@@ -57,14 +57,7 @@ module.exports = async (req, res) => {
 
   // Default courses list (fallback if database is unavailable)
   const defaultCourses = [
-    { id: 1, title: "E-Commerce", description: "Master Amazon FBA, Shopify, and dropshipping to build multiple income streams", level: "All Levels", duration: 6, price: 99.99, imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" },
-    { id: 2, title: "Health & Fitness", description: "Build profitable fitness brands, coaching businesses, and supplement companies", level: "All Levels", duration: 5, price: 79.99, imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" },
-    { id: 3, title: "Trading", description: "Master forex, stocks, and crypto trading strategies", level: "Intermediate", duration: 8, price: 149.99, imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" },
-    { id: 4, title: "Real Estate", description: "Master strategic property investment, REIT analysis, and PropTech opportunities\n\nProfessor - Raj Johal", level: "Intermediate", duration: 7, price: 119.99, imageUrl: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2073&q=80" },
-    { id: 5, title: "Social Media", description: "Build massive personal brands and monetize digital influence", level: "All Levels", duration: 4, price: 59.99, imageUrl: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&auto=format&fit=crop&w=2339&q=80" },
-    { id: 6, title: "Psychology and Mindset", description: "Master the psychological aspects of trading and develop the winning mindset for consistent success", level: "All Levels", duration: 6, price: 129.99, imageUrl: "https://images.unsplash.com/photo-1559757148-5c350d0d4c09?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" },
-    { id: 7, title: "Algorithmic AI", description: "Learn to build and deploy algorithmic trading systems powered by artificial intelligence", level: "Advanced", duration: 10, price: 199.99, imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" },
-    { id: 8, title: "Crypto", description: "Master cryptocurrency trading, blockchain technology, and DeFi strategies", level: "Intermediate", duration: 7, price: 149.99, imageUrl: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" }
+    { id: 1, title: "1 to 1", description: "Personalized one-on-one trading mentorship and guidance tailored to your specific goals and experience level", level: "All Levels", duration: 0, price: 0, imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" }
   ];
 
   try {

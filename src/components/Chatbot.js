@@ -24,8 +24,8 @@ const Chatbot = () => {
     useEffect(() => {
         if (isOpen) {
             const welcomeMessage = isAuthenticated 
-                ? `👋 Welcome back, ${user?.username || user?.name || 'there'}! I'm THE GLITCH AI assistant. I can answer any questions you have about trading, courses, your account, or anything else. Choose a question below or type your own!`
-                : "👋 Welcome to <span className='glitch-brand' data-text='THE GLITCH'>THE GLITCH</span>! I can answer questions about our website. <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #8B5CF6; text-decoration: underline;'>log in</a> to unlock full chatbot capabilities and ask me anything!\nChoose a question or type your own.";
+                ? `👋 Welcome back, ${user?.username || user?.name || 'there'}! I'm the AURA FX trading assistant. I can answer questions about trading, our courses, and the platform. Choose a question below or type your own!`
+                : "👋 Welcome to <span className='glitch-brand' data-text='AURA FX'>AURA FX</span>! I can answer questions about trading and our platform. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #1E90FF; text-decoration: underline;'>log in</a> to access full features!\nChoose a question or type your own.";
             
             setMessages([
                 {
@@ -52,7 +52,7 @@ const Chatbot = () => {
             // Try to use the live API first
             const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
                 ? window.location.origin
-                : (process.env.REACT_APP_API_URL || 'https://theglitch.world');
+                : (process.env.REACT_APP_API_URL || 'https://www.aurafx.com');
             const token = localStorage.getItem('token');
             
             // Prepare headers - include auth token if user is logged in
@@ -122,115 +122,107 @@ const Chatbot = () => {
     const getSimulatedResponse = (message) => {
         const msg = message.toLowerCase();
         
-        // If not logged in, only answer simple website questions
+        // If not logged in, only answer simple trading questions
         if (!isAuthenticated) {
             // Greetings
             if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.match(/^hi$/) || msg.match(/^hey$/)) {
-                return "Hello! Welcome to THE GLITCH! 👋 I can answer questions about our website. <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #8B5CF6; text-decoration: underline;'>log in</a> to unlock full chatbot capabilities and ask me anything!";
+                return "Hello! Welcome to AURA FX! 👋 I can answer questions about trading and our platform. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #1E90FF; text-decoration: underline;'>log in</a> to access full features!";
             }
             
-            // Simple website info
-            if (msg.includes("what") && (msg.includes("glitch") || msg.includes("platform") || msg.includes("website"))) {
-                return "THE GLITCH is a trading education platform focused on building generational wealth through 8 wealth domains: Health & Fitness, E-Commerce, Forex, Crypto, Algorithmic FX, Intelligent Systems, Social Media, and Real Estate. <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>Sign up</a> to access our courses and community!";
+            // Simple platform info
+            if (msg.includes("what") && (msg.includes("aura") || msg.includes("platform") || msg.includes("website"))) {
+                return "AURA FX is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Sign up</a> to access our courses!";
+            }
+            
+            // Trading questions
+            if (msg.includes("trade") || msg.includes("trading") || msg.includes("forex") || msg.includes("crypto") || msg.includes("stock")) {
+                return "AURA FX specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>Courses page</a> to learn more. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Sign up</a> to get started!";
             }
             
             // Courses info
             if (msg.includes("course") || msg.includes("learn")) {
-                return "We offer courses in 8 wealth-building domains. Visit our <a href='/courses' style='color: #8B5CF6; text-decoration: underline;'>Courses page</a> to see all available courses. <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>Sign up</a> to enroll!";
+                return "We offer 1-to-1 trading mentorship. Visit our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>Courses page</a> to see details. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Sign up</a> to enroll!";
             }
             
             // Pricing
-            if (msg.includes("price") || msg.includes("cost")) {
-                return "Our courses range from free to premium. Visit our <a href='/courses' style='color: #8B5CF6; text-decoration: underline;'>Courses page</a> to see pricing. <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>Create an account</a> to get started!";
+            if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription")) {
+                return "We offer Aura FX subscription at $99/month and A7FX Elite at $250/month. Visit our <a href='/subscription' style='color: #1E90FF; text-decoration: underline;'>Subscription page</a> for details. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Create an account</a> to get started!";
             }
             
             // Sign up/Login
             if (msg.includes("sign up") || msg.includes("register") || msg.includes("create account") || msg.includes("join")) {
-                return "Great! You can <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>sign up here</a> to access all our courses and features. It only takes a minute!";
+                return "Great! You can <a href='/register' style='color: #1E90FF; text-decoration: underline;'>sign up here</a> to access our trading courses and mentorship. It only takes a minute!";
             }
             
             // Contact
             if (msg.includes("contact") || msg.includes("support") || msg.includes("help")) {
-                return "You can <a href='/contact-us' style='color: #8B5CF6; text-decoration: underline;'>contact our support team</a> or <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>sign up</a> to access the full chatbot that can answer any question!";
+                return "You can <a href='/contact' style='color: #1E90FF; text-decoration: underline;'>contact our support team</a> or <a href='/register' style='color: #1E90FF; text-decoration: underline;'>sign up</a> for full access!";
             }
             
             // Default for non-logged in users
-            return "I can help with basic questions about THE GLITCH website. For advanced questions and personalized assistance, please <a href='/register' style='color: #8B5CF6; text-decoration: underline;'>sign up</a> or <a href='/login' style='color: #8B5CF6; text-decoration: underline;'>log in</a> to unlock full chatbot capabilities!";
+            return "I can help with questions about trading and the AURA FX platform. For personalized assistance, please <a href='/register' style='color: #1E90FF; text-decoration: underline;'>sign up</a> or <a href='/login' style='color: #1E90FF; text-decoration: underline;'>log in</a>!";
         }
         
-        // If logged in, provide full responses - answer ANY question
+        // If logged in, provide trading-focused responses
         // Greetings
         if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.match(/^hi$/) || msg.match(/^hey$/)) {
-            return `Hello ${user?.username || user?.name || 'there'}! 👋 I'm THE GLITCH AI assistant. I can help you with any questions about trading, courses, your account, or anything else. What would you like to know?`;
+            return `Hello ${user?.username || user?.name || 'there'}! 👋 I'm the AURA FX trading assistant. I can help you with questions about trading, our courses, and the platform. What would you like to know?`;
+        }
+        
+        // Trading questions - PRIMARY FOCUS
+        if (msg.includes("trade") || msg.includes("trading") || msg.includes("forex") || msg.includes("crypto") || msg.includes("stock") || msg.includes("option") || msg.includes("market") || msg.includes("chart") || msg.includes("strategy") || msg.includes("signal")) {
+            if (msg.includes("forex")) {
+                return "Forex trading involves trading currency pairs. AURA FX teaches technical analysis, risk management, and proven strategies for Forex trading. Check our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>courses</a> for detailed lessons.";
+            }
+            if (msg.includes("crypto")) {
+                return "Cryptocurrency trading requires understanding market volatility and technical indicators. Our 1-to-1 mentorship covers crypto trading strategies. Visit our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>courses</a> page.";
+            }
+            if (msg.includes("stock")) {
+                return "Stock trading involves buying and selling shares. AURA FX provides education on fundamental and technical analysis for stocks. Check our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>courses</a>.";
+            }
+            if (msg.includes("beginner") || msg.includes("start") || msg.includes("learn")) {
+                return "For beginners, we recommend starting with our 1-to-1 mentorship program. It provides personalized guidance tailored to your experience level. Visit our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>courses</a> page to learn more.";
+            }
+            return "AURA FX specializes in trading education covering Forex, Stocks, Crypto, and Options. Our 1-to-1 mentorship provides personalized trading guidance. Check our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>courses</a> for details.";
         }
         
         // Course related queries
-        if (msg.includes("course") || msg.includes("learn") || msg.includes("study") || msg.includes("tutorial")) {
-            if (msg.includes("beginner") || msg.includes("start")) {
-                return "We offer several beginner-friendly courses including 'Introduction to Trading' which is completely free! Visit our Courses page to get started.";
-            }
-            if (msg.includes("video")) {
-                return "Yes, our courses include video tutorials, interactive lessons, quizzes, and downloadable resources.";
-            }
-            if (msg.includes("track") || msg.includes("progress")) {
-                return "You can track your course progress in the 'My Courses' section. It shows completion percentage and which modules you've finished.";
-            }
-            return "We offer various trading courses from beginner to advanced levels across 8 wealth domains. Popular options include Introduction to Trading (free), Technical Analysis ($49.99), and Advanced Options Trading ($79.99).";
+        if (msg.includes("course") || msg.includes("learn") || msg.includes("study") || msg.includes("tutorial") || msg.includes("mentorship")) {
+            return "AURA FX offers 1-to-1 trading mentorship. This personalized program provides expert guidance tailored to your trading goals. Visit our <a href='/courses' style='color: #1E90FF; text-decoration: underline;'>Courses page</a> to learn more.";
         }
         
         // Pricing related queries
         if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription") || msg.includes("pay") || msg.includes("fee")) {
-            if (msg.includes("free")) {
-                return "Yes, we offer free courses including 'Introduction to Trading' and limited access to the community.";
-            }
-            if (msg.includes("premium")) {
-                return "Premium membership costs $19.99/month and includes access to all courses, advanced features, and priority support.";
-            }
-            return "We have a freemium model. Basic access is free, premium features start at $19.99/month, and individual courses range from free to $79.99.";
+            return "AURA FX offers two subscription plans: Aura FX at $99/month and A7FX Elite at $250/month. Visit our <a href='/subscription' style='color: #1E90FF; text-decoration: underline;'>Subscription page</a> for full details.";
         }
         
         // Platform features
-        if (msg.includes("feature") || msg.includes("tool") || msg.includes("function")) {
-            return "THE GLITCH provides educational resources across 8 wealth domains: Health & Fitness, E-Commerce, Forex, Crypto, Algorithmic FX, Intelligent Systems, Social Media, and Real Estate. Our platform focuses on helping you build generational wealth through multiple income streams.";
+        if (msg.includes("feature") || msg.includes("tool") || msg.includes("function") || msg.includes("what") || msg.includes("about")) {
+            return "AURA FX is a professional trading education platform. We offer 1-to-1 mentorship, trading courses, community access, and expert strategies for Forex, Stocks, Crypto, and Options trading.";
         }
         
         // Community related
         if (msg.includes("community") || msg.includes("forum") || msg.includes("chat") || msg.includes("discuss")) {
-            return "Our community is a great place to connect with other traders, share strategies, and get help. You can access it in the Community section, and it's free for all logged-in users!";
+            return "Our trading community is where traders connect, share strategies, and discuss markets. Access it through the Community section. Subscription required for full access.";
         }
         
         // Technical support
         if (msg.includes("help") || msg.includes("support") || msg.includes("problem") || msg.includes("issue") || msg.includes("error")) {
-            return "I'm here to help! For technical issues, you can <a href='/contact-us' style='color: #8B5CF6; text-decoration: underline;'>contact our support team</a>. For general questions about trading or our platform, feel free to ask me anything!";
+            return "I'm here to help with trading questions! For technical issues, <a href='/contact' style='color: #1E90FF; text-decoration: underline;'>contact our support team</a>. For trading questions, feel free to ask me!";
         }
         
         // Account and payment issues
         if (msg.includes("account") || msg.includes("password") || msg.includes("login") || msg.includes("payment") || msg.includes("billing") || msg.includes("refund")) {
-            return "For account, payment, or billing-related questions, please visit our <a href='/contact-us' style='color: #8B5CF6; text-decoration: underline;'>Contact Us page</a> to submit a support request. Our team will assist you within 24 hours.";
+            return "For account or payment questions, visit our <a href='/contact' style='color: #1E90FF; text-decoration: underline;'>Contact page</a>. Our team will assist you within 24 hours.";
         }
         
-        // About the platform
-        if (msg.includes("about") || msg.includes("what") || msg.includes("how") || msg.includes("platform")) {
-            return "THE GLITCH is your pathway to building generational wealth through multiple streams of knowledge. We teach you to make money work for you, break bad financial habits, and create lasting prosperity across 8 powerful domains.";
-        }
-        
-        // Generational wealth questions
-        if (msg.includes("wealth") || msg.includes("income") || msg.includes("passive") || msg.includes("financial freedom")) {
-            return "We focus on teaching you how to build generational wealth through multiple income streams. Our courses cover trading, investing, e-commerce, and more—all designed to help you achieve true financial freedom!";
-        }
-        
-        // Trading questions (logged in users only)
-        if (msg.includes("trade") || msg.includes("trading") || msg.includes("forex") || msg.includes("crypto") || msg.includes("stock") || msg.includes("investment")) {
-            return "I can help with trading questions! We cover Forex, Crypto, Algorithmic FX, and more. Which area would you like to learn about? You can also check our <a href='/courses' style='color: #8B5CF6; text-decoration: underline;'>courses</a> for in-depth lessons.";
-        }
-        
-        // Personal questions (logged in users only)
+        // Personal questions
         if (msg.includes("my") && (msg.includes("course") || msg.includes("progress") || msg.includes("level") || msg.includes("xp"))) {
-            return `Check your <a href='/my-courses' style='color: #8B5CF6; text-decoration: underline;'>My Courses</a> page to see your enrolled courses and progress. Your level and XP are visible in your <a href='/profile' style='color: #8B5CF6; text-decoration: underline;'>Profile</a>.`;
+            return `Check your <a href='/my-courses' style='color: #1E90FF; text-decoration: underline;'>My Courses</a> page for your progress. Your profile shows your level and XP.`;
         }
         
-        // Default response for logged in users - try to answer anything
-        return "I'm here to help with any questions you have! Try asking about our courses, trading strategies, community features, your account, or anything else. For complex questions, visit our <a href='/contact-us' style='color: #8B5CF6; text-decoration: underline;'>Contact Us page</a>. What else can I help you with?";
+        // Default response - trading focused
+        return "I'm here to help with trading questions! Ask me about Forex, Stocks, Crypto, Options trading, our courses, or the platform. For account issues, visit our <a href='/contact' style='color: #1E90FF; text-decoration: underline;'>Contact page</a>. What would you like to know?";
     };
 
     const handleOption = (message) => {
@@ -245,33 +237,33 @@ const Chatbot = () => {
     };
 
     const groupedOptions = {
-        "📚 Courses": [
-            "What trading courses do you offer for beginners?",
-            "Are there any video tutorials or just text?",
-            "How do I track my course progress?",
-            "Do the courses include quizzes or checkpoints?",
-            "Can I access advanced courses without a subscription?",
+        "📈 Trading": [
+            "What trading strategies do you teach?",
+            "How do I get started with Forex trading?",
+            "What's the difference between Forex and Crypto trading?",
+            "Do you teach stock trading?",
+            "What is options trading?",
         ],
-        "💸 Pricing & Subscriptions": [
-            "What's the difference between the Free and Premium plans?",
-            "How much does the Premium plan cost?",
+        "🎓 Courses & Mentorship": [
+            "What is the 1-to-1 mentorship program?",
+            "How does the mentorship work?",
+            "What will I learn in the mentorship?",
+            "Is the mentorship personalized?",
+            "How long is the mentorship program?",
+        ],
+        "💳 Subscriptions": [
+            "What's included in the Aura FX subscription?",
+            "What's the difference between Aura FX and A7FX?",
+            "How much does A7FX Elite cost?",
             "Can I cancel my subscription anytime?",
-            "Is there a refund if I'm not happy?",
             "What payment methods are accepted?",
         ],
-        "💬 Community": [
-            "What's the THE GLITCH community?",
-            "How do I unlock new chat channels?",
-            "Is the community moderated?",
-            "Can free users access the chatroom?",
-            "How do XP and leveling up work?",
-        ],
-        "🛠️ Tech Help & Chatbot": [
-            "Where can I use the chatbot?",
-            "What can the chatbot help me with?",
-            "Does the bot give live market data?",
-            "Why can't I send messages in some channels?",
-            "I purchased a course — why can't I access the community?",
+        "💬 Platform & Support": [
+            "What is AURA FX?",
+            "How do I access the trading community?",
+            "Can I get help with my trades?",
+            "How do I contact support?",
+            "What trading markets do you cover?",
         ]
     };
 
@@ -281,7 +273,7 @@ const Chatbot = () => {
             {isOpen && (
                 <div className="chatbot-window">
                     <div className="chatbot-header">
-                        THE GLITCH Chat
+                        AURA FX Trading Chat
                         {connectError && <span className="offline-indicator">⚠️ Offline Mode</span>}
                         <button className="chatbot-close" onClick={toggleChat}>✕</button>
                     </div>

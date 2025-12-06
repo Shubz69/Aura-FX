@@ -1,10 +1,10 @@
 /* ========== VARIABLES (From Landing Page) ========== */
 :root {
-    /* Purple-Blue Colors */
-    --primary: #6366F1;      /* Indigo */
-    --secondary: #8B5CF6;    /* Purple-Blue */
-    --accent: #A78BFA;       /* Light Purple */
-    --dark-purple: #4C1D95;  /* Deep Purple */
+    /* Blue Colors */
+    --primary: #1E90FF;      /* Dodger Blue */
+    --secondary: #4169E1;    /* Royal Blue */
+    --accent: #00BFFF;       /* Deep Sky Blue */
+    --dark-blue: #0000CD;    /* Medium Blue */
     
     /* Very Dark Purple */
     --bg-dark: #0a0a1a;
@@ -16,10 +16,10 @@
     --font-secondary: 'Space Grotesk', sans-serif;
     
     /* Legacy variables for compatibility */
-    --blue-primary: #6366F1;
-    --blue-secondary: #8B5CF6;
-    --blue-accent: #A78BFA;
-    --blue-dark: #4C1D95;
+    --blue-primary: #1E90FF;
+    --blue-secondary: #4169E1;
+    --blue-accent: #00BFFF;
+    --blue-dark: #0000CD;
     --bg-lighter: #252541;
     
     /* Reduced glow effects */

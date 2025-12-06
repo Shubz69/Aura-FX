@@ -5,7 +5,7 @@ import BinaryBackground from '../components/BinaryBackground';
 import axios from 'axios';
 import '../styles/Subscription.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://www.theglitch.world';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://www.aurafx.com';
 const STRIPE_PAYMENT_LINK = process.env.REACT_APP_STRIPE_PAYMENT_LINK || 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
 
 const Subscription = () => {
@@ -20,6 +20,7 @@ const Subscription = () => {
     const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
     const [contactSubmitting, setContactSubmitting] = useState(false);
     const [contactStatus, setContactStatus] = useState(null);
+    const [selectedPlan, setSelectedPlan] = useState(null);
 
     useEffect(() => {
         // Check if user is authenticated
@@ -42,12 +43,14 @@ const Subscription = () => {
         }
     }, [isAuthenticated, navigate]);
 
-    const handleSubscribe = () => {
+    const handleSubscribe = (planType = 'aura') => {
+        setSelectedPlan(planType);
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email || storedUser?.email;
+        // TODO: Update with actual Stripe payment links for each plan
         const paymentLink = userEmail
-            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}`
-            : STRIPE_PAYMENT_LINK;
+            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
+            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}plan=${planType}`;
 
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);
@@ -101,7 +104,7 @@ const Subscription = () => {
             console.error('Error sending contact message:', error);
             setContactStatus({ 
                 type: 'error', 
-                message: 'There was a problem sending your message. Please try again later or email us directly at support@theglitch.world' 
+                message: 'There was a problem sending your message. Please try again later or email us directly at support@aurafx.com' 
             });
         } finally {
             setContactSubmitting(false);
@@ -225,33 +228,71 @@ const Subscription = () => {
             <div className="subscription-card">
                 <div className="subscription-header">
                     <h1>🔒 COMMUNITY ACCESS REQUIRED</h1>
-                    <p className="subscription-subtitle">Unlock the full THE GLITCH experience</p>
+                    <p className="subscription-subtitle">Unlock the full AURA FX experience</p>
                 </div>
 
                 <div className="subscription-content">
-                    <div className="subscription-benefits">
-                        <h2>What You Get:</h2>
-                        <ul>
-                            <li>✅ Access to all community channels</li>
-                            <li>✅ Real-time trading discussions</li>
-                            <li>✅ Connect with expert traders</li>
-                            <li>✅ Share strategies and insights</li>
-                            <li>✅ Premium course discussions</li>
-                            <li>✅ Exclusive VIP content</li>
-                        </ul>
-                    </div>
+                    <div className="subscription-plans">
+                        {/* Aura FX Plan */}
+                        <div className="subscription-plan-card">
+                            <div className="plan-header">
+                                <h2>Aura FX</h2>
+                                <div className="plan-badge">Standard</div>
+                            </div>
+                            <div className="plan-pricing">
+                                <span className="plan-price">$99</span>
+                                <span className="plan-period">/month</span>
+                            </div>
+                            <div className="plan-benefits">
+                                <ul>
+                                    <li>✅ Access to all community channels</li>
+                                    <li>✅ Real-time trading discussions</li>
+                                    <li>✅ Connect with expert traders</li>
+                                    <li>✅ Share strategies and insights</li>
+                                    <li>✅ Premium course discussions</li>
+                                    <li>✅ Exclusive content access</li>
+                                </ul>
+                            </div>
+                            <button 
+                                className="plan-select-button"
+                                onClick={() => handleSubscribe('aura')}
+                                disabled={loading}
+                            >
+                                {loading && selectedPlan === 'aura' ? 'PROCESSING...' : 'SELECT PLAN'}
+                            </button>
+                        </div>
 
-                    <div className="subscription-pricing">
-                        <div className="pricing-highlight">
-                            <span className="pricing-label">First 3 Months</span>
-                            <span className="pricing-amount">FREE</span>
+                        {/* A7FX Plan - Elite Only */}
+                        <div className="subscription-plan-card elite-plan">
+                            <div className="plan-header">
+                                <h2>A7FX</h2>
+                                <div className="plan-badge elite-badge">ELITE</div>
+                            </div>
+                            <div className="plan-pricing">
+                                <span className="plan-price">$250</span>
+                                <span className="plan-period">/month</span>
+                            </div>
+                            <div className="plan-benefits">
+                                <ul>
+                                    <li>✅ Everything in Aura FX</li>
+                                    <li>✅ Elite-only trading signals</li>
+                                    <li>✅ Priority 1-to-1 mentorship</li>
+                                    <li>✅ Exclusive elite community</li>
+                                    <li>✅ Advanced trading strategies</li>
+                                    <li>✅ Direct access to founders</li>
+                                    <li>✅ Early access to new features</li>
+                                </ul>
+                            </div>
+                            <button 
+                                className="plan-select-button elite-button"
+                                onClick={() => handleSubscribe('a7fx')}
+                                disabled={loading}
+                            >
+                                {loading && selectedPlan === 'a7fx' ? 'PROCESSING...' : 'SELECT ELITE PLAN'}
+                            </button>
                         </div>
-                        <div className="pricing-regular">
-                            <span className="pricing-label">Then</span>
-                            <span className="pricing-amount">£99/month</span>
-                        </div>
-                        <p className="pricing-note">Cancel anytime • No hidden fees</p>
                     </div>
+                    <p className="pricing-note" style={{ textAlign: 'center', marginTop: '20px' }}>Cancel anytime • No hidden fees</p>
                 </div>
 
                 {error && <div className="subscription-error">{error}</div>}
@@ -278,13 +319,6 @@ const Subscription = () => {
 
                 <div className="subscription-actions">
                     <button 
-                        className="subscribe-button"
-                        onClick={handleSubscribe}
-                        disabled={loading}
-                    >
-                        {loading ? 'PROCESSING...' : 'START FREE TRIAL'}
-                    </button>
-                    <button 
                         className="skip-button"
                         onClick={handleSkipForNow}
                     >
@@ -306,7 +340,7 @@ const Subscription = () => {
                             {showContactForm ? 'Hide Contact Form' : 'Contact Support'}
                         </button>
                         <a 
-                            href="mailto:support@theglitch.world"
+                            href="mailto:support@aurafx.com"
                             className="support-button"
                             style={{ textDecoration: 'none', display: 'inline-block', textAlign: 'center' }}
                         >

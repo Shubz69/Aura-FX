@@ -23,7 +23,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="logo-container">
                 <Link to="/" className="logo-link">
-                    <span className="logo">THE GLITCH</span>
+                    <span className="logo">AURA FX</span>
                 </Link>
             </div>
 
@@ -36,7 +36,7 @@ const Navbar = () => {
                 {user && <li><Link to="/community">Community</Link></li>}
                 <li><Link to="/courses">Courses</Link></li>
                 {!user && <li><Link to="/explore">Explore</Link></li>}
-                {!user && <li><Link to="/why-glitch">Why Glitch</Link></li>}
+                    {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
                 {(isAdmin(user) || isSuperAdmin(user)) && (
@@ -103,7 +103,7 @@ const Navbar = () => {
                     {user && <li><Link to="/community" onClick={toggleMobileMenu}>Community</Link></li>}
                     <li><Link to="/courses" onClick={toggleMobileMenu}>Courses</Link></li>
                     {!user && <li><Link to="/explore" onClick={toggleMobileMenu}>Explore</Link></li>}
-                    {!user && <li><Link to="/why-glitch" onClick={toggleMobileMenu}>Why Glitch</Link></li>}
+                    {!user && <li><Link to="/why-glitch" onClick={toggleMobileMenu}>Why AURA FX</Link></li>}
                     <li><Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link></li>
                     {user && <li><Link to="/leaderboard" onClick={toggleMobileMenu}>Leaderboard</Link></li>}
                     {user?.role?.toUpperCase() === "ADMIN" && (

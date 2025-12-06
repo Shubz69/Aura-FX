@@ -4,16 +4,13 @@ import "../styles/Home.css";
 import { useAuth } from "../context/AuthContext";
 import Chatbot from "../components/Chatbot";
 import BinaryBackground from "../components/BinaryBackground";
-import FancyAIHead from "../components/FancyAIHead";
 
 const Home = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const [showContent, setShowContent] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [aiHeadState, setAiHeadState] = useState('idle');
     const [currentFeature, setCurrentFeature] = useState(0);
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
 
     // Loading effect
@@ -49,53 +46,38 @@ const Home = () => {
         return () => clearInterval(interval);
     }, []);
 
-    useEffect(() => {
-        const handleMouseMove = (e) => {
-            setMousePosition({ x: e.clientX, y: e.clientY });
-        };
-
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
-
-
     const handleStartTrading = () => {
         if (isAuthenticated) {
-            navigate("/dashboard");
+            navigate("/community");
         } else {
             navigate("/register");
         }
     };
 
-    const handleAiHeadInteraction = (state) => {
-        setAiHeadState(state);
-        setTimeout(() => setAiHeadState('idle'), 4000);
-    };
-
     const features = [
         {
-            icon: "💰",
-            title: "8 Wealth Domains",
-            description: "Master Health & Fitness, E-Commerce, Forex, Crypto, Algorithmic FX, Intelligent Systems, Social Media, and Real Estate",
+            icon: "📈",
+            title: "Forex Trading",
+            description: "Master currency trading with proven strategies, technical analysis, and risk management techniques",
             color: "#1E90FF"
         },
         {
-            icon: "🚀",
-            title: "Multiple Income Streams",
-            description: "Build generational wealth through diverse revenue channels and strategic investments",
-            color: "#00CED1"
+            icon: "💹",
+            title: "Stock Trading",
+            description: "Learn to trade stocks, analyze markets, and build a profitable trading portfolio",
+            color: "#4169E1"
         },
         {
-            icon: "📈",
-            title: "Proven Results",
-            description: "247% average ROI with 15 active income streams - real numbers from real traders",
-            color: "#32CD32"
+            icon: "₿",
+            title: "Crypto Trading",
+            description: "Navigate cryptocurrency markets with advanced strategies and market analysis",
+            color: "#00BFFF"
         },
         {
-            icon: "🎓",
-            title: "Cutting-Edge Knowledge",
-            description: "Access comprehensive courses and strategies powered by the latest trading intelligence",
-            color: "#FF69B4"
+            icon: "🎯",
+            title: "1-to-1 Mentorship",
+            description: "Get personalized trading guidance from experienced professionals tailored to your goals",
+            color: "#1E90FF"
         }
     ];
 
@@ -107,7 +89,7 @@ const Home = () => {
                     <BinaryBackground />
                     {/* Main Loading Content */}
                     <div className="loading-content">
-                        <div className="loading-title">THE GLITCH</div>
+                        <div className="loading-title">AURA FX</div>
                         <div className="loading-subtitle">INITIALIZING SYSTEM...</div>
                         
                         <div className="loading-dots-container">
@@ -131,23 +113,22 @@ const Home = () => {
                             <div className="hero-left">
                                 <div className="hero-badge">
                                     <div className="badge-glow"></div>
-                                    <span className="badge-icon">⚡</span>
-                                    <span className="badge-text">AI-POWERED TRADING</span>
+                                    <span className="badge-icon">📊</span>
+                                    <span className="badge-text">PROFESSIONAL TRADING</span>
                                 </div>
                                 
                                 <h1 className="hero-title">
                                     <span className="title-line">WELCOME TO</span>
-                                    <span className="title-highlight">THE GLITCH</span>
-                                    <span className="title-line">PLATFORM</span>
+                                    <span className="title-highlight">AURA FX</span>
+                                    <span className="title-line">TRADING PLATFORM</span>
                                 </h1>
                                 
                                 <p className="hero-description">
-                                    Your comprehensive platform for building generational wealth across 8 powerful domains: 
-                                    <span className="highlight-text">Health & Fitness</span>, <span className="highlight-text">E-Commerce</span>, 
-                                    <span className="highlight-text">Forex</span>, <span className="highlight-text">Crypto</span>, 
-                                    <span className="highlight-text">Algorithmic FX</span>, <span className="highlight-text">Intelligent Systems Development</span>, 
-                                    <span className="highlight-text">Social Media</span>, and <span className="highlight-text">Real Estate</span>. 
-                                    Multiple income streams powered by cutting-edge knowledge.
+                                    Your premier destination for professional trading education. Master 
+                                    <span className="highlight-text"> Forex</span>, <span className="highlight-text">Stocks</span>, 
+                                    <span className="highlight-text"> Crypto</span>, and <span className="highlight-text">Options Trading</span> 
+                                    with expert guidance, proven strategies, and personalized 1-to-1 mentorship. 
+                                    Build your trading skills and achieve consistent profitability.
                                 </p>
                                 
                                 <div className="hero-actions">
@@ -164,12 +145,23 @@ const Home = () => {
                             </div>
                             
                             <div className="hero-right">
-                                <div className="ai-head-wrapper">
-                                    <FancyAIHead 
-                                        state={aiHeadState}
-                                        onInteraction={handleAiHeadInteraction}
-                                        mousePosition={mousePosition}
-                                    />
+                                <div className="trading-visual">
+                                    <div className="trading-chart-placeholder">
+                                        <div className="chart-line"></div>
+                                        <div className="chart-line"></div>
+                                        <div className="chart-line"></div>
+                                        <div className="chart-glow"></div>
+                                    </div>
+                                    <div className="trading-stats">
+                                        <div className="stat-item">
+                                            <span className="stat-value">+24.7%</span>
+                                            <span className="stat-label">Avg ROI</span>
+                                        </div>
+                                        <div className="stat-item">
+                                            <span className="stat-value">1,200+</span>
+                                            <span className="stat-label">Traders</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -179,8 +171,8 @@ const Home = () => {
                     <section className="features-section">
                         <div className="features-container">
                             <div className="features-header">
-                                <h2 className="section-title">Advanced Capabilities</h2>
-                                <p className="section-subtitle">Discover what makes THE GLITCH the most advanced trading platform</p>
+                                <h2 className="section-title">Trading Excellence</h2>
+                                <p className="section-subtitle">Master the markets with AURA FX's comprehensive trading education</p>
                             </div>
                             
                             <div className="features-showcase">
@@ -214,27 +206,27 @@ const Home = () => {
                     <section className="wealth-impact-section">
                         <div className="wealth-impact-container">
                             <div className="wealth-impact-header">
-                                <h2 className="wealth-impact-title">WEALTH IMPACT</h2>
-                                <p className="wealth-impact-subtitle">Real results across all wealth-building domains</p>
+                                <h2 className="wealth-impact-title">TRADING RESULTS</h2>
+                                <p className="wealth-impact-subtitle">Real performance from our trading community</p>
                             </div>
                             
                             <div className="wealth-stats-grid">
                                 <div className="wealth-stat-card">
-                                    <div className="wealth-stat-icon">🎯</div>
-                                    <div className="wealth-stat-number">8.00</div>
-                                    <div className="wealth-stat-label">WEALTH DOMAINS</div>
-                                    <div className="wealth-stat-glow"></div>
-                                </div>
-                                <div className="wealth-stat-card">
-                                    <div className="wealth-stat-icon">💰</div>
-                                    <div className="wealth-stat-number">247</div>
+                                    <div className="wealth-stat-icon">📈</div>
+                                    <div className="wealth-stat-number">24.7</div>
                                     <div className="wealth-stat-label">% AVG ROI</div>
                                     <div className="wealth-stat-glow"></div>
                                 </div>
                                 <div className="wealth-stat-card">
-                                    <div className="wealth-stat-icon">📈</div>
-                                    <div className="wealth-stat-number">15</div>
-                                    <div className="wealth-stat-label">INCOME STREAMS</div>
+                                    <div className="wealth-stat-icon">👥</div>
+                                    <div className="wealth-stat-number">1,200+</div>
+                                    <div className="wealth-stat-label">ACTIVE TRADERS</div>
+                                    <div className="wealth-stat-glow"></div>
+                                </div>
+                                <div className="wealth-stat-card">
+                                    <div className="wealth-stat-icon">🎯</div>
+                                    <div className="wealth-stat-number">85%</div>
+                                    <div className="wealth-stat-label">SUCCESS RATE</div>
                                     <div className="wealth-stat-glow"></div>
                                 </div>
                             </div>
@@ -245,8 +237,8 @@ const Home = () => {
                     <section className="cta-section">
                         <div className="cta-container">
                             <div className="cta-content">
-                                <h2 className="cta-title">Ready to Experience the Future?</h2>
-                                <p className="cta-description">Join thousands of traders who trust THE GLITCH for their automated trading needs</p>
+                                <h2 className="cta-title">Ready to Start Trading?</h2>
+                                <p className="cta-description">Join thousands of successful traders who trust AURA FX for professional trading education</p>
                                 
                                 <div className="cta-actions">
                                     <button className="cta-primary" onClick={handleStartTrading}>
@@ -260,16 +252,16 @@ const Home = () => {
                                 
                                 <div className="trust-indicators">
                                     <div className="trust-item">
-                                        <span className="trust-icon">🔒</span>
-                                        <span>Bank-Level Security</span>
+                                        <span className="trust-icon">📚</span>
+                                        <span>Expert Education</span>
                                     </div>
                                     <div className="trust-item">
-                                        <span className="trust-icon">⚡</span>
-                                        <span>Lightning Fast</span>
+                                        <span className="trust-icon">🎯</span>
+                                        <span>Proven Strategies</span>
                                     </div>
                                     <div className="trust-item">
-                                        <span className="trust-icon">🧠</span>
-                                        <span>AI-Powered</span>
+                                        <span className="trust-icon">💼</span>
+                                        <span>1-to-1 Mentorship</span>
                                     </div>
                                 </div>
                             </div>
