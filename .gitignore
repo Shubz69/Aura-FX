@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+lerna-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.code-workspace
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+
+# Installation files
+*.msi
+
+# MySQL database dumps
+MySQL DB/
+
+# Other
+server.js.backup
+
+# Exclude everything outside project directory
+../*
+!src/
+!public/
+!package.json
+!package-lock.json
+!README.md
+!vercel.json
+!trading-platform-backend/
+!trading-platform-frontend/

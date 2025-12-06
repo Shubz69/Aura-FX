@@ -1,0 +1,330 @@
+/* Modern Trading Platform Course Styling - THE GLITCH Design Scheme */
+.my-courses-container {
+    padding: 2rem;
+    position: relative;
+    min-height: 100vh;
+    background: #0a0a1a;
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.course-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.course-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.course-content {
+    position: relative;
+    z-index: 1;
+}
+
+.course-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    margin: 0 0 1rem 0;
+    font-weight: 600;
+}
+
+.course-description {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.course-button {
+    background: linear-gradient(45deg, #7a36ff, #00bcd4);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(122, 54, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.course-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(122, 54, 255, 0.6);
+}
+
+.course-button:hover svg {
+    transform: translateX(5px);
+}
+
+.course-button svg {
+    transition: transform 0.3s ease;
+}
+
+.upgrade-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.upgrade-container h3 {
+    color: #ffffff;
+    font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.upgrade-container p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.upgrade-btn {
+    background: linear-gradient(45deg, #7a36ff, #00bcd4);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(122, 54, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.upgrade-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(122, 54, 255, 0.6);
+}
+
+.error-message {
+    background: rgba(255, 64, 129, 0.1);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 64, 129, 0.3);
+}
+
+.error-message p {
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: #ff4081;
+}
+
+.server-help {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.server-help p {
+    color: #cccccc;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.server-help ol {
+    color: #aaaaaa;
+    margin-left: 1.5rem;
+    padding-left: 0;
+}
+
+.server-help li {
+    margin-bottom: 0.5rem;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.loading-text {
+    color: #ffffff;
+    font-size: 1.2rem;
+    position: relative;
+    padding-left: 30px;
+}
+
+.loading-text:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+.no-courses-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.no-courses-message p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Stock ticker styling */
+.ticker-container {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ticker {
+    display: flex;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+}
+
+.ticker-item {
+    margin-right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ffffff;
+}
+
+.ticker-price {
+    color: #7a36ff;
+}
+
+.ticker-up {
+    color: #00ff00;
+}
+
+.ticker-down {
+    color: #ff4081;
+}
+
+@keyframes ticker {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .my-courses-container {
+        padding: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+        letter-spacing: 1px;
+    }
+    
+    .courses-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .course-card {
+        padding: 1.25rem;
+    }
+    
+    .upgrade-container {
+        padding: 1.5rem;
+    }
+    
+    .upgrade-container h3 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .course-card {
+        padding: 1rem;
+    }
+    
+    .course-title {
+        font-size: 1.25rem;
+    }
+    
+    .upgrade-container {
+        padding: 1rem;
+    }
+    
+    .upgrade-container h3 {
+        font-size: 1.25rem;
+    }
+    
+    .ticker-item {
+        margin-right: 1rem;
+        font-size: 0.9rem;
+    }
+}

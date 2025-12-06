@@ -1,0 +1,36 @@
+/* src/styles/Footer.css */
+.footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.9rem;
+    background: #0a0a1a;
+    color: var(--text-light); /* Changed from gold to blue */
+    z-index: 2;
+    position: relative;
+    width: 100%;
+    border-top: 1px solid rgba(30, 144, 255, 0.1); /* Changed from gold to blue */
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 1px;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.8);
+    margin-top: auto;
+}
+
+.footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(30, 144, 255, 0.3), transparent); /* Changed from gold to blue */
+}
+
+/* Footer logo styling */
+.footer-logo {
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--accent); /* Changed from gold to blue */
+    text-shadow: 0 0 1.5px rgba(30, 144, 255, 0.6); /* Changed from gold to blue */
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}

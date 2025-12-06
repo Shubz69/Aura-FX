@@ -1,0 +1,88 @@
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #2b2d31;
+    color: white;
+    padding: 30px;
+    width: 400px;
+    max-width: 90%;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(171, 122, 255, 0.2);
+    animation: popIn 0.3s ease-out;
+    border: 1px solid #ab7aff44;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #ab7aff;
+    font-size: 1.5rem;
+}
+
+.modal-content ul {
+    text-align: left;
+    padding-left: 20px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.modal-content li {
+    margin-bottom: 8px;
+}
+
+.modal-content p {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-bottom: 20px;
+}
+
+.modal-content button {
+    background-color: #ab7aff;
+    padding: 10px 20px;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.modal-content button:hover {
+    background-color: #8a5be2;
+}
+
+/* Community sidebar support for locked channels */
+.sidebar li.locked {
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
+    pointer-events: none;
+    user-select: none;
+}
+
+.lock-icon {
+    float: right;
+    opacity: 0.6;
+}

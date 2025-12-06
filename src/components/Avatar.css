@@ -1,0 +1,480 @@
+/* CLEAN MODERN AVATAR STYLES */
+:root {
+    --primary: #6366F1;
+    --secondary: #8B5CF6;
+    --accent: #A78BFA;
+    --bg-dark: #0A0A0F;
+    --bg-medium: #1A1A2E;
+    --bg-light: #252541;
+    --font-main: 'Space Grotesk', sans-serif;
+    --font-secondary: 'Inter', sans-serif;
+}
+
+.avatar-option {
+    position: relative;
+    cursor: pointer;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 3px solid transparent;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    min-height: 80px;
+}
+
+.avatar-option:hover {
+    transform: translateY(-4px) scale(1.05);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 16px 40px rgba(99, 102, 241, 0.25);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+}
+
+.avatar-option.selected {
+    border-color: var(--primary);
+    box-shadow: 
+        0 0 0 2px rgba(99, 102, 241, 0.3), 
+        0 20px 50px rgba(99, 102, 241, 0.4);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25));
+    transform: scale(1.05);
+}
+
+.avatar-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 12px;
+}
+
+/* AVATAR HEAD */
+.avatar-head {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2D3748, #4A5568);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(99, 102, 241, 0.3);
+    margin-bottom: 8px;
+}
+
+/* EYES */
+.ai-eyes {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.eye {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 245, 255, 0.9) 0%, rgba(0, 245, 255, 0.6) 70%);
+    position: absolute;
+    box-shadow: 0 0 8px rgba(0, 245, 255, 0.8);
+    animation: eyeGlow 2s ease-in-out infinite alternate;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.left-eye {
+    left: 14px;
+    top: 18px;
+}
+
+.right-eye {
+    right: 14px;
+    top: 18px;
+}
+
+.eye-pupil {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: transform 0.1s ease-out;
+    pointer-events: none;
+}
+
+@keyframes eyeGlow {
+    0% { box-shadow: 0 0 8px var(--primary); }
+    100% { box-shadow: 0 0 16px var(--secondary); }
+}
+
+/* AVATAR BODY */
+.avatar-body {
+    width: 60px;
+    height: 30px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2D3748, #4A5568);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* AI AVATAR */
+.ai-avatar .avatar-head {
+    background: linear-gradient(135deg, #1E3A8A, #3B82F6);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.ai-avatar .eye {
+    background: #00F5FF;
+    box-shadow: 0 0 8px #00F5FF;
+}
+
+.ai-circuits {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.circuit {
+    position: absolute;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 1px;
+    opacity: 0.8;
+}
+
+.circuit-1 {
+    width: 20px;
+    height: 2px;
+    top: 12px;
+    left: 8px;
+    animation: circuitFlow 3s ease-in-out infinite;
+}
+
+.circuit-2 {
+    width: 2px;
+    height: 15px;
+    top: 20px;
+    right: 12px;
+    animation: circuitFlow 3s ease-in-out infinite 0.5s;
+}
+
+.circuit-3 {
+    width: 15px;
+    height: 2px;
+    bottom: 10px;
+    left: 10px;
+    animation: circuitFlow 3s ease-in-out infinite 1s;
+}
+
+.ai-core {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--primary), var(--secondary));
+    box-shadow: 0 0 20px var(--primary);
+    animation: corePulse 2s ease-in-out infinite;
+}
+
+@keyframes circuitFlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+@keyframes corePulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--primary); }
+    50% { transform: scale(1.1); box-shadow: 0 0 30px var(--secondary); }
+}
+
+/* MONEY AVATAR */
+.money-avatar .avatar-head {
+    background: linear-gradient(135deg, #059669, #10B981);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.money-avatar .eye {
+    background: #10B981;
+    box-shadow: 0 0 8px #10B981;
+}
+
+.money-symbol {
+    position: absolute;
+    font-size: 18px;
+    font-weight: 900;
+    color: #FEF3C7;
+    text-shadow: 0 0 10px #F59E0B;
+    animation: moneyGlow 2s ease-in-out infinite alternate;
+    top: -5px;
+    right: -5px;
+}
+
+.coins {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.coin {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #F59E0B, #FCD34D);
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+    animation: coinSpin 3s ease-in-out infinite;
+}
+
+.coin-2 {
+    animation-delay: 0.3s;
+}
+
+.coin-3 {
+    animation-delay: 0.6s;
+}
+
+@keyframes moneyGlow {
+    0% { text-shadow: 0 0 10px #F59E0B; }
+    100% { text-shadow: 0 0 20px #FCD34D; }
+}
+
+@keyframes coinSpin {
+    0%, 100% { transform: rotateY(0deg); }
+    50% { transform: rotateY(180deg); }
+}
+
+/* TECH AVATAR */
+.tech-avatar .avatar-head {
+    background: linear-gradient(135deg, #7C3AED, #A855F7);
+    border-color: rgba(168, 85, 247, 0.4);
+}
+
+.tech-avatar .eye {
+    background: #3B82F6;
+    box-shadow: 0 0 8px #3B82F6;
+}
+
+.tech-glasses {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.glass {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    position: absolute;
+    top: 16px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.left-glass {
+    left: 12px;
+}
+
+.right-glass {
+    right: 12px;
+}
+
+.tech-pattern {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pattern-line {
+    height: 2px;
+    background: linear-gradient(90deg, var(--secondary), var(--accent));
+    border-radius: 1px;
+    animation: patternFlow 2s ease-in-out infinite;
+}
+
+.line-1 {
+    width: 25px;
+    animation-delay: 0s;
+}
+
+.line-2 {
+    width: 20px;
+    animation-delay: 0.3s;
+}
+
+.line-3 {
+    width: 15px;
+    animation-delay: 0.6s;
+}
+
+@keyframes patternFlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* TRADING AVATAR */
+.trading-avatar .avatar-head {
+    background: linear-gradient(135deg, #DC2626, #EF4444);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.trading-avatar .eye {
+    background: #A855F7;
+    box-shadow: 0 0 8px #A855F7;
+}
+
+.trading-chart {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-line {
+    width: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, #10B981, #059669);
+    border-radius: 1px;
+    position: absolute;
+    top: 20px;
+    animation: chartGrow 2s ease-in-out infinite;
+}
+
+.chart-points {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.point {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #10B981;
+    position: absolute;
+    box-shadow: 0 0 6px #10B981;
+}
+
+.point-1 {
+    top: 12px;
+    left: 12px;
+    animation: pointPulse 2s ease-in-out infinite;
+}
+
+.point-2 {
+    top: 16px;
+    left: 20px;
+    animation: pointPulse 2s ease-in-out infinite 0.3s;
+}
+
+.point-3 {
+    top: 14px;
+    right: 20px;
+    animation: pointPulse 2s ease-in-out infinite 0.6s;
+}
+
+.point-4 {
+    top: 18px;
+    right: 12px;
+    animation: pointPulse 2s ease-in-out infinite 0.9s;
+}
+
+.trading-symbols {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.trend-up, .trend-down {
+    font-size: 14px;
+    font-weight: 900;
+    animation: symbolFloat 2s ease-in-out infinite;
+}
+
+.trend-up {
+    color: #10B981;
+    animation-delay: 0s;
+}
+
+.trend-down {
+    color: #EF4444;
+    animation-delay: 1s;
+}
+
+@keyframes chartGrow {
+    0%, 100% { width: 20px; }
+    50% { width: 25px; }
+}
+
+@keyframes pointPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes symbolFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-2px); }
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .avatar-container {
+        padding: 8px;
+    }
+    
+    .avatar-head {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .avatar-body {
+        width: 55px;
+        height: 25px;
+    }
+    
+    .eye {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .left-eye {
+        left: 14px;
+        top: 16px;
+    }
+    
+    .right-eye {
+        right: 14px;
+        top: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .avatar-container {
+        padding: 6px;
+    }
+    
+    .avatar-head {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .avatar-body {
+        width: 50px;
+        height: 22px;
+    }
+}

@@ -1,0 +1,420 @@
+/* MFA Page Container */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #0a0a1a;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Code Matrix Background - same as Register page */
+.code-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    z-index: 0;
+    opacity: 0.8;
+}
+
+.code-line {
+    position: absolute;
+    color: rgba(30, 144, 255, 0.7); /* Blue instead of purple */
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    white-space: nowrap;
+    user-select: none;
+    text-shadow: 0 0 5px rgba(30, 144, 255, 0.7); /* Blue instead of purple */
+    animation-name: code-rain;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-duration: calc(8s + (var(--i, 0) * 0.8s));
+}
+
+@keyframes code-rain {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0.9;
+    }
+    100% {
+        transform: translateY(100vh);
+        opacity: 0.7;
+    }
+}
+
+/* Login Box */
+.login-box {
+    background: rgba(14, 5, 32, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(30, 144, 255, 0.4); /* Blue instead of purple */
+    border-radius: 16px;
+    padding: 25px;
+    width: 350px;
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+    z-index: 1;
+    box-shadow: 
+        0 0 30px rgba(30, 144, 255, 0.3), /* Blue instead of purple */
+        0 0 80px rgba(30, 144, 255, 0.15); /* Blue instead of purple */
+    animation: form-glow 6s infinite alternate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@keyframes form-glow {
+    0% {
+        box-shadow: 0 0 30px rgba(30, 144, 255, 0.3), 0 0 80px rgba(30, 144, 255, 0.15); /* Blue instead of purple */
+        border-color: rgba(30, 144, 255, 0.4); /* Blue instead of purple */
+    }
+    100% {
+        box-shadow: 0 0 40px rgba(30, 144, 255, 0.4), 0 0 100px rgba(30, 144, 255, 0.2); /* Blue instead of purple */
+        border-color: rgba(30, 144, 255, 0.5); /* Blue instead of purple */
+    }
+}
+
+/* Glitch effect for title */
+.gradient-text {
+    position: relative;
+    background: linear-gradient(90deg, #1E90FF, #1E90FF); /* Blue instead of purple */
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+    width: 100%;
+    animation: glitch-skew 1s infinite linear alternate-reverse;
+}
+
+.gradient-text::before,
+.gradient-text::after {
+    content: "🔐 MFA VERIFICATION";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #1E90FF, #1E90FF); /* Blue instead of purple */
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.gradient-text::before {
+    left: 2px;
+    text-shadow: -2px 0 #ff00c1;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.gradient-text::after {
+    left: -2px;
+    text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% {
+        clip: rect(15px, 9999px, 5px, 0);
+        transform: skew(0.2deg);
+    }
+    20% {
+        clip: rect(30px, 9999px, 30px, 0);
+        transform: skew(0.3deg);
+    }
+    40% {
+        clip: rect(55px, 9999px, 20px, 0);
+        transform: skew(0.5deg);
+    }
+    60% {
+        clip: rect(7px, 9999px, 45px, 0);
+        transform: skew(0.1deg);
+    }
+    80% {
+        clip: rect(22px, 9999px, 18px, 0);
+        transform: skew(0.4deg);
+    }
+    100% {
+        clip: rect(10px, 9999px, 25px, 0);
+        transform: skew(0.2deg);
+    }
+}
+
+@keyframes glitch-anim2 {
+    0% {
+        clip: rect(8px, 9999px, 50px, 0);
+        transform: skew(0.4deg);
+    }
+    20% {
+        clip: rect(60px, 9999px, 10px, 0);
+        transform: skew(0.2deg);
+    }
+    40% {
+        clip: rect(25px, 9999px, 35px, 0);
+        transform: skew(0.5deg);
+    }
+    60% {
+        clip: rect(40px, 9999px, 15px, 0);
+        transform: skew(0.3deg);
+    }
+    80% {
+        clip: rect(5px, 9999px, 40px, 0);
+        transform: skew(0.1deg);
+    }
+    100% {
+        clip: rect(30px, 9999px, 12px, 0);
+        transform: skew(0.4deg);
+    }
+}
+
+@keyframes glitch-skew {
+    0% { transform: skew(0deg); }
+    20% { transform: skew(0.2deg); }
+    40% { transform: skew(-0.1deg); }
+    60% { transform: skew(0.3deg); }
+    80% { transform: skew(-0.2deg); }
+    100% { transform: skew(0.1deg); }
+}
+
+/* Form and elements */
+.login-box p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 14px;
+}
+
+.email-sent {
+    color: #1E90FF !important; /* Blue instead of purple */
+    font-weight: 600;
+    font-size: 13px !important;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 5px rgba(30, 144, 255, 0.5); /* Blue instead of purple */
+}
+
+.error-message {
+    background-color: rgba(255, 65, 81, 0.1);
+    border: 1px solid rgba(255, 65, 81, 0.3);
+    color: #ff4151 !important;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 13px !important;
+    width: 100%;
+    text-align: center;
+}
+
+/* Code Input */
+.code-input-container {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.code-input {
+    width: 100%;
+    background: rgba(22, 7, 49, 0.6);
+    border: 1px solid rgba(30, 144, 255, 0.4); /* Blue instead of purple */
+    border-radius: 10px;
+    padding: 15px;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 12px;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(30, 144, 255, 0.15) inset, /* Blue instead of purple */
+                0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.code-input:focus {
+    outline: none;
+    border-color: #1E90FF; /* Blue instead of purple */
+    box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.3), /* Blue instead of purple */
+                0 0 20px rgba(30, 144, 255, 0.3) inset, /* Blue instead of purple */
+                0 5px 15px rgba(0, 0, 0, 0.2);
+    background: rgba(30, 14, 60, 0.8);
+    transform: translateY(-2px);
+}
+
+.code-input::placeholder {
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 16px;
+}
+
+/* Add pulsing border effect */
+@keyframes pulse-border {
+    0% {
+        box-shadow: 0 0 0 0 rgba(30, 144, 255, 0.4), /* Blue instead of purple */
+                    0 0 15px rgba(30, 144, 255, 0.15) inset, /* Blue instead of purple */
+                    0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(30, 144, 255, 0), /* Blue instead of purple */
+                    0 0 15px rgba(30, 144, 255, 0.15) inset, /* Blue instead of purple */
+                    0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(30, 144, 255, 0), /* Blue instead of purple */
+                    0 0 15px rgba(30, 144, 255, 0.15) inset, /* Blue instead of purple */
+                    0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.code-input:focus {
+    animation: pulse-border 2s infinite;
+}
+
+/* Buttons */
+.verify-btn {
+    background: linear-gradient(135deg, rgba(30, 144, 255, 0.8), rgba(30, 144, 255, 0.9)); /* Blue instead of purple */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    width: 100%;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.verify-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.6s ease;
+}
+
+.verify-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(30, 144, 255, 0.3); /* Blue instead of purple */
+}
+
+.verify-btn:hover::before {
+    left: 100%;
+}
+
+.verify-btn:disabled {
+    opacity: 0.6;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Resend container */
+.resend-container {
+    margin: 1.5rem 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.resend-btn {
+    background: transparent;
+    border: 1px solid rgba(30, 144, 255, 0.6); /* Blue instead of purple */
+    color: #1E90FF; /* Blue instead of purple */
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.resend-btn:hover:not(:disabled) {
+    background-color: rgba(30, 144, 255, 0.1); /* Blue instead of purple */
+    transform: translateY(-2px);
+}
+
+.resend-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Support container */
+.support-container {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(30, 144, 255, 0.2); /* Blue instead of purple */
+    width: 100%;
+    text-align: center;
+}
+
+.support-container p {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.5rem;
+    font-size: 13px;
+}
+
+.support-btn {
+    background-color: rgba(30, 144, 255, 0.4); /* Blue instead of purple */
+    border: 1px solid rgba(30, 144, 255, 0.3); /* Blue instead of purple */
+    color: #1E90FF; /* Blue instead of purple */
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.support-btn:hover {
+    background-color: rgba(30, 144, 255, 0.6); /* Blue instead of purple */
+    transform: translateY(-2px);
+}
+
+/* Back link */
+.back-link {
+    margin-top: 1.5rem;
+    font-size: 13px;
+    width: 100%;
+    text-align: center;
+}
+
+.back-link a {
+    color: rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.back-link a:hover {
+    color: #1E90FF; /* Blue instead of purple */
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .login-box {
+        width: 90%;
+        padding: 20px;
+    }
+    
+    .code-input {
+        font-size: 18px;
+        letter-spacing: 6px;
+    }
+}

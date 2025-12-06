@@ -1,0 +1,344 @@
+/* ========== VARIABLES (From Landing Page) ========== */
+:root {
+    /* Purple-Blue Colors */
+    --primary: #6366F1;      /* Indigo */
+    --secondary: #8B5CF6;    /* Purple-Blue */
+    --accent: #A78BFA;       /* Light Purple */
+    --dark-purple: #4C1D95;  /* Deep Purple */
+    
+    /* Very Dark Purple */
+    --bg-dark: #0a0a1a;
+    --bg-medium: #1a0f2e;
+    --bg-light: #251a3a;
+    
+    /* Fonts */
+    --font-main: 'Space Grotesk', sans-serif;
+    --font-secondary: 'Space Grotesk', sans-serif;
+    
+    /* Legacy variables for compatibility */
+    --blue-primary: #6366F1;
+    --blue-secondary: #8B5CF6;
+    --blue-accent: #A78BFA;
+    --blue-dark: #4C1D95;
+    --bg-lighter: #252541;
+    
+    /* Reduced glow effects */
+    --glow-weak: 0 0 0.5px;
+    --glow-medium: 0 0 1px;
+    --glow-strong: 0 0 1.5px;
+}
+
+html, body, #root {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: transparent;
+    color: var(--primary);
+    font-family: 'Space Grotesk', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: transparent;
+  color: var(--primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  flex: 1;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  flex: 1;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* Fix Buttons Being Unclickable */
+button {
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+  position: relative;
+  z-index: 1001 !important; /* Ensure buttons stay clickable */
+}
+
+/* Fix Video Overlapping */
+.video-container {
+  pointer-events: none !important; /* Prevents it from blocking clicks */
+  z-index: 1;
+}
+
+/* Fix Background Video */
+.background-video {
+  pointer-events: none !important; /* Ensures it doesn't interfere */
+}
+
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+.mt-5 {
+  margin-top: 3rem;
+}
+
+/* Custom Navbar overrides */
+.navbar {
+  background-color: var(--primary-color) !important;
+}
+.navbar-brand, .nav-link {
+  color: #fff !important;
+  font-weight: 500;
+}
+.nav-link.active {
+  border-bottom: 2px solid var(--secondary-color);
+}
+
+/* Footer styling */
+footer {
+  background-color: var(--primary-color);
+  color: #fff;
+  padding: 20px 0;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Adjust button styles */
+.btn-lg {
+  font-size: 1.2rem;
+  padding: 10px 20px;
+}
+
+/* Navbar Buttons */
+.nav-buttons button {
+  z-index: 2000 !important;
+  position: relative;
+}
+
+/* Scroll Fix for All Pages */
+.page-wrapper {
+  flex: 1;
+  min-height: 100vh;
+  padding-top: 60px;
+  padding-bottom: 0; /* No bottom padding needed since footer is relative */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-dark);
+  position: relative;
+}
+
+/* Ensure all pages have proper footer spacing */
+.page-wrapper > * {
+  margin-bottom: 20px; /* Add space between page content and footer */
+}
+
+/* Specific page adjustments */
+.community-container,
+.home-container,
+.courses-container,
+.explore-container,
+.why-container,
+.contact-container,
+.profile-container,
+.leaderboard-container {
+  padding-bottom: 0; /* Footer is now relative, no need for extra padding */
+  min-height: calc(100vh - 160px); /* Account for navbar */
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-light);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--bg-lighter);
+}
+
+/* Selection */
+::selection {
+    background: rgba(99, 102, 241, 0.3);
+    color: var(--accent);
+}
+
+/* Focus styles */
+*:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Links */
+a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+a:hover {
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* Form elements */
+input, textarea, select {
+    font-family: var(--font-secondary);
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: var(--accent);
+    transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+/* Buttons */
+.btn {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.5);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Footer */
+footer {
+    border-top: 1px solid rgba(99, 102, 241, 0.2);
+    background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
+    color: var(--accent);
+    text-align: center;
+    padding: 20px;
+    font-size: 0.9rem;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Error states */
+.error {
+    color: var(--error-color);
+    border-color: var(--error-color);
+}
+
+/* Success states */
+.success {
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+/* Warning states */
+.warning {
+    color: var(--warning-color);
+    border-color: var(--warning-color);
+}
+
+/* Info states */
+.info {
+    color: var(--info-color);
+    border-color: var(--info-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 10px rgba(99, 102, 241, 0.8); }
+    100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Utility classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+.glow {
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+.pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+}
+

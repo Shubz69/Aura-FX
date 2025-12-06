@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    container_name: trading-platform-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+    volumes:
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+    networks:
+      - trading-platform-network
+
+  backend:
+    image: trading-platform-backend:latest
+    container_name: trading-platform-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/trading_platform?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - JWT_SECRET=${JWT_SECRET:-YourSecretKeyHere}
+      - ELASTIC_EMAIL_APIKEY=${ELASTIC_EMAIL_APIKEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - AES_ENCRYPTION_KEY=${AES_ENCRYPTION_KEY:-v8y/B?E(H+KbPeShVmYq3t6w9z$C&F)J}
+    depends_on:
+      - mysql
+    networks:
+      - trading-platform-network
+
+  # Node.js service for password reset endpoints
+  nodejs-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.nodejs
+    container_name: trading-platform-nodejs
+    ports:
+      - "8081:8080"
+    environment:
+      - PORT=8080
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+    volumes:
+      - ./data.sqlite3:/app/data.sqlite3
+    networks:
+      - trading-platform-network
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: trading-platform-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=trading_platform
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - trading-platform-network
+
+networks:
+  trading-platform-network:
+    driver: bridge
+
+volumes:
+  mysql-data: 

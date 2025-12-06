@@ -1,0 +1,191 @@
+.user-profile {
+    position: relative;
+    display: inline-block;
+}
+
+.user-icon {
+    cursor: pointer;
+    font-size: 24px;
+    color: #8B5CF6; /* Purple theme */
+    transition: all 0.3s ease;
+}
+
+.user-icon:hover {
+    color: #A78BFA; /* Lighter purple on hover */
+    text-shadow: 0 0 1px rgba(139, 92, 246, 0.6); /* Purple glow */
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 240px;
+    background: rgba(28, 28, 28, 0.95); /* 60% darker grey background */
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(139, 92, 246, 0.1); /* Purple glow */
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    z-index: 1000;
+    border: 1px solid rgba(139, 92, 246, 0.2); /* Purple border */
+    animation: dropdownAppear 0.3s ease;
+    transform-origin: top center;
+}
+
+@keyframes dropdownAppear {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.user-dropdown p {
+    margin: 0;
+    padding: 15px;
+    font-size: 0.9rem;
+    color: rgba(139, 92, 246, 0.8); /* Purple text */
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1); /* Purple border */
+    text-align: center;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-dropdown a, .user-dropdown button {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: #8B5CF6; /* Purple theme */
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-dropdown a:hover, .user-dropdown button:hover {
+    background: rgba(139, 92, 246, 0.1); /* Purple hover background */
+    color: #A78BFA; /* Lighter purple on hover */
+}
+
+.user-dropdown a::before, .user-dropdown button::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: linear-gradient(to bottom, #8B5CF6, #A78BFA); /* Purple gradient */
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+}
+
+.user-dropdown a:hover::before, .user-dropdown button:hover::before {
+    transform: scaleY(1);
+}
+
+.dropdown-icon {
+    margin-right: 10px;
+    font-size: 1.1rem;
+    color: #8B5CF6; /* Purple theme */
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.dropdown-badge {
+    position: absolute;
+    right: 15px;
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .user-dropdown {
+        top: 45px;
+        width: 220px;
+    }
+    
+    .user-dropdown a, .user-dropdown button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Animation for dropdown items */
+.user-dropdown a, .user-dropdown button {
+    animation: fadeInItem 0.3s ease;
+    animation-fill-mode: both;
+}
+
+@keyframes fadeInItem {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Apply staggered delay to items */
+.user-dropdown a:nth-child(2), .user-dropdown button:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+.user-dropdown a:nth-child(3), .user-dropdown button:nth-child(3) {
+    animation-delay: 0.1s;
+}
+
+.user-dropdown a:nth-child(4), .user-dropdown button:nth-child(4) {
+    animation-delay: 0.15s;
+}
+
+.user-dropdown a:nth-child(5), .user-dropdown button:nth-child(5) {
+    animation-delay: 0.2s;
+}
+
+.user-dropdown a:nth-child(6), .user-dropdown button:nth-child(6) {
+    animation-delay: 0.25s;
+}
+
+.avatar-img {
+    display: block;
+    margin: 0 auto;
+    border: 2px solid #8B5CF6; /* Purple theme */
+}
+
+.avatar-dropdown {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    margin-top: 8px;
+    background-color: rgba(28, 28, 28, 0.8); /* 60% darker grey background */
+    color: #8B5CF6; /* Purple theme */
+    font-weight: bold;
+    border: 1px solid rgba(139, 92, 246, 0.2); /* Purple border */
+}

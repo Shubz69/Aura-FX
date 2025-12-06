@@ -1,0 +1,224 @@
+.ai-head-container {
+    position: relative;
+    width: 250px;
+    height: 300px;
+    margin: 0 auto;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.ai-head-outline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+    border-radius: 40% 40% 35% 35% / 50% 50% 25% 25%;
+    box-shadow: 
+        0 0 20px rgba(30, 144, 255, 0.5), /* Blue instead of purple */
+        inset 0 0 15px rgba(30, 144, 255, 0.3); /* Blue instead of purple */
+    animation: headPulse 4s infinite ease-in-out;
+    z-index: 2;
+}
+
+@keyframes headPulse {
+    0%, 100% { 
+        border-color: rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+        box-shadow: 
+            0 0 20px rgba(30, 144, 255, 0.5), /* Blue instead of purple */
+            inset 0 0 15px rgba(30, 144, 255, 0.3); /* Blue instead of purple */
+    }
+    50% { 
+        border-color: rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+        box-shadow: 
+            0 0 30px rgba(30, 144, 255, 0.7), /* Blue instead of purple */
+            inset 0 0 20px rgba(30, 144, 255, 0.5); /* Blue instead of purple */
+    }
+}
+
+.ai-eye {
+    position: absolute;
+    width: 40px;
+    height: 15px;
+    background: rgba(30, 144, 255, 0.9); /* Blue instead of purple */
+    top: 100px;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+    animation: eyePulse 2s infinite alternate;
+}
+
+.ai-eye.left {
+    left: 50px;
+    transform: rotate(20deg);
+}
+
+.ai-eye.right {
+    right: 50px;
+    transform: rotate(-20deg);
+}
+
+@keyframes eyePulse {
+    0% { 
+        background: rgba(30, 144, 255, 0.9); /* Blue instead of purple */
+        box-shadow: 0 0 10px rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+        height: 15px;
+    }
+    100% { 
+        background: rgba(30, 144, 255, 0.9); /* Blue instead of purple */
+        box-shadow: 0 0 15px rgba(30, 144, 255, 1); /* Blue instead of purple */
+        height: 8px;
+    }
+}
+
+.ai-mouth {
+    position: absolute;
+    width: 80px;
+    height: 10px;
+    background: rgba(30, 144, 255, 0.7); /* Blue instead of purple */
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.5); /* Blue instead of purple */
+    animation: mouthMove 3s infinite;
+}
+
+@keyframes mouthMove {
+    0%, 100% { 
+        width: 80px; 
+        height: 10px;
+        background: rgba(30, 144, 255, 0.7); /* Blue instead of purple */
+    }
+    30% { 
+        width: 40px; 
+        height: 15px;
+        background: rgba(30, 144, 255, 0.7); /* Blue instead of purple */
+    }
+    60% { 
+        width: 60px; 
+        height: 5px;
+        background: rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+    }
+}
+
+.brain-animation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    opacity: 0.8;
+    clip-path: ellipse(45% 50% at 50% 40%);
+}
+
+/* For hover effect */
+.ai-head-container:hover .ai-eye.left {
+    animation: eyeHoverLeft 0.5s forwards;
+}
+
+.ai-head-container:hover .ai-eye.right {
+    animation: eyeHoverRight 0.5s forwards;
+}
+
+.ai-head-container:hover .ai-mouth {
+    animation: mouthHover 0.5s forwards;
+}
+
+@keyframes eyeHoverLeft {
+    to {
+        transform: rotate(10deg) scaleY(1.2);
+        width: 45px;
+        background: rgba(30, 144, 255, 1); /* Blue instead of purple */
+        box-shadow: 0 0 15px rgba(30, 144, 255, 1); /* Blue instead of purple */
+    }
+}
+
+@keyframes eyeHoverRight {
+    to {
+        transform: rotate(-10deg) scaleY(1.2);
+        width: 45px;
+        background: rgba(30, 144, 255, 1); /* Blue instead of purple */
+        box-shadow: 0 0 15px rgba(30, 144, 255, 1); /* Blue instead of purple */
+    }
+}
+
+@keyframes mouthHover {
+    to {
+        width: 90px;
+        height: 15px;
+        border-radius: 10px;
+        background: rgba(30, 144, 255, 0.9); /* Blue instead of purple */
+        box-shadow: 0 0 15px rgba(30, 144, 255, 0.8); /* Blue instead of purple */
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .ai-head-container {
+        width: 200px;
+        height: 240px;
+    }
+    
+    .ai-eye {
+        width: 30px;
+        top: 80px;
+    }
+    
+    .ai-eye.left {
+        left: 40px;
+    }
+    
+    .ai-eye.right {
+        right: 40px;
+    }
+    
+    .ai-mouth {
+        width: 60px;
+        bottom: 70px;
+    }
+}
+
+/* Glitch effect for the AI head */
+.ai-head-container:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border-radius: 40% 40% 35% 35% / 50% 50% 25% 25%;
+    border: 3px solid rgba(30, 144, 255, 0.3); /* Blue instead of purple */
+    z-index: 3;
+    animation: glitchEffect 5s infinite;
+    pointer-events: none;
+}
+
+@keyframes glitchEffect {
+    0%, 100% {
+        transform: translate(0, 0);
+        opacity: 0;
+    }
+    10%, 15% {
+        transform: translate(-2px, 1px);
+        border-color: rgba(0, 255, 255, 0.3);
+        opacity: 0.5;
+    }
+    20%, 25% {
+        transform: translate(2px, -1px);
+        border-color: rgba(255, 0, 255, 0.3);
+        opacity: 0.3;
+    }
+    35% {
+        transform: translate(-1px, -1px);
+        border-color: rgba(255, 255, 0, 0.3);
+        opacity: 0.5;
+    }
+    40%, 100% {
+        transform: translate(0, 0);
+        border-color: rgba(30, 144, 255, 0.3); /* Blue instead of purple */
+        opacity: 0;
+    }
+} 

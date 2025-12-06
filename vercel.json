@@ -1,0 +1,116 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/courses",
+      "destination": "/api/courses.js"
+    },
+    {
+      "source": "/api/community/channels",
+      "destination": "/api/community/channels.js"
+    },
+    {
+      "source": "/api/community/channels/:channelId/messages",
+      "destination": "/api/community/channels/messages.js?channelId=:channelId"
+    },
+    {
+      "source": "/api/community/channels/:channelId/messages/:messageId",
+      "destination": "/api/community/channels/messages.js?channelId=:channelId&messageId=:messageId"
+    },
+    {
+      "source": "/api/stripe/create-subscription",
+      "destination": "/api/stripe/create-subscription.js"
+    },
+    {
+      "source": "/api/stripe/direct-checkout",
+      "destination": "/api/stripe/direct-checkout.js"
+    },
+    {
+      "source": "/api/auth/login",
+      "destination": "/api/auth/login.js"
+    },
+    {
+      "source": "/api/auth/password-reset",
+      "destination": "/api/auth/password-reset.js"
+    },
+    {
+      "source": "/api/auth/forgot-password",
+      "destination": "/api/auth/password-reset.js"
+    },
+    {
+      "source": "/api/auth/signup-verification",
+      "destination": "/api/auth/signup-verification.js"
+    },
+    {
+      "source": "/api/auth/send-mfa",
+      "destination": "/api/auth/mfa.js"
+    },
+    {
+      "source": "/api/auth/verify-mfa",
+      "destination": "/api/auth/mfa.js"
+    },
+    {
+      "source": "/api/community/users",
+      "destination": "/api/community/index.js"
+    },
+    {
+      "source": "/api/admin/user-status",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/contact",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/community/update-presence",
+      "destination": "/api/community/index.js"
+    },
+    {
+      "source": "/api/subscription/check",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/stripe/subscription-success",
+      "destination": "/api/stripe/index.js"
+    },
+    {
+      "source": "/api/stripe/webhook",
+      "destination": "/api/stripe/index.js"
+    },
+    {
+      "source": "/api/stripe/create-subscription",
+      "destination": "/api/stripe/index.js"
+    },
+    {
+      "source": "/api/stripe/direct-checkout",
+      "destination": "/api/stripe/index.js"
+    },
+    {
+      "source": "/api/admin",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/admin/users",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/admin/users/:userId/role",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/admin/users/:userId",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/leaderboard",
+      "destination": "/api/leaderboard.js"
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting to Stripe...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a0033;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            margin-top: 0;
+            color: #a275ff;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(106, 13, 255, 0.1);
+            border-top-color: #6a0dff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .manual-link {
+            margin-top: 30px;
+        }
+        .manual-link a {
+            display: inline-block;
+            background: linear-gradient(135deg, #6e00ff 0%, #00d4ff 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .manual-link a:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Redirecting to Stripe Payment</h1>
+        <p>You are being redirected to our secure payment processor...</p>
+        <div class="spinner"></div>
+        <div id="countdown">Redirecting in <span id="timer">3</span> seconds</div>
+        <div class="manual-link">
+            <p>If you are not redirected automatically, please click below:</p>
+            <a id="manual-redirect" href="https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk" target="_blank">Continue to Payment</a>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('courseId') || '1';
+        const courseTitle = urlParams.get('title') || 'Trading Course';
+        const suppliedPaymentLink = urlParams.get('paymentLink') ? decodeURIComponent(urlParams.get('paymentLink')) : null;
+        
+        // Stripe payment links (replace with your actual payment links)
+        const stripeLinks = {
+            'Intro to Trading': 'https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk',
+            'Technical Analysis': 'https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk',
+            'Fundamental Analysis': 'https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk',
+            'Crypto Trading': 'https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk',
+            'Day Trading': 'https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk',
+            'Swing Trading': 'https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk',
+            'default': 'https://buy.stripe.com/test_28o14C1Ygf7L9gc5kk'
+        };
+        
+        // Select the payment link based on course title or supplied link
+        let paymentLink = suppliedPaymentLink || stripeLinks[courseTitle] || stripeLinks['default'];
+        
+        // Add client reference ID for tracking
+        let finalUrl = paymentLink;
+        if (!suppliedPaymentLink) {
+            finalUrl = `${paymentLink}${paymentLink.includes('?') ? '&' : '?'}client_reference_id=${courseId}`;
+        }
+        
+        // Update the manual link
+        document.getElementById('manual-redirect').href = finalUrl;
+        if (suppliedPaymentLink) {
+            document.getElementById('manual-redirect').textContent = 'Continue to Stripe Checkout';
+        }
+        
+        // Countdown timer
+        let seconds = 3;
+        const timerElement = document.getElementById('timer');
+        const countdown = setInterval(() => {
+            seconds--;
+            timerElement.textContent = seconds;
+            
+            if (seconds <= 0) {
+                clearInterval(countdown);
+                
+                // Redirect to Stripe
+                window.location.href = finalUrl;
+            }
+        }, 1000);
+        
+        // Log for debugging
+        console.log('Redirecting to:', finalUrl);
+    </script>
+</body>
+</html> 

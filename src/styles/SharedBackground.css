@@ -1,0 +1,171 @@
+/* SharedBackground.css - Grey theme background effects for all pages */
+:root {
+    /* New grey and blue color scheme */
+    --bg-dark: rgba(20, 20, 20, 0.8);
+    --bg-darker: rgba(28, 28, 28, 0.9);
+    --bg-light: rgba(36, 36, 36, 1.0);
+    --bg-lighter: rgba(44, 44, 44, 1.0);
+    
+    /* Blue writing colors */
+    --blue-primary: #1E90FF;
+    --blue-secondary: #1E90FF;
+    --blue-accent: #1E90FF;
+    --blue-dark: #1E90FF; /* Blue for "the glitch" branding */
+    
+    /* Text colors */
+    --text-primary: var(--blue-primary);
+    --text-secondary: var(--blue-secondary);
+    --text-accent: var(--blue-accent);
+    --text-dark: var(--blue-dark);
+    
+    /* Accent colors */
+    --accent-blue: #4a90e2;
+    --accent-green: #50c878;
+    --accent-red: #e74c3c;
+    --accent-purple: #9b59b6;
+    
+    /* Matrix colors */
+    --matrix-green: #00ff41;
+    --matrix-dark: #003b00;
+    
+    /* Grid colors */
+    --grid-line: rgba(30, 144, 255, 0.3); /* Blue instead of gold */
+    --grid-accent: rgba(30, 144, 255, 0.6); /* Blue instead of gold */
+    
+    /* Chart colors */
+    --chart-line: rgba(30, 144, 255, 0.4); /* Blue instead of gold */
+    --chart-accent: rgba(30, 144, 255, 0.7); /* Blue instead of gold */
+    
+    /* Floating element colors */
+    --float-primary: rgba(30, 144, 255, 0.2); /* Blue instead of gold */
+    --float-secondary: rgba(30, 144, 255, 0.1); /* Blue instead of gold */
+}
+
+/* Matrix Background */
+.matrix-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -3;
+    opacity: 0.3;
+}
+
+/* 3D Grid Effect */
+.grid-3d {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    opacity: 0.4;
+    overflow: hidden;
+}
+
+.grid-line {
+    position: absolute;
+    background: var(--grid-line);
+    animation: gridMove 20s linear infinite;
+}
+
+.grid-line:nth-child(odd) {
+    background: var(--grid-accent);
+    animation-duration: 25s;
+}
+
+/* Chart Background */
+.chart-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.2;
+}
+
+.chart-line {
+    stroke: var(--chart-line);
+    stroke-width: 1;
+    fill: none;
+    animation: chartLine 15s ease-in-out infinite;
+}
+
+.chart-line:nth-child(even) {
+    stroke: var(--chart-accent);
+    animation-delay: -7.5s;
+}
+
+/* Floating Elements */
+.floating-element {
+    position: fixed;
+    z-index: -1;
+    opacity: 0.3;
+    animation: float 20s ease-in-out infinite;
+}
+
+.floating-element.el1 {
+    top: 20%;
+    left: 10%;
+    width: 60px;
+    height: 60px;
+    background: var(--float-primary);
+    border-radius: 50%;
+    animation-delay: 0s;
+}
+
+.floating-element.el2 {
+    top: 60%;
+    right: 15%;
+    width: 40px;
+    height: 40px;
+    background: var(--float-secondary);
+    border-radius: 4px;
+    animation-delay: -5s;
+}
+
+.floating-element.el3 {
+    bottom: 30%;
+    left: 20%;
+    width: 50px;
+    height: 50px;
+    background: var(--float-primary);
+    border-radius: 50%;
+    animation-delay: -10s;
+}
+
+/* Animations */
+@keyframes gridMove {
+    0% { transform: translateY(100vh) rotateX(45deg); }
+    100% { transform: translateY(-100vh) rotateX(45deg); }
+}
+
+@keyframes chartLine {
+    0%, 100% { opacity: 0.2; transform: scaleY(1); }
+    50% { opacity: 0.6; transform: scaleY(1.2); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+    25% { transform: translateY(-20px) rotate(90deg); opacity: 0.5; }
+    50% { transform: translateY(-10px) rotate(180deg); opacity: 0.3; }
+    75% { transform: translateY(-30px) rotate(270deg); opacity: 0.5; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .floating-element {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .grid-3d {
+        opacity: 0.2;
+    }
+    .matrix-background {
+        opacity: 0.2;
+    }
+}

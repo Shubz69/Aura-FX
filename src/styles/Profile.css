@@ -1,0 +1,297 @@
+.profile-container {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: #0a0a1a;
+    overflow: hidden;
+    padding: 20px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.profile-content {
+    width: 100%;
+    max-width: 800px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.profile-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gold-primary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.profile-box {
+    width: 100%;
+    background: rgba(42, 42, 42, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 1.5px rgba(255, 215, 0, 0.2);
+    margin-bottom: 15px;
+}
+
+.avatar-section select {
+    background: rgba(42, 42, 42, 0.7);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: var(--gold-primary);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.avatar-section select:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.profile-level,
+.profile-xp {
+    text-align: center;
+    color: var(--gold-primary);
+    font-size: 1.1rem;
+}
+
+.xp-progress-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.xp-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-primary), var(--gold-accent));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.profile-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(42, 42, 42, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.profile-field strong {
+    color: var(--gold-primary);
+    min-width: 100px;
+    text-transform: uppercase;
+}
+
+.profile-field span {
+    color: var(--gold-secondary);
+    flex: 1;
+    margin: 0 15px;
+}
+
+.profile-field input,
+.profile-field textarea {
+    background: rgba(42, 42, 42, 0.7);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: var(--gold-primary);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    flex: 1;
+    margin: 0 15px;
+}
+
+.profile-field input:focus,
+.profile-field textarea:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.profile-field button {
+    background: rgba(255, 215, 0, 0.1);
+    color: var(--gold-primary);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.profile-field button:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.user-role {
+    text-align: center;
+    padding: 15px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    border-radius: 8px;
+    color: #00ff00;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.profile-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.action-button {
+    background: linear-gradient(45deg, var(--gold-primary), var(--gold-accent));
+    color: var(--bg-dark);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+}
+
+.save-button {
+    background: linear-gradient(45deg, var(--gold-primary), var(--gold-secondary));
+}
+
+.cancel-button {
+    background: linear-gradient(45deg, #ff0000, #cc0000);
+}
+
+.status-msg {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    color: #00ff00;
+}
+
+.loading {
+    text-align: center;
+    color: var(--gold-primary);
+    font-size: 1.2rem;
+    text-transform: uppercase;
+}
+
+.error {
+    text-align: center;
+    color: #ff0000;
+    font-size: 1.2rem;
+    padding: 20px;
+    background: rgba(255, 0, 0, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 15px;
+    }
+    
+    .profile-title {
+        font-size: 2rem;
+        letter-spacing: 1px;
+    }
+    
+    .profile-box {
+        padding: 20px;
+    }
+    
+    .profile-field {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .profile-field input,
+    .profile-field textarea {
+        margin: 0;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .action-button {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-title {
+        font-size: 1.5rem;
+    }
+    
+    .profile-box {
+        padding: 15px;
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+    }
+}

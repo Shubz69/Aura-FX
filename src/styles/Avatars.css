@@ -1,0 +1,18 @@
+.avatar-list {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.avatar {
+    font-size: 32px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    padding: 6px;
+    border-radius: 50%;
+}
+
+.avatar.selected {
+    border-color: #00bfff;
+    background-color: #29014d;
+}

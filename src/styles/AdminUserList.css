@@ -1,0 +1,348 @@
+/* AdminUserList.css — Infinity Themed Admin Table */
+.page-wrapper {
+    min-height: 100vh;
+    background: #0a0a1a;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.container {
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.gradient-text {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gold-primary);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+/* Apply glitch effect to the title */
+.gradient-text.glitch-brand {
+    animation: title-glitch 4s ease-in-out infinite alternate;
+}
+
+.gradient-text.glitch-brand::before,
+.gradient-text.glitch-brand::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.gradient-text.glitch-brand::before {
+    animation: glitch-effect 3s infinite linear alternate-reverse;
+    color: #ff0000;
+    z-index: -1;
+}
+
+.gradient-text.glitch-brand::after {
+    animation: glitch-effect 2s infinite linear alternate-reverse;
+    color: #00ffff;
+    z-index: -2;
+}
+
+/* Glitch effect animation from Contact Us */
+@keyframes glitch-effect {
+    0% {
+        clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%);
+        transform: translate(-5px, -3px);
+    }
+    10% {
+        clip-path: polygon(0 15%, 100% 15%, 100% 15%, 0 15%);
+        transform: translate(5px, 3px);
+    }
+    20% {
+        clip-path: polygon(0 10%, 100% 10%, 100% 20%, 0 20%);
+        transform: translate(-3px, 1px);
+    }
+    30% {
+        clip-path: polygon(0 1%, 100% 1%, 100% 2%, 0 2%);
+        transform: translate(3px, 2px);
+    }
+    40% {
+        clip-path: polygon(0 33%, 100% 33%, 100% 33%, 0 33%);
+        transform: translate(-1px, -1px);
+    }
+    50% {
+        clip-path: polygon(0 44%, 100% 44%, 100% 44%, 0 44%);
+        transform: translate(1px, 2px);
+    }
+    60% {
+        clip-path: polygon(0 50%, 100% 50%, 100% 20%, 0 20%);
+        transform: translate(-3px, -3px);
+    }
+    70% {
+        clip-path: polygon(0 70%, 100% 70%, 100% 70%, 0 70%);
+        transform: translate(3px, 1px);
+    }
+    80% {
+        clip-path: polygon(0 80%, 100% 80%, 100% 80%, 0 80%);
+        transform: translate(-1px, -1px);
+    }
+    90% {
+        clip-path: polygon(0 50%, 100% 50%, 100% 55%, 0 55%);
+        transform: translate(3px, 3px);
+    }
+    100% {
+        clip-path: polygon(0 90%, 100% 90%, 100% 90%, 0 90%);
+        transform: translate(-3px, 0);
+    }
+}
+
+@keyframes title-glitch {
+    0%, 40%, 44%, 58%, 61%, 65%, 69%, 73%, 100% {
+        transform: skewX(0deg);
+    }
+    41% { transform: skewX(10deg); }
+    43% { transform: skewX(-10deg); }
+    59% { transform: skewX(40deg) skewY(10deg); }
+    60% { transform: skewX(-40deg) skewY(-5deg); }
+    63% { transform: skewX(10deg) skewY(-5deg); }
+    70% { transform: skewX(-50deg) skewY(-20deg); }
+    71% { transform: skewX(10deg) skewY(-10deg); }
+}
+
+.list-group-item {
+    background-color: rgba(42, 42, 42, 0.8);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: 0.2s;
+    color: var(--gold-primary);
+}
+
+.list-group-item:hover {
+    background-color: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.btn-danger {
+    background-color: #ff4d4d;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    transition: 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #e60000;
+    transform: scale(1.03);
+}
+
+/* Remove extra scrollbar */
+.page-wrapper {
+    overflow: hidden;
+}
+
+.container {
+    overflow: visible;
+}
+
+/* User summary styling */
+.user-summary {
+    font-size: 1.2rem;
+    color: var(--gold-secondary);
+    background: rgba(42, 42, 42, 0.8);
+    padding: 15px 30px;
+    border-radius: 25px;
+    display: inline-block;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* Loading and error text */
+.loading-text, .error-text, .no-users-text {
+    text-align: center;
+    color: var(--gold-primary);
+    font-size: 1.1rem;
+    margin: 20px 0;
+}
+
+.error-text {
+    color: #ff6b6b;
+}
+
+/* Users list styling */
+.users-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.user-item {
+    background-color: rgba(42, 42, 42, 0.8);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.user-item:hover {
+    background-color: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+}
+
+.user-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.user-email {
+    color: var(--gold-primary);
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    color: var(--gold-secondary);
+}
+
+.user-details {
+    color: var(--gold-secondary);
+    font-size: 0.9rem;
+}
+
+.user-role {
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.role-admin {
+    color: #ff6666;
+    background-color: rgba(255, 102, 102, 0.1);
+    border: 1px solid rgba(255, 102, 102, 0.3);
+}
+
+.role-premium {
+    color: #00ffc3;
+    background-color: rgba(0, 255, 195, 0.1);
+    border: 1px solid rgba(0, 255, 195, 0.3);
+}
+
+.role-free {
+    color: #ccc;
+    background-color: rgba(204, 204, 204, 0.1);
+    border: 1px solid rgba(204, 204, 204, 0.3);
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.user-status {
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.user-status.online {
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff00;
+    border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.user-status.offline {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff0000;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.delete-btn {
+    background-color: #ff4d4d;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background-color: #e60000;
+    transform: scale(1.03);
+}
+
+/* Update gold colors to blue */
+.admin-panel-header h2 {
+    color: var(--accent); /* Changed from gold-primary to blue */
+}
+
+.admin-search {
+    border: 1px solid rgba(30, 144, 255, 0.3); /* Changed from gold to blue */
+}
+
+.admin-search:focus {
+    color: var(--accent); /* Changed from gold-primary to blue */
+    background-color: rgba(30, 144, 255, 0.1); /* Changed from gold to blue */
+    border-color: rgba(30, 144, 255, 0.5); /* Changed from gold to blue */
+}
+
+.user-role {
+    color: var(--text-light); /* Changed from gold-secondary to blue */
+}
+
+.user-role.admin {
+    border: 1px solid rgba(30, 144, 255, 0.2); /* Changed from gold to blue */
+}
+
+.user-role.premium {
+    color: var(--accent); /* Changed from gold-primary to blue */
+}
+
+.user-actions button {
+    border: 1px solid rgba(30, 144, 255, 0.3); /* Changed from gold to blue */
+}
+
+.user-actions button:hover {
+    background-color: rgba(30, 144, 255, 0.1); /* Changed from gold to blue */
+    border-color: rgba(30, 144, 255, 0.5); /* Changed from gold to blue */
+    box-shadow: 0 4px 15px rgba(30, 144, 255, 0.2); /* Changed from gold to blue */
+}
+
+.user-actions button.ban {
+    color: var(--accent); /* Changed from gold-primary to blue */
+}
+
+.user-actions button.mute {
+    color: var(--text-light); /* Changed from gold-secondary to blue */
+}
+
+.user-actions button.kick {
+    color: var(--text-light); /* Changed from gold-secondary to blue */
+}

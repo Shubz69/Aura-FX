@@ -1,0 +1,65 @@
+MYSQL WORKBENCH CONNECTION SETUP:
+
+1. Open MySQL Workbench
+2. Click "+" to create new connection
+3. Enter these details:
+
+Connection Name: Railway MySQL
+Hostname: switchback.proxy.rlwy.net
+Port: 47440
+Username: root
+Password: cwuuYDzDwAJkNSjHySZsKIdGHMpJHwBT
+Default Schema: railway
+
+4. Click "Test Connection" - should work!
+5. Click "OK" to save
+6. Connect to the database
+
+TO IMPORT YOUR SQL FILES:
+1. Connect to Railway MySQL
+2. Go to Server → Data Import
+3. Select "Import from Self-Contained File"
+4. Choose each SQL file from: C:\Users\1230s\Downloads\attachments
+5. Import them one by one
+
+OR use the import script:
+Run: import_railway.bat
+Enter:
+- Host: switchback.proxy.rlwy.net
+- Port: 47440
+- User: root
+- Password: cwuuYDzDwAJkNSjHySZsKIdGHMpJHwBT
+- Database: railway
+
+
+1. Open MySQL Workbench
+2. Click "+" to create new connection
+3. Enter these details:
+
+Connection Name: Railway MySQL
+Hostname: switchback.proxy.rlwy.net
+Port: 47440
+Username: root
+Password: cwuuYDzDwAJkNSjHySZsKIdGHMpJHwBT
+Default Schema: railway
+
+4. Click "Test Connection" - should work!
+5. Click "OK" to save
+6. Connect to the database
+
+TO IMPORT YOUR SQL FILES:
+1. Connect to Railway MySQL
+2. Go to Server → Data Import
+3. Select "Import from Self-Contained File"
+4. Choose each SQL file from: C:\Users\1230s\Downloads\attachments
+5. Import them one by one
+
+OR use the import script:
+Run: import_railway.bat
+Enter:
+- Host: switchback.proxy.rlwy.net
+- Port: 47440
+- User: root
+- Password: cwuuYDzDwAJkNSjHySZsKIdGHMpJHwBT
+- Database: railway
+
