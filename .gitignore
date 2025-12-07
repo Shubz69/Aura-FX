@@ -45,6 +45,10 @@ MySQL DB/
 # Other
 server.js.backup
 
+# Backup directories with secrets
+backend-backup/
+complete-backup/
+
 # Exclude everything outside project directory
 ../*
 !src/
