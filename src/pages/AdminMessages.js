@@ -10,7 +10,11 @@ const AdminMessages = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!user || user.role !== 'ADMIN') {
+        // Check if user is admin (flexible check for different role formats)
+        const userRole = user?.role?.toLowerCase() || '';
+        const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+        
+        if (!user || !isAdmin) {
             setError('Access denied. Admin privileges required.');
             setLoading(false);
             return;
@@ -32,7 +36,11 @@ const AdminMessages = () => {
         fetchMessages();
     }, [user]);
 
-    if (!user || user.role !== 'ADMIN') {
+    // Check if user is admin (flexible check for different role formats)
+    const userRole = user?.role?.toLowerCase() || '';
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+    
+    if (!user || !isAdmin) {
         return (
             <div className="admin-messages-container">
                 <div className="access-denied">
