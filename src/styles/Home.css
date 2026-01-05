@@ -61,11 +61,11 @@ body, html {
 
 @keyframes glowPulse {
     0%, 100% {
-        opacity: 0.6;
+        ;
         transform: translate(-50%, -50%) scale(1);
     }
     50% {
-        opacity: 0.8;
+        ;
         transform: translate(-50%, -50%) scale(1.1);
     }
 }
@@ -119,7 +119,6 @@ body.loading-active {
     font-family: 'Space Grotesk', sans-serif;
     letter-spacing: 0.1em;
     margin-bottom: 2rem;
-    opacity: 0.9;
 }
 
 .loading-dots-container {
@@ -163,7 +162,7 @@ body.loading-active {
 
 @keyframes titleGlow {
     0% {
-        opacity: 0.8;
+        ;
     }
     100% {
         opacity: 1;
@@ -172,7 +171,7 @@ body.loading-active {
 
 @keyframes dotPulse {
     0%, 100% {
-        opacity: 0.3;
+        ;
         transform: scale(0.8);
     }
     50% {
@@ -311,7 +310,7 @@ body.loading-active {
 
 .feature-card:hover {
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: #ffffff;
     transform: translateY(-5px);
 }
 
@@ -344,7 +343,6 @@ body.loading-active {
     color: #ffffff;
     line-height: 1.6;
     font-weight: 300;
-    opacity: 0.9;
 }
 
 /* CTA Section */
@@ -378,20 +376,20 @@ body.loading-active {
 
 .home-cta-button:hover,
 .home-secondary-button:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: #ffffff;
     background: rgba(255, 255, 255, 0.05);
     transform: translateY(-2px);
     color: rgba(255, 255, 255, 1);
 }
 
 .home-cta-button {
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: #ffffff;
     background: rgba(255, 255, 255, 0.03);
 }
 
 .home-cta-button:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.7);
+    border-color: #ffffff;
 }
 
 /* Stats Section */
@@ -419,7 +417,7 @@ body.loading-active {
 
 .stat-item:hover {
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: #ffffff;
     transform: translateY(-5px);
 }
 
@@ -437,7 +435,6 @@ body.loading-active {
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-weight: 300;
-    opacity: 0.8;
 }
 
 /* Why Choose Section */
@@ -475,13 +472,13 @@ body.loading-active {
 
 .why-item:hover {
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: #ffffff;
     transform: translateY(-5px);
 }
 
 .why-icon {
     font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: #ffffff;
     margin-bottom: 1rem;
     font-weight: 300;
 }
@@ -500,7 +497,6 @@ body.loading-active {
     color: #ffffff;
     line-height: 1.6;
     font-weight: 300;
-    opacity: 0.9;
 }
 
 /* Responsive Design */
