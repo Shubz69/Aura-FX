@@ -10,17 +10,30 @@ const createEmailTransporter = () => {
   }
 
   try {
+    const emailUser = process.env.EMAIL_USER.trim();
+    const emailPass = process.env.EMAIL_PASS.trim();
+    
+    // Log credential info (without exposing password)
+    console.log('Creating email transporter:', {
+      emailUser: emailUser,
+      emailPassLength: emailPass.length,
+      emailPassHasSpaces: emailPass.includes(' ')
+    });
+    
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER.trim(),
-        pass: process.env.EMAIL_PASS.trim()
+        user: emailUser,
+        pass: emailPass
       }
     });
     
+    // Verify connection (but don't block - do it async)
     transporter.verify((error, success) => {
       if (error) {
         console.error('Email transporter verification failed:', error);
+        console.error('Error code:', error.code);
+        console.error('Error response:', error.response);
       } else {
         console.log('Email transporter verified successfully');
       }
