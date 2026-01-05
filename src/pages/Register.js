@@ -354,7 +354,7 @@ const Register = () => {
             <div className="form-header">
                 <h2 className="register-title">VERIFY EMAIL</h2>
                 <p className="register-subtitle">Enter the 6-digit code sent to your email</p>
-                <p style={{ color: '#a78bfa', fontSize: '14px', marginTop: '10px' }}>Code sent to: {formData.email}</p>
+                <p style={{ color: 'rgba(255, 255, 255, 0.15)', fontSize: '14px', marginTop: '10px' }}>Code sent to: {formData.email}</p>
             </div>
             
             {/* Only show one message at a time - error takes priority */}
@@ -392,8 +392,8 @@ const Register = () => {
             </form>
             
             <div className="login-link" style={{ marginTop: '20px' }}>
-                <p>Didn't receive the code? <button type="button" onClick={handleSendVerificationEmail} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', textDecoration: 'underline' }}>Resend Code</button></p>
-                <p><button type="button" onClick={() => { setStep(1); setVerificationCode(''); setError(''); setSuccess(''); }} className="link-button" style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', textDecoration: 'underline' }}>Back to Sign Up</button></p>
+                <p>Didn't receive the code? <button type="button" onClick={handleSendVerificationEmail} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.15)', cursor: 'pointer', textDecoration: 'underline' }}>Resend Code</button></p>
+                <p><button type="button" onClick={() => { setStep(1); setVerificationCode(''); setError(''); setSuccess(''); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.15)', cursor: 'pointer', textDecoration: 'underline' }}>Back to Sign Up</button></p>
             </div>
         </div>
     );

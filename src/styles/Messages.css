@@ -9,19 +9,19 @@
 
 .messages-page-header {
     background: rgba(17, 17, 27, 0.95);
-    border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
     padding: 20px 30px;
     display: flex;
     align-items: center;
     gap: 20px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
 }
 
 .back-button {
-    background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    color: #A78BFA;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.15);
     padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
@@ -34,9 +34,9 @@
 }
 
 .back-button:hover {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.5);
-    color: #C4B5FD;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.2);
     transform: translateX(-3px);
 }
 
@@ -51,27 +51,27 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
     font-weight: 700;
     color: white;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
 }
 
 .admin-details h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: #C4B5FD;
+    color: rgba(255, 255, 255, 0.2);
     font-weight: 700;
 }
 
 .admin-status {
     margin: 5px 0 0 0;
     font-size: 0.85rem;
-    color: #A78BFA;
+    color: rgba(255, 255, 255, 0.15);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -138,17 +138,17 @@
 
 .user-message {
     align-self: flex-end;
-    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
     color: white;
     border-bottom-right-radius: 4px;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
 }
 
 .admin-message {
     align-self: flex-start;
     background: rgba(30, 30, 45, 0.9);
     color: #E0E7FF;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-bottom-left-radius: 4px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
@@ -173,7 +173,7 @@
 }
 
 .admin-message .message-sender {
-    color: #A78BFA;
+    color: rgba(255, 255, 255, 0.15);
 }
 
 .message-time {
@@ -191,7 +191,7 @@
     background: rgba(17, 17, 27, 0.95);
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 -4px 15px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 -4px 15px rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
 }
 
@@ -205,7 +205,7 @@
     flex: 1;
     padding: 15px 20px;
     background: rgba(30, 30, 45, 0.9);
-    border: 2px solid rgba(139, 92, 246, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 25px;
     color: #E0E7FF;
     font-size: 0.95rem;
@@ -214,12 +214,12 @@
 }
 
 .message-input:focus {
-    border-color: rgba(139, 92, 246, 0.6);
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
 .message-input::placeholder {
-    color: #A78BFA;
+    color: rgba(255, 255, 255, 0.15);
     opacity: 0.6;
 }
 
@@ -227,7 +227,7 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
     border: none;
     color: white;
     cursor: pointer;
@@ -236,12 +236,12 @@
     justify-content: center;
     font-size: 1.1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
 }
 
 .send-button:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.5);
 }
 
 .send-button:disabled {

@@ -1599,7 +1599,7 @@ Let's build generational wealth together! 💰🚀`,
                     top: 0,
                     left: 0,
                     right: 0,
-                    background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
                     color: 'white',
                     padding: '16px 24px',
                     zIndex: 1000,
@@ -1621,7 +1621,7 @@ Let's build generational wealth together! 💰🚀`,
                         onClick={handleSubscribe}
                         style={{
                             background: 'white',
-                            color: '#8B5CF6',
+                            color: 'rgba(255, 255, 255, 0.2)',
                             border: 'none',
                             padding: '12px 32px',
                             borderRadius: '8px',
@@ -1682,7 +1682,7 @@ Let's build generational wealth together! 💰🚀`,
                             width: '90%',
                             textAlign: 'center',
                             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-                            border: '2px solid #8B5CF6'
+                            border: '2px solid rgba(255, 255, 255, 0.2)'
                         }}>
                             <div style={{
                                 fontSize: '48px',
@@ -1705,12 +1705,12 @@ Let's build generational wealth together! 💰🚀`,
                                 lineHeight: '1.6',
                                 marginBottom: '32px'
                             }}>
-                                To access the community, you need to subscribe. <strong style={{ color: '#A78BFA' }}>Click here</strong> to subscribe and get 3 months free, then just £99/month.
+                                To access the community, you need to subscribe. <strong style={{ color: 'rgba(255, 255, 255, 0.15)' }}>Click here</strong> to subscribe and get 3 months free, then just £99/month.
                             </p>
                             <button
                                 onClick={handleSubscribe}
                                 style={{
-                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+                                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
                                     color: 'white',
                                     border: 'none',
                                     padding: '16px 48px',
@@ -1760,7 +1760,7 @@ Let's build generational wealth together! 💰🚀`,
                                 gap: '6px',
                                 background: 'rgba(139, 92, 246, 0.15)',
                                 border: '1px solid rgba(139, 92, 246, 0.4)',
-                                color: '#A78BFA',
+                                color: 'rgba(255, 255, 255, 0.15)',
                                 padding: '6px 10px',
                                 borderRadius: '6px',
                                 fontSize: '0.75rem',
@@ -2392,7 +2392,7 @@ Let's build generational wealth together! 💰🚀`,
                                 type="submit"
                                 disabled={channelActionLoading}
                                 style={{
-                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+                                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
                                     border: 'none',
                                     borderRadius: '8px',
                                     padding: '12px',

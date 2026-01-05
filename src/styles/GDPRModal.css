@@ -21,15 +21,15 @@
     max-width: 90%;
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(139, 92, 246, 0.3),
-        0 0 60px rgba(139, 92, 246, 0.2);
-    border: 1px solid rgba(139, 92, 246, 0.4);
+        0 0 0 1px rgba(255, 255, 255, 0.3),
+        0 0 60px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     font-family: 'Space Grotesk', sans-serif;
 }
 
 .gdpr-modal h2 {
     margin-bottom: 1.25rem;
-    color: #8B5CF6;
+    color: rgba(255, 255, 255, 0.2);
     font-size: 1.5rem;
     font-weight: 700;
     text-align: center;
@@ -43,7 +43,7 @@
 }
 
 .gdpr-modal button {
-    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
     color: white;
     padding: 12px 32px;
     border: none;
@@ -55,11 +55,11 @@
     transition: all 0.3s ease;
     font-family: 'Space Grotesk', sans-serif;
     font-size: 1rem;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
 }
 
 .gdpr-modal button:hover {
     background: linear-gradient(135deg, #9f70f8, #7c7ff3);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
 }

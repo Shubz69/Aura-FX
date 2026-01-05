@@ -1,7 +1,7 @@
 /* CLEAN MODERN REGISTER PAGE - FITS WITHOUT SCROLLING */
 :root {
     --primary: #3B82F6; /* Blue */
-    --secondary: #8B5CF6; /* Purple */
+    --secondary: rgba(255, 255, 255, 0.2); /* Purple */
     --accent: #10B981; /* Green */
     --error: #EF4444; /* Red */
     --neutral: #6B7280; /* Grey */
@@ -301,7 +301,7 @@
 
 .register-button:hover {
     transform: translateY(-3px) !important;
-    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.5) !important;
 }
 
 .register-button:hover::before {
@@ -391,7 +391,7 @@
 .login-link a:hover {
     color: var(--secondary);
     text-decoration: underline;
-    text-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
     transform: translateY(-1px);
 }
 

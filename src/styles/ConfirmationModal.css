@@ -24,14 +24,14 @@
 
 .confirmation-modal {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 2rem;
   max-width: 500px;
   width: 90%;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-              0 0 40px rgba(139, 92, 246, 0.2);
+              0 0 40px rgba(255, 255, 255, 0.2);
   animation: slideUp 0.3s ease-out;
 }
 
@@ -107,7 +107,7 @@
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -152,13 +152,13 @@
 }
 
 .confirmation-modal-btn-confirm {
-  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
   color: white;
 }
 
 .confirmation-modal-btn-confirm:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.4);
 }
 
 .confirmation-modal-btn-confirm.danger {
