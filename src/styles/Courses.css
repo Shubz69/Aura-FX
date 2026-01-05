@@ -6,8 +6,8 @@
 .pricing-info p {
     font-size: 18px;
     margin: 5px 0;
-    color: var(--primary);
-    font-weight: bold;
+    color: #ffffff;
+    font-weight: 300;
     font-family: var(--font-main);
 }
 
@@ -20,22 +20,22 @@
 
 .course-card {
     width: 300px;
-    background: linear-gradient(135deg, var(--bg-medium), var(--bg-light));
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 20px;
     padding: 20px;
     text-align: center;
-    color: var(--primary);
+    color: #ffffff;
     text-decoration: none;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+    transition: transform 0.3s ease, background 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .course-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.4);
-    background: linear-gradient(135deg, var(--bg-light), var(--bg-medium));
-    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Course content alignment */
@@ -52,8 +52,9 @@
 
 .course-price {
     font-size: 24px;
-    font-weight: bold;
+    font-weight: 300;
     margin-bottom: 15px;
+    color: #ffffff;
 }
 
 .course-description {
@@ -65,33 +66,35 @@
 
 .page-title {
     text-align: center;
-    color: var(--primary);
+    color: #ffffff;
     font-size: 32px;
     margin-bottom: 30px;
     font-family: var(--font-main);
-    font-weight: 700;
+    font-weight: 200;
+    letter-spacing: 0.15em;
 }
 
 .buy-button {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    font-weight: bold;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-weight: 300;
     font-family: var(--font-main);
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
     padding: 10px 20px;
     margin-top: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+    box-shadow: none;
     font-size: 16px;
     text-transform: uppercase;
 }
 
 .buy-button:hover {
-    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    background: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.5);
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .courses-container {
@@ -104,7 +107,7 @@
     background: #0a0a0a;
     overflow: hidden;
     padding: 120px 20px 40px; /* Increased top padding to account for navbar */
-    color: var(--primary);
+    color: #ffffff;
 }
 
 
@@ -131,10 +134,10 @@
 
 .courses-title {
     font-size: 42px;
-    font-weight: 700;
+    font-weight: 200;
     line-height: 1.2;
-    color: var(--primary);
-    letter-spacing: 5px;
+    color: #ffffff;
+    letter-spacing: 0.15em;
     z-index: 1;
     font-family: 'Space Grotesk', sans-serif;
 }
@@ -174,12 +177,11 @@
     text-align: center;
     margin-bottom: 40px;
     padding: 15px 30px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: none;
     transform: translateY(0);
-    animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
@@ -193,11 +195,12 @@
 
 .courses-heading {
     margin: 0;
-    color: var(--primary);
+    color: #ffffff;
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 300;
     text-transform: uppercase;
     font-family: var(--font-main);
+    letter-spacing: 0.1em;
 }
 
 .courses-grid {
@@ -214,33 +217,35 @@
 
 .course-card {
     position: relative;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(10px);
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
+    box-shadow: none;
     animation: fadeIn 0.6s ease-out forwards;
 }
 
 .course-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 35px rgba(255, 255, 255, 0.4);
-    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .course-image {
     height: 160px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 48px;
-    font-weight: bold;
-    color: white;
+    font-weight: 300;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .course-image img {
@@ -269,19 +274,21 @@
 .course-info h3 {
     font-size: 20px;
     margin: 0 0 10px;
-    color: var(--primary);
-    font-weight: 600;
+    color: #ffffff;
+    font-weight: 300;
     text-transform: uppercase;
     font-family: var(--font-main);
+    letter-spacing: 0.1em;
 }
 
 .course-description {
     margin: 0 0 20px;
     font-size: 14px;
-    color: var(--accent);
+    color: #ffffff;
     flex: 1;
     line-height: 1.5;
     font-family: var(--font-secondary);
+    font-weight: 300;
 }
 
 .course-cta {
@@ -293,51 +300,40 @@
 
 .price {
     font-size: 22px;
-    font-weight: bold;
-    color: var(--primary);
+    font-weight: 300;
+    color: #ffffff;
     font-family: var(--font-main);
 }
 
 .coming-soon-badge {
     display: inline-block;
-    background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
-    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 300;
     font-family: var(--font-main);
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4);
-    animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-    0%, 100% {
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4);
-        transform: scale(1);
-    }
-    50% {
-        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.6);
-        transform: scale(1.02);
-    }
+    box-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .enroll-button {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    color: white;
-    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
     padding: 12px 24px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 300;
     font-family: var(--font-main);
     cursor: pointer;
     position: relative;
     overflow: hidden;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+    box-shadow: none;
     text-transform: uppercase;
     letter-spacing: 1px;
     display: flex;
@@ -346,9 +342,10 @@
 }
 
 .enroll-button:hover {
-    background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: none;
     transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .enroll-button:disabled,
@@ -401,9 +398,9 @@
     font-size: 18px;
     max-width: 600px;
     margin: 0 auto;
-    opacity: 0.8;
-    color: var(--accent);
+    color: #ffffff;
     font-family: var(--font-secondary);
+    font-weight: 300;
 }
 
 /* Responsive */
@@ -480,14 +477,6 @@
 }
 
 
-@keyframes glow {
-    from {
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    }
-    to {
-        box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-    }
-}
 
 .no-courses {
     text-align: center;
@@ -503,14 +492,17 @@
 .no-courses h2 {
     font-size: 24px;
     margin-bottom: 10px;
-    color: var(--primary);
+    color: #ffffff;
     text-transform: uppercase;
     font-family: var(--font-main);
+    font-weight: 300;
+    letter-spacing: 0.1em;
 }
 
 .no-courses p {
-    color: var(--accent);
+    color: #ffffff;
     font-family: var(--font-secondary);
+    font-weight: 300;
 }
 
 .courses-loading {

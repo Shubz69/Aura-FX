@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import "../styles/WhyInfinity.css";
-import BinaryBackground from "../components/BinaryBackground";
+import CosmicBackground from "../components/CosmicBackground";
 import { FaChartLine, FaGraduationCap, FaArrowRight, FaUsers, FaLock } from "react-icons/fa";
 // Unused icons commented out to fix ESLint warnings
 // import { FaRobot, FaGlobe, FaServer, FaShieldAlt, FaMobileAlt } from "react-icons/fa";
@@ -139,7 +139,7 @@ const WhyInfinity = () => {
 
     return (
         <div className="why-container">
-            <BinaryBackground />
+            <CosmicBackground />
             
             <div className="content-wrapper">
                 {/* Logo */}

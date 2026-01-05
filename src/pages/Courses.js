@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Courses.css';
 import Api from '../services/Api';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 // Fallback API URL
 const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
@@ -53,7 +53,7 @@ const Courses = () => {
     if (loading) {
         return (
             <div className="courses-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="courses-loading">
                     <div className="loading-spinner"></div>
                     <p>Loading courses...</p>
@@ -65,7 +65,7 @@ const Courses = () => {
     if (error) {
         return (
             <div className="courses-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="courses-error">
                     <h2>Oops!</h2>
                     <p>{error}</p>
@@ -77,7 +77,7 @@ const Courses = () => {
 
     return (
         <div className="courses-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="courses-header">
                 <h1 className="courses-title">COURSES</h1>
                 <p>Expand your knowledge with our comprehensive trading courses</p>

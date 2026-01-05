@@ -4,7 +4,7 @@ import { FaEnvelope, FaMapMarkerAlt, FaGlobe } from 'react-icons/fa';
 import { IoSend } from 'react-icons/io5';
 import '../styles/ContactUs.css';
 import Chatbot from "../components/Chatbot";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
 // Simple Text Component
@@ -77,7 +77,7 @@ const ContactUs = () => {
 
     return (
         <div className="contact-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="contact-content">
                 <div className="contact-header">
                     <SimpleText text={fromMfa ? 'MFA Support' : 'Contact Us'} />

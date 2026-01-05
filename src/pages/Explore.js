@@ -1,6 +1,6 @@
 import React from 'react';
 import '../styles/Explore.css';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const Explore = () => {
   // Stock ticker data
@@ -51,7 +51,7 @@ const Explore = () => {
 
   return (
     <div className="explore-page">
-      <BinaryBackground />
+      <CosmicBackground />
       {/* Stock Ticker */}
       <div className="stock-ticker">
         <div className="ticker-wrap">
