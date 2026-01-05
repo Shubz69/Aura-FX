@@ -15,7 +15,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #0a0a1a;
+    background: #0a0a0a;
     position: relative;
     overflow: hidden;
     font-family: var(--font-secondary);

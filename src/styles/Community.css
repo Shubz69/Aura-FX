@@ -22,7 +22,7 @@
     display: grid;
     grid-template-columns: 280px 1fr 280px;
     height: calc(100vh - 60px);
-    background: #0a0a1a;
+    background: #0a0a0a;
     color: var(--text-normal);
     font-family: 'Space Grotesk', sans-serif;
     overflow: hidden;

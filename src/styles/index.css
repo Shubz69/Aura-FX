@@ -235,7 +235,6 @@ a {
 
 a:hover {
     color: var(--primary);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
 /* Form elements */
@@ -330,8 +329,6 @@ footer {
 }
 
 @keyframes glow {
-    0% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
-    100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
 }
 
 @keyframes pulse {

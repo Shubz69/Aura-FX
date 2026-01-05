@@ -107,7 +107,6 @@ body.loading-active {
     color: #ffffff;
     font-family: 'Space Grotesk', sans-serif;
     letter-spacing: 0.25em;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
     margin-bottom: 1rem;
     animation: titleGlow 2s ease-in-out infinite alternate;
     text-transform: uppercase;
@@ -235,7 +234,6 @@ body.loading-active {
     text-transform: uppercase;
     margin: 0;
     line-height: 1.2;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     animation: brandNameFadeIn 1.5s ease-out 0.3s both;
     position: relative;
 }
