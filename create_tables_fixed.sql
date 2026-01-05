@@ -190,6 +190,16 @@ INSERT INTO channels (id, name, display_name, category, description, access_leve
 VALUES ('announcements', 'announcements', 'Announcements', 'announcements', 'Important announcements', 'read-only', TRUE, FALSE)
 ON DUPLICATE KEY UPDATE name=name;
 
+-- Insert general chat channel (for general discussions)
+INSERT INTO channels (id, name, display_name, category, description, access_level, is_system_channel, hidden)
+VALUES ('general', 'general', 'General', 'general', 'General discussion', 'open', TRUE, FALSE)
+ON DUPLICATE KEY UPDATE name=name;
+
+-- Insert admin channel (admin-only, created here but API will also create it)
+INSERT INTO channels (id, name, display_name, category, description, access_level, is_system_channel, hidden)
+VALUES ('admin', 'admin', 'Admin', 'staff', 'Admin-only channel', 'admin-only', TRUE, FALSE)
+ON DUPLICATE KEY UPDATE name=name;
+
 -- ============================================
 -- VERIFICATION QUERY (Optional - run this to check)
 -- ============================================
