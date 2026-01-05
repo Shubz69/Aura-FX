@@ -6,13 +6,13 @@
 .user-icon {
     cursor: pointer;
     font-size: 24px;
-    color: #8B5CF6; /* Purple theme */
+    color: rgba(255, 255, 255, 0.9);
     transition: all 0.3s ease;
 }
 
 .user-icon:hover {
-    color: #A78BFA; /* Lighter purple on hover */
-    text-shadow: 0 0 1px rgba(139, 92, 246, 0.6); /* Purple glow */
+    color: rgba(255, 255, 255, 1);
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
 .user-dropdown {
@@ -22,11 +22,11 @@
     width: 240px;
     background: rgba(28, 28, 28, 0.95); /* 60% darker grey background */
     border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(139, 92, 246, 0.1); /* Purple glow */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
     overflow: hidden;
     z-index: 1000;
-    border: 1px solid rgba(139, 92, 246, 0.2); /* Purple border */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     animation: dropdownAppear 0.3s ease;
     transform-origin: top center;
 }
@@ -46,8 +46,8 @@
     margin: 0;
     padding: 15px;
     font-size: 0.9rem;
-    color: rgba(139, 92, 246, 0.8); /* Purple text */
-    border-bottom: 1px solid rgba(139, 92, 246, 0.1); /* Purple border */
+    color: rgba(255, 255, 255, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
     font-weight: 500;
     overflow: hidden;
@@ -58,7 +58,7 @@
     display: flex;
     align-items: center;
     padding: 12px 15px;
-    color: #8B5CF6; /* Purple theme */
+    color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
     transition: all 0.2s ease;
     border: none;
@@ -73,8 +73,8 @@
 }
 
 .user-dropdown a:hover, .user-dropdown button:hover {
-    background: rgba(139, 92, 246, 0.1); /* Purple hover background */
-    color: #A78BFA; /* Lighter purple on hover */
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 1);
 }
 
 .user-dropdown a::before, .user-dropdown button::before {
@@ -84,7 +84,7 @@
     top: 0;
     height: 100%;
     width: 3px;
-    background: linear-gradient(to bottom, #8B5CF6, #A78BFA); /* Purple gradient */
+    background: rgba(255, 255, 255, 0.3);
     transform: scaleY(0);
     transition: transform 0.2s ease;
 }
@@ -96,7 +96,7 @@
 .dropdown-icon {
     margin-right: 10px;
     font-size: 1.1rem;
-    color: #8B5CF6; /* Purple theme */
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .dropdown-item {
@@ -175,7 +175,7 @@
 .avatar-img {
     display: block;
     margin: 0 auto;
-    border: 2px solid #8B5CF6; /* Purple theme */
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .avatar-dropdown {
@@ -185,7 +185,7 @@
     border: none;
     margin-top: 8px;
     background-color: rgba(28, 28, 28, 0.8); /* 60% darker grey background */
-    color: #8B5CF6; /* Purple theme */
+    color: rgba(255, 255, 255, 0.9);
     font-weight: bold;
-    border: 1px solid rgba(139, 92, 246, 0.2); /* Purple border */
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }

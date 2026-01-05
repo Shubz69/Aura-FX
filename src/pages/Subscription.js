@@ -328,7 +328,7 @@ const Subscription = () => {
 
                 {/* Support/Contact Section */}
                 <div className="subscription-support">
-                    <h3 style={{ color: '#8B5CF6', marginBottom: '16px', fontSize: '1.1rem' }}>Need Help?</h3>
+                    <h3 style={{ color: 'rgba(255, 255, 255, 0.9)', marginBottom: '16px', fontSize: '1.1rem' }}>Need Help?</h3>
                     <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', marginBottom: '16px' }}>
                         Having issues with your subscription or payment? Our support team is available 24/7 to assist you.
                     </p>
