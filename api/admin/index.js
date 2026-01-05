@@ -333,7 +333,7 @@ module.exports = async (req, res) => {
               subject VARCHAR(255),
               message TEXT NOT NULL,
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              read BOOLEAN DEFAULT FALSE,
+              \`read\` BOOLEAN DEFAULT FALSE,
               INDEX idx_email (email),
               INDEX idx_created (created_at)
             )
@@ -397,7 +397,7 @@ module.exports = async (req, res) => {
               subject VARCHAR(255),
               message TEXT NOT NULL,
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              read BOOLEAN DEFAULT FALSE
+              \`read\` BOOLEAN DEFAULT FALSE
             )
           `);
 
