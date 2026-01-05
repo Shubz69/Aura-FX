@@ -28,7 +28,6 @@
     font-size: 16px;
     white-space: nowrap;
     user-select: none;
-    text-shadow: 0 0 5px rgba(30, 144, 255, 0.7); /* Blue instead of purple */
     animation-name: code-rain;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
@@ -111,14 +110,12 @@
 
 .gradient-text::before {
     left: 2px;
-    text-shadow: -2px 0 #ff00c1;
     clip: rect(44px, 450px, 56px, 0);
     animation: glitch-anim 5s infinite linear alternate-reverse;
 }
 
 .gradient-text::after {
     left: -2px;
-    text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
     clip: rect(44px, 450px, 56px, 0);
     animation: glitch-anim2 5s infinite linear alternate-reverse;
 }
@@ -199,7 +196,6 @@
     font-weight: 600;
     font-size: 13px !important;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 5px rgba(30, 144, 255, 0.5); /* Blue instead of purple */
 }
 
 .error-message {

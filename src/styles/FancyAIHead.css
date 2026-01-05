@@ -688,7 +688,6 @@
     font-family: var(--font-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* Enhanced Effects Canvas */

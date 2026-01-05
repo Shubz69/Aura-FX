@@ -49,7 +49,6 @@
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(120, 170, 255, 0.8);
     opacity: 0.9;
     animation: label-pulse 4s infinite alternate;
     pointer-events: none;
@@ -88,11 +87,9 @@
 @keyframes label-pulse {
     0% {
         opacity: 0.7;
-        text-shadow: 0 0 8px rgba(120, 170, 255, 0.7);
     }
     100% {
         opacity: 0.9;
-        text-shadow: 0 0 15px rgba(120, 170, 255, 0.9), 0 0 30px rgba(100, 120, 255, 0.5);
     }
 }
 
