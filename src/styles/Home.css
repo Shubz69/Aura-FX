@@ -1031,8 +1031,8 @@ body.loading-active {
     }
 }
 
-/* iPhone SE and smaller (max-width: 374px) - Portrait Mode */
-@media (max-width: 374px) and (orientation: portrait) {
+/* iPhone SE and smaller (max-width: 374px) */
+@media (max-width: 374px) {
     .home-container {
         padding-top: 66px;
     }
