@@ -3,12 +3,12 @@
     text-align: center;
     padding: 20px;
     font-size: 0.9rem;
-    background: #0a0a1a;
-    color: var(--text-light); /* Changed from gold to blue */
+    background: #0a0a0a;
+    color: #ffffff;
     z-index: 2;
     position: relative;
     width: 100%;
-    border-top: 1px solid rgba(30, 144, 255, 0.1); /* Changed from gold to blue */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     font-family: 'Space Grotesk', sans-serif;
     letter-spacing: 1px;
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.8);
@@ -22,15 +22,15 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(30, 144, 255, 0.3), transparent); /* Changed from gold to blue */
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
 }
 
 /* Footer logo styling */
 .footer-logo {
     font-weight: 600;
     font-family: 'Space Grotesk', sans-serif;
-    color: var(--accent); /* Changed from gold to blue */
-    text-shadow: 0 0 1.5px rgba(30, 144, 255, 0.6); /* Changed from gold to blue */
+    color: #ffffff;
+    text-shadow: 0 0 1.5px rgba(255, 255, 255, 0.3);
     letter-spacing: 2px;
     text-transform: uppercase;
 }
