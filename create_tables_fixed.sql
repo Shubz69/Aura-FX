@@ -43,10 +43,10 @@ CREATE TABLE IF NOT EXISTS contact_messages (
     email VARCHAR(255) NOT NULL,
     subject VARCHAR(255),
     message TEXT NOT NULL,
-    read BOOLEAN DEFAULT FALSE,
+    `read` BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_email (email),
-    INDEX idx_read (read),
+    INDEX idx_read (`read`),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
