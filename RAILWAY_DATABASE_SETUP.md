@@ -22,11 +22,17 @@ This guide will help you set up a new MySQL database on Railway for AURA FX, sep
    - Click on the MySQL service you just created
    - Go to the "Variables" tab
    - You'll see the following environment variables:
-     - `MYSQL_HOST` (e.g., `containers-us-west-xxx.railway.app`)
-     - `MYSQL_PORT` (usually `3306`)
-     - `MYSQL_USER` (usually `root`)
-     - `MYSQL_PASSWORD` (auto-generated password)
-     - `MYSQL_DATABASE` (database name, usually `railway`)
+     - `MYSQL_PUBLIC_URL` - Contains the public hostname and port (e.g., `mysql://root:password@tramway.proxy.rlwy.net:49989/railway`)
+     - `MYSQL_ROOT_PASSWORD` - The database password
+     - `MYSQL_DATABASE` - Database name (usually `railway`)
+     - `MYSQL_USER` - Username (usually `root`)
+   
+   **For your current setup, use these values:**
+   - Hostname: `tramway.proxy.rlwy.net` (extracted from MYSQL_PUBLIC_URL)
+   - Port: `49989` (extracted from MYSQL_PUBLIC_URL)
+   - Username: `root`
+   - Password: `FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb`
+   - Database: `railway`
 
 ## Step 2: Configure MySQL Workbench Connection
 
@@ -37,11 +43,11 @@ This guide will help you set up a new MySQL database on Railway for AURA FX, sep
    - Click the "+" icon to create a new connection
    - Enter the following details:
      - **Connection Name**: `AURA FX Railway MySQL`
-     - **Hostname**: Use the value from `MYSQL_HOST` (e.g., `containers-us-west-xxx.railway.app`)
-     - **Port**: Use the value from `MYSQL_PORT` (usually `3306`)
-     - **Username**: Use the value from `MYSQL_USER` (usually `root`)
-     - **Password**: Click "Store in Keychain" and enter the value from `MYSQL_PASSWORD`
-     - **Default Schema**: Use the value from `MYSQL_DATABASE` (usually `railway`)
+     - **Hostname**: `tramway.proxy.rlwy.net` (from MYSQL_PUBLIC_URL)
+     - **Port**: `49989` (from MYSQL_PUBLIC_URL)
+     - **Username**: `root`
+     - **Password**: `FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb` (click "Store in Keychain")
+     - **Default Schema**: `railway`
 
 3. **Test Connection**
    - Click "Test Connection"
