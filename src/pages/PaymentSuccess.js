@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/PaymentSuccess.css";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 // Define API base URL with fallback
 const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
@@ -131,7 +131,7 @@ const PaymentSuccess = () => {
 
     return (
         <div className="payment-success-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="payment-success-card">
                 <div className={`success-icon ${error ? "error" : ""}`}>
                     {error ? "❌" : "✅"}

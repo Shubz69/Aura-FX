@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import "../styles/AdminUserList.css";
 import AdminApi from "../services/AdminApi";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const AdminUserList = () => {
     const { user } = useAuth();
@@ -76,7 +76,7 @@ const AdminUserList = () => {
 
     return (
         <div className="page-wrapper">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="container">
                 <h2 className="gradient-text">REGISTERED USERS</h2>
                 <p className="user-summary">

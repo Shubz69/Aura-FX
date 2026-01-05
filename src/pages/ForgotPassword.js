@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import "../styles/Login.css";
 import { RiTerminalBoxFill } from 'react-icons/ri';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
 const ForgotPassword = () => {
@@ -298,7 +298,7 @@ const ForgotPassword = () => {
 
     return (
         <div className="login-container">
-            <BinaryBackground />
+            <CosmicBackground />
             
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}

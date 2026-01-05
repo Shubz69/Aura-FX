@@ -3,7 +3,7 @@ import '../styles/Community.css';
 import { useWebSocket } from '../utils/useWebSocket';
 import { useNavigate, useParams } from 'react-router-dom';
 import Api from '../services/Api';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 
 // Icons
@@ -1514,7 +1514,7 @@ Let's build generational wealth together! 💰🚀`,
     // Render
     return (
         <div className="community-container" style={{ position: 'relative' }}>
-            <BinaryBackground />
+            <CosmicBackground />
             
             {/* PAYMENT FAILED BANNER - Show if payment failed */}
             {showPaymentFailedBanner && (

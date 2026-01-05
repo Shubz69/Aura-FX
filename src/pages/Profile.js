@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const resolveApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location?.origin) {
@@ -253,7 +253,7 @@ const Profile = () => {
 
     return (
         <div className="profile-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="profile-content">
                 <div className="profile-header">
                     <h1 className="profile-title">MY PROFILE</h1>

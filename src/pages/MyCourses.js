@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../styles/MyCourses.css';
 import { useNavigate } from 'react-router-dom';
 import { FaChevronRight } from 'react-icons/fa';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
 const MyCourses = () => {
@@ -71,7 +71,7 @@ const MyCourses = () => {
     if (loading) {
         return (
             <div className="my-courses-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="page-header">
                     <h1 className="page-title">
                         {userRole === "ADMIN" ? "ALL COURSES" : "MY COURSES"}
@@ -86,7 +86,7 @@ const MyCourses = () => {
 
     return (
         <div className="my-courses-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="page-header">
                 <h1 className="page-title">
                     {userRole === "ADMIN" ? "ALL COURSES" : "MY COURSES"}

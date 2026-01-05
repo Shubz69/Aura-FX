@@ -262,7 +262,7 @@ const Login = () => {
     // Regular login interface
     return (
         <div className="login-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="login-form-container">
                 
                 <div className="form-header">

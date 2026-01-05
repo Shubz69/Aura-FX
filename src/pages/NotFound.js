@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/NotFound.css';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const NotFound = () => {
     const navigate = useNavigate();
@@ -17,7 +17,7 @@ const NotFound = () => {
     
     return (
         <div className="not-found-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="not-found-content">
                 <div className="error-code">404</div>
                 <div className="redirect-message">

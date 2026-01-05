@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import axios from 'axios';
 import '../styles/Subscription.css';
 
@@ -224,7 +224,7 @@ const Subscription = () => {
 
     return (
         <div className="subscription-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="subscription-card">
                 <div className="subscription-header">
                     <h1>🔒 COMMUNITY ACCESS REQUIRED</h1>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Leaderboard.css';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
 const Leaderboard = () => {
@@ -178,7 +178,7 @@ const Leaderboard = () => {
     if (loading) {
         return (
             <div className="leaderboard-container" ref={containerRef}>
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="loading-screen">
                     <div className="loading-spinner"></div>
                     <div className="loading-text">Loading Leaderboard...</div>
@@ -190,7 +190,7 @@ const Leaderboard = () => {
     if (error) {
         return (
             <div className="leaderboard-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="error-message">
                     <h2>⚠️ Error Loading Leaderboard</h2>
                     <p>{error}</p>
@@ -205,7 +205,7 @@ const Leaderboard = () => {
                         
                         return (
         <div className="leaderboard-container" ref={containerRef}>
-            <BinaryBackground />
+            <CosmicBackground />
             
             {/* Header */}
             <div className="leaderboard-header">

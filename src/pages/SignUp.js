@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import "../styles/Login.css";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import { useAuth } from "../context/AuthContext";
 import Api from '../services/Api';
 
@@ -283,7 +283,7 @@ function SignUp() {
 
     return (
         <div className="login-container">
-            <BinaryBackground />
+            <CosmicBackground />
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/ProfileEdit.css";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const EditEmail = () => {
     const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ const EditEmail = () => {
 
     return (
         <div className="edit-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <h2>Edit Email</h2>
             <form onSubmit={handleSave}>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter new email" required />

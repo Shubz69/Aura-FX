@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/ProfileEdit.css";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const EditPassword = () => {
     const [password, setPassword] = useState("");
@@ -15,7 +15,7 @@ const EditPassword = () => {
 
     return (
         <div className="edit-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <h2>Edit Password</h2>
             <form onSubmit={handleSave}>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter new password" required />

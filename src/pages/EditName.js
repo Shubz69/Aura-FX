@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/ProfileEdit.css";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const EditName = () => {
     const [name, setName] = useState("");
@@ -16,7 +16,7 @@ const EditName = () => {
 
     return (
         <div className="edit-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <h2>Edit Name</h2>
             <form onSubmit={handleSave}>
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your full name" required />

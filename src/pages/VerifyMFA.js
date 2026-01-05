@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/VerifyMFA.css";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const VerifyMFA = () => {
     const [code, setCode] = useState("");
@@ -195,7 +195,7 @@ const VerifyMFA = () => {
 
     return (
         <div className="login-container">
-            <BinaryBackground />
+            <CosmicBackground />
             
             <div className="login-box">
                 <h2 className="gradient-text">🔐 MFA VERIFICATION</h2>

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import '../styles/Login.css';
 import Api from '../services/Api';
 
@@ -47,7 +47,7 @@ const ResetPassword = () => {
 
   return (
     <div className="login-container">
-      <BinaryBackground />
+      <CosmicBackground />
       <div className="login-form-container">
         <div className="form-header">
           <h2 className="login-title">CHANGE PASSWORD</h2>

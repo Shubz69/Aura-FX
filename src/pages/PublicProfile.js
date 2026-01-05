@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../styles/PublicProfile.css';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 import { FaArrowLeft, FaMedal, FaCalendarAlt, FaUserCircle } from 'react-icons/fa';
 
@@ -71,7 +71,7 @@ const PublicProfile = () => {
     if (loading) {
         return (
             <div className="public-profile-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="profile-card loading">
                     <div className="loader">Loading profile...</div>
                 </div>
@@ -82,7 +82,7 @@ const PublicProfile = () => {
     if (error) {
         return (
             <div className="public-profile-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="profile-card error">
                     <div className="error-message">{error}</div>
                     <button className="back-button" onClick={goBack}>
@@ -96,7 +96,7 @@ const PublicProfile = () => {
     if (!profile) {
         return (
             <div className="public-profile-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="profile-card error">
                     <div className="error-message">Profile not found</div>
                     <button className="back-button" onClick={goBack}>
@@ -114,7 +114,7 @@ const PublicProfile = () => {
 
     return (
         <div className="public-profile-container">
-            <BinaryBackground />
+            <CosmicBackground />
             <div className="profile-card">
                 <button className="back-button" onClick={goBack}>
                     <FaArrowLeft /> Back

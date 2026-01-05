@@ -5,7 +5,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import WebSocketService from '../services/WebSocketService';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 
 const SupportInbox = () => {
   const { user } = useAuth();
@@ -102,7 +102,7 @@ const SupportInbox = () => {
 
   return (
     <>
-      <BinaryBackground />
+      <CosmicBackground />
       <Box sx={{ p: 2 }}>
         <Typography variant="h5" sx={{ mb: 2 }}>Support</Typography>
       <Paper sx={{ p: 2, minHeight: 360, maxHeight: 480, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
