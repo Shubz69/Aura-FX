@@ -539,10 +539,10 @@ body.loading-active .navbar {
 
 .mobile-menu-close {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
     border-radius: 8px;
     color: #ffffff;
     font-size: 1.5rem;
@@ -550,11 +550,12 @@ body.loading-active .navbar {
     transition: all 0.3s ease;
     padding: 10px 15px;
     z-index: 10001;
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .mobile-menu-close:hover {
@@ -583,7 +584,7 @@ body.loading-active .navbar {
 .mobile-nav-links li a {
     text-decoration: none;
     color: #ffffff;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 400;
     font-family: 'Space Grotesk', sans-serif;
     position: relative;
@@ -591,10 +592,10 @@ body.loading-active .navbar {
     display: block;
     transition: all 0.3s ease;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     width: 100%;
-    min-height: 44px;
+    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -631,6 +632,7 @@ body.loading-active .navbar {
     width: 100%;
     max-width: 400px;
     padding: 0 1rem;
+    box-sizing: border-box;
 }
 
 .mobile-sign-in, .mobile-start-trading {
