@@ -654,81 +654,151 @@ body.loading-active {
     }
 }
 
-/* Tablets (iPad) */
-@media (max-width: 1024px) {
+/* iPad Pro 12.9" (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) {
     .home-container {
         padding-top: 90px;
     }
     
     .home-content {
-        gap: 3rem;
-        padding: 2rem 1.5rem;
+        gap: 3.5rem;
+        padding: 2.5rem 2rem;
+        max-width: 1200px;
     }
     
     .brand-name {
-        font-size: 4rem;
-        letter-spacing: 0.2em;
+        font-size: 4.5rem;
+        letter-spacing: 0.22em;
     }
     
     .home-logo-section .aura-logo-symbol {
-        width: 140px;
-        height: 140px;
+        width: 160px;
+        height: 160px;
     }
     
     .feature-cards-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-    }
-    
-    .feature-card {
-        padding: 2rem 1.5rem;
+        gap: 2rem;
     }
     
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 1.5rem;
     }
     
     .why-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+    
+    .markets-grid {
+        grid-template-columns: repeat(4, 1fr);
         gap: 1.5rem;
+    }
+    
+    .central-glow {
+        width: 750px;
+        height: 750px;
+    }
+}
+
+/* iPad (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .home-container {
+        padding-top: 85px;
+    }
+    
+    .home-content {
+        gap: 3rem;
+        padding: 2rem 1.5rem;
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .brand-name {
+        font-size: 3.5rem;
+        letter-spacing: 0.2em;
+    }
+    
+    .home-logo-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .home-logo-section .aura-logo-symbol {
+        width: 130px;
+        height: 130px;
+    }
+    
+    .intro-text {
+        font-size: 1.2rem;
+        padding: 0 1rem;
+    }
+    
+    .feature-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        width: 100%;
+        padding: 0;
+    }
+    
+    .feature-card {
+        padding: 2rem 1.5rem;
+        width: 100%;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        width: 100%;
+    }
+    
+    .why-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        width: 100%;
     }
     
     .markets-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
-    }
-    
-    .market-item {
-        padding: 2rem 1.5rem;
-    }
-    
-    .feature-item {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
+        width: 100%;
     }
     
     .section-title {
-        font-size: 2.2rem;
+        font-size: 2rem;
+        padding: 0 1rem;
+    }
+    
+    .stats-section,
+    .why-choose-section,
+    .trading-markets-section,
+    .key-features-section {
+        width: 100%;
+        padding: 0 1rem;
     }
     
     .central-glow {
-        width: 700px;
-        height: 700px;
+        width: 600px;
+        height: 600px;
     }
 }
 
-/* Mobile Devices (iPhone, Samsung) */
-@media (max-width: 768px) {
+/* iPhone X and newer (375px - 812px) */
+@media (min-width: 375px) and (max-width: 812px) {
     .home-container {
-        padding-top: 70px;
+        padding-top: 60px;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
     }
     
     .home-content {
-        gap: 2.5rem;
+        gap: 2rem;
         padding: 1.5rem 1rem;
         min-height: auto;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     .home-logo-section {
@@ -894,6 +964,144 @@ body.loading-active {
     .central-glow {
         width: 500px;
         height: 500px;
+    }
+    
+    /* Ensure all sections are properly contained */
+    .stats-section,
+    .why-choose-section,
+    .trading-markets-section,
+    .key-features-section {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .section-title {
+        text-align: center;
+        width: 100%;
+        padding: 0 1rem;
+        box-sizing: border-box;
+    }
+}
+
+/* iPhone 6/7/8 (375px - 667px) */
+@media (min-width: 375px) and (max-width: 667px) {
+    .home-container {
+        padding-top: 60px;
+    }
+    
+    .home-content {
+        padding: 1.25rem 0.75rem;
+    }
+    
+    .brand-name {
+        font-size: 2.5rem;
+        letter-spacing: 0.12em;
+    }
+    
+    .home-logo-section .aura-logo-symbol {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .intro-text {
+        font-size: 1rem;
+        padding: 0 0.75rem;
+    }
+    
+    .feature-card,
+    .stat-item,
+    .why-item,
+    .market-item,
+    .feature-item {
+        padding: 1.25rem 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.6rem;
+        padding: 0 0.75rem;
+    }
+    
+    .central-glow {
+        width: 400px;
+        height: 400px;
+    }
+}
+
+/* iPhone SE and smaller (max-width: 374px) */
+@media (max-width: 374px) {
+    .home-container {
+        padding-top: 55px;
+    }
+    
+    .home-content {
+        padding: 1rem 0.5rem;
+        gap: 1.5rem;
+    }
+    
+    .brand-name {
+        font-size: 2rem;
+        letter-spacing: 0.1em;
+    }
+    
+    .home-logo-section .aura-logo-symbol {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .intro-text {
+        font-size: 0.95rem;
+        padding: 0 0.5rem;
+    }
+    
+    .feature-card,
+    .stat-item,
+    .why-item,
+    .market-item,
+    .feature-item {
+        padding: 1rem 0.75rem;
+    }
+    
+    .feature-icon {
+        font-size: 2rem;
+    }
+    
+    .feature-title,
+    .market-title,
+    .feature-item-title {
+        font-size: 0.95rem;
+    }
+    
+    .feature-description,
+    .market-description,
+    .feature-item-text {
+        font-size: 0.85rem;
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+        padding: 0 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+    }
+    
+    .home-cta-button,
+    .home-secondary-button {
+        padding: 0.9rem 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .central-glow {
+        width: 350px;
+        height: 350px;
     }
 }
 
