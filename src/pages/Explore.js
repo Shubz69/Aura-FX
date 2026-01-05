@@ -15,13 +15,17 @@ import {
   FaBrain,
   FaRobot,
   FaHome,
-  FaShieldAlt,
   FaHandshake,
   FaBook,
-  FaNetworkWired
+  FaNetworkWired,
+  FaArrowRight,
+  FaCheckCircle
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const Explore = () => {
+  const navigate = useNavigate();
+
   // Stock ticker data
   const stockData = [
     { symbol: 'BTC', price: '41,225.78', change: '+3.6%', positive: true },
@@ -58,20 +62,34 @@ const Explore = () => {
     { icon: <FaBitcoin />, title: 'Crypto', description: 'Blockchain and cryptocurrency mastery' }
   ];
 
-  // Core Values
-  const coreValues = [
-    { icon: <FaShieldAlt />, title: 'Trust & Integrity', description: 'Ethical practices and transparent education' },
-    { icon: <FaGraduationCap />, title: 'Comprehensive Education', description: 'In-depth courses covering all aspects of wealth building' },
-    { icon: <FaHandshake />, title: 'Community Support', description: 'Join a network of like-minded wealth builders' },
-    { icon: <FaBook />, title: 'Practical Knowledge', description: 'Real-world strategies you can implement immediately' }
+  // Platform Features
+  const platformFeatures = [
+    { icon: <FaDollarSign />, title: 'Generational Wealth Education', description: 'Learn proven strategies to build lasting wealth that spans generations' },
+    { icon: <FaRocket />, title: 'Multiple Income Streams', description: 'Discover diverse knowledge paths including trading, investing, and passive income' },
+    { icon: <FaChartLine />, title: 'Break Bad Habits', description: 'Identify and eliminate destructive financial patterns' },
+    { icon: <FaGraduationCap />, title: 'Money Works For You', description: 'Master passive income and investment strategies' },
+    { icon: <FaTrophy />, title: 'Comprehensive Knowledge', description: 'Access courses on trading, investing, and wealth building' },
+    { icon: <FaUsers />, title: 'AURA FX Advantage', description: 'Join a community committed to breaking financial limitations' }
   ];
 
-  // Success Metrics (without names)
-  const successMetrics = [
-    { number: '10,000+', label: 'Active Learners' },
-    { number: '8', label: 'Core Course Categories' },
-    { number: '24/7', label: 'Community Access' },
-    { number: '100%', label: 'Practical Focus' }
+  // What We Offer
+  const offerings = [
+    { icon: <FaGraduationCap />, title: 'Expert-Led Courses', description: 'Comprehensive courses taught by experienced professionals' },
+    { icon: <FaUsers />, title: 'Live Community', description: 'Connect with fellow learners and share strategies' },
+    { icon: <FaBook />, title: 'Practical Strategies', description: 'Real-world strategies you can implement immediately' },
+    { icon: <FaHandshake />, title: 'Ongoing Support', description: 'Continuous learning resources and updates' }
+  ];
+
+  // Benefits
+  const benefits = [
+    'Build generational wealth through proven strategies',
+    'Create multiple income streams for financial security',
+    'Learn from expert mentors with real-world experience',
+    'Join an active community of wealth builders',
+    'Access comprehensive courses on all aspects of trading',
+    'Break free from bad financial habits',
+    'Make money work for you, not the other way around',
+    'Achieve true financial freedom'
   ];
 
   return (
@@ -110,134 +128,130 @@ const Explore = () => {
           <p className="hero-description">
             Build <strong>GENERATIONAL WEALTH</strong> through our comprehensive educational platform. Learn to make money work for you, eliminate bad financial habits, and achieve true financial freedom through disciplined education and smart investment strategies.
           </p>
+          <div className="hero-cta">
+            <button className="cta-primary" onClick={() => navigate('/register')}>
+              Get Started <FaArrowRight />
+            </button>
+            <button className="cta-secondary" onClick={() => navigate('/courses')}>
+              View Courses
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* About AURA FX */}
+      {/* About Section */}
       <section className="about-section">
-        <h2 className="section-title">ABOUT AURA FX</h2>
-        <div className="about-content">
-          <div className="about-text">
-            <p>
+        <div className="about-container">
+          <h2 className="section-title">ABOUT AURA FX</h2>
+          <div className="about-content">
+            <p className="about-text">
               AURA FX is a leading financial education platform dedicated to helping individuals build generational wealth through multiple income streams. We provide comprehensive courses, expert guidance, and a supportive community focused on breaking free from traditional financial limitations.
             </p>
-            <p>
+            <p className="about-text">
               Our mission is to empower you with the knowledge and strategies needed to create sustainable wealth that spans generations. We teach you how to make money work for you, not the other way around.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Success Metrics */}
-      <section className="metrics-section">
-        <div className="metrics-grid">
-          {successMetrics.map((metric, index) => (
-            <div key={index} className="metric-card">
-              <div className="metric-number">{metric.number}</div>
-              <div className="metric-label">{metric.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Platform Features */}
-      <section className="features-showcase">
-        <h2 className="section-title">PLATFORM FEATURES</h2>
-        <div className="features-showcase-grid">
-          <div className="showcase-card">
-            <div className="showcase-icon"><FaDollarSign /></div>
-            <h3>Generational Wealth Education</h3>
-            <p>Learn proven strategies to build lasting wealth that spans generations. Break free from the cycle of living paycheck to paycheck.</p>
-          </div>
-          <div className="showcase-card">
-            <div className="showcase-icon"><FaRocket /></div>
-            <h3>Multiple Income Streams</h3>
-            <p>Discover diverse knowledge paths including trading, investing, business, and passive income to create financial security.</p>
-          </div>
-          <div className="showcase-card">
-            <div className="showcase-icon"><FaChartLine /></div>
-            <h3>Break Bad Habits</h3>
-            <p>Identify and eliminate destructive financial patterns. Learn disciplined money management and smart spending principles.</p>
-          </div>
-          <div className="showcase-card">
-            <div className="showcase-icon"><FaGraduationCap /></div>
-            <h3>Money Works For You</h3>
-            <p>Master the art of passive income and investment strategies that generate wealth while you focus on what matters most.</p>
-          </div>
-          <div className="showcase-card">
-            <div className="showcase-icon"><FaTrophy /></div>
-            <h3>Comprehensive Knowledge Base</h3>
-            <p>Access courses on trading, investing, entrepreneurship, and wealth building—all designed to help you achieve financial freedom.</p>
-          </div>
-          <div className="showcase-card">
-            <div className="showcase-icon"><FaUsers /></div>
-            <h3>AURA FX Advantage</h3>
-            <p>Join a community committed to breaking traditional financial limitations and creating extraordinary wealth through smart, ethical strategies.</p>
+      <section className="features-section">
+        <div className="features-container">
+          <h2 className="section-title">PLATFORM FEATURES</h2>
+          <div className="features-grid">
+            {platformFeatures.map((feature, index) => (
+              <div key={index} className="feature-card">
+                <div className="feature-icon-wrapper">
+                  <div className="feature-icon">{feature.icon}</div>
+                </div>
+                <h3 className="feature-title">{feature.title}</h3>
+                <p className="feature-description">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Trading Markets */}
       <section className="markets-section">
-        <h2 className="section-title">TRADING MARKETS</h2>
-        <div className="markets-grid">
-          {tradingMarkets.map((market, index) => (
-            <div key={index} className="market-card">
-              <div className="market-icon">{market.icon}</div>
-              <h3>{market.title}</h3>
-              <p>{market.description}</p>
-            </div>
-          ))}
+        <div className="markets-container">
+          <h2 className="section-title">TRADING MARKETS</h2>
+          <p className="section-subtitle">Master multiple trading markets and diversify your portfolio</p>
+          <div className="markets-grid">
+            {tradingMarkets.map((market, index) => (
+              <div key={index} className="market-card">
+                <div className="market-icon">{market.icon}</div>
+                <h3 className="market-title">{market.title}</h3>
+                <p className="market-description">{market.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Course Categories */}
       <section className="courses-section">
-        <h2 className="section-title">COURSE CATEGORIES</h2>
-        <div className="courses-grid">
-          {courseCategories.map((course, index) => (
-            <div key={index} className="course-card">
-              <div className="course-icon">{course.icon}</div>
-              <h3>{course.title}</h3>
-              <p>{course.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Core Values */}
-      <section className="values-section">
-        <h2 className="section-title">OUR CORE VALUES</h2>
-        <div className="values-grid">
-          {coreValues.map((value, index) => (
-            <div key={index} className="value-card">
-              <div className="value-icon">{value.icon}</div>
-              <h3>{value.title}</h3>
-              <p>{value.description}</p>
-            </div>
-          ))}
+        <div className="courses-container">
+          <h2 className="section-title">COURSE CATEGORIES</h2>
+          <p className="section-subtitle">Explore our comprehensive range of educational courses</p>
+          <div className="courses-grid">
+            {courseCategories.map((course, index) => (
+              <div key={index} className="course-card" onClick={() => navigate('/courses')}>
+                <div className="course-icon">{course.icon}</div>
+                <h3 className="course-title">{course.title}</h3>
+                <p className="course-description">{course.description}</p>
+                <div className="course-link">
+                  Learn More <FaArrowRight />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* What We Offer */}
       <section className="offerings-section">
-        <h2 className="section-title">WHAT WE OFFER</h2>
-        <div className="offerings-content">
-          <div className="offering-item">
-            <h3>Expert-Led Courses</h3>
-            <p>Comprehensive courses taught by experienced professionals covering all aspects of wealth building, trading, and financial independence.</p>
+        <div className="offerings-container">
+          <h2 className="section-title">WHAT WE OFFER</h2>
+          <div className="offerings-grid">
+            {offerings.map((offering, index) => (
+              <div key={index} className="offering-card">
+                <div className="offering-icon">{offering.icon}</div>
+                <h3 className="offering-title">{offering.title}</h3>
+                <p className="offering-description">{offering.description}</p>
+              </div>
+            ))}
           </div>
-          <div className="offering-item">
-            <h3>Live Community</h3>
-            <p>Connect with fellow learners, share strategies, ask questions, and grow together in our active community platform.</p>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="benefits-section">
+        <div className="benefits-container">
+          <h2 className="section-title">WHY CHOOSE AURA FX</h2>
+          <div className="benefits-grid">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="benefit-item">
+                <FaCheckCircle className="benefit-icon" />
+                <span className="benefit-text">{benefit}</span>
+              </div>
+            ))}
           </div>
-          <div className="offering-item">
-            <h3>Practical Strategies</h3>
-            <p>Real-world, actionable strategies you can implement immediately to start building wealth and creating multiple income streams.</p>
-          </div>
-          <div className="offering-item">
-            <h3>Ongoing Support</h3>
-            <p>Continuous learning resources, updates, and support to help you stay ahead in your wealth-building journey.</p>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="explore-cta-section">
+        <div className="cta-container">
+          <h2 className="cta-title">Ready to Start Your Wealth Journey?</h2>
+          <p className="cta-description">Join thousands of learners building generational wealth today</p>
+          <div className="cta-buttons">
+            <button className="cta-primary" onClick={() => navigate('/register')}>
+              Sign Up Now <FaArrowRight />
+            </button>
+            <button className="cta-secondary" onClick={() => navigate('/courses')}>
+              Browse Courses
+            </button>
           </div>
         </div>
       </section>
