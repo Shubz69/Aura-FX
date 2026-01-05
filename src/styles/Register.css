@@ -60,7 +60,6 @@
     color: var(--primary);
     margin-bottom: 8px;
     font-family: var(--font-main);
-    text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
     letter-spacing: -0.5px;
     line-height: 1.1;
 }
@@ -264,7 +263,6 @@
     color: white;
     font-size: 12px;
     font-weight: bold;
-    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
 }
 
 /* CREATE ACCOUNT BUTTON - EXACTLY MATCHES START TRADING BUTTON */
@@ -385,13 +383,11 @@
     font-family: var(--font-main);
     transition: all 0.3s ease;
     font-size: 0.85rem;
-    text-shadow: 0 0 4px rgba(59, 130, 246, 0.3);
 }
 
 .login-link a:hover {
     color: var(--secondary);
     text-decoration: underline;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
     transform: translateY(-1px);
 }
 

@@ -82,7 +82,6 @@
     font-size: 1.2rem;
     color: #cccccc;
     margin-bottom: 30px;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 /* Timeframe Selector */
@@ -172,9 +171,6 @@
 /* Update gold colors to blue */
 .first-place .podium-avatar img {
     color: var(--accent); /* Changed from gold-primary to blue */
-    text-shadow: 
-        0 0 1px var(--accent), /* Changed from gold-primary to blue */
-        0 0 2px var(--accent), /* Changed from gold-primary to blue */
         0 0 3px var(--accent); /* Changed from gold-primary to blue */
 }
 
@@ -245,7 +241,6 @@
     font-size: 2rem;
     margin-bottom: 30px;
     color: #ffffff;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 .leaderboard-table {
@@ -482,7 +477,6 @@
 .loading-text {
     font-size: 1.2rem;
     color: #ffffff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* Error Message */

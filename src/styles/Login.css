@@ -56,7 +56,6 @@
     color: var(--primary);
     margin-bottom: 8px;
     font-family: var(--font-main);
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
     letter-spacing: -0.5px;
     line-height: 1.1;
 }
@@ -175,13 +174,11 @@
     font-family: var(--font-secondary);
     font-weight: 600;
     transition: all 0.3s ease;
-    text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
 }
 
 .forgot-password:hover {
     color: #E879F9;
     text-decoration: underline;
-    text-shadow: 0 0 12px rgba(232, 121, 249, 0.7);
     transform: translateY(-1px);
 }
 
@@ -207,14 +204,12 @@
     font-family: var(--font-main);
     transition: all 0.3s ease;
     font-size: 0.9rem;
-    text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
     margin-left: 4px;
 }
 
 .register-link a:hover {
     color: #E879F9;
     text-decoration: underline;
-    text-shadow: 0 0 12px rgba(232, 121, 249, 0.7);
     transform: translateY(-1px);
 }
 

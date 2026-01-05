@@ -26,7 +26,6 @@
     color: transparent;
     line-height: 1;
     margin-bottom: 1rem;
-    text-shadow: 0 0 20px rgba(30, 144, 255, 0.3); /* Blue instead of purple */
     animation: pulse 3s infinite;
 }
 
@@ -63,14 +62,12 @@
 
 .glitch::before {
     left: 2px;
-    text-shadow: -2px 0 #ff00c1;
     clip: rect(24px, 550px, 90px, 0);
     animation: glitch-animation-2 3s infinite linear alternate-reverse;
 }
 
 .glitch::after {
     left: -2px;
-    text-shadow: -2px 0 #00fff9;
     clip: rect(85px, 550px, 140px, 0);
     animation: glitch-animation-3 2.5s infinite linear alternate-reverse;
 }
