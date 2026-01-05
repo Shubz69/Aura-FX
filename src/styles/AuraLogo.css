@@ -136,6 +136,50 @@
     left: 8px;
 }
 
+/* Tablet Navbar Logo */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .navbar-logo-wrapper .aura-logo-symbol {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Mobile Navbar Logo */
+@media (max-width: 768px) {
+    .navbar-logo-wrapper .aura-logo-symbol {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .navbar-logo-wrapper .logo-diagonal {
+        width: 2.5px;
+        height: 12px;
+    }
+    
+    .navbar-logo-wrapper .logo-horizontal {
+        width: 10px;
+        height: 2.5px;
+    }
+}
+
+/* Small Mobile Navbar Logo */
+@media (max-width: 480px) {
+    .navbar-logo-wrapper .aura-logo-symbol {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .navbar-logo-wrapper .logo-diagonal {
+        width: 2px;
+        height: 10px;
+    }
+    
+    .navbar-logo-wrapper .logo-horizontal {
+        width: 8px;
+        height: 2px;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .aura-logo-symbol {

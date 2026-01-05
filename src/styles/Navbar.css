@@ -273,11 +273,51 @@ body.loading-active .navbar {
     100% { background-position: 0 0; }
 }
 
+/* Tablet (iPad) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .navbar {
+        padding: 0.6rem 1.5rem;
+    }
+    
+    .logo {
+        font-size: 0.85rem;
+    }
+    
+    .nav-links {
+        gap: 2rem;
+    }
+    
+    .nav-links li a {
+        font-size: 0.95rem;
+        padding: 0.7rem 0.8rem;
+    }
+}
+
+/* Mobile Devices */
 @media (max-width: 768px) {
     .navbar {
         padding: 0.5rem 1rem;
         justify-content: space-between;
         align-items: center;
+        height: 50px;
+    }
+    
+    .logo-container {
+        flex: 0 0 auto;
+    }
+    
+    .logo-link {
+        gap: 8px;
+    }
+    
+    .navbar-logo-wrapper .aura-logo-symbol {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .logo {
+        font-size: 0.8rem;
+        letter-spacing: 0.2em;
     }
     
     .nav-links {
@@ -290,6 +330,8 @@ body.loading-active .navbar {
     
     .mobile-menu-toggle {
         display: block;
+        font-size: 1.3rem;
+        padding: 0.5rem;
     }
 
     .navbar-ai-head {
@@ -299,6 +341,28 @@ body.loading-active .navbar {
 
     .navbar-ai-head .ai-head-container {
         transform: scale(0.35);
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0.4rem 0.75rem;
+        height: 48px;
+    }
+    
+    .navbar-logo-wrapper .aura-logo-symbol {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .logo {
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+    }
+    
+    .mobile-menu-toggle {
+        font-size: 1.2rem;
     }
 }
 

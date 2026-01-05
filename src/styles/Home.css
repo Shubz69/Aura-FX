@@ -15,6 +15,12 @@ body, html {
     background: transparent;
     color: var(--primary);
     font-family: var(--font-main);
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 .home-container {
@@ -27,6 +33,9 @@ body, html {
     align-items: center;
     justify-content: flex-start;
     padding-top: 100px;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
 }
 
 /* Central Glow Effect */
@@ -185,6 +194,7 @@ body.loading-active {
     z-index: 2;
     gap: 3rem;
     animation: fadeInUp 1s ease-out;
+    box-sizing: border-box;
 }
 
 @keyframes fadeInUp {
@@ -491,55 +501,55 @@ body.loading-active {
 }
 
 /* Responsive Design */
+/* Large Tablets and Small Desktops */
 @media (max-width: 1200px) {
     .brand-name {
-        font-size: 4rem;
+        font-size: 4.5rem;
     }
     
     .feature-cards-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.2rem;
     }
 }
 
-@media (max-width: 768px) {
+/* Tablets (iPad) */
+@media (max-width: 1024px) {
     .home-container {
-        padding-top: 80px;
+        padding-top: 90px;
     }
     
     .home-content {
-        gap: 2.5rem;
-        padding: 1.5rem;
+        gap: 3rem;
+        padding: 2rem 1.5rem;
     }
     
     .brand-name {
-        font-size: 3rem;
-        letter-spacing: 0.15em;
+        font-size: 4rem;
+        letter-spacing: 0.2em;
+    }
+    
+    .home-logo-section .aura-logo-symbol {
+        width: 140px;
+        height: 140px;
     }
     
     .feature-cards-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
     }
     
     .feature-card {
         padding: 2rem 1.5rem;
-    }
-    
-    .home-cta-section {
-        flex-direction: column;
-        width: 100%;
-        max-width: 300px;
-    }
-    
-    .home-cta-button,
-    .home-secondary-button {
-        width: 100%;
-        padding: 0.9rem 2rem;
-    }
-    
-    .central-glow {
-        width: 600px;
-        height: 600px;
     }
     
     .stats-grid {
@@ -548,49 +558,261 @@ body.loading-active {
     }
     
     .why-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
     }
     
     .section-title {
-        font-size: 2rem;
+        font-size: 2.2rem;
+    }
+    
+    .central-glow {
+        width: 700px;
+        height: 700px;
     }
 }
 
-@media (max-width: 480px) {
-    .brand-name {
-        font-size: 2.5rem;
-        letter-spacing: 0.1em;
+/* Mobile Devices (iPhone, Samsung) */
+@media (max-width: 768px) {
+    .home-container {
+        padding-top: 70px;
     }
     
     .home-content {
-        gap: 2rem;
+        gap: 2.5rem;
+        padding: 1.5rem 1rem;
+        min-height: auto;
+    }
+    
+    .home-logo-section {
+        margin-bottom: 1rem;
+    }
+    
+    .home-logo-section .aura-logo-symbol {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .brand-name {
+        font-size: 2.8rem;
+        letter-spacing: 0.15em;
+        line-height: 1.1;
+    }
+    
+    .content-intro {
+        max-width: 100%;
+        padding: 0 1rem;
     }
     
     .intro-text {
         font-size: 1.1rem;
+        line-height: 1.6;
     }
     
-    .home-cta-button,
-    .home-secondary-button {
-        font-size: 0.9rem;
-        padding: 0.8rem 1.5rem;
+    .feature-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        width: 100%;
     }
     
-    .central-glow {
-        width: 400px;
-        height: 400px;
+    .feature-card {
+        padding: 1.5rem 1.25rem;
+        width: 100%;
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    .feature-description {
+        font-size: 0.95rem;
+    }
+    
+    .stats-section {
+        width: 100%;
+        margin: 3rem 0;
+        padding: 0 1rem;
     }
     
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .stat-item {
+        padding: 1.5rem 1rem;
     }
     
     .stat-number {
         font-size: 2rem;
     }
     
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .why-choose-section {
+        width: 100%;
+        margin: 3rem 0;
+        padding: 0 1rem;
+    }
+    
+    .why-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .why-item {
+        padding: 1.5rem 1.25rem;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+    }
+    
+    .home-cta-section {
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        gap: 1rem;
+    }
+    
+    .home-cta-button,
+    .home-secondary-button {
+        width: 100%;
+        max-width: 100%;
+        padding: 1rem 2rem;
+        font-size: 0.95rem;
+    }
+    
+    .central-glow {
+        width: 500px;
+        height: 500px;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .home-container {
+        padding-top: 60px;
+    }
+    
+    .home-content {
+        gap: 2rem;
+        padding: 1rem 0.75rem;
+    }
+    
+    .home-logo-section .aura-logo-symbol {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .brand-name {
+        font-size: 2rem;
+        letter-spacing: 0.1em;
+        padding: 0 0.5rem;
+    }
+    
+    .intro-text {
+        font-size: 1rem;
+        padding: 0 0.5rem;
+    }
+    
+    .feature-cards-grid {
+        gap: 1.25rem;
+    }
+    
+    .feature-card {
+        padding: 1.25rem 1rem;
+    }
+    
+    .feature-icon {
+        font-size: 2rem;
+    }
+    
+    .feature-title {
+        font-size: 1rem;
+    }
+    
+    .feature-description {
+        font-size: 0.9rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-item {
+        padding: 1.25rem 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+    }
+    
+    .why-item {
+        padding: 1.25rem 1rem;
+    }
+    
     .section-title {
         font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .why-title {
+        font-size: 1.1rem;
+    }
+    
+    .why-text {
+        font-size: 0.9rem;
+    }
+    
+    .home-cta-button,
+    .home-secondary-button {
+        padding: 0.9rem 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .central-glow {
+        width: 350px;
+        height: 350px;
+    }
+}
+
+/* Extra Small Devices */
+@media (max-width: 360px) {
+    .brand-name {
+        font-size: 1.75rem;
+    }
+    
+    .home-logo-section .aura-logo-symbol {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .feature-card,
+    .stat-item,
+    .why-item {
+        padding: 1rem 0.75rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
     }
 }
