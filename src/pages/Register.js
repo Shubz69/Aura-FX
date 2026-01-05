@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import "../styles/Register.css";
 import CosmicBackground from '../components/CosmicBackground';
@@ -332,8 +332,15 @@ const Register = () => {
                         required
                         disabled={isLoading}
                     />
-                    <label htmlFor="terms">
-                        I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+                    <label htmlFor="terms" onClick={(e) => {
+                        // Allow clicking on links within the label
+                        if (e.target.tagName === 'A') {
+                            return;
+                        }
+                        // Toggle checkbox when clicking label
+                        setAcceptedTerms(!acceptedTerms);
+                    }}>
+                        I agree to the <Link to="/terms" target="_blank" onClick={(e) => e.stopPropagation()}>Terms and Conditions</Link> and <Link to="/privacy" target="_blank" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
                     </label>
                 </div>
                 

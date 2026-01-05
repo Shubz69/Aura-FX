@@ -304,21 +304,31 @@
     display: none;
 }
 
-/* Compact terms checkbox */
+/* Compact terms checkbox - Mobile-friendly */
 .terms-checkbox {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 20px;
+    position: relative;
 }
 
 .terms-checkbox input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
     accent-color: var(--primary);
     margin-top: 2px;
-  border-radius: 4px;
+    border-radius: 4px;
     cursor: pointer;
+    flex-shrink: 0;
+    -webkit-appearance: checkbox;
+    appearance: checkbox;
+    touch-action: manipulation;
+    /* Ensure proper touch target on mobile */
+    position: relative;
+    z-index: 1;
 }
 
 .terms-checkbox label {
@@ -465,5 +475,58 @@
     .avatar-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 6px;
+    }
+    
+    /* Larger checkbox for mobile devices */
+    .terms-checkbox input[type="checkbox"] {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        margin-top: 0;
+    }
+    
+    .terms-checkbox {
+        gap: 14px;
+        align-items: center;
+    }
+    
+    .terms-checkbox label {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+}
+
+/* iPhone and iPad specific fixes */
+@media (max-width: 1024px) {
+    .terms-checkbox input[type="checkbox"] {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
+    }
+    
+    /* Make entire label clickable on mobile */
+    .terms-checkbox label {
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+        padding: 8px 0;
+        display: block;
+        width: 100%;
+    }
+}
+
+/* Ensure checkbox is clickable on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .terms-checkbox input[type="checkbox"] {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        margin-top: -2px;
+    }
+    
+    .terms-checkbox {
+        gap: 16px;
+        align-items: flex-start;
     }
 } 

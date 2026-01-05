@@ -34,6 +34,8 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import VerifyMFA from './pages/VerifyMFA';
 import Subscription from './pages/Subscription';
 import Settings from './pages/Settings';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -102,8 +104,8 @@ function AppRoutes() {
                     <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/verify-mfa" element={<VerifyMFA />} />
                     <Route path="/subscription" element={<Subscription />} />
-
-
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
 
                     {user && (
                         <>
