@@ -270,7 +270,7 @@ module.exports = async (req, res) => {
     try {
       const { courseId } = req.query;
       // Placeholder - redirect to subscription page
-      return res.redirect(302, `${process.env.FRONTEND_URL || 'https://www.theglitch.world'}/subscription`);
+      return res.redirect(302, `${process.env.FRONTEND_URL || 'https://www.aurafx.com'}/subscription`);
     } catch (error) {
       console.error('Error creating checkout:', error);
       return res.status(500).json({ 

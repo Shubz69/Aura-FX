@@ -241,7 +241,7 @@ module.exports = async (req, res) => {
     try {
       // Default channels (fallback)
       const defaultChannels = [
-        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to THE GLITCH community!' },
+        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA FX community!' },
         { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important announcements' },
         { id: 'general', name: 'general', displayName: 'General', category: 'general', description: 'General discussion' }
       ];
@@ -340,7 +340,7 @@ module.exports = async (req, res) => {
             
             // Insert default channels (welcome and announcements - everyone can see, only admins post)
             const defaultChannels = [
-              { id: 'welcome', name: 'welcome', category: 'announcements', description: 'Welcome to THE GLITCH community!', accessLevel: 'read-only' },
+              { id: 'welcome', name: 'welcome', category: 'announcements', description: 'Welcome to AURA FX community!', accessLevel: 'read-only' },
               { id: 'announcements', name: 'announcements', category: 'announcements', description: 'Important announcements', accessLevel: 'read-only' }
             ];
             

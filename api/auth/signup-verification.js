@@ -221,29 +221,29 @@ module.exports = async (req, res) => {
       }
 
       const mailOptions = {
-        from: `"THE GLITCH" <${process.env.EMAIL_USER.trim()}>`,
+        from: `"AURA FX" <${process.env.EMAIL_USER.trim()}>`,
         to: emailLower,
-        subject: 'THE GLITCH - Email Verification Code',
+        subject: 'AURA FX - Email Verification Code',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0a0a1a; color: #ffffff;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #8B5CF6; font-size: 32px; margin: 0;">THE GLITCH</h1>
+              <h1 style="color: #ffffff; font-size: 32px; margin: 0;">AURA FX</h1>
             </div>
-            <div style="background-color: #1a0f2e; padding: 30px; border-radius: 10px; border: 1px solid #8B5CF6;">
-              <h2 style="color: #8B5CF6; margin-top: 0;">Email Verification Required</h2>
+            <div style="background-color: #1a1a1a; padding: 30px; border-radius: 10px; border: 1px solid #ffffff;">
+              <h2 style="color: #ffffff; margin-top: 0;">Email Verification Required</h2>
               <p style="font-size: 16px; line-height: 1.6;">
-                Thank you for signing up for THE GLITCH! To complete your registration and verify your email address, please use the following verification code:
+                Thank you for signing up for AURA FX! To complete your registration and verify your email address, please use the following verification code:
               </p>
               <div style="text-align: center; margin: 30px 0;">
-                <div style="display: inline-block; background-color: #251a3a; padding: 20px 40px; border-radius: 8px; border: 2px solid #8B5CF6;">
-                  <span style="font-size: 36px; font-weight: bold; color: #8B5CF6; letter-spacing: 5px;">${verificationCode}</span>
+                <div style="display: inline-block; background-color: #2a2a2a; padding: 20px 40px; border-radius: 8px; border: 2px solid #ffffff;">
+                  <span style="font-size: 36px; font-weight: bold; color: #ffffff; letter-spacing: 5px;">${verificationCode}</span>
                 </div>
               </div>
               <p style="font-size: 14px; color: #cccccc; margin-top: 30px;">
                 This code will expire in 10 minutes. If you didn't request this verification code, please ignore this email.
               </p>
               <p style="font-size: 14px; color: #cccccc; margin-top: 20px;">
-                Welcome to THE GLITCH - where wealth meets opportunity! 💰🚀
+                Welcome to AURA FX - where wealth meets opportunity! 💰🚀
               </p>
             </div>
           </div>
