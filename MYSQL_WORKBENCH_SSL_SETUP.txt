@@ -1,0 +1,84 @@
+AURA FX - MySQL Workbench SSL Connection Setup
+===============================================
+
+Railway MySQL requires SSL connections. Follow these steps:
+
+STEP 1: CREATE CONNECTION
+=========================
+1. Open MySQL Workbench
+2. Click "+" to create new connection
+3. Enter basic details:
+   - Connection Name: AURA FX Railway MySQL
+   - Hostname: tramway.proxy.rlwy.net
+   - Port: 49989
+   - Username: root
+   - Password: FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
+   - Default Schema: railway
+
+STEP 2: CONFIGURE SSL (CRITICAL!)
+==================================
+1. In the connection dialog, click on "SSL" tab (at the bottom)
+2. Select "Use SSL" checkbox
+3. SSL CA File: Leave empty (or use "Require SSL" option)
+4. SSL Cert File: Leave empty
+5. SSL Key File: Leave empty
+6. SSL Cipher: Leave empty
+7. SSL Mode: Select "Require" or "Preferred"
+
+ALTERNATIVE: Use "Use SSL" with "Require SSL" option checked
+
+STEP 3: ADVANCED SETTINGS
+==========================
+1. Click "Advanced" tab
+2. Under "Others", add this parameter:
+   ssl-mode=REQUIRED
+   
+   OR in the "Others" text box, add:
+   ssl-mode=REQUIRED;ssl-ca=;ssl-cert=;ssl-key=
+
+STEP 4: TEST CONNECTION
+========================
+1. Click "Test Connection"
+2. If it still fails, try these alternatives:
+
+ALTERNATIVE METHOD 1: Use Connection String
+===========================================
+Instead of individual fields, try using the connection string format:
+- In MySQL Workbench, you might need to use the "Connection String" option if available
+
+ALTERNATIVE METHOD 2: Check Railway Service Status
+===================================================
+1. Go to Railway dashboard
+2. Check if MySQL service is "Online" (green status)
+3. Check the "Logs" tab for any connection errors
+4. Verify the service is not paused
+
+ALTERNATIVE METHOD 3: Try Internal Hostname
+============================================
+If public URL doesn't work, Railway might require internal connection:
+- Hostname: mysql.railway.internal
+- Port: 3306
+- Note: This only works from within Railway services, not from your local machine
+
+ALTERNATIVE METHOD 4: Use Command Line
+=======================================
+Try connecting via command line first to verify credentials:
+mysql -h tramway.proxy.rlwy.net -P 49989 -u root -p
+(Enter password when prompted)
+
+If command line works but Workbench doesn't, it's an SSL configuration issue.
+
+TROUBLESHOOTING COMMON ERRORS:
+===============================
+1. "Access denied" - Check username/password are correct
+2. "Can't connect" - Check hostname and port
+3. "SSL required" - Enable SSL in Workbench (see Step 2)
+4. "Connection timeout" - Check firewall/network settings
+
+NEXT STEPS IF STILL FAILING:
+=============================
+1. Check Railway MySQL service logs for connection attempts
+2. Verify the MySQL service is running and accessible
+3. Try connecting from a different network (in case of firewall issues)
+4. Contact Railway support if service appears down
+

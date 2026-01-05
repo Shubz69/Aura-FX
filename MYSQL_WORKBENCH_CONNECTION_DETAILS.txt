@@ -26,5 +26,15 @@ IMPORTANT NOTES:
 - Use the PUBLIC URL hostname (tramway.proxy.rlwy.net) for external connections
 - The port is 49989 (not the default 3306)
 - Default schema is "railway"
-- SSL may be required - MySQL Workbench will handle this automatically
+- SSL IS REQUIRED - You MUST enable SSL in MySQL Workbench!
+
+CRITICAL: SSL CONFIGURATION REQUIRED
+====================================
+After entering the connection details above:
+1. Click on the "SSL" tab in the connection dialog
+2. Check "Use SSL" checkbox
+3. Set SSL Mode to "Require" or "Preferred"
+4. Leave SSL certificate files empty (Railway uses self-signed certs)
+
+If connection still fails, see MYSQL_WORKBENCH_SSL_SETUP.txt for detailed troubleshooting.
 
