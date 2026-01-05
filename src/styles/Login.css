@@ -1,11 +1,11 @@
 /* CLEAN MODERN LOGIN PAGE - BEAUTIFUL DESIGN */
 :root {
-    --primary: rgba(255, 255, 255, 0.3);
-    --secondary: rgba(255, 255, 255, 0.2);
-    --accent: rgba(255, 255, 255, 0.15);
-    --bg-dark: #0A0A0F;
-    --bg-medium: #1A1A2E;
-    --bg-light: #252541;
+    --primary: #ffffff;
+    --secondary: rgba(255, 255, 255, 0.9);
+    --accent: rgba(255, 255, 255, 0.8);
+    --bg-dark: #0a0a0a;
+    --bg-medium: #0a0a0a;
+    --bg-light: #0a0a0a;
     --font-main: 'Space Grotesk', sans-serif;
     --font-secondary: 'Space Grotesk', sans-serif;
 }
@@ -30,18 +30,16 @@
 
 /* Clean modern form container */
 .login-form-container {
-    background: rgba(26, 26, 46, 0.9);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 48px 40px;
     width: 100%;
     max-width: 420px;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.2);
+    box-shadow: none;
     position: relative;
     z-index: 10;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Clean header */
@@ -52,23 +50,22 @@
 
 .login-title {
     font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--primary);
+    font-weight: 200;
+    color: #ffffff;
     margin-bottom: 8px;
     font-family: var(--font-main);
-    letter-spacing: -0.5px;
+    letter-spacing: 0.15em;
     line-height: 1.1;
 }
 
 .login-subtitle {
-    color: var(--accent);
+    color: #ffffff;
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 300;
     font-family: var(--font-secondary);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     margin-bottom: 24px;
-    opacity: 0.9;
 }
 
 /* Beautiful modern form fields */
@@ -78,9 +75,9 @@
 
 .form-label {
     display: block;
-    color: var(--primary);
+    color: #ffffff;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 300;
     font-family: var(--font-main);
     margin-bottom: 8px;
     letter-spacing: 0.5px;
@@ -89,26 +86,24 @@
 
 .form-input {
     width: 100%;
-    background: rgba(37, 37, 65, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 16px 20px;
-    color: var(--accent);
+    color: #ffffff;
     font-size: 1rem;
     font-family: var(--font-secondary);
-    font-weight: 500;
+    font-weight: 300;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    box-shadow: none;
     backdrop-filter: blur(10px);
 }
 
 .form-input:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 
-        0 0 0 4px rgba(255, 255, 255, 0.15), 
-        0 8px 24px rgba(255, 255, 255, 0.2);
-    background: rgba(37, 37, 65, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.08);
     transform: translateY(-1px);
 }
 
@@ -121,42 +116,29 @@
 /* Beautiful modern button */
 .login-button {
     width: 100%;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 16px 24px;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 300;
     font-family: var(--font-main);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
+    box-shadow: none;
     position: relative;
     overflow: hidden;
     margin-top: 8px;
 }
 
-.login-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-}
-
 .login-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(255, 255, 255, 0.4);
-}
-
-.login-button:hover::before {
-    left: 100%;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .login-button:active {
@@ -168,16 +150,16 @@
     display: block;
     text-align: center;
     margin-top: 16px;
-    color: #C084FC;
+    color: #ffffff;
     text-decoration: none;
     font-size: 0.9rem;
     font-family: var(--font-secondary);
-    font-weight: 600;
+    font-weight: 300;
     transition: all 0.3s ease;
 }
 
 .forgot-password:hover {
-    color: #E879F9;
+    color: #ffffff;
     text-decoration: underline;
     transform: translateY(-1px);
 }
@@ -190,17 +172,17 @@
 }
 
 .register-link p {
-    color: var(--accent);
+    color: #ffffff;
     font-size: 0.9rem;
     font-family: var(--font-secondary);
     margin-bottom: 0;
-    font-weight: 400;
+    font-weight: 300;
 }
 
 .register-link a {
-    color: #C084FC;
+    color: #ffffff;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 300;
     font-family: var(--font-main);
     transition: all 0.3s ease;
     font-size: 0.9rem;
@@ -208,7 +190,7 @@
 }
 
 .register-link a:hover {
-    color: #E879F9;
+    color: #ffffff;
     text-decoration: underline;
     transform: translateY(-1px);
 }

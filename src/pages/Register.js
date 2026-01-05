@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import "../styles/Register.css";
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 // Import avatar images
@@ -421,7 +421,7 @@ const Register = () => {
 
     return (
         <div className="register-container">
-            <BinaryBackground />
+            <CosmicBackground />
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}

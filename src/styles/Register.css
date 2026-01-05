@@ -1,13 +1,13 @@
 /* CLEAN MODERN REGISTER PAGE - FITS WITHOUT SCROLLING */
 :root {
-    --primary: #3B82F6; /* Blue */
-    --secondary: rgba(255, 255, 255, 0.2); /* Purple */
-    --accent: #10B981; /* Green */
+    --primary: #ffffff;
+    --secondary: rgba(255, 255, 255, 0.9);
+    --accent: rgba(255, 255, 255, 0.8);
     --error: #EF4444; /* Red */
-    --neutral: #6B7280; /* Grey */
-    --bg-dark: #1F2937; /* Dark grey */
-    --bg-medium: #374151; /* Medium grey */
-    --bg-light: #4B5563; /* Light grey */
+    --neutral: rgba(255, 255, 255, 0.5);
+    --bg-dark: #0a0a0a;
+    --bg-medium: #0a0a0a;
+    --bg-light: #0a0a0a;
     --font-main: 'Space Grotesk', sans-serif;
     --font-secondary: 'Space Grotesk', sans-serif;
 }
@@ -32,18 +32,16 @@
 
 /* CLEAN MODERN FORM CONTAINER */
 .register-form-container {
-    background: rgba(55, 65, 81, 0.95);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 40px 36px;
   width: 100%;
     max-width: 460px;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(59, 130, 246, 0.2);
+    box-shadow: none;
     position: relative;
     z-index: 10;
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     max-height: 90vh;
     overflow-y: auto;
 }
@@ -56,23 +54,22 @@
 
 .register-title {
     font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--primary);
+    font-weight: 200;
+    color: #ffffff;
     margin-bottom: 8px;
     font-family: var(--font-main);
-    letter-spacing: -0.5px;
+    letter-spacing: 0.15em;
     line-height: 1.1;
 }
 
 .register-subtitle {
-    color: var(--accent);
+    color: #ffffff;
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 300;
     font-family: var(--font-secondary);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     margin-bottom: 20px;
-    opacity: 0.9;
 }
 
 /* Compact form layout - two columns */
@@ -94,9 +91,9 @@
 /* CLEAN MODERN FORM FIELDS */
 .form-label {
     display: block;
-    color: var(--primary);
+    color: #ffffff;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 300;
     font-family: var(--font-main);
     margin-bottom: 6px;
     letter-spacing: 0.5px;
@@ -105,26 +102,24 @@
 
 .form-input {
     width: 100%;
-    background: rgba(75, 85, 99, 0.8);
-    border: 2px solid rgba(59, 130, 246, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
     padding: 14px 16px;
-    color: var(--accent);
+    color: #ffffff;
     font-size: 0.95rem;
     font-family: var(--font-secondary);
-    font-weight: 500;
+    font-weight: 300;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    box-shadow: none;
     backdrop-filter: blur(10px);
 }
 
 .form-input:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 
-        0 0 0 4px rgba(59, 130, 246, 0.15), 
-        0 8px 24px rgba(59, 130, 246, 0.2);
-    background: rgba(75, 85, 99, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.08);
     transform: translateY(-1px);
 }
 
@@ -268,42 +263,29 @@
 /* CREATE ACCOUNT BUTTON - EXACTLY MATCHES START TRADING BUTTON */
 .register-button {
     width: 100% !important;
-    background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
-    color: white !important;
-    border: none !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 50px !important;
     padding: 0.8rem 2rem !important;
     font-size: 1rem !important;
-    font-weight: 600 !important;
+    font-weight: 300 !important;
     font-family: var(--font-main) !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
-    box-shadow: 0 5px 20px rgba(59, 130, 246, 0.3) !important;
+    box-shadow: none !important;
     position: relative !important;
     overflow: hidden !important;
     margin-top: 12px !important;
 }
 
-.register-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-    transition: left 0.4s ease;
-}
-
 .register-button:hover {
     transform: translateY(-3px) !important;
-    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.5) !important;
-}
-
-.register-button:hover::before {
-  left: 100%;
+    box-shadow: none !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 .register-button:active {
@@ -340,23 +322,24 @@
 }
 
 .terms-checkbox label {
-    color: var(--accent);
+    color: #ffffff;
     font-size: 0.8rem;
     font-family: var(--font-secondary);
     line-height: 1.4;
     cursor: pointer;
+    font-weight: 300;
 }
 
 .terms-checkbox a {
-    color: var(--primary);
+    color: #ffffff;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 300;
     font-family: var(--font-main);
     transition: color 0.3s ease;
 }
 
 .terms-checkbox a:hover {
-    color: var(--secondary);
+    color: #ffffff;
     text-decoration: underline;
 }
 
@@ -369,24 +352,24 @@
 }
 
 .login-link p {
-    color: var(--accent);
+    color: #ffffff;
     font-size: 0.8rem;
     font-family: var(--font-secondary);
     margin-bottom: 6px;
-    font-weight: 400;
+    font-weight: 300;
 }
 
 .login-link a {
-    color: var(--primary);
+    color: #ffffff;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 300;
     font-family: var(--font-main);
     transition: all 0.3s ease;
     font-size: 0.85rem;
 }
 
 .login-link a:hover {
-    color: var(--secondary);
+    color: #ffffff;
     text-decoration: underline;
     transform: translateY(-1px);
 }

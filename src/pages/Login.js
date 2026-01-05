@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import "../styles/Login.css";
 import { useAuth } from "../context/AuthContext";
 import { RiTerminalBoxFill } from 'react-icons/ri';
-import BinaryBackground from '../components/BinaryBackground';
+import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
 const Login = () => {
@@ -196,7 +196,7 @@ const Login = () => {
     if (showMfaVerification) {
         return (
             <div className="login-container">
-                <BinaryBackground />
+                <CosmicBackground />
                 <div className="login-form-container">
                     <div className="brand-logo">
                         <div className="logo-icon">
