@@ -25,8 +25,8 @@ const createTransporter = () => {
 };
 
 const transporter = createTransporter();
-const CONTACT_INBOX = process.env.CONTACT_INBOX || 'platform@theglitch.online';
-const CONTACT_FROM = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@theglitch.world';
+const CONTACT_INBOX = process.env.CONTACT_INBOX || 'platform@aurafx.com';
+const CONTACT_FROM = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@aurafx.com';
 
 const sendContactEmail = async ({ name, email, subject, message }) => {
   if (!transporter) {
@@ -48,7 +48,7 @@ const sendContactEmail = async ({ name, email, subject, message }) => {
         <p><strong>Message:</strong></p>
         <p>${(message || '').replace(/\n/g, '<br>')}</p>
         <hr />
-        <p style="font-size: 12px; color: #666;">Submitted via THE GLITCH contact form.</p>
+        <p style="font-size: 12px; color: #666;">Submitted via AURA FX contact form.</p>
       `
     });
 

@@ -2,9 +2,12 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "build",
+  "installCommand": "npm install",
+  "framework": "create-react-app",
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "runtime": "nodejs18.x"
     }
   },
   "rewrites": [
@@ -37,6 +40,10 @@
       "destination": "/api/auth/login.js"
     },
     {
+      "source": "/api/auth/register",
+      "destination": "/api/auth/register.js"
+    },
+    {
       "source": "/api/auth/password-reset",
       "destination": "/api/auth/password-reset.js"
     },
@@ -46,6 +53,14 @@
     },
     {
       "source": "/api/auth/signup-verification",
+      "destination": "/api/auth/signup-verification.js"
+    },
+    {
+      "source": "/api/auth/send-signup-verification",
+      "destination": "/api/auth/signup-verification.js"
+    },
+    {
+      "source": "/api/auth/verify-signup-code",
       "destination": "/api/auth/signup-verification.js"
     },
     {
