@@ -90,6 +90,52 @@
     left: 30px;
 }
 
+/* Navbar Logo Size */
+.navbar-logo-wrapper .aura-logo-symbol {
+    width: 35px;
+    height: 35px;
+}
+
+.navbar-logo-wrapper .logo-diagonal {
+    width: 3px;
+    height: 15px;
+}
+
+.navbar-logo-wrapper .logo-horizontal {
+    width: 12px;
+    height: 3px;
+}
+
+.navbar-logo-wrapper .logo-diagonal-1 {
+    top: 5px;
+    right: 8px;
+}
+
+.navbar-logo-wrapper .logo-diagonal-2 {
+    top: 5px;
+    right: 8px;
+}
+
+.navbar-logo-wrapper .logo-horizontal-1 {
+    top: 17px;
+    right: 8px;
+}
+
+.navbar-logo-wrapper .logo-diagonal-3 {
+    bottom: 5px;
+    left: 8px;
+}
+
+.navbar-logo-wrapper .logo-diagonal-4 {
+    bottom: 5px;
+    left: 8px;
+}
+
+.navbar-logo-wrapper .logo-horizontal-2 {
+    bottom: 17px;
+    left: 8px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .aura-logo-symbol {

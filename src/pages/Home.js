@@ -95,29 +95,78 @@ const Home = () => {
                                     <div className="feature-icon">📈</div>
                                     <h3 className="feature-title">Forex Trading</h3>
                                     <p className="feature-description">
-                                        Master currency markets with proven strategies
+                                        Master currency markets with proven strategies and real-time analysis
                                     </p>
                                 </div>
                                 <div className="feature-card">
                                     <div className="feature-icon">💹</div>
                                     <h3 className="feature-title">Stock Trading</h3>
                                     <p className="feature-description">
-                                        Learn to analyze and trade stocks effectively
+                                        Learn to analyze and trade stocks effectively with expert guidance
                                     </p>
                                 </div>
                                 <div className="feature-card">
                                     <div className="feature-icon">₿</div>
                                     <h3 className="feature-title">Crypto Trading</h3>
                                     <p className="feature-description">
-                                        Navigate cryptocurrency markets with confidence
+                                        Navigate cryptocurrency markets with confidence and precision
                                     </p>
                                 </div>
                                 <div className="feature-card">
                                     <div className="feature-icon">🎯</div>
                                     <h3 className="feature-title">1-to-1 Mentorship</h3>
                                     <p className="feature-description">
-                                        Get personalized guidance from experts
+                                        Get personalized guidance from experienced trading professionals
                                     </p>
+                                </div>
+                            </div>
+
+                            {/* Stats Section */}
+                            <div className="stats-section">
+                                <div className="stats-grid">
+                                    <div className="stat-item">
+                                        <div className="stat-number">24.7%</div>
+                                        <div className="stat-label">Average ROI</div>
+                                    </div>
+                                    <div className="stat-item">
+                                        <div className="stat-number">1,200+</div>
+                                        <div className="stat-label">Active Traders</div>
+                                    </div>
+                                    <div className="stat-item">
+                                        <div className="stat-number">85%</div>
+                                        <div className="stat-label">Success Rate</div>
+                                    </div>
+                                    <div className="stat-item">
+                                        <div className="stat-number">50+</div>
+                                        <div className="stat-label">Expert Courses</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Why Choose Section */}
+                            <div className="why-choose-section">
+                                <h2 className="section-title">Why Choose AURA FX</h2>
+                                <div className="why-grid">
+                                    <div className="why-item">
+                                        <div className="why-icon">✓</div>
+                                        <h3 className="why-title">Expert Education</h3>
+                                        <p className="why-text">Learn from industry professionals with years of trading experience</p>
+                                    </div>
+                                    <div className="why-item">
+                                        <div className="why-icon">✓</div>
+                                        <h3 className="why-title">Proven Strategies</h3>
+                                        <p className="why-text">Access tested trading strategies that deliver consistent results</p>
+                                    </div>
+                                    <div className="why-item">
+                                        <div className="why-icon">✓</div>
+                                        <h3 className="why-title">Real-Time Support</h3>
+                                        <p className="why-text">Get instant help from our community and expert mentors</p>
+                                    </div>
+                                    <div className="why-item">
+                                        <div className="why-icon">✓</div>
+                                        <h3 className="why-title">Comprehensive Resources</h3>
+                                        <p className="why-text">Access extensive library of courses, tools, and trading materials</p>
+                                    </div>
                                 </div>
                             </div>
 
