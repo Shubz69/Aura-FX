@@ -25,11 +25,11 @@ const resolveWebSocketBaseUrl = () => {
 
     // Production fallback when env var is missing
     if (hostname && hostname.includes('aurafx.com')) {
-      return 'https://aurafx-realtime-production.up.railway.app';
+      return 'https://aura-fx-production.up.railway.app';
     }
   }
 
-  return 'https://aurafx-realtime-production.up.railway.app';
+  return 'https://aura-fx-production.up.railway.app';
 };
 
 const WS_BASE_URL = resolveWebSocketBaseUrl();
