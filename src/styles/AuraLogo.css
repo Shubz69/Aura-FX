@@ -1,0 +1,126 @@
+.aura-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.aura-logo-symbol {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-left,
+.logo-right {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+}
+
+.logo-left {
+    left: 0;
+}
+
+.logo-right {
+    right: 0;
+}
+
+.logo-diagonal,
+.logo-horizontal {
+    position: absolute;
+    background: #1a1a1a;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Left side - Inverted V (A shape) */
+.logo-diagonal-1 {
+    width: 12px;
+    height: 70px;
+    top: 20px;
+    right: 30px;
+    transform: rotate(-28deg);
+    transform-origin: bottom right;
+}
+
+.logo-diagonal-2 {
+    width: 12px;
+    height: 70px;
+    top: 20px;
+    right: 30px;
+    transform: rotate(28deg);
+    transform-origin: bottom left;
+}
+
+.logo-horizontal-1 {
+    width: 45px;
+    height: 12px;
+    top: 65px;
+    right: 30px;
+}
+
+/* Right side - V shape */
+.logo-diagonal-3 {
+    width: 12px;
+    height: 70px;
+    bottom: 20px;
+    left: 30px;
+    transform: rotate(28deg);
+    transform-origin: top left;
+}
+
+.logo-diagonal-4 {
+    width: 12px;
+    height: 70px;
+    bottom: 20px;
+    left: 30px;
+    transform: rotate(-28deg);
+    transform-origin: top right;
+}
+
+.logo-horizontal-2 {
+    width: 45px;
+    height: 12px;
+    bottom: 65px;
+    left: 30px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .aura-logo-symbol {
+        width: 140px;
+        height: 140px;
+    }
+    
+    .logo-diagonal {
+        width: 10px;
+        height: 55px;
+    }
+    
+    .logo-horizontal {
+        width: 35px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .aura-logo-symbol {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .logo-diagonal {
+        width: 8px;
+        height: 45px;
+    }
+    
+    .logo-horizontal {
+        width: 30px;
+        height: 8px;
+    }
+}
