@@ -79,6 +79,14 @@ Once the WebSocket server is deployed and running:
 
 ## Database Requirements
 
+The WebSocket server uses the existing `messages` table. No additional database setup is needed. The server will:
+- Save messages to the database when received
+- Broadcast messages to all connected clients in real-time
+
+**No database changes required** - the existing `messages` table structure is sufficient.
+
+## Database Requirements
+
 The WebSocket server needs access to the `messages` table. This should already exist from your previous setup. If not, the server will still work but won't save messages to the database (they'll only be broadcast in real-time).
 
 ## Troubleshooting

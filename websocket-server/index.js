@@ -59,39 +59,78 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', service: 'websocket-server' });
 });
 
+// Store STOMP subscriptions by channel
+const stompSubscriptions = new Map();
+
 // STOMP message handlers
 stompServer.on('connect', (sessionId) => {
     console.log(`STOMP client connected: ${sessionId}`);
 });
 
 stompServer.on('subscribe', (subscription) => {
-    const channelId = subscription.destination.replace('/topic/', '').replace('/user/', '');
-    console.log(`Client subscribed to: ${channelId}`);
+    const destination = subscription.destination;
+    console.log(`Client subscribed to: ${destination}`);
     
-    if (!channelClients.has(channelId)) {
-        channelClients.set(channelId, new Set());
+    // Extract channel ID from destination (format: /topic/chat/{channelId} or /topic/online-users)
+    let channelId = null;
+    if (destination.startsWith('/topic/chat/')) {
+        channelId = destination.replace('/topic/chat/', '');
+    } else if (destination === '/topic/online-users') {
+        channelId = 'online-users';
     }
-    channelClients.get(channelId).add(subscription);
+    
+    if (channelId) {
+        if (!stompSubscriptions.has(channelId)) {
+            stompSubscriptions.set(channelId, new Set());
+        }
+        stompSubscriptions.get(channelId).add(subscription);
+    }
 });
 
 stompServer.on('unsubscribe', (subscription) => {
-    const channelId = subscription.destination.replace('/topic/', '').replace('/user/', '');
-    console.log(`Client unsubscribed from: ${channelId}`);
+    const destination = subscription.destination;
+    console.log(`Client unsubscribed from: ${destination}`);
     
-    if (channelClients.has(channelId)) {
-        channelClients.get(channelId).delete(subscription);
-        if (channelClients.get(channelId).size === 0) {
-            channelClients.delete(channelId);
+    let channelId = null;
+    if (destination.startsWith('/topic/chat/')) {
+        channelId = destination.replace('/topic/chat/', '');
+    } else if (destination === '/topic/online-users') {
+        channelId = 'online-users';
+    }
+    
+    if (channelId && stompSubscriptions.has(channelId)) {
+        stompSubscriptions.get(channelId).delete(subscription);
+        if (stompSubscriptions.get(channelId).size === 0) {
+            stompSubscriptions.delete(channelId);
         }
     }
 });
 
-stompServer.on('send', async (subscription, message, headers) => {
+stompServer.on('send', async (frame) => {
     try {
-        const data = JSON.parse(message);
-        const channelId = subscription.destination.replace('/app/', '');
+        const destination = frame.headers.destination;
+        const messageBody = frame.body;
+        
+        // Extract channel ID from destination (format: /app/chat/{channelId})
+        let channelId = null;
+        if (destination && destination.startsWith('/app/chat/')) {
+            channelId = destination.replace('/app/chat/', '');
+        }
+        
+        if (!channelId) {
+            console.warn('Unknown message destination:', destination);
+            return;
+        }
         
         console.log(`Message received for channel: ${channelId}`);
+        
+        let data;
+        try {
+            data = JSON.parse(messageBody);
+        } catch (parseError) {
+            console.error('Error parsing message body:', parseError);
+            return;
+        }
         
         // Save to database if pool is available
         if (dbPool && data.content) {
@@ -106,17 +145,23 @@ stompServer.on('send', async (subscription, message, headers) => {
         }
         
         // Broadcast to all subscribers of this channel
-        const topic = `/topic/${channelId}`;
-        if (channelClients.has(channelId)) {
+        const topic = `/topic/chat/${channelId}`;
+        if (stompSubscriptions.has(channelId)) {
             const messageToSend = JSON.stringify({
                 id: Date.now(),
                 channelId: channelId,
                 content: data.content,
-                sender: data.sender || { id: data.userId, username: data.username || 'User' },
-                timestamp: new Date().toISOString()
+                sender: data.sender || { 
+                    id: data.userId || data.senderId, 
+                    username: data.username || 'User',
+                    avatar: data.avatar || '/avatars/avatar_ai.png'
+                },
+                timestamp: new Date().toISOString(),
+                userId: data.userId || data.senderId,
+                username: data.username || 'User'
             });
             
-            channelClients.get(channelId).forEach((sub) => {
+            stompSubscriptions.get(channelId).forEach((sub) => {
                 if (sub && sub.send) {
                     try {
                         sub.send(messageToSend);
@@ -134,14 +179,14 @@ stompServer.on('send', async (subscription, message, headers) => {
 stompServer.on('disconnect', (sessionId) => {
     console.log(`STOMP client disconnected: ${sessionId}`);
     // Clean up subscriptions
-    channelClients.forEach((subs, channelId) => {
+    stompSubscriptions.forEach((subs, channelId) => {
         subs.forEach((sub) => {
             if (sub.sessionId === sessionId) {
                 subs.delete(sub);
             }
         });
         if (subs.size === 0) {
-            channelClients.delete(channelId);
+            stompSubscriptions.delete(channelId);
         }
     });
 });
