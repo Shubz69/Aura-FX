@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import Chatbot from "../components/Chatbot";
 import CosmicBackground from "../components/CosmicBackground";
 import AuraLogo from "../components/AuraLogo";
+import { FaChartLine, FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaGlobe } from 'react-icons/fa';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -166,6 +167,68 @@ const Home = () => {
                                         <div className="why-icon">✓</div>
                                         <h3 className="why-title">Comprehensive Resources</h3>
                                         <p className="why-text">Access extensive library of courses, tools, and trading materials</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Trading Markets Section */}
+                            <div className="trading-markets-section">
+                                <h2 className="section-title">Trade Multiple Markets</h2>
+                                <div className="markets-grid">
+                                    <div className="market-item">
+                                        <div className="market-icon"><FaChartLine /></div>
+                                        <h3 className="market-title">Forex</h3>
+                                        <p className="market-description">Major, minor, and exotic currency pairs</p>
+                                    </div>
+                                    <div className="market-item">
+                                        <div className="market-icon"><FaTrophy /></div>
+                                        <h3 className="market-title">Stocks</h3>
+                                        <p className="market-description">US and international equity markets</p>
+                                    </div>
+                                    <div className="market-item">
+                                        <div className="market-icon"><FaRocket /></div>
+                                        <h3 className="market-title">Crypto</h3>
+                                        <p className="market-description">Bitcoin, Ethereum, and altcoins</p>
+                                    </div>
+                                    <div className="market-item">
+                                        <div className="market-icon"><FaGlobe /></div>
+                                        <h3 className="market-title">Options</h3>
+                                        <p className="market-description">Advanced options trading strategies</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Key Features Section */}
+                            <div className="key-features-section">
+                                <h2 className="section-title">What Sets Us Apart</h2>
+                                <div className="features-list">
+                                    <div className="feature-item">
+                                        <div className="feature-icon"><FaShieldAlt /></div>
+                                        <div className="feature-content">
+                                            <h3 className="feature-item-title">Secure Platform</h3>
+                                            <p className="feature-item-text">Your data and privacy are protected with enterprise-grade security</p>
+                                        </div>
+                                    </div>
+                                    <div className="feature-item">
+                                        <div className="feature-icon"><FaClock /></div>
+                                        <div className="feature-content">
+                                            <h3 className="feature-item-title">24/7 Support</h3>
+                                            <p className="feature-item-text">Get help whenever you need it from our dedicated support team</p>
+                                        </div>
+                                    </div>
+                                    <div className="feature-item">
+                                        <div className="feature-icon"><FaUsers /></div>
+                                        <div className="feature-content">
+                                            <h3 className="feature-item-title">Active Community</h3>
+                                            <p className="feature-item-text">Connect with thousands of traders sharing insights and strategies</p>
+                                        </div>
+                                    </div>
+                                    <div className="feature-item">
+                                        <div className="feature-icon"><FaGraduationCap /></div>
+                                        <div className="feature-content">
+                                            <h3 className="feature-item-title">Expert Mentors</h3>
+                                            <p className="feature-item-text">Learn from professionals with proven track records in trading</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

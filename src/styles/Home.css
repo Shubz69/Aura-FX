@@ -499,6 +499,134 @@ body.loading-active {
     font-weight: 300;
 }
 
+/* Trading Markets Section */
+.trading-markets-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 4rem 0;
+    text-align: center;
+}
+
+.markets-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.market-item {
+    padding: 2.5rem 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    text-align: center;
+}
+
+.market-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #ffffff;
+    transform: translateY(-5px);
+}
+
+.market-icon {
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    filter: grayscale(0.3);
+    transition: filter 0.3s ease;
+}
+
+.market-item:hover .market-icon {
+    filter: grayscale(0);
+}
+
+.market-title {
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.market-description {
+    font-size: 1rem;
+    color: #ffffff;
+    line-height: 1.6;
+    font-weight: 300;
+}
+
+/* Key Features Section */
+.key-features-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 4rem 0;
+    text-align: center;
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 3rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    text-align: left;
+}
+
+.feature-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #ffffff;
+    transform: translateX(5px);
+}
+
+.feature-item .feature-icon {
+    font-size: 2rem;
+    color: #ffffff;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: grayscale(0.3);
+    transition: filter 0.3s ease;
+}
+
+.feature-item:hover .feature-icon {
+    filter: grayscale(0);
+}
+
+.feature-content {
+    flex: 1;
+}
+
+.feature-item-title {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.feature-item-text {
+    font-size: 1rem;
+    color: #ffffff;
+    line-height: 1.6;
+    font-weight: 300;
+}
+
 /* Responsive Design */
 /* Large Tablets and Small Desktops */
 @media (max-width: 1200px) {
@@ -518,6 +646,11 @@ body.loading-active {
     
     .stat-number {
         font-size: 2.2rem;
+    }
+    
+    .markets-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
     }
 }
 
@@ -559,6 +692,21 @@ body.loading-active {
     .why-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
+    }
+    
+    .markets-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .market-item {
+        padding: 2rem 1.5rem;
+    }
+    
+    .feature-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
     }
     
     .section-title {
@@ -669,6 +817,58 @@ body.loading-active {
     
     .why-item {
         padding: 1.5rem 1.25rem;
+    }
+    
+    .trading-markets-section {
+        width: 100%;
+        margin: 3rem 0;
+        padding: 0 1rem;
+    }
+    
+    .markets-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .market-item {
+        padding: 2rem 1.5rem;
+    }
+    
+    .market-icon {
+        font-size: 1.8rem;
+    }
+    
+    .market-title {
+        font-size: 1rem;
+    }
+    
+    .market-description {
+        font-size: 0.85rem;
+    }
+    
+    .key-features-section {
+        width: 100%;
+        margin: 3rem 0;
+        padding: 0 1rem;
+    }
+    
+    .feature-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .feature-item .feature-icon {
+        font-size: 1.3rem;
+        min-width: 50px;
+    }
+    
+    .feature-item-title {
+        font-size: 1rem;
+    }
+    
+    .feature-item-text {
+        font-size: 0.85rem;
     }
     
     .section-title {

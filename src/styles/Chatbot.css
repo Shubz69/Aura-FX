@@ -7,7 +7,7 @@
     --chatbot-text-muted: #8E9297;
     --chatbot-accent: rgba(255, 255, 255, 0.2);
     --chatbot-accent-dark: rgba(255, 255, 255, 0.15);
-    --chatbot-border: #1a0f2e;
+    --chatbot-border: rgba(255, 255, 255, 0.2);
 }
 
 /* Floating Chat Button */
@@ -272,7 +272,7 @@
 }
 
 .chatbot-input input:focus {
-    background: #1a0f2e;
+    background: rgba(10, 10, 10, 0.95);
     box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
