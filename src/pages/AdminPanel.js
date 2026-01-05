@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../utils/useWebSocket';
 import ConfirmationModal from '../components/ConfirmationModal';
+import CosmicBackground from '../components/CosmicBackground';
 import '../styles/AdminPanel.css';
 
 const AdminPanel = () => {
@@ -132,6 +133,7 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-panel-container">
+            <CosmicBackground />
             <div className="admin-panel">
                 <div className="admin-header">
                     <h1 className="admin-title">REGISTERED USERS</h1>

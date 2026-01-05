@@ -338,12 +338,6 @@ module.exports = async (req, res) => {
             // Fetch courses to create channels
             const [courses] = await db.execute('SELECT * FROM courses');
             
-            // Insert default channels (welcome and announcements - everyone can see, only admins post)
-            const defaultChannels = [
-              { id: 'welcome', name: 'welcome', category: 'announcements', description: 'Welcome to AURA FX community!', accessLevel: 'read-only' },
-              { id: 'announcements', name: 'announcements', category: 'announcements', description: 'Important announcements', accessLevel: 'read-only' }
-            ];
-            
             // Helper function to safely insert/update channels with description
             // Based on actual schema: id, name, category, description, access_level, is_system_channel (bit NOT NULL), hidden (bit NOT NULL), etc.
             const safeInsertChannel = async (channelId, channelName, channelCategory, channelDescription, channelAccess) => {
@@ -371,58 +365,23 @@ module.exports = async (req, res) => {
               }
             };
 
-            for (const channel of defaultChannels) {
-              await safeInsertChannel(channel.id, channel.name, channel.category, channel.description, channel.accessLevel);
-            }
-            
-            // Insert admin channel (only admins can see and post)
-            await safeInsertChannel('admin', 'admin', 'staff', 'Admin-only channel', 'admin-only');
-            
-            // Create channels from courses (everyone can see and post)
-            if (courses && courses.length > 0) {
-              for (const course of courses) {
-                const courseId = `course-${course.id}`;
-                const courseName = (course.title || course.name || 'Unnamed Course').toLowerCase().replace(/\s+/g, '-');
-                const courseDisplayName = course.title || course.name || 'Unnamed Course';
-                await safeInsertChannel(courseId, courseName, 'courses', `Discussion for ${courseDisplayName}`, 'open');
-              }
-            }
-            
-            // Ensure all courses from defaultCourses are also in the database
-            const defaultCourses = [
-              { id: 1, title: "E-Commerce" },
-              { id: 2, title: "Health & Fitness" },
-              { id: 3, title: "Trading" },
-              { id: 4, title: "Real Estate" },
-              { id: 5, title: "Social Media" },
-              { id: 6, title: "Psychology and Mindset" },
-              { id: 7, title: "Algorithmic AI" },
-              { id: 8, title: "Crypto" }
-            ];
-            
-            for (const course of defaultCourses) {
-              const courseId = `course-${course.id}`;
-              const courseName = course.title.toLowerCase().replace(/\s+/g, '-');
-              await safeInsertChannel(courseId, courseName, 'courses', `Discussion for ${course.title}`, 'open');
-            }
-            
-            // Add trading channels (everyone can see and post)
+            // ONLY TRADING CHANNELS - Admin-only access
             const tradingChannels = [
-              { id: 'forex', name: 'forex', category: 'trading', description: 'Forex trading discussions' },
-              { id: 'crypto', name: 'crypto', category: 'trading', description: 'Cryptocurrency trading discussions' },
-              { id: 'stocks', name: 'stocks', category: 'trading', description: 'Stock market discussions' },
-              { id: 'indices', name: 'indices', category: 'trading', description: 'Indices trading discussions' },
-              { id: 'day-trading', name: 'day-trading', category: 'trading', description: 'Day trading strategies and discussions' },
-              { id: 'swing-trading', name: 'swing-trading', category: 'trading', description: 'Swing trading discussions' },
-              { id: 'commodities', name: 'commodities', category: 'trading', description: 'Commodities and metals trading insights' },
-              { id: 'futures', name: 'futures', category: 'trading', description: 'Futures market strategies and setups' },
-              { id: 'options', name: 'options', category: 'trading', description: 'Options trading strategies and education' },
-              { id: 'prop-trading', name: 'prop-trading', category: 'trading', description: 'Prop firm challenges and funded account tips' },
-              { id: 'market-analysis', name: 'market-analysis', category: 'trading', description: 'Daily market analysis and trade ideas' }
+              { id: 'forex', name: 'forex', category: 'trading', description: 'Forex trading discussions', accessLevel: 'admin-only' },
+              { id: 'crypto', name: 'crypto', category: 'trading', description: 'Cryptocurrency trading discussions', accessLevel: 'admin-only' },
+              { id: 'stocks', name: 'stocks', category: 'trading', description: 'Stock market discussions', accessLevel: 'admin-only' },
+              { id: 'indices', name: 'indices', category: 'trading', description: 'Indices trading discussions', accessLevel: 'admin-only' },
+              { id: 'day-trading', name: 'day-trading', category: 'trading', description: 'Day trading strategies and discussions', accessLevel: 'admin-only' },
+              { id: 'swing-trading', name: 'swing-trading', category: 'trading', description: 'Swing trading discussions', accessLevel: 'admin-only' },
+              { id: 'commodities', name: 'commodities', category: 'trading', description: 'Commodities and metals trading insights', accessLevel: 'admin-only' },
+              { id: 'futures', name: 'futures', category: 'trading', description: 'Futures market strategies and setups', accessLevel: 'admin-only' },
+              { id: 'options', name: 'options', category: 'trading', description: 'Options trading strategies and education', accessLevel: 'admin-only' },
+              { id: 'prop-trading', name: 'prop-trading', category: 'trading', description: 'Prop firm challenges and funded account tips', accessLevel: 'admin-only' },
+              { id: 'market-analysis', name: 'market-analysis', category: 'trading', description: 'Daily market analysis and trade ideas', accessLevel: 'admin-only' }
             ];
             
             for (const channel of tradingChannels) {
-              await safeInsertChannel(channel.id, channel.name, channel.category, channel.description, 'open');
+              await safeInsertChannel(channel.id, channel.name, channel.category, channel.description, channel.accessLevel);
             }
             
             // Re-fetch channels after inserting/updating
@@ -432,24 +391,27 @@ module.exports = async (req, res) => {
           }
           
           if (rows && rows.length > 0) {
-            const channels = rows.map(row => {
-              // Create a proper displayName from the name
-              const displayName = row.name
-                .split('-')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-              
-              return {
-                id: row.id,
-                name: row.name,
-                displayName: displayName,
-                category: row.category || 'general',
-                description: row.description,
-                accessLevel: row.access_level || 'open',
-                locked: row.access_level === 'admin-only'
-              };
-            });
-            return res.status(200).json(channels);
+            // Filter to only show trading channels with admin-only access
+            const tradingChannels = rows
+              .filter(row => row.category === 'trading' && (row.access_level === 'admin-only' || row.access_level === 'admin'))
+              .map(row => {
+                // Create a proper displayName from the name
+                const displayName = row.name
+                  .split('-')
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ');
+                
+                return {
+                  id: row.id,
+                  name: row.name,
+                  displayName: displayName,
+                  category: row.category || 'trading',
+                  description: row.description,
+                  accessLevel: 'admin-only',
+                  locked: true
+                };
+              });
+            return res.status(200).json(tradingChannels);
           }
         } catch (dbError) {
           console.error('Database error fetching channels:', dbError);

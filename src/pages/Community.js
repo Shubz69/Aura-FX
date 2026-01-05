@@ -206,10 +206,16 @@ const Community = () => {
         try {
             const response = await Api.getChannels();
             if (Array.isArray(response?.data)) {
-                channelsFromServer = response.data;
+                    channelsFromServer = response.data;
             } else if (Array.isArray(response?.data?.channels)) {
                 channelsFromServer = response.data.channels;
             }
+            
+            // Filter to only show trading channels with admin-only access
+            channelsFromServer = channelsFromServer.filter(channel => 
+                channel.category === 'trading' && 
+                (channel.accessLevel === 'admin-only' || channel.locked === true)
+            );
             
             // Cache channels for next time
             if (channelsFromServer.length > 0) {
@@ -264,19 +270,13 @@ const Community = () => {
                 };
             });
 
-            const essentialChannels = [
-                { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA FX community!', accessLevel: 'open', locked: false },
-                { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important platform announcements', accessLevel: 'admin-only', locked: true },
-                { id: 'general-chat', name: 'general-chat', displayName: 'General Chat', category: 'trading', description: 'General trading discussion', accessLevel: 'open', locked: false }
-            ];
+            // Only trading channels with admin-only access
+            const essentialChannels = [];
 
             preparedChannels = [...essentialChannels, ...courseChannels];
         } else {
-            preparedChannels = [
-                { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA FX community!', accessLevel: 'open', locked: false },
-                { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important platform announcements', accessLevel: 'admin-only', locked: true },
-                { id: 'general-chat', name: 'general-chat', displayName: 'General Chat', category: 'general', description: 'General trading discussion', accessLevel: 'open', locked: false }
-            ];
+            // Only trading channels with admin-only access
+            preparedChannels = [];
         }
 
         if (preparedChannels.length === 0) {
@@ -1104,7 +1104,7 @@ const Community = () => {
         }, 5000); // Increased from 3 to 5 seconds
 
         return () => clearInterval(pollInterval);
-    }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages]);
+    }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel]);
     
     // Add welcome message when welcome channel is selected for first time
     useEffect(() => {
@@ -1471,26 +1471,25 @@ Let's build generational wealth together! 💰🚀`,
         setDeleteMessageModal(null);
     };
 
-    // Group channels by category
+    // Group channels by category - ONLY TRADING CHANNELS with admin-only access
     const groupedChannels = channelList.reduce((acc, channel) => {
-        const category = channel.category || 'general';
-        const channelName = (channel.name || '').toLowerCase();
-        const isAdminChannel = channel.accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
-        
-        // Admin channel: Only admins can see it
-        if (isAdminChannel && !isAdminUser && !isSuperAdminUser) {
-            return acc; // Skip admin channel for non-admins
-        }
-        
-        // Everyone can see welcome and announcements (they're read-only for non-admins)
-        // Everyone can see all other channels (courses, trading, etc.)
-        // No filtering needed for subscribed users - they see everything except admin channel
-        
-        // Only filter admin channel for non-admins
-        if (isAdminChannel && !isAdminUser && !isSuperAdminUser) {
+        // Only show trading channels
+        if (channel.category !== 'trading') {
             return acc;
         }
         
+        // Only show admin-only channels (locked channels)
+        const isAdminChannel = channel.accessLevel === 'admin-only' || channel.locked === true;
+        if (!isAdminChannel) {
+            return acc;
+        }
+        
+        // Only admins can see these channels
+        if (!isAdminUser && !isSuperAdminUser) {
+            return acc;
+        }
+        
+        const category = 'trading';
         if (!acc[category]) {
             acc[category] = [];
         }
