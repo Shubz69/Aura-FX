@@ -330,7 +330,7 @@ body.loading-active .navbar {
 @media (min-width: 375px) and (max-width: 767px) {
     .navbar {
         padding: 0.6rem 1rem;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
         height: 60px;
         min-height: 60px;
@@ -347,41 +347,19 @@ body.loading-active .navbar {
     }
     
     .logo-container {
-        flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        min-width: 0;
-        flex-shrink: 1;
+        display: none !important;
     }
     
     .logo-link {
-        gap: 10px;
-        display: flex;
-        align-items: center;
-        min-width: 0;
+        display: none !important;
     }
     
     .navbar-logo-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-width: 0;
-    }
-    
-    .navbar-logo-wrapper .aura-logo-symbol {
-        width: 32px;
-        height: 32px;
-        flex-shrink: 0;
+        display: none !important;
     }
     
     .logo {
-        font-size: 0.8rem;
-        letter-spacing: 0.18em;
-        color: #ffffff;
-        white-space: nowrap;
-        font-weight: 300;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        display: none !important;
     }
     
     .nav-links {
@@ -393,14 +371,18 @@ body.loading-active .navbar {
     }
     
     .mobile-menu-toggle {
-        display: flex;
-        font-size: 1.4rem;
-        padding: 0.6rem;
-        min-width: 48px;
-        min-height: 48px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.4);
+        display: flex !important;
+        font-size: 1.5rem;
+        padding: 0.7rem;
+        min-width: 50px;
+        min-height: 50px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
         flex-shrink: 0;
+        color: #ffffff;
+        align-items: center;
+        justify-content: center;
     }
 }
 
@@ -411,24 +393,30 @@ body.loading-active .navbar {
         height: 58px;
         min-height: 58px;
         background: #0a0a0a;
+        justify-content: flex-end;
+    }
+    
+    .logo-container {
+        display: none !important;
     }
     
     .navbar-logo-wrapper .aura-logo-symbol {
-        width: 30px;
-        height: 30px;
+        display: none !important;
     }
     
     .logo {
-        font-size: 0.8rem;
-        letter-spacing: 0.18em;
-        color: #ffffff;
+        display: none !important;
     }
     
     .mobile-menu-toggle {
-        font-size: 1.3rem;
-        padding: 0.5rem;
-        min-width: 44px;
-        min-height: 44px;
+        display: flex !important;
+        font-size: 1.4rem;
+        padding: 0.6rem;
+        min-width: 48px;
+        min-height: 48px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
     }
 }
 
@@ -440,30 +428,34 @@ body.loading-active .navbar {
         min-height: 56px;
         background: #0a0a0a;
         border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        justify-content: flex-end;
+    }
+    
+    .logo-container {
+        display: none !important;
     }
     
     .navbar-logo-wrapper .aura-logo-symbol {
-        width: 28px;
-        height: 28px;
+        display: none !important;
     }
     
     .logo {
-        font-size: 0.75rem;
-        letter-spacing: 0.15em;
-        color: #ffffff;
+        display: none !important;
     }
     
     .mobile-menu-toggle {
-        font-size: 1.2rem;
+        display: flex !important;
+        font-size: 1.3rem;
         padding: 0.5rem;
         min-width: 48px;
         min-height: 48px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
     }
 }
 
-/* Small Mobile */
+/* Small Mobile (Samsung and other Android devices) */
 @media (max-width: 480px) {
     .navbar {
         padding: 0.6rem 0.9rem;
@@ -471,25 +463,30 @@ body.loading-active .navbar {
         min-height: 58px;
         background: #0a0a0a;
         border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        justify-content: flex-end;
+    }
+    
+    .logo-container {
+        display: none !important;
     }
     
     .navbar-logo-wrapper .aura-logo-symbol {
-        width: 30px;
-        height: 30px;
+        display: none !important;
     }
     
     .logo {
-        font-size: 0.8rem;
-        letter-spacing: 0.15em;
-        color: #ffffff;
+        display: none !important;
     }
     
     .mobile-menu-toggle {
-        font-size: 1.3rem;
+        display: flex !important;
+        font-size: 1.4rem;
+        padding: 0.6rem;
         min-width: 48px;
         min-height: 48px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
     }
 }
 
