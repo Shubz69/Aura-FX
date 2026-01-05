@@ -87,7 +87,7 @@ body.loading-active .navbar {
     font-size: 0.9rem;
     font-weight: 200;
     font-family: 'Space Grotesk', sans-serif;
-    color: rgba(255, 255, 255, 0.95);
+    color: #ffffff;
     letter-spacing: 0.25em;
     position: relative;
     text-transform: uppercase;
@@ -108,7 +108,7 @@ body.loading-active .navbar {
 
 .nav-links li a {
     text-decoration: none;
-    color: var(--accent);
+    color: #ffffff;
     font-weight: 500;
     font-family: var(--font-main);
     padding: 0.8rem 1rem;
@@ -118,10 +118,12 @@ body.loading-active .navbar {
     align-items: center;
     gap: 6px;
     position: relative;
+    opacity: 0.9;
 }
 
 .nav-links li a:hover {
-    color: var(--primary);
+    color: #ffffff;
+    opacity: 1;
     transform: translateY(-2px);
 }
 
@@ -149,8 +151,8 @@ body.loading-active .navbar {
 .sign-in {
     padding: 0.8rem 2rem;
     background: transparent;
-    border: 1px solid var(--primary);
-    color: var(--primary);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #ffffff;
     font-weight: 600;
     font-family: var(--font-main);
     border-radius: 50px;
@@ -167,9 +169,9 @@ body.loading-active .navbar {
 
 .start-trading {
     padding: 0.8rem 2rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
     font-weight: 300;
     font-family: 'Space Grotesk', sans-serif;
     letter-spacing: 0.1em;
@@ -431,7 +433,7 @@ body.loading-active .navbar {
 
 .mobile-nav-links li a {
     text-decoration: none;
-    color: var(--accent);
+    color: #ffffff;
     font-size: 1.2rem;
     font-weight: 500;
     font-family: var(--font-main);
@@ -439,10 +441,12 @@ body.loading-active .navbar {
     padding: 0.5rem 1rem;
     display: block;
     transition: color 0.3s ease;
+    opacity: 0.9;
 }
 
 .mobile-nav-links li a:hover {
-    color: var(--primary);
+    color: #ffffff;
+    opacity: 1;
 }
 
 .mobile-nav-links li a::after {
@@ -481,14 +485,14 @@ body.loading-active .navbar {
 
 .mobile-sign-in {
     background: transparent;
-    border: 1px solid var(--primary);
-    color: var(--primary);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #ffffff;
 }
 
 .mobile-sign-in:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--secondary);
-    color: var(--secondary);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.7);
+    color: #ffffff;
 }
 
 .mobile-start-trading {

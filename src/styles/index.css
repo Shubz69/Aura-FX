@@ -1,10 +1,10 @@
 /* ========== VARIABLES (From Landing Page) ========== */
 :root {
-    /* Blue Colors */
-    --primary: #1E90FF;      /* Dodger Blue */
-    --secondary: #4169E1;    /* Royal Blue */
-    --accent: #00BFFF;       /* Deep Sky Blue */
-    --dark-blue: #0000CD;    /* Medium Blue */
+    /* White/Cosmic Colors */
+    --primary: #ffffff;      /* White */
+    --secondary: rgba(255, 255, 255, 0.8);    /* Light White */
+    --accent: rgba(255, 255, 255, 0.9);       /* White with slight transparency */
+    --dark-blue: rgba(255, 255, 255, 0.7);    /* Medium White */
     
     /* Dark Cosmic Colors */
     --bg-dark: #0a0a0a;
