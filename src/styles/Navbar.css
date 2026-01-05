@@ -13,7 +13,7 @@ body.loading-active .navbar {
     top: 0;
     left: 0;
     width: 100%;
-    background: rgba(10, 10, 10, 0.9);
+    background: #0a0a0a;
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 1000;
@@ -504,20 +504,21 @@ body.loading-active .navbar {
     left: 0;
     width: 100%;
     height: 100vh;
-    background: rgba(10, 10, 10, 0.98);
+    background: #0a0a0a;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     z-index: 10000;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding-top: 80px;
-    padding-bottom: 40px;
+    padding-top: 70px;
+    padding-bottom: 30px;
     overflow-y: auto;
     transform: translateY(-100%);
     transition: transform 0.3s ease-in-out;
     -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
 }
 
 .mobile-menu.active {
