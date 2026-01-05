@@ -9,6 +9,8 @@ HOSTNAME: tramway.proxy.rlwy.net
 PORT: 49989
 USERNAME: root
 PASSWORD: FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
+   ⚠️ IMPORTANT: Copy the EXACT password from Railway "MYSQL_ROOT_PASSWORD" variable
+   ⚠️ Make sure there are no extra spaces or hidden characters
 DEFAULT SCHEMA: railway
 
 STEP-BY-STEP INSTRUCTIONS:
