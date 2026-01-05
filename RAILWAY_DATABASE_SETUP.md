@@ -62,10 +62,10 @@ You need to add these environment variables to your **Vercel project** (where yo
    - Add the following variables (use the values from Railway MySQL service):
 
    ```
-   MYSQL_HOST=<your-railway-mysql-host>
-   MYSQL_PORT=3306
+   MYSQL_HOST=tramway.proxy.rlwy.net
+   MYSQL_PORT=49989
    MYSQL_USER=root
-   MYSQL_PASSWORD=<your-railway-mysql-password>
+   MYSQL_PASSWORD=FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
    MYSQL_DATABASE=railway
    MYSQL_SSL=true
    ```

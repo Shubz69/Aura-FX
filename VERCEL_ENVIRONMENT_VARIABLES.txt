@@ -1,0 +1,37 @@
+AURA FX - Vercel Environment Variables
+======================================
+
+Add these EXACT values to your Vercel project:
+
+HOW TO ADD:
+1. Go to https://vercel.com/dashboard
+2. Select your "AURA FX" project
+3. Go to "Settings" → "Environment Variables"
+4. Add each variable below (one by one)
+5. Make sure to select ALL environments (Production, Preview, Development)
+6. Click "Save" after each variable
+7. After adding all, go to "Deployments" and click "Redeploy" on the latest deployment
+
+VARIABLES TO ADD:
+=================
+
+MYSQL_HOST=tramway.proxy.rlwy.net
+MYSQL_PORT=49989
+MYSQL_USER=root
+MYSQL_PASSWORD=FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
+MYSQL_DATABASE=railway
+MYSQL_SSL=true
+
+IMPORTANT NOTES:
+- Copy and paste EXACTLY as shown above
+- MYSQL_SSL must be set to "true" (Railway requires SSL for external connections)
+- Make sure all variables are added to Production, Preview, AND Development environments
+- After adding, redeploy your project for changes to take effect
+
+OPTIONAL EMAIL VARIABLES (if you want email functionality):
+===========================================================
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+CONTACT_INBOX=platform@aurafx.com
+CONTACT_FROM=no-reply@aurafx.com
+

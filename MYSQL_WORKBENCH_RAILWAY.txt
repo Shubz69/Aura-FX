@@ -4,30 +4,25 @@ IMPORTANT: This is for the NEW AURA FX database, separate from "theglitches"
 
 1. Open MySQL Workbench
 2. Click "+" to create new connection
-3. Enter these details (get the actual values from Railway):
+3. Enter these EXACT details:
 
 Connection Name: AURA FX Railway MySQL
-Hostname: <Get from Railway MySQL service - MYSQL_HOST variable>
-Port: <Get from Railway MySQL service - MYSQL_PORT variable (usually 3306)>
-Username: <Get from Railway MySQL service - MYSQL_USER variable (usually root)>
-Password: <Get from Railway MySQL service - MYSQL_PASSWORD variable>
-Default Schema: <Get from Railway MySQL service - MYSQL_DATABASE variable (usually railway)>
+Hostname: tramway.proxy.rlwy.net
+Port: 49989
+Username: root
+Password: FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
+Default Schema: railway
 
-4. Click "Test Connection" - should work!
-5. Click "OK" to save
-6. Connect to the database
+4. Click "Store in Keychain" for the password
+5. Click "Test Connection" - should work!
+6. Click "OK" to save
+7. Double-click the connection to connect
 
-TO GET RAILWAY CREDENTIALS:
-1. Go to Railway.app
-2. Open your AURA FX project
-3. Click on the MySQL service
-4. Go to "Variables" tab
-5. Copy the values for:
-   - MYSQL_HOST
-   - MYSQL_PORT
-   - MYSQL_USER
-   - MYSQL_PASSWORD
-   - MYSQL_DATABASE
+IMPORTANT NOTES:
+- Use the PUBLIC URL hostname (tramway.proxy.rlwy.net) for external connections
+- The port is 49989 (from MYSQL_PUBLIC_URL)
+- Default schema is "railway"
+- SSL will be handled automatically by MySQL Workbench
 
 TO IMPORT YOUR SQL FILES:
 1. Connect to AURA FX Railway MySQL
