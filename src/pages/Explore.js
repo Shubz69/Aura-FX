@@ -1,7 +1,25 @@
 import React from 'react';
 import '../styles/Explore.css';
 import CosmicBackground from '../components/CosmicBackground';
-import { FaChartLine, FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaDollarSign } from 'react-icons/fa';
+import { 
+  FaChartLine, 
+  FaUsers, 
+  FaTrophy, 
+  FaGraduationCap, 
+  FaRocket, 
+  FaDollarSign,
+  FaBitcoin,
+  FaCoins,
+  FaBuilding,
+  FaLaptop,
+  FaBrain,
+  FaRobot,
+  FaHome,
+  FaShieldAlt,
+  FaHandshake,
+  FaBook,
+  FaNetworkWired
+} from 'react-icons/fa';
 
 const Explore = () => {
   // Stock ticker data
@@ -18,36 +36,42 @@ const Explore = () => {
     { symbol: 'QQQ', price: '420.85', change: '+0.8%', positive: true }
   ];
 
-  // Team members data
-  const teamMembers = [
-    {
-      id: 1,
-      name: 'Shubz',
-      role: 'Lead Architect',
-      expertise: 'Wealth Building',
-      description: 'Expert in creating sustainable income streams and teaching principles of generational wealth creation.'
-    },
-    {
-      id: 2,
-      name: 'Aaron',
-      role: 'UI/UX Director',
-      expertise: 'Financial Education',
-      description: 'Designs learning experiences that help you understand how to make your money work for you.'
-    },
-    {
-      id: 3,
-      name: 'Shaun',
-      role: 'Investment Strategist',
-      expertise: 'Smart Investing',
-      description: 'Teaches disciplined wealth-building strategies and how to avoid common financial pitfalls.'
-    },
-    {
-      id: 4,
-      name: 'Leonardo',
-      role: 'Financial Mentor',
-      expertise: 'Multiple Income Streams',
-      description: 'Guides you through building diverse income sources and achieving lasting financial independence.'
-    }
+  // Trading Markets
+  const tradingMarkets = [
+    { icon: <FaBitcoin />, title: 'Cryptocurrency Trading', description: 'Master Bitcoin, Ethereum, and altcoin trading strategies' },
+    { icon: <FaChartLine />, title: 'Forex Trading', description: 'Learn currency pair trading and market analysis' },
+    { icon: <FaBuilding />, title: 'Stock Market', description: 'Navigate equities, ETFs, and index trading' },
+    { icon: <FaCoins />, title: 'Commodities', description: 'Trade gold, oil, and other valuable resources' },
+    { icon: <FaRocket />, title: 'Futures & Options', description: 'Advanced derivatives trading strategies' },
+    { icon: <FaNetworkWired />, title: 'Forex Pairs', description: 'Major, minor, and exotic currency pairs' }
+  ];
+
+  // Course Categories
+  const courseCategories = [
+    { icon: <FaLaptop />, title: 'E-Commerce', description: 'Build and scale online businesses' },
+    { icon: <FaTrophy />, title: 'Health & Fitness', description: 'Monetize your wellness expertise' },
+    { icon: <FaChartLine />, title: 'Trading', description: 'Professional trading strategies and techniques' },
+    { icon: <FaHome />, title: 'Real Estate', description: 'Property investment and management' },
+    { icon: <FaUsers />, title: 'Social Media', description: 'Build brands and monetize platforms' },
+    { icon: <FaBrain />, title: 'Psychology and Mindset', description: 'Develop winning mental frameworks' },
+    { icon: <FaRobot />, title: 'Algorithmic AI', description: 'AI-powered trading and automation' },
+    { icon: <FaBitcoin />, title: 'Crypto', description: 'Blockchain and cryptocurrency mastery' }
+  ];
+
+  // Core Values
+  const coreValues = [
+    { icon: <FaShieldAlt />, title: 'Trust & Integrity', description: 'Ethical practices and transparent education' },
+    { icon: <FaGraduationCap />, title: 'Comprehensive Education', description: 'In-depth courses covering all aspects of wealth building' },
+    { icon: <FaHandshake />, title: 'Community Support', description: 'Join a network of like-minded wealth builders' },
+    { icon: <FaBook />, title: 'Practical Knowledge', description: 'Real-world strategies you can implement immediately' }
+  ];
+
+  // Success Metrics (without names)
+  const successMetrics = [
+    { number: '10,000+', label: 'Active Learners' },
+    { number: '8', label: 'Core Course Categories' },
+    { number: '24/7', label: 'Community Access' },
+    { number: '100%', label: 'Practical Focus' }
   ];
 
   return (
@@ -84,12 +108,39 @@ const Explore = () => {
         <div className="hero-content">
           <h1 className="hero-title">WELCOME TO AURA FX</h1>
           <p className="hero-description">
-            Build <strong>GENERATIONAL WEALTH</strong> through our multiple streams of knowledge. Learn to make money work for you, avoid bad financial habits, and gain true financial freedom through disciplined education and smart investment strategies.
+            Build <strong>GENERATIONAL WEALTH</strong> through our comprehensive educational platform. Learn to make money work for you, eliminate bad financial habits, and achieve true financial freedom through disciplined education and smart investment strategies.
           </p>
         </div>
       </section>
 
-      {/* Platform Features - New Card Layout */}
+      {/* About AURA FX */}
+      <section className="about-section">
+        <h2 className="section-title">ABOUT AURA FX</h2>
+        <div className="about-content">
+          <div className="about-text">
+            <p>
+              AURA FX is a leading financial education platform dedicated to helping individuals build generational wealth through multiple income streams. We provide comprehensive courses, expert guidance, and a supportive community focused on breaking free from traditional financial limitations.
+            </p>
+            <p>
+              Our mission is to empower you with the knowledge and strategies needed to create sustainable wealth that spans generations. We teach you how to make money work for you, not the other way around.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Success Metrics */}
+      <section className="metrics-section">
+        <div className="metrics-grid">
+          {successMetrics.map((metric, index) => (
+            <div key={index} className="metric-card">
+              <div className="metric-number">{metric.number}</div>
+              <div className="metric-label">{metric.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Platform Features */}
       <section className="features-showcase">
         <h2 className="section-title">PLATFORM FEATURES</h2>
         <div className="features-showcase-grid">
@@ -126,59 +177,67 @@ const Explore = () => {
         </div>
       </section>
 
-      {/* Team Section - New Vertical Timeline Layout */}
-      <section className="team-showcase">
-        <h2 className="section-title">OUR EXPERT TEAM</h2>
-        <div className="team-timeline">
-          {teamMembers.map((member, index) => (
-            <div key={member.id} className="timeline-item">
-              <div className="timeline-marker">
-                <div className="member-avatar">{member.name.charAt(0)}</div>
-                <div className="expertise-badge">{member.expertise}</div>
-              </div>
-              <div className="timeline-content">
-                <h3>{member.name}</h3>
-                <p className="member-role">{member.role}</p>
-                <p className="member-description">{member.description}</p>
-              </div>
+      {/* Trading Markets */}
+      <section className="markets-section">
+        <h2 className="section-title">TRADING MARKETS</h2>
+        <div className="markets-grid">
+          {tradingMarkets.map((market, index) => (
+            <div key={index} className="market-card">
+              <div className="market-icon">{market.icon}</div>
+              <h3>{market.title}</h3>
+              <p>{market.description}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Testimonials - New Side-by-Side Layout */}
-      <section className="testimonials-showcase">
-        <h2 className="section-title">SUCCESS STORIES</h2>
-        <div className="testimonials-grid">
-          <div className="testimonial-box">
-            <div className="testimonial-quote">"</div>
-            <p className="testimonial-text">
-              AURA FX taught me to break free from bad spending habits and focus on building real wealth. I now have three passive income streams and my financial future looks completely different.
-            </p>
-            <div className="testimonial-author">
-              <span className="author-name">Michael T.</span>
-              <span className="author-title">Financial Freedom Journey | Started 2 years ago</span>
+      {/* Course Categories */}
+      <section className="courses-section">
+        <h2 className="section-title">COURSE CATEGORIES</h2>
+        <div className="courses-grid">
+          {courseCategories.map((course, index) => (
+            <div key={index} className="course-card">
+              <div className="course-icon">{course.icon}</div>
+              <h3>{course.title}</h3>
+              <p>{course.description}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Core Values */}
+      <section className="values-section">
+        <h2 className="section-title">OUR CORE VALUES</h2>
+        <div className="values-grid">
+          {coreValues.map((value, index) => (
+            <div key={index} className="value-card">
+              <div className="value-icon">{value.icon}</div>
+              <h3>{value.title}</h3>
+              <p>{value.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* What We Offer */}
+      <section className="offerings-section">
+        <h2 className="section-title">WHAT WE OFFER</h2>
+        <div className="offerings-content">
+          <div className="offering-item">
+            <h3>Expert-Led Courses</h3>
+            <p>Comprehensive courses taught by experienced professionals covering all aspects of wealth building, trading, and financial independence.</p>
           </div>
-          <div className="testimonial-box">
-            <div className="testimonial-quote">"</div>
-            <p className="testimonial-text">
-              Instead of working for money, I learned how to make money work for me. The multiple streams of knowledge here helped me understand investing, passive income, and generational wealth.
-            </p>
-            <div className="testimonial-author">
-              <span className="author-name">Sophia R.</span>
-              <span className="author-title">Entrepreneur | Building Legacy Wealth</span>
-            </div>
+          <div className="offering-item">
+            <h3>Live Community</h3>
+            <p>Connect with fellow learners, share strategies, ask questions, and grow together in our active community platform.</p>
           </div>
-          <div className="testimonial-box">
-            <div className="testimonial-quote">"</div>
-            <p className="testimonial-text">
-              This platform changed my mindset from chasing quick money to building sustainable wealth. No more bad financial habits—just smart strategies that create lasting prosperity for my family.
-            </p>
-            <div className="testimonial-author">
-              <span className="author-name">David K.</span>
-              <span className="author-title">Wealth Builder | Creating Generational Impact</span>
-            </div>
+          <div className="offering-item">
+            <h3>Practical Strategies</h3>
+            <p>Real-world, actionable strategies you can implement immediately to start building wealth and creating multiple income streams.</p>
+          </div>
+          <div className="offering-item">
+            <h3>Ongoing Support</h3>
+            <p>Continuous learning resources, updates, and support to help you stay ahead in your wealth-building journey.</p>
           </div>
         </div>
       </section>
