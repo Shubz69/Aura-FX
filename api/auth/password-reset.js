@@ -196,7 +196,7 @@ module.exports = async (req, res) => {
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #ffffff;">AURA FX - Password Reset</h2>
               <p>You requested to reset your password. Your reset code is:</p>
-              <div style="background: #1a0f2e; color: #8B5CF6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 8px;">
+              <div style="background: #1a1a1a; color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 8px; border: 1px solid #ffffff;">
                 ${resetCode}
               </div>
               <p>This code will expire in 10 minutes.</p>
