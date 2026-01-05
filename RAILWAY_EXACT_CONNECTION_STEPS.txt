@@ -1,0 +1,111 @@
+AURA FX - Exact Railway MySQL Connection Steps
+===============================================
+
+Based on your Railway Variables tab, use these EXACT values:
+
+FOR MYSQL WORKBENCH:
+====================
+Connection Name: AURA FX Railway MySQL
+
+HOSTNAME: tramway.proxy.rlwy.net
+PORT: 49989
+USERNAME: root
+PASSWORD: FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
+DEFAULT SCHEMA: railway
+
+SSL SETTINGS (REQUIRED):
+========================
+1. Click "SSL" tab in connection dialog
+2. Check "Use SSL" checkbox
+3. SSL Mode: "Require" or "Preferred"
+4. Leave all certificate files EMPTY
+
+STEP-BY-STEP:
+=============
+1. Open MySQL Workbench
+2. Click "+" to create new connection
+3. Enter the values above
+4. Go to "SSL" tab → Enable SSL
+5. Click "Test Connection"
+
+IF STILL GETTING "ACCESS DENIED":
+=================================
+
+OPTION 1: Check Railway IP Restrictions
+----------------------------------------
+1. Go to Railway MySQL service
+2. Click "Settings" tab
+3. Look for "Network" or "Access Control" settings
+4. Check if there are IP whitelist restrictions
+5. Your IP might need to be added to allowed list
+
+OPTION 2: Try Railway's Web Interface
+--------------------------------------
+1. In Railway dashboard, go to MySQL service
+2. Look for "Database" or "Connect" tab
+3. Railway might have a built-in SQL editor
+4. Use that to verify the connection works
+
+OPTION 3: Check Railway Service Logs
+-------------------------------------
+1. Go to MySQL service → "Logs" tab
+2. Look for connection attempts from your IP
+3. Check for any error messages about authentication
+4. This will show if Railway is blocking your connection
+
+OPTION 4: Verify Password Hasn't Changed
+-----------------------------------------
+1. In Railway Variables tab
+2. Click the eye icon next to MYSQL_ROOT_PASSWORD
+3. Verify the password is exactly: FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
+4. Copy it fresh (don't use old copy)
+5. Paste into MySQL Workbench
+
+OPTION 5: Try Different Connection Method
+------------------------------------------
+If MySQL Workbench keeps failing, try:
+1. Use command line: mysql -h tramway.proxy.rlwy.net -P 49989 -u root -p
+2. Or use a different MySQL client (like DBeaver, HeidiSQL)
+3. Or use Railway's connection string directly if supported
+
+OPTION 6: Check for Special Characters
+---------------------------------------
+Make sure the password doesn't have:
+- Leading/trailing spaces
+- Hidden characters
+- Line breaks
+- Copy the password directly from Railway (click eye icon, select all, copy)
+
+FOR VERCEL (These are correct):
+================================
+MYSQL_HOST=tramway.proxy.rlwy.net
+MYSQL_PORT=49989
+MYSQL_USER=root
+MYSQL_PASSWORD=FGcoKdqpUYWNb1nXzdGmBUACzeYDmewb
+MYSQL_DATABASE=railway
+MYSQL_SSL=true
+
+TROUBLESHOOTING CHECKLIST:
+==========================
+□ Password copied directly from Railway (MYSQL_ROOT_PASSWORD)
+□ No extra spaces in password
+□ SSL enabled in MySQL Workbench
+□ Hostname is exactly: tramway.proxy.rlwy.net
+□ Port is exactly: 49989
+□ Username is exactly: root (lowercase)
+□ Default Schema is: railway
+□ Railway MySQL service shows "Online" status
+□ Checked Railway logs for connection errors
+□ Tried revealing password again in Railway (in case it changed)
+
+NEXT STEPS IF STILL FAILING:
+=============================
+1. Contact Railway support - they can check:
+   - If your IP is blocked
+   - If there are connection restrictions
+   - If the MySQL service has any issues
+   
+2. Try connecting from a different network (mobile hotspot) to test if it's IP-related
+
+3. Check Railway documentation for MySQL connection requirements
+
