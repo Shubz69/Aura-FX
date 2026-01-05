@@ -171,7 +171,7 @@
 /* Update gold colors to blue */
 .first-place .podium-avatar img {
     color: var(--accent); /* Changed from gold-primary to blue */
-        0 0 3px var(--accent); /* Changed from gold-primary to blue */
+    box-shadow: 0 0 3px var(--accent); /* Changed from gold-primary to blue */
 }
 
 .second-place .podium-avatar img {
