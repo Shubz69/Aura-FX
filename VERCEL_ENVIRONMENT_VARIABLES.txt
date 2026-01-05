@@ -28,10 +28,21 @@ IMPORTANT NOTES:
 - Make sure all variables are added to Production, Preview, AND Development environments
 - After adding, redeploy your project for changes to take effect
 
-OPTIONAL EMAIL VARIABLES (if you want email functionality):
-===========================================================
+REQUIRED EMAIL VARIABLES (for signups and password resets to work):
+====================================================================
 EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
+EMAIL_PASS=your-gmail-app-password
+
+IMPORTANT: To get a Gmail App Password:
+1. Go to https://myaccount.google.com/security
+2. Enable 2-Step Verification (if not already enabled)
+3. Click "App passwords" under "How you sign in to Google"
+4. Select "Mail" and "Other (Custom name)"
+5. Enter "AURA FX" and click "Generate"
+6. Copy the 16-character password (remove spaces when adding to Vercel)
+
+OPTIONAL EMAIL VARIABLES:
+==========================
 CONTACT_INBOX=platform@aurafx.com
 CONTACT_FROM=no-reply@aurafx.com
 

@@ -214,9 +214,10 @@ module.exports = async (req, res) => {
       // Send email
       const transporter = createEmailTransporter();
       if (!transporter) {
+        console.error('Email service not configured - missing EMAIL_USER or EMAIL_PASS environment variables');
         return res.status(500).json({ 
           success: false, 
-          message: 'Email service is not configured. Please contact support.' 
+          message: 'Email service is temporarily unavailable. Please contact support or check back later.' 
         });
       }
 
