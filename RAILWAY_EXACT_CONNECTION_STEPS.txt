@@ -68,7 +68,7 @@ If MySQL Workbench keeps failing, try:
 2. Or use a different MySQL client (like DBeaver, HeidiSQL)
 3. Or use Railway's connection string directly if supported
 
-OPTION 6: Check for Special Characters
+OPTION 6:Check for Special Characters
 ---------------------------------------
 Make sure the password doesn't have:
 - Leading/trailing spaces
