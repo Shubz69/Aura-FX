@@ -3,6 +3,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const { Server: StompServer } = require('stomp-broker-js');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,10 +12,18 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
-// WebSocket Server
+// WebSocket Server (for STOMP)
 const wss = new WebSocket.Server({ 
     server,
-    path: '/ws'
+    path: '/ws',
+    perMessageDeflate: false
+});
+
+// STOMP Server
+const stompServer = new StompServer({
+    server: wss,
+    path: '/ws',
+    heartbeat: [4000, 4000]
 });
 
 // Database connection pool
@@ -50,90 +59,91 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', service: 'websocket-server' });
 });
 
-// WebSocket connection handling
-wss.on('connection', (ws, req) => {
-    console.log('New WebSocket connection');
-    
-    let clientChannel = null;
-    let userId = null;
+// STOMP message handlers
+stompServer.on('connect', (sessionId) => {
+    console.log(`STOMP client connected: ${sessionId}`);
+});
 
-    ws.on('message', async (message) => {
-        try {
-            const data = JSON.parse(message.toString());
+stompServer.on('subscribe', (subscription) => {
+    const channelId = subscription.destination.replace('/topic/', '').replace('/user/', '');
+    console.log(`Client subscribed to: ${channelId}`);
+    
+    if (!channelClients.has(channelId)) {
+        channelClients.set(channelId, new Set());
+    }
+    channelClients.get(channelId).add(subscription);
+});
+
+stompServer.on('unsubscribe', (subscription) => {
+    const channelId = subscription.destination.replace('/topic/', '').replace('/user/', '');
+    console.log(`Client unsubscribed from: ${channelId}`);
+    
+    if (channelClients.has(channelId)) {
+        channelClients.get(channelId).delete(subscription);
+        if (channelClients.get(channelId).size === 0) {
+            channelClients.delete(channelId);
+        }
+    }
+});
+
+stompServer.on('send', async (subscription, message, headers) => {
+    try {
+        const data = JSON.parse(message);
+        const channelId = subscription.destination.replace('/app/', '');
+        
+        console.log(`Message received for channel: ${channelId}`);
+        
+        // Save to database if pool is available
+        if (dbPool && data.content) {
+            try {
+                await dbPool.execute(
+                    'INSERT INTO messages (channel_id, sender_id, content, timestamp) VALUES (?, ?, ?, NOW())',
+                    [channelId, data.userId || data.senderId || null, data.content]
+                );
+            } catch (dbError) {
+                console.error('Error saving message to database:', dbError.message);
+            }
+        }
+        
+        // Broadcast to all subscribers of this channel
+        const topic = `/topic/${channelId}`;
+        if (channelClients.has(channelId)) {
+            const messageToSend = JSON.stringify({
+                id: Date.now(),
+                channelId: channelId,
+                content: data.content,
+                sender: data.sender || { id: data.userId, username: data.username || 'User' },
+                timestamp: new Date().toISOString()
+            });
             
-            if (data.type === 'subscribe') {
-                // Subscribe to a channel
-                clientChannel = data.channelId;
-                userId = data.userId;
-                
-                if (!channelClients.has(clientChannel)) {
-                    channelClients.set(clientChannel, new Set());
-                }
-                channelClients.get(clientChannel).add(ws);
-                
-                console.log(`Client subscribed to channel: ${clientChannel}`);
-                
-                // Send confirmation
-                ws.send(JSON.stringify({
-                    type: 'subscribed',
-                    channelId: clientChannel
-                }));
-            } else if (data.type === 'message') {
-                // Broadcast message to all clients in the channel
-                const channelId = data.channelId;
-                const messageData = {
-                    type: 'new_message',
-                    message: data.message
-                };
-                
-                // Save to database if pool is available
-                if (dbPool && data.message) {
+            channelClients.get(channelId).forEach((sub) => {
+                if (sub && sub.send) {
                     try {
-                        await dbPool.execute(
-                            'INSERT INTO messages (channel_id, sender_id, content, timestamp) VALUES (?, ?, ?, NOW())',
-                            [channelId, data.userId || null, data.message.content || '']
-                        );
-                    } catch (dbError) {
-                        console.error('Error saving message to database:', dbError.message);
+                        sub.send(messageToSend);
+                    } catch (error) {
+                        console.error('Error sending message to subscriber:', error);
                     }
                 }
-                
-                // Broadcast to all clients in the channel
-                if (channelClients.has(channelId)) {
-                    channelClients.get(channelId).forEach((client) => {
-                        if (client.readyState === WebSocket.OPEN) {
-                            client.send(JSON.stringify(messageData));
-                        }
-                    });
-                }
-            } else if (data.type === 'ping') {
-                // Respond to ping
-                ws.send(JSON.stringify({ type: 'pong' }));
+            });
+        }
+    } catch (error) {
+        console.error('Error processing STOMP message:', error);
+    }
+});
+
+stompServer.on('disconnect', (sessionId) => {
+    console.log(`STOMP client disconnected: ${sessionId}`);
+    // Clean up subscriptions
+    channelClients.forEach((subs, channelId) => {
+        subs.forEach((sub) => {
+            if (sub.sessionId === sessionId) {
+                subs.delete(sub);
             }
-        } catch (error) {
-            console.error('Error processing WebSocket message:', error);
+        });
+        if (subs.size === 0) {
+            channelClients.delete(channelId);
         }
     });
-
-    ws.on('close', () => {
-        console.log('WebSocket connection closed');
-        if (clientChannel && channelClients.has(clientChannel)) {
-            channelClients.get(clientChannel).delete(ws);
-            if (channelClients.get(clientChannel).size === 0) {
-                channelClients.delete(clientChannel);
-            }
-        }
-    });
-
-    ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
-    });
-
-    // Send welcome message
-    ws.send(JSON.stringify({
-        type: 'connected',
-        message: 'WebSocket connected successfully'
-    }));
 });
 
 // Start server
