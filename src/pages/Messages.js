@@ -29,7 +29,7 @@ const Messages = () => {
                     id: 1,
                     sender: 'admin',
                     senderName: 'Admin',
-                    content: `👋 Welcome to The Glitch, ${user.username || user.name || 'there'}! I'm here to help you with anything you need.`,
+                    content: `👋 Welcome to AURA FX, ${user.username || user.name || 'there'}! I'm here to help you with anything you need.`,
                     timestamp: new Date().toISOString(),
                     read: false
                 },

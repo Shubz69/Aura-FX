@@ -116,7 +116,7 @@ const MyCourses = () => {
                             <p>To fix this issue:</p>
                             <ol>
                                 <li>Make sure the backend server is running</li>
-                                <li>Check that it's available at theglitch.world</li>
+                                <li>Check that it's available at aurafx.com</li>
                                 <li>Verify there are no network issues</li>
                             </ol>
                         </div>

@@ -146,7 +146,7 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">THE GLITCH</h1>
+                <h1 className="brand-title">AURA FX</h1>
             </div>
             
             <div className="form-header">
@@ -193,7 +193,7 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">THE GLITCH</h1>
+                <h1 className="brand-title">AURA FX</h1>
             </div>
             
             <div className="form-header">
@@ -241,7 +241,7 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">THE GLITCH</h1>
+                <h1 className="brand-title">AURA FX</h1>
             </div>
             
             <div className="form-header">

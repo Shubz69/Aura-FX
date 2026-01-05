@@ -103,7 +103,7 @@ const VerifyMFA = () => {
         }
 
         try {
-            const API_BASE_URL = process.env.REACT_APP_API_URL || (typeof window !== 'undefined' && window.location.origin.includes('theglitch.world') ? window.location.origin : 'https://www.theglitch.world');
+            const API_BASE_URL = process.env.REACT_APP_API_URL || (typeof window !== 'undefined' && window.location.origin.includes('aurafx.com') ? window.location.origin : 'https://www.aurafx.com');
             const res = await axios.post(`${API_BASE_URL}/api/auth/verify-mfa`, {
                 userId,
                 code,
@@ -172,7 +172,7 @@ const VerifyMFA = () => {
             // Send either userId or email depending on what we have
             const payload = userId ? { userId } : { email: emailAddress };
             
-            const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://www.theglitch.world';
+            const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://www.aurafx.com';
             await axios.post(`${API_BASE_URL}/api/auth/send-mfa`, { ...payload, resend: true });
             setTimer(30);
             setCanResend(false);

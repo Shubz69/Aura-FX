@@ -202,7 +202,7 @@ const Login = () => {
                         <div className="logo-icon">
                             <RiTerminalBoxFill />
                         </div>
-                        <h1 className="brand-title">WHY THE GLITCH</h1>
+                        <h1 className="brand-title">WHY AURA FX</h1>
                     </div>
                     
                     <h2 className="mfa-title">MFA VERIFICATION</h2>

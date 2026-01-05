@@ -198,7 +198,7 @@ const Register = () => {
             await registerUser(submitData);
             setIsLoading(false);
 
-            toast.success('🎉 Account created successfully! Welcome to The Glitch!', {
+            toast.success('🎉 Account created successfully! Welcome to AURA FX!', {
                 position: "top-center",
                 autoClose: 1500,
                 hideProgressBar: false,

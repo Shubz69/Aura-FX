@@ -24,12 +24,12 @@ const resolveWebSocketBaseUrl = () => {
     }
 
     // Production fallback when env var is missing
-    if (hostname && hostname.includes('theglitch.world')) {
-      return 'https://glitch-realtime-production.up.railway.app';
+    if (hostname && hostname.includes('aurafx.com')) {
+      return 'https://aurafx-realtime-production.up.railway.app';
     }
   }
 
-  return 'https://glitch-realtime-production.up.railway.app';
+  return 'https://aurafx-realtime-production.up.railway.app';
 };
 
 const WS_BASE_URL = resolveWebSocketBaseUrl();

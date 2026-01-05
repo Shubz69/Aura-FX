@@ -82,7 +82,7 @@ const Explore = () => {
         </div>
 
         <div className="hero-content">
-          <h1 className="hero-title">WELCOME TO THE GLITCH</h1>
+          <h1 className="hero-title">WELCOME TO AURA FX</h1>
           <p className="hero-description">
             Build <strong>GENERATIONAL WEALTH</strong> through our multiple streams of knowledge. Learn to make money work for you, avoid bad financial habits, and gain true financial freedom through disciplined education and smart investment strategies.
           </p>
@@ -120,7 +120,7 @@ const Explore = () => {
           </div>
           <div className="showcase-card">
             <div className="showcase-icon"><FaUsers /></div>
-            <h3>The Glitch Advantage</h3>
+            <h3>AURA FX Advantage</h3>
             <p>Join a community committed to breaking traditional financial limitations and creating extraordinary wealth through smart, ethical strategies.</p>
           </div>
         </div>
@@ -153,7 +153,7 @@ const Explore = () => {
           <div className="testimonial-box">
             <div className="testimonial-quote">"</div>
             <p className="testimonial-text">
-              The Glitch taught me to break free from bad spending habits and focus on building real wealth. I now have three passive income streams and my financial future looks completely different.
+              AURA FX taught me to break free from bad spending habits and focus on building real wealth. I now have three passive income streams and my financial future looks completely different.
             </p>
             <div className="testimonial-author">
               <span className="author-name">Michael T.</span>

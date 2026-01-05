@@ -7,7 +7,7 @@ import BinaryBackground from '../components/BinaryBackground';
 // Define API base URL with fallback
 const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
     ? window.location.origin
-    : (process.env.REACT_APP_API_URL || 'https://theglitch.world');
+    : (process.env.REACT_APP_API_URL || 'https://aurafx.com');
 
 const PaymentSuccess = () => {
     const [message, setMessage] = useState("Processing your purchase...");

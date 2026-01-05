@@ -80,7 +80,7 @@ const WhyInfinity = () => {
             <div className="content-wrapper">
                 {/* Header Section */}
                 <header className="why-header">
-                    <h1 className="why-main-title">WHY THE GLITCH</h1>
+                    <h1 className="why-main-title">WHY AURA FX</h1>
                     <div className="stock-ticker-compact">
                         <div className="ticker">
                             {stockData.concat(stockData).map((stock, index) => (
@@ -99,10 +99,10 @@ const WhyInfinity = () => {
                 {/* Main Content - Split Layout */}
                 <div className="why-main-content">
                     <div className="why-text-section">
-                        <h2 className="why-subtitle">Why Choose The Glitch</h2>
+                        <h2 className="why-subtitle">Why Choose AURA FX</h2>
                         <div className="why-divider"></div>
                         <p className="why-text">
-                            The Glitch is your pathway to building generational wealth and breaking free from 
+                            AURA FX is your pathway to building generational wealth and breaking free from 
                             destructive financial habits. We teach you how to make your money work for you through 
                             multiple streams of knowledge—from smart investing to creating passive income.
                         </p>
@@ -192,7 +192,7 @@ const WhyInfinity = () => {
                             </div>
                             <h3>Smart Money Strategies</h3>
                             <p>
-                                Master the knowledge needed to build multiple income streams through trading, investing, and entrepreneurship on The Glitch platform.
+                                Master the knowledge needed to build multiple income streams through trading, investing, and entrepreneurship on AURA FX platform.
                             </p>
                         </div>
                         
@@ -220,9 +220,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaUsers />
                             </div>
-                            <h3>The Glitch Community</h3>
+                            <h3>AURA FX Community</h3>
                             <p>
-                                Join like-minded individuals committed to breaking free from financial limitations and building generational wealth through smart, disciplined strategies.
+                                Join like-minded individuals committed to breaking free from financial limitations and building generational wealth through smart, disciplined strategies on AURA FX.
                             </p>
                         </div>
                     </div>

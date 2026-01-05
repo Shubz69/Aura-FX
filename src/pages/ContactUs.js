@@ -147,7 +147,7 @@ const ContactUs = () => {
                             )}
                             
                             <div className="direct-email-option">
-                                <p>Or email us directly at: <a href="mailto:platform@theglitch.online">platform@theglitch.online</a></p>
+                                <p>Or email us directly at: <a href="mailto:platform@aurafx.com">platform@aurafx.com</a></p>
                             </div>
                         </form>
                     </div>
@@ -162,7 +162,7 @@ const ContactUs = () => {
                                 </div>
                                 <div className="contact-text">
                                     <strong>Email</strong>
-                                    <span>platform@theglitch.online</span>
+                                    <span>platform@aurafx.com</span>
                                 </div>
                             </div>
                             
