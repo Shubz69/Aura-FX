@@ -1,0 +1,43 @@
+🚀 ADD EMAIL TO VERCEL RIGHT NOW
+================================
+
+Your Gmail App Password: mzxparcgxlvqsxvc
+(Already removed spaces for you)
+
+STEP-BY-STEP:
+=============
+
+1. Go to: https://vercel.com/dashboard
+2. Click on your "aura-fx" project
+3. Click "Settings" (top menu)
+4. Click "Environment Variables" (left sidebar)
+
+5. ADD FIRST VARIABLE:
+   - Click "Add New"
+   - Key: EMAIL_USER
+   - Value: shubzfx@gmail.com
+   (Or whatever Gmail address you used to generate the App Password)
+   - Environments: ✅ Production ✅ Preview ✅ Development
+   - Click "Save"
+
+6. ADD SECOND VARIABLE:
+   - Click "Add New" again
+   - Key: EMAIL_PASS
+   - Value: mzxparcgxlvqsxvc
+   (Copy this exactly - no spaces!)
+   - Environments: ✅ Production ✅ Preview ✅ Development
+   - Click "Save"
+
+7. REDEPLOY:
+   - Go to "Deployments" tab
+   - Click "..." on latest deployment
+   - Click "Redeploy"
+   - Wait 2-3 minutes
+
+8. TEST:
+   - Go to your website
+   - Try signing up
+   - Check email for verification code!
+
+DONE! ✅
+

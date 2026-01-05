@@ -215,9 +215,25 @@ module.exports = async (req, res) => {
       const transporter = createEmailTransporter();
       if (!transporter) {
         console.error('Email service not configured - missing EMAIL_USER or EMAIL_PASS environment variables');
+        console.error('EMAIL_USER exists:', !!process.env.EMAIL_USER);
+        console.error('EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
         return res.status(500).json({ 
           success: false, 
           message: 'Email service is temporarily unavailable. Please contact support or check back later.' 
+        });
+      }
+
+      // Check if email credentials are actually set
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('Email credentials check failed:', {
+          hasEmailUser: !!process.env.EMAIL_USER,
+          hasEmailPass: !!process.env.EMAIL_PASS,
+          emailUserLength: process.env.EMAIL_USER ? process.env.EMAIL_USER.length : 0,
+          emailPassLength: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0
+        });
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Email service configuration error. Please contact support.' 
         });
       }
 
@@ -251,13 +267,37 @@ module.exports = async (req, res) => {
         `
       };
 
-      await transporter.sendMail(mailOptions);
-      console.log(`Signup verification code sent to ${emailLower}`);
-
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Verification code sent successfully' 
-      });
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Signup verification code sent to ${emailLower}`);
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Verification code sent successfully' 
+        });
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError);
+        console.error('Email error details:', {
+          message: emailError.message,
+          code: emailError.code,
+          response: emailError.response,
+          command: emailError.command,
+          responseCode: emailError.responseCode
+        });
+        
+        // Return a more helpful error message
+        let errorMessage = 'Failed to send verification email. Please try again later.';
+        if (emailError.code === 'EAUTH') {
+          errorMessage = 'Email authentication failed. Please check email credentials.';
+        } else if (emailError.code === 'ECONNECTION') {
+          errorMessage = 'Email service connection failed. Please try again later.';
+        }
+        
+        return res.status(500).json({ 
+          success: false, 
+          message: errorMessage 
+        });
+      }
     }
 
     // ACTION: VERIFY CODE
@@ -360,6 +400,12 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in signup verification:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code
+    });
     return res.status(500).json({ 
       success: false, 
       message: 'An error occurred. Please try again later.' 
