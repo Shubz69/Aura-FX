@@ -16,9 +16,17 @@
 3. If not, you can manually select the database from the dropdown in MySQL Workbench
 
 ## Step 4: Execute the Script
-1. Click the **Execute** button (lightning bolt icon) in the toolbar
-2. Or press **Ctrl+Shift+Enter**
-3. Wait for the script to complete
+1. **IMPORTANT:** Make sure you select and run the ENTIRE file from top to bottom
+2. The script must run in order:
+   - First: All CREATE TABLE statements
+   - Then: All INSERT statements
+3. Click the **Execute** button (lightning bolt icon) in the toolbar
+4. Or press **Ctrl+Shift+Enter**
+5. Wait for the script to complete
+
+**If you get an error about a table not existing:**
+- Make sure you ran the entire `database_schema.sql` file from the beginning
+- Or run `create_tables_only.sql` first, then run the rest
 
 ## Step 5: Verify Tables Were Created
 1. In the Navigator panel (left side), expand the `railway` schema
