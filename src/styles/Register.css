@@ -311,13 +311,15 @@
     gap: 12px;
     margin-bottom: 20px;
     position: relative;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .terms-checkbox input[type="checkbox"] {
-    width: 24px;
-    height: 24px;
-    min-width: 24px;
-    min-height: 24px;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
     accent-color: var(--primary);
     margin-top: 2px;
     border-radius: 4px;
@@ -326,9 +328,10 @@
     -webkit-appearance: checkbox;
     appearance: checkbox;
     touch-action: manipulation;
-    /* Ensure proper touch target on mobile */
+    pointer-events: auto;
     position: relative;
-    z-index: 1;
+    z-index: 10;
+    opacity: 1;
 }
 
 .terms-checkbox label {
@@ -338,6 +341,18 @@
     line-height: 1.4;
     cursor: pointer;
     font-weight: 300;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.terms-checkbox label a {
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
 }
 
 .terms-checkbox a {
@@ -477,18 +492,9 @@
         gap: 6px;
     }
     
-    /* Larger checkbox for mobile devices */
-    .terms-checkbox input[type="checkbox"] {
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
-        min-height: 32px;
-        margin-top: 0;
-    }
-    
     .terms-checkbox {
-        gap: 14px;
-        align-items: center;
+        gap: 12px;
+        align-items: flex-start;
     }
     
     .terms-checkbox label {
@@ -499,34 +505,25 @@
 
 /* iPhone and iPad specific fixes */
 @media (max-width: 1024px) {
-    .terms-checkbox input[type="checkbox"] {
-        width: 28px;
-        height: 28px;
-        min-width: 28px;
-        min-height: 28px;
+    .terms-checkbox {
+        gap: 12px;
+        align-items: flex-start;
     }
     
-    /* Make entire label clickable on mobile */
     .terms-checkbox label {
         -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
-        padding: 8px 0;
-        display: block;
-        width: 100%;
+        padding: 4px 0;
     }
 }
 
 /* Ensure checkbox is clickable on touch devices */
 @media (hover: none) and (pointer: coarse) {
-    .terms-checkbox input[type="checkbox"] {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
-        margin-top: -2px;
+    .terms-checkbox {
+        gap: 12px;
+        align-items: flex-start;
     }
     
-    .terms-checkbox {
-        gap: 16px;
-        align-items: flex-start;
+    .terms-checkbox input[type="checkbox"] {
+        margin-top: 2px;
     }
 } 

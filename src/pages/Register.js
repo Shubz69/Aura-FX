@@ -323,16 +323,31 @@ const Register = () => {
                     </div>
                 </div>
                 
-                <div className="terms-checkbox">
+                <div className="terms-checkbox" onClick={(e) => {
+                    // If clicking on a link, don't toggle checkbox
+                    if (e.target.tagName === 'A' || e.target.closest('a')) {
+                        return;
+                    }
+                    // Toggle checkbox when clicking anywhere in the container
+                    setAcceptedTerms(!acceptedTerms);
+                }}>
                     <input
                         type="checkbox"
                         id="terms"
                         checked={acceptedTerms}
                         onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        onClick={(e) => e.stopPropagation()}
                         required
                         disabled={isLoading}
                     />
-                    <label htmlFor="terms">
+                    <label htmlFor="terms" onClick={(e) => {
+                        // If clicking on a link, don't toggle
+                        if (e.target.tagName === 'A' || e.target.closest('a')) {
+                            return;
+                        }
+                        // Prevent default label behavior and let container handle it
+                        e.preventDefault();
+                    }}>
                         I agree to the <Link to="/terms" target="_blank" onClick={(e) => e.stopPropagation()}>Terms and Conditions</Link> and <Link to="/privacy" target="_blank" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
                     </label>
                 </div>
