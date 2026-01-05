@@ -270,6 +270,38 @@
     box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
 }
 
+/* No users message */
+.no-users-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.no-users-message p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.retry-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 300;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.retry-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .admin-panel-container {

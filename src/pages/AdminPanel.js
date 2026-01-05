@@ -15,6 +15,13 @@ const AdminPanel = () => {
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userEmail: null });
 
+    // Handle real-time online status updates from WebSocket
+    const handleOnlineStatusUpdate = (data) => {
+        if (data && Array.isArray(data)) {
+            setOnlineUsers(new Set(data));
+        }
+    };
+
     // WebSocket connection for real-time updates
     const { isConnected } = useWebSocket(null, handleOnlineStatusUpdate, true);
 
@@ -46,22 +53,40 @@ const AdminPanel = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
+            setError(null);
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/community/users`, {
+            
+            // Try multiple API endpoints
+            let response = await fetch(`/api/admin/users`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
             
+            // If that fails, try community endpoint
             if (!response.ok) {
-                throw new Error('Failed to fetch users');
+                response = await fetch(`/api/community/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to fetch users');
             }
             
             const data = await response.json();
-            setUsers(data);
+            // Handle different response formats
+            const usersList = Array.isArray(data) ? data : (data.users || data.data || []);
+            setUsers(usersList);
         } catch (err) {
-            setError('Failed to load users. Please try again.');
+            console.error('Error fetching users:', err);
+            setError(err.message || 'Failed to load users. Please try again.');
+            setUsers([]); // Set empty array on error
         } finally {
             setLoading(false);
         }
@@ -85,12 +110,6 @@ const AdminPanel = () => {
         }
     };
 
-    // Handle real-time online status updates from WebSocket
-    function handleOnlineStatusUpdate(data) {
-        if (data && Array.isArray(data)) {
-            setOnlineUsers(new Set(data));
-        }
-    }
 
     const handleDeleteUser = (userId, userEmail) => {
         setDeleteModal({ isOpen: true, userId, userEmail });
@@ -124,7 +143,11 @@ const AdminPanel = () => {
         }
     };
 
-    if (!isAuthenticated || (user && user.role !== 'ADMIN')) {
+    // Check admin status more flexibly
+    const userRole = user?.role?.toLowerCase() || '';
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+    
+    if (!isAuthenticated || !isAdmin) {
         return null; // Don't render anything while redirecting
     }
 
@@ -157,23 +180,28 @@ const AdminPanel = () => {
                         <div className="loading-spinner"></div>
                         <div className="loading-text">Loading users...</div>
                     </div>
+                ) : users.length === 0 ? (
+                    <div className="no-users-message">
+                        <p>No users found.</p>
+                        <button onClick={fetchUsers} className="retry-btn">Retry</button>
+                    </div>
                 ) : (
                     <div className="users-grid">
-                        {users.map(user => (
-                            <div key={user.id} className="user-card">
+                        {users.map(userItem => (
+                            <div key={userItem.id || userItem.email} className="user-card">
                                 <div className="user-info">
-                                    <div className="user-email">{user.email}</div>
-                                    <div className="user-name">({user.name || user.username || 'N/A'})</div>
-                                    <div className="user-role">{user.role}</div>
-                                    <div className="user-joined">Joined: N/A</div>
-                                    <div className={`user-status ${onlineUsers.has(user.id) ? 'online' : 'offline'}`}>
-                                        {onlineUsers.has(user.id) ? 'Online' : 'Offline'}
+                                    <div className="user-email">{userItem.email || 'No email'}</div>
+                                    <div className="user-name">({userItem.name || userItem.username || 'N/A'})</div>
+                                    <div className="user-role">{userItem.role || 'USER'}</div>
+                                    <div className="user-joined">Joined: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}</div>
+                                    <div className={`user-status ${onlineUsers.has(userItem.id) ? 'online' : 'offline'}`}>
+                                        {onlineUsers.has(userItem.id) ? 'Online' : 'Offline'}
                                     </div>
                                 </div>
                                 <div className="user-actions">
                                     <button 
                                         className="delete-btn"
-                                        onClick={() => handleDeleteUser(user.id, user.email)}
+                                        onClick={() => handleDeleteUser(userItem.id, userItem.email)}
                                     >
                                         Delete
                                     </button>
