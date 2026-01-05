@@ -1,0 +1,35 @@
+QUICK EMAIL SETUP FOR VERCEL
+============================
+
+STEP 1: Get Gmail App Password
+------------------------------
+1. Go to: https://myaccount.google.com/apppasswords
+2. Select "Mail" → "Other" → Type "AURA FX" → Generate
+3. Copy the 16-character password (remove spaces!)
+
+STEP 2: Add to Vercel
+---------------------
+1. Go to: https://vercel.com/dashboard
+2. Select "aura-fx" project
+3. Settings → Environment Variables
+4. Add these 2 variables:
+
+Variable 1:
+  Key: EMAIL_USER
+  Value: your-email@gmail.com
+  Environments: ✅ Production ✅ Preview ✅ Development
+
+Variable 2:
+  Key: EMAIL_PASS
+  Value: 16-character-app-password (NO SPACES!)
+  Environments: ✅ Production ✅ Preview ✅ Development
+
+STEP 3: Redeploy
+----------------
+1. Deployments tab
+2. Click "..." on latest deployment
+3. Click "Redeploy"
+4. Wait 2-3 minutes
+
+DONE! Signups will work after redeploy completes.
+
