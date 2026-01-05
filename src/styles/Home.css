@@ -784,7 +784,7 @@ body.loading-active {
 /* iPhone X and newer (375px - 812px) */
 @media (min-width: 375px) and (max-width: 812px) {
     .home-container {
-        padding-top: 60px;
+        padding-top: 70px;
         width: 100%;
         max-width: 100vw;
         overflow-x: hidden;
@@ -987,7 +987,7 @@ body.loading-active {
 /* iPhone 6/7/8 (375px - 667px) */
 @media (min-width: 375px) and (max-width: 667px) {
     .home-container {
-        padding-top: 60px;
+        padding-top: 68px;
     }
     
     .home-content {
@@ -1031,7 +1031,7 @@ body.loading-active {
 /* iPhone SE and smaller (max-width: 374px) */
 @media (max-width: 374px) {
     .home-container {
-        padding-top: 55px;
+        padding-top: 66px;
     }
     
     .home-content {
