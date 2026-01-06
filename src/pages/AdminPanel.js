@@ -116,14 +116,14 @@ const AdminPanel = () => {
     };
 
     const handleGrantCommunityAccess = async (userId, userEmail) => {
-        if (!window.confirm(`Grant community access to ${userEmail}? This will activate their subscription and give them premium access.`)) {
+        if (!window.confirm(`Grant community access to ${userEmail}? This will activate their subscription status (after you've verified their payment confirmation).`)) {
             return;
         }
 
         try {
             const token = localStorage.getItem('token');
             
-            // First, update subscription status
+            // Grant access by activating subscription status (this sets both subscription_status AND role)
             const subscriptionResponse = await fetch(`/api/stripe/subscription-success`, {
                 method: 'POST',
                 headers: {
@@ -137,29 +137,20 @@ const AdminPanel = () => {
             });
 
             if (!subscriptionResponse.ok) {
-                throw new Error('Failed to grant subscription access');
+                const errorData = await subscriptionResponse.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to grant subscription access');
             }
 
-            // Also update role to premium
-            const roleResponse = await fetch(`/api/admin/users/${userId}/role`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    role: 'premium'
-                })
-            });
-
-            if (!roleResponse.ok) {
-                console.warn('Failed to update role, but subscription was granted');
+            const result = await subscriptionResponse.json();
+            
+            if (result.success) {
+                // Refresh the user list
+                fetchUsers();
+                setError(null);
+                alert(`✅ Community access granted to ${userEmail}!\n\nSubscription activated with 90-day expiry. User can now access the community.`);
+            } else {
+                throw new Error(result.message || 'Failed to grant access');
             }
-
-            // Refresh the user list
-            fetchUsers();
-            setError(null);
-            alert(`✅ Community access granted to ${userEmail}!`);
         } catch (err) {
             console.error('Error granting community access:', err);
             setError(err.message || 'Failed to grant community access. Please try again.');

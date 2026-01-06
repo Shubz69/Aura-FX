@@ -145,55 +145,80 @@ const Subscription = () => {
                     );
 
                     if (response.data && response.data.success) {
-                        // Mark subscription as active in localStorage
-                        localStorage.setItem('hasActiveSubscription', 'true');
-                        localStorage.removeItem('pendingSubscription');
-                        localStorage.removeItem('subscriptionSkipped');
+                        // Wait a moment for database to fully update
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         
-                        // Set subscription expiry from database response or calculate
-                        const expiryDate = response.data.subscription?.expiry 
-                            ? new Date(response.data.subscription.expiry)
-                            : (() => {
-                                const date = new Date();
-                                date.setDate(date.getDate() + 90); // 3 months free trial
-                                return date;
-                            })();
-                        
-                        localStorage.setItem('subscriptionExpiry', expiryDate.toISOString());
-                        
-                        // Show success message
-                        setError('');
-                        setSubscriptionActivated(true);
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        setLoading(false);
-                        
-                        // Start countdown timer
-                        const baseUrl = window.location.origin;
-                        setCountdown(10);
-                        
-                        let currentCount = 10;
-                        countdownIntervalRef.current = setInterval(() => {
-                            currentCount--;
-                            setCountdown(currentCount);
-                            
-                            if (currentCount <= 0) {
-                                if (countdownIntervalRef.current) {
-                                    clearInterval(countdownIntervalRef.current);
-                                    countdownIntervalRef.current = null;
+                        // Verify subscription status from API (all checks must pass)
+                        try {
+                            const verifyResponse = await axios.get(
+                                `${API_BASE_URL}/api/subscription/check`,
+                                {
+                                    params: { userId: activeUserId },
+                                    headers: {
+                                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                        'Content-Type': 'application/json'
+                                    }
                                 }
-                                // Force hard redirect to community page
-                                window.location.replace(`${baseUrl}/community`);
+                            );
+                            
+                            if (verifyResponse.data && verifyResponse.data.hasActiveSubscription && !verifyResponse.data.paymentFailed) {
+                                // All checks passed - update localStorage
+                                localStorage.setItem('hasActiveSubscription', 'true');
+                                localStorage.removeItem('pendingSubscription');
+                                localStorage.removeItem('subscriptionSkipped');
+                                
+                                // Set subscription expiry from verified response
+                                const expiryDate = verifyResponse.data.expiry 
+                                    ? new Date(verifyResponse.data.expiry)
+                                    : (() => {
+                                        const date = new Date();
+                                        date.setDate(date.getDate() + 90); // 3 months
+                                        return date;
+                                    })();
+                                
+                                localStorage.setItem('subscriptionExpiry', expiryDate.toISOString());
+                                
+                                // Show success message
+                                setError('');
+                                setSubscriptionActivated(true);
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                                setLoading(false);
+                                
+                                // Start countdown timer
+                                const baseUrl = window.location.origin;
+                                setCountdown(5);
+                                
+                                let currentCount = 5;
+                                countdownIntervalRef.current = setInterval(() => {
+                                    currentCount--;
+                                    setCountdown(currentCount);
+                                    
+                                    if (currentCount <= 0) {
+                                        if (countdownIntervalRef.current) {
+                                            clearInterval(countdownIntervalRef.current);
+                                            countdownIntervalRef.current = null;
+                                        }
+                                        // Force hard redirect to community page
+                                        window.location.replace(`${baseUrl}/community`);
+                                    }
+                                }, 1000);
+                                
+                                // Fallback redirect after 5 seconds
+                                setTimeout(() => {
+                                    if (countdownIntervalRef.current) {
+                                        clearInterval(countdownIntervalRef.current);
+                                        countdownIntervalRef.current = null;
+                                    }
+                                    window.location.replace(`${baseUrl}/community`);
+                                }, 5000);
+                            } else {
+                                throw new Error('Subscription verification failed - checks did not pass');
                             }
-                        }, 1000);
-                        
-                        // Fallback redirect after 10 seconds
-                        setTimeout(() => {
-                            if (countdownIntervalRef.current) {
-                                clearInterval(countdownIntervalRef.current);
-                                countdownIntervalRef.current = null;
-                            }
-                            window.location.replace(`${baseUrl}/community`);
-                        }, 10000);
+                        } catch (verifyError) {
+                            console.error('Subscription verification error:', verifyError);
+                            setError('Payment processed but subscription verification failed. Please contact support.');
+                            setLoading(false);
+                        }
                     } else {
                         throw new Error('Failed to activate subscription');
                     }

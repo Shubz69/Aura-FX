@@ -44,23 +44,55 @@ const PaymentSuccess = () => {
                         );
                         
                         if (response.data && response.data.success) {
-                            // Update localStorage
-                            localStorage.setItem('hasActiveSubscription', 'true');
-                            if (response.data.subscription?.expiry) {
-                                localStorage.setItem('subscriptionExpiry', response.data.subscription.expiry);
+                            // Verify subscription is actually active before redirecting
+                            // Wait a moment for database to update, then verify
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            
+                            // Double-check subscription status from API
+                            try {
+                                const verifyResponse = await axios.get(
+                                    `${API_BASE_URL}/api/subscription/check`,
+                                    {
+                                        params: { userId },
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Content-Type': 'application/json'
+                                        }
+                                    }
+                                );
+                                
+                                if (verifyResponse.data && verifyResponse.data.hasActiveSubscription && !verifyResponse.data.paymentFailed) {
+                                    // All checks passed - update localStorage
+                                    localStorage.setItem('hasActiveSubscription', 'true');
+                                    if (verifyResponse.data.expiry) {
+                                        localStorage.setItem('subscriptionExpiry', verifyResponse.data.expiry);
+                                    }
+                                    
+                                    // Update user role in localStorage
+                                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                    user.role = 'premium';
+                                    localStorage.setItem('user', JSON.stringify(user));
+                                    
+                                    setMessage("🎉 Subscription activated! All checks passed. Redirecting to community...");
+                                    setProcessing(false);
+                                    
+                                    // Redirect to community after brief delay
+                                    setTimeout(() => {
+                                        window.location.href = '/community';
+                                    }, 1500);
+                                    return;
+                                } else {
+                                    throw new Error('Subscription verification failed');
+                                }
+                            } catch (verifyError) {
+                                console.error('Subscription verification error:', verifyError);
+                                setMessage("⚠️ Payment processed but subscription activation needs verification. Please contact support or wait a moment and refresh.");
+                                setError(true);
+                                setProcessing(false);
+                                return;
                             }
-                            
-                            // Update user role in localStorage
-                            const user = JSON.parse(localStorage.getItem('user') || '{}');
-                            user.role = 'premium';
-                            localStorage.setItem('user', JSON.stringify(user));
-                            
-                            // Redirect to community
-                            setTimeout(() => {
-                                navigate('/community');
-                            }, 2000);
-                            setMessage("🎉 Subscription activated! Redirecting to community...");
-                            return;
+                        } else {
+                            throw new Error('Subscription activation failed');
                         }
                     } catch (error) {
                         console.error('Error activating subscription:', error);
