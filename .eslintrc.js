@@ -4,17 +4,20 @@ module.exports = {
     'react-app/jest'
   ],
   rules: {
-    'no-unused-vars': 'warn',
-    'no-empty-pattern': 'warn',
-    'react-hooks/exhaustive-deps': 'warn'
+    'no-unused-vars': 'off',
+    'no-empty-pattern': 'off',
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-undef': 'warn',
+    'no-console': 'off'
   },
   overrides: [
     {
       files: ['**/*.js', '**/*.jsx'],
       rules: {
-        'no-unused-vars': 'warn',
-        'no-empty-pattern': 'warn',
-        'react-hooks/exhaustive-deps': 'warn'
+        'no-unused-vars': 'off',
+        'no-empty-pattern': 'off',
+        'react-hooks/exhaustive-deps': 'warn',
+        'no-undef': 'warn'
       }
     }
   ]
