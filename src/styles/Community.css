@@ -310,13 +310,14 @@
     }
 }
 
-/* Messages Area */
+/* Messages Area - Discord Style */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 0;
     display: flex;
     flex-direction: column;
+    background: var(--bg-tertiary);
 }
 
 /* Empty State */
@@ -342,85 +343,139 @@
     line-height: 1.5;
 }
 
-/* Message Items */
+/* Message Items - Discord Compact Style */
 .message-item {
-    padding: 12px 24px 16px 80px;
-    margin-bottom: 20px;
+    display: flex;
+    padding: 2px 16px;
+    margin: 0;
     position: relative;
-    transition: background 0.06s ease;
-    min-height: 44px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.1s ease;
+    min-height: auto;
+    border: none;
 }
 
 .message-item:hover {
-    background: rgba(4, 4, 5, 0.07);
+    background: rgba(4, 4, 5, 0.3);
+}
+
+.message-item:hover .message-timestamp {
+    opacity: 1;
+}
+
+.message-item:hover button[title="Delete message"] {
+    opacity: 1 !important;
+}
+
+/* Group consecutive messages from same sender */
+.message-item.grouped {
+    padding-top: 0;
+    padding-bottom: 2px;
+}
+
+.message-item.grouped .message-avatar,
+.message-item.grouped .message-avatar-text {
+    display: none;
+}
+
+.message-item.grouped .message-content {
+    margin-left: 0;
 }
 
 .message-avatar {
     position: absolute;
-    left: 24px;
-    top: 8px;
-    width: 44px;
-    height: 44px;
+    left: 16px;
+    top: 4px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     flex-shrink: 0;
-    border: 2px solid var(--bg-secondary);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.message-avatar:hover {
+    transform: scale(1.05);
 }
 
 .message-avatar-text {
     position: absolute;
-    left: 24px;
-    top: 8px;
-    width: 44px;
-    height: 44px;
+    left: 16px;
+    top: 4px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+    background: linear-gradient(135deg, #5865F2, #4752C4);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 0.875rem;
+    font-weight: 600;
     color: white;
     flex-shrink: 0;
-    border: 2px solid var(--bg-secondary);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.message-avatar-text:hover {
+    transform: scale(1.05);
+}
+
+.message-content {
+    margin-left: 56px;
+    min-width: 0;
+    flex: 1;
 }
 
 .message-header-info {
     display: flex;
     align-items: baseline;
-    gap: 10px;
-    margin-bottom: 4px;
+    gap: 6px;
+    margin-bottom: 2px;
+    flex-wrap: wrap;
 }
 
 .message-author {
-    font-weight: 700;
-    color: var(--purple-secondary);
+    font-weight: 500;
+    color: #FFFFFF;
     font-size: 1rem;
     cursor: pointer;
+    transition: color 0.15s ease;
 }
 
 .message-author:hover {
     text-decoration: underline;
+    color: #FFFFFF;
 }
 
 .message-timestamp {
     font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 500;
+    color: #72767D;
+    font-weight: 400;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.message-item:hover .message-timestamp {
+    opacity: 1;
 }
 
 .message-text {
-    color: var(--text-normal);
-    line-height: 1.5;
-    font-size: 1rem;
+    color: #DCDDDE;
+    line-height: 1.375;
+    font-size: 0.9375rem;
     word-wrap: break-word;
+    white-space: pre-wrap;
+    margin: 0;
+    padding: 0;
 }
 
 /* Chat Input */
 .chat-input-container {
-    padding: 24px;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
+    padding: 0 16px 24px 16px;
+    background: var(--bg-tertiary);
+    border-top: none;
 }
 
 .connection-status {
@@ -429,8 +484,8 @@
     gap: 6px;
     font-size: 0.75rem;
     color: var(--accent-green);
-    margin-bottom: 12px;
-    padding-left: 4px;
+    margin-bottom: 8px;
+    padding-left: 16px;
     font-weight: 600;
 }
 
@@ -478,17 +533,18 @@
 
 .chat-input {
     width: 100%;
-    padding: 16px 20px;
-    border-radius: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
     border: none;
     background: var(--bg-elevated);
     color: var(--text-normal);
-    font-size: 1rem;
+    font-size: 0.9375rem;
     resize: none;
     outline: none;
     font-family: inherit;
     transition: all 0.2s ease;
-    min-height: 48px;
+    min-height: 44px;
+    line-height: 1.375;
 }
 
 .chat-input:focus {

@@ -2099,56 +2099,102 @@ Let's build generational wealth together! 💰🚀`,
                                     <p>{selectedChannel.description || 'No messages yet. Be the first to start the conversation!'}</p>
                                 </div>
                             ) : (
-                                messages.map((message, index) => (
-                                    <div 
-                                        key={message.id || index} 
-                                        className="message-item"
-                                    >
-                                        <div className="message-avatar-text">
-                                            {(message.sender?.username || 'U').substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div className="message-content">
-                                            <div className="message-header-info" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span className="message-author">
-                                                        {message.sender?.username || 'Unknown'}
-                                                    </span>
-                                                    <span className="message-timestamp">
-                                                        {formatTimestamp(message.timestamp)}
-                                                    </span>
+                                messages.map((message, index) => {
+                                    // Check if this message is from the same sender as the previous one (grouping)
+                                    const prevMessage = index > 0 ? messages[index - 1] : null;
+                                    const isGrouped = prevMessage && 
+                                        prevMessage.sender?.username === message.sender?.username &&
+                                        !message.isWelcomeMessage &&
+                                        !prevMessage.isWelcomeMessage &&
+                                        // Group if messages are within 5 minutes
+                                        (new Date(message.timestamp || message.created_at) - new Date(prevMessage.timestamp || prevMessage.created_at)) < 300000;
+                                    
+                                    return (
+                                        <div 
+                                            key={message.id || index} 
+                                            className={`message-item ${isGrouped ? 'grouped' : ''}`}
+                                        >
+                                            {!isGrouped && (
+                                                <div className="message-avatar-text">
+                                                    {(message.sender?.username || 'U').substring(0, 2).toUpperCase()}
                                                 </div>
-                                                {(isAdminUser || isSuperAdminUser) && (
-                                                    <button
-                                                        onClick={() => handleDeleteMessage(message.id)}
-                                                        style={{
-                                                            background: 'transparent',
-                                                            border: 'none',
-                                                            color: '#f87171',
-                                                            cursor: 'pointer',
-                                                            padding: '4px 8px',
-                                                            borderRadius: '4px',
-                                                            opacity: 0.7,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px',
-                                                            fontSize: '0.85rem',
-                                                            transition: 'all 0.2s ease'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.opacity = 1;
-                                                            e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.opacity = 0.7;
-                                                            e.currentTarget.style.background = 'transparent';
-                                                        }}
-                                                        title="Delete message"
-                                                    >
-                                                        <FaTrash size={12} />
-                                                    </button>
+                                            )}
+                                            <div className="message-content">
+                                                {!isGrouped && (
+                                                    <div className="message-header-info" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span className="message-author">
+                                                                {message.sender?.username || 'Unknown'}
+                                                            </span>
+                                                            <span className="message-timestamp">
+                                                                {formatTimestamp(message.timestamp)}
+                                                            </span>
+                                                        </div>
+                                                        {(isAdminUser || isSuperAdminUser) && (
+                                                            <button
+                                                                onClick={() => handleDeleteMessage(message.id)}
+                                                                style={{
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    color: '#f87171',
+                                                                    cursor: 'pointer',
+                                                                    padding: '4px 8px',
+                                                                    borderRadius: '4px',
+                                                                    opacity: 0,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px',
+                                                                    fontSize: '0.85rem',
+                                                                    transition: 'all 0.2s ease'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.opacity = 1;
+                                                                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.opacity = 0;
+                                                                    e.currentTarget.style.background = 'transparent';
+                                                                }}
+                                                                title="Delete message"
+                                                            >
+                                                                <FaTrash size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
-                                            </div>
-                                            <div className="message-text" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                                                {isGrouped && (isAdminUser || isSuperAdminUser) && (
+                                                    <div style={{ 
+                                                        position: 'absolute', 
+                                                        right: '16px', 
+                                                        top: '2px',
+                                                        opacity: 0,
+                                                        transition: 'opacity 0.2s ease'
+                                                    }}>
+                                                        <button
+                                                            onClick={() => handleDeleteMessage(message.id)}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: '#f87171',
+                                                                cursor: 'pointer',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.85rem',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'transparent';
+                                                            }}
+                                                            title="Delete message"
+                                                        >
+                                                            <FaTrash size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            <div className="message-text">
                                                 {message.isWelcomeMessage ? (
                                                     message.content.split('\n').map((line, idx) => {
                                                         const trimmedLine = line.trim();
@@ -2225,7 +2271,8 @@ Let's build generational wealth together! 💰🚀`,
                                             )}
                                         </div>
                                     </div>
-                                ))
+                                    );
+                                })
                             )}
                             <div ref={messagesEndRef} />
                         </div>
