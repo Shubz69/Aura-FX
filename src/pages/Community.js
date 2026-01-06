@@ -213,11 +213,8 @@ const Community = () => {
                 channelsFromServer = response.data.channels;
             }
             
-            // Filter to only show trading channels with admin-only access
-            channelsFromServer = channelsFromServer.filter(channel => 
-                channel.category === 'trading' && 
-                (channel.accessLevel === 'admin-only' || channel.locked === true)
-            );
+            // Show ALL channels - no filtering (API returns all channels from database)
+            // Admin can control access via access_level in database
             
             // Cache channels for next time
             if (channelsFromServer.length > 0) {
@@ -272,13 +269,8 @@ const Community = () => {
                 };
             });
 
-            // Only trading channels with admin-only access
-            const essentialChannels = [];
-
-            preparedChannels = [...essentialChannels, ...courseChannels];
-        } else {
-            // Only trading channels with admin-only access
-            preparedChannels = [];
+            // Add course channels to existing preparedChannels (don't overwrite)
+            preparedChannels = [...preparedChannels, ...courseChannels];
         }
 
         if (preparedChannels.length === 0) {
@@ -472,74 +464,43 @@ const Community = () => {
     };
 
     // Check if user can access channel (view)
+    // ADMIN CONTROLS VISIBILITY - No automatic filtering
+    // Admins set access_level in database to control who can see channels
+    // If admin wants to hide a channel, they set access_level to 'admin-only' or delete it
     const canUserAccessChannel = (channel) => {
         const userRole = getCurrentUserRole();
-        const userCourses = getUserCourses();
         
-        // Admins and Super Admins can access everything
-        if (userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser) {
-            return true;
-        }
-        
-        // Trading channels are visible to all users
-        if (channel.category === 'trading') {
-            return true;
-        }
-        
-        // Check access level
+        // Admin-only channels: only admins can see
         if (channel.accessLevel === 'admin-only') {
-            return false;
+            return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        if (channel.accessLevel === 'open') {
-            return true;
-        }
-        
-        if (channel.accessLevel === 'premium') {
-            return userRole === 'premium';
-        }
-        
-        if (channel.accessLevel === 'level') {
-            return userLevel >= (channel.minLevel || 0);
-        }
-        
-        if (channel.accessLevel === 'course') {
-            return userCourses.some(course => course.id === channel.courseId);
-        }
-        
+        // Show ALL other channels to ALL users
+        // Admin controls visibility via access_level in database
         return true;
     };
 
     // Check if user can post in channel
+    // ADMIN CONTROLS POSTING - No automatic filtering
+    // Admins set access_level in database to control who can post
     const canUserPostInChannel = (channel) => {
         const userRole = getCurrentUserRole();
         const channelName = (channel.name || '').toLowerCase();
         const isAdminChannel = channel.accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
-        const isWelcomeChannel = channelName === 'welcome';
-        const isAnnouncementsChannel = channelName === 'announcements';
-        
-        // Trading channels: all users can post (accessLevel should be 'open')
-        if (channel.category === 'trading' && (channel.accessLevel === 'open' || !channel.accessLevel)) {
-            return true;
-        }
         
         // Admin-only channels: only admins can post
         if (isAdminChannel) {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // Welcome and announcements channels: read-only for everyone except admins
-        if ((isWelcomeChannel || isAnnouncementsChannel) && !isAdminUser && !isSuperAdminUser) {
-            return false; // Read-only for non-admins, admins can post
+        // Read-only channels: only admins can post
+        if (channel.accessLevel === 'read-only') {
+            return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // All other channels: everyone with subscription can post
-        if (hasActiveSubscription || isAdminUser || isSuperAdminUser) {
-            return true;
-        }
-        
-        // Non-subscribed users cannot post
-        return false;
+        // All other channels: everyone can post (admin controls via access_level)
+        // If admin wants to restrict posting, they set access_level to 'read-only' or 'admin-only'
+        return true;
     };
 
     // Scroll to bottom of messages
@@ -1891,17 +1852,20 @@ Let's build generational wealth together! 💰🚀`,
                                 
                                 <ul className="channels-list">
                                     {channels.map(channel => {
+                                        // Only hide admin-only channels from non-admins
+                                        // All other channels are visible to everyone
                                         const canAccess = canUserAccessChannel(channel);
+                                        if (!canAccess) return null; // Skip admin-only channels for non-admins
+                                        
                                         const isActive = selectedChannel?.id === channel.id;
                                         
                                         return (
                                             <li 
                                                 key={channel.id}
                                                 className={`channel-item ${isActive ? 'active' : ''} ${channel.unread ? 'unread' : ''}`}
-                                                onClick={() => canAccess && setSelectedChannel(channel)}
+                                                onClick={() => setSelectedChannel(channel)}
                                                 style={{ 
-                                                    cursor: canAccess ? 'pointer' : 'not-allowed', 
-                                                    opacity: canAccess ? 1 : 0.5,
+                                                    cursor: 'pointer',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'space-between',
@@ -2039,6 +2003,7 @@ Let's build generational wealth together! 💰🚀`,
                     {Object.keys(groupedChannels).sort().map(categoryName => {
                         const channels = groupedChannels[categoryName];
                         return channels.map(channel => {
+                            // Only hide admin-only channels from non-admins
                             const canAccess = canUserAccessChannel(channel);
                             if (!canAccess) return null;
                             return (
