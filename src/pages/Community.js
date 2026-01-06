@@ -849,10 +849,10 @@ const Community = () => {
             checkSubscriptionFromDB();
         }
         
-        // Check every 10 seconds (more frequent for better UX)
+        // Check every 3 seconds for immediate updates after payment
         const interval = setInterval(() => {
             checkSubscriptionFromDB();
-        }, 10000);
+        }, 3000);
         
         return () => clearInterval(interval);
     }, [userId, isAuthenticated, checkSubscriptionFromDB]);
@@ -1549,8 +1549,20 @@ Let's build generational wealth together! 💰🚀`,
 
     // Handle subscribe button click - redirect to Stripe payment link
     const handleSubscribe = () => {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const userEmail = storedUser?.email;
+        
+        // Add success URL to Stripe payment link
+        const successUrl = `${window.location.origin}/payment-success?payment_success=true&subscription=true`;
+        const cancelUrl = `${window.location.origin}/community`;
+        
+        const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+        const paymentLink = userEmail
+            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`
+            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`;
+        
         // Redirect to Stripe payment link
-        window.location.href = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+        window.location.href = paymentLink;
     };
 
     // Render
@@ -1775,43 +1787,9 @@ Let's build generational wealth together! 💰🚀`,
                                     Subscribe Now
                                 </button>
                                 <button
-                                    onClick={async () => {
-                                        // Manual activation for users who paid but subscription wasn't activated
-                                        if (window.confirm('Have you completed payment on Stripe? Click OK to activate your subscription.')) {
-                                            try {
-                                                const token = localStorage.getItem('token');
-                                                const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                                                const userId = userData.id || userId;
-                                                
-                                                if (!userId) {
-                                                    alert('Error: User ID not found. Please log out and log back in.');
-                                                    return;
-                                                }
-                                                
-                                                const response = await axios.post(
-                                                    `${window.location.origin}/api/stripe/subscription-success`,
-                                                    { userId, session_id: `manual-activation-${Date.now()}` },
-                                                    {
-                                                        headers: {
-                                                            'Authorization': `Bearer ${token}`,
-                                                            'Content-Type': 'application/json'
-                                                        }
-                                                    }
-                                                );
-                                                
-                                                if (response.data && response.data.success) {
-                                                    // Force subscription check
-                                                    await checkSubscriptionFromDB();
-                                                    alert('✅ Subscription activated! The page will refresh.');
-                                                    window.location.reload();
-                                                } else {
-                                                    alert('Failed to activate subscription. Please contact support or use the admin panel.');
-                                                }
-                                            } catch (error) {
-                                                console.error('Error manually activating subscription:', error);
-                                                alert('Error activating subscription. Please contact support.');
-                                            }
-                                        }
+                                    onClick={() => {
+                                        // Redirect to contact page for manual activation
+                                        window.location.href = '/contact';
                                     }}
                                     style={{
                                         background: 'rgba(255, 255, 255, 0.1)',
@@ -1832,7 +1810,7 @@ Let's build generational wealth together! 💰🚀`,
                                         e.target.style.background = 'rgba(255, 255, 255, 0.1)';
                                     }}
                                 >
-                                    I've Already Paid - Activate My Subscription
+                                    I've Already Paid - Contact Support
                                 </button>
                             </div>
                         </div>

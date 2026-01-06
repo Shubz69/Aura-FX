@@ -47,10 +47,15 @@ const Subscription = () => {
         setSelectedPlan(planType);
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email || storedUser?.email;
+        
+        // Add success URL to Stripe payment link
+        const successUrl = `${window.location.origin}/payment-success?payment_success=true&subscription=true`;
+        const cancelUrl = `${window.location.origin}/subscription`;
+        
         // TODO: Update with actual Stripe payment links for each plan
         const paymentLink = userEmail
-            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
-            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}plan=${planType}`;
+            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}&success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`
+            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}plan=${planType}&success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`;
 
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);

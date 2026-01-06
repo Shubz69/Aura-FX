@@ -24,7 +24,7 @@ const PaymentSuccess = () => {
         const isSubscription = params.get("subscription") === "true" || !courseIdFromUrl;
         
         // If this is a subscription payment, redirect to community after processing
-        if (isSubscription && paymentSuccess === "true" && sessionId) {
+        if (isSubscription && (paymentSuccess === "true" || sessionId || params.get("redirect_status") === "succeeded")) {
             const userData = localStorage.getItem("user");
             const userId = userData ? JSON.parse(userData)?.id : null;
             
@@ -34,7 +34,7 @@ const PaymentSuccess = () => {
                         const token = localStorage.getItem("token");
                         const response = await axios.post(
                             `${API_BASE_URL}/api/stripe/subscription-success`,
-                            { userId, session_id: sessionId },
+                            { userId, session_id: sessionId || `stripe-${Date.now()}` },
                             {
                                 headers: {
                                     'Authorization': `Bearer ${token}`,
@@ -44,11 +44,10 @@ const PaymentSuccess = () => {
                         );
                         
                         if (response.data && response.data.success) {
-                            // Verify subscription is actually active before redirecting
-                            // Wait a moment for database to update, then verify
-                            await new Promise(resolve => setTimeout(resolve, 500));
+                            // Wait a moment for database to update
+                            await new Promise(resolve => setTimeout(resolve, 1000));
                             
-                            // Double-check subscription status from API
+                            // Verify subscription status from API
                             try {
                                 const verifyResponse = await axios.get(
                                     `${API_BASE_URL}/api/subscription/check`,
@@ -73,33 +72,65 @@ const PaymentSuccess = () => {
                                     user.role = 'premium';
                                     localStorage.setItem('user', JSON.stringify(user));
                                     
-                                    setMessage("🎉 Subscription activated! All checks passed. Redirecting to community...");
-                                    setProcessing(false);
+                                    // Clear URL params
+                                    window.history.replaceState({}, document.title, window.location.pathname);
                                     
-                                    // Redirect to community after brief delay
-                                    setTimeout(() => {
-                                        window.location.href = '/community';
-                                    }, 1500);
+                                    // Redirect to community immediately
+                                    window.location.href = '/community';
                                     return;
                                 } else {
-                                    throw new Error('Subscription verification failed');
+                                    // Retry once more after another second
+                                    await new Promise(resolve => setTimeout(resolve, 1000));
+                                    const retryResponse = await axios.get(
+                                        `${API_BASE_URL}/api/subscription/check`,
+                                        {
+                                            params: { userId },
+                                            headers: {
+                                                'Authorization': `Bearer ${token}`,
+                                                'Content-Type': 'application/json'
+                                            }
+                                        }
+                                    );
+                                    
+                                    if (retryResponse.data && retryResponse.data.hasActiveSubscription && !retryResponse.data.paymentFailed) {
+                                        localStorage.setItem('hasActiveSubscription', 'true');
+                                        if (retryResponse.data.expiry) {
+                                            localStorage.setItem('subscriptionExpiry', retryResponse.data.expiry);
+                                        }
+                                        const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                        user.role = 'premium';
+                                        localStorage.setItem('user', JSON.stringify(user));
+                                        window.history.replaceState({}, document.title, window.location.pathname);
+                                        window.location.href = '/community';
+                                        return;
+                                    }
+                                    
+                                    throw new Error('Subscription verification failed after retry');
                                 }
                             } catch (verifyError) {
                                 console.error('Subscription verification error:', verifyError);
-                                setMessage("⚠️ Payment processed but subscription activation needs verification. Please contact support or wait a moment and refresh.");
-                                setError(true);
-                                setProcessing(false);
+                                // Still redirect to community - the check there will handle it
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                                window.location.href = '/community';
                                 return;
                             }
                         } else {
-                            throw new Error('Subscription activation failed');
+                            // Still redirect to community even if activation failed
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                            window.location.href = '/community';
+                            return;
                         }
                     } catch (error) {
                         console.error('Error activating subscription:', error);
+                        // Still redirect to community
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        window.location.href = '/community';
+                        return;
                     }
                 };
                 
                 activateSubscription();
+                return; // Don't continue with course purchase flow
             }
         }
         
