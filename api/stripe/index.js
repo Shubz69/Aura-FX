@@ -1,4 +1,5 @@
 const mysql = require('mysql2/promise');
+const nodemailer = require('nodemailer');
 
 const getDbConnection = async () => {
   if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
@@ -27,6 +28,70 @@ const getDbConnection = async () => {
   } catch (error) {
     console.error('Database connection error:', error);
     return null;
+  }
+};
+
+// Email transporter for sending subscription cancellation emails
+const createEmailTransporter = () => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('Email credentials not configured - subscription cancellation emails will not be sent');
+    return null;
+  }
+
+  try {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create email transporter:', error);
+    return null;
+  }
+};
+
+const sendSubscriptionCancellationEmail = async (userEmail, userName) => {
+  const transporter = createEmailTransporter();
+  if (!transporter) {
+    return { sent: false, reason: 'transporter_not_configured' };
+  }
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: userEmail,
+      subject: '⚠️ Your AURA FX Subscription Has Been Cancelled',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #d32f2f;">⚠️ Subscription Cancelled</h2>
+          <p>Dear ${userName || 'Valued Member'},</p>
+          <p>We regret to inform you that your AURA FX subscription has been cancelled due to a payment failure.</p>
+          <p><strong>What this means:</strong></p>
+          <ul>
+            <li>Your access to the community has been temporarily suspended</li>
+            <li>You will no longer be able to post messages or access premium features</li>
+            <li>Your subscription status has been set to inactive</li>
+          </ul>
+          <p><strong>To restore your access:</strong></p>
+          <ol>
+            <li>Update your payment method in your Stripe account</li>
+            <li>Complete the payment for your subscription</li>
+            <li>Your access will be automatically restored once payment is successful</li>
+          </ol>
+          <p>If you believe this is an error or need assistance, please contact our support team immediately.</p>
+          <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+            Best regards,<br>
+            The AURA FX Team
+          </p>
+        </div>
+      `
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error('Failed to send subscription cancellation email:', error);
+    return { sent: false, reason: error.message };
   }
 };
 
@@ -183,11 +248,30 @@ module.exports = async (req, res) => {
           }
 
           if (userId) {
+            // Get user email and name before updating
+            const [userRows] = await db.execute(
+              'SELECT email, name, username FROM users WHERE id = ?',
+              [userId]
+            );
+            const userEmail = userRows[0]?.email;
+            const userName = userRows[0]?.name || userRows[0]?.username || 'Valued Member';
+            
+            // Update subscription status
             await db.execute(
-              'UPDATE users SET payment_failed = TRUE, subscription_status = ? WHERE id = ?',
-              ['inactive', userId]
+              'UPDATE users SET payment_failed = TRUE, subscription_status = ?, role = ? WHERE id = ?',
+              ['inactive', 'free', userId]
             );
             console.log('Marked payment as failed for user:', userId);
+            
+            // Send email notification
+            if (userEmail) {
+              try {
+                await sendSubscriptionCancellationEmail(userEmail, userName);
+                console.log('Subscription cancellation email sent to:', userEmail);
+              } catch (emailError) {
+                console.error('Failed to send cancellation email:', emailError);
+              }
+            }
           }
           
           await db.end();

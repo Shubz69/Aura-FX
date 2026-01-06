@@ -169,6 +169,46 @@ const AdminPanel = () => {
         }
     };
 
+    const handleUpdateChannel = async (channelId, field, value) => {
+        try {
+            const token = localStorage.getItem('token');
+            const updateData = { id: channelId };
+            
+            if (field === 'name') {
+                updateData.name = value;
+            } else if (field === 'description') {
+                updateData.description = value;
+            } else if (field === 'category') {
+                updateData.category = value;
+            }
+            
+            const response = await fetch(`/api/community/channels`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to update channel');
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                fetchChannels();
+                setError(null);
+            } else {
+                throw new Error(result.message || 'Failed to update channel');
+            }
+        } catch (err) {
+            console.error('Error updating channel:', err);
+            setError(err.message || 'Failed to update channel. Please try again.');
+        }
+    };
+
 
     const handleDeleteUser = (userId, userEmail) => {
         setDeleteModal({ isOpen: true, userId, userEmail });
@@ -213,6 +253,44 @@ const AdminPanel = () => {
         } catch (err) {
             console.error('Error granting community access:', err);
             setError(err.message || 'Failed to grant community access. Please try again.');
+        }
+    };
+
+    const handleRevokeCommunityAccess = async (userId, userEmail) => {
+        if (!window.confirm(`Revoke community access from ${userEmail}? This will deactivate their subscription and remove their premium access.`)) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/admin/revoke-access`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    userId: userId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to revoke access');
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                fetchUsers();
+                setError(null);
+                alert(`✅ Community access revoked from ${userEmail}!\n\nTheir subscription has been deactivated.`);
+            } else {
+                throw new Error(result.message || 'Failed to revoke access');
+            }
+        } catch (err) {
+            console.error('Error revoking community access:', err);
+            setError(err.message || 'Failed to revoke community access. Please try again.');
         }
     };
 
@@ -362,32 +440,50 @@ const AdminPanel = () => {
                                                 {onlineUsers.has(userItem.id) ? 'Online' : 'Offline'}
                                             </div>
                                         </div>
-                                        <div className="user-actions">
-                                            <button 
-                                                className="grant-access-btn"
-                                                onClick={() => handleGrantCommunityAccess(userItem.id, userItem.email)}
-                                                style={{
-                                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    padding: '8px 16px',
-                                                    borderRadius: '8px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '14px',
-                                                    fontWeight: '600',
-                                                    marginRight: '8px',
-                                                    transition: 'all 0.3s ease'
-                                                }}
-                                            >
-                                                Grant Community Access
-                                            </button>
-                                            <button 
-                                                className="delete-btn"
-                                                onClick={() => handleDeleteUser(userItem.id, userItem.email)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
+                                <div className="user-actions">
+                                    <button 
+                                        className="grant-access-btn"
+                                        onClick={() => handleGrantCommunityAccess(userItem.id, userItem.email)}
+                                        style={{
+                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            marginRight: '8px',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        Grant Community Access
+                                    </button>
+                                    <button 
+                                        className="revoke-access-btn"
+                                        onClick={() => handleRevokeCommunityAccess(userItem.id, userItem.email)}
+                                        style={{
+                                            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            marginRight: '8px',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        Revoke Access
+                                    </button>
+                                    <button 
+                                        className="delete-btn"
+                                        onClick={() => handleDeleteUser(userItem.id, userItem.email)}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                                     </div>
                                 ))}
                             </div>

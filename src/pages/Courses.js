@@ -62,19 +62,6 @@ const Courses = () => {
         );
     }
 
-    if (error) {
-        return (
-            <div className="courses-container">
-                <CosmicBackground />
-                <div className="courses-error">
-                    <h2>Oops!</h2>
-                    <p>{error}</p>
-                    <button onClick={() => window.location.reload()}>Try Again</button>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="courses-container">
             <CosmicBackground />
@@ -82,6 +69,31 @@ const Courses = () => {
                 <h1 className="courses-title">COURSES</h1>
                 <p>Expand your knowledge with our comprehensive trading courses</p>
             </div>
+            
+            {error && (
+                <div className="courses-error" style={{ 
+                    margin: '20px auto', 
+                    maxWidth: '600px', 
+                    padding: '20px', 
+                    background: 'rgba(239, 68, 68, 0.1)', 
+                    border: '1px solid rgba(239, 68, 68, 0.3)', 
+                    borderRadius: '8px',
+                    color: '#fff',
+                    textAlign: 'center'
+                }}>
+                    <h2>Oops!</h2>
+                    <p>{error}</p>
+                    <button onClick={() => window.location.reload()} style={{
+                        marginTop: '10px',
+                        padding: '10px 20px',
+                        background: '#6D28D9',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer'
+                    }}>Try Again</button>
+                </div>
+            )}
             
             <div className="courses-grid">
                 {Array.isArray(courses) && courses.length > 0 ? (
