@@ -294,17 +294,6 @@ const Api = {
             params: { id: channelId }
         });
     },
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('Authentication required to delete channels');
-        }
-
-        return axios.delete(`${API_BASE_URL}/api/community/channels`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            data: {
                 id: channelId
             },
             params: {
