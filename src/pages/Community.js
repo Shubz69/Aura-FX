@@ -561,42 +561,70 @@ const Community = () => {
         }
     };
 
-    // Fetch messages for a channel - optimized for fast loading
-    const fetchMessages = useCallback(async (channelId) => {
+    // Fetch messages for a channel - optimized for fast loading and real-time updates
+    const fetchMessages = useCallback(async (channelId, mergeMode = false) => {
         if (!channelId) return;
         
-        // OPTIMIZATION: Load from localStorage FIRST for instant display
-        const cachedMessages = loadMessagesFromStorage(channelId);
-        if (cachedMessages.length > 0) {
-            // Show cached messages immediately while fetching fresh ones
-            setMessages(cachedMessages);
-        } else {
-            // No cache, show empty array immediately
-            setMessages([]);
-        }
-        
-        // Then fetch from API in background to get latest messages
         try {
             const response = await Api.getChannelMessages(channelId);
             if (response && response.data && Array.isArray(response.data)) {
                 const apiMessages = response.data;
                 
-                // Only update if messages actually changed (avoid unnecessary re-renders)
-                if (JSON.stringify(apiMessages) !== JSON.stringify(cachedMessages)) {
-                    // Save to localStorage as backup/cache
-                    saveMessagesToStorage(channelId, apiMessages);
+                if (mergeMode) {
+                    // Merge mode: Add only new messages that don't exist yet
+                    setMessages(prev => {
+                        const existingIds = new Set(prev.map(m => m.id));
+                        const newMessages = apiMessages.filter(m => !existingIds.has(m.id));
+                        
+                        if (newMessages.length > 0) {
+                            // Merge new messages with existing ones, sorted by timestamp
+                            const merged = [...prev, ...newMessages].sort((a, b) => {
+                                const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
+                                const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
+                                return timeA - timeB;
+                            });
+                            
+                            // Save to localStorage
+                            saveMessagesToStorage(channelId, merged);
+                            return merged;
+                        }
+                        
+                        return prev; // No new messages
+                    });
+                } else {
+                    // Full refresh mode: Replace all messages
+                    // OPTIMIZATION: Load from localStorage FIRST for instant display
+                    const cachedMessages = loadMessagesFromStorage(channelId);
+                    if (cachedMessages.length > 0) {
+                        // Show cached messages immediately while fetching fresh ones
+                        setMessages(cachedMessages);
+                    } else {
+                        // No cache, show empty array immediately
+                        setMessages([]);
+                    }
                     
-                    // Update with fresh messages from API
-                    setMessages(apiMessages);
+                    // Only update if messages actually changed (avoid unnecessary re-renders)
+                    if (JSON.stringify(apiMessages) !== JSON.stringify(cachedMessages)) {
+                        // Save to localStorage as backup/cache
+                        saveMessagesToStorage(channelId, apiMessages);
+                        
+                        // Update with fresh messages from API
+                        setMessages(apiMessages);
+                    }
                 }
                 return;
             }
         } catch (apiError) {
-            // Silently fail if we already have cached messages
-            if (cachedMessages.length === 0) {
-                console.warn('Backend API unavailable, no cached messages:', apiError.message);
+            // In merge mode, don't show errors - just silently fail
+            if (!mergeMode) {
+                // Full refresh mode: show cached messages if available
+                const cachedMessages = loadMessagesFromStorage(channelId);
+                if (cachedMessages.length > 0) {
+                    setMessages(cachedMessages);
+                } else {
+                    console.warn('Backend API unavailable, no cached messages:', apiError.message);
+                }
             }
-            // Keep showing cached messages if available
         }
     }, []);
 
@@ -1116,26 +1144,30 @@ const Community = () => {
         }
     }, [selectedChannel, fetchMessages, navigate]);
 
-    // Poll for new messages when WebSocket is not connected (fallback)
+    // Poll for new messages - ALWAYS run as backup, even when WebSocket is connected
+    // This ensures messages appear instantly even if WebSocket has issues
     useEffect(() => {
-        if (!selectedChannel || !isAuthenticated) return;
+        if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Only poll if WebSocket is not connected
-        if (isConnected) {
-            return; // WebSocket is working, no need to poll
-        }
+        // Poll interval: faster when WebSocket is down, slower when connected (as backup)
+        const pollInterval = isConnected ? 3000 : 2000; // 3s when connected (backup), 2s when disconnected (primary)
+        
+        // Start polling immediately
+        const pollMessages = () => {
+            // Use merge mode to only add new messages, not replace all
+            fetchMessages(selectedChannel.id, true).catch((err) => {
+                // Silently handle errors to avoid console spam
+                console.debug('Polling fetch error:', err.message);
+            });
+        };
+        
+        // Poll immediately on mount/channel change
+        pollMessages();
+        
+        // Then poll at regular intervals
+        const pollTimer = setInterval(pollMessages, pollInterval);
 
-        // Poll every 5 seconds for new messages when WebSocket is down (reduced frequency to avoid spam)
-        const pollInterval = setInterval(() => {
-            if (selectedChannel?.id && !isConnected) {
-                fetchMessages(selectedChannel.id).catch((err) => {
-                    // Silently handle errors to avoid console spam
-                    console.debug('Polling fetch error:', err.message);
-                });
-            }
-        }, 5000); // Increased from 3 to 5 seconds
-
-        return () => clearInterval(pollInterval);
+        return () => clearInterval(pollTimer);
     }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel]);
     
     // Add welcome message when welcome channel is selected for first time
