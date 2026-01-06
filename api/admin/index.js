@@ -756,6 +756,56 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Handle /api/admin/revoke-access
+  if ((pathname.includes('/revoke-access') || pathname.endsWith('/revoke-access')) && req.method === 'POST') {
+    try {
+      const { userId } = req.body || {};
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required'
+        });
+      }
+
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database connection error'
+        });
+      }
+
+      try {
+        // Revoke access by setting subscription to inactive and role to free
+        await db.execute(
+          'UPDATE users SET subscription_status = ?, payment_failed = TRUE, role = ? WHERE id = ?',
+          ['inactive', 'free', userId]
+        );
+
+        await db.end();
+
+        return res.status(200).json({
+          success: true,
+          message: 'Community access revoked successfully'
+        });
+      } catch (dbError) {
+        console.error('Database error revoking access:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to revoke access'
+        });
+      }
+    } catch (error) {
+      console.error('Error revoking access:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   return res.status(404).json({ success: false, message: 'Endpoint not found' });
 };
 
