@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
 import { SUPER_ADMIN_EMAIL } from '../utils/roles';
+import axios from 'axios';
 
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus } from 'react-icons/fa';
@@ -806,17 +807,52 @@ const Community = () => {
         return checkSubscriptionLocal();
     };
     
-    // Periodically check subscription status from database
+    // Check for Stripe redirect and activate subscription immediately
     useEffect(() => {
         if (!userId || !isAuthenticated) return;
         
-        // Check immediately
-        checkSubscriptionFromDB();
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session_id');
+        const paymentSuccess = params.get('payment_success') === 'true' || params.get('redirect_status') === 'succeeded';
         
-        // Check every 30 seconds
+        // If user just came back from Stripe payment, activate subscription immediately
+        if ((sessionId || paymentSuccess) && userId) {
+            const activateSubscription = async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(
+                        `${window.location.origin}/api/stripe/subscription-success`,
+                        { userId, session_id: sessionId || `stripe-${Date.now()}` },
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    
+                    if (response.data && response.data.success) {
+                        // Clear URL params
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        // Force immediate subscription check
+                        await checkSubscriptionFromDB();
+                    }
+                } catch (error) {
+                    console.error('Error activating subscription from redirect:', error);
+                }
+            };
+            
+            activateSubscription();
+        } else {
+            // Normal subscription check
+            checkSubscriptionFromDB();
+        }
+        
+        // Check every 10 seconds (more frequent for better UX)
         const interval = setInterval(() => {
             checkSubscriptionFromDB();
-        }, 30000);
+        }, 10000);
         
         return () => clearInterval(interval);
     }, [userId, isAuthenticated, checkSubscriptionFromDB]);
