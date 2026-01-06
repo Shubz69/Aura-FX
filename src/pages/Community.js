@@ -122,6 +122,7 @@ const Community = () => {
     const [newChannelCategory, setNewChannelCategory] = useState('trading');
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
     const [channelActionStatus, setChannelActionStatus] = useState(null);
     const [channelActionLoading, setChannelActionLoading] = useState(false);
     
@@ -873,6 +874,19 @@ const Community = () => {
         
         return () => clearInterval(interval);
     }, [userId, isAuthenticated, checkSubscriptionFromDB]);
+
+    // Handle window resize for mobile detection
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        // Check on mount
+        handleResize();
+        
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Check subscription before allowing access to community
     useEffect(() => {
