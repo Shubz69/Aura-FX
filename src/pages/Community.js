@@ -1726,6 +1726,121 @@ Let's build generational wealth together! 💰🚀`,
                             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
                             border: '2px solid rgba(255, 255, 255, 0.2)'
                         }}>
+                            <div style={{ marginBottom: '20px' }}>
+                                <span style={{ fontSize: '48px' }}>🔒</span>
+                            </div>
+                            <h2 style={{
+                                color: '#ffffff',
+                                fontSize: '24px',
+                                fontWeight: 'bold',
+                                marginBottom: '16px',
+                                fontFamily: 'var(--font-main)'
+                            }}>
+                                Subscribe to Access Community
+                            </h2>
+                            <p style={{
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                fontSize: '16px',
+                                marginBottom: '24px',
+                                lineHeight: '1.5',
+                                fontFamily: 'var(--font-secondary)'
+                            }}>
+                                To access the community, you need to subscribe. Click here to subscribe and get 3 months free, then just £99/month.
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <button
+                                    onClick={handleSubscribe}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '16px 32px',
+                                        borderRadius: '12px',
+                                        fontSize: '16px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        fontFamily: 'var(--font-main)',
+                                        boxShadow: '0 4px 12px rgba(109, 40, 217, 0.4)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 6px 16px rgba(109, 40, 217, 0.6)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(109, 40, 217, 0.4)';
+                                    }}
+                                >
+                                    Subscribe Now
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        // Manual activation for users who paid but subscription wasn't activated
+                                        if (window.confirm('Have you completed payment on Stripe? Click OK to activate your subscription.')) {
+                                            try {
+                                                const token = localStorage.getItem('token');
+                                                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                                                const userId = userData.id || userId;
+                                                
+                                                if (!userId) {
+                                                    alert('Error: User ID not found. Please log out and log back in.');
+                                                    return;
+                                                }
+                                                
+                                                const response = await axios.post(
+                                                    `${window.location.origin}/api/stripe/subscription-success`,
+                                                    { userId, session_id: `manual-activation-${Date.now()}` },
+                                                    {
+                                                        headers: {
+                                                            'Authorization': `Bearer ${token}`,
+                                                            'Content-Type': 'application/json'
+                                                        }
+                                                    }
+                                                );
+                                                
+                                                if (response.data && response.data.success) {
+                                                    // Force subscription check
+                                                    await checkSubscriptionFromDB();
+                                                    alert('✅ Subscription activated! The page will refresh.');
+                                                    window.location.reload();
+                                                } else {
+                                                    alert('Failed to activate subscription. Please contact support or use the admin panel.');
+                                                }
+                                            } catch (error) {
+                                                console.error('Error manually activating subscription:', error);
+                                                alert('Error activating subscription. Please contact support.');
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.1)',
+                                        color: 'white',
+                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                        padding: '12px 24px',
+                                        borderRadius: '12px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        fontFamily: 'var(--font-main)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                                    }}
+                                >
+                                    I've Already Paid - Activate My Subscription
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+            
+            {/* Rest of community content */}
                             <div style={{
                                 fontSize: '48px',
                                 marginBottom: '20px'
@@ -1749,33 +1864,94 @@ Let's build generational wealth together! 💰🚀`,
                             }}>
                                 To access the community, you need to subscribe. <strong style={{ color: 'rgba(255, 255, 255, 0.15)' }}>Click here</strong> to subscribe and get 3 months free, then just £99/month.
                             </p>
-                            <button
-                                onClick={handleSubscribe}
-                                style={{
-                                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '16px 48px',
-                                    borderRadius: '10px',
-                                    fontSize: '18px',
-                                    fontWeight: 'bold',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s ease',
-                                    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-                                    width: '100%',
-                                    maxWidth: '300px'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.transform = 'scale(1.05)';
-                                    e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.transform = 'scale(1)';
-                                    e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
-                                }}
-                            >
-                                Subscribe Now
-                            </button>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                                <button
+                                    onClick={handleSubscribe}
+                                    style={{
+                                        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '16px 48px',
+                                        borderRadius: '10px',
+                                        fontSize: '18px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
+                                        width: '100%'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.transform = 'scale(1.05)';
+                                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.transform = 'scale(1)';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+                                    }}
+                                >
+                                    Subscribe Now
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        // Manual activation for users who paid but subscription wasn't activated
+                                        if (window.confirm('Have you completed payment on Stripe? Click OK to activate your subscription.')) {
+                                            try {
+                                                const token = localStorage.getItem('token');
+                                                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                                                const currentUserId = userData.id || userId;
+                                                
+                                                if (!currentUserId) {
+                                                    alert('Error: User ID not found. Please log out and log back in.');
+                                                    return;
+                                                }
+                                                
+                                                const response = await axios.post(
+                                                    `${window.location.origin}/api/stripe/subscription-success`,
+                                                    { userId: currentUserId, session_id: `manual-activation-${Date.now()}` },
+                                                    {
+                                                        headers: {
+                                                            'Authorization': `Bearer ${token}`,
+                                                            'Content-Type': 'application/json'
+                                                        }
+                                                    }
+                                                );
+                                                
+                                                if (response.data && response.data.success) {
+                                                    // Force subscription check
+                                                    await checkSubscriptionFromDB();
+                                                    alert('✅ Subscription activated! The page will refresh.');
+                                                    window.location.reload();
+                                                } else {
+                                                    alert('Failed to activate subscription. Please contact support or use the admin panel.');
+                                                }
+                                            } catch (error) {
+                                                console.error('Error manually activating subscription:', error);
+                                                alert('Error activating subscription. Please contact support.');
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.1)',
+                                        color: 'white',
+                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                        padding: '12px 24px',
+                                        borderRadius: '10px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        width: '100%'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                                    }}
+                                >
+                                    I've Already Paid - Activate My Subscription
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </>

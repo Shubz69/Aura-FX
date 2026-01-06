@@ -212,10 +212,26 @@ export const AuthProvider = ({ children }) => {
           setMfaVerified(true);
         }
         
-        // Check subscription status after login
+        // Check subscription status from database after login (not just localStorage)
+        try {
+            const subscriptionCheck = await Api.checkSubscription(data.id || data.userId);
+            if (subscriptionCheck && subscriptionCheck.hasActiveSubscription && !subscriptionCheck.paymentFailed) {
+                localStorage.setItem('hasActiveSubscription', 'true');
+                if (subscriptionCheck.expiry) {
+                    localStorage.setItem('subscriptionExpiry', subscriptionCheck.expiry);
+                }
+            } else {
+                localStorage.removeItem('hasActiveSubscription');
+                localStorage.removeItem('subscriptionExpiry');
+            }
+        } catch (error) {
+            console.error('Error checking subscription on login:', error);
+            // Fallback to localStorage check
+        }
+        
         const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
         const pendingSubscription = localStorage.getItem('pendingSubscription') === 'true';
-        const isAdmin = data.role === 'ADMIN';
+        const isAdmin = data.role === 'ADMIN' || data.role === 'admin' || data.role === 'super_admin';
         
         // If no subscription and not admin, redirect to subscription page
         if (!isAdmin && !hasActiveSubscription && !pendingSubscription) {
