@@ -114,3 +114,4 @@ If you're still getting errors:
 2. Make sure you're connected to the `railway` database
 3. Try running each CREATE TABLE statement one at a time to see which one fails
 
+

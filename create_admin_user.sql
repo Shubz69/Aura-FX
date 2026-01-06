@@ -67,3 +67,4 @@ ON DUPLICATE KEY UPDATE
 -- 
 -- IMPORTANT: Change the password immediately after first login!
 
+

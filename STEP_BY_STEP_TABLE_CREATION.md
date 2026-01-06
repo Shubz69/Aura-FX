@@ -90,3 +90,4 @@ Then run `create_tables_fixed.sql` again from the beginning.
 2. ✅ Create admin user (see `CREATE_ADMIN_USER.md`)
 3. ✅ Login with shubzfx@gmail.com
 
+

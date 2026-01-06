@@ -56,3 +56,4 @@ Once working, you should see in browser console:
 - Messages update in real-time (no 5-second delay)
 - No more "HTTP 200 instead of 101" errors
 
+

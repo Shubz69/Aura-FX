@@ -92,3 +92,4 @@ Change the `nodemailer.createTransport` configuration to use your preferred SMTP
 
 Never commit email credentials to Git. Always use environment variables in Vercel.
 
+

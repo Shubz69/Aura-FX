@@ -10,3 +10,4 @@ SELECT id, email, username, role
 FROM users 
 WHERE email = 'shubzfx@gmail.com';
 
+
