@@ -294,13 +294,6 @@ const Api = {
             params: { id: channelId }
         });
     },
-                id: channelId
-            },
-            params: {
-                id: channelId
-            }
-        });
-    },
 
     getChannelMessages: async (channelId, customHeaders = {}) => {
         console.log(`Attempting to fetch messages for channel ${channelId}`);

@@ -294,6 +294,53 @@ const AdminPanel = () => {
         }
     };
 
+    const handleGiveXP = async (userId, userEmail, currentXP = 0) => {
+        const xpAmount = window.prompt(`Give XP points to ${userEmail}\n\nCurrent XP: ${currentXP}\n\nEnter amount of XP to give:`, '100');
+        
+        if (xpAmount === null || xpAmount === '') {
+            return; // User cancelled
+        }
+
+        const xp = parseFloat(xpAmount);
+        if (isNaN(xp) || xp <= 0) {
+            alert('Please enter a valid positive number for XP amount.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/admin/give-xp`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    userId: userId,
+                    xpAmount: xp
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to give XP');
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                fetchUsers();
+                setError(null);
+                alert(`✅ Successfully awarded ${xp} XP to ${userEmail}!\n\nNew XP: ${result.newXP}\nNew Level: ${result.newLevel}`);
+            } else {
+                throw new Error(result.message || 'Failed to give XP');
+            }
+        } catch (err) {
+            console.error('Error giving XP:', err);
+            setError(err.message || 'Failed to give XP points. Please try again.');
+        }
+    };
+
     const confirmDeleteUser = async () => {
         const { userId } = deleteModal;
         if (!userId) return;
@@ -435,12 +482,48 @@ const AdminPanel = () => {
                                             <div className="user-email">{userItem.email || 'No email'}</div>
                                             <div className="user-name">({userItem.name || userItem.username || 'N/A'})</div>
                                             <div className="user-role">{userItem.role || 'USER'}</div>
+                                            <div className="user-xp" style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '8px',
+                                                marginTop: '8px',
+                                                padding: '6px 12px',
+                                                background: 'rgba(139, 92, 246, 0.2)',
+                                                borderRadius: '6px',
+                                                fontSize: '14px',
+                                                fontWeight: '600'
+                                            }}>
+                                                <span>⭐ Level {userItem.level || 1}</span>
+                                                <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>•</span>
+                                                <span>{parseFloat(userItem.xp || 0).toFixed(2)} XP</span>
+                                            </div>
                                             <div className="user-joined">Joined: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}</div>
                                             <div className={`user-status ${onlineUsers.has(userItem.id) ? 'online' : 'offline'}`}>
                                                 {onlineUsers.has(userItem.id) ? 'Online' : 'Offline'}
                                             </div>
                                         </div>
                                 <div className="user-actions">
+                                    <button 
+                                        className="give-xp-btn"
+                                        onClick={() => handleGiveXP(userItem.id, userItem.email, userItem.xp || 0)}
+                                        style={{
+                                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            marginRight: '8px',
+                                            transition: 'all 0.3s ease',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}
+                                    >
+                                        ⭐ Give XP
+                                    </button>
                                     <button 
                                         className="grant-access-btn"
                                         onClick={() => handleGrantCommunityAccess(userItem.id, userItem.email)}

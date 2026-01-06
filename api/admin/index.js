@@ -555,6 +555,18 @@ module.exports = async (req, res) => {
           } catch (e2) {}
         }
 
+        // Check if XP and level columns exist
+        let hasXP = false;
+        let hasLevel = false;
+        try {
+          await db.execute('SELECT xp FROM users LIMIT 1');
+          hasXP = true;
+        } catch (e) {}
+        try {
+          await db.execute('SELECT level FROM users LIMIT 1');
+          hasLevel = true;
+        } catch (e) {}
+
         // Build query based on available columns
         let query = 'SELECT id, email, username, role';
         if (hasMetadata) {
@@ -565,6 +577,12 @@ module.exports = async (req, res) => {
         }
         if (hasLastSeen) {
           query += ', last_seen';
+        }
+        if (hasXP) {
+          query += ', xp';
+        }
+        if (hasLevel) {
+          query += ', level';
         }
         query += ' FROM users';
         if (hasCreatedAt) {
@@ -581,7 +599,9 @@ module.exports = async (req, res) => {
             email: user.email || '',
             username: user.username || user.name || '',
             role: user.role || 'free',
-            capabilities: []
+            capabilities: [],
+            xp: hasXP ? (user.xp || 0) : 0,
+            level: hasLevel ? (user.level || 1) : 1
           };
 
           // Parse capabilities if metadata exists
@@ -799,6 +819,97 @@ module.exports = async (req, res) => {
       }
     } catch (error) {
       console.error('Error revoking access:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Handle /api/admin/give-xp - Give XP points to a user
+  if ((pathname.includes('/give-xp') || pathname.endsWith('/give-xp')) && req.method === 'POST') {
+    try {
+      const { userId, xpAmount } = req.body || {};
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required'
+        });
+      }
+
+      if (!xpAmount || xpAmount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid XP amount is required (must be greater than 0)'
+        });
+      }
+
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database connection error'
+        });
+      }
+
+      try {
+        // Check if XP column exists, if not add it
+        try {
+          await db.execute('SELECT xp FROM users LIMIT 1');
+        } catch (e) {
+          console.log('XP column does not exist, adding it...');
+          await db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(10, 2) DEFAULT 0');
+        }
+
+        // Check if level column exists, if not add it
+        try {
+          await db.execute('SELECT level FROM users LIMIT 1');
+        } catch (e) {
+          console.log('Level column does not exist, adding it...');
+          await db.execute('ALTER TABLE users ADD COLUMN level INT DEFAULT 1');
+        }
+
+        // Get current XP
+        const [userRows] = await db.execute('SELECT xp, level FROM users WHERE id = ?', [userId]);
+        if (userRows.length === 0) {
+          await db.end();
+          return res.status(404).json({
+            success: false,
+            message: 'User not found'
+          });
+        }
+
+        const currentXP = parseFloat(userRows[0].xp || 0);
+        const newXP = currentXP + parseFloat(xpAmount);
+
+        // Calculate level from XP: Level = floor(sqrt(XP / 100)) + 1
+        const newLevel = Math.floor(Math.sqrt(newXP / 100)) + 1;
+
+        // Update user XP and level
+        await db.execute(
+          'UPDATE users SET xp = ?, level = ? WHERE id = ?',
+          [newXP, newLevel, userId]
+        );
+
+        await db.end();
+
+        return res.status(200).json({
+          success: true,
+          message: `Successfully awarded ${xpAmount} XP points`,
+          newXP: newXP,
+          newLevel: newLevel
+        });
+      } catch (dbError) {
+        console.error('Database error giving XP:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to give XP points'
+        });
+      }
+    } catch (error) {
+      console.error('Error giving XP:', error);
       return res.status(500).json({
         success: false,
         message: 'Internal server error'
