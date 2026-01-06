@@ -286,6 +286,14 @@ const Api = {
     },
 
     deleteChannel: async (channelId) => {
+        if (!hasValidAuth()) {
+            throw new Error('Authentication required to delete channels');
+        }
+        
+        return axios.delete(`${API_BASE_URL}/api/community/channels`, {
+            params: { id: channelId }
+        });
+    },
         const token = localStorage.getItem('token');
         if (!token) {
             throw new Error('Authentication required to delete channels');

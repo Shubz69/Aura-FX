@@ -470,13 +470,18 @@ const Community = () => {
         return storedUser?.courses || [];
     };
 
-    // Check if user can access channel
+    // Check if user can access channel (view)
     const canUserAccessChannel = (channel) => {
         const userRole = getCurrentUserRole();
         const userCourses = getUserCourses();
         
         // Admins and Super Admins can access everything
         if (userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser) {
+            return true;
+        }
+        
+        // Trading channels are visible to all users
+        if (channel.category === 'trading') {
             return true;
         }
         
@@ -511,7 +516,13 @@ const Community = () => {
         const isAdminChannel = channel.accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
         const isWelcomeChannel = channelName === 'welcome';
         const isAnnouncementsChannel = channelName === 'announcements';
-               // Admin-only channels: only admins can post
+        
+        // Trading channels: all users can post (accessLevel should be 'open')
+        if (channel.category === 'trading' && (channel.accessLevel === 'open' || !channel.accessLevel)) {
+            return true;
+        }
+        
+        // Admin-only channels: only admins can post
         if (isAdminChannel) {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
@@ -676,10 +687,16 @@ const Community = () => {
 
         } catch (error) {
             console.error('Failed to create channel:', error);
+            const errorMessage = error.response?.data?.message || error.message || 'Failed to create channel.';
             setChannelActionStatus({
                 type: 'error',
-                message: error.response?.data?.message || error.message || 'Failed to create channel.'
+                message: errorMessage
             });
+            
+            // If it's a 409 (duplicate), suggest using a different name
+            if (error.response?.status === 409) {
+                setNewChannelName('');
+            }
         } finally {
             setChannelActionLoading(false);
         }

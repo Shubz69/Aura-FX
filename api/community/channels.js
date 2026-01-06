@@ -365,19 +365,19 @@ module.exports = async (req, res) => {
               }
             };
 
-            // ONLY TRADING CHANNELS - Admin-only access
+            // TRADING CHANNELS - Open access for all users to see and post
             const tradingChannels = [
-              { id: 'forex', name: 'forex', category: 'trading', description: 'Forex trading discussions', accessLevel: 'admin-only' },
-              { id: 'crypto', name: 'crypto', category: 'trading', description: 'Cryptocurrency trading discussions', accessLevel: 'admin-only' },
-              { id: 'stocks', name: 'stocks', category: 'trading', description: 'Stock market discussions', accessLevel: 'admin-only' },
-              { id: 'indices', name: 'indices', category: 'trading', description: 'Indices trading discussions', accessLevel: 'admin-only' },
-              { id: 'day-trading', name: 'day-trading', category: 'trading', description: 'Day trading strategies and discussions', accessLevel: 'admin-only' },
-              { id: 'swing-trading', name: 'swing-trading', category: 'trading', description: 'Swing trading discussions', accessLevel: 'admin-only' },
-              { id: 'commodities', name: 'commodities', category: 'trading', description: 'Commodities and metals trading insights', accessLevel: 'admin-only' },
-              { id: 'futures', name: 'futures', category: 'trading', description: 'Futures market strategies and setups', accessLevel: 'admin-only' },
-              { id: 'options', name: 'options', category: 'trading', description: 'Options trading strategies and education', accessLevel: 'admin-only' },
-              { id: 'prop-trading', name: 'prop-trading', category: 'trading', description: 'Prop firm challenges and funded account tips', accessLevel: 'admin-only' },
-              { id: 'market-analysis', name: 'market-analysis', category: 'trading', description: 'Daily market analysis and trade ideas', accessLevel: 'admin-only' }
+              { id: 'forex', name: 'forex', category: 'trading', description: 'Forex trading discussions', accessLevel: 'open' },
+              { id: 'crypto', name: 'crypto', category: 'trading', description: 'Cryptocurrency trading discussions', accessLevel: 'open' },
+              { id: 'stocks', name: 'stocks', category: 'trading', description: 'Stock market discussions', accessLevel: 'open' },
+              { id: 'indices', name: 'indices', category: 'trading', description: 'Indices trading discussions', accessLevel: 'open' },
+              { id: 'day-trading', name: 'day-trading', category: 'trading', description: 'Day trading strategies and discussions', accessLevel: 'open' },
+              { id: 'swing-trading', name: 'swing-trading', category: 'trading', description: 'Swing trading discussions', accessLevel: 'open' },
+              { id: 'commodities', name: 'commodities', category: 'trading', description: 'Commodities and metals trading insights', accessLevel: 'open' },
+              { id: 'futures', name: 'futures', category: 'trading', description: 'Futures market strategies and setups', accessLevel: 'open' },
+              { id: 'options', name: 'options', category: 'trading', description: 'Options trading strategies and education', accessLevel: 'open' },
+              { id: 'prop-trading', name: 'prop-trading', category: 'trading', description: 'Prop firm challenges and funded account tips', accessLevel: 'open' },
+              { id: 'market-analysis', name: 'market-analysis', category: 'trading', description: 'Daily market analysis and trade ideas', accessLevel: 'open' }
             ];
             
             for (const channel of tradingChannels) {
@@ -504,9 +504,11 @@ module.exports = async (req, res) => {
 
         const [existingByName] = await db.execute('SELECT id FROM channels WHERE name = ?', [channelName]);
         if (existingByName && existingByName.length > 0) {
+          // If channel with same name exists, suggest updating it instead
           return res.status(409).json({
             success: false,
-            message: 'A channel with this name already exists.'
+            message: `A channel with the name "${channelName}" already exists. Please use a different name or update the existing channel.`,
+            existingChannelId: existingByName[0].id
           });
         }
 
