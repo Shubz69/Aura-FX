@@ -20,6 +20,56 @@ const PaymentSuccess = () => {
         const params = new URLSearchParams(location.search);
         const courseIdFromUrl = params.get("courseId");
         const sessionId = params.get("session_id");
+        const paymentSuccess = params.get("payment_success");
+        const isSubscription = params.get("subscription") === "true" || !courseIdFromUrl;
+        
+        // If this is a subscription payment, redirect to community after processing
+        if (isSubscription && paymentSuccess === "true" && sessionId) {
+            const userData = localStorage.getItem("user");
+            const userId = userData ? JSON.parse(userData)?.id : null;
+            
+            if (userId) {
+                const activateSubscription = async () => {
+                    try {
+                        const token = localStorage.getItem("token");
+                        const response = await axios.post(
+                            `${API_BASE_URL}/api/stripe/subscription-success`,
+                            { userId, session_id: sessionId },
+                            {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+                        
+                        if (response.data && response.data.success) {
+                            // Update localStorage
+                            localStorage.setItem('hasActiveSubscription', 'true');
+                            if (response.data.subscription?.expiry) {
+                                localStorage.setItem('subscriptionExpiry', response.data.subscription.expiry);
+                            }
+                            
+                            // Update user role in localStorage
+                            const user = JSON.parse(localStorage.getItem('user') || '{}');
+                            user.role = 'premium';
+                            localStorage.setItem('user', JSON.stringify(user));
+                            
+                            // Redirect to community
+                            setTimeout(() => {
+                                navigate('/community');
+                            }, 2000);
+                            setMessage("🎉 Subscription activated! Redirecting to community...");
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error activating subscription:', error);
+                    }
+                };
+                
+                activateSubscription();
+            }
+        }
         
         const completePurchase = async () => {
             try {

@@ -170,7 +170,8 @@ module.exports = async (req, res) => {
         }
 
         const user = rows[0];
-        const isAdmin = user.role === 'ADMIN' || user.role === 'admin';
+        const isAdmin = user.role === 'ADMIN' || user.role === 'admin' || user.role === 'super_admin';
+        const isPremium = user.role === 'premium' || user.role === 'PREMIUM';
         
         if (isAdmin) {
           return res.status(200).json({
@@ -179,6 +180,17 @@ module.exports = async (req, res) => {
             isAdmin: true,
             paymentFailed: false,
             expiry: null
+          });
+        }
+
+        // Premium role grants access regardless of subscription status
+        if (isPremium) {
+          return res.status(200).json({
+            success: true,
+            hasActiveSubscription: true,
+            isAdmin: false,
+            paymentFailed: false,
+            expiry: user.subscription_expiry || null
           });
         }
 

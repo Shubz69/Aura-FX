@@ -772,8 +772,15 @@ const Community = () => {
                 setSubscriptionStatus(result);
                 setPaymentFailed(result.paymentFailed || false);
                 
+                // Check if user has premium role
+                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const hasPremiumRole = storedUser.role === 'premium' || storedUser.role === 'PREMIUM';
+                
+                // User has access if they have active subscription OR premium role
+                const hasAccess = (result.hasActiveSubscription && !result.paymentFailed) || hasPremiumRole;
+                
                 // Update localStorage to match database
-                if (result.hasActiveSubscription && !result.paymentFailed) {
+                if (hasAccess) {
                     localStorage.setItem('hasActiveSubscription', 'true');
                     if (result.expiry) {
                         localStorage.setItem('subscriptionExpiry', result.expiry);
@@ -783,7 +790,7 @@ const Community = () => {
                     localStorage.removeItem('subscriptionExpiry');
                 }
                 
-                return result.hasActiveSubscription && !result.paymentFailed;
+                return hasAccess;
             }
             return false;
         } catch (error) {
@@ -795,6 +802,14 @@ const Community = () => {
     
     // Combined subscription check
     const checkSubscription = () => {
+        // Check if user has premium role
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const hasPremiumRole = storedUser.role === 'premium' || storedUser.role === 'PREMIUM';
+        
+        if (hasPremiumRole) {
+            return true; // Premium role grants access
+        }
+        
         // Use database status if available, otherwise fallback to localStorage
         if (subscriptionStatus) {
             return subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed;

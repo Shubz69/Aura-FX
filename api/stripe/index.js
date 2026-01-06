@@ -96,13 +96,15 @@ module.exports = async (req, res) => {
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 90); // 3 months free trial
 
+        // Update subscription status AND role to premium
         await db.execute(
           `UPDATE users 
            SET subscription_status = 'active',
                subscription_expiry = ?,
                subscription_started = NOW(),
                stripe_session_id = ?,
-               payment_failed = FALSE
+               payment_failed = FALSE,
+               role = 'premium'
            WHERE id = ?`,
           [expiryDate, sessionId || null, userId]
         );
@@ -219,8 +221,8 @@ module.exports = async (req, res) => {
             expiryDate.setDate(expiryDate.getDate() + 30); // 1 month from now
             
             await db.execute(
-              'UPDATE users SET payment_failed = FALSE, subscription_status = ?, subscription_expiry = ? WHERE id = ?',
-              ['active', expiryDate.toISOString().slice(0, 19).replace('T', ' '), userId]
+              'UPDATE users SET payment_failed = FALSE, subscription_status = ?, subscription_expiry = ?, role = ? WHERE id = ?',
+              ['active', expiryDate.toISOString().slice(0, 19).replace('T', ' '), 'premium', userId]
             );
             console.log('Reactivated subscription for user:', userId);
           }

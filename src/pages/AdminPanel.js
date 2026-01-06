@@ -115,6 +115,57 @@ const AdminPanel = () => {
         setDeleteModal({ isOpen: true, userId, userEmail });
     };
 
+    const handleGrantCommunityAccess = async (userId, userEmail) => {
+        if (!window.confirm(`Grant community access to ${userEmail}? This will activate their subscription and give them premium access.`)) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            
+            // First, update subscription status
+            const subscriptionResponse = await fetch(`/api/stripe/subscription-success`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    userId: userId,
+                    session_id: `admin-granted-${Date.now()}`
+                })
+            });
+
+            if (!subscriptionResponse.ok) {
+                throw new Error('Failed to grant subscription access');
+            }
+
+            // Also update role to premium
+            const roleResponse = await fetch(`/api/admin/users/${userId}/role`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    role: 'premium'
+                })
+            });
+
+            if (!roleResponse.ok) {
+                console.warn('Failed to update role, but subscription was granted');
+            }
+
+            // Refresh the user list
+            fetchUsers();
+            setError(null);
+            alert(`✅ Community access granted to ${userEmail}!`);
+        } catch (err) {
+            console.error('Error granting community access:', err);
+            setError(err.message || 'Failed to grant community access. Please try again.');
+        }
+    };
+
     const confirmDeleteUser = async () => {
         const { userId } = deleteModal;
         if (!userId) return;
@@ -199,6 +250,24 @@ const AdminPanel = () => {
                                     </div>
                                 </div>
                                 <div className="user-actions">
+                                    <button 
+                                        className="grant-access-btn"
+                                        onClick={() => handleGrantCommunityAccess(userItem.id, userItem.email)}
+                                        style={{
+                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            marginRight: '8px',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        Grant Community Access
+                                    </button>
                                     <button 
                                         className="delete-btn"
                                         onClick={() => handleDeleteUser(userItem.id, userItem.email)}
