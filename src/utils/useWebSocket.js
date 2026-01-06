@@ -465,29 +465,36 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
   // Send message through WebSocket
   const sendMessage = useCallback((message) => {
     if (!enableConnection) {
-      console.log('WebSocket connections disabled, not sending message');
+      // WebSocket disabled - silently fail, REST API will handle it
       return false;
     }
 
     if (!isAuthenticated || !token) {
-      console.log('Cannot send message: Not authenticated');
+      // Not authenticated - silently fail, REST API will handle it
       return false;
     }
 
     if (!stompClientRef.current || !stompClientRef.current.connected || !channelId) {
-      console.error('Cannot send message: WebSocket not connected or channelId missing');
+      // WebSocket not connected - silently fail, REST API will handle it
+      // Don't log error as this is expected when WebSocket is unavailable
       return false;
     }
 
     try {
+      // Ensure message has channelId if not already present
+      const messageWithChannel = {
+        ...message,
+        channelId: message.channelId || channelId
+      };
+
       stompClientRef.current.publish({
         destination: `/app/chat/${channelId}`,
         headers: getAuthHeaders(),
-        body: JSON.stringify(message)
+        body: JSON.stringify(messageWithChannel)
       });
       return true;
     } catch (error) {
-      console.error('Error sending message:', error);
+      // Error sending via WebSocket - silently fail, REST API already handled it
       return false;
     }
   }, [channelId, getAuthHeaders, isAuthenticated, token, enableConnection]);

@@ -1303,8 +1303,17 @@ Let's build generational wealth together! 💰🚀`,
                     persistMessagesList(selectedChannel.id, finalMessages);
                     
                     // Broadcast message via WebSocket so all users see it in real-time
-                    if (sendWebSocketMessage && isConnected) {
-                        sendWebSocketMessage(serverMessage);
+                    // Silently fail if WebSocket not available - REST API already saved the message
+                    if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
+                        try {
+                            sendWebSocketMessage({
+                                ...serverMessage,
+                                channelId: selectedChannel.id
+                            });
+                        } catch (wsError) {
+                            // WebSocket failed - that's okay, REST API already saved it
+                            // Other users will see it via polling or when they refresh
+                        }
                     }
                 } else {
                     // If response doesn't have expected format, keep optimistic message
@@ -1317,8 +1326,16 @@ Let's build generational wealth together! 💰🚀`,
                     persistMessagesList(selectedChannel.id, finalMessages);
                     
                     // Still try to broadcast via WebSocket
-                    if (sendWebSocketMessage && isConnected) {
-                        sendWebSocketMessage(permanentMessage);
+                    // Silently fail if WebSocket not available - REST API already saved the message
+                    if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
+                        try {
+                            sendWebSocketMessage({
+                                ...permanentMessage,
+                                channelId: selectedChannel.id
+                            });
+                        } catch (wsError) {
+                            // WebSocket failed - that's okay, REST API already saved it
+                        }
                     }
                 }
             } catch (apiError) {
@@ -1333,8 +1350,16 @@ Let's build generational wealth together! 💰🚀`,
                 persistMessagesList(selectedChannel.id, finalMessages);
                 
                 // Still try to broadcast via WebSocket if available
-                if (sendWebSocketMessage && isConnected) {
-                    sendWebSocketMessage(permanentMessage);
+                // Silently fail if WebSocket not available - message saved to localStorage
+                if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
+                    try {
+                        sendWebSocketMessage({
+                            ...permanentMessage,
+                            channelId: selectedChannel.id
+                        });
+                    } catch (wsError) {
+                        // WebSocket failed - that's okay, message is in localStorage
+                    }
                 }
             }
             
