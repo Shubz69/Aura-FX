@@ -1552,14 +1552,14 @@ Let's build generational wealth together! 💰🚀`,
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = storedUser?.email;
         
-        // Add success URL to Stripe payment link
-        const successUrl = `${window.location.origin}/payment-success?payment_success=true&subscription=true`;
-        const cancelUrl = `${window.location.origin}/community`;
+        // Note: Stripe payment links don't support cancel_url as query parameter
+        // Cancel URL must be configured in Stripe Dashboard (if available)
+        // Success URL is configured in Stripe Dashboard, not as query parameter
         
         const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
         const paymentLink = userEmail
-            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`
-            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`;
+            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}`
+            : STRIPE_PAYMENT_LINK;
         
         // Redirect to Stripe payment link
         window.location.href = paymentLink;

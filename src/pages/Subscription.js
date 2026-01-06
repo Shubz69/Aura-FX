@@ -48,14 +48,14 @@ const Subscription = () => {
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email || storedUser?.email;
         
-        // Add success URL to Stripe payment link
-        const successUrl = `${window.location.origin}/payment-success?payment_success=true&subscription=true`;
-        const cancelUrl = `${window.location.origin}/subscription`;
+        // Note: Stripe payment links don't support success_url or cancel_url as query parameters
+        // These must be configured in the Stripe Dashboard under "After payment" settings
+        // Success URL should be: https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true
         
         // TODO: Update with actual Stripe payment links for each plan
         const paymentLink = userEmail
-            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}&success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`
-            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}plan=${planType}&success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`;
+            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
+            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}plan=${planType}`;
 
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);
