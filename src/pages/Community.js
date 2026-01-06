@@ -1528,25 +1528,15 @@ Let's build generational wealth together! 💰🚀`,
         setDeleteMessageModal(null);
     };
 
-    // Group channels by category - Show ALL trading channels to ALL users
+    // Group channels by category - Show ALL channels to ALL users
     // Admin can control access via access_level in database
     const groupedChannels = channelList.reduce((acc, channel) => {
-        // Show all trading channels to everyone
-        if (channel.category === 'trading') {
-            const category = 'trading';
-            if (!acc[category]) {
-                acc[category] = [];
-            }
-            acc[category].push(channel);
-        } else if (channel.category === 'general' || channel.category === 'announcements') {
-            // Also show general and announcement channels
-            const category = channel.category;
-            if (!acc[category]) {
-                acc[category] = [];
-            }
-            acc[category].push(channel);
+        // Show ALL channels regardless of category
+        const category = channel.category || 'general';
+        if (!acc[category]) {
+            acc[category] = [];
         }
-        
+        acc[category].push(channel);
         return acc;
     }, {});
 
