@@ -1538,7 +1538,10 @@ Let's build generational wealth together! 💰🚀`,
     }, {});
 
     // Check subscription status for banner and channel visibility
-    const hasActiveSubscription = checkSubscription();
+    // Use subscriptionStatus from database check (most up-to-date) if available, otherwise fallback
+    const hasActiveSubscription = subscriptionStatus 
+        ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
+        : checkSubscription();
     const storedUserDataForBanner = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdminForBanner = storedUserDataForBanner.role === 'ADMIN' || storedUserDataForBanner.role === 'admin' || storedUserDataForBanner.role === 'super_admin';
     const showSubscribeBanner = !isAdminForBanner && !hasActiveSubscription;
