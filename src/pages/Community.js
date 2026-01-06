@@ -1511,29 +1511,25 @@ Let's build generational wealth together! 💰🚀`,
         setDeleteMessageModal(null);
     };
 
-    // Group channels by category - ONLY TRADING CHANNELS with admin-only access
+    // Group channels by category - Show ALL trading channels to ALL users
+    // Admin can control access via access_level in database
     const groupedChannels = channelList.reduce((acc, channel) => {
-        // Only show trading channels
-        if (channel.category !== 'trading') {
-            return acc;
+        // Show all trading channels to everyone
+        if (channel.category === 'trading') {
+            const category = 'trading';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(channel);
+        } else if (channel.category === 'general' || channel.category === 'announcements') {
+            // Also show general and announcement channels
+            const category = channel.category;
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(channel);
         }
         
-        // Only show admin-only channels (locked channels)
-        const isAdminChannel = channel.accessLevel === 'admin-only' || channel.locked === true;
-        if (!isAdminChannel) {
-            return acc;
-        }
-        
-        // Only admins can see these channels
-        if (!isAdminUser && !isSuperAdminUser) {
-            return acc;
-        }
-        
-        const category = 'trading';
-        if (!acc[category]) {
-            acc[category] = [];
-        }
-        acc[category].push(channel);
         return acc;
     }, {});
 

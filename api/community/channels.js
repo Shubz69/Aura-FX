@@ -640,6 +640,117 @@ module.exports = async (req, res) => {
     }
   }
 
+  if (req.method === 'PUT' || req.method === 'PATCH') {
+    try {
+      const { id, name, displayName, category, description, accessLevel } = req.body || {};
+      const channelId = id || req.query.id;
+
+      if (!channelId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Channel ID is required'
+        });
+      }
+
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database connection error'
+        });
+      }
+
+      try {
+        await ensureChannelsTable(db);
+        await ensureChannelSchema(db);
+
+        // Check if channel exists
+        const [existingRows] = await db.execute('SELECT * FROM channels WHERE id = ?', [channelId]);
+        if (!existingRows || existingRows.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Channel not found'
+          });
+        }
+
+        const updates = [];
+        const values = [];
+
+        if (name !== undefined) {
+          const channelName = slugify(name);
+          updates.push('name = ?');
+          values.push(channelName);
+        }
+
+        if (category !== undefined) {
+          const channelCategory = normalizeCategory(category);
+          updates.push('category = ?');
+          values.push(channelCategory);
+        }
+
+        if (description !== undefined) {
+          updates.push('description = ?');
+          values.push(description || null);
+        }
+
+        if (accessLevel !== undefined) {
+          const channelAccess = normalizeAccessLevel(accessLevel);
+          updates.push('access_level = ?');
+          values.push(channelAccess);
+        }
+
+        if (updates.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'No fields to update'
+          });
+        }
+
+        values.push(channelId);
+        await db.execute(
+          `UPDATE channels SET ${updates.join(', ')} WHERE id = ?`,
+          values
+        );
+
+        // Fetch updated channel
+        const [updatedRows] = await db.execute('SELECT * FROM channels WHERE id = ?', [channelId]);
+        const updatedChannel = updatedRows[0];
+
+        const displayNameFinal = displayName || toDisplayName(updatedChannel.name);
+        const locked = (updatedChannel.access_level || 'open') === 'admin-only';
+
+        await db.end();
+
+        return res.status(200).json({
+          success: true,
+          channel: {
+            id: updatedChannel.id,
+            name: updatedChannel.name,
+            displayName: displayNameFinal,
+            category: updatedChannel.category || 'general',
+            description: updatedChannel.description,
+            accessLevel: updatedChannel.access_level || 'open',
+            locked
+          }
+        });
+      } catch (dbError) {
+        console.error('Database error updating channel:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to update channel',
+          error: dbError.message
+        });
+      }
+    } catch (error) {
+      console.error('Error updating channel:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   return res.status(405).json({ success: false, message: 'Method not allowed' });
 };
 

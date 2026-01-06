@@ -121,6 +121,110 @@ const Courses = () => {
                     </div>
                 )}
             </div>
+            
+            {/* A7FX Elite Subscription Upgrade Section */}
+            <div style={{
+                marginTop: '60px',
+                padding: '40px',
+                background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                borderRadius: '16px',
+                border: '2px solid rgba(139, 92, 246, 0.3)',
+                textAlign: 'center'
+            }}>
+                <h2 style={{
+                    color: '#ffffff',
+                    fontSize: '32px',
+                    fontWeight: 'bold',
+                    marginBottom: '16px',
+                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                }}>
+                    ⚡ UPGRADE TO A7FX ELITE
+                </h2>
+                <p style={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: '18px',
+                    marginBottom: '32px',
+                    lineHeight: '1.6'
+                }}>
+                    Unlock elite trading signals, priority mentorship, and exclusive community access
+                </p>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '24px',
+                    marginBottom: '32px',
+                    flexWrap: 'wrap'
+                }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            fontSize: '48px',
+                            fontWeight: 'bold',
+                            color: '#8B5CF6',
+                            marginBottom: '8px'
+                        }}>$250</div>
+                        <div style={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '14px'
+                        }}>per month</div>
+                    </div>
+                    <div style={{
+                        width: '1px',
+                        height: '60px',
+                        background: 'rgba(255, 255, 255, 0.2)'
+                    }}></div>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            fontSize: '24px',
+                            fontWeight: 'bold',
+                            color: '#ffffff',
+                            marginBottom: '8px'
+                        }}>Elite Benefits</div>
+                        <div style={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '14px'
+                        }}>Everything in Aura FX + More</div>
+                    </div>
+                </div>
+                <button
+                    onClick={() => {
+                        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        const userEmail = storedUser?.email;
+                        const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+                        const paymentLink = userEmail
+                            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=a7fx`
+                            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}plan=a7fx`;
+                        window.location.href = paymentLink;
+                    }}
+                    style={{
+                        background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '16px 48px',
+                        borderRadius: '12px',
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+                    }}
+                >
+                    Upgrade to A7FX Elite
+                </button>
+            </div>
         </div>
     );
 };

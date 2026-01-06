@@ -14,6 +14,9 @@ const AdminPanel = () => {
     const [error, setError] = useState(null);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userEmail: null });
+    const [channels, setChannels] = useState([]);
+    const [channelsLoading, setChannelsLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('users'); // 'users' or 'channels'
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -42,6 +45,7 @@ const AdminPanel = () => {
         
         // Only fetch data if user is authenticated and is an admin
         fetchUsers();
+        fetchChannels();
         fetchOnlineStatus();
         
         // Set up periodic refresh for online status
@@ -107,6 +111,61 @@ const AdminPanel = () => {
                 setOnlineUsers(new Set(data.onlineUsers.map(u => u.id)));
             }
         } catch (err) {
+        }
+    };
+
+    const fetchChannels = async () => {
+        try {
+            setChannelsLoading(true);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/community/channels`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setChannels(Array.isArray(data) ? data : []);
+            }
+        } catch (err) {
+            console.error('Error fetching channels:', err);
+        } finally {
+            setChannelsLoading(false);
+        }
+    };
+
+    const handleUpdateChannelAccess = async (channelId, newAccessLevel) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/community/channels`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: channelId,
+                    accessLevel: newAccessLevel
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to update channel');
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                fetchChannels();
+                setError(null);
+            } else {
+                throw new Error(result.message || 'Failed to update channel');
+            }
+        } catch (err) {
+            console.error('Error updating channel access:', err);
+            setError(err.message || 'Failed to update channel access. Please try again.');
         }
     };
 
@@ -201,12 +260,73 @@ const AdminPanel = () => {
             <CosmicBackground />
             <div className="admin-panel">
                 <div className="admin-header">
-                    <h1 className="admin-title">REGISTERED USERS</h1>
-                    <div className="user-summary">
-                        <span>Total: {users.length} | Online: {onlineUsersCount} | Offline: {offlineUsersCount}</span>
-                        {!isConnected && <span className="connection-status offline"> (Offline)</span>}
-                        {isConnected && <span className="connection-status online"> (Live)</span>}
+                    <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            style={{
+                                background: activeTab === 'users' ? 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)' : 'rgba(255, 255, 255, 0.1)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            Users ({users.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('channels')}
+                            style={{
+                                background: activeTab === 'channels' ? 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)' : 'rgba(255, 255, 255, 0.1)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            Channels ({channels.length})
+                        </button>
                     </div>
+                    {activeTab === 'users' && (
+                        <>
+                            <h1 className="admin-title">REGISTERED USERS</h1>
+                            <div className="user-summary">
+                                <span>Total: {users.length} | Online: {onlineUsersCount} | Offline: {offlineUsersCount}</span>
+                                {!isConnected && <span className="connection-status offline"> (Offline)</span>}
+                                {isConnected && <span className="connection-status online"> (Live)</span>}
+                            </div>
+                        </>
+                    )}
+                    {activeTab === 'channels' && (
+                        <>
+                            <h1 className="admin-title">CHANNEL MANAGEMENT</h1>
+                            <div className="user-summary">
+                                <span>Total Channels: {channels.length}</span>
+                                <button
+                                    onClick={fetchChannels}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.1)',
+                                        color: 'white',
+                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                        padding: '8px 16px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        marginLeft: '16px'
+                                    }}
+                                >
+                                    Refresh
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {error && (
@@ -217,58 +337,120 @@ const AdminPanel = () => {
                     </div>
                 )}
 
-                {loading ? (
-                    <div className="loading-container">
-                        <div className="loading-spinner"></div>
-                        <div className="loading-text">Loading users...</div>
-                    </div>
-                ) : users.length === 0 ? (
-                    <div className="no-users-message">
-                        <p>No users found.</p>
-                        <button onClick={fetchUsers} className="retry-btn">Retry</button>
-                    </div>
-                ) : (
-                    <div className="users-grid">
-                        {users.map(userItem => (
-                            <div key={userItem.id || userItem.email} className="user-card">
-                                <div className="user-info">
-                                    <div className="user-email">{userItem.email || 'No email'}</div>
-                                    <div className="user-name">({userItem.name || userItem.username || 'N/A'})</div>
-                                    <div className="user-role">{userItem.role || 'USER'}</div>
-                                    <div className="user-joined">Joined: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}</div>
-                                    <div className={`user-status ${onlineUsers.has(userItem.id) ? 'online' : 'offline'}`}>
-                                        {onlineUsers.has(userItem.id) ? 'Online' : 'Offline'}
-                                    </div>
-                                </div>
-                                <div className="user-actions">
-                                    <button 
-                                        className="grant-access-btn"
-                                        onClick={() => handleGrantCommunityAccess(userItem.id, userItem.email)}
-                                        style={{
-                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '8px 16px',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            fontSize: '14px',
-                                            fontWeight: '600',
-                                            marginRight: '8px',
-                                            transition: 'all 0.3s ease'
-                                        }}
-                                    >
-                                        Grant Community Access
-                                    </button>
-                                    <button 
-                                        className="delete-btn"
-                                        onClick={() => handleDeleteUser(userItem.id, userItem.email)}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
+                {activeTab === 'users' && (
+                    <>
+                        {loading ? (
+                            <div className="loading-container">
+                                <div className="loading-spinner"></div>
+                                <div className="loading-text">Loading users...</div>
                             </div>
-                        ))}
-                    </div>
+                        ) : users.length === 0 ? (
+                            <div className="no-users-message">
+                                <p>No users found.</p>
+                                <button onClick={fetchUsers} className="retry-btn">Retry</button>
+                            </div>
+                        ) : (
+                            <div className="users-grid">
+                                {users.map(userItem => (
+                                    <div key={userItem.id || userItem.email} className="user-card">
+                                        <div className="user-info">
+                                            <div className="user-email">{userItem.email || 'No email'}</div>
+                                            <div className="user-name">({userItem.name || userItem.username || 'N/A'})</div>
+                                            <div className="user-role">{userItem.role || 'USER'}</div>
+                                            <div className="user-joined">Joined: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}</div>
+                                            <div className={`user-status ${onlineUsers.has(userItem.id) ? 'online' : 'offline'}`}>
+                                                {onlineUsers.has(userItem.id) ? 'Online' : 'Offline'}
+                                            </div>
+                                        </div>
+                                        <div className="user-actions">
+                                            <button 
+                                                className="grant-access-btn"
+                                                onClick={() => handleGrantCommunityAccess(userItem.id, userItem.email)}
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    marginRight: '8px',
+                                                    transition: 'all 0.3s ease'
+                                                }}
+                                            >
+                                                Grant Community Access
+                                            </button>
+                                            <button 
+                                                className="delete-btn"
+                                                onClick={() => handleDeleteUser(userItem.id, userItem.email)}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {activeTab === 'channels' && (
+                    <>
+                        {channelsLoading ? (
+                            <div className="loading-container">
+                                <div className="loading-spinner"></div>
+                                <div className="loading-text">Loading channels...</div>
+                            </div>
+                        ) : channels.length === 0 ? (
+                            <div className="no-users-message">
+                                <p>No channels found.</p>
+                                <button onClick={fetchChannels} className="retry-btn">Retry</button>
+                            </div>
+                        ) : (
+                            <div className="users-grid">
+                                {channels.map(channel => (
+                                    <div key={channel.id} className="user-card" style={{ maxWidth: '100%' }}>
+                                        <div className="user-info" style={{ width: '100%' }}>
+                                            <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                                                #{channel.displayName || channel.name}
+                                            </div>
+                                            <div style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '8px' }}>
+                                                Category: {channel.category || 'general'}
+                                            </div>
+                                            <div style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '16px' }}>
+                                                {channel.description || 'No description'}
+                                            </div>
+                                            <div style={{ marginTop: '16px' }}>
+                                                <label style={{ display: 'block', marginBottom: '8px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                                                    Access Level:
+                                                </label>
+                                                <select
+                                                    value={channel.accessLevel || 'open'}
+                                                    onChange={(e) => handleUpdateChannelAccess(channel.id, e.target.value)}
+                                                    style={{
+                                                        background: 'rgba(255, 255, 255, 0.1)',
+                                                        color: 'white',
+                                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                                        padding: '8px 12px',
+                                                        borderRadius: '8px',
+                                                        fontSize: '14px',
+                                                        width: '100%',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <option value="open">Open - Everyone can view and post</option>
+                                                    <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
+                                                    <option value="admin-only">Admin-Only - Only admins can view and post</option>
+                                                    <option value="premium">Premium - Only premium subscribers</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
