@@ -391,9 +391,8 @@ module.exports = async (req, res) => {
           }
           
           if (rows && rows.length > 0) {
-            // Filter to only show trading channels with admin-only access
-            const tradingChannels = rows
-              .filter(row => row.category === 'trading' && (row.access_level === 'admin-only' || row.access_level === 'admin'))
+            // Return ALL channels, not just trading ones
+            const allChannels = rows
               .map(row => {
                 // Create a proper displayName from the name
                 const displayName = row.name
@@ -401,17 +400,23 @@ module.exports = async (req, res) => {
                   .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                   .join(' ');
                 
+                // Determine access level and lock status
+                const isGeneral = row.category === 'general' || row.name === 'general' || row.id === 'general';
+                const isTrading = row.category === 'trading';
+                const accessLevel = row.access_level || (isGeneral ? 'open' : 'admin-only');
+                const locked = accessLevel === 'admin-only' || accessLevel === 'admin';
+                
                 return {
                   id: row.id,
                   name: row.name,
                   displayName: displayName,
-                  category: row.category || 'trading',
+                  category: row.category || (isGeneral ? 'general' : 'trading'),
                   description: row.description,
-                  accessLevel: 'admin-only',
-                  locked: true
+                  accessLevel: accessLevel,
+                  locked: locked
                 };
               });
-            return res.status(200).json(tradingChannels);
+            return res.status(200).json(allChannels);
           }
         } catch (dbError) {
           console.error('Database error fetching channels:', dbError);
