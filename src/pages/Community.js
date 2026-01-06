@@ -1991,6 +1991,52 @@ Let's build generational wealth together! 💰🚀`,
                 </div>
             </div>
             
+            {/* MOBILE CHANNEL SELECTOR - Only visible on mobile/tablet */}
+            <div className="mobile-channel-selector" style={{ display: isMobile ? 'block' : 'none' }}>
+                <select
+                    value={selectedChannel?.id || ''}
+                    onChange={(e) => {
+                        const channelId = e.target.value;
+                        if (channelId) {
+                            const channel = channelList.find(c => c.id === channelId);
+                            if (channel && canUserAccessChannel(channel)) {
+                                setSelectedChannel(channel);
+                            }
+                        }
+                    }}
+                    style={{
+                        width: '100%',
+                        background: 'var(--bg-primary)',
+                        color: '#F2F3F5',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        padding: '12px 16px',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        appearance: 'none',
+                        backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23F2F3F5\' d=\'M6 9L1 4h10z\'/%3E%3C/svg%3E")',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 16px center',
+                        paddingRight: '40px'
+                    }}
+                >
+                    <option value="">Select a channel...</option>
+                    {Object.keys(groupedChannels).sort().map(categoryName => {
+                        const channels = groupedChannels[categoryName];
+                        return channels.map(channel => {
+                            const canAccess = canUserAccessChannel(channel);
+                            if (!canAccess) return null;
+                            return (
+                                <option key={channel.id} value={channel.id}>
+                                    {categoryName.toUpperCase()}: {channel.displayName || channel.name}
+                                </option>
+                            );
+                        });
+                    })}
+                </select>
+            </div>
+            
             {/* MAIN CHAT AREA */}
             <div className="chat-main" style={{
                 filter: (showSubscribeBanner || showPaymentFailedBanner) ? 'blur(8px)' : 'none',
