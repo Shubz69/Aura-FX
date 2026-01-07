@@ -182,7 +182,7 @@ const ContactUs = () => {
                                 </div>
                                 <div className="contact-text">
                                     <strong>Working Hours</strong>
-                                    <span>Mon - Fri: 9:00 AM - 6:00 PM</span>
+                                    <span>24/7 - Always Available</span>
                                 </div>
                             </div>
                         </div>
