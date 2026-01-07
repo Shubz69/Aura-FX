@@ -1414,29 +1414,33 @@ const Community = () => {
                         const existingIds = new Set(prev.map(m => m.id));
                         const newMessages = apiMessages.filter(m => !existingIds.has(m.id));
                         
-                        // Trigger notifications for new messages
-                        const currentUsername = storedUser?.username || storedUser?.name || '';
-                        newMessages.forEach(newMsg => {
-                            const messageContent = newMsg.content || '';
-                            const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
-                            
-                            if (isMentioned) {
-                                triggerNotification(
-                                    'mention',
-                                    `You were mentioned in #${selectedChannel.name}`,
-                                    `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                                    `/community/${selectedChannel.id}`
-                                );
-                            } else if (newMsg.sender?.id !== userId) {
-                                // Only notify if message is from someone else
-                                triggerNotification(
-                                    'message',
-                                    `New message in #${selectedChannel.name}`,
-                                    `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                                    `/community/${selectedChannel.id}`
-                                );
-                            }
-                        });
+                        // Trigger notifications for new messages (only if not from current user)
+                        if (newMessages.length > 0) {
+                            const currentUsername = storedUser?.username || storedUser?.name || '';
+                            newMessages.forEach(newMsg => {
+                                // Don't notify for own messages
+                                if (String(newMsg.sender?.id) === String(userId) || 
+                                    newMsg.sender?.username === currentUsername) {
+                                    return;
+                                }
+                                
+                                const messageContent = newMsg.content || '';
+                                const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
+                                
+                                if (isMentioned) {
+                                    triggerNotification(
+                                        'mention',
+                                        `You were mentioned in #${selectedChannel.name}`,
+                                        `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+                                        `/community/${selectedChannel.id}`
+                                    );
+                                } else {
+                                    // Only notify for messages in current channel if user is viewing it
+                                    // (Notifications for other channels are handled by WebSocket)
+                                    // For polling, we only notify if it's a mention
+                                }
+                            });
+                        }
                         
                         if (newMessages.length > 0) {
                             // Merge new messages with existing ones, sorted by timestamp
