@@ -55,6 +55,109 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
     );
 };
 
+// GIF Picker component
+const GifPicker = ({ onGifSelect, onClose }) => {
+    const [gifs, setGifs] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(false);
+    const searchTimeoutRef = useRef(null);
+    
+    // Giphy API key (using public demo key - in production, use your own)
+    const GIPHY_API_KEY = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65'; // Giphy public demo key
+    
+    const fetchGifs = useCallback(async (query = '') => {
+        setLoading(true);
+        try {
+            const endpoint = query 
+                ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=25&rating=g`
+                : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=25&rating=g`;
+            
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            
+            if (data.data) {
+                setGifs(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching GIFs:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+    
+    useEffect(() => {
+        // Load trending GIFs on mount
+        fetchGifs();
+    }, [fetchGifs]);
+    
+    const handleSearch = (value) => {
+        setSearchQuery(value);
+        
+        // Clear existing timeout
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        
+        // Debounce search
+        searchTimeoutRef.current = setTimeout(() => {
+            if (value.trim()) {
+                fetchGifs(value);
+            } else {
+                fetchGifs();
+            }
+        }, 500);
+    };
+    
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
+    
+    return (
+        <div className="gif-picker" onClick={(e) => e.stopPropagation()}>
+            <div className="gif-picker-header">
+                <span>GIFs</span>
+                <button className="gif-picker-close" onClick={onClose}>×</button>
+            </div>
+            <div className="gif-picker-search">
+                <input
+                    type="text"
+                    placeholder="Search GIFs..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="gif-search-input"
+                />
+            </div>
+            <div className="gif-grid">
+                {loading ? (
+                    <div className="gif-loading">Loading GIFs...</div>
+                ) : gifs.length === 0 ? (
+                    <div className="gif-empty">No GIFs found</div>
+                ) : (
+                    gifs.map((gif) => (
+                        <div
+                            key={gif.id}
+                            className="gif-item"
+                            onClick={() => {
+                                onGifSelect(gif.images.fixed_height.url || gif.images.original.url);
+                            }}
+                        >
+                            <img
+                                src={gif.images.fixed_height_small.url || gif.images.preview_gif.url}
+                                alt={gif.title}
+                                loading="lazy"
+                            />
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
+
 // Get category icon
 const getCategoryIcon = (category) => {
     switch(category) {
@@ -568,6 +671,28 @@ const Community = () => {
             }, 0);
         }
         setShowEmojiPicker(false);
+    };
+
+    // GIF selection handler
+    const handleGifSelect = (gifUrl) => {
+        // Insert GIF as image in message
+        const input = messageInputRef.current;
+        if (input) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = newMessage;
+            const before = text.substring(0, start);
+            const after = text.substring(end);
+            // Insert GIF URL with markdown-style image syntax
+            const gifMarkdown = `![GIF](${gifUrl})`;
+            setNewMessage(before + gifMarkdown + after);
+            // Manually set cursor position after GIF
+            setTimeout(() => {
+                input.focus();
+                input.setSelectionRange(start + gifMarkdown.length, start + gifMarkdown.length);
+            }, 0);
+        }
+        setShowGifPicker(false);
     };
 
     // File selection handler
@@ -2456,7 +2581,48 @@ Let's build generational wealth together! 💰🚀`,
                                                         return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
                                                     })
                                                 ) : (
-                                                    message.content
+                                                    (() => {
+                                                        // Parse message content for GIFs and images
+                                                        const content = message.content;
+                                                        // Check for markdown image syntax: ![alt](url)
+                                                        const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+                                                        const parts = [];
+                                                        let lastIndex = 0;
+                                                        let match;
+                                                        let keyCounter = 0;
+                                                        
+                                                        while ((match = imageRegex.exec(content)) !== null) {
+                                                            // Add text before image
+                                                            if (match.index > lastIndex) {
+                                                                parts.push(<span key={`text-${keyCounter++}`}>{content.substring(lastIndex, match.index)}</span>);
+                                                            }
+                                                            // Add image/GIF
+                                                            parts.push(
+                                                                <img
+                                                                    key={`img-${keyCounter++}`}
+                                                                    src={match[2]}
+                                                                    alt={match[1] || 'GIF'}
+                                                                    style={{
+                                                                        maxWidth: '300px',
+                                                                        maxHeight: '300px',
+                                                                        borderRadius: '4px',
+                                                                        marginTop: '4px',
+                                                                        display: 'block',
+                                                                        cursor: 'pointer'
+                                                                    }}
+                                                                    onClick={() => window.open(match[2], '_blank')}
+                                                                />
+                                                            );
+                                                            lastIndex = match.index + match[0].length;
+                                                        }
+                                                        
+                                                        // Add remaining text
+                                                        if (lastIndex < content.length) {
+                                                            parts.push(<span key={`text-${keyCounter++}`}>{content.substring(lastIndex)}</span>);
+                                                        }
+                                                        
+                                                        return parts.length > 0 ? parts : content;
+                                                    })()
                                                 )}
                                             </div>
                                             
@@ -2686,10 +2852,26 @@ Let's build generational wealth together! 💰🚀`,
                                         <button
                                             type="button"
                                             className="chat-input-btn"
-                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                            onClick={() => {
+                                                setShowEmojiPicker(!showEmojiPicker);
+                                                setShowGifPicker(false);
+                                            }}
                                             disabled={!canUserPostInChannel(selectedChannel)}
                                         >
                                             <FaSmile />
+                                        </button>
+                                        
+                                        {/* GIF Button */}
+                                        <button
+                                            type="button"
+                                            className="chat-input-btn"
+                                            onClick={() => {
+                                                setShowGifPicker(!showGifPicker);
+                                                setShowEmojiPicker(false);
+                                            }}
+                                            disabled={!canUserPostInChannel(selectedChannel)}
+                                        >
+                                            <FaImage />
                                         </button>
                                     </div>
                                 </div>
@@ -3150,6 +3332,14 @@ Let's build generational wealth together! 💰🚀`,
                         setShowEmojiPicker(false);
                         setSelectedMessageForReaction(null);
                     }}
+                />
+            )}
+            
+            {/* GIF Picker */}
+            {showGifPicker && (
+                <GifPicker
+                    onGifSelect={handleGifSelect}
+                    onClose={() => setShowGifPicker(false)}
                 />
             )}
             
