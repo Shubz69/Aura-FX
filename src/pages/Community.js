@@ -3134,6 +3134,114 @@ Let's build generational wealth together! 💰🚀`,
                     }}
                 />
             )}
+            
+            {/* Context Menu */}
+            {contextMenu && (
+                <div
+                    className="message-context-menu"
+                    style={{
+                        position: 'fixed',
+                        top: contextMenu.y,
+                        left: contextMenu.x,
+                        background: '#2B2D31',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        padding: '4px',
+                        minWidth: '200px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                        zIndex: 1000,
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            // Reply functionality - could focus input and add @mention
+                            const message = messages.find(m => m.id === contextMenu.messageId);
+                            if (message) {
+                                setNewMessage(`@${message.sender?.username || 'user'} `);
+                                messageInputRef.current?.focus();
+                            }
+                            setContextMenu(null);
+                        }}
+                    >
+                        <FaReply size={14} /> Reply
+                    </button>
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            setShowEmojiPicker(true);
+                            setSelectedMessageForReaction(contextMenu.messageId);
+                            setContextMenu(null);
+                        }}
+                    >
+                        <FaSmile size={14} /> Add Reaction
+                    </button>
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            const message = messages.find(m => m.id === contextMenu.messageId);
+                            if (message) {
+                                navigator.clipboard.writeText(message.content);
+                                setContextMenu(null);
+                            }
+                        }}
+                    >
+                        <FaCopy size={14} /> Copy message text
+                    </button>
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            const messageLink = `${window.location.origin}${window.location.pathname}?message=${contextMenu.messageId}`;
+                            navigator.clipboard.writeText(messageLink);
+                            setContextMenu(null);
+                        }}
+                    >
+                        <FaLink size={14} /> Copy message link
+                    </button>
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            // Save message functionality
+                            setContextMenu(null);
+                        }}
+                    >
+                        <FaBookmark size={14} /> Save Message
+                    </button>
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            // Notify on replies functionality
+                            setContextMenu(null);
+                        }}
+                    >
+                        <FaBell size={14} /> Notify on Replies
+                    </button>
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            // Mark as unread functionality
+                            setContextMenu(null);
+                        }}
+                    >
+                        Mark as Unread
+                    </button>
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            // Report message functionality
+                            setContextMenu(null);
+                        }}
+                        style={{ color: '#f87171' }}
+                    >
+                        <FaFlag size={14} /> Report message
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
