@@ -59,16 +59,35 @@ module.exports = async (req, res) => {
     if (req.query && req.query.userId) {
       userId = req.query.userId;
     } else {
-      // Try to parse from URL path
-      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-      const pathParts = url.pathname.split('/').filter(p => p);
+      // Try to parse from URL path - handle /api/users/1/update or /api/users/1
+      let urlPath = req.url || '';
+      // Remove query string if present
+      if (urlPath.includes('?')) {
+        urlPath = urlPath.split('?')[0];
+      }
+      const pathParts = urlPath.split('/').filter(p => p);
       const userIdIndex = pathParts.indexOf('users');
       if (userIdIndex !== -1 && pathParts[userIdIndex + 1]) {
-        userId = pathParts[userIdIndex + 1];
+        const potentialUserId = pathParts[userIdIndex + 1];
+        // Check if it's a number (userId) or 'update' (which means userId is missing)
+        if (potentialUserId === 'update') {
+          console.error('Invalid URL format - userId missing before /update');
+        } else if (!isNaN(potentialUserId)) {
+          userId = potentialUserId;
+        }
+      }
+    }
+    
+    // If still no userId, try regex match as fallback
+    if (!userId) {
+      const match = req.url?.match(/\/users\/(\d+)/);
+      if (match) {
+        userId = match[1];
       }
     }
   } catch (e) {
-    // If URL parsing fails, try to extract from req.url directly
+    console.error('Error parsing userId:', e);
+    // Last resort: try regex on full URL
     const match = req.url?.match(/\/users\/(\d+)/);
     if (match) {
       userId = match[1];
@@ -76,8 +95,14 @@ module.exports = async (req, res) => {
   }
 
   if (!userId) {
-    console.error('Could not extract userId from URL:', req.url);
+    console.error('Could not extract userId from URL:', req.url, 'Query:', req.query);
     return res.status(400).json({ success: false, message: 'User ID is required' });
+  }
+  
+  // Ensure userId is a valid number
+  userId = parseInt(userId);
+  if (isNaN(userId)) {
+    return res.status(400).json({ success: false, message: 'Invalid user ID format' });
   }
 
   // Check authentication
