@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../utils/useWebSocket';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CosmicBackground from '../components/CosmicBackground';
+import Api from '../services/Api';
 import '../styles/AdminPanel.css';
 
 const AdminPanel = () => {
@@ -308,25 +309,9 @@ const AdminPanel = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/admin/give-xp`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    userId: userId,
-                    xpAmount: xp
-                })
-            });
+            const response = await Api.giveXp(userId, xp);
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Failed to give XP');
-            }
-
-            const result = await response.json();
+            const result = response.data || response;
             
             if (result.success) {
                 fetchUsers();

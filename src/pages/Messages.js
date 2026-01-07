@@ -18,33 +18,47 @@ const Messages = () => {
             return;
         }
 
-        // Load messages from localStorage or create initial welcome message
-        const savedMessages = localStorage.getItem(`messages_${user.id}`);
-        if (savedMessages) {
-            setMessages(JSON.parse(savedMessages));
-        } else {
-            // Initial welcome message from Admin
-            const welcomeMessages = [
-                {
-                    id: 1,
-                    sender: 'admin',
-                    senderName: 'Admin',
-                    content: `👋 Welcome to AURA FX, ${user.username || user.name || 'there'}! I'm here to help you with anything you need.`,
-                    timestamp: new Date().toISOString(),
-                    read: false
-                },
-                {
-                    id: 2,
-                    sender: 'admin',
-                    senderName: 'Admin',
-                    content: 'Feel free to ask any questions about our platform, courses, or trading strategies. Our admin team will respond to your messages within 24 hours.',
-                    timestamp: new Date().toISOString(),
-                    read: false
+        // Load messages from API
+        const loadMessages = async () => {
+            try {
+                // Ensure admin thread exists
+                const threadResponse = await Api.ensureAdminThread();
+                const threadId = threadResponse.data?.thread?.id;
+                
+                if (threadId) {
+                    // Load messages from thread
+                    const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
+                    const apiMessages = messagesResponse.data?.messages || [];
+                    
+                    // Convert API format to display format
+                    const formattedMessages = apiMessages.map(msg => ({
+                        id: msg.id,
+                        sender: String(msg.senderId) === String(user.id) ? 'user' : 'admin',
+                        senderName: String(msg.senderId) === String(user.id) ? (user.username || user.name || 'You') : 'Admin',
+                        content: msg.body,
+                        timestamp: msg.createdAt || msg.created_at,
+                        read: !!msg.readAt || !!msg.read_at
+                    }));
+                    
+                    setMessages(formattedMessages);
+                } else {
+                    // Fallback to localStorage if API fails
+                    const savedMessages = localStorage.getItem(`messages_${user.id}`);
+                    if (savedMessages) {
+                        setMessages(JSON.parse(savedMessages));
+                    }
                 }
-            ];
-            setMessages(welcomeMessages);
-            localStorage.setItem(`messages_${user.id}`, JSON.stringify(welcomeMessages));
-        }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                // Fallback to localStorage
+                const savedMessages = localStorage.getItem(`messages_${user.id}`);
+                if (savedMessages) {
+                    setMessages(JSON.parse(savedMessages));
+                }
+            }
+        };
+
+        loadMessages();
     }, [user, navigate]);
 
     useEffect(() => {
@@ -52,12 +66,12 @@ const Messages = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
 
         const newMsg = {
-            id: messages.length + 1,
+            id: `temp_${Date.now()}`,
             sender: 'user',
             senderName: user.username || user.name || 'You',
             content: newMessage,
@@ -65,14 +79,38 @@ const Messages = () => {
             read: true
         };
 
+        // Optimistic update
         const updatedMessages = [...messages, newMsg];
         setMessages(updatedMessages);
         localStorage.setItem(`messages_${user.id}`, JSON.stringify(updatedMessages));
         setNewMessage('');
 
-        // Send message to admin backend (shubzfx@gmail.com will receive notification)
-        // In production, this would trigger an email/notification to the admin
-        console.log('Message sent to admin:', newMsg);
+        // Send message to admin via API
+        try {
+            // Ensure admin thread exists
+            const threadResponse = await Api.ensureAdminThread();
+            const threadId = threadResponse.data?.thread?.id;
+            
+            if (threadId) {
+                // Send message to thread
+                await Api.sendThreadMessage(threadId, newMessage);
+                // Reload messages to get server response
+                const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
+                const apiMessages = messagesResponse.data?.messages || [];
+                const formattedMessages = apiMessages.map(msg => ({
+                    id: msg.id,
+                    sender: String(msg.senderId) === String(user.id) ? 'user' : 'admin',
+                    senderName: String(msg.senderId) === String(user.id) ? (user.username || user.name || 'You') : 'Admin',
+                    content: msg.body,
+                    timestamp: msg.createdAt || msg.created_at,
+                    read: !!msg.readAt || !!msg.read_at
+                }));
+                setMessages(formattedMessages);
+            }
+        } catch (error) {
+            console.error('Error sending message to admin:', error);
+            // Message is still saved locally, so user can see it
+        }
     };
 
     const formatTime = (timestamp) => {

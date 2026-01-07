@@ -11,6 +11,7 @@ const Navbar = () => {
     const { user, logout } = useAuth();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
 
     const toggleDropdown = () => {
         setDropdownOpen(!dropdownOpen);
@@ -18,6 +19,12 @@ const Navbar = () => {
 
     const toggleMobileMenu = () => {
         setMobileMenuOpen(!mobileMenuOpen);
+        setMobileUserMenuOpen(false); // Close user menu when opening nav menu
+    };
+
+    const toggleMobileUserMenu = () => {
+        setMobileUserMenuOpen(!mobileUserMenuOpen);
+        setMobileMenuOpen(false); // Close nav menu when opening user menu
     };
 
     return (
@@ -124,12 +131,67 @@ const Navbar = () => {
                             <button className="mobile-start-trading" onClick={() => window.location.href='/register'}>Sign Up</button>
                         </>
                     ) : (
-                        <button onClick={logout} className="mobile-sign-in">
-                            <FaSignOutAlt className="dropdown-icon" /> Logout
-                        </button>
+                        <>
+                            <button 
+                                className="mobile-user-menu-toggle" 
+                                onClick={toggleMobileUserMenu}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '10px 16px',
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    borderRadius: '8px',
+                                    color: '#ffffff',
+                                    cursor: 'pointer',
+                                    width: '100%',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <FaUserCircle /> User Menu
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
+
+            {/* Mobile User Menu Dropdown */}
+            {user && (
+                <div className={`mobile-user-menu ${mobileUserMenuOpen ? 'active' : ''}`}>
+                    <button className="mobile-user-menu-close" onClick={toggleMobileUserMenu}>
+                        <FaTimes />
+                    </button>
+                    <div className="mobile-user-email">{user.email}</div>
+                    <ul className="mobile-user-links">
+                        <li><Link to="/messages" onClick={toggleMobileUserMenu}>
+                            <FaEnvelope className="dropdown-icon" /> Messages
+                        </Link></li>
+                        <li><Link to="/profile" onClick={toggleMobileUserMenu}>
+                            <FaUserCircle className="dropdown-icon" /> Profile
+                        </Link></li>
+                        <li><Link to="/my-courses" onClick={toggleMobileUserMenu}>
+                            <FaBook className="dropdown-icon" /> My Courses
+                        </Link></li>
+                        <li><Link to="/leaderboard" onClick={toggleMobileUserMenu}>
+                            <FaTrophy className="dropdown-icon" /> Leaderboard
+                        </Link></li>
+                        {(isAdmin(user) || isSuperAdmin(user)) && (
+                            <>
+                                <li><Link to="/admin" onClick={toggleMobileUserMenu}>
+                                    <FaCog className="dropdown-icon" /> Admin Panel
+                                </Link></li>
+                                <li><Link to="/settings" onClick={toggleMobileUserMenu}>
+                                    <FaSlidersH className="dropdown-icon" /> Settings
+                                </Link></li>
+                            </>
+                        )}
+                        <li><button onClick={() => { toggleMobileUserMenu(); logout(); }}>
+                            <FaSignOutAlt className="dropdown-icon" /> Logout
+                        </button></li>
+                    </ul>
+                </div>
+            )}
 
         </nav>
     );

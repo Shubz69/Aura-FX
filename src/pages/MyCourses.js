@@ -50,14 +50,23 @@ const MyCourses = () => {
             const response = await Api.getUserCourses(userId);
             
             if (response && response.data) {
-                setCourses(Array.isArray(response.data) ? response.data : response.data.courses || []);
+                const coursesData = Array.isArray(response.data) ? response.data : response.data.courses || [];
+                setCourses(coursesData);
+                if (coursesData.length === 0) {
+                    setError(null); // Clear error if no courses but API call succeeded
+                }
             } else {
                 setCourses([]);
             }
             setLoading(false);
         } catch (error) {
             console.error('Error fetching courses:', error);
-            setError('Failed to load courses. Please try again.');
+            // Only show error if it's a real API error, not just empty courses
+            if (error.response && error.response.status !== 404) {
+                setError('Failed to load courses. Please try again.');
+            } else {
+                setError(null); // 404 or empty response is fine - just no courses
+            }
             setCourses([]);
             setLoading(false);
         }
@@ -111,46 +120,57 @@ const MyCourses = () => {
             {error && (
                 <div className="error-message">
                     <p>{error}</p>
-                    {error.includes('backend server') && (
-                        <div className="server-help">
-                            <p>To fix this issue:</p>
-                            <ol>
-                                <li>Make sure the backend server is running</li>
-                                <li>Check that it's available at aurafx.com</li>
-                                <li>Verify there are no network issues</li>
-                            </ol>
+                    <button onClick={() => {
+                        const userJson = localStorage.getItem("user");
+                        if (userJson) {
+                            const user = JSON.parse(userJson);
+                            fetchCourses(user.id, user.role);
+                        }
+                    }} style={{
+                        marginTop: '12px',
+                        padding: '8px 16px',
+                        background: 'rgba(139, 92, 246, 0.8)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                    }}>
+                        Retry
+                    </button>
+                </div>
+            )}
+            
+            {!error && (
+                <div className="courses-grid">
+                    {courses.length > 0 ? (
+                        courses.map((course) => (
+                            <div key={course.id} className="course-card">
+                                <div className="course-content">
+                                    <h3 className="course-title">{course.name || course.title}</h3>
+                                    <p className="course-description">{course.description || 'No description available'}</p>
+                                    <button 
+                                        className="course-button" 
+                                        onClick={() => navigateToCourse(course.courseId || course.id)}
+                                    >
+                                        <span>Go to Course</span>
+                                        <FaChevronRight />
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="no-courses-message">
+                            <p>
+                                {userRole === "FREE" 
+                                    ? "You need to upgrade to Premium to access courses." 
+                                    : userRole === "ADMIN"
+                                    ? "No courses available. Courses will appear here once they are added to the system."
+                                    : "No courses available at this time. Check back soon for new course offerings."}
+                            </p>
                         </div>
                     )}
                 </div>
             )}
-            
-            <div className="courses-grid">
-                {courses.length > 0 ? (
-                    courses.map((course) => (
-                        <div key={course.id} className="course-card">
-                            <div className="course-content">
-                                <h3 className="course-title">{course.name}</h3>
-                                <p className="course-description">{course.description}</p>
-                                <button 
-                                    className="course-button" 
-                                    onClick={() => navigateToCourse(course.courseId)}
-                                >
-                                    <span>Go to Course</span>
-                                    <FaChevronRight />
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="no-courses-message">
-                        <p>
-                            {userRole === "FREE" 
-                                ? "You need to upgrade to Premium to access courses." 
-                                : "No courses available."}
-                        </p>
-                    </div>
-                )}
-            </div>
             
             {userRole === "FREE" && (
                 <div className="upgrade-container">

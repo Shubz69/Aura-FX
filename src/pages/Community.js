@@ -2095,6 +2095,20 @@ Let's build generational wealth together! 💰🚀`,
                 </div>
             </div>
             
+            {/* MOBILE USER STATS - Only visible on mobile/tablet */}
+            {isMobile && (
+                <div className="mobile-user-stats">
+                    <div className="mobile-stat-item">
+                        <span className="mobile-stat-label">Online:</span>
+                        <span className="mobile-stat-value">{onlineCount}</span>
+                    </div>
+                    <div className="mobile-stat-item">
+                        <span className="mobile-stat-label">Total Users:</span>
+                        <span className="mobile-stat-value">{totalUsers}</span>
+                    </div>
+                </div>
+            )}
+            
             {/* MOBILE CHANNEL SELECTOR - Only visible on mobile/tablet */}
             <div className="mobile-channel-selector" style={{ display: isMobile ? 'block' : 'none' }}>
                 <select

@@ -732,6 +732,148 @@ const Api = {
             console.error('Error updating user role:', error);
             throw error;
         }
+    },
+
+    giveXp: async (userId, xpAmount) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `${API_BASE_URL}/api/admin/give-xp`,
+                { userId, xpAmount },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error giving XP:', error);
+            throw error;
+        }
+    },
+
+    // Messaging/Thread functions
+    ensureAdminThread: async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const userJson = localStorage.getItem('user');
+            const user = userJson ? JSON.parse(userJson) : null;
+            const userId = user?.id || null;
+            
+            if (!userId) {
+                throw new Error('User ID not available');
+            }
+            
+            const response = await axios.post(
+                `${API_BASE_URL}/api/messages/threads/ensure-admin`,
+                { userId },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error ensuring admin thread:', error);
+            throw error;
+        }
+    },
+
+    listThreads: async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(
+                `${API_BASE_URL}/api/messages/threads`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error listing threads:', error);
+            throw error;
+        }
+    },
+
+    getThreadMessages: async (threadId, options = {}) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(
+                `${API_BASE_URL}/api/messages/threads/${threadId}/messages`,
+                {
+                    params: options,
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error getting thread messages:', error);
+            throw error;
+        }
+    },
+
+    sendThreadMessage: async (threadId, body) => {
+        try {
+            const token = localStorage.getItem('token');
+            const userJson = localStorage.getItem('user');
+            const user = userJson ? JSON.parse(userJson) : null;
+            const userId = user?.id || null;
+            
+            if (!userId) {
+                throw new Error('User ID not available');
+            }
+            
+            const response = await axios.post(
+                `${API_BASE_URL}/api/messages/threads/${threadId}/messages`,
+                { body, userId },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error sending thread message:', error);
+            throw error;
+        }
+    },
+
+    markThreadRead: async (threadId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const userJson = localStorage.getItem('user');
+            const user = userJson ? JSON.parse(userJson) : null;
+            const userId = user?.id || null;
+            
+            if (!userId) {
+                throw new Error('User ID not available');
+            }
+            
+            const response = await axios.post(
+                `${API_BASE_URL}/api/messages/threads/${threadId}/read`,
+                { userId },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error marking thread as read:', error);
+            throw error;
+        }
     }
 };
 

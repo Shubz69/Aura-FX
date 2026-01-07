@@ -700,6 +700,90 @@ body.loading-active .navbar {
     visibility: visible;
 }
 
+/* Mobile User Menu Dropdown */
+.mobile-user-menu {
+    position: fixed;
+    top: 55px;
+    right: -100%;
+    width: 280px;
+    height: calc(100vh - 55px);
+    background: rgba(26, 27, 30, 0.98);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1001;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-user-menu.active {
+    right: 0;
+}
+
+.mobile-user-menu-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.mobile-user-menu-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.mobile-user-email {
+    padding: 20px 16px 16px 16px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 8px;
+}
+
+.mobile-user-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mobile-user-links li {
+    margin: 0;
+}
+
+.mobile-user-links li a,
+.mobile-user-links li button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 14px 16px;
+    color: #ffffff;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+    text-align: left;
+    font-family: inherit;
+}
+
+.mobile-user-links li a:hover,
+.mobile-user-links li button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.mobile-user-links .dropdown-icon {
+    margin-right: 12px;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
 /* Ensure mobile menu is above everything on iPhone */
 @media (max-width: 768px) {
     .mobile-menu {

@@ -125,6 +125,22 @@
     {
       "source": "/api/leaderboard",
       "destination": "/api/leaderboard.js"
+    },
+    {
+      "source": "/api/messages/threads",
+      "destination": "/api/messages/threads.js"
+    },
+    {
+      "source": "/api/messages/threads/ensure-admin",
+      "destination": "/api/messages/threads.js"
+    },
+    {
+      "source": "/api/messages/threads/:threadId/messages",
+      "destination": "/api/messages/threads.js"
+    },
+    {
+      "source": "/api/messages/threads/:threadId/read",
+      "destination": "/api/messages/threads.js"
     }
   ]
 }
