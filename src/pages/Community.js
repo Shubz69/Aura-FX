@@ -3443,19 +3443,21 @@ Let's build generational wealth together! 💰🚀`,
                     className="message-context-menu"
                     style={{
                         position: 'fixed',
-                        top: contextMenu.y,
-                        left: contextMenu.x,
+                        top: `${contextMenu.y}px`,
+                        left: `${contextMenu.x}px`,
                         background: '#2B2D31',
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '4px',
                         minWidth: '200px',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
-                        zIndex: 1000,
+                        zIndex: 10000,
                         display: 'flex',
-                        flexDirection: 'column'
+                        flexDirection: 'column',
+                        pointerEvents: 'auto'
                     }}
                     onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => e.preventDefault()}
                 >
                     <button
                         className="context-menu-item"
