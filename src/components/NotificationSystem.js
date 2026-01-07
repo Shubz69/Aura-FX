@@ -168,10 +168,24 @@ const NotificationSystem = ({ user, onNotificationClick }) => {
 
 // Helper function to trigger notifications from anywhere
 export const triggerNotification = (type, title, message, link = null, userId = null) => {
-    const event = new CustomEvent('newNotification', {
-        detail: { type, title, message, link, userId }
-    });
-    window.dispatchEvent(event);
+    try {
+        const event = new CustomEvent('newNotification', {
+            detail: { type, title, message, link, userId }
+        });
+        window.dispatchEvent(event);
+        
+        // Also show browser notification if permission granted
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, {
+                body: message,
+                icon: '/aura_logo.png',
+                tag: `notification-${Date.now()}`,
+                requireInteraction: false
+            });
+        }
+    } catch (error) {
+        console.error('Error triggering notification:', error);
+    }
 };
 
 export default NotificationSystem;

@@ -409,7 +409,7 @@
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0.5px 16px;
+    padding: 0.25rem 16px;
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
@@ -433,8 +433,8 @@
 
 /* Group consecutive messages from same sender */
 .message-item.grouped {
-    padding-top: 0;
-    padding-bottom: 0.5px;
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
 }
 
 .message-item.grouped .message-avatar,
@@ -449,7 +449,7 @@
 .message-avatar {
     position: absolute;
     left: 16px;
-    top: 1px;
+    top: 0.25rem;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -466,7 +466,7 @@
 .message-avatar-text {
     position: absolute;
     left: 16px;
-    top: 1px;
+    top: 0.25rem;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -492,6 +492,7 @@
     min-width: 0;
     flex: 1;
     padding: 0;
+    position: relative;
 }
 
 .message-header-info {
@@ -500,14 +501,16 @@
     gap: 6px;
     margin-bottom: 0;
     flex-wrap: wrap;
+    line-height: 1.375;
 }
 
 .message-author {
     font-weight: 500;
     color: #FFFFFF;
-    font-size: 1rem;
+    font-size: 0.9375rem;
     cursor: pointer;
     transition: color 0.15s ease;
+    user-select: none;
 }
 
 .message-author:hover {
@@ -521,6 +524,7 @@
     font-weight: 400;
     opacity: 0;
     transition: opacity 0.15s ease;
+    user-select: none;
 }
 
 .message-item:hover .message-timestamp {
@@ -538,6 +542,7 @@
     background: none;
     border: none;
     box-shadow: none;
+    overflow-wrap: break-word;
 }
 
 /* Emoji Reactions */

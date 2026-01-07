@@ -453,28 +453,62 @@ const Community = () => {
     } = useWebSocket(
         selectedChannel?.id,
         (message) => {
-            // Instant message update via WebSocket
-            setMessages(prev => {
-                const isDuplicate = prev.some(m => 
-                    m.id === message.id ||
-                    (m.content === message.content && 
-                    m.sender?.username === message.sender?.username &&
-                    Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 5000)
+            // Check if message is for current channel
+            const isCurrentChannel = selectedChannel?.id && 
+                (String(message.channelId) === String(selectedChannel.id) || 
+                 String(message.channel_id) === String(selectedChannel.id));
+            
+            // Check if message mentions current user
+            const currentUsername = storedUser?.username || storedUser?.name || '';
+            const messageContent = message.content || '';
+            const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
+            
+            // Trigger notifications
+            if (!isCurrentChannel) {
+                // New message in different channel
+                const channelName = channelList.find(c => 
+                    String(c.id) === String(message.channelId || message.channel_id)
+                )?.name || 'a channel';
+                triggerNotification(
+                    'message',
+                    `New message in #${channelName}`,
+                    `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+                    `/community/${message.channelId || message.channel_id}`
                 );
-                
-                if (isDuplicate) {
-                    return prev;
-                }
-                
-                const newMessages = [...prev, message];
-                // Save to localStorage as backup
-                if (selectedChannel?.id) {
-                    saveMessagesToStorage(selectedChannel.id, newMessages);
-                }
-                // Scroll to bottom immediately when new message arrives
-                setTimeout(() => scrollToBottom(), 0);
-                return newMessages;
-            });
+            } else if (isMentioned) {
+                // User was mentioned
+                triggerNotification(
+                    'mention',
+                    `You were mentioned in #${selectedChannel.name}`,
+                    `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+                    `/community/${selectedChannel.id}`
+                );
+            }
+            
+            // Only add message if it's for the current channel
+            if (isCurrentChannel) {
+                setMessages(prev => {
+                    const isDuplicate = prev.some(m => 
+                        m.id === message.id ||
+                        (m.content === message.content && 
+                        m.sender?.username === message.sender?.username &&
+                        Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 5000)
+                    );
+                    
+                    if (isDuplicate) {
+                        return prev;
+                    }
+                    
+                    const newMessages = [...prev, message];
+                    // Save to localStorage as backup
+                    if (selectedChannel?.id) {
+                        saveMessagesToStorage(selectedChannel.id, newMessages);
+                    }
+                    // Scroll to bottom immediately when new message arrives
+                    setTimeout(() => scrollToBottom(), 0);
+                    return newMessages;
+                });
+            }
         },
         enableRealtime
     );
@@ -1360,17 +1394,70 @@ const Community = () => {
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
+        // Store previous message count for notification detection
+        let previousMessageCount = messages.length;
+        
         // Poll interval: much faster for instant updates
         // 500ms when WebSocket is down (primary), 1000ms when connected (backup)
         const pollInterval = isConnected ? 1000 : 500;
         
         // Start polling immediately
-        const pollMessages = () => {
-            // Use merge mode to only add new messages, not replace all
-            fetchMessages(selectedChannel.id, true).catch((err) => {
+        const pollMessages = async () => {
+            try {
+                // Use merge mode to only add new messages, not replace all
+                const response = await Api.getChannelMessages(selectedChannel.id);
+                if (response && response.data && Array.isArray(response.data)) {
+                    const apiMessages = response.data;
+                    
+                    // Check for new messages
+                    setMessages(prev => {
+                        const existingIds = new Set(prev.map(m => m.id));
+                        const newMessages = apiMessages.filter(m => !existingIds.has(m.id));
+                        
+                        // Trigger notifications for new messages
+                        const currentUsername = storedUser?.username || storedUser?.name || '';
+                        newMessages.forEach(newMsg => {
+                            const messageContent = newMsg.content || '';
+                            const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
+                            
+                            if (isMentioned) {
+                                triggerNotification(
+                                    'mention',
+                                    `You were mentioned in #${selectedChannel.name}`,
+                                    `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+                                    `/community/${selectedChannel.id}`
+                                );
+                            } else if (newMsg.sender?.id !== userId) {
+                                // Only notify if message is from someone else
+                                triggerNotification(
+                                    'message',
+                                    `New message in #${selectedChannel.name}`,
+                                    `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+                                    `/community/${selectedChannel.id}`
+                                );
+                            }
+                        });
+                        
+                        if (newMessages.length > 0) {
+                            // Merge new messages with existing ones, sorted by timestamp
+                            const merged = [...prev, ...newMessages].sort((a, b) => {
+                                const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
+                                const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
+                                return timeA - timeB;
+                            });
+                            
+                            // Save to localStorage
+                            saveMessagesToStorage(selectedChannel.id, merged);
+                            return merged;
+                        }
+                        
+                        return prev; // No new messages
+                    });
+                }
+            } catch (err) {
                 // Silently handle errors to avoid console spam
                 console.debug('Polling fetch error:', err.message);
-            });
+            }
         };
         
         // Poll immediately on mount/channel change
@@ -1380,7 +1467,7 @@ const Community = () => {
         const pollTimer = setInterval(pollMessages, pollInterval);
 
         return () => clearInterval(pollTimer);
-    }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel]);
+    }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel, storedUser, userId]);
     
     // Add welcome message when welcome channel is selected for first time
     useEffect(() => {
