@@ -153,22 +153,6 @@ const Community = () => {
         return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
     });
     
-    // Update category order when channels change
-    useEffect(() => {
-        const allCategories = Object.keys(groupedChannels);
-        if (allCategories.length > 0) {
-            const merged = [...categoryOrderState];
-            allCategories.forEach(cat => {
-                if (!merged.includes(cat)) {
-                    merged.push(cat);
-                }
-            });
-            if (merged.length !== categoryOrderState.length) {
-                setCategoryOrderState(merged);
-            }
-        }
-    }, [groupedChannels]);
-    
     const categoryOrder = categoryOrderState;
 
     const protectedChannelIds = useMemo(() => (['welcome', 'announcements', 'admin']), []);
