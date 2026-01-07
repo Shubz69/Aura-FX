@@ -956,6 +956,36 @@
     background: linear-gradient(180deg, var(--purple-secondary), var(--purple-primary));
 }
 
+/* Message Context Menu */
+.message-context-menu {
+    user-select: none;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: #DCDDDE;
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.context-menu-item:hover {
+    background: rgba(88, 101, 242, 0.3);
+    color: #ffffff;
+}
+
+.context-menu-item:active {
+    background: rgba(88, 101, 242, 0.4);
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .community-container {

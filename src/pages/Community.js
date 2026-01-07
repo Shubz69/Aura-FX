@@ -9,7 +9,7 @@ import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 
 // Icons
-import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus } from 'react-icons/fa';
+import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag } from 'react-icons/fa';
 
 // All API calls use real endpoints only - no mock mode
 
@@ -89,6 +89,7 @@ const Community = () => {
     const [draggedChannel, setDraggedChannel] = useState(null);
     const [draggedCategory, setDraggedCategory] = useState(null);
     const [messageReactions, setMessageReactions] = useState({}); // messageId -> { emoji: count }
+    const [contextMenu, setContextMenu] = useState(null); // { x, y, messageId }
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -2328,6 +2329,14 @@ Let's build generational wealth together! 💰🚀`,
                                         <div 
                                             key={message.id || index} 
                                             className={`message-item ${isGrouped ? 'grouped' : ''}`}
+                                            onContextMenu={(e) => {
+                                                e.preventDefault();
+                                                setContextMenu({
+                                                    x: e.clientX,
+                                                    y: e.clientY,
+                                                    messageId: message.id
+                                                });
+                                            }}
                                         >
                                             {!isGrouped && (
                                                 <div className="message-avatar-text">
@@ -2487,37 +2496,6 @@ Let's build generational wealth together! 💰🚀`,
                                                         <span>{count}</span>
                                                     </button>
                                                 ))}
-                                                <button
-                                                    className="add-reaction-button"
-                                                    onClick={() => {
-                                                        // Show emoji picker for this message
-                                                        setShowEmojiPicker(true);
-                                                        setSelectedMessageForReaction(message.id);
-                                                    }}
-                                                    style={{
-                                                        padding: '4px 8px',
-                                                        background: 'transparent',
-                                                        border: '1px dashed rgba(255, 255, 255, 0.3)',
-                                                        borderRadius: '12px',
-                                                        cursor: 'pointer',
-                                                        fontSize: '0.85rem',
-                                                        color: 'rgba(255, 255, 255, 0.6)',
-                                                        transition: 'all 0.2s ease',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '4px'
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-                                                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                                                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
-                                                    }}
-                                                >
-                                                    <FaSmile size={12} /> Add Reaction
-                                                </button>
                                             </div>
                                             
                                             {message.isWelcomeMessage && !hasReadWelcome && (
