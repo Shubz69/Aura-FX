@@ -126,7 +126,7 @@ const Explore = () => {
         <div className="hero-content">
           <h1 className="hero-title">WELCOME TO AURA FX</h1>
           <p className="hero-description">
-            Build <strong>GENERATIONAL WEALTH</strong> through our elite educational platform. Master proven strategies to make money work for you, eliminate destructive financial patterns, and achieve true financial independence through expert-led education and institutional-grade investment methodologies.
+            Transform your trading career with <strong>ELITE PROFESSIONAL EDUCATION</strong>. Join 1,200+ successful traders mastering institutional-grade strategies across Forex, Stocks, Crypto, and Futures. Learn from industry experts with proven track records and build consistent profitability through disciplined, systematic trading approaches.
           </p>
           <div className="hero-cta">
             <button className="cta-primary" onClick={() => navigate('/register')}>
@@ -145,10 +145,10 @@ const Explore = () => {
           <h2 className="section-title">ABOUT AURA FX</h2>
           <div className="about-content">
             <p className="about-text">
-              AURA FX is the premier financial education platform dedicated to empowering individuals to build generational wealth through diversified income streams. We deliver comprehensive courses, elite mentorship, and a thriving community of 1,200+ successful traders committed to breaking free from traditional financial constraints.
+              AURA FX is the premier professional trading education platform, dedicated to transforming traders into consistently profitable professionals. We deliver comprehensive trading courses, elite mentorship from industry experts, and a thriving community of 1,200+ active traders mastering markets across Forex, Stocks, Crypto, and Futures.
             </p>
             <p className="about-text">
-              Our mission is to equip you with the institutional-grade knowledge and battle-tested strategies needed to create sustainable, multi-generational wealth. We teach you how to make money work for you, transforming you from a consumer into a wealth creator.
+              Our mission is to equip you with institutional-grade trading knowledge and battle-tested strategies that generate consistent returns. We focus on realistic, disciplined approaches to trading—teaching proper risk management, systematic analysis, and the psychological discipline required for long-term trading success.
             </p>
           </div>
         </div>

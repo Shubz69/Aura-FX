@@ -102,19 +102,13 @@ const WhyInfinity = () => {
                         <h2 className="why-subtitle">Why Choose AURA FX</h2>
                         <div className="why-divider"></div>
                         <p className="why-text">
-                            AURA FX is your pathway to building generational wealth and breaking free from 
-                            destructive financial habits. We teach you how to make your money work for you through 
-                            multiple streams of knowledge—from smart investing to creating passive income.
+                            AURA FX is a professional trading education platform designed to transform aspiring traders into consistently profitable professionals. We focus exclusively on trading—Forex, Stocks, Crypto, and Futures—with realistic, disciplined approaches that emphasize proper risk management and systematic analysis.
                         </p>
                         <p className="why-text">
-                            Stop working just for money and start building wealth that lasts. Our comprehensive 
-                            courses and community support help you develop disciplined strategies that generate 
-                            lasting prosperity without falling into common financial traps.
+                            Trading requires discipline, education, and patience. We don't promise get-rich-quick schemes. Instead, we teach proven strategies, proper risk management, and the psychological discipline needed for long-term trading success. Our community of 1,200+ traders learns together, shares insights, and builds consistent profitability through systematic approaches.
                         </p>
                         <p className="why-text">
-                            Join our community of wealth builders who are creating financial freedom through 
-                            smart decision-making. Learn to avoid bad habits, build multiple income streams, 
-                            and develop the mindset needed for true generational wealth.
+                            Success in trading comes from education, practice, and discipline. Our expert mentors have years of real trading experience and teach strategies that work in real market conditions. Join traders who understand that consistent profitability requires time, dedication, and the right education.
                         </p>
                         <button className="why-cta-button">
                             Initialize Trading <FaArrowRight />
@@ -128,9 +122,9 @@ const WhyInfinity = () => {
                             <div className="why-feature-icon">
                                 <FaChartLine />
                             </div>
-                            <h3 className="why-feature-title">Wealth Building Knowledge</h3>
+                            <h3 className="why-feature-title">Professional Trading Education</h3>
                             <p className="why-feature-text">
-                                Learn proven strategies to build generational wealth and make your money work for you effectively.
+                                Master institutional-grade trading strategies across Forex, Stocks, Crypto, and Futures. Learn from experts with proven track records in real market conditions.
                             </p>
                         </div>
                         <div className={`why-feature-card ${visibleSections['feature-1'] ? 'fade-in-up' : ''}`}
@@ -139,9 +133,9 @@ const WhyInfinity = () => {
                             <div className="why-feature-icon">
                                 <FaGraduationCap />
                             </div>
-                            <h3 className="why-feature-title">Break Bad Habits</h3>
+                            <h3 className="why-feature-title">Risk Management & Discipline</h3>
                             <p className="why-feature-text">
-                                Eliminate destructive financial patterns and develop disciplined money management skills.
+                                Learn proper risk management, position sizing, and the psychological discipline required for consistent trading success. Avoid common trading mistakes that lead to losses.
                             </p>
                         </div>
                         <div className={`why-feature-card ${visibleSections['feature-2'] ? 'fade-in-up' : ''}`}
@@ -150,9 +144,9 @@ const WhyInfinity = () => {
                             <div className="why-feature-icon">
                                 <FaUsers />
                             </div>
-                            <h3 className="why-feature-title">Multiple Income Streams</h3>
+                            <h3 className="why-feature-title">Multiple Trading Markets</h3>
                             <p className="why-feature-text">
-                                Discover diverse knowledge paths to create lasting financial security and independence.
+                                Trade across Forex, Stocks, Crypto, and Futures markets. Diversify your trading strategies and learn to profit in different market conditions.
                             </p>
                         </div>
                     </div>
@@ -170,9 +164,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <RiStockLine />
                             </div>
-                            <h3>Financial Freedom Path</h3>
+                            <h3>Systematic Trading Strategies</h3>
                             <p>
-                                Learn to make your money work for you through smart investment strategies and passive income creation. Build wealth that lasts for generations.
+                                Master proven trading methodologies that work in real market conditions. Learn technical analysis, fundamental analysis, and systematic approaches to identify high-probability trading opportunities across all markets.
                             </p>
                         </div>
                         
@@ -180,9 +174,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaLock />
                             </div>
-                            <h3>Avoid Financial Traps</h3>
+                            <h3>Avoid Trading Mistakes</h3>
                             <p>
-                                Identify and break free from bad financial habits that keep you stuck. Learn disciplined approaches to spending, saving, and investing.
+                                Learn from common trading errors that cause losses: overtrading, poor risk management, emotional decisions, and lack of discipline. Develop the mindset and habits of successful professional traders.
                             </p>
                         </div>
                         
@@ -190,9 +184,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <BiCodeAlt />
                             </div>
-                            <h3>Smart Money Strategies</h3>
+                            <h3>Expert Mentorship</h3>
                             <p>
-                                Master the knowledge needed to build multiple income streams through trading, investing, and entrepreneurship on AURA FX platform.
+                                Learn from professional traders with years of real market experience. Get personalized guidance, strategy reviews, and insights from mentors who have achieved consistent profitability in trading.
                             </p>
                         </div>
                         
@@ -200,9 +194,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaRocket />
                             </div>
-                            <h3>Generational Wealth Building</h3>
+                            <h3>Realistic Trading Approach</h3>
                             <p>
-                                Create lasting prosperity for your family through proven wealth-building strategies that focus on sustainable growth and smart financial decisions.
+                                We focus on realistic, achievable trading goals. Trading requires time, education, and discipline. We teach strategies that generate consistent returns through proper risk management and systematic analysis—not unrealistic promises.
                             </p>
                         </div>
                         
@@ -210,9 +204,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaChartPie />
                             </div>
-                            <h3>Diverse Knowledge Streams</h3>
+                            <h3>Comprehensive Trading Education</h3>
                             <p>
-                                Access comprehensive education in trading, investing, business building, and passive income—all the tools needed to achieve true financial freedom.
+                                Access in-depth courses covering technical analysis, fundamental analysis, risk management, trading psychology, and market-specific strategies for Forex, Stocks, Crypto, and Futures. Everything you need to become a professional trader.
                             </p>
                         </div>
                         
@@ -220,9 +214,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaUsers />
                             </div>
-                            <h3>AURA FX Community</h3>
+                            <h3>Thriving Trading Community</h3>
                             <p>
-                                Join like-minded individuals committed to breaking free from financial limitations and building generational wealth through smart, disciplined strategies on AURA FX.
+                                Join 1,200+ active traders sharing strategies, market analysis, and insights. Learn from experienced traders, discuss market conditions, and build your trading skills alongside a supportive community of professionals.
                             </p>
                         </div>
                     </div>
