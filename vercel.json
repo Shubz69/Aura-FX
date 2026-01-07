@@ -123,6 +123,14 @@
       "destination": "/api/admin/index.js"
     },
     {
+      "source": "/api/admin/give-xp",
+      "destination": "/api/admin/index.js"
+    },
+    {
+      "source": "/api/admin/revoke-access",
+      "destination": "/api/admin/index.js"
+    },
+    {
       "source": "/api/leaderboard",
       "destination": "/api/leaderboard.js"
     },
