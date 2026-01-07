@@ -46,7 +46,7 @@ const Explore = () => {
     { icon: <FaChartLine />, title: 'Forex Trading', description: 'Learn currency pair trading and market analysis' },
     { icon: <FaBuilding />, title: 'Stock Market', description: 'Navigate equities, ETFs, and index trading' },
     { icon: <FaCoins />, title: 'Commodities', description: 'Trade gold, oil, and other valuable resources' },
-    { icon: <FaRocket />, title: 'Futures & Options', description: 'Advanced derivatives trading strategies' },
+    { icon: <FaRocket />, title: 'Futures', description: 'Master futures contracts and commodity trading with professional strategies' },
     { icon: <FaNetworkWired />, title: 'Forex Pairs', description: 'Major, minor, and exotic currency pairs' }
   ];
 
