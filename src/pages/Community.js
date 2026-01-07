@@ -9,7 +9,7 @@ import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 
 // Icons
-import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag } from 'react-icons/fa';
+import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage } from 'react-icons/fa';
 
 // All API calls use real endpoints only - no mock mode
 
@@ -108,6 +108,7 @@ const Community = () => {
     
     // Discord-like features
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showGifPicker, setShowGifPicker] = useState(false);
     const [selectedMessageForReaction, setSelectedMessageForReaction] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
