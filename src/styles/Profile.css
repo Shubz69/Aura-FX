@@ -203,7 +203,7 @@
 
 .action-button {
     background: linear-gradient(45deg, var(--gold-primary), var(--gold-accent));
-    color: var(--bg-dark);
+    color: #ffffff;
     border: none;
     padding: 12px 24px;
     border-radius: 8px;
@@ -222,6 +222,7 @@
 
 .save-button {
     background: linear-gradient(45deg, var(--gold-primary), var(--gold-secondary));
+    color: #ffffff;
 }
 
 .cancel-button {
