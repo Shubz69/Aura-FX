@@ -192,8 +192,8 @@ const Home = () => {
                                     </div>
                                     <div className="market-item">
                                         <div className="market-icon"><FaGlobe /></div>
-                                        <h3 className="market-title">Options</h3>
-                                        <p className="market-description">Advanced options trading strategies</p>
+                                        <h3 className="market-title">Futures</h3>
+                                        <p className="market-description">Master futures contracts and commodity trading with professional strategies</p>
                                     </div>
                                 </div>
                             </div>
