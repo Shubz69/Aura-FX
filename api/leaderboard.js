@@ -92,10 +92,11 @@ module.exports = async (req, res) => {
 
       // Create real user accounts if we have less than 20 users to populate leaderboard
       const fakeUsernames = [
-        'TradingPro', 'MarketMaster', 'ForexElite', 'CryptoKing', 'StockGuru',
-        'DayTrader', 'SwingMaster', 'OptionsPro', 'FuturesExpert', 'CommodityTrader',
-        'WealthBuilder', 'ProfitSeeker', 'MarketWizard', 'TradingLegend', 'EliteTrader',
-        'ProTrader', 'MarketShark', 'TradingNinja', 'ProfitMaster', 'MarketGenius'
+        'Alex_Martinez', 'Jordan_Chen', 'Sam_Williams', 'Casey_Rodriguez', 'Riley_Thompson',
+        'Quinn_Patel', 'Avery_Johnson', 'Blake_Anderson', 'Cameron_Lee', 'Dakota_Taylor',
+        'xX_Trader_Xx', 'MoonLambo420', 'CryptoWhale99', 'DiamondHands_69', 'ToTheMoon_2024',
+        'MikeTheTrader', 'SarahTrades', 'JohnnyCashFlow', 'LunaTrading', 'ZephyrMarkets',
+        'TradingWithTom', 'EmmaForex', 'NoobSlayer2024', 'ProfitPanda', 'MarketMaven'
       ];
       
       if (users.length < 20) {
