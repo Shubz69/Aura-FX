@@ -417,6 +417,8 @@
     border: none;
     background: none;
     box-shadow: none;
+    cursor: context-menu;
+    user-select: text;
 }
 
 .message-item:hover {

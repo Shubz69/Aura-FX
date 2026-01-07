@@ -2527,7 +2527,8 @@ Let's build generational wealth together! 💰🚀`,
             <div className="chat-main" style={{
                 filter: (showSubscribeBanner || showPaymentFailedBanner) ? 'blur(8px)' : 'none',
                 pointerEvents: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
-                userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto'
+                userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
+                position: 'relative'
             }}>
                 {selectedChannel ? (
                     <>
