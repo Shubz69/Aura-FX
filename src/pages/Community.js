@@ -1671,15 +1671,33 @@ Let's build generational wealth together! 💰🚀`,
 
     // Group channels by category - Show ALL channels to ALL users
     // Admin can control access via access_level in database
-    const groupedChannels = channelList.reduce((acc, channel) => {
-        // Show ALL channels regardless of category
-        const category = channel.category || 'general';
-        if (!acc[category]) {
-            acc[category] = [];
+    const groupedChannels = useMemo(() => {
+        return channelList.reduce((acc, channel) => {
+            // Show ALL channels regardless of category
+            const category = channel.category || 'general';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(channel);
+            return acc;
+        }, {});
+    }, [channelList]);
+    
+    // Update category order when channels change
+    useEffect(() => {
+        const allCategories = Object.keys(groupedChannels);
+        if (allCategories.length > 0) {
+            const merged = [...categoryOrderState];
+            allCategories.forEach(cat => {
+                if (!merged.includes(cat)) {
+                    merged.push(cat);
+                }
+            });
+            if (merged.length !== categoryOrderState.length) {
+                setCategoryOrderState(merged);
+            }
         }
-        acc[category].push(channel);
-        return acc;
-    }, {});
+    }, [groupedChannels, categoryOrderState]);
 
     // Check subscription status for banner and channel visibility
     // Use subscriptionStatus from database check (most up-to-date) if available, otherwise fallback
