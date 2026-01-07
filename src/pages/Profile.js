@@ -204,10 +204,26 @@ const Profile = () => {
     };
 
     const handleSaveChanges = async () => {
+        if (!user?.id) {
+            setStatus("Cannot update — user ID missing.");
+            return;
+        }
+
         try {
+            // Save all current form data to database (updates for everyone)
+            const dataToSave = {
+                name: formData.name || "",
+                username: formData.username || "",
+                email: formData.email || "",
+                phone: formData.phone || "",
+                address: formData.address || "",
+                bio: formData.bio || "",
+                avatar: formData.avatar || "avatar_ai.png"
+            };
+
             const res = await axios.put(
                 `${resolveApiBaseUrl()}/api/users/${user.id}/update`,
-                editedUserData,
+                dataToSave,
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -217,16 +233,27 @@ const Profile = () => {
             );
 
             if (res.status === 200) {
-                setStatus("Profile updated successfully.");
+                setStatus("Profile updated successfully and saved for everyone.");
                 
-                // Update form data with the edited data
+                // Update form data
                 setFormData(prev => ({
                     ...prev,
-                    ...editedUserData
+                    ...dataToSave
                 }));
                 
-                // Save to local storage for persistence
-                updateLocalUserData(editedUserData);
+                // Update edited user data
+                setEditedUserData(dataToSave);
+                
+                // Update local storage
+                updateLocalUserData(dataToSave);
+                
+                // Update auth context if setUser is available
+                if (setUser) {
+                    setUser(prev => ({
+                        ...prev,
+                        ...dataToSave
+                    }));
+                }
             } else {
                 setStatus("Update failed.");
             }
@@ -234,7 +261,7 @@ const Profile = () => {
             setEditField(null);
         } catch (err) {
             console.error("Error updating profile:", err);
-            setStatus("Failed to update profile");
+            setStatus("Failed to update profile. Please try again.");
         }
     };
 
@@ -344,20 +371,9 @@ const Profile = () => {
                     )}
 
                     <div className="profile-actions">
-                        {editField ? (
-                            <>
-                                <button className="action-button save-button" onClick={handleSaveChanges}>
-                                    Save Changes
-                                </button>
-                                <button className="action-button cancel-button" onClick={handleEditToggle}>
-                                    Cancel
-                                </button>
-                            </>
-                        ) : (
-                            <button className="action-button edit-button" onClick={handleEditToggle}>
-                                Edit Profile
-                            </button>
-                        )}
+                        <button className="action-button save-button" onClick={handleSaveChanges}>
+                            SAVE PROFILE
+                        </button>
                     </div>
                 </div>
 

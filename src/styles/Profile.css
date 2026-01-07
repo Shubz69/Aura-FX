@@ -132,21 +132,32 @@
 }
 
 .profile-field span {
-    color: var(--gold-secondary);
+    color: #ffffff;
     flex: 1;
     margin: 0 15px;
+    font-weight: 500;
+}
+
+.profile-field span i {
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
 }
 
 .profile-field input,
 .profile-field textarea {
     background: rgba(42, 42, 42, 0.7);
     border: 1px solid rgba(255, 215, 0, 0.3);
-    color: var(--gold-primary);
+    color: #ffffff;
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 0.9rem;
     flex: 1;
     margin: 0 15px;
+}
+
+.profile-field input::placeholder,
+.profile-field textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .profile-field input:focus,
