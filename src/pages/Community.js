@@ -2032,12 +2032,22 @@ Let's build generational wealth together! 💰🚀`,
                         return (
                             <div 
                                 key={categoryName} 
-                                className="channel-category"
+                                className={`channel-category ${draggedCategory === categoryName ? 'dragging' : ''} ${draggedCategory && draggedCategory !== categoryName ? 'drag-over' : ''}`}
                                 draggable={isAdminUser}
                                 onDragStart={(e) => {
                                     if (isAdminUser) {
                                         setDraggedCategory(categoryName);
                                         e.dataTransfer.effectAllowed = 'move';
+                                        e.dataTransfer.setData('text/plain', categoryName);
+                                        // Add visual feedback
+                                        e.currentTarget.style.opacity = '0.5';
+                                    }
+                                }}
+                                onDragEnd={(e) => {
+                                    if (isAdminUser) {
+                                        // Reset visual feedback
+                                        e.currentTarget.style.opacity = '1';
+                                        setDraggedCategory(null);
                                     }
                                 }}
                                 onDragOver={(e) => {
@@ -2046,9 +2056,15 @@ Let's build generational wealth together! 💰🚀`,
                                         e.dataTransfer.dropEffect = 'move';
                                     }
                                 }}
+                                onDragEnter={(e) => {
+                                    if (isAdminUser && draggedCategory && draggedCategory !== categoryName) {
+                                        e.preventDefault();
+                                    }
+                                }}
                                 onDrop={(e) => {
                                     if (isAdminUser && draggedCategory && draggedCategory !== categoryName) {
                                         e.preventDefault();
+                                        e.stopPropagation();
                                         // Reorder categories - update localStorage and state
                                         const currentOrder = [...categoryOrder];
                                         const draggedIndex = currentOrder.indexOf(draggedCategory);
@@ -2065,12 +2081,23 @@ Let's build generational wealth together! 💰🚀`,
                             >
                                 <div 
                                     className="category-header"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        // Don't toggle collapse if we're dragging
+                                        if (draggedCategory) {
+                                            e.stopPropagation();
+                                            return;
+                                        }
                                         setCollapsedCategories(prev => {
                                             const updated = { ...prev, [categoryName]: !prev[categoryName] };
                                             localStorage.setItem('collapsedCategories', JSON.stringify(updated));
                                             return updated;
                                         });
+                                    }}
+                                    onMouseDown={(e) => {
+                                        // Prevent text selection while dragging
+                                        if (isAdminUser) {
+                                            e.preventDefault();
+                                        }
                                     }}
                                 >
                                     <span className={`category-chevron ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
