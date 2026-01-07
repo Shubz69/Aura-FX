@@ -317,7 +317,10 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
         // Subscribe to channel
         if (channelId) {
           client.subscribe(`/topic/chat/${channelId}`, (message) => {
-            console.log('Received message:', message);
+            // Reduced logging for performance - only log in dev mode
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Received message:', message);
+            }
             try {
               // Check if message.body exists and is valid JSON
               if (message.body) {
@@ -325,18 +328,25 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
                 if (message.body.trim().startsWith('{') || message.body.trim().startsWith('[')) {
                   try {
                     const data = JSON.parse(message.body);
+                    // Call callback immediately for instant UI update
                     onMessageCallback(data);
                   } catch (parseError) {
-                    console.error('Error parsing message as JSON:', parseError);
-                    console.warn('Invalid JSON received:', message.body.substring(0, 50) + '...');
+                    if (process.env.NODE_ENV === 'development') {
+                      console.error('Error parsing message as JSON:', parseError);
+                      console.warn('Invalid JSON received:', message.body.substring(0, 50) + '...');
+                    }
                   }
                 } else {
                   // Handle non-JSON message
-                  console.warn('Received non-JSON message:', message.body.substring(0, 50) + '...');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.warn('Received non-JSON message:', message.body.substring(0, 50) + '...');
+                  }
                 }
               }
             } catch (error) {
-              console.error('Error handling message:', error);
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Error handling message:', error);
+              }
             }
           });
 

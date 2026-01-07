@@ -95,3 +95,5 @@ To check what's actually in the database:
 4. Run: `SELECT COUNT(*) FROM users;` - Count users
 5. Run: `SELECT COUNT(*) FROM channels;` - Count channels
 
+
+

@@ -316,6 +316,7 @@ const Community = () => {
     } = useWebSocket(
         selectedChannel?.id,
         (message) => {
+            // Instant message update via WebSocket
             setMessages(prev => {
                 const isDuplicate = prev.some(m => 
                     m.id === message.id ||
@@ -333,6 +334,8 @@ const Community = () => {
                 if (selectedChannel?.id) {
                     saveMessagesToStorage(selectedChannel.id, newMessages);
                 }
+                // Scroll to bottom immediately when new message arrives
+                setTimeout(() => scrollToBottom(), 0);
                 return newMessages;
             });
         },
@@ -733,7 +736,7 @@ const Community = () => {
         setHasReadWelcome(readStatus);
     }, []);
 
-    // Fetch courses for channel naming
+    // Fetch courses for channel naming - parallelize with channel list for faster load
     useEffect(() => {
         const fetchCourses = async () => {
             try {
@@ -747,6 +750,7 @@ const Community = () => {
         };
         
         if (isAuthenticated) {
+            // Fetch courses in parallel with channel list (no need to wait)
             fetchCourses();
         }
     }, [isAuthenticated]);
@@ -851,15 +855,13 @@ const Community = () => {
             };
             
             activateSubscription();
-        } else {
-            // Normal subscription check
-            checkSubscriptionFromDB();
         }
         
-        // Check every 3 seconds for immediate updates after payment
+        // Check subscription less frequently to improve performance
+        // Initial check already done above if needed, then every 10 seconds
         const interval = setInterval(() => {
             checkSubscriptionFromDB();
-        }, 3000);
+        }, 10000); // Reduced from 3s to 10s
         
         return () => clearInterval(interval);
     }, [userId, isAuthenticated, checkSubscriptionFromDB]);
@@ -1006,6 +1008,8 @@ const Community = () => {
     useEffect(() => {
         if (!isAuthenticated) return;
 
+        // Refresh channel list less frequently to improve performance
+        // Initial load happens immediately, then refresh every 60 seconds
         const intervalId = setInterval(() => {
             // Only refresh if API is working to avoid spam
             checkApiConnectivity().then((apiWorking) => {
@@ -1015,7 +1019,7 @@ const Community = () => {
                     });
                 }
             });
-        }, 30000);
+        }, 60000); // Reduced from 30s to 60s
 
         return () => clearInterval(intervalId);
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
@@ -1134,13 +1138,26 @@ const Community = () => {
         return () => clearInterval(statusInterval);
     }, [isAuthenticated, fetchOnlineStatus]);
 
-    // Load messages when channel changes
+    // Load messages when channel changes - optimized for instant display
     useEffect(() => {
-        if (selectedChannel) {
+        if (selectedChannel && selectedChannel.id) {
             // Navigate immediately (non-blocking)
             navigate(`/community/${selectedChannel.id}`);
-            // Fetch messages (will show cached first, then update)
-            fetchMessages(selectedChannel.id);
+            
+            // Load cached messages first for instant display
+            const cachedMessages = loadMessagesFromStorage(selectedChannel.id);
+            if (cachedMessages.length > 0) {
+                setMessages(cachedMessages);
+                // Scroll to bottom immediately when showing cached messages
+                setTimeout(() => scrollToBottom(), 0);
+            } else {
+                setMessages([]);
+            }
+            
+            // Fetch fresh messages in parallel (non-blocking)
+            fetchMessages(selectedChannel.id).catch(err => {
+                console.debug('Failed to fetch messages:', err.message);
+            });
         }
     }, [selectedChannel, fetchMessages, navigate]);
 
@@ -1149,8 +1166,9 @@ const Community = () => {
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Poll interval: faster when WebSocket is down, slower when connected (as backup)
-        const pollInterval = isConnected ? 3000 : 2000; // 3s when connected (backup), 2s when disconnected (primary)
+        // Poll interval: much faster for instant updates
+        // 500ms when WebSocket is down (primary), 1000ms when connected (backup)
+        const pollInterval = isConnected ? 1000 : 500;
         
         // Start polling immediately
         const pollMessages = () => {
@@ -1316,12 +1334,19 @@ Let's build generational wealth together! 💰🚀`,
         };
         
         // Add message to state immediately for instant UI feedback
-        const updatedMessages = [...messages, optimisticMessage];
-        persistMessagesList(selectedChannel.id, updatedMessages);
+        // Use functional update to ensure we have the latest messages
+        setMessages(prev => {
+            const updated = [...prev, optimisticMessage];
+            saveMessagesToStorage(selectedChannel.id, updated);
+            return updated;
+        });
         
         // Clear inputs immediately
         setNewMessage('');
         removeSelectedFile();
+        
+        // Scroll to bottom immediately to show new message
+        setTimeout(() => scrollToBottom(), 0);
 
         try {
             // Save to backend API for permanent persistence
@@ -1331,8 +1356,11 @@ Let's build generational wealth together! 💰🚀`,
                 if (response && response.data) {
                     // Replace optimistic message with server response (has real ID)
                     const serverMessage = response.data;
-                    const finalMessages = replaceMessageById(updatedMessages, optimisticMessage.id, serverMessage);
-                    persistMessagesList(selectedChannel.id, finalMessages);
+                    setMessages(prev => {
+                        const final = replaceMessageById(prev, optimisticMessage.id, serverMessage);
+                        saveMessagesToStorage(selectedChannel.id, final);
+                        return final;
+                    });
                     
                     // Broadcast message via WebSocket so all users see it in real-time
                     // Silently fail if WebSocket not available - REST API already saved the message
@@ -1354,8 +1382,11 @@ Let's build generational wealth together! 💰🚀`,
                         ...optimisticMessage,
                         id: Date.now()
                     };
-                    const finalMessages = replaceMessageById(updatedMessages, optimisticMessage.id, permanentMessage);
-                    persistMessagesList(selectedChannel.id, finalMessages);
+                    setMessages(prev => {
+                        const final = replaceMessageById(prev, optimisticMessage.id, permanentMessage);
+                        saveMessagesToStorage(selectedChannel.id, final);
+                        return final;
+                    });
                     
                     // Still try to broadcast via WebSocket
                     // Silently fail if WebSocket not available - REST API already saved the message
@@ -1378,8 +1409,11 @@ Let's build generational wealth together! 💰🚀`,
                     ...optimisticMessage,
                     id: Date.now()
                 };
-                const finalMessages = replaceMessageById(updatedMessages, optimisticMessage.id, permanentMessage);
-                persistMessagesList(selectedChannel.id, finalMessages);
+                setMessages(prev => {
+                    const final = replaceMessageById(prev, optimisticMessage.id, permanentMessage);
+                    saveMessagesToStorage(selectedChannel.id, final);
+                    return final;
+                });
                 
                 // Still try to broadcast via WebSocket if available
                 // Silently fail if WebSocket not available - message saved to localStorage

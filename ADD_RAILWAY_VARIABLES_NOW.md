@@ -56,3 +56,5 @@ Once the variables are added and the service redeploys:
 **This is the missing piece! Add these variables to Railway now.**
 
 
+
+
