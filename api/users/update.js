@@ -184,33 +184,40 @@ module.exports = async (req, res) => {
         const updates = [];
         const values = [];
 
+        // Helper to convert "None" or empty strings to NULL
+        const cleanValue = (val) => {
+          if (val === undefined) return undefined;
+          if (val === null || val === '' || val === 'None') return null;
+          return val;
+        };
+
         if (name !== undefined) {
           updates.push('name = ?');
-          values.push(name);
+          values.push(cleanValue(name));
         }
         if (username !== undefined) {
           updates.push('username = ?');
-          values.push(username);
+          values.push(cleanValue(username));
         }
         if (email !== undefined) {
           updates.push('email = ?');
-          values.push(email);
+          values.push(cleanValue(email));
         }
         if (phone !== undefined) {
           updates.push('phone = ?');
-          values.push(phone);
+          values.push(cleanValue(phone));
         }
         if (address !== undefined) {
           updates.push('address = ?');
-          values.push(address);
+          values.push(cleanValue(address));
         }
         if (bio !== undefined) {
           updates.push('bio = ?');
-          values.push(bio);
+          values.push(cleanValue(bio));
         }
         if (avatar !== undefined) {
           updates.push('avatar = ?');
-          values.push(avatar);
+          values.push(cleanValue(avatar) || 'avatar_ai.png');
         }
 
         if (updates.length === 0) {
