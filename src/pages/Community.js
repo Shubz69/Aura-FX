@@ -115,6 +115,23 @@ const Community = () => {
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
 
+    // Close context menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setContextMenu(null);
+        };
+        
+        if (contextMenu) {
+            document.addEventListener('click', handleClickOutside);
+            document.addEventListener('contextmenu', handleClickOutside);
+        }
+        
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+            document.removeEventListener('contextmenu', handleClickOutside);
+        };
+    }, [contextMenu]);
+
     useEffect(() => {
         channelListRef.current = channelList;
     }, [channelList]);
