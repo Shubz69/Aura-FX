@@ -156,11 +156,11 @@
     },
     {
       "source": "/api/users/:userId/update",
-      "destination": "/api/users/update.js"
+      "destination": "/api/users/update.js?userId=:userId"
     },
     {
       "source": "/api/users/:userId",
-      "destination": "/api/users/update.js"
+      "destination": "/api/users/update.js?userId=:userId"
     }
   ]
 }

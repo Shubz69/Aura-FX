@@ -51,13 +51,32 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Extract userId from URL
-  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const pathParts = url.pathname.split('/');
-  const userIdIndex = pathParts.indexOf('users');
-  const userId = userIdIndex !== -1 && pathParts[userIdIndex + 1] ? pathParts[userIdIndex + 1] : null;
+  // Extract userId from URL - handle both Vercel rewrites and direct paths
+  let userId = null;
+  
+  try {
+    // Try to get from query parameter first (Vercel rewrites)
+    if (req.query && req.query.userId) {
+      userId = req.query.userId;
+    } else {
+      // Try to parse from URL path
+      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+      const pathParts = url.pathname.split('/').filter(p => p);
+      const userIdIndex = pathParts.indexOf('users');
+      if (userIdIndex !== -1 && pathParts[userIdIndex + 1]) {
+        userId = pathParts[userIdIndex + 1];
+      }
+    }
+  } catch (e) {
+    // If URL parsing fails, try to extract from req.url directly
+    const match = req.url?.match(/\/users\/(\d+)/);
+    if (match) {
+      userId = match[1];
+    }
+  }
 
   if (!userId) {
+    console.error('Could not extract userId from URL:', req.url);
     return res.status(400).json({ success: false, message: 'User ID is required' });
   }
 
