@@ -2566,12 +2566,14 @@ Let's build generational wealth together! 💰🚀`,
                                             className={`message-item ${isGrouped ? 'grouped' : ''}`}
                                             onContextMenu={(e) => {
                                                 e.preventDefault();
+                                                e.stopPropagation();
                                                 setContextMenu({
                                                     x: e.clientX,
                                                     y: e.clientY,
                                                     messageId: message.id
                                                 });
                                             }}
+                                            style={{ cursor: 'context-menu' }}
                                         >
                                             {!isGrouped && (
                                                 <div className="message-avatar-text">
