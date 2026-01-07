@@ -1024,6 +1024,22 @@ const Community = () => {
         return () => clearInterval(intervalId);
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
 
+    // Generate fake users for display (will be replaced with real data later)
+    const generateFakeUsers = useCallback(() => {
+        // Base numbers - will show realistic community size
+        const baseOnline = 45; // Online users (realistic for active community)
+        const baseTotal = 1247; // Total users (1200+ as requested)
+        
+        // Add some variation to make it feel more dynamic
+        const onlineVariation = Math.floor(Math.random() * 10) - 5; // ±5 variation
+        const totalVariation = Math.floor(Math.random() * 20) - 10; // ±10 variation
+        
+        return {
+            online: Math.max(35, baseOnline + onlineVariation), // Min 35 online
+            total: Math.max(1200, baseTotal + totalVariation) // Min 1200 total
+        };
+    }, []);
+
     // Fetch online users status periodically
     const fetchOnlineStatus = useCallback(async () => {
         if (!isAuthenticated) return;
@@ -1039,15 +1055,32 @@ const Community = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                const total = data.totalUsers || 0;
+                const realTotal = data.totalUsers || 0;
+                const realOnline = (data.onlineUsers || []).length;
                 
-                setOnlineCount((data.onlineUsers || []).length);
-                setTotalUsers(total);
+                // Use fake users if real data is low, otherwise use real data
+                if (realTotal < 1200 || realOnline < 30) {
+                    const fakeUsers = generateFakeUsers();
+                    setOnlineCount(fakeUsers.online);
+                    setTotalUsers(fakeUsers.total);
+                } else {
+                    setOnlineCount(realOnline);
+                    setTotalUsers(realTotal);
+                }
+            } else {
+                // If API fails, use fake users
+                const fakeUsers = generateFakeUsers();
+                setOnlineCount(fakeUsers.online);
+                setTotalUsers(fakeUsers.total);
             }
         } catch (error) {
             console.error('Failed to fetch online status:', error);
+            // On error, use fake users to show community is active
+            const fakeUsers = generateFakeUsers();
+            setOnlineCount(fakeUsers.online);
+            setTotalUsers(fakeUsers.total);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, generateFakeUsers]);
 
     // Update user presence (heartbeat) - runs periodically
     useEffect(() => {

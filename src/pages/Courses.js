@@ -66,8 +66,8 @@ const Courses = () => {
         <div className="courses-container">
             <CosmicBackground />
             <div className="courses-header">
-                <h1 className="courses-title">COURSES</h1>
-                <p>Expand your knowledge with our comprehensive trading courses</p>
+                <h1 className="courses-title">PREMIUM TRADING COURSES</h1>
+                <p>Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs</p>
             </div>
             
             {error && (
@@ -143,7 +143,7 @@ const Courses = () => {
                 border: '2px solid rgba(139, 92, 246, 0.3)',
                 textAlign: 'center'
             }}>
-                <h2 style={{
+                    <h2 style={{
                     color: '#ffffff',
                     fontSize: '32px',
                     fontWeight: 'bold',
@@ -161,7 +161,7 @@ const Courses = () => {
                     marginBottom: '32px',
                     lineHeight: '1.6'
                 }}>
-                    Unlock elite trading signals, priority mentorship, and exclusive community access
+                    Unlock exclusive elite trading signals, priority 1-to-1 mentorship, and access to our most exclusive community of successful traders
                 </p>
                 <div style={{
                     display: 'flex',

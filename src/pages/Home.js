@@ -86,7 +86,7 @@ const Home = () => {
                         <div className="home-main-content">
                             <div className="content-intro">
                                 <p className="intro-text">
-                                    Professional trading education for the modern trader
+                                    Transform Your Trading Career with Elite Education and Proven Strategies
                                 </p>
                             </div>
 
@@ -96,28 +96,28 @@ const Home = () => {
                                     <div className="feature-icon">📈</div>
                                     <h3 className="feature-title">Forex Trading</h3>
                                     <p className="feature-description">
-                                        Master currency markets with proven strategies and real-time analysis
+                                        Dominate currency markets with institutional-grade strategies and live market analysis
                                     </p>
                                 </div>
                                 <div className="feature-card">
                                     <div className="feature-icon">💹</div>
                                     <h3 className="feature-title">Stock Trading</h3>
                                     <p className="feature-description">
-                                        Learn to analyze and trade stocks effectively with expert guidance
+                                        Master equity markets with advanced analysis techniques and professional trading strategies
                                     </p>
                                 </div>
                                 <div className="feature-card">
                                     <div className="feature-icon">₿</div>
                                     <h3 className="feature-title">Crypto Trading</h3>
                                     <p className="feature-description">
-                                        Navigate cryptocurrency markets with confidence and precision
+                                        Capitalize on digital asset opportunities with cutting-edge strategies and market insights
                                     </p>
                                 </div>
                                 <div className="feature-card">
                                     <div className="feature-icon">🎯</div>
                                     <h3 className="feature-title">1-to-1 Mentorship</h3>
                                     <p className="feature-description">
-                                        Get personalized guidance from experienced trading professionals
+                                        Accelerate your success with personalized coaching from industry-leading trading experts
                                     </p>
                                 </div>
                             </div>
@@ -150,23 +150,23 @@ const Home = () => {
                                 <div className="why-grid">
                                     <div className="why-item">
                                         <div className="why-icon">✓</div>
-                                        <h3 className="why-title">Expert Education</h3>
-                                        <p className="why-text">Learn from industry professionals with years of trading experience</p>
+                                        <h3 className="why-title">Elite Education</h3>
+                                        <p className="why-text">Learn from world-class professionals with decades of combined trading expertise</p>
                                     </div>
                                     <div className="why-item">
                                         <div className="why-icon">✓</div>
                                         <h3 className="why-title">Proven Strategies</h3>
-                                        <p className="why-text">Access tested trading strategies that deliver consistent results</p>
+                                        <p className="why-text">Access battle-tested trading methodologies that generate consistent profits</p>
                                     </div>
                                     <div className="why-item">
                                         <div className="why-icon">✓</div>
-                                        <h3 className="why-title">Real-Time Support</h3>
-                                        <p className="why-text">Get instant help from our community and expert mentors</p>
+                                        <h3 className="why-title">24/7 Support</h3>
+                                        <p className="why-text">Receive instant assistance from our thriving community and dedicated expert mentors</p>
                                     </div>
                                     <div className="why-item">
                                         <div className="why-icon">✓</div>
                                         <h3 className="why-title">Comprehensive Resources</h3>
-                                        <p className="why-text">Access extensive library of courses, tools, and trading materials</p>
+                                        <p className="why-text">Unlock unlimited access to our extensive library of premium courses, advanced tools, and exclusive trading materials</p>
                                     </div>
                                 </div>
                             </div>
@@ -205,29 +205,29 @@ const Home = () => {
                                     <div className="feature-item">
                                         <div className="feature-icon"><FaShieldAlt /></div>
                                         <div className="feature-content">
-                                            <h3 className="feature-item-title">Secure Platform</h3>
-                                            <p className="feature-item-text">Your data and privacy are protected with enterprise-grade security</p>
+                                            <h3 className="feature-item-title">Bank-Level Security</h3>
+                                            <p className="feature-item-text">Your data and privacy are safeguarded with military-grade encryption and enterprise security protocols</p>
                                         </div>
                                     </div>
                                     <div className="feature-item">
                                         <div className="feature-icon"><FaClock /></div>
                                         <div className="feature-content">
-                                            <h3 className="feature-item-title">24/7 Support</h3>
-                                            <p className="feature-item-text">Get help whenever you need it from our dedicated support team</p>
+                                            <h3 className="feature-item-title">24/7 Premium Support</h3>
+                                            <p className="feature-item-text">Access round-the-clock assistance from our expert support team, available whenever you need guidance</p>
                                         </div>
                                     </div>
                                     <div className="feature-item">
                                         <div className="feature-icon"><FaUsers /></div>
                                         <div className="feature-content">
-                                            <h3 className="feature-item-title">Active Community</h3>
-                                            <p className="feature-item-text">Connect with thousands of traders sharing insights and strategies</p>
+                                            <h3 className="feature-item-title">Thriving Community</h3>
+                                            <p className="feature-item-text">Join over 1,200+ active traders sharing exclusive insights, strategies, and real-time market analysis</p>
                                         </div>
                                     </div>
                                     <div className="feature-item">
                                         <div className="feature-icon"><FaGraduationCap /></div>
                                         <div className="feature-content">
-                                            <h3 className="feature-item-title">Expert Mentors</h3>
-                                            <p className="feature-item-text">Learn from professionals with proven track records in trading</p>
+                                            <h3 className="feature-item-title">Elite Mentors</h3>
+                                            <p className="feature-item-text">Learn directly from industry legends with verified track records of consistent profitability and market success</p>
                                         </div>
                                     </div>
                                 </div>

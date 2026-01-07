@@ -64,32 +64,32 @@ const Explore = () => {
 
   // Platform Features
   const platformFeatures = [
-    { icon: <FaDollarSign />, title: 'Generational Wealth Education', description: 'Learn proven strategies to build lasting wealth that spans generations' },
-    { icon: <FaRocket />, title: 'Multiple Income Streams', description: 'Discover diverse knowledge paths including trading, investing, and passive income' },
-    { icon: <FaChartLine />, title: 'Break Bad Habits', description: 'Identify and eliminate destructive financial patterns' },
-    { icon: <FaGraduationCap />, title: 'Money Works For You', description: 'Master passive income and investment strategies' },
-    { icon: <FaTrophy />, title: 'Comprehensive Knowledge', description: 'Access courses on trading, investing, and wealth building' },
-    { icon: <FaUsers />, title: 'AURA FX Advantage', description: 'Join a community committed to breaking financial limitations' }
+    { icon: <FaDollarSign />, title: 'Generational Wealth Education', description: 'Master proven, institutional-grade strategies to build lasting wealth that spans multiple generations' },
+    { icon: <FaRocket />, title: 'Multiple Income Streams', description: 'Discover diverse, scalable knowledge paths including professional trading, strategic investing, and passive income generation' },
+    { icon: <FaChartLine />, title: 'Break Bad Habits', description: 'Identify and eliminate destructive financial patterns with expert guidance and proven methodologies' },
+    { icon: <FaGraduationCap />, title: 'Money Works For You', description: 'Master advanced passive income and investment strategies that generate consistent returns' },
+    { icon: <FaTrophy />, title: 'Comprehensive Knowledge', description: 'Access premium courses on professional trading, strategic investing, and generational wealth building' },
+    { icon: <FaUsers />, title: 'AURA FX Advantage', description: 'Join an elite community of 1,200+ successful traders committed to achieving financial freedom' }
   ];
 
   // What We Offer
   const offerings = [
-    { icon: <FaGraduationCap />, title: 'Expert-Led Courses', description: 'Comprehensive courses taught by experienced professionals' },
-    { icon: <FaUsers />, title: 'Live Community', description: 'Connect with fellow learners and share strategies' },
-    { icon: <FaBook />, title: 'Practical Strategies', description: 'Real-world strategies you can implement immediately' },
-    { icon: <FaHandshake />, title: 'Ongoing Support', description: 'Continuous learning resources and updates' }
+    { icon: <FaGraduationCap />, title: 'Elite Expert-Led Courses', description: 'Comprehensive, premium courses taught by industry-leading professionals with verified track records' },
+    { icon: <FaUsers />, title: 'Thriving Live Community', description: 'Connect with 1,200+ active traders, share exclusive strategies, and network with successful professionals' },
+    { icon: <FaBook />, title: 'Battle-Tested Strategies', description: 'Real-world, proven strategies you can implement immediately to generate consistent results' },
+    { icon: <FaHandshake />, title: '24/7 Premium Support', description: 'Continuous learning resources, real-time updates, and dedicated expert assistance whenever you need it' }
   ];
 
   // Benefits
   const benefits = [
-    'Build generational wealth through proven strategies',
-    'Create multiple income streams for financial security',
-    'Learn from expert mentors with real-world experience',
-    'Join an active community of wealth builders',
-    'Access comprehensive courses on all aspects of trading',
-    'Break free from bad financial habits',
-    'Make money work for you, not the other way around',
-    'Achieve true financial freedom'
+    'Build generational wealth through institutional-grade, proven strategies',
+    'Create multiple diversified income streams for lasting financial security',
+    'Learn from elite mentors with decades of real-world trading experience',
+    'Join a thriving community of 1,200+ active wealth builders and successful traders',
+    'Access comprehensive premium courses covering all aspects of professional trading',
+    'Break free from destructive financial habits with expert guidance',
+    'Transform your relationship with money - make it work for you, not against you',
+    'Achieve true financial freedom and independence through disciplined education'
   ];
 
   return (
@@ -126,7 +126,7 @@ const Explore = () => {
         <div className="hero-content">
           <h1 className="hero-title">WELCOME TO AURA FX</h1>
           <p className="hero-description">
-            Build <strong>GENERATIONAL WEALTH</strong> through our comprehensive educational platform. Learn to make money work for you, eliminate bad financial habits, and achieve true financial freedom through disciplined education and smart investment strategies.
+            Build <strong>GENERATIONAL WEALTH</strong> through our elite educational platform. Master proven strategies to make money work for you, eliminate destructive financial patterns, and achieve true financial independence through expert-led education and institutional-grade investment methodologies.
           </p>
           <div className="hero-cta">
             <button className="cta-primary" onClick={() => navigate('/register')}>
@@ -145,10 +145,10 @@ const Explore = () => {
           <h2 className="section-title">ABOUT AURA FX</h2>
           <div className="about-content">
             <p className="about-text">
-              AURA FX is a leading financial education platform dedicated to helping individuals build generational wealth through multiple income streams. We provide comprehensive courses, expert guidance, and a supportive community focused on breaking free from traditional financial limitations.
+              AURA FX is the premier financial education platform dedicated to empowering individuals to build generational wealth through diversified income streams. We deliver comprehensive courses, elite mentorship, and a thriving community of 1,200+ successful traders committed to breaking free from traditional financial constraints.
             </p>
             <p className="about-text">
-              Our mission is to empower you with the knowledge and strategies needed to create sustainable wealth that spans generations. We teach you how to make money work for you, not the other way around.
+              Our mission is to equip you with the institutional-grade knowledge and battle-tested strategies needed to create sustainable, multi-generational wealth. We teach you how to make money work for you, transforming you from a consumer into a wealth creator.
             </p>
           </div>
         </div>
@@ -243,8 +243,8 @@ const Explore = () => {
       {/* CTA Section */}
       <section className="explore-cta-section">
         <div className="cta-container">
-          <h2 className="cta-title">Ready to Start Your Wealth Journey?</h2>
-          <p className="cta-description">Join thousands of learners building generational wealth today</p>
+          <h2 className="cta-title">Ready to Transform Your Financial Future?</h2>
+          <p className="cta-description">Join 1,200+ elite traders building generational wealth and achieving financial freedom today</p>
           <div className="cta-buttons">
             <button className="cta-primary" onClick={() => navigate('/register')}>
               Sign Up Now <FaArrowRight />

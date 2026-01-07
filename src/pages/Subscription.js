@@ -257,8 +257,8 @@ const Subscription = () => {
             <CosmicBackground />
             <div className="subscription-card">
                 <div className="subscription-header">
-                    <h1>🔒 COMMUNITY ACCESS REQUIRED</h1>
-                    <p className="subscription-subtitle">Unlock the full AURA FX experience</p>
+                    <h1>🔒 PREMIUM COMMUNITY ACCESS</h1>
+                    <p className="subscription-subtitle">Join 1,200+ Elite Traders and Unlock Your Path to Financial Freedom</p>
                 </div>
 
                 <div className="subscription-content">
@@ -275,12 +275,12 @@ const Subscription = () => {
                             </div>
                             <div className="plan-benefits">
                                 <ul>
-                                    <li>✅ Access to all community channels</li>
-                                    <li>✅ Real-time trading discussions</li>
-                                    <li>✅ Connect with expert traders</li>
-                                    <li>✅ Share strategies and insights</li>
-                                    <li>✅ Premium course discussions</li>
-                                    <li>✅ Exclusive content access</li>
+                                    <li>✅ Unlimited access to all premium community channels</li>
+                                    <li>✅ Real-time trading signals and market analysis</li>
+                                    <li>✅ Network with 1,200+ successful traders</li>
+                                    <li>✅ Share and receive exclusive trading strategies</li>
+                                    <li>✅ Priority access to premium course content</li>
+                                    <li>✅ Exclusive market insights and expert commentary</li>
                                 </ul>
                             </div>
                             <button 
@@ -304,13 +304,13 @@ const Subscription = () => {
                             </div>
                             <div className="plan-benefits">
                                 <ul>
-                                    <li>✅ Everything in Aura FX</li>
-                                    <li>✅ Elite-only trading signals</li>
-                                    <li>✅ Priority 1-to-1 mentorship</li>
-                                    <li>✅ Exclusive elite community</li>
-                                    <li>✅ Advanced trading strategies</li>
-                                    <li>✅ Direct access to founders</li>
-                                    <li>✅ Early access to new features</li>
+                                    <li>✅ Everything included in Aura FX Standard</li>
+                                    <li>✅ Exclusive elite-only trading signals with highest accuracy</li>
+                                    <li>✅ Priority 1-to-1 mentorship with industry experts</li>
+                                    <li>✅ Access to exclusive elite trader community</li>
+                                    <li>✅ Advanced proprietary trading strategies</li>
+                                    <li>✅ Direct communication channel with founders</li>
+                                    <li>✅ First access to cutting-edge features and tools</li>
                                 </ul>
                             </div>
                             <button 
