@@ -141,6 +141,10 @@
     {
       "source": "/api/messages/threads/:threadId/read",
       "destination": "/api/messages/threads.js"
+    },
+    {
+      "source": "/api/messages/threads/ensure-user/:userId",
+      "destination": "/api/messages/threads.js"
     }
   ]
 }

@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../styles/PublicProfile.css';
 import CosmicBackground from '../components/CosmicBackground';
+import Api from '../services/Api';
+import { isAdmin, isSuperAdmin } from '../utils/roles';
 
-import { FaArrowLeft, FaMedal, FaCalendarAlt, FaUserCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaMedal, FaCalendarAlt, FaUserCircle, FaEnvelope } from 'react-icons/fa';
 
 const PublicProfile = () => {
     const { userId } = useParams();
+    const { user: currentUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    
+    const isAdminUser = isAdmin(currentUser) || isSuperAdmin(currentUser);
 
     const resolveApiBaseUrl = () => {
         if (typeof window !== 'undefined' && window.location?.origin) {
@@ -138,6 +144,26 @@ const PublicProfile = () => {
                         <div className="badge" style={{ backgroundColor: badge.color }}>
                             {badge.icon} {badge.label}
                         </div>
+                        {isAdminUser && userId && parseInt(userId) !== currentUser?.id && (
+                            <button 
+                                className="message-user-btn"
+                                onClick={async () => {
+                                    try {
+                                        // Ensure DM thread exists
+                                        const response = await Api.ensureUserThread(userId);
+                                        const threadId = response.data?.thread?.id;
+                                        if (threadId) {
+                                            navigate(`/messages?thread=${threadId}`);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error creating DM thread:', error);
+                                        alert('Failed to create message thread. Please try again.');
+                                    }
+                                }}
+                            >
+                                <FaEnvelope /> Message User
+                            </button>
+                        )}
                     </div>
                 </div>
                 
@@ -164,7 +190,7 @@ const PublicProfile = () => {
                 <div className="xp-container">
                     <div className="xp-header">
                         <span>Experience</span>
-                        <span>{profile.xp || 0} / {profile.level * 100} XP</span>
+                        <span>{Math.floor(profile.xp || 0).toLocaleString()} / {(profile.level || 1) * 100} XP</span>
                     </div>
                     <div className="xp-bar-container">
                         <div className="xp-bar" style={{ width: `${percent}%` }}></div>

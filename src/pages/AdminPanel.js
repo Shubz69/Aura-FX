@@ -480,7 +480,7 @@ const AdminPanel = () => {
                                             }}>
                                                 <span>⭐ Level {userItem.level || 1}</span>
                                                 <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>•</span>
-                                                <span>{parseFloat(userItem.xp || 0).toFixed(2)} XP</span>
+                                                <span>{Math.floor(userItem.xp || 0).toLocaleString()} XP</span>
                                             </div>
                                             <div className="user-joined">Joined: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}</div>
                                             <div className={`user-status ${onlineUsers.has(userItem.id) ? 'online' : 'offline'}`}>

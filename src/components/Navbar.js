@@ -1,17 +1,25 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 import "../styles/UserDropdown.css";
 import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH } from 'react-icons/fa';
 import { isSuperAdmin, isAdmin } from '../utils/roles';
 import AuraLogo from './AuraLogo';
+import NotificationSystem, { triggerNotification } from './NotificationSystem';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
+    
+    const handleNotificationClick = (link) => {
+        if (link) {
+            navigate(link);
+        }
+    };
 
     const toggleDropdown = () => {
         setDropdownOpen(!dropdownOpen);
@@ -65,12 +73,14 @@ const Navbar = () => {
                         <button className="start-trading" onClick={() => window.location.href='/register'}>Sign Up</button>
                     </>
                 ) : (
-                    <div className="user-profile">
-                        <div className="user-icon" onClick={toggleDropdown}>
-                            <FaUserCircle />
-                        </div>
-                        {dropdownOpen && (
-                            <div className="user-dropdown">
+                    <>
+                        <NotificationSystem user={user} onNotificationClick={handleNotificationClick} />
+                        <div className="user-profile">
+                            <div className="user-icon" onClick={toggleDropdown}>
+                                <FaUserCircle />
+                            </div>
+                            {dropdownOpen && (
+                                <div className="user-dropdown">
                                 <p>{user.email}</p>
                                 <Link to="/messages" className="dropdown-item">
                                     <FaEnvelope className="dropdown-icon" /> Messages
@@ -101,6 +111,7 @@ const Navbar = () => {
                             </div>
                         )}
                     </div>
+                    </>
                 )}
             </div>
 

@@ -324,6 +324,7 @@ const Api = {
             const token = localStorage.getItem('token');
             const customAxios = axios.create();
             
+            // Send as JSON (file metadata included if present)
             const response = await customAxios.post(
                 `${API_BASE_URL}/api/community/channels/${channelId}/messages`, 
                 messageData,
@@ -779,6 +780,34 @@ const Api = {
             return response;
         } catch (error) {
             console.error('Error ensuring admin thread:', error);
+            throw error;
+        }
+    },
+
+    ensureUserThread: async (targetUserId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const userJson = localStorage.getItem('user');
+            const user = userJson ? JSON.parse(userJson) : null;
+            const adminUserId = user?.id || null;
+            
+            if (!adminUserId) {
+                throw new Error('User ID not available');
+            }
+            
+            const response = await axios.post(
+                `${API_BASE_URL}/api/messages/threads/ensure-user/${targetUserId}`,
+                { userId: adminUserId },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error ensuring user thread:', error);
             throw error;
         }
     },

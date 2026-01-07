@@ -6,6 +6,7 @@ import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
 import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 import axios from 'axios';
+import { triggerNotification } from '../components/NotificationSystem';
 
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus } from 'react-icons/fa';
@@ -1333,18 +1334,26 @@ Let's build generational wealth together! 💰🚀`,
         const messageContent = newMessage.trim();
         const senderUsername = storedUser?.username || storedUser?.name || 'User';
 
+        // Prepare message data - include file metadata if file exists
         const messageToSend = {
             channelId: selectedChannel.id,
-            content: messageContent,
+            content: messageContent || (selectedFile ? `[File: ${selectedFile.name}]` : ''),
             userId,
-            username: senderUsername,
-            file: selectedFile ? {
+            username: senderUsername
+        };
+        
+        // Add file metadata if file exists
+        if (selectedFile) {
+            messageToSend.file = {
                 name: selectedFile.name,
                 type: selectedFile.type,
-                size: selectedFile.size,
-                preview: filePreview
-            } : null
-        };
+                size: selectedFile.size
+            };
+            // Include preview if it's an image
+            if (filePreview) {
+                messageToSend.file.preview = filePreview;
+            }
+        }
 
         // Optimistic update - add message to UI immediately
         const optimisticMessage = {
@@ -1396,6 +1405,23 @@ Let's build generational wealth together! 💰🚀`,
                         saveMessagesToStorage(selectedChannel.id, final);
                         return final;
                     });
+                    
+                    // Check for @mentions and send notifications
+                    const mentionRegex = /@(\w+)/g;
+                    const mentions = messageContent.match(mentionRegex);
+                    if (mentions) {
+                        mentions.forEach(mention => {
+                            const username = mention.substring(1); // Remove @
+                            // Trigger notification for mentioned user
+                            triggerNotification(
+                                'mention',
+                                `You were mentioned in #${selectedChannel.name}`,
+                                `${senderUsername} mentioned you: ${messageContent}`,
+                                `/community/${selectedChannel.id}`,
+                                null
+                            );
+                        });
+                    }
                     
                     // Broadcast message via WebSocket so all users see it in real-time
                     // Silently fail if WebSocket not available - REST API already saved the message
@@ -2088,7 +2114,7 @@ Let's build generational wealth together! 💰🚀`,
                             }}>
                                 <span>Level {userLevel}</span>
                                 <span>•</span>
-                                <span>{storedUser?.xp || 0} XP</span>
+                                <span>{Math.floor(storedUser?.xp || 0).toLocaleString()} XP</span>
                             </div>
                         </div>
                     </div>

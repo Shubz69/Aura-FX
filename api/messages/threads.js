@@ -114,10 +114,43 @@ module.exports = async (req, res) => {
         return res.status(200).json({ success: true, thread: existing[0] });
       }
 
-      // Create new thread
+      // Create new thread (auto-create DM for every user)
       const [result] = await db.execute(
         'INSERT INTO threads (userId, adminId) VALUES (?, NULL)',
         [userId]
+      );
+
+      const [newThread] = await db.execute('SELECT * FROM threads WHERE id = ?', [result.insertId]);
+      await db.end();
+      return res.status(200).json({ success: true, thread: newThread[0] });
+    }
+    
+    // Handle /api/messages/threads/ensure-user/:userId - Create or get DM thread with specific user (for admins)
+    const ensureUserMatch = pathname.match(/\/ensure-user\/(\d+)/);
+    if (ensureUserMatch && req.method === 'POST') {
+      const targetUserId = parseInt(ensureUserMatch[1]);
+      const adminUserId = req.body.userId || null; // Admin's user ID
+      
+      if (!adminUserId || !targetUserId) {
+        await db.end();
+        return res.status(400).json({ success: false, message: 'User IDs required' });
+      }
+
+      // Check if thread exists between admin and user
+      const [existing] = await db.execute(
+        'SELECT * FROM threads WHERE (userId = ? AND adminId = ?) OR (userId = ? AND adminId = ?) LIMIT 1',
+        [targetUserId, adminUserId, adminUserId, targetUserId]
+      );
+
+      if (existing.length > 0) {
+        await db.end();
+        return res.status(200).json({ success: true, thread: existing[0] });
+      }
+
+      // Create new DM thread
+      const [result] = await db.execute(
+        'INSERT INTO threads (userId, adminId) VALUES (?, ?)',
+        [targetUserId, adminUserId]
       );
 
       const [newThread] = await db.execute('SELECT * FROM threads WHERE id = ?', [result.insertId]);

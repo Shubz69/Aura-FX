@@ -254,10 +254,11 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
       // Create a new message
-      const { userId, username, content } = req.body;
+      const { userId, username, content, file } = req.body;
 
-      if (!content || !content.trim()) {
-        return res.status(400).json({ success: false, message: 'Message content is required' });
+      // Allow empty content if file metadata is present
+      if ((!content || !content.trim()) && !file) {
+        return res.status(400).json({ success: false, message: 'Message content or file is required' });
       }
 
       if (!db) {
@@ -357,13 +358,19 @@ module.exports = async (req, res) => {
           }
         }
         
+        // Prepare content - include file info if present
+        let messageContent = content.trim();
+        if (file && file.name) {
+            messageContent += ` [FILE: ${file.name}${file.preview ? ' - Image' : ''}]`;
+        }
+        
         // Insert message - use actual column names
         // Include encrypted field with default FALSE value
         let result;
         try {
           const insertResult = await db.execute(
             'INSERT INTO messages (channel_id, sender_id, content, encrypted, timestamp) VALUES (?, ?, ?, FALSE, NOW())',
-            [channelIdValue, userId || null, content.trim()]
+            [channelIdValue, userId || null, messageContent]
           );
           // result is [ResultSetHeader, fields], we need the first element
           result = insertResult[0];
