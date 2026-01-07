@@ -3101,8 +3101,30 @@ Let's build generational wealth together! 💰🚀`,
             {/* Emoji Picker */}
             {showEmojiPicker && (
                 <EmojiPicker
-                    onEmojiSelect={handleEmojiSelect}
-                    onClose={() => setShowEmojiPicker(false)}
+                    onEmojiSelect={(emoji) => {
+                        if (selectedMessageForReaction) {
+                            // Add reaction to message
+                            setMessageReactions(prev => {
+                                const current = prev[selectedMessageForReaction] || {};
+                                return {
+                                    ...prev,
+                                    [selectedMessageForReaction]: {
+                                        ...current,
+                                        [emoji]: (current[emoji] || 0) + 1
+                                    }
+                                };
+                            });
+                            setSelectedMessageForReaction(null);
+                        } else {
+                            // Insert emoji into message input
+                            handleEmojiSelect(emoji);
+                        }
+                        setShowEmojiPicker(false);
+                    }}
+                    onClose={() => {
+                        setShowEmojiPicker(false);
+                        setSelectedMessageForReaction(null);
+                    }}
                 />
             )}
         </div>
