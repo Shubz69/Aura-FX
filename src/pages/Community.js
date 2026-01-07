@@ -81,6 +81,14 @@ const Community = () => {
     const [userLevel, setUserLevel] = useState(1);
     const [storedUser, setStoredUser] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [collapsedCategories, setCollapsedCategories] = useState(() => {
+        // Load collapsed state from localStorage
+        const saved = localStorage.getItem('collapsedCategories');
+        return saved ? JSON.parse(saved) : {};
+    });
+    const [draggedChannel, setDraggedChannel] = useState(null);
+    const [draggedCategory, setDraggedCategory] = useState(null);
+    const [messageReactions, setMessageReactions] = useState({}); // messageId -> { emoji: count }
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -99,6 +107,7 @@ const Community = () => {
     
     // Discord-like features
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [selectedMessageForReaction, setSelectedMessageForReaction] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
     const fileInputRef = useRef(null);
@@ -131,15 +140,36 @@ const Community = () => {
     const [deleteMessageModal, setDeleteMessageModal] = useState(null); // { messageId, messageContent }
     const [isDeletingMessage, setIsDeletingMessage] = useState(false);
     
-    const categoryOrder = useMemo(() => ([
-        'announcements',
-        'staff',
-        'courses',
-        'trading',
-        'general',
-        'support',
-        'premium'
-    ]), []);
+    // Category order - load from localStorage or use default
+    const [categoryOrderState, setCategoryOrderState] = useState(() => {
+        const saved = localStorage.getItem('channelCategoryOrder');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
+            }
+        }
+        return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
+    });
+    
+    // Update category order when channels change
+    useEffect(() => {
+        const allCategories = Object.keys(groupedChannels);
+        if (allCategories.length > 0) {
+            const merged = [...categoryOrderState];
+            allCategories.forEach(cat => {
+                if (!merged.includes(cat)) {
+                    merged.push(cat);
+                }
+            });
+            if (merged.length !== categoryOrderState.length) {
+                setCategoryOrderState(merged);
+            }
+        }
+    }, [groupedChannels]);
+    
+    const categoryOrder = categoryOrderState;
 
     const protectedChannelIds = useMemo(() => (['welcome', 'announcements', 'admin']), []);
 
@@ -1994,14 +2024,60 @@ Let's build generational wealth together! 💰🚀`,
                         const channels = groupedChannels[categoryName];
                         if (!channels || channels.length === 0) return null;
                         
+                        const isCollapsed = collapsedCategories[categoryName];
+                        const isAdminUser = getCurrentUserRole() === 'ADMIN' || getCurrentUserRole() === 'SUPER_ADMIN';
+                        
                         return (
-                            <div key={categoryName} className="channel-category">
-                                <div className="category-header">
+                            <div 
+                                key={categoryName} 
+                                className="channel-category"
+                                draggable={isAdminUser}
+                                onDragStart={(e) => {
+                                    if (isAdminUser) {
+                                        setDraggedCategory(categoryName);
+                                        e.dataTransfer.effectAllowed = 'move';
+                                    }
+                                }}
+                                onDragOver={(e) => {
+                                    if (isAdminUser && draggedCategory && draggedCategory !== categoryName) {
+                                        e.preventDefault();
+                                        e.dataTransfer.dropEffect = 'move';
+                                    }
+                                }}
+                                onDrop={(e) => {
+                                    if (isAdminUser && draggedCategory && draggedCategory !== categoryName) {
+                                        e.preventDefault();
+                                        // Reorder categories - update localStorage and state
+                                        const currentOrder = [...categoryOrder];
+                                        const draggedIndex = currentOrder.indexOf(draggedCategory);
+                                        const dropIndex = currentOrder.indexOf(categoryName);
+                                        if (draggedIndex !== -1 && dropIndex !== -1) {
+                                            currentOrder.splice(draggedIndex, 1);
+                                            currentOrder.splice(dropIndex, 0, draggedCategory);
+                                            localStorage.setItem('channelCategoryOrder', JSON.stringify(currentOrder));
+                                            setCategoryOrderState(currentOrder);
+                                            setDraggedCategory(null);
+                                        }
+                                    }
+                                }}
+                            >
+                                <div 
+                                    className="category-header"
+                                    onClick={() => {
+                                        setCollapsedCategories(prev => {
+                                            const updated = { ...prev, [categoryName]: !prev[categoryName] };
+                                            localStorage.setItem('collapsedCategories', JSON.stringify(updated));
+                                            return updated;
+                                        });
+                                    }}
+                                >
+                                    <span className={`category-chevron ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
                                     <span className="category-icon">{getCategoryIcon(categoryName)}</span>
                                     <h3 className="category-title">{categoryName}</h3>
                                     <span className="category-count">{channels.length}</span>
                                 </div>
                                 
+                                {!isCollapsed && (
                                 <ul className="channels-list">
                                     {channels.map(channel => {
                                         // Only hide admin-only channels from non-admins
@@ -2061,6 +2137,7 @@ Let's build generational wealth together! 💰🚀`,
                                         );
                                     })}
                                 </ul>
+                                )}
                             </div>
                         );
                     })}
@@ -2326,6 +2403,94 @@ Let's build generational wealth together! 💰🚀`,
                                                     message.content
                                                 )}
                                             </div>
+                                            
+                                            {/* Emoji Reactions */}
+                                            <div className="message-reactions" style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '6px',
+                                                marginTop: '8px',
+                                                alignItems: 'center'
+                                            }}>
+                                                {messageReactions[message.id] && Object.entries(messageReactions[message.id]).map(([emoji, count]) => (
+                                                    <button
+                                                        key={emoji}
+                                                        className="reaction-button"
+                                                        onClick={() => {
+                                                            // Toggle reaction
+                                                            setMessageReactions(prev => {
+                                                                const current = prev[message.id] || {};
+                                                                const newCount = (current[emoji] || 0) - 1;
+                                                                if (newCount <= 0) {
+                                                                    const { [emoji]: removed, ...rest } = current;
+                                                                    if (Object.keys(rest).length === 0) {
+                                                                        const { [message.id]: removedMsg, ...restMsgs } = prev;
+                                                                        return restMsgs;
+                                                                    }
+                                                                    return { ...prev, [message.id]: rest };
+                                                                }
+                                                                return { ...prev, [message.id]: { ...current, [emoji]: newCount } };
+                                                            });
+                                                        }}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            padding: '4px 8px',
+                                                            background: 'rgba(255, 255, 255, 0.1)',
+                                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                            borderRadius: '12px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '0.85rem',
+                                                            color: '#ffffff',
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                                        }}
+                                                    >
+                                                        <span>{emoji}</span>
+                                                        <span>{count}</span>
+                                                    </button>
+                                                ))}
+                                                <button
+                                                    className="add-reaction-button"
+                                                    onClick={() => {
+                                                        // Show emoji picker for this message
+                                                        setShowEmojiPicker(true);
+                                                        setSelectedMessageForReaction(message.id);
+                                                    }}
+                                                    style={{
+                                                        padding: '4px 8px',
+                                                        background: 'transparent',
+                                                        border: '1px dashed rgba(255, 255, 255, 0.3)',
+                                                        borderRadius: '12px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.85rem',
+                                                        color: 'rgba(255, 255, 255, 0.6)',
+                                                        transition: 'all 0.2s ease',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                                                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                                                    }}
+                                                >
+                                                    <FaSmile size={12} /> Add Reaction
+                                                </button>
+                                            </div>
+                                            
                                             {message.isWelcomeMessage && !hasReadWelcome && (
                                                 <div style={{
                                                     marginTop: '20px',

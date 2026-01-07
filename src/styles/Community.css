@@ -1,20 +1,20 @@
-/* Premium Purple-Themed Community Page - Clean & Professional */
+/* Premium Purple-Themed Community Page - Clean & Professional - Discord-like */
 :root {
     --bg-primary: #1E1F22;
     --bg-secondary: #2B2D31;
     --bg-tertiary: #313338;
-    --bg-elevated: #383A40;
-    --text-normal: #F2F3F5;
-    --text-muted: #B5BAC1;
-    --text-link: #00B0F4;
-    --purple-primary: rgba(255, 255, 255, 0.2);
-    --purple-secondary: rgba(255, 255, 255, 0.15);
-    --purple-dark: rgba(255, 255, 255, 0.1);
-    --purple-light: rgba(255, 255, 255, 0.25);
-    --accent-blue: rgba(255, 255, 255, 0.3);
-    --accent-green: #10B981;
+    --bg-elevated: #40444B;
+    --text-normal: #DCDDDE;
+    --text-muted: #72767D;
+    --text-link: #00A8FC;
+    --purple-primary: rgba(88, 101, 242, 0.8);
+    --purple-secondary: rgba(88, 101, 242, 0.6);
+    --purple-dark: rgba(88, 101, 242, 0.4);
+    --purple-light: rgba(88, 101, 242, 0.9);
+    --accent-blue: #5865F2;
+    --accent-green: #23A55A;
     --border-color: #3F4147;
-    --hover-bg: #35373C;
+    --hover-bg: #32353B;
 }
 
 /* Main Container */
@@ -83,21 +83,45 @@
 
 /* Channel Categories */
 .channel-category {
-    margin-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+.channel-category[draggable="true"] {
+    cursor: grab;
+}
+
+.channel-category[draggable="true"]:active {
+    cursor: grabbing;
+    opacity: 0.7;
 }
 
 .category-header {
     display: flex;
     align-items: center;
-    padding: 8px 10px;
+    padding: 4px 8px;
     cursor: pointer;
     user-select: none;
     transition: all 0.15s ease;
     border-radius: 4px;
+    position: relative;
+    margin-bottom: 2px;
 }
 
 .category-header:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(4, 4, 5, 0.3);
+}
+
+.category-chevron {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-right: 4px;
+    transition: transform 0.2s ease;
+    width: 12px;
+    display: inline-block;
+}
+
+.category-chevron.collapsed {
+    transform: rotate(-90deg);
 }
 
 .category-icon {
@@ -109,20 +133,20 @@
 .category-title {
     flex: 1;
     font-size: 0.75rem;
-    font-weight: 700;
-    color: #F2F3F5; /* Improved contrast - white text */
+    font-weight: 600;
+    color: #8E9297;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.5px;
     margin: 0;
 }
 
 .category-count {
     font-size: 0.7rem;
-    color: #F2F3F5; /* Improved contrast - white text */
-    background: var(--bg-elevated);
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-weight: 600;
+    color: #8E9297;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-weight: 500;
 }
 
 /* Channel List */
@@ -135,14 +159,28 @@
 .channel-item {
     display: flex;
     align-items: center;
-    padding: 8px 10px;
-    margin: 2px 0;
-    border-radius: 6px;
+    padding: 6px 8px;
+    margin: 1px 0;
+    border-radius: 4px;
     cursor: pointer;
-    color: #F2F3F5; /* Improved contrast - white text */
-    font-size: 0.95rem;
+    color: #96989D;
+    font-size: 0.9375rem;
     transition: all 0.12s ease-in-out;
     position: relative;
+}
+
+.channel-item:hover {
+    background: var(--hover-bg);
+    color: #DCDDDE;
+}
+
+.channel-item[draggable="true"] {
+    cursor: grab;
+}
+
+.channel-item[draggable="true"]:active {
+    cursor: grabbing;
+    opacity: 0.7;
 }
 
 .channel-item::before {
@@ -168,9 +206,9 @@
 }
 
 .channel-item.active {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
-    color: white;
-    font-weight: 600;
+    background: var(--hover-bg);
+    color: #FFFFFF;
+    font-weight: 500;
 }
 
 .channel-item.active::before {
@@ -178,16 +216,19 @@
 }
 
 .channel-icon {
-    margin-right: 10px;
-    font-size: 1.1rem;
+    margin-right: 6px;
+    font-size: 1rem;
     flex-shrink: 0;
-    color: var(--purple-secondary);
+    color: #8E9297;
     transition: transform 0.2s ease;
 }
 
+.channel-item:hover .channel-icon {
+    color: #DCDDDE;
+}
+
 .channel-item.active .channel-icon {
-    color: var(--purple-primary);
-    transform: scale(1.1);
+    color: #FFFFFF;
 }
 
 .channel-name {
@@ -477,6 +518,55 @@
     box-shadow: none;
 }
 
+/* Emoji Reactions */
+.message-reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.reaction-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.reaction-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.add-reaction-button {
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.add-reaction-button:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.05);
+}
+
 /* Chat Input */
 .chat-input-container {
     padding: 0 16px 24px 16px;
@@ -539,11 +629,11 @@
 
 .chat-input {
     width: 100%;
-    padding: 12px 16px;
+    padding: 10px 12px;
     border-radius: 8px;
     border: none;
-    background: var(--bg-elevated);
-    color: var(--text-normal);
+    background: #40444B;
+    color: #DCDDDE;
     font-size: 0.9375rem;
     resize: none;
     outline: none;
@@ -555,7 +645,7 @@
 
 .chat-input:focus {
     background: #40444B;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    box-shadow: none;
 }
 
 .chat-input::placeholder {
