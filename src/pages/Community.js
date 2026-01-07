@@ -1157,19 +1157,21 @@ const Community = () => {
         return () => clearInterval(statusCheckInterval);
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
 
-    // Fetch online status periodically
+    // Fetch online status periodically - initialize with fake users immediately
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Fetch immediately
-        fetchOnlineStatus();
+        // Set fake users immediately for instant display
+        const fakeUsers = generateFakeUsers();
+        setOnlineCount(fakeUsers.online);
+        setTotalUsers(fakeUsers.total);
 
-        // Then fetch every 10 seconds for live updates
-        // OPTIMIZATION: Check online status less frequently (15 seconds instead of 10)
+        // Then fetch real data periodically
+        fetchOnlineStatus();
         const statusInterval = setInterval(fetchOnlineStatus, 15000);
 
         return () => clearInterval(statusInterval);
-    }, [isAuthenticated, fetchOnlineStatus]);
+    }, [isAuthenticated, fetchOnlineStatus, generateFakeUsers]);
 
     // Load messages when channel changes - optimized for instant display
     useEffect(() => {
