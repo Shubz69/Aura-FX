@@ -14,6 +14,11 @@ const resolveApiBaseUrl = () => {
 
 // Helper function to ensure avatar path is valid
 const getAvatarPath = (avatarName) => {
+    // If it's a base64 data URL, return it directly
+    if (avatarName && avatarName.startsWith('data:image')) {
+        return avatarName;
+    }
+    
     const availableAvatars = [
         'avatar_ai.png',
         'avatar_money.png',
@@ -23,6 +28,16 @@ const getAvatarPath = (avatarName) => {
     return availableAvatars.includes(avatarName)
         ? `/avatars/${avatarName}`
         : '/avatars/avatar_ai.png';
+};
+
+// Helper function to convert file to base64
+const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
 };
 
 const Profile = () => {
@@ -41,6 +56,8 @@ const Profile = () => {
         level: 1,
         xp: 0
     });
+    const [avatarPreview, setAvatarPreview] = useState(null);
+    const fileInputRef = React.useRef(null);
     const [loading, setLoading] = useState(true);
     const [editedUserData, setEditedUserData] = useState({});
     const [userRole, setUserRole] = useState("");
@@ -88,6 +105,11 @@ const Profile = () => {
                 ...authData
             }));
 
+            // Set avatar preview if it's a base64 image
+            if (authData.avatar && authData.avatar.startsWith('data:image')) {
+                setAvatarPreview(authData.avatar);
+            }
+
             // Set user role
             setUserRole(user.role || "");
 
@@ -123,6 +145,11 @@ const Profile = () => {
                             ...backendData
                         }));
 
+                        // Set avatar preview if it's a base64 image
+                        if (backendData.avatar && backendData.avatar.startsWith('data:image')) {
+                            setAvatarPreview(backendData.avatar);
+                        }
+
                         // Save to local storage
                         updateLocalUserData(backendData);
                     }
@@ -148,6 +175,47 @@ const Profile = () => {
             ...prev,
             [name]: value
         }));
+        
+        // If avatar dropdown changed, clear preview
+        if (name === 'avatar' && !value.startsWith('data:image')) {
+            setAvatarPreview(null);
+        }
+    };
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            setStatus("Please select an image file.");
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setStatus("Image size must be less than 5MB.");
+            return;
+        }
+
+        try {
+            // Convert to base64
+            const base64Image = await convertToBase64(file);
+            
+            // Update form data with base64 image
+            setFormData(prev => ({
+                ...prev,
+                avatar: base64Image
+            }));
+            
+            // Set preview
+            setAvatarPreview(base64Image);
+            
+            setStatus("Image uploaded successfully. Click 'SAVE PROFILE' to save.");
+        } catch (error) {
+            console.error("Error converting image:", error);
+            setStatus("Failed to process image. Please try again.");
+        }
     };
 
     const handleSave = async (field) => {
@@ -289,7 +357,7 @@ const Profile = () => {
                 <div className="profile-box">
                     <div className="avatar-section">
                         <img
-                            src={getAvatarPath(formData.avatar)}
+                            src={avatarPreview || getAvatarPath(formData.avatar)}
                             alt="Avatar"
                             className="profile-avatar"
                             onError={(e) => {
@@ -297,15 +365,58 @@ const Profile = () => {
                                 e.target.src = "/avatars/avatar_ai.png";
                             }}
                         />
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            style={{ display: 'none' }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{
+                                background: 'rgba(255, 215, 0, 0.1)',
+                                color: 'var(--gold-primary)',
+                                border: '1px solid rgba(255, 215, 0, 0.3)',
+                                padding: '8px 16px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                marginBottom: '10px',
+                                width: '100%',
+                                maxWidth: '200px',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.background = 'rgba(255, 215, 0, 0.2)';
+                                e.target.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.background = 'rgba(255, 215, 0, 0.1)';
+                                e.target.style.borderColor = 'rgba(255, 215, 0, 0.3)';
+                            }}
+                        >
+                            📷 Upload Photo
+                        </button>
                         <select
                             name="avatar"
-                            value={formData.avatar}
-                            onChange={handleChange}
+                            value={formData.avatar.startsWith('data:image') ? 'custom' : formData.avatar}
+                            onChange={(e) => {
+                                if (e.target.value === 'custom') {
+                                    fileInputRef.current?.click();
+                                } else {
+                                    handleChange(e);
+                                }
+                            }}
                         >
                             <option value="avatar_ai.png">AI Avatar</option>
                             <option value="avatar_money.png">Money Avatar</option>
                             <option value="avatar_tech.png">Tech Avatar</option>
                             <option value="avatar_trading.png">Trading Avatar</option>
+                            {formData.avatar.startsWith('data:image') && (
+                                <option value="custom">Custom Image (Current)</option>
+                            )}
                         </select>
                     </div>
 
