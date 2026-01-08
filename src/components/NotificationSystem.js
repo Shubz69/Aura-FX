@@ -19,6 +19,16 @@ const NotificationSystem = ({ user, onNotificationClick }) => {
 
         // Listen for new notifications via custom events
         const handleNotification = (event) => {
+            const notificationUserId = event.detail.userId;
+            
+            // Only store notification if:
+            // 1. userId is null/undefined (global notification for all users)
+            // 2. userId matches the current user's ID (notification specifically for this user)
+            if (notificationUserId !== null && notificationUserId !== undefined && String(notificationUserId) !== String(user?.id)) {
+                // This notification is for a different user, ignore it
+                return;
+            }
+            
             const newNotification = {
                 id: Date.now(),
                 type: event.detail.type || 'message', // 'message', 'mention', 'dm'
@@ -27,7 +37,7 @@ const NotificationSystem = ({ user, onNotificationClick }) => {
                 timestamp: new Date().toISOString(),
                 read: false,
                 link: event.detail.link || null,
-                userId: event.detail.userId || null
+                userId: notificationUserId || null
             };
 
             setNotifications(prev => {

@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Messages.css';
 import CosmicBackground from '../components/CosmicBackground';
-import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
+import { FaPaperPlane, FaArrowLeft, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
+import Api from '../services/Api';
 
 const Messages = () => {
     const { user } = useAuth();
@@ -138,13 +139,16 @@ const Messages = () => {
                     </button>
                     <div className="chat-partner-info">
                         <div className="admin-avatar">
-                            <span>A</span>
+                            <FaShieldAlt className="admin-icon" />
                         </div>
                         <div className="admin-details">
-                            <h2>Admin</h2>
+                            <h2>
+                                <span className="admin-badge">Admin</span>
+                                Support Team
+                            </h2>
                             <p className="admin-status">
                                 <span className="status-dot online"></span>
-                                Available to help
+                                <span className="status-text">Available to help</span>
                             </p>
                         </div>
                     </div>
@@ -152,20 +156,44 @@ const Messages = () => {
 
                 <div className="messages-page-content">
                     <div className="messages-list">
-                        {messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`message-bubble ${msg.sender === 'user' ? 'user-message' : 'admin-message'}`}
-                            >
-                                <div className="message-header">
-                                    <span className="message-sender">
-                                        {msg.sender === 'admin' ? 'Admin' : 'You'}
-                                    </span>
-                                    <span className="message-time">{formatTime(msg.timestamp)}</span>
+                        {messages.length === 0 ? (
+                            <div className="empty-messages-state">
+                                <div className="empty-icon-wrapper">
+                                    <FaShieldAlt className="empty-icon" />
                                 </div>
-                                <div className="message-content">{msg.content}</div>
+                                <h3>Start a conversation</h3>
+                                <p>Send a message to our admin team and we'll get back to you as soon as possible.</p>
                             </div>
-                        ))}
+                        ) : (
+                            messages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={`message-bubble ${msg.sender === 'user' ? 'user-message' : 'admin-message'}`}
+                                >
+                                    <div className="message-header">
+                                        <div className="message-sender-wrapper">
+                                            <span className="message-sender">
+                                                {msg.sender === 'admin' ? (
+                                                    <>
+                                                        <FaShieldAlt className="sender-icon" />
+                                                        Admin
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="sender-you-icon">You</span>
+                                                    </>
+                                                )}
+                                            </span>
+                                            {msg.read && msg.sender === 'user' && (
+                                                <FaCheckCircle className="read-indicator" />
+                                            )}
+                                        </div>
+                                        <span className="message-time">{formatTime(msg.timestamp)}</span>
+                                    </div>
+                                    <div className="message-content">{msg.content}</div>
+                                </div>
+                            ))
+                        )}
                         <div ref={messagesEndRef} />
                     </div>
 

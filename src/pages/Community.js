@@ -1655,21 +1655,42 @@ Let's build generational wealth together! 💰🚀`,
                         return final;
                     });
                     
-                    // Check for @mentions and send notifications
+                    // Check for @mentions and send notifications only to mentioned users
                     const mentionRegex = /@(\w+)/g;
                     const mentions = messageContent.match(mentionRegex);
                     if (mentions) {
-                        mentions.forEach(mention => {
-                            const username = mention.substring(1); // Remove @
-                            // Trigger notification for mentioned user
-                            triggerNotification(
-                                'mention',
-                                `You were mentioned in #${selectedChannel.name}`,
-                                `${senderUsername} mentioned you: ${messageContent}`,
-                                `/community/${selectedChannel.id}`,
-                                null
-                            );
-                        });
+                        try {
+                            // Fetch all users to match usernames
+                            const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
+                            const allUsers = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+                            
+                            // Get unique mentioned usernames
+                            const mentionedUsernames = [...new Set(mentions.map(m => m.substring(1).toLowerCase()))];
+                            
+                            mentionedUsernames.forEach(mentionedUsername => {
+                                // Find the user by username (case-insensitive)
+                                const mentionedUser = allUsers.find(u => {
+                                    const uUsername = (u.username || u.name || '').toLowerCase();
+                                    return uUsername === mentionedUsername;
+                                });
+                                
+                                // Only send notification if:
+                                // 1. User exists
+                                // 2. It's not the current user (don't notify yourself)
+                                if (mentionedUser && String(mentionedUser.id) !== String(userId)) {
+                                    triggerNotification(
+                                        'mention',
+                                        `You were mentioned in #${selectedChannel.name}`,
+                                        `${senderUsername} mentioned you: ${messageContent}`,
+                                        `/community/${selectedChannel.id}`,
+                                        mentionedUser.id // Pass the mentioned user's ID
+                                    );
+                                }
+                            });
+                        } catch (error) {
+                            console.error('Error fetching users for mentions:', error);
+                            // Silently fail - don't break message sending if user lookup fails
+                        }
                     }
                     
                     // Broadcast message via WebSocket so all users see it in real-time

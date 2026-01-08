@@ -92,11 +92,11 @@ module.exports = async (req, res) => {
 
       // Create real user accounts if we have less than 20 users to populate leaderboard
       const fakeUsernames = [
-        'Alex_Martinez', 'Jordan_Chen', 'Sam_Williams', 'Casey_Rodriguez', 'Riley_Thompson',
-        'Quinn_Patel', 'Avery_Johnson', 'Blake_Anderson', 'Cameron_Lee', 'Dakota_Taylor',
-        'xX_Trader_Xx', 'MoonLambo420', 'CryptoWhale99', 'DiamondHands_69', 'ToTheMoon_2024',
-        'MikeTheTrader', 'SarahTrades', 'JohnnyCashFlow', 'LunaTrading', 'ZephyrMarkets',
-        'TradingWithTom', 'EmmaForex', 'NoobSlayer2024', 'ProfitPanda', 'MarketMaven'
+        'Zephyr_Montgomery', 'Kai_Blackwood', 'Jasper_Thornfield', 'Luna_Vesper', 'Orion_Starlight',
+        'Phoenix_Ravenwood', 'Atlas_Moonbeam', 'Nova_Shadowmere', 'River_Stormweaver', 'Sage_Emberheart',
+        'Aurora_Nightshade', 'Caspian_Winterbourne', 'Indigo_Silvermoon', 'Lyra_Thunderbolt', 'Maverick_Frost',
+        'Seraphina_Blaze', 'Titan_Stormrider', 'Vesper_Darkwater', 'Willow_Ember', 'Xander_Crimson',
+        'Yuki_Snowfall', 'Zara_Midnight', 'Axel_Firebrand', 'Briar_Rosewood', 'Cora_Stardust'
       ];
       
       if (users.length < 20) {
@@ -155,6 +155,48 @@ module.exports = async (req, res) => {
         const [updatedUsers] = await db.execute(query);
         users.length = 0;
         users.push(...updatedUsers);
+      }
+
+      // Update users with generic trading-related usernames to more realistic names
+      const genericNames = ['ProTrader', 'CommodityTrader', 'MarketMaster', 'DayTrader', 'SwingTrader', 
+        'CryptoTrader', 'ForexTrader', 'StockTrader', 'OptionsTrader', 'FuturesTrader',
+        'TradingPro', 'MarketGuru', 'TradingExpert', 'TradeMaster', 'ProfitTrader'];
+      
+      const replacementNames = [
+        'Zephyr_Montgomery', 'Kai_Blackwood', 'Jasper_Thornfield', 'Luna_Vesper', 'Orion_Starlight',
+        'Phoenix_Ravenwood', 'Atlas_Moonbeam', 'Nova_Shadowmere', 'River_Stormweaver', 'Sage_Emberheart',
+        'Aurora_Nightshade', 'Caspian_Winterbourne', 'Indigo_Silvermoon', 'Lyra_Thunderbolt', 'Maverick_Frost'
+      ];
+      
+      for (const user of users) {
+        const currentUsername = (user.username || user.name || '').trim();
+        if (genericNames.includes(currentUsername)) {
+          // Find a replacement name that's not already taken
+          let newUsername = null;
+          for (const replacement of replacementNames) {
+            const [taken] = await db.execute('SELECT id FROM users WHERE username = ? OR name = ?', [replacement, replacement]);
+            if (taken.length === 0) {
+              newUsername = replacement;
+              break;
+            }
+          }
+          
+          // If all replacement names are taken, use a random one with a number
+          if (!newUsername) {
+            const randomIndex = Math.floor(Math.random() * replacementNames.length);
+            newUsername = `${replacementNames[randomIndex]}_${Math.floor(Math.random() * 1000)}`;
+          }
+          
+          // Update the user's username and name
+          await db.execute(
+            'UPDATE users SET username = ?, name = ? WHERE id = ?',
+            [newUsername, newUsername, user.id]
+          );
+          
+          // Update the user object for this iteration
+          user.username = newUsername;
+          user.name = newUsername;
+        }
       }
 
       const leaderboard = users.map((user, index) => ({
