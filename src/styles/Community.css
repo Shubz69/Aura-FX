@@ -690,7 +690,7 @@
 
 .chat-input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-radius: 8px;
     border: none;
     background: #40444B;
@@ -701,7 +701,28 @@
     font-family: inherit;
     transition: all 0.2s ease;
     min-height: 44px;
-    line-height: 1.375;
+    max-height: 200px;
+    line-height: 1.5;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.chat-input::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-input::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-input::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.chat-input::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .chat-input:focus {

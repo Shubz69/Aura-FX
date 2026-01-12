@@ -9,7 +9,7 @@ import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 
 // Icons
-import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage } from 'react-icons/fa';
+import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit } from 'react-icons/fa';
 
 // All API calls use real endpoints only - no mock mode
 
@@ -203,6 +203,8 @@ const Community = () => {
     const [selectedChannel, setSelectedChannel] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editingMessageContent, setEditingMessageContent] = useState('');
     const [totalUsers, setTotalUsers] = useState(0);
     const [onlineCount, setOnlineCount] = useState(0);
     const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'connecting', 'server-issue', 'wifi-issue'
@@ -2003,6 +2005,8 @@ Let's build generational wealth together! 💰🚀`,
         
         // Clear inputs immediately
         setNewMessage('');
+        setEditingMessageId(null);
+        setEditingMessageContent('');
         removeSelectedFile();
         
         // Scroll to bottom immediately to show new message
@@ -3004,6 +3008,15 @@ Let's build generational wealth together! 💰🚀`,
                                                             <span className="message-timestamp">
                                                                 {formatTimestamp(message.timestamp)}
                                                             </span>
+                                                            {message.edited && (
+                                                                <span style={{ 
+                                                                    fontSize: '0.75rem', 
+                                                                    color: 'var(--text-muted)',
+                                                                    fontStyle: 'italic'
+                                                                }}>
+                                                                    (edited)
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         {(isAdminUser || isSuperAdminUser) && (
                                                             <button
@@ -3314,19 +3327,68 @@ Let's build generational wealth together! 💰🚀`,
                             )}
                             
                             <form className="chat-form" onSubmit={handleSendMessage}>
+                                {editingMessageId && (
+                                    <div style={{
+                                        padding: '8px 12px',
+                                        background: 'rgba(139, 92, 246, 0.15)',
+                                        borderLeft: '3px solid var(--accent-blue)',
+                                        borderRadius: '4px',
+                                        marginBottom: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        fontSize: '0.875rem'
+                                    }}>
+                                        <span style={{ color: 'var(--accent-blue)' }}>
+                                            <FaEdit size={12} style={{ marginRight: '6px', display: 'inline' }} />
+                                            Editing message
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={handleCancelEdit}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: 'var(--text-muted)',
+                                                cursor: 'pointer',
+                                                padding: '4px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '0.875rem',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                                e.currentTarget.style.color = 'var(--text-normal)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'none';
+                                                e.currentTarget.style.color = 'var(--text-muted)';
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="chat-input-wrapper">
                                     <textarea
                                         ref={messageInputRef}
                                         className="chat-input"
                                         value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onChange={(e) => {
+                                            setNewMessage(e.target.value);
+                                            // Auto-resize textarea
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                                        }}
                                         onPaste={handlePaste}
                                         placeholder={
-                                            canUserPostInChannel(selectedChannel)
-                                                ? `Message #${selectedChannel.name}`
-                                                : selectedChannel.accessLevel === 'admin-only'
-                                                    ? `🔒 Only admins can post in #${selectedChannel.name}`
-                                                    : `You don't have permission to send messages in #${selectedChannel.name}`
+                                            editingMessageId
+                                                ? 'Edit your message...'
+                                                : canUserPostInChannel(selectedChannel)
+                                                    ? `Message #${selectedChannel.name}`
+                                                    : selectedChannel.accessLevel === 'admin-only'
+                                                        ? `🔒 Only admins can post in #${selectedChannel.name}`
+                                                        : `You don't have permission to send messages in #${selectedChannel.name}`
                                         }
                                         disabled={!canUserPostInChannel(selectedChannel)}
                                         onKeyDown={(e) => {
@@ -3334,9 +3396,19 @@ Let's build generational wealth together! 💰🚀`,
                                                 e.preventDefault();
                                                 handleSendMessage(e);
                                             }
+                                            if (e.key === 'Escape' && editingMessageId) {
+                                                handleCancelEdit();
+                                            }
                                         }}
                                         rows="1"
-                                        style={{ paddingRight: '120px' }}
+                                        style={{ 
+                                            paddingRight: '120px',
+                                            minHeight: '44px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            fontSize: '0.9375rem',
+                                            lineHeight: '1.5'
+                                        }}
                                     />
                                     
                                     <div className="chat-input-buttons">
@@ -3391,7 +3463,7 @@ Let's build generational wealth together! 💰🚀`,
                                     disabled={(!newMessage.trim() && !selectedFile) || !canUserPostInChannel(selectedChannel)}
                                 >
                                     <FaPaperPlane style={{ marginRight: '8px' }} />
-                                    Send
+                                    {editingMessageId ? 'Save' : 'Send'}
                                 </button>
                             </form>
                         </div>
@@ -3874,31 +3946,48 @@ Let's build generational wealth together! 💰🚀`,
                     onClick={(e) => e.stopPropagation()}
                     onContextMenu={(e) => e.preventDefault()}
                 >
-                    <button
-                        className="context-menu-item"
-                        onClick={() => {
-                            // Reply functionality - could focus input and add @mention
-                            const message = messages.find(m => m.id === contextMenu.messageId);
-                            if (message) {
-                                setNewMessage(`@${message.sender?.username || 'user'} `);
-                                messageInputRef.current?.focus();
-                            }
-                            setContextMenu(null);
-                        }}
-                    >
-                        <FaReply size={14} /> Reply
-                    </button>
-                    <button
-                        className="context-menu-item"
-                        onClick={() => {
-                            setShowEmojiPicker(true);
-                            setSelectedMessageForReaction(contextMenu.messageId);
-                            setContextMenu(null);
-                        }}
-                    >
-                        <FaSmile size={14} /> Add Reaction
-                    </button>
-                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
+                    {(() => {
+                        const message = messages.find(m => m.id === contextMenu.messageId);
+                        const isOwnMessage = message && String(message.userId) === String(userId);
+                        return (
+                            <>
+                                {isOwnMessage && (
+                                    <button
+                                        className="context-menu-item"
+                                        onClick={() => {
+                                            handleEditMessage(contextMenu.messageId);
+                                        }}
+                                    >
+                                        <FaEdit size={14} /> Edit
+                                    </button>
+                                )}
+                                <button
+                                    className="context-menu-item"
+                                    onClick={() => {
+                                        // Reply functionality - could focus input and add @mention
+                                        if (message) {
+                                            setNewMessage(`@${message.sender?.username || 'user'} `);
+                                            messageInputRef.current?.focus();
+                                        }
+                                        setContextMenu(null);
+                                    }}
+                                >
+                                    <FaReply size={14} /> Reply
+                                </button>
+                                <button
+                                    className="context-menu-item"
+                                    onClick={() => {
+                                        setShowEmojiPicker(true);
+                                        setSelectedMessageForReaction(contextMenu.messageId);
+                                        setContextMenu(null);
+                                    }}
+                                >
+                                    <FaSmile size={14} /> Add Reaction
+                                </button>
+                                <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
+                            </>
+                        );
+                    })()}
                     <button
                         className="context-menu-item"
                         onClick={() => {
