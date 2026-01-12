@@ -3460,7 +3460,7 @@ Let's build generational wealth together! 💰🚀`,
                                             setNewMessage(e.target.value);
                                             // Auto-resize textarea
                                             e.target.style.height = 'auto';
-                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 400)}px`;
                                         }}
                                         onPaste={handlePaste}
                                         placeholder={
@@ -3482,14 +3482,14 @@ Let's build generational wealth together! 💰🚀`,
                                                 handleCancelEdit();
                                             }
                                         }}
-                                        rows="1"
+                                        rows="3"
                                         style={{ 
                                             paddingRight: '120px',
-                                            minHeight: '44px',
-                                            maxHeight: '200px',
+                                            minHeight: '60px',
+                                            maxHeight: '400px',
                                             overflowY: 'auto',
                                             fontSize: '0.9375rem',
-                                            lineHeight: '1.5'
+                                            lineHeight: '1.6'
                                         }}
                                     />
                                     

@@ -143,12 +143,42 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Extract channel ID from query or URL
-  const channelId = req.query.channelId || req.query.id;
+  // Extract channel ID from query, URL path, or request body
+  let channelId = req.query.channelId || req.query.id;
+  
+  // If not in query, try to extract from URL path
+  // Vercel routes: /api/community/channels/[channelId]/messages
+  if (!channelId && req.url) {
+    // Handle different URL formats
+    const urlMatch = req.url.match(/\/channels\/([^\/]+)\/messages/);
+    if (urlMatch && urlMatch[1]) {
+      channelId = urlMatch[1];
+    } else {
+      // Fallback: split URL and find channel ID
+      const urlParts = req.url.split('/');
+      const channelsIndex = urlParts.indexOf('channels');
+      if (channelsIndex !== -1 && urlParts[channelsIndex + 1]) {
+        channelId = urlParts[channelsIndex + 1];
+      }
+    }
+  }
+  
+  // Also check request body for POST requests
+  if (!channelId && req.body && req.body.channelId) {
+    channelId = req.body.channelId;
+  }
 
   if (!channelId) {
+    console.error('Channel ID not found in request:', { 
+      url: req.url, 
+      query: req.query, 
+      body: req.body,
+      method: req.method 
+    });
     return res.status(400).json({ success: false, message: 'Channel ID is required' });
   }
+  
+  console.log('Processing messages request for channel:', channelId, 'Method:', req.method);
 
   try {
     const db = await getDbConnection();
