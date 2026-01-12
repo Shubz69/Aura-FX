@@ -307,16 +307,19 @@ module.exports = async (req, res) => {
         });
 
         return res.status(200).json(messages);
-      } catch (dbError) {
-        console.error('Database error fetching messages:', dbError);
+      } catch (error) {
+        // Catch all errors (database errors, unexpected errors, etc.)
+        console.error('Error fetching messages:', error);
         console.error('Error details:', {
-          message: dbError.message,
-          code: dbError.code,
-          errno: dbError.errno,
-          sqlState: dbError.sqlState,
+          message: error.message,
+          code: error.code,
+          errno: error.errno,
+          sqlState: error.sqlState,
           channelId: channelId,
           channelIdType: typeof channelId,
-          stack: dbError.stack
+          url: req.url,
+          query: req.query,
+          stack: error.stack
         });
         if (db) {
           try {
@@ -332,29 +335,6 @@ module.exports = async (req, res) => {
         }
         // Return empty array instead of 500 error to prevent frontend errors
         // This allows the app to continue working even if DB has issues
-        return res.status(200).json([]);
-      } catch (error) {
-        // Catch any other unexpected errors
-        console.error('Unexpected error in GET messages:', error);
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          channelId: channelId,
-          url: req.url,
-          query: req.query
-        });
-        if (db) {
-          try {
-            if (typeof db.release === 'function') {
-              db.release();
-            } else if (typeof db.end === 'function') {
-              await db.end();
-            }
-          } catch (e) {
-            console.warn('Error releasing database connection:', e.message);
-          }
-        }
-        // Return empty array to prevent frontend crashes
         return res.status(200).json([]);
       }
     }
