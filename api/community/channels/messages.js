@@ -369,7 +369,8 @@ module.exports = async (req, res) => {
       }
 
       if (!db) {
-        return res.status(500).json({ success: false, message: 'Database unavailable' });
+        console.warn('Database unavailable for POST message');
+        return res.status(200).json({ success: false, message: 'Database unavailable' });
       }
 
       try {
@@ -386,7 +387,7 @@ module.exports = async (req, res) => {
           } catch (e) {
             console.warn('Error releasing connection:', e.message);
           }
-          return res.status(500).json({ 
+          return res.status(200).json({ 
             success: false, 
             message: 'Failed to initialize messages table. Please contact support.',
             error: 'Table initialization failed'
@@ -464,8 +465,16 @@ module.exports = async (req, res) => {
           } else {
             // Can't convert string to number for numeric column
             console.error(`Cannot convert channel ID "${channelId}" to number for ${columnType} column`);
-            await db.end();
-            return res.status(500).json({ 
+            try {
+              if (db && typeof db.release === 'function') {
+                db.release();
+              } else if (db && typeof db.end === 'function') {
+                await db.end();
+              }
+            } catch (e) {
+              console.warn('Error releasing connection:', e.message);
+            }
+            return res.status(200).json({ 
               success: false, 
               message: `Channel ID "${channelId}" is not compatible with database column type ${columnType}`,
               error: 'Type mismatch'
@@ -631,8 +640,8 @@ module.exports = async (req, res) => {
           }
         }
         
-        // Return detailed error in development, generic in production
-        return res.status(500).json({ 
+        // Return error but with 200 status to prevent frontend crashes
+        return res.status(200).json({ 
           success: false, 
           message: errorMessage,
           error: errorDetails,
@@ -667,7 +676,8 @@ module.exports = async (req, res) => {
       }
 
       if (!db) {
-        return res.status(500).json({ success: false, message: 'Database unavailable' });
+        console.warn('Database unavailable for DELETE message');
+        return res.status(200).json({ success: false, message: 'Database unavailable' });
       }
 
       try {
@@ -749,7 +759,7 @@ module.exports = async (req, res) => {
             // Ignore errors when releasing connection
           }
         }
-        return res.status(500).json({ 
+        return res.status(200).json({ 
           success: false, 
           message: 'Failed to delete message',
           error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
@@ -759,10 +769,19 @@ module.exports = async (req, res) => {
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   } catch (error) {
-    console.error('Error handling messages:', error);
-    return res.status(500).json({ 
+    console.error('Unexpected error handling messages:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      url: req.url,
+      method: req.method,
+      query: req.query
+    });
+    // Return 200 with error to prevent frontend crashes
+    return res.status(200).json({ 
       success: false, 
-      message: 'An error occurred' 
+      message: 'An error occurred',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
