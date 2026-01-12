@@ -229,7 +229,17 @@ module.exports = async (req, res) => {
             }
           }
         }
-        db.release(); // Release connection back to pool
+        
+        // Release connection back to pool
+        try {
+          if (db && typeof db.release === 'function') {
+            db.release();
+          } else if (db && typeof db.end === 'function') {
+            await db.end();
+          }
+        } catch (releaseError) {
+          console.warn('Error releasing database connection:', releaseError.message);
+        }
 
         // Map to frontend format - handle actual column names
         const messages = rows.map(row => {
@@ -269,13 +279,25 @@ module.exports = async (req, res) => {
         return res.status(200).json(messages);
       } catch (dbError) {
         console.error('Database error fetching messages:', dbError);
+        console.error('Error details:', {
+          message: dbError.message,
+          code: dbError.code,
+          channelId: channelId,
+          channelIdType: typeof channelId
+        });
         if (db) {
           try {
-            db.release(); // Release connection back to pool
+            if (typeof db.release === 'function') {
+              db.release(); // Release connection back to pool
+            } else if (typeof db.end === 'function') {
+              await db.end();
+            }
           } catch (e) {
             // Ignore release errors
+            console.warn('Error releasing database connection:', e.message);
           }
         }
+        // Return empty array instead of 500 error to prevent frontend errors
         return res.status(200).json([]);
       }
     }
@@ -298,7 +320,15 @@ module.exports = async (req, res) => {
         const tableExists = await ensureMessagesTable(db);
         if (!tableExists) {
           console.error('Failed to ensure messages table exists');
-          db.release(); // Release connection back to pool
+          try {
+            if (db && typeof db.release === 'function') {
+              db.release();
+            } else if (db && typeof db.end === 'function') {
+              await db.end();
+            }
+          } catch (e) {
+            console.warn('Error releasing connection:', e.message);
+          }
           return res.status(500).json({ 
             success: false, 
             message: 'Failed to initialize messages table. Please contact support.',
@@ -458,7 +488,16 @@ module.exports = async (req, res) => {
           }
         }
         
-        db.release(); // Release connection back to pool
+        // Release connection back to pool
+        try {
+          if (db && typeof db.release === 'function') {
+            db.release();
+          } else if (db && typeof db.end === 'function') {
+            await db.end();
+          }
+        } catch (releaseError) {
+          console.warn('Error releasing database connection:', releaseError.message);
+        }
 
         // Parse file_data if present
         let fileData = null;
@@ -595,7 +634,15 @@ module.exports = async (req, res) => {
         
         if (!messageRows || messageRows.length === 0) {
           console.log('Message not found with ID:', messageId, 'tried value:', messageIdValue);
-          db.release(); // Release connection back to pool
+          try {
+            if (db && typeof db.release === 'function') {
+              db.release();
+            } else if (db && typeof db.end === 'function') {
+              await db.end();
+            }
+          } catch (e) {
+            console.warn('Error releasing connection:', e.message);
+          }
           return res.status(404).json({ success: false, message: 'Message not found' });
         }
 
@@ -605,7 +652,17 @@ module.exports = async (req, res) => {
         // TODO: Add admin check from JWT token
         // For now, allow deletion (you can add auth check later)
         const [result] = await db.execute('DELETE FROM messages WHERE id = ?', [messageIdValue]);
-        db.release(); // Release connection back to pool
+        
+        // Release connection back to pool
+        try {
+          if (db && typeof db.release === 'function') {
+            db.release();
+          } else if (db && typeof db.end === 'function') {
+            await db.end();
+          }
+        } catch (releaseError) {
+          console.warn('Error releasing database connection:', releaseError.message);
+        }
 
         if (result.affectedRows > 0) {
           console.log('Message deleted successfully:', messageIdValue);

@@ -3382,40 +3382,69 @@ Let's build generational wealth together! 💰🚀`,
                             <form className="chat-form" onSubmit={handleSendMessage}>
                                 {editingMessageId && (
                                     <div style={{
-                                        padding: '8px 12px',
-                                        background: 'rgba(139, 92, 246, 0.15)',
-                                        borderLeft: '3px solid var(--accent-blue)',
-                                        borderRadius: '4px',
-                                        marginBottom: '8px',
+                                        padding: '12px 16px',
+                                        background: 'linear-gradient(135deg, rgba(88, 101, 242, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                                        border: '1px solid rgba(88, 101, 242, 0.3)',
+                                        borderRadius: '8px',
+                                        marginBottom: '12px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'space-between',
-                                        fontSize: '0.875rem'
+                                        fontSize: '0.875rem',
+                                        boxShadow: '0 2px 8px rgba(88, 101, 242, 0.1)',
+                                        backdropFilter: 'blur(10px)'
                                     }}>
-                                        <span style={{ color: 'var(--accent-blue)' }}>
-                                            <FaEdit size={12} style={{ marginRight: '6px', display: 'inline' }} />
-                                            Editing message
-                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                borderRadius: '6px',
+                                                background: 'rgba(88, 101, 242, 0.2)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: 'var(--accent-blue)'
+                                            }}>
+                                                <FaEdit size={14} />
+                                            </div>
+                                            <div>
+                                                <div style={{ 
+                                                    color: 'var(--accent-blue)', 
+                                                    fontWeight: 600,
+                                                    fontSize: '0.875rem'
+                                                }}>
+                                                    Editing message
+                                                </div>
+                                                <div style={{ 
+                                                    color: 'var(--text-muted)', 
+                                                    fontSize: '0.75rem',
+                                                    marginTop: '2px'
+                                                }}>
+                                                    Make your changes and click Save
+                                                </div>
+                                            </div>
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={handleCancelEdit}
                                             style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: 'var(--text-muted)',
+                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                color: 'var(--text-normal)',
                                                 cursor: 'pointer',
-                                                padding: '4px 8px',
-                                                borderRadius: '4px',
-                                                fontSize: '0.875rem',
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '0.8125rem',
+                                                fontWeight: 500,
                                                 transition: 'all 0.2s ease'
                                             }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                                e.currentTarget.style.color = 'var(--text-normal)';
+                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = 'none';
-                                                e.currentTarget.style.color = 'var(--text-muted)';
+                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                                             }}
                                         >
                                             Cancel
