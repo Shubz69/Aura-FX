@@ -1021,6 +1021,97 @@ const Community = () => {
         }
     };
 
+    // Handle paste events - supports text, images, and other content
+    const handlePaste = async (e) => {
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const items = clipboardData.items;
+        if (!items || items.length === 0) return;
+
+        // Check for images first (highest priority)
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            
+            // Handle image paste
+            if (item.type.indexOf('image') !== -1) {
+                e.preventDefault(); // Prevent default paste behavior
+                
+                const blob = item.getAsFile();
+                if (blob) {
+                    // Convert blob to File object
+                    const file = new File([blob], `pasted-image-${Date.now()}.png`, {
+                        type: blob.type || 'image/png'
+                    });
+                    
+                    // Set as selected file (same as file upload)
+                    setSelectedFile(file);
+                    
+                    // Create preview for image
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFilePreview(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+                return; // Don't process text if image was found
+            }
+        }
+
+        // Check for files (other than images)
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.kind === 'file' && item.type.indexOf('image') === -1) {
+                // Handle file paste (non-image files)
+                e.preventDefault();
+                const blob = item.getAsFile();
+                if (blob) {
+                    const file = new File([blob], `pasted-file-${Date.now()}.${blob.type.split('/')[1] || 'bin'}`, {
+                        type: blob.type || 'application/octet-stream'
+                    });
+                    setSelectedFile(file);
+                    setFilePreview(null); // No preview for non-image files
+                }
+                return;
+            }
+        }
+
+        // Handle text paste - allow default behavior for plain text
+        const textData = clipboardData.getData('text/plain');
+        const htmlData = clipboardData.getData('text/html');
+        
+        if (textData) {
+            // If there's plain text, allow default paste behavior
+            // The textarea will handle it automatically
+            // This covers: plain text, formatted text from Word/Google Docs, etc.
+            return;
+        } else if (htmlData) {
+            // If only HTML and no plain text, extract text from HTML
+            e.preventDefault();
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlData;
+            const plainText = tempDiv.textContent || tempDiv.innerText || '';
+            
+            if (plainText.trim()) {
+                const input = messageInputRef.current;
+                if (input) {
+                    const start = input.selectionStart;
+                    const end = input.selectionEnd;
+                    const text = newMessage;
+                    const before = text.substring(0, start);
+                    const after = text.substring(end);
+                    setNewMessage(before + plainText + after);
+                    
+                    // Set cursor position after pasted text
+                    setTimeout(() => {
+                        input.focus();
+                        input.setSelectionRange(start + plainText.length, start + plainText.length);
+                    }, 0);
+                }
+            }
+        }
+    };
+
     // Fetch messages for a channel - optimized for fast loading and real-time updates
     const fetchMessages = useCallback(async (channelId, mergeMode = false) => {
         if (!channelId) return;
@@ -3229,6 +3320,7 @@ Let's build generational wealth together! 💰🚀`,
                                         className="chat-input"
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
+                                        onPaste={handlePaste}
                                         placeholder={
                                             canUserPostInChannel(selectedChannel)
                                                 ? `Message #${selectedChannel.name}`
