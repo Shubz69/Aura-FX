@@ -209,6 +209,48 @@ const Community = () => {
     const messagesEndRef = useRef(null);
     const messageInputRef = useRef(null);
     
+    // Channel badge tracking: { channelId: { unread: number, mentions: number } }
+    const [channelBadges, setChannelBadges] = useState(() => {
+        if (!userId) return {};
+        const saved = localStorage.getItem(`channelBadges_${userId}`);
+        return saved ? JSON.parse(saved) : {};
+    });
+    
+    // Save channel badges to localStorage whenever they change
+    useEffect(() => {
+        if (userId && channelBadges) {
+            localStorage.setItem(`channelBadges_${userId}`, JSON.stringify(channelBadges));
+        }
+    }, [channelBadges, userId]);
+    
+    // Helper to update channel badge
+    const updateChannelBadge = useCallback((channelId, type, increment = true) => {
+        if (!channelId) return;
+        setChannelBadges(prev => {
+            const current = prev[channelId] || { unread: 0, mentions: 0 };
+            const updated = {
+                ...prev,
+                [channelId]: {
+                    ...current,
+                    [type]: increment ? (current[type] || 0) + 1 : 0
+                }
+            };
+            return updated;
+        });
+    }, []);
+    
+    // Helper to clear channel badge when viewed
+    const clearChannelBadge = useCallback((channelId) => {
+        if (!channelId) return;
+        setChannelBadges(prev => {
+            const updated = { ...prev };
+            if (updated[channelId]) {
+                updated[channelId] = { unread: 0, mentions: 0 };
+            }
+            return updated;
+        });
+    }, []);
+    
     // Discord-like features
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showGifPicker, setShowGifPicker] = useState(false);
@@ -218,6 +260,7 @@ const Community = () => {
     const fileInputRef = useRef(null);
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
+    const isSendingGifRef = useRef(false);
 
     // Close context menu when clicking outside
     useEffect(() => {
@@ -262,20 +305,81 @@ const Community = () => {
     const [deleteMessageModal, setDeleteMessageModal] = useState(null); // { messageId, messageContent }
     const [isDeletingMessage, setIsDeletingMessage] = useState(false);
     
-    // Category order - load from localStorage or use default
+    // Category order - load from backend or use default
     const [categoryOrderState, setCategoryOrderState] = useState(() => {
-        const saved = localStorage.getItem('channelCategoryOrder');
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
-            }
-        }
+        // Default order - will be replaced by backend data
         return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
     });
     
     const categoryOrder = categoryOrderState;
+
+    // Load category order from backend
+    useEffect(() => {
+        const fetchCategoryOrder = async () => {
+            try {
+                const response = await fetch('/api/community/channels?categoryOrder=true');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && Array.isArray(data.data)) {
+                        setCategoryOrderState(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching category order:', error);
+                // Fallback to localStorage if backend fails
+                const saved = localStorage.getItem('channelCategoryOrder');
+                if (saved) {
+                    try {
+                        setCategoryOrderState(JSON.parse(saved));
+                    } catch (e) {
+                        // Use default
+                    }
+                }
+            }
+        };
+        fetchCategoryOrder();
+
+        // Poll for category order updates every 10 seconds to sync across users
+        const intervalId = setInterval(fetchCategoryOrder, 10000);
+
+        // Also check when window regains focus
+        const handleFocus = () => {
+            fetchCategoryOrder();
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, []);
+
+    // Save category order to backend
+    const saveCategoryOrder = async (newOrder) => {
+        try {
+            const response = await fetch('/api/community/channels', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ categoryOrder: newOrder })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Also save to localStorage as fallback
+                    localStorage.setItem('channelCategoryOrder', JSON.stringify(newOrder));
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.error('Error saving category order:', error);
+            // Fallback to localStorage
+            localStorage.setItem('channelCategoryOrder', JSON.stringify(newOrder));
+            return false;
+        }
+        return false;
+    };
 
     const protectedChannelIds = useMemo(() => (['welcome', 'announcements', 'admin']), []);
 
@@ -458,31 +562,60 @@ const Community = () => {
                 (String(message.channelId) === String(selectedChannel.id) || 
                  String(message.channel_id) === String(selectedChannel.id));
             
-            // Check if message mentions current user
+            // Check if message mentions current user (case-insensitive)
             const currentUsername = storedUser?.username || storedUser?.name || '';
             const messageContent = message.content || '';
-            const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
+            const mentionRegex = new RegExp(`@${currentUsername}\\b`, 'i');
+            const isMentioned = currentUsername && mentionRegex.test(messageContent);
             
-            // Trigger notifications
-            if (!isCurrentChannel) {
-                // New message in different channel
+            // Get message channel ID
+            const messageChannelId = message.channelId || message.channel_id;
+            const messageSenderId = message.sender?.id || message.userId;
+            const isOwnMessage = String(messageSenderId) === String(userId);
+            
+            // Trigger notifications and update badges
+            if (!isCurrentChannel && !isOwnMessage) {
+                // New message in different channel - update badge
+                updateChannelBadge(messageChannelId, 'unread');
+                
+                // Check if user is mentioned
+                if (isMentioned) {
+                    updateChannelBadge(messageChannelId, 'mentions');
+                }
+                
                 const channelName = channelList.find(c => 
-                    String(c.id) === String(message.channelId || message.channel_id)
+                    String(c.id) === String(messageChannelId)
                 )?.name || 'a channel';
-                triggerNotification(
-                    'message',
-                    `New message in #${channelName}`,
-                    `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                    `/community/${message.channelId || message.channel_id}`
-                );
-            } else if (isMentioned) {
-                // User was mentioned
+                
+                if (isMentioned) {
+                    triggerNotification(
+                        'mention',
+                        `You were mentioned in #${channelName}`,
+                        `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+                        `/community/${messageChannelId}`,
+                        userId
+                    );
+                } else {
+                    triggerNotification(
+                        'message',
+                        `New message in #${channelName}`,
+                        `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+                        `/community/${messageChannelId}`,
+                        null
+                    );
+                }
+            } else if (isCurrentChannel && isMentioned && !isOwnMessage) {
+                // User was mentioned in current channel
                 triggerNotification(
                     'mention',
                     `You were mentioned in #${selectedChannel.name}`,
                     `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                    `/community/${selectedChannel.id}`
+                    `/community/${selectedChannel.id}`,
+                    userId
                 );
+            } else if (!isCurrentChannel && !isOwnMessage) {
+                // Message in other channel, update badge
+                updateChannelBadge(messageChannelId, 'unread');
             }
             
             // Only add message if it's for the current channel
@@ -707,26 +840,157 @@ const Community = () => {
         setShowEmojiPicker(false);
     };
 
-    // GIF selection handler
-    const handleGifSelect = (gifUrl) => {
-        // Insert GIF as image in message
-        const input = messageInputRef.current;
-        if (input) {
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const text = newMessage;
-            const before = text.substring(0, start);
-            const after = text.substring(end);
-            // Insert GIF URL with markdown-style image syntax
-            const gifMarkdown = `![GIF](${gifUrl})`;
-            setNewMessage(before + gifMarkdown + after);
-            // Manually set cursor position after GIF
-            setTimeout(() => {
-                input.focus();
-                input.setSelectionRange(start + gifMarkdown.length, start + gifMarkdown.length);
-            }, 0);
-        }
+    // GIF selection handler - auto-sends the message
+    const handleGifSelect = async (gifUrl) => {
+        // Prevent double-sending
+        if (isSendingGifRef.current) return;
+        isSendingGifRef.current = true;
+
+        // Close GIF picker immediately
         setShowGifPicker(false);
+
+        // Check if user can send messages in this channel
+        if (!selectedChannel || !canUserPostInChannel(selectedChannel)) {
+            alert("You don't have permission to send messages in this channel.");
+            isSendingGifRef.current = false;
+            return;
+        }
+
+        // Create GIF markdown
+        const gifMarkdown = `![GIF](${gifUrl})`;
+        const messageContent = gifMarkdown;
+        const senderUsername = storedUser?.username || storedUser?.name || 'User';
+
+        // Prepare message data
+        const messageToSend = {
+            channelId: selectedChannel.id,
+            content: messageContent,
+            userId,
+            username: senderUsername
+        };
+
+        // Optimistic update - add message to UI immediately
+        const optimisticMessage = {
+            id: `temp_${Date.now()}`,
+            channelId: selectedChannel.id,
+            content: messageContent,
+            sender: {
+                id: userId,
+                username: storedUser?.username || storedUser?.name || 'User',
+                avatar: storedUser?.avatar || '/avatars/avatar_ai.png',
+                role: getCurrentUserRole()
+            },
+            timestamp: new Date().toISOString(),
+            file: null,
+            userId,
+            username: senderUsername
+        };
+        
+        // Add message to state immediately for instant UI feedback
+        setMessages(prev => {
+            const updated = [...prev, optimisticMessage];
+            saveMessagesToStorage(selectedChannel.id, updated);
+            return updated;
+        });
+        
+        // Clear message input
+        setNewMessage('');
+        
+        // Scroll to bottom immediately to show new message
+        setTimeout(() => scrollToBottom(), 0);
+
+        try {
+            // Save to backend API for permanent persistence
+            try {
+                const response = await Api.sendMessage(selectedChannel.id, messageToSend);
+                
+                if (response && response.data) {
+                    // Replace optimistic message with server response (has real ID)
+                    const serverMessage = response.data;
+                    setMessages(prev => {
+                        const final = replaceMessageById(prev, optimisticMessage.id, serverMessage);
+                        saveMessagesToStorage(selectedChannel.id, final);
+                        return final;
+                    });
+                    
+                    // Broadcast message via WebSocket so all users see it in real-time
+                    if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
+                        try {
+                            sendWebSocketMessage({
+                                ...serverMessage,
+                                channelId: selectedChannel.id
+                            });
+                        } catch (wsError) {
+                            // WebSocket failed - that's okay, REST API already saved it
+                        }
+                    }
+                } else {
+                    // If response doesn't have expected format, keep optimistic message
+                    const permanentMessage = {
+                        ...optimisticMessage,
+                        id: Date.now()
+                    };
+                    setMessages(prev => {
+                        const final = replaceMessageById(prev, optimisticMessage.id, permanentMessage);
+                        saveMessagesToStorage(selectedChannel.id, final);
+                        return final;
+                    });
+                    
+                    // Still try to broadcast via WebSocket
+                    if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
+                        try {
+                            sendWebSocketMessage({
+                                ...permanentMessage,
+                                channelId: selectedChannel.id
+                            });
+                        } catch (wsError) {
+                            // WebSocket failed - that's okay, REST API already saved it
+                        }
+                    }
+                }
+            } catch (apiError) {
+                console.error('Backend API unavailable, saving to localStorage:', apiError);
+                // Backend unavailable - save to localStorage for persistence
+                const permanentMessage = {
+                    ...optimisticMessage,
+                    id: Date.now()
+                };
+                setMessages(prev => {
+                    const final = replaceMessageById(prev, optimisticMessage.id, permanentMessage);
+                    saveMessagesToStorage(selectedChannel.id, final);
+                    return final;
+                });
+                
+                // Still try to broadcast via WebSocket if available
+                if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
+                    try {
+                        sendWebSocketMessage({
+                            ...permanentMessage,
+                            channelId: selectedChannel.id
+                        });
+                    } catch (wsError) {
+                        // WebSocket failed - that's okay, message is in localStorage
+                    }
+                }
+            }
+            
+            // Award XP for sending message
+            const earnedXP = calculateMessageXP(messageContent, false);
+            const xpResult = awardXP(earnedXP);
+            if (xpResult?.leveledUp) {
+                // Placeholder: trigger level-up UI feedback if desired
+            }
+        } catch (error) {
+            console.error('Error sending GIF message:', error);
+            // On error, remove optimistic message
+            setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
+            alert('Failed to send GIF. Please try again.');
+        } finally {
+            // Reset sending flag after a short delay to prevent rapid clicks
+            setTimeout(() => {
+                isSendingGifRef.current = false;
+            }, 500);
+        }
     };
 
     // File selection handler
@@ -1388,18 +1652,31 @@ const Community = () => {
             });
         }
     }, [selectedChannel, fetchMessages, navigate]);
+    
+    // Clear channel badge when channel is selected
+    useEffect(() => {
+        if (selectedChannel?.id) {
+            clearChannelBadge(selectedChannel.id);
+        }
+    }, [selectedChannel?.id, clearChannelBadge]);
 
-    // Poll for new messages - ALWAYS run as backup, even when WebSocket is connected
-    // This ensures messages appear instantly even if WebSocket has issues
+    // Poll for new messages - Optimized for high traffic (500+ users)
+    // When WebSocket is connected, polling is disabled to reduce database load
+    // When WebSocket is down, poll every 3 seconds for reliability
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
+        
+        // If WebSocket is connected, don't poll (rely 100% on WebSocket for real-time updates)
+        // This reduces database load significantly for high traffic scenarios
+        if (isConnected) {
+            return; // WebSocket handles all updates, no polling needed
+        }
         
         // Store previous message count for notification detection
         let previousMessageCount = messages.length;
         
-        // Poll interval: much faster for instant updates
-        // 500ms when WebSocket is down (primary), 1000ms when connected (backup)
-        const pollInterval = isConnected ? 1000 : 500;
+        // Poll interval: 3 seconds when WebSocket is down (optimized for 500 users)
+        const pollInterval = 3000;
         
         // Start polling immediately
         const pollMessages = async () => {
@@ -1427,17 +1704,16 @@ const Community = () => {
                                 const messageContent = newMsg.content || '';
                                 const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
                                 
+                                // Update badges for mentions in current channel
                                 if (isMentioned) {
+                                    updateChannelBadge(selectedChannel.id, 'mentions');
                                     triggerNotification(
                                         'mention',
                                         `You were mentioned in #${selectedChannel.name}`,
                                         `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                                        `/community/${selectedChannel.id}`
+                                        `/community/${selectedChannel.id}`,
+                                        userId
                                     );
-                                } else {
-                                    // Only notify for messages in current channel if user is viewing it
-                                    // (Notifications for other channels are handled by WebSocket)
-                                    // For polling, we only notify if it's a mention
                                 }
                             });
                         }
@@ -1678,6 +1954,11 @@ Let's build generational wealth together! 💰🚀`,
                                 // 1. User exists
                                 // 2. It's not the current user (don't notify yourself)
                                 if (mentionedUser && String(mentionedUser.id) !== String(userId)) {
+                                    // Update badge for mentioned user (if not viewing this channel)
+                                    if (String(selectedChannel.id) !== String(selectedChannel?.id)) {
+                                        // This will be handled by WebSocket for other users
+                                    }
+                                    
                                     triggerNotification(
                                         'mention',
                                         `You were mentioned in #${selectedChannel.name}`,
@@ -2289,47 +2570,43 @@ Let's build generational wealth together! 💰🚀`,
                             <div 
                                 key={categoryName} 
                                 className={`channel-category ${draggedCategory === categoryName ? 'dragging' : ''} ${draggedCategory && draggedCategory !== categoryName ? 'drag-over' : ''}`}
-                                draggable={isAdminUser}
+                                draggable={true}
                                 onDragStart={(e) => {
-                                    if (isAdminUser) {
-                                        setDraggedCategory(categoryName);
-                                        e.dataTransfer.effectAllowed = 'move';
-                                        e.dataTransfer.setData('text/plain', categoryName);
-                                        // Add visual feedback
-                                        e.currentTarget.style.opacity = '0.5';
-                                    }
+                                    setDraggedCategory(categoryName);
+                                    e.dataTransfer.effectAllowed = 'move';
+                                    e.dataTransfer.setData('text/plain', categoryName);
+                                    // Add visual feedback
+                                    e.currentTarget.style.opacity = '0.5';
                                 }}
                                 onDragEnd={(e) => {
-                                    if (isAdminUser) {
-                                        // Reset visual feedback
-                                        e.currentTarget.style.opacity = '1';
-                                        setDraggedCategory(null);
-                                    }
+                                    // Reset visual feedback
+                                    e.currentTarget.style.opacity = '1';
+                                    setDraggedCategory(null);
                                 }}
                                 onDragOver={(e) => {
-                                    if (isAdminUser && draggedCategory && draggedCategory !== categoryName) {
+                                    if (draggedCategory && draggedCategory !== categoryName) {
                                         e.preventDefault();
                                         e.dataTransfer.dropEffect = 'move';
                                     }
                                 }}
                                 onDragEnter={(e) => {
-                                    if (isAdminUser && draggedCategory && draggedCategory !== categoryName) {
+                                    if (draggedCategory && draggedCategory !== categoryName) {
                                         e.preventDefault();
                                     }
                                 }}
                                 onDrop={(e) => {
-                                    if (isAdminUser && draggedCategory && draggedCategory !== categoryName) {
+                                    if (draggedCategory && draggedCategory !== categoryName) {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        // Reorder categories - update localStorage and state
+                                        // Reorder categories - update backend and state
                                         const currentOrder = [...categoryOrder];
                                         const draggedIndex = currentOrder.indexOf(draggedCategory);
                                         const dropIndex = currentOrder.indexOf(categoryName);
                                         if (draggedIndex !== -1 && dropIndex !== -1) {
                                             currentOrder.splice(draggedIndex, 1);
                                             currentOrder.splice(dropIndex, 0, draggedCategory);
-                                            localStorage.setItem('channelCategoryOrder', JSON.stringify(currentOrder));
                                             setCategoryOrderState(currentOrder);
+                                            saveCategoryOrder(currentOrder);
                                             setDraggedCategory(null);
                                         }
                                     }
@@ -2351,7 +2628,7 @@ Let's build generational wealth together! 💰🚀`,
                                     }}
                                     onMouseDown={(e) => {
                                         // Prevent text selection while dragging
-                                        if (isAdminUser) {
+                                        if (draggedCategory) {
                                             e.preventDefault();
                                         }
                                     }}
@@ -2371,11 +2648,14 @@ Let's build generational wealth together! 💰🚀`,
                                         if (!canAccess) return null; // Skip admin-only channels for non-admins
                                         
                                         const isActive = selectedChannel?.id === channel.id;
+                                        const badge = channelBadges[channel.id] || { unread: 0, mentions: 0 };
+                                        const hasUnread = badge.unread > 0;
+                                        const hasMentions = badge.mentions > 0;
                                         
                                         return (
                                             <li 
                                                 key={channel.id}
-                                                className={`channel-item ${isActive ? 'active' : ''} ${channel.unread ? 'unread' : ''}`}
+                                                className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''}`}
                                                 onClick={() => setSelectedChannel(channel)}
                                                 style={{ 
                                                     cursor: 'pointer',
@@ -2393,6 +2673,28 @@ Let's build generational wealth together! 💰🚀`,
                                                         {channel.displayName || channel.name}
                                                     </span>
                                                 </span>
+                                                {(hasUnread || hasMentions) && (
+                                                    <span className="channel-badge" style={{
+                                                        minWidth: '20px',
+                                                        height: '20px',
+                                                        borderRadius: '10px',
+                                                        background: hasMentions 
+                                                            ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
+                                                            : 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                                        color: 'white',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: '700',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        padding: '0 6px',
+                                                        boxShadow: hasMentions 
+                                                            ? '0 0 10px rgba(239, 68, 68, 0.5)' 
+                                                            : '0 0 8px rgba(255, 255, 255, 0.3)'
+                                                    }}>
+                                                        {hasMentions ? badge.mentions : badge.unread > 99 ? '99+' : badge.unread}
+                                                    </span>
+                                                )}
                                                 {(isAdminUser || isSuperAdminUser) && !protectedChannelIds.includes(channel.id) && (
                                                     <button
                                                         type="button"

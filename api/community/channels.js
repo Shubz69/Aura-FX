@@ -215,6 +215,20 @@ const ensureChannelsTable = async (db) => {
   `);
 };
 
+const ensureSettingsTable = async (db) => {
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS community_settings (
+        id VARCHAR(255) PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+  } catch (error) {
+    console.error('Error ensuring settings table:', error);
+  }
+};
+
 const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'admin']);
 
 module.exports = async (req, res) => {
@@ -746,6 +760,106 @@ module.exports = async (req, res) => {
       }
     } catch (error) {
       console.error('Error updating channel:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Handle category order GET/POST
+  if (req.method === 'GET' && req.query.categoryOrder === 'true') {
+    try {
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database connection error'
+        });
+      }
+
+      try {
+        await ensureSettingsTable(db);
+        const [rows] = await db.execute(
+          'SELECT value FROM community_settings WHERE id = ?',
+          ['category_order']
+        );
+
+        if (rows && rows.length > 0) {
+          const order = JSON.parse(rows[0].value);
+          return res.status(200).json({
+            success: true,
+            data: order
+          });
+        } else {
+          // Return default order if not set
+          const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
+          return res.status(200).json({
+            success: true,
+            data: defaultOrder
+          });
+        }
+      } catch (dbError) {
+        console.error('Database error fetching category order:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to fetch category order'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching category order:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  if (req.method === 'POST' && req.body.categoryOrder) {
+    try {
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database connection error'
+        });
+      }
+
+      try {
+        await ensureSettingsTable(db);
+        const order = Array.isArray(req.body.categoryOrder) ? req.body.categoryOrder : [];
+        
+        // Validate order array
+        if (order.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Category order cannot be empty'
+          });
+        }
+
+        // Upsert category order
+        await db.execute(
+          'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
+          ['category_order', JSON.stringify(order), JSON.stringify(order)]
+        );
+
+        await db.end();
+        return res.status(200).json({
+          success: true,
+          message: 'Category order updated successfully',
+          data: order
+        });
+      } catch (dbError) {
+        console.error('Database error saving category order:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to save category order'
+        });
+      }
+    } catch (error) {
+      console.error('Error saving category order:', error);
       return res.status(500).json({
         success: false,
         message: 'Internal server error'
