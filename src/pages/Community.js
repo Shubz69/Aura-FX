@@ -1938,7 +1938,30 @@ Let's build generational wealth together! 💰🚀`,
         }
     }, [selectedChannel, hasReadWelcome, messages]);
 
-    // Handle send message
+    // Handle edit message
+    const handleEditMessage = (messageId) => {
+        const message = messages.find(m => m.id === messageId);
+        if (message && String(message.userId) === String(userId)) {
+            setEditingMessageId(messageId);
+            setEditingMessageContent(message.content);
+            setNewMessage(message.content);
+            setContextMenu(null);
+            // Focus input after a brief delay
+            setTimeout(() => {
+                messageInputRef.current?.focus();
+                messageInputRef.current?.setSelectionRange(message.content.length, message.content.length);
+            }, 0);
+        }
+    };
+
+    // Cancel edit
+    const handleCancelEdit = () => {
+        setEditingMessageId(null);
+        setEditingMessageContent('');
+        setNewMessage('');
+    };
+
+    // Handle send message (or update if editing)
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
@@ -1947,6 +1970,36 @@ Let's build generational wealth together! 💰🚀`,
         if (!canUserPostInChannel(selectedChannel)) {
             alert("You don't have permission to send messages in this channel.");
             return;
+        }
+
+        // If editing a message, handle update instead
+        if (editingMessageId) {
+            const message = messages.find(m => m.id === editingMessageId);
+            if (message && String(message.userId) === String(userId)) {
+                try {
+                    // Update message content
+                    const updatedContent = newMessage.trim();
+                    setMessages(prev => {
+                        const updated = prev.map(msg => 
+                            msg.id === editingMessageId 
+                                ? { ...msg, content: updatedContent, edited: true }
+                                : msg
+                        );
+                        saveMessagesToStorage(selectedChannel.id, updated);
+                        return updated;
+                    });
+                    
+                    // TODO: Send update to backend API
+                    // For now, just update locally
+                    
+                    handleCancelEdit();
+                    return;
+                } catch (error) {
+                    console.error('Error editing message:', error);
+                    alert('Failed to edit message. Please try again.');
+                    return;
+                }
+            }
         }
 
         const messageContent = newMessage.trim();
