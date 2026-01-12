@@ -3200,62 +3200,6 @@ Let's build generational wealth together! 💰🚀`,
                                                 )}
                                             </div>
                                             
-                                            {/* Emoji Reactions */}
-                                            <div className="message-reactions" style={{
-                                                display: 'flex',
-                                                flexWrap: 'wrap',
-                                                gap: '6px',
-                                                marginTop: '8px',
-                                                alignItems: 'center'
-                                            }}>
-                                                {messageReactions[message.id] && Object.entries(messageReactions[message.id]).map(([emoji, count]) => (
-                                                    <button
-                                                        key={emoji}
-                                                        className="reaction-button"
-                                                        onClick={() => {
-                                                            // Toggle reaction
-                                                            setMessageReactions(prev => {
-                                                                const current = prev[message.id] || {};
-                                                                const newCount = (current[emoji] || 0) - 1;
-                                                                if (newCount <= 0) {
-                                                                    const { [emoji]: removed, ...rest } = current;
-                                                                    if (Object.keys(rest).length === 0) {
-                                                                        const { [message.id]: removedMsg, ...restMsgs } = prev;
-                                                                        return restMsgs;
-                                                                    }
-                                                                    return { ...prev, [message.id]: rest };
-                                                                }
-                                                                return { ...prev, [message.id]: { ...current, [emoji]: newCount } };
-                                                            });
-                                                        }}
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px',
-                                                            padding: '4px 8px',
-                                                            background: 'rgba(255, 255, 255, 0.1)',
-                                                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                                                            borderRadius: '12px',
-                                                            cursor: 'pointer',
-                                                            fontSize: '0.85rem',
-                                                            color: '#ffffff',
-                                                            transition: 'all 0.2s ease'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                                                        }}
-                                                    >
-                                                        <span>{emoji}</span>
-                                                        <span>{count}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            
                                             {message.isWelcomeMessage && !hasReadWelcome && (
                                                 <div style={{
                                                     marginTop: '20px',
@@ -3306,6 +3250,64 @@ Let's build generational wealth together! 💰🚀`,
                                                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                                         ({(message.file.size / 1024).toFixed(2)} KB)
                                                     </span>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Emoji Reactions - At the bottom of message */}
+                                            {messageReactions[message.id] && Object.keys(messageReactions[message.id]).length > 0 && (
+                                                <div className="message-reactions" style={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: '6px',
+                                                    marginTop: '8px',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    {Object.entries(messageReactions[message.id]).map(([emoji, count]) => (
+                                                        <button
+                                                            key={emoji}
+                                                            className="reaction-button"
+                                                            onClick={() => {
+                                                                // Toggle reaction
+                                                                setMessageReactions(prev => {
+                                                                    const current = prev[message.id] || {};
+                                                                    const newCount = (current[emoji] || 0) - 1;
+                                                                    if (newCount <= 0) {
+                                                                        const { [emoji]: removed, ...rest } = current;
+                                                                        if (Object.keys(rest).length === 0) {
+                                                                            const { [message.id]: removedMsg, ...restMsgs } = prev;
+                                                                            return restMsgs;
+                                                                        }
+                                                                        return { ...prev, [message.id]: rest };
+                                                                    }
+                                                                    return { ...prev, [message.id]: { ...current, [emoji]: newCount } };
+                                                                });
+                                                            }}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                padding: '4px 8px',
+                                                                background: 'rgba(255, 255, 255, 0.1)',
+                                                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                                borderRadius: '12px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '0.85rem',
+                                                                color: '#ffffff',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                                            }}
+                                                        >
+                                                            <span>{emoji}</span>
+                                                            <span>{count}</span>
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>
