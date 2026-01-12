@@ -1,28 +1,4 @@
-const mysql = require('mysql2/promise');
-
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    return null;
-  }
-
-  try {
-    const connection = await mysql.createConnection({
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 5000, // 5 second timeout
-      ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false
-    });
-    await connection.ping(); // Test connection
-    return connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return null;
-  }
-};
+const { getDbConnection } = require('../db');
 
 // Ensure messages table exists with correct schema
 const ensureMessagesTable = async (db) => {
@@ -79,6 +55,26 @@ const ensureMessagesTable = async (db) => {
       }
     } catch (encryptedError) {
       console.warn('Could not check/add encrypted column:', encryptedError.message);
+      // Continue anyway
+    }
+    
+    // Check if file_data column exists, add it if it doesn't
+    try {
+      const [fileDataColumn] = await db.execute(`
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = ? 
+        AND TABLE_NAME = 'messages' 
+        AND COLUMN_NAME = 'file_data'
+      `, [process.env.MYSQL_DATABASE]);
+      
+      if (!fileDataColumn || fileDataColumn.length === 0) {
+        // Add file_data column as JSON to store file metadata
+        await db.execute('ALTER TABLE messages ADD COLUMN file_data JSON DEFAULT NULL');
+        console.log('Added file_data column to messages table');
+      }
+    } catch (fileDataError) {
+      console.warn('Could not check/add file_data column:', fileDataError.message);
       // Continue anyway
     }
     
@@ -173,14 +169,18 @@ module.exports = async (req, res) => {
         try {
           // Try with channel_id as string first (for string IDs like 'welcome')
           // JOIN with users table to get username
+          // LIMIT to last 200 messages for performance (most recent messages)
           [rows] = await db.execute(
             `SELECT m.*, u.username, u.name, u.email 
              FROM messages m 
              LEFT JOIN users u ON m.sender_id = u.id 
              WHERE m.channel_id = ? 
-             ORDER BY m.timestamp ASC`,
+             ORDER BY m.timestamp DESC 
+             LIMIT 200`,
             [channelId]
           );
+          // Reverse to get chronological order
+          rows = rows.reverse();
         } catch (queryError) {
           // If that fails, try converting channelId to number (for numeric IDs)
           const numericChannelId = parseInt(channelId);
@@ -190,9 +190,12 @@ module.exports = async (req, res) => {
                FROM messages m 
                LEFT JOIN users u ON m.sender_id = u.id 
                WHERE m.channel_id = ? 
-               ORDER BY m.timestamp ASC`,
+               ORDER BY m.timestamp DESC 
+               LIMIT 200`,
               [numericChannelId]
             );
+            // Reverse to get chronological order
+            rows = rows.reverse();
           } else {
             // If channelId is not numeric and query failed, try ordering by id
             try {
@@ -201,9 +204,12 @@ module.exports = async (req, res) => {
                  FROM messages m 
                  LEFT JOIN users u ON m.sender_id = u.id 
                  WHERE m.channel_id = ? 
-                 ORDER BY m.id ASC`,
+                 ORDER BY m.id DESC 
+                 LIMIT 200`,
                 [channelId]
               );
+              // Reverse to get chronological order
+              rows = rows.reverse();
             } catch (fallbackError) {
               if (!isNaN(numericChannelId)) {
                 [rows] = await db.execute(
@@ -211,21 +217,36 @@ module.exports = async (req, res) => {
                    FROM messages m 
                    LEFT JOIN users u ON m.sender_id = u.id 
                    WHERE m.channel_id = ? 
-                   ORDER BY m.id ASC`,
+                   ORDER BY m.id DESC 
+                   LIMIT 200`,
                   [numericChannelId]
                 );
+                // Reverse to get chronological order
+                rows = rows.reverse();
               } else {
                 throw queryError;
               }
             }
           }
         }
-        await db.end();
+        db.release(); // Release connection back to pool
 
         // Map to frontend format - handle actual column names
         const messages = rows.map(row => {
           // Get username from joined user table, fallback to name, then email prefix, then Anonymous
           const username = row.username || row.name || (row.email ? row.email.split('@')[0] : 'Anonymous');
+          
+          // Parse file_data if present
+          let fileData = null;
+          if (row.file_data) {
+            try {
+              fileData = typeof row.file_data === 'string' 
+                ? JSON.parse(row.file_data) 
+                : row.file_data;
+            } catch (parseError) {
+              console.warn('Could not parse file_data for message', row.id, ':', parseError);
+            }
+          }
           
           return {
             id: row.id,
@@ -235,6 +256,7 @@ module.exports = async (req, res) => {
             content: row.content,
             createdAt: row.timestamp,
             timestamp: row.timestamp,
+            file: fileData, // Include file data if present
             sender: {
               id: row.sender_id,
               username: username,
@@ -247,7 +269,13 @@ module.exports = async (req, res) => {
         return res.status(200).json(messages);
       } catch (dbError) {
         console.error('Database error fetching messages:', dbError);
-        await db.end();
+        if (db) {
+          try {
+            db.release(); // Release connection back to pool
+          } catch (e) {
+            // Ignore release errors
+          }
+        }
         return res.status(200).json([]);
       }
     }
@@ -270,7 +298,7 @@ module.exports = async (req, res) => {
         const tableExists = await ensureMessagesTable(db);
         if (!tableExists) {
           console.error('Failed to ensure messages table exists');
-          await db.end();
+          db.release(); // Release connection back to pool
           return res.status(500).json({ 
             success: false, 
             message: 'Failed to initialize messages table. Please contact support.',
@@ -364,13 +392,24 @@ module.exports = async (req, res) => {
             messageContent += ` [FILE: ${file.name}${file.preview ? ' - Image' : ''}]`;
         }
         
+        // Prepare file_data JSON if file exists
+        let fileDataJson = null;
+        if (file && file.name) {
+            fileDataJson = JSON.stringify({
+                name: file.name,
+                type: file.type || 'application/octet-stream',
+                size: file.size || 0,
+                preview: file.preview || null
+            });
+        }
+        
         // Insert message - use actual column names
-        // Include encrypted field with default FALSE value
+        // Include encrypted field with default FALSE value and file_data if present
         let result;
         try {
           const insertResult = await db.execute(
-            'INSERT INTO messages (channel_id, sender_id, content, encrypted, timestamp) VALUES (?, ?, ?, FALSE, NOW())',
-            [channelIdValue, userId || null, messageContent]
+            'INSERT INTO messages (channel_id, sender_id, content, encrypted, file_data, timestamp) VALUES (?, ?, ?, FALSE, ?, NOW())',
+            [channelIdValue, userId || null, messageContent, fileDataJson]
           );
           // result is [ResultSetHeader, fields], we need the first element
           result = insertResult[0];
@@ -419,8 +458,20 @@ module.exports = async (req, res) => {
           }
         }
         
-        await db.end();
+        db.release(); // Release connection back to pool
 
+        // Parse file_data if present
+        let fileData = null;
+        if (newMessage.file_data) {
+            try {
+                fileData = typeof newMessage.file_data === 'string' 
+                    ? JSON.parse(newMessage.file_data) 
+                    : newMessage.file_data;
+            } catch (parseError) {
+                console.warn('Could not parse file_data:', parseError);
+            }
+        }
+        
         // Map to frontend format
         const message = {
           id: newMessage.id,
@@ -430,6 +481,7 @@ module.exports = async (req, res) => {
           content: newMessage.content,
           createdAt: newMessage.timestamp, // Actual column is timestamp
           timestamp: newMessage.timestamp,
+          file: fileData, // Include file data if present
           sender: {
             id: newMessage.sender_id,
             username: senderUsername,
@@ -474,13 +526,13 @@ module.exports = async (req, res) => {
           errorDetails = `Error code: ${dbError.code || 'UNKNOWN'}`;
         }
         
-        try {
-          if (db && !db.ended) {
-            await db.end();
+        if (db) {
+          try {
+            db.release(); // Release connection back to pool
+          } catch (releaseError) {
+            // Ignore errors when releasing connection
+            console.warn('Error releasing database connection:', releaseError.message);
           }
-        } catch (endError) {
-          // Ignore errors when closing connection
-          console.warn('Error closing database connection:', endError.message);
         }
         
         // Return detailed error in development, generic in production
@@ -543,7 +595,7 @@ module.exports = async (req, res) => {
         
         if (!messageRows || messageRows.length === 0) {
           console.log('Message not found with ID:', messageId, 'tried value:', messageIdValue);
-          await db.end();
+          db.release(); // Release connection back to pool
           return res.status(404).json({ success: false, message: 'Message not found' });
         }
 
@@ -553,7 +605,7 @@ module.exports = async (req, res) => {
         // TODO: Add admin check from JWT token
         // For now, allow deletion (you can add auth check later)
         const [result] = await db.execute('DELETE FROM messages WHERE id = ?', [messageIdValue]);
-        await db.end();
+        db.release(); // Release connection back to pool
 
         if (result.affectedRows > 0) {
           console.log('Message deleted successfully:', messageIdValue);
@@ -576,12 +628,12 @@ module.exports = async (req, res) => {
           messageId: messageId,
           messageIdType: typeof messageId
         });
-        try {
-          if (db && !db.ended) {
-            await db.end();
+        if (db) {
+          try {
+            db.release(); // Release connection back to pool
+          } catch (releaseError) {
+            // Ignore errors when releasing connection
           }
-        } catch (endError) {
-          // Ignore errors when closing connection
         }
         return res.status(500).json({ 
           success: false, 
