@@ -98,7 +98,7 @@ const Courses = () => {
             {/* SUBSCRIPTIONS SECTION */}
             <div style={{
                 marginTop: '40px',
-                marginBottom: '60px'
+                marginBottom: '30px'
             }}>
                 <h2 className="section-title subscriptions-title" style={{
                     color: '#ffffff',
@@ -216,7 +216,7 @@ const Courses = () => {
 
             {/* COURSES SECTION */}
             <div style={{
-                marginTop: '80px',
+                marginTop: '30px',
                 marginBottom: '40px'
             }}>
                 <h2 className="section-title courses-section-title" style={{
