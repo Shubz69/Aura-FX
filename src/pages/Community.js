@@ -7,6 +7,7 @@ import CosmicBackground from '../components/CosmicBackground';
 import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
+import { useAuth } from '../context/AuthContext';
 
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit } from 'react-icons/fa';
@@ -226,6 +227,7 @@ const Community = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
     const { id: channelIdParam } = useParams();
+    const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
     
     const [channelList, setChannelList] = useState([]);
     const [selectedChannel, setSelectedChannel] = useState(null);
@@ -1807,7 +1809,8 @@ const Community = () => {
     // Initialize component - refresh user data on mount and on payment redirect
     useEffect(() => {        
         const storedToken = localStorage.getItem('token');
-        let storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        // Prioritize AuthContext user if available (most up-to-date), otherwise use localStorage
+        let storedUserData = authUser ? { ...authUser } : JSON.parse(localStorage.getItem('user') || '{}');
         
         const tokenIsValid = storedToken && storedToken.split('.').length === 3;
         setIsAuthenticated(tokenIsValid);
@@ -1824,7 +1827,9 @@ const Community = () => {
         
         if (paymentSuccess || sessionId) {
             // Refresh user data from localStorage (just updated by PaymentSuccess)
-            storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+            // Also check AuthContext for latest data
+            const latestUser = authUser || JSON.parse(localStorage.getItem('user') || '{}');
+            storedUserData = { ...latestUser };
             // Clear URL params
             window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -1875,8 +1880,16 @@ const Community = () => {
             
             // Set user level
             setUserLevel(calculatedLevel);
+            
+            // If coming from payment success, immediately check subscription status from DB
+            if ((paymentSuccess || sessionId) && storedUserData.id) {
+                // Small delay to ensure backend has processed the payment
+                setTimeout(() => {
+                    checkSubscriptionFromDB();
+                }, 500);
+            }
         }
-    }, [navigate]);
+    }, [navigate, authUser, checkSubscriptionFromDB]);
 
     // Check API connectivity - defined before useEffects that use it
     const checkApiConnectivity = useCallback(async () => {
