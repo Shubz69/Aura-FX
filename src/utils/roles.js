@@ -110,6 +110,32 @@ export const isSuperAdmin = (user = null) => {
          user.role === ROLES.SUPER_ADMIN;
 };
 
+// Check if user has premium subscription (premium or a7fx)
+export const isPremium = (user = null) => {
+  if (!user) {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const role = storedUser.role || ROLES.FREE;
+    const subscriptionStatus = storedUser.subscription_status || 'inactive';
+    const subscriptionPlan = storedUser.subscription_plan;
+    
+    return role === ROLES.PREMIUM || 
+           role === ROLES.A7FX || 
+           role === ROLES.ADMIN || 
+           role === ROLES.SUPER_ADMIN ||
+           (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
+  }
+  
+  const role = user.role || ROLES.FREE;
+  const subscriptionStatus = user.subscription_status || 'inactive';
+  const subscriptionPlan = user.subscription_plan;
+  
+  return role === ROLES.PREMIUM || 
+         role === ROLES.A7FX || 
+         role === ROLES.ADMIN || 
+         role === ROLES.SUPER_ADMIN ||
+         (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
+};
+
 // Get user's capabilities
 export const getUserCapabilities = (user = null) => {
   if (isSuperAdmin(user)) {

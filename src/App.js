@@ -36,6 +36,7 @@ import Subscription from './pages/Subscription';
 import Settings from './pages/Settings';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import PremiumAI from './pages/PremiumAI';
 
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -113,6 +114,7 @@ function AppRoutes() {
                             <Route path="/community/:channelId" element={<Community />} />
                             <Route path="/leaderboard" element={<Leaderboard />} />
                             <Route path="/messages" element={<Messages />} />
+                            <Route path="/premium-ai" element={<PremiumAI />} />
                         </>
                     )}
 

@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 import "../styles/UserDropdown.css";
 import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH } from 'react-icons/fa';
-import { isSuperAdmin, isAdmin } from '../utils/roles';
+import { isSuperAdmin, isAdmin, isPremium } from '../utils/roles';
 import AuraLogo from './AuraLogo';
 import NotificationSystem, { triggerNotification } from './NotificationSystem';
 
@@ -95,6 +95,11 @@ const Navbar = () => {
                                 <Link to="/leaderboard" className="dropdown-item">
                                     <FaTrophy className="dropdown-icon" /> Leaderboard
                                 </Link>
+                                {isPremium(user) && (
+                                    <Link to="/premium-ai" className="dropdown-item">
+                                        🤖 Premium AI Assistant
+                                    </Link>
+                                )}
                                 {(isAdmin(user) || isSuperAdmin(user)) && (
                                     <>
                                         <Link to="/admin" className="dropdown-item">
@@ -128,6 +133,9 @@ const Navbar = () => {
                     {!user && <li><Link to="/why-glitch" onClick={toggleMobileMenu}>Why AURA FX</Link></li>}
                     <li><Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link></li>
                     {user && <li><Link to="/leaderboard" onClick={toggleMobileMenu}>Leaderboard</Link></li>}
+                    {isPremium(user) && (
+                        <li><Link to="/premium-ai" onClick={toggleMobileMenu}>🤖 Premium AI</Link></li>
+                    )}
                     {user?.role?.toUpperCase() === "ADMIN" && (
                         <>
                             <li><Link to="/admin" onClick={toggleMobileMenu}>Admin Panel</Link></li>
