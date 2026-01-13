@@ -759,12 +759,39 @@ const Community = () => {
         return totalXP;
     };
 
-    // Get user's role
+    // Get user's role - check subscription status and plan
     const getCurrentUserRole = () => {
         if (isSuperAdminUser) return 'super_admin';
         if (isAdminUser) return 'admin';
-        if (storedUser?.role) return storedUser.role.toLowerCase();
-        return 'free';
+        
+        // Check subscription status and plan from user object
+        const subscriptionStatus = storedUser?.subscription_status || subscriptionStatusFromDB;
+        const subscriptionPlan = storedUser?.subscription_plan;
+        const userRole = storedUser?.role?.toLowerCase() || 'free';
+        
+        // If user has active subscription, ensure role matches plan
+        if (subscriptionStatus === 'active') {
+            if (subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'A7FX') {
+                return 'a7fx';
+            }
+            if (subscriptionPlan === 'aura' || subscriptionPlan === 'Aura FX' || subscriptionPlan === 'premium') {
+                return 'premium';
+            }
+            // If no plan specified but has active subscription, check role
+            if (userRole === 'a7fx' || userRole === 'premium') {
+                return userRole;
+            }
+            // Default to premium if subscription is active but no plan specified
+            return 'premium';
+        }
+        
+        // If subscription is inactive/expired, downgrade to free
+        if (subscriptionStatus === 'inactive' || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') {
+            return 'free';
+        }
+        
+        // Return stored role or default to free
+        return userRole || 'free';
     };
 
     // Get user's courses
@@ -3122,12 +3149,26 @@ Let's build generational wealth together! 💰🚀`,
                     {Object.keys(groupedChannels).sort().map(categoryName => {
                         const channels = groupedChannels[categoryName];
                         return channels.map(channel => {
-                            // Only hide admin-only channels from non-admins
                             const canAccess = canUserAccessChannel(channel);
-                            if (!canAccess) return null;
+                            const accessLevel = (channel.accessLevel || 'open').toLowerCase();
+                            const isAdminOnly = accessLevel === 'admin-only';
+                            
+                            // Hide admin-only channels from non-admins
+                            if (isAdminOnly && !canAccess) return null;
+                            
+                            const isLocked = !canAccess && !isAdminOnly;
+                            let lockIndicator = '';
+                            if (isLocked) {
+                                if (accessLevel === 'premium') {
+                                    lockIndicator = ' 🔒 (Premium Required)';
+                                } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                                    lockIndicator = ' 🔒 (A7FX Elite Required)';
+                                }
+                            }
+                            
                             return (
-                                <option key={channel.id} value={channel.id}>
-                                    {categoryName.toUpperCase()}: {channel.displayName || channel.name}
+                                <option key={channel.id} value={channel.id} disabled={isLocked}>
+                                    {categoryName.toUpperCase()}: {channel.displayName || channel.name}{lockIndicator}
                                 </option>
                             );
                         });
@@ -3144,15 +3185,128 @@ Let's build generational wealth together! 💰🚀`,
             }}>
                 {selectedChannel ? (
                     <>
-                        {/* Chat Header */}
-                        <div className="chat-header">
-                            <h2>
-                                {selectedChannel.name}
-                            </h2>
-                        </div>
-                        
-                        {/* Messages */}
-                        <div className="chat-messages">
+                        {/* Check if user can access this channel */}
+                        {!canUserAccessChannel(selectedChannel) ? (
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                height: '100%',
+                                padding: '40px',
+                                textAlign: 'center',
+                                background: 'rgba(0, 0, 0, 0.3)',
+                                borderRadius: '12px',
+                                border: '2px solid rgba(251, 191, 36, 0.3)'
+                            }}>
+                                <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔒</div>
+                                <h2 style={{ 
+                                    color: '#fbbf24', 
+                                    marginBottom: '16px',
+                                    fontSize: '24px',
+                                    fontWeight: 'bold'
+                                }}>
+                                    Subscription Required
+                                </h2>
+                                {(() => {
+                                    const accessLevel = (selectedChannel.accessLevel || 'open').toLowerCase();
+                                    const currentRole = getCurrentUserRole();
+                                    let message = '';
+                                    let subscriptionType = '';
+                                    let price = '';
+                                    
+                                    if (accessLevel === 'premium') {
+                                        subscriptionType = 'Aura FX Premium';
+                                        price = '£99/month';
+                                        message = `This channel requires an Aura FX Premium subscription (${price}).\n\n`;
+                                        message += `Current Status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User (but subscription may be inactive or expired)' : currentRole}\n\n`;
+                                    } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                                        subscriptionType = 'A7FX Elite';
+                                        price = '£250/month';
+                                        message = `This channel requires an A7FX Elite subscription (${price}).\n\n`;
+                                        message += `Current Status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User (upgrade to A7FX Elite required)' : currentRole === 'a7fx' ? 'A7FX Elite (but subscription may be inactive or expired)' : currentRole}\n\n`;
+                                    }
+                                    
+                                    message += `To access this channel, you need an active ${subscriptionType} subscription.\n\n`;
+                                    message += `Would you like to subscribe now?`;
+                                    
+                                    return (
+                                        <>
+                                            <p style={{ 
+                                                color: 'var(--text-normal)', 
+                                                marginBottom: '24px',
+                                                fontSize: '16px',
+                                                lineHeight: '1.6',
+                                                maxWidth: '500px'
+                                            }}>
+                                                This channel requires a <strong style={{ color: '#fbbf24' }}>{subscriptionType}</strong> subscription ({price})
+                                            </p>
+                                            <div style={{
+                                                background: 'rgba(251, 191, 36, 0.1)',
+                                                padding: '16px',
+                                                borderRadius: '8px',
+                                                marginBottom: '24px',
+                                                maxWidth: '500px',
+                                                width: '100%'
+                                            }}>
+                                                <p style={{ 
+                                                    color: 'var(--text-muted)', 
+                                                    margin: '0 0 8px 0',
+                                                    fontSize: '14px'
+                                                }}>
+                                                    <strong>Your Current Status:</strong> {currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' ? 'A7FX Elite User' : currentRole}
+                                                </p>
+                                                {(currentRole === 'premium' || currentRole === 'a7fx') && (
+                                                    <p style={{ 
+                                                        color: '#fbbf24', 
+                                                        margin: '8px 0 0 0',
+                                                        fontSize: '14px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        ⚠️ Your subscription may be inactive or expired. Please check your subscription status.
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => window.location.href = '/subscription'}
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    padding: '12px 32px',
+                                                    borderRadius: '8px',
+                                                    fontSize: '16px',
+                                                    fontWeight: 'bold',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease',
+                                                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.6)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                                                }}
+                                            >
+                                                Subscribe Now - {price}
+                                            </button>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        ) : (
+                            <>
+                                {/* Chat Header */}
+                                <div className="chat-header">
+                                    <h2>
+                                        {selectedChannel.name}
+                                    </h2>
+                                </div>
+                                
+                                {/* Messages */}
+                                <div className="chat-messages">
                             {messages.length === 0 ? (
                                 <div className="empty-state">
                                     <h3>Welcome to #{selectedChannel.displayName || selectedChannel.name}</h3>
@@ -3658,9 +3812,18 @@ Let's build generational wealth together! 💰🚀`,
                                                 ? 'Edit your message...'
                                                 : canUserPostInChannel(selectedChannel)
                                                     ? `Message #${selectedChannel.name}`
-                                                    : selectedChannel.accessLevel === 'admin-only'
-                                                        ? `🔒 Only admins can post in #${selectedChannel.name}`
-                                                        : `You don't have permission to send messages in #${selectedChannel.name}`
+                                                    : (() => {
+                                                        const accessLevel = (selectedChannel.accessLevel || 'open').toLowerCase();
+                                                        if (accessLevel === 'admin-only') {
+                                                            return `🔒 Only admins can post in #${selectedChannel.name}`;
+                                                        } else if (accessLevel === 'premium') {
+                                                            return `🔒 Premium subscription required to post in #${selectedChannel.name}. Subscribe to unlock!`;
+                                                        } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                                                            return `🔒 A7FX Elite subscription required to post in #${selectedChannel.name}. Upgrade to unlock!`;
+                                                        } else {
+                                                            return `You don't have permission to send messages in #${selectedChannel.name}`;
+                                                        }
+                                                    })()
                                         }
                                         disabled={!canUserPostInChannel(selectedChannel)}
                                         onKeyDown={(e) => {

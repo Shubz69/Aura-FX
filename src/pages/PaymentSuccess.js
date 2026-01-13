@@ -91,9 +91,16 @@ const PaymentSuccess = () => {
                                         localStorage.setItem('subscriptionExpiry', verifyResponse.data.expiry);
                                     }
                                     
-                                    // Update user role in localStorage
+                                    // Update user role in localStorage based on plan
                                     const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                    user.role = 'premium';
+                                    // Set role based on plan: 'a7fx' for A7FX Elite, 'premium' for Aura FX
+                                    if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
+                                        user.role = 'a7fx';
+                                    } else {
+                                        user.role = 'premium'; // Default to premium for 'aura' or any other plan
+                                    }
+                                    user.subscription_status = 'active';
+                                    user.subscription_plan = planParam || 'aura';
                                     localStorage.setItem('user', JSON.stringify(user));
                                     
                                     // Show success message before redirect
@@ -128,7 +135,14 @@ const PaymentSuccess = () => {
                                             localStorage.setItem('subscriptionExpiry', retryResponse.data.expiry);
                                         }
                                         const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                        user.role = 'premium';
+                                        // Set role based on plan: 'a7fx' for A7FX Elite, 'premium' for Aura FX
+                                        if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
+                                            user.role = 'a7fx';
+                                        } else {
+                                            user.role = 'premium'; // Default to premium for 'aura' or any other plan
+                                        }
+                                        user.subscription_status = 'active';
+                                        user.subscription_plan = planParam || 'aura';
                                         localStorage.setItem('user', JSON.stringify(user));
                                         
                                         // Show success message before redirect
