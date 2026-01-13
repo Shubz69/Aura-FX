@@ -384,7 +384,7 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Handle GET request for fetching user data
+  // Handle GET request for fetching user data (both /api/users/:userId and /api/users/public-profile/:userId)
   if (req.method === 'GET') {
     try {
       const db = await getDbConnection();
@@ -400,8 +400,15 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN last_username_change DATETIME DEFAULT NULL');
         }
         
+        // Ensure created_at column exists for public profiles
+        try {
+          await db.execute('SELECT created_at FROM users LIMIT 1');
+        } catch (e) {
+          await db.execute('ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP');
+        }
+        
         const [rows] = await db.execute(
-          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change FROM users WHERE id = ?',
+          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change, created_at FROM users WHERE id = ?',
           [userId]
         );
         await db.end();
@@ -410,7 +417,23 @@ module.exports = async (req, res) => {
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        return res.status(200).json(rows[0]);
+        const user = rows[0];
+        // Return user data with formatted dates
+        return res.status(200).json({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          name: user.name,
+          phone: user.phone,
+          address: user.address,
+          bio: user.bio,
+          avatar: user.avatar || '/avatars/avatar_ai.png',
+          role: user.role,
+          level: user.level || 1,
+          xp: user.xp || 0,
+          lastUsernameChange: user.last_username_change,
+          createdAt: user.created_at
+        });
       } catch (dbError) {
         console.error('Database error fetching user:', dbError);
         if (db && !db.ended) await db.end();

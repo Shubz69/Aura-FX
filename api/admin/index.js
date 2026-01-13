@@ -1000,7 +1000,7 @@ module.exports = async (req, res) => {
         // Auto-assign role based on plan
         let autoRole = 'free';
         if (subscription_plan === 'a7fx' || subscription_plan === 'elite') {
-          autoRole = 'a7fx';
+          autoRole = 'elite'; // A7FX purchases get Elite role
         } else if (subscription_plan === 'aura') {
           autoRole = 'premium';
         }

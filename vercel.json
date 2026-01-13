@@ -163,6 +163,10 @@
       "destination": "/api/users/update.js?userId=:userId"
     },
     {
+      "source": "/api/users/public-profile/:userId",
+      "destination": "/api/users/update.js?userId=:userId"
+    },
+    {
       "source": "/api/ai/premium-chat",
       "destination": "/api/ai/premium-chat.js"
     }
