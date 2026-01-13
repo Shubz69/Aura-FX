@@ -757,7 +757,7 @@ const Community = () => {
                     if (window.requestAnimationFrame) {
                         requestAnimationFrame(() => scrollToBottom());
                     } else {
-                        setTimeout(() => scrollToBottom(), 0);
+                    setTimeout(() => scrollToBottom(), 0);
                     }
                     
                     return newMessages;
@@ -1077,7 +1077,7 @@ const Community = () => {
         if (window.requestAnimationFrame) {
             requestAnimationFrame(() => scrollToBottom());
         } else {
-            setTimeout(() => scrollToBottom(), 0);
+        setTimeout(() => scrollToBottom(), 0);
         }
 
         try {
@@ -1804,10 +1804,10 @@ const Community = () => {
         // Subscription check is done in the render to show subscribe banner
     }, [isAuthenticated, navigate]);
 
-    // Initialize component
+    // Initialize component - refresh user data on mount and on payment redirect
     useEffect(() => {        
         const storedToken = localStorage.getItem('token');
-        const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        let storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
         
         const tokenIsValid = storedToken && storedToken.split('.').length === 3;
         setIsAuthenticated(tokenIsValid);
@@ -1817,8 +1817,17 @@ const Community = () => {
             return;
         }
         
-        // Don't redirect - allow user to see community page with subscribe button
-        // Subscription check is done in the render to show subscribe banner
+        // Check if coming from payment success - refresh user data immediately
+        const params = new URLSearchParams(window.location.search);
+        const paymentSuccess = params.get('payment_success') === 'true' || params.get('redirect_status') === 'succeeded';
+        const sessionId = params.get('session_id');
+        
+        if (paymentSuccess || sessionId) {
+            // Refresh user data from localStorage (just updated by PaymentSuccess)
+            storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+            // Clear URL params
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
 
         if (tokenIsValid) {
             // Ensure user has a displayable name
@@ -2534,7 +2543,7 @@ Let's build generational wealth together! 💰🚀`,
         if (window.requestAnimationFrame) {
             requestAnimationFrame(() => scrollToBottom());
         } else {
-            setTimeout(() => scrollToBottom(), 0);
+        setTimeout(() => scrollToBottom(), 0);
         }
 
         try {
@@ -2559,7 +2568,7 @@ Let's build generational wealth together! 💰🚀`,
                             // Use cached allUsers or fetch if needed
                             let usersForMentions = allUsers;
                             if (usersForMentions.length === 0) {
-                                const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
+                            const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
                                 usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
                                 setAllUsers(usersForMentions);
                             }
@@ -2952,7 +2961,7 @@ Let's build generational wealth together! 💰🚀`,
     
     if (!isAuthenticated && !hasToken) {
         // Show loading state instead of null to prevent white screen
-        return (
+    return (
             <div style={{ 
                 position: 'fixed',
                 top: 0,

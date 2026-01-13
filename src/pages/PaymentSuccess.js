@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../styles/PaymentSuccess.css";
 import CosmicBackground from '../components/CosmicBackground';
 
@@ -15,6 +16,7 @@ const PaymentSuccess = () => {
     const location = useLocation();
     const [processing, setProcessing] = useState(true);
     const [error, setError] = useState(false);
+    const { persistUser } = useAuth();
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -91,7 +93,7 @@ const PaymentSuccess = () => {
                                         localStorage.setItem('subscriptionExpiry', verifyResponse.data.expiry);
                                     }
                                     
-                                    // Update user role in localStorage based on plan
+                                    // Update user role in localStorage AND AuthContext immediately
                                     const user = JSON.parse(localStorage.getItem('user') || '{}');
                                     // Set role based on plan: 'a7fx' for A7FX Elite, 'premium' for Aura FX
                                     if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
@@ -101,19 +103,24 @@ const PaymentSuccess = () => {
                                     }
                                     user.subscription_status = 'active';
                                     user.subscription_plan = planParam || 'aura';
+                                    
+                                    // Update localStorage
                                     localStorage.setItem('user', JSON.stringify(user));
                                     
-                                    // Show success message before redirect
+                                    // Immediately update AuthContext to sync state
+                                    if (persistUser) {
+                                        persistUser(user);
+                                    }
+                                    
+                                    // Show success message briefly
                                     setMessage(`Purchased ${purchaseName}!`);
                                     setProcessing(false);
                                     
-                                    // Clear URL params
+                                    // Clear URL params immediately
                                     window.history.replaceState({}, document.title, window.location.pathname);
                                     
-                                    // Redirect to community after a brief delay to show success message
-                                    setTimeout(() => {
-                                        navigate('/community', { replace: true });
-                                    }, 1500);
+                                    // Redirect to community immediately (no delay for mobile)
+                                    navigate('/community', { replace: true });
                                     return;
                                 } else {
                                     // Retry once more after another second
@@ -143,18 +150,23 @@ const PaymentSuccess = () => {
                                         }
                                         user.subscription_status = 'active';
                                         user.subscription_plan = planParam || 'aura';
+                                        
+                                        // Update localStorage
                                         localStorage.setItem('user', JSON.stringify(user));
                                         
-                                        // Show success message before redirect
+                                        // Immediately update AuthContext to sync state
+                                        if (persistUser) {
+                                            persistUser(user);
+                                        }
+                                        
+                                        // Show success message briefly
                                         setMessage(`Purchased ${purchaseName}!`);
                                         setProcessing(false);
                                         
                                         window.history.replaceState({}, document.title, window.location.pathname);
                                         
-                                        // Redirect to community after a brief delay to show success message
-                                        setTimeout(() => {
-                                            navigate('/community', { replace: true });
-                                        }, 1500);
+                                        // Redirect to community immediately (no delay for mobile)
+                                        navigate('/community', { replace: true });
                                         return;
                                     }
                                     
@@ -162,12 +174,38 @@ const PaymentSuccess = () => {
                                 }
                             } catch (verifyError) {
                                 console.error('Subscription verification error:', verifyError);
+                                // Update user role anyway based on plan param
+                                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
+                                    user.role = 'a7fx';
+                                } else {
+                                    user.role = 'premium';
+                                }
+                                user.subscription_status = 'active';
+                                user.subscription_plan = planParam || 'aura';
+                                localStorage.setItem('user', JSON.stringify(user));
+                                if (persistUser) {
+                                    persistUser(user);
+                                }
                                 // Still redirect to community - the check there will handle it
                                 window.history.replaceState({}, document.title, window.location.pathname);
                                 navigate('/community', { replace: true });
                                 return;
                             }
                         } else {
+                            // Update user role anyway based on plan param
+                            const user = JSON.parse(localStorage.getItem('user') || '{}');
+                            if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
+                                user.role = 'a7fx';
+                            } else {
+                                user.role = 'premium';
+                            }
+                            user.subscription_status = 'active';
+                            user.subscription_plan = planParam || 'aura';
+                            localStorage.setItem('user', JSON.stringify(user));
+                            if (persistUser) {
+                                persistUser(user);
+                            }
                             // Still redirect to community even if activation failed
                             window.history.replaceState({}, document.title, window.location.pathname);
                             navigate('/community', { replace: true });
@@ -175,6 +213,19 @@ const PaymentSuccess = () => {
                         }
                     } catch (error) {
                         console.error('Error activating subscription:', error);
+                        // Update user role anyway based on plan param
+                        const user = JSON.parse(localStorage.getItem('user') || '{}');
+                        if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
+                            user.role = 'a7fx';
+                        } else {
+                            user.role = 'premium';
+                        }
+                        user.subscription_status = 'active';
+                        user.subscription_plan = planParam || 'aura';
+                        localStorage.setItem('user', JSON.stringify(user));
+                        if (persistUser) {
+                            persistUser(user);
+                        }
                         // Still redirect to community
                         window.history.replaceState({}, document.title, window.location.pathname);
                         navigate('/community', { replace: true });
