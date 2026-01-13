@@ -100,9 +100,9 @@ const Courses = () => {
                 marginTop: '40px',
                 marginBottom: '60px'
             }}>
-                <h2 className="section-title" style={{
+                <h2 className="section-title subscriptions-title" style={{
                     color: '#ffffff',
-                    fontSize: 'clamp(24px, 5vw, 36px)',
+                    fontSize: '36px',
                     fontWeight: 'bold',
                     marginBottom: '12px',
                     textAlign: 'center',
@@ -114,9 +114,9 @@ const Courses = () => {
                 }}>
                     💎 SUBSCRIPTIONS
                 </h2>
-                <p className="section-description" style={{
+                <p className="section-description subscriptions-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: 'clamp(14px, 2.5vw, 18px)',
+                    fontSize: '18px',
                     marginBottom: '40px',
                     textAlign: 'center',
                     lineHeight: '1.6',
@@ -321,9 +321,9 @@ const Courses = () => {
                 marginTop: '80px',
                 marginBottom: '40px'
             }}>
-                <h2 className="section-title" style={{
+                <h2 className="section-title courses-section-title" style={{
                     color: '#ffffff',
-                    fontSize: 'clamp(24px, 5vw, 36px)',
+                    fontSize: '36px',
                     fontWeight: 'bold',
                     marginBottom: '12px',
                     textAlign: 'center',
@@ -335,9 +335,9 @@ const Courses = () => {
                 }}>
                     📚 COURSES
                 </h2>
-                <p className="section-description" style={{
+                <p className="section-description courses-section-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: 'clamp(14px, 2.5vw, 18px)',
+                    fontSize: '18px',
                     marginBottom: '40px',
                     textAlign: 'center',
                     lineHeight: '1.6',

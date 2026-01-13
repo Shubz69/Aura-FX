@@ -3915,7 +3915,7 @@ Let's build generational wealth together! 💰🚀`,
                                 {/* Chat Header */}
                                 <div className="chat-header">
                                     <h2>
-                                        {selectedChannel.name}
+                                        {selectedChannel.displayName || selectedChannel.name}
                                     </h2>
                                 </div>
                                 
