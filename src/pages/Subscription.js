@@ -272,7 +272,7 @@ const Subscription = () => {
                                 <div className="plan-badge">Standard</div>
                             </div>
                             <div className="plan-pricing">
-                                <span className="plan-price">£79</span>
+                                <span className="plan-price">£99</span>
                                 <span className="plan-period">/month</span>
                             </div>
                             <div className="plan-benefits">
@@ -301,7 +301,7 @@ const Subscription = () => {
                                 <div className="plan-badge elite-badge">ELITE</div>
                             </div>
                             <div className="plan-pricing">
-                                <span className="plan-price">£199</span>
+                                <span className="plan-price">£250</span>
                                 <span className="plan-period">/month</span>
                             </div>
                             <div className="plan-benefits">

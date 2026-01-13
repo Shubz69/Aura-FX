@@ -3,15 +3,15 @@
 ## Overview
 The platform now supports a 3-tier subscription system with proper role-based channel access:
 1. **Free** - No subscription required
-2. **Premium (Aura FX)** - £79/month subscription
-3. **A7FX Elite** - £199/month subscription
+2. **Premium (Aura FX)** - £99/month subscription
+3. **A7FX Elite** - £250/month subscription
 
 ## Role System
 
 ### Roles Defined
 - `free` - Default role for all new users
-- `premium` - Assigned when user purchases Aura FX subscription (£79/month)
-- `a7fx` - Assigned when user purchases A7FX Elite subscription (£199/month)
+- `premium` - Assigned when user purchases Aura FX subscription (£99/month)
+- `a7fx` - Assigned when user purchases A7FX Elite subscription (£250/month)
 - `admin` - Admin users (assigned by Super Admin)
 - `super_admin` - Full system access (shubzfx@gmail.com only)
 

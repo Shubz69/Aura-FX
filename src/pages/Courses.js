@@ -224,7 +224,7 @@ const Courses = () => {
                         textAlign: 'center'
                     }}>
                         <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>Aura FX</h3>
-                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£79</div>
+                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
                         <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
                         <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
                             <li>✅ All free features</li>
@@ -289,7 +289,7 @@ const Courses = () => {
                             fontWeight: 'bold'
                         }}>ELITE</div>
                         <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>A7FX Elite</h3>
-                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£199</div>
+                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
                         <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
                         <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
                             <li>✅ Everything in Premium</li>

@@ -18,8 +18,8 @@ https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription
 ```
 
 **Important:** Replace `{PLAN_TYPE}` with:
-- `aura` for Aura FX Standard (£79/month)
-- `a7fx` for A7FX Elite (£199/month)
+- `aura` for Aura FX Standard (£99/month)
+- `a7fx` for A7FX Elite (£250/month)
 
 ### Step 3: Configure Cancel URL (Optional)
 Set the cancel URL to:
@@ -29,13 +29,13 @@ https://aura-fx-ten.vercel.app/subscription
 
 ## Payment Link URLs
 
-### For Aura FX Standard (£79/month)
+### For Aura FX Standard (£99/month)
 **Success URL:**
 ```
 https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true&plan=aura
 ```
 
-### For A7FX Elite (£199/month)
+### For A7FX Elite (£250/month)
 **Success URL:**
 ```
 https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true&plan=a7fx
@@ -61,13 +61,13 @@ https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription
 
 ## Testing
 
-### Test Aura FX Subscription (£79/month)
+### Test Aura FX Subscription (£99/month)
 1. Use test card: `4242 4242 4242 4242`
 2. Complete payment
 3. Should redirect to: `https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true&plan=aura`
 4. User should get `premium` role
 
-### Test A7FX Elite Subscription (£199/month)
+### Test A7FX Elite Subscription (£250/month)
 1. Use test card: `4242 4242 4242 4242`
 2. Complete payment
 3. Should redirect to: `https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true&plan=a7fx`
