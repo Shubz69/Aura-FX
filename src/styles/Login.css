@@ -224,24 +224,30 @@
     margin-bottom: 0;
 }
 
-/* Error message */
+/* Error message - Make it VERY visible */
 .error-message {
-    background: rgba(239, 68, 68, 0.15);
-    border: 2px solid rgba(239, 68, 68, 0.5);
-    color: #ff6b6b;
-    padding: 16px 20px;
-    border-radius: 12px;
-    margin-bottom: 24px;
-    font-size: 0.95rem;
-    font-family: var(--font-secondary);
-    font-weight: 600;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-    animation: errorPulse 0.5s ease-in-out;
-    position: relative;
-    z-index: 100;
-    display: block;
-    min-height: 20px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%) !important;
+    border: 2px solid #EF4444 !important;
+    color: #FFFFFF !important;
+    padding: 20px 24px !important;
+    border-radius: 12px !important;
+    margin-bottom: 24px !important;
+    margin-top: 16px !important;
+    font-size: 16px !important;
+    font-family: var(--font-secondary) !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    animation: errorPulse 0.5s ease-in-out !important;
+    position: relative !important;
+    z-index: 1000 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: auto !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
+    line-height: 1.6 !important;
 }
 
 @keyframes errorPulse {

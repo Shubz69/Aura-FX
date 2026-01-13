@@ -60,6 +60,9 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        // Clear previous error
+        errorRef.current = '';
         setError('');
         setIsLoading(true);
         
@@ -122,16 +125,18 @@ const Login = () => {
             }
 
             console.log('Setting error message:', errorMessage);
+            // Store error in ref for persistence
+            errorRef.current = errorMessage;
             // Ensure error is set and persists
             setError(errorMessage);
             setIsLoading(false);
             
-            // Force error to persist and be visible
+            // Force error to persist - double-check after render
             setTimeout(() => {
-                // Re-check error state to ensure it's still set
-                if (!error) {
+                // Force re-render with error message if it was cleared
+                if (errorRef.current && !error) {
                     console.warn('Error message was cleared, re-setting...');
-                    setError(errorMessage);
+                    setError(errorRef.current);
                 }
             }, 100);
             
@@ -297,23 +302,49 @@ const Login = () => {
                     <div 
                         className="error-message" 
                         role="alert" 
-                        aria-live="polite" 
+                        aria-live="assertive"
                         style={{ 
-                            display: 'block',
-                            visibility: 'visible',
-                            opacity: 1,
-                            marginBottom: '16px',
-                            padding: '12px 16px',
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            border: '1px solid rgba(239, 68, 68, 0.4)',
-                            borderRadius: '8px',
-                            color: '#ff6b6b',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            textAlign: 'center'
+                            display: 'block !important',
+                            visibility: 'visible !important',
+                            opacity: '1 !important',
+                            marginBottom: '24px',
+                            marginTop: '16px',
+                            padding: '20px 24px',
+                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                            border: '2px solid #EF4444',
+                            borderRadius: '12px',
+                            color: '#FFFFFF',
+                            fontSize: '16px',
+                            fontWeight: '700',
+                            textAlign: 'center',
+                            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.1)',
+                            animation: 'errorPulse 0.5s ease-in-out',
+                            zIndex: 1000,
+                            position: 'relative',
+                            textTransform: 'none',
+                            letterSpacing: '0.3px',
+                            lineHeight: '1.6'
                         }}
                     >
-                        <strong>⚠️ {error}</strong>
+                        <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            gap: '12px',
+                            fontSize: '20px',
+                            marginBottom: '8px'
+                        }}>
+                            <span style={{ fontSize: '28px' }}>⚠️</span>
+                            <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>LOGIN ERROR</strong>
+                        </div>
+                        <div style={{ 
+                            fontSize: '16px', 
+                            color: '#FFFFFF', 
+                            fontWeight: '600',
+                            marginTop: '8px'
+                        }}>
+                            {error}
+                        </div>
                     </div>
                 )}
                 
