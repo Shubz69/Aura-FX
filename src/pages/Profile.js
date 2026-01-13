@@ -4,6 +4,7 @@ import axios from "axios";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
 import CosmicBackground from '../components/CosmicBackground';
+import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
 
 const resolveApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location?.origin) {
@@ -65,6 +66,9 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     // eslint-disable-next-line no-unused-vars
     const navigate = useNavigate();
+    const [lastUsernameChange, setLastUsernameChange] = useState(null);
+    const [usernameValidationError, setUsernameValidationError] = useState("");
+    const [usernameCooldownInfo, setUsernameCooldownInfo] = useState(null);
 
     // Function to update local storage with user profile data
     const updateLocalUserData = (data) => {
@@ -139,6 +143,13 @@ const Profile = () => {
                             level: userData.level || authData.level,
                             xp: userData.xp || authData.xp
                         };
+                        
+                        // Store last username change date if available
+                        if (userData.last_username_change) {
+                            setLastUsernameChange(userData.last_username_change);
+                            const cooldownCheck = canChangeUsername(userData.last_username_change);
+                            setUsernameCooldownInfo(cooldownCheck);
+                        }
 
                         setFormData(prev => ({
                             ...prev,
@@ -224,10 +235,35 @@ const Profile = () => {
             return;
         }
 
+        // Special validation for username
+        if (field === 'username') {
+            const validation = validateUsername(formData.username);
+            if (!validation.valid) {
+                setUsernameValidationError(validation.error);
+                setStatus(validation.error);
+                return;
+            }
+            
+            // Check cooldown
+            if (lastUsernameChange) {
+                const cooldownCheck = canChangeUsername(lastUsernameChange);
+                if (!cooldownCheck.canChange) {
+                    setUsernameValidationError(getCooldownMessage(cooldownCheck.daysRemaining));
+                    setStatus(getCooldownMessage(cooldownCheck.daysRemaining));
+                    return;
+                }
+            }
+            
+            setUsernameValidationError("");
+        }
+
         try {
             const res = await axios.put(
                 `${resolveApiBaseUrl()}/api/users/${user.id}/update`,
-                { [field]: formData[field] },
+                { 
+                    [field]: formData[field],
+                    ...(field === 'username' ? { updateUsername: true } : {})
+                },
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -238,6 +274,13 @@ const Profile = () => {
 
             if (res.status === 200) {
                 setStatus("Profile updated successfully.");
+                
+                // If username was updated, update cooldown info
+                if (field === 'username' && res.data.last_username_change) {
+                    setLastUsernameChange(res.data.last_username_change);
+                    const cooldownCheck = canChangeUsername(res.data.last_username_change);
+                    setUsernameCooldownInfo(cooldownCheck);
+                }
                 
                 // Update both states with the new value
                 const updatedData = {
@@ -259,7 +302,14 @@ const Profile = () => {
             setEditField(null);
         } catch (err) {
             console.error(err);
-            setStatus("Server error.");
+            if (err.response?.data?.message) {
+                setStatus(err.response.data.message);
+                if (field === 'username') {
+                    setUsernameValidationError(err.response.data.message);
+                }
+            } else {
+                setStatus("Server error.");
+            }
         }
     };
 
@@ -458,16 +508,70 @@ const Profile = () => {
                                                 type="text"
                                                 name={name}
                                                 value={formData[name]}
-                                                onChange={handleChange}
+                                                onChange={(e) => {
+                                                    handleChange(e);
+                                                    // Real-time validation for username
+                                                    if (name === 'username') {
+                                                        const validation = validateUsername(e.target.value);
+                                                        if (!validation.valid) {
+                                                            setUsernameValidationError(validation.error);
+                                                        } else {
+                                                            setUsernameValidationError("");
+                                                        }
+                                                    }
+                                                }}
+                                                placeholder={name === 'username' ? 'Letters, numbers, spaces allowed' : ''}
                                             />
                                         )}
-                                        <button onClick={() => handleSave(name)}>Save</button>
+                                        {name === 'username' && usernameValidationError && (
+                                            <div style={{ 
+                                                color: '#ff6b6b', 
+                                                fontSize: '12px', 
+                                                marginTop: '4px',
+                                                marginBottom: '4px'
+                                            }}>
+                                                {usernameValidationError}
+                                            </div>
+                                        )}
+                                        {name === 'username' && usernameCooldownInfo && !usernameCooldownInfo.canChange && (
+                                            <div style={{ 
+                                                color: '#ffa500', 
+                                                fontSize: '12px', 
+                                                marginTop: '4px',
+                                                marginBottom: '4px'
+                                            }}>
+                                                {getCooldownMessage(usernameCooldownInfo.daysRemaining)}
+                                            </div>
+                                        )}
+                                        <button 
+                                            onClick={() => handleSave(name)}
+                                            disabled={name === 'username' && (!!usernameValidationError || (usernameCooldownInfo && !usernameCooldownInfo.canChange))}
+                                        >
+                                            Save
+                                        </button>
+                                        <button onClick={() => {
+                                            setEditField(null);
+                                            setUsernameValidationError("");
+                                        }}>Cancel</button>
                                     </>
                                 ) : (
                                     <>
                                         <span>{formData[name] ? formData[name] : <i>None</i>}</span>
                                         {editable && (
-                                            <button onClick={() => setEditField(name)}>Change</button>
+                                            <button onClick={() => {
+                                                setEditField(name);
+                                                if (name === 'username' && lastUsernameChange) {
+                                                    const cooldownCheck = canChangeUsername(lastUsernameChange);
+                                                    setUsernameCooldownInfo(cooldownCheck);
+                                                }
+                                            }}>
+                                                Change
+                                                {name === 'username' && usernameCooldownInfo && !usernameCooldownInfo.canChange && (
+                                                    <span style={{ fontSize: '10px', display: 'block', color: '#ffa500' }}>
+                                                        ({usernameCooldownInfo.daysRemaining} days)
+                                                    </span>
+                                                )}
+                                            </button>
                                         )}
                                     </>
                                 )}

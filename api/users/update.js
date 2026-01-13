@@ -178,7 +178,7 @@ module.exports = async (req, res) => {
         }
 
         // Get update data from request body
-        const { name, username, email, phone, address, bio, avatar } = req.body || {};
+        const { name, username, email, phone, address, bio, avatar, updateUsername } = req.body || {};
 
         // Build update query dynamically
         const updates = [];
@@ -191,13 +191,110 @@ module.exports = async (req, res) => {
           return val;
         };
 
+        // Username validation and cooldown check (only if updateUsername flag is set)
+        if (username !== undefined && updateUsername) {
+          // Validate username format and content
+          const trimmedUsername = (username || '').trim();
+          
+          // Length check
+          if (trimmedUsername.length < 3) {
+            await db.end();
+            return res.status(400).json({ success: false, message: 'Username must be at least 3 characters long' });
+          }
+          
+          if (trimmedUsername.length > 30) {
+            await db.end();
+            return res.status(400).json({ success: false, message: 'Username must be 30 characters or less' });
+          }
+          
+          // Check for valid characters (letters, numbers, spaces, hyphens, underscores)
+          const validPattern = /^[a-zA-Z0-9\s_-]+$/;
+          if (!validPattern.test(trimmedUsername)) {
+            await db.end();
+            return res.status(400).json({ success: false, message: 'Username can only contain letters, numbers, spaces, hyphens, and underscores' });
+          }
+          
+          // Check for consecutive spaces
+          if (/\s{2,}/.test(trimmedUsername)) {
+            await db.end();
+            return res.status(400).json({ success: false, message: 'Username cannot contain consecutive spaces' });
+          }
+          
+          // Check for spaces at start/end
+          if (trimmedUsername.startsWith(' ') || trimmedUsername.endsWith(' ')) {
+            await db.end();
+            return res.status(400).json({ success: false, message: 'Username cannot start or end with a space' });
+          }
+          
+          // Check for inappropriate words (family-friendly filter)
+          const inappropriateWords = [
+            'fuck', 'shit', 'damn', 'hell', 'ass', 'bitch', 'bastard', 'crap',
+            'sex', 'porn', 'xxx', 'nsfw',
+            'kill', 'murder', 'death', 'violence',
+            'drug', 'cocaine', 'heroin', 'marijuana', 'weed',
+            'hate', 'racist', 'nazi',
+            'stupid', 'idiot', 'moron', 'retard'
+          ];
+          
+          const lowerUsername = trimmedUsername.toLowerCase();
+          const containsInappropriate = inappropriateWords.some(word => lowerUsername.includes(word));
+          if (containsInappropriate) {
+            await db.end();
+            return res.status(400).json({ success: false, message: 'Username contains inappropriate content. Please choose a family-friendly username.' });
+          }
+          
+          // Check 30-day cooldown
+          try {
+            // Ensure last_username_change column exists
+            try {
+              await db.execute('SELECT last_username_change FROM users LIMIT 1');
+            } catch (e) {
+              await db.execute('ALTER TABLE users ADD COLUMN last_username_change DATETIME DEFAULT NULL');
+            }
+            
+            // Get current user data
+            const [currentUser] = await db.execute(
+              'SELECT username, last_username_change FROM users WHERE id = ?',
+              [userId]
+            );
+            
+            // Only check cooldown if username is actually changing
+            if (currentUser.length > 0 && currentUser[0].username !== trimmedUsername) {
+              if (currentUser[0].last_username_change) {
+                const lastChange = new Date(currentUser[0].last_username_change);
+                const now = new Date();
+                const daysSinceChange = Math.floor((now - lastChange) / (1000 * 60 * 60 * 24));
+                const daysRemaining = 30 - daysSinceChange;
+                
+                if (daysRemaining > 0) {
+                  await db.end();
+                  return res.status(400).json({ 
+                    success: false, 
+                    message: `You can change your username in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.` 
+                  });
+                }
+              }
+              
+              // Username is changing and cooldown passed - update timestamp
+              updates.push('last_username_change = NOW()');
+            }
+          } catch (cooldownError) {
+            console.error('Error checking username cooldown:', cooldownError);
+            // Continue if cooldown check fails (for backward compatibility)
+          }
+          
+          // Use trimmed username
+          updates.push('username = ?');
+          values.push(trimmedUsername);
+        } else if (username !== undefined) {
+          // Username update without validation (for admin updates, etc.)
+          updates.push('username = ?');
+          values.push(cleanValue(username));
+        }
+
         if (name !== undefined) {
           updates.push('name = ?');
           values.push(cleanValue(name));
-        }
-        if (username !== undefined) {
-          updates.push('username = ?');
-          values.push(cleanValue(username));
         }
         if (email !== undefined) {
           updates.push('email = ?');
@@ -232,9 +329,9 @@ module.exports = async (req, res) => {
         const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
         await db.execute(query, values);
 
-        // Fetch updated user data
+        // Fetch updated user data (include last_username_change)
         const [updatedRows] = await db.execute(
-          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp FROM users WHERE id = ?',
+          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change FROM users WHERE id = ?',
           [userId]
         );
 
@@ -276,8 +373,15 @@ module.exports = async (req, res) => {
       }
 
       try {
+        // Ensure last_username_change column exists
+        try {
+          await db.execute('SELECT last_username_change FROM users LIMIT 1');
+        } catch (e) {
+          await db.execute('ALTER TABLE users ADD COLUMN last_username_change DATETIME DEFAULT NULL');
+        }
+        
         const [rows] = await db.execute(
-          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp FROM users WHERE id = ?',
+          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change FROM users WHERE id = ?',
           [userId]
         );
         await db.end();

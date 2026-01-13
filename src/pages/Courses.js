@@ -66,7 +66,7 @@ const Courses = () => {
         <div className="courses-container">
             <CosmicBackground />
             <div className="courses-header">
-                <h1 className="courses-title">PREMIUM TRADING COURSES</h1>
+                <h1 className="courses-title">COURSES/SUBSCRIPTIONS</h1>
                 <p>Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs</p>
             </div>
             
@@ -134,108 +134,215 @@ const Courses = () => {
                 )}
             </div>
             
-            {/* A7FX Elite Subscription Upgrade Section */}
+            {/* Subscription Management Section */}
             <div style={{
                 marginTop: '60px',
                 padding: '40px',
-                background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
                 borderRadius: '16px',
-                border: '2px solid rgba(139, 92, 246, 0.3)',
-                textAlign: 'center'
+                border: '2px solid rgba(139, 92, 246, 0.3)'
             }}>
-                    <h2 style={{
+                <h2 style={{
                     color: '#ffffff',
                     fontSize: '32px',
                     fontWeight: 'bold',
                     marginBottom: '16px',
+                    textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
                 }}>
-                    ⚡ UPGRADE TO A7FX ELITE
+                    📦 MANAGE YOUR SUBSCRIPTION
                 </h2>
                 <p style={{
                     color: 'rgba(255, 255, 255, 0.8)',
                     fontSize: '18px',
-                    marginBottom: '32px',
+                    marginBottom: '40px',
+                    textAlign: 'center',
                     lineHeight: '1.6'
                 }}>
-                    Unlock exclusive elite trading signals, priority 1-to-1 mentorship, and access to our most exclusive community of successful traders
+                    Choose or switch between subscription plans. Cancel anytime, no hidden fees.
                 </p>
+                
                 <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                     gap: '24px',
-                    marginBottom: '32px',
-                    flexWrap: 'wrap'
+                    marginBottom: '20px'
                 }}>
-                    <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                            fontSize: '48px',
-                            fontWeight: 'bold',
-                            color: '#8B5CF6',
-                            marginBottom: '8px'
-                        }}>£199</div>
-                        <div style={{
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            fontSize: '14px'
-                        }}>per month</div>
-                    </div>
+                    {/* Free Plan */}
                     <div style={{
-                        width: '1px',
-                        height: '60px',
-                        background: 'rgba(255, 255, 255, 0.2)'
-                    }}></div>
-                    <div style={{ textAlign: 'center' }}>
+                        padding: '24px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        textAlign: 'center'
+                    }}>
+                        <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>Free</h3>
+                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
+                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
+                            <li>✅ Access to general channels</li>
+                            <li>✅ Basic community features</li>
+                            <li>✅ View announcements</li>
+                        </ul>
+                        <button
+                            onClick={() => {
+                                // Redirect to subscription page to manage (downgrade to free)
+                                window.location.href = '/subscription';
+                            }}
+                            style={{
+                                width: '100%',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                color: 'white',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                padding: '12px 24px',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                            }}
+                        >
+                            Select Free Plan
+                        </button>
+                    </div>
+
+                    {/* Premium Plan */}
+                    <div style={{
+                        padding: '24px',
+                        background: 'rgba(139, 92, 246, 0.15)',
+                        borderRadius: '12px',
+                        border: '2px solid rgba(139, 92, 246, 0.4)',
+                        textAlign: 'center'
+                    }}>
+                        <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>Aura FX</h3>
+                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£79</div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
+                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
+                            <li>✅ All free features</li>
+                            <li>✅ Premium channels</li>
+                            <li>✅ Trading signals</li>
+                            <li>✅ Market analysis</li>
+                        </ul>
+                        <button
+                            onClick={() => {
+                                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                                const userEmail = storedUser?.email;
+                                const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+                                const paymentLink = userEmail
+                                    ? `${STRIPE_PAYMENT_LINK_AURA}${STRIPE_PAYMENT_LINK_AURA.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=aura`
+                                    : `${STRIPE_PAYMENT_LINK_AURA}${STRIPE_PAYMENT_LINK_AURA.includes('?') ? '&' : '?'}plan=aura`;
+                                window.location.href = paymentLink;
+                            }}
+                            style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+                            }}
+                        >
+                            Select Premium Plan
+                        </button>
+                    </div>
+
+                    {/* A7FX Elite Plan */}
+                    <div style={{
+                        padding: '24px',
+                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)',
+                        borderRadius: '12px',
+                        border: '2px solid rgba(139, 92, 246, 0.5)',
+                        textAlign: 'center',
+                        position: 'relative'
+                    }}>
                         <div style={{
-                            fontSize: '24px',
-                            fontWeight: 'bold',
-                            color: '#ffffff',
-                            marginBottom: '8px'
-                        }}>Elite Benefits</div>
-                        <div style={{
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            fontSize: '14px'
-                        }}>Everything in Aura FX + More</div>
+                            position: 'absolute',
+                            top: '12px',
+                            right: '12px',
+                            background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                            color: 'white',
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }}>ELITE</div>
+                        <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>A7FX Elite</h3>
+                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£199</div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
+                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
+                            <li>✅ Everything in Premium</li>
+                            <li>✅ Elite-only channels</li>
+                            <li>✅ 1-to-1 mentorship</li>
+                            <li>✅ Exclusive signals</li>
+                            <li>✅ Direct founder access</li>
+                        </ul>
+                        <button
+                            onClick={() => {
+                                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                                const userEmail = storedUser?.email;
+                                const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
+                                const paymentLink = userEmail
+                                    ? `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=a7fx`
+                                    : `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}plan=a7fx`;
+                                window.location.href = paymentLink;
+                            }}
+                            style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+                            }}
+                        >
+                            Select Elite Plan
+                        </button>
                     </div>
                 </div>
-                <button
-                    onClick={() => {
-                        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                        const userEmail = storedUser?.email;
-                        const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
-                        const paymentLink = userEmail
-                            ? `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=a7fx`
-                            : `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}plan=a7fx`;
-                        window.location.href = paymentLink;
-                    }}
-                    style={{
-                        background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-                        color: 'white',
-                        border: 'none',
-                        padding: '16px 48px',
-                        borderRadius: '12px',
-                        fontSize: '18px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.target.style.transform = 'translateY(-2px)';
-                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
-                    }}
-                >
-                    Upgrade to A7FX Elite
-                </button>
+                
+                <p style={{
+                    textAlign: 'center',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '14px',
+                    marginTop: '20px'
+                }}>
+                    Cancel anytime • No hidden fees • Switch plans anytime
+                </p>
             </div>
         </div>
     );
