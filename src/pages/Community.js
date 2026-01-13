@@ -220,6 +220,9 @@ const Community = () => {
     const [requiredSubscriptionType, setRequiredSubscriptionType] = useState(null); // 'premium' or 'a7fx' - for channel access
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
+    const [allUsers, setAllUsers] = useState([]); // All users for @mention autocomplete
+    const [mentionAutocomplete, setMentionAutocomplete] = useState(null); // { show: true, query: 'sam', position: { x, y } }
+    const [mentionQuery, setMentionQuery] = useState(''); // Current @mention query
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
     const { id: channelIdParam } = useParams();
@@ -1656,6 +1659,31 @@ const Community = () => {
         return false;
     }, []);
 
+    // Fetch all users for @mention autocomplete
+    const fetchAllUsers = useCallback(async () => {
+        try {
+            const response = await axios.get(`${window.location.origin}/api/community/users`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (Array.isArray(response.data)) {
+                setAllUsers(response.data);
+            }
+        } catch (error) {
+            console.error('Error fetching users for autocomplete:', error);
+        }
+    }, []);
+
+    // Fetch users on mount and periodically
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchAllUsers();
+            const interval = setInterval(fetchAllUsers, 60000); // Refresh every minute
+            return () => clearInterval(interval);
+        }
+    }, [isAuthenticated, fetchAllUsers]);
+
     // Check subscription status from database
     const checkSubscriptionFromDB = useCallback(async () => {
         if (!userId) return false;
@@ -2523,21 +2551,60 @@ Let's build generational wealth together! 💰🚀`,
                         return final;
                     });
                     
-                    // Check for @mentions and send notifications only to mentioned users
+                    // Check for @mentions and send notifications
                     const mentionRegex = /@(\w+)/g;
                     const mentions = messageContent.match(mentionRegex);
                     if (mentions) {
                         try {
-                            // Fetch all users to match usernames
-                            const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
-                            const allUsers = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+                            // Use cached allUsers or fetch if needed
+                            let usersForMentions = allUsers;
+                            if (usersForMentions.length === 0) {
+                                const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
+                                usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+                                setAllUsers(usersForMentions);
+                            }
                             
                             // Get unique mentioned usernames
                             const mentionedUsernames = [...new Set(mentions.map(m => m.substring(1).toLowerCase()))];
                             
+                            // Check for @admin mention
+                            const hasAdminMention = mentionedUsernames.includes('admin');
+                            
+                            if (hasAdminMention) {
+                                // Notify all admins
+                                const adminUsers = usersForMentions.filter(u => {
+                                    const role = (u.role || '').toLowerCase();
+                                    return role === 'admin' || role === 'super_admin';
+                                });
+                                
+                                adminUsers.forEach(adminUser => {
+                                    // Send notification to all admins (including current user if they're an admin)
+                                    // Update channel badge for admin (only if not viewing this channel)
+                                    if (String(selectedChannel.id) !== String(selectedChannel?.id)) {
+                                        // This will be handled by WebSocket for other users
+                                    }
+                                    
+                                    // Send notification
+                                    triggerNotification(
+                                        'mention',
+                                        `@admin mention in #${selectedChannel.name}`,
+                                        `${senderUsername} mentioned @admin: ${messageContent}`,
+                                        `/community`,
+                                        adminUser.id
+                                    );
+                                    
+                                    // Update channel badge for admin (if not viewing this channel)
+                                    // Note: This will be handled per-user via WebSocket or localStorage
+                                    // For now, we'll update it for all admins via the notification system
+                                });
+                            }
+                            
+                            // Handle regular user mentions
                             mentionedUsernames.forEach(mentionedUsername => {
+                                if (mentionedUsername === 'admin') return; // Already handled above
+                                
                                 // Find the user by username (case-insensitive)
-                                const mentionedUser = allUsers.find(u => {
+                                const mentionedUser = usersForMentions.find(u => {
                                     const uUsername = (u.username || u.name || '').toLowerCase();
                                     return uUsername === mentionedUsername;
                                 });
@@ -2555,7 +2622,7 @@ Let's build generational wealth together! 💰🚀`,
                                         'mention',
                                         `You were mentioned in #${selectedChannel.name}`,
                                         `${senderUsername} mentioned you: ${messageContent}`,
-                                        `/community/${selectedChannel.id}`,
+                                        `/community`,
                                         mentionedUser.id // Pass the mentioned user's ID
                                     );
                                 }
@@ -4419,18 +4486,65 @@ Let's build generational wealth together! 💰🚀`,
                                         </button>
                                     </div>
                                 )}
-                                <div className="chat-input-wrapper">
+                                <div className="chat-input-wrapper" style={{ position: 'relative' }}>
                                     <textarea
                                         ref={messageInputRef}
                                         className="chat-input"
                                         value={newMessage}
                                         onChange={(e) => {
-                                            setNewMessage(e.target.value);
+                                            const value = e.target.value;
+                                            setNewMessage(value);
+                                            
+                                            // Check for @mention
+                                            const cursorPos = e.target.selectionStart;
+                                            const textBeforeCursor = value.substring(0, cursorPos);
+                                            const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+                                            
+                                            if (lastAtIndex !== -1) {
+                                                const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+                                                // Check if we're still in a word (no space after @)
+                                                if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+                                                    const query = textAfterAt.toLowerCase();
+                                                    setMentionQuery(query);
+                                                    setMentionAutocomplete({
+                                                        show: true,
+                                                        query: query,
+                                                        position: { x: 0, y: 0 } // Will be calculated
+                                                    });
+                                                } else {
+                                                    setMentionAutocomplete(null);
+                                                }
+                                            } else {
+                                                setMentionAutocomplete(null);
+                                            }
+                                            
                                             // Auto-resize textarea
                                             e.target.style.height = 'auto';
                                             e.target.style.height = `${Math.min(e.target.scrollHeight, 400)}px`;
                                         }}
                                         onPaste={handlePaste}
+                                        onKeyDown={(e) => {
+                                            // Handle autocomplete selection
+                                            if (mentionAutocomplete?.show) {
+                                                if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Tab') {
+                                                    e.preventDefault();
+                                                    // Autocomplete selection will be handled by the dropdown
+                                                    return;
+                                                }
+                                                if (e.key === 'Escape') {
+                                                    setMentionAutocomplete(null);
+                                                    return;
+                                                }
+                                            }
+                                            
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSendMessage(e);
+                                            }
+                                            if (e.key === 'Escape' && editingMessageId) {
+                                                handleCancelEdit();
+                                            }
+                                        }}
                                         placeholder={
                                             editingMessageId
                                                 ? 'Edit your message...'
@@ -4469,6 +4583,156 @@ Let's build generational wealth together! 💰🚀`,
                                             lineHeight: '1.6'
                                         }}
                                     />
+                                    
+                                    {/* @Mention Autocomplete Dropdown */}
+                                    {mentionAutocomplete?.show && (
+                                        <div className="mention-autocomplete" style={{
+                                            position: 'absolute',
+                                            bottom: '100%',
+                                            left: '0',
+                                            right: '0',
+                                            marginBottom: '8px',
+                                            background: 'var(--bg-secondary)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            zIndex: 1000,
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                        }}>
+                                            {(() => {
+                                                const query = mentionQuery.toLowerCase();
+                                                const filteredUsers = allUsers.filter(u => {
+                                                    const username = (u.username || u.name || '').toLowerCase();
+                                                    return username.includes(query) && String(u.id) !== String(userId);
+                                                }).slice(0, 10); // Limit to 10 results
+                                                
+                                                // Add @admin option if query matches
+                                                const showAdmin = query === '' || 'admin'.includes(query);
+                                                
+                                                return (
+                                                    <>
+                                                        {showAdmin && (
+                                                            <div
+                                                                className="mention-item"
+                                                                onClick={() => {
+                                                                    const cursorPos = messageInputRef.current.selectionStart;
+                                                                    const textBeforeCursor = newMessage.substring(0, cursorPos);
+                                                                    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+                                                                    const newText = newMessage.substring(0, lastAtIndex + 1) + 'admin ' + newMessage.substring(cursorPos);
+                                                                    setNewMessage(newText);
+                                                                    setMentionAutocomplete(null);
+                                                                    setTimeout(() => {
+                                                                        messageInputRef.current.focus();
+                                                                        const newPos = lastAtIndex + 6; // '@admin '
+                                                                        messageInputRef.current.setSelectionRange(newPos, newPos);
+                                                                    }, 0);
+                                                                }}
+                                                                style={{
+                                                                    padding: '10px 16px',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '10px',
+                                                                    borderBottom: '1px solid var(--border-color)',
+                                                                    background: query === '' ? 'rgba(139, 92, 246, 0.2)' : 'transparent'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.background = query === '' ? 'rgba(139, 92, 246, 0.2)' : 'transparent';
+                                                                }}
+                                                            >
+                                                                <div style={{
+                                                                    width: '32px',
+                                                                    height: '32px',
+                                                                    borderRadius: '50%',
+                                                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    color: 'white',
+                                                                    fontWeight: 'bold',
+                                                                    fontSize: '0.875rem'
+                                                                }}>A</div>
+                                                                <div>
+                                                                    <div style={{ fontWeight: 600, color: '#fff' }}>@admin</div>
+                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Notify all admins</div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {filteredUsers.map(user => (
+                                                            <div
+                                                                key={user.id}
+                                                                className="mention-item"
+                                                                onClick={() => {
+                                                                    const cursorPos = messageInputRef.current.selectionStart;
+                                                                    const textBeforeCursor = newMessage.substring(0, cursorPos);
+                                                                    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+                                                                    const username = user.username || user.name || 'user';
+                                                                    const newText = newMessage.substring(0, lastAtIndex + 1) + username + ' ' + newMessage.substring(cursorPos);
+                                                                    setNewMessage(newText);
+                                                                    setMentionAutocomplete(null);
+                                                                    setTimeout(() => {
+                                                                        messageInputRef.current.focus();
+                                                                        const newPos = lastAtIndex + username.length + 1;
+                                                                        messageInputRef.current.setSelectionRange(newPos, newPos);
+                                                                    }, 0);
+                                                                }}
+                                                                style={{
+                                                                    padding: '10px 16px',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '10px'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.background = 'transparent';
+                                                                }}
+                                                            >
+                                                                <div style={{
+                                                                    width: '32px',
+                                                                    height: '32px',
+                                                                    borderRadius: '50%',
+                                                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    color: 'white',
+                                                                    fontWeight: 'bold',
+                                                                    fontSize: '0.875rem'
+                                                                }}>
+                                                                    {(user.username || user.name || 'U').substring(0, 2).toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontWeight: 600, color: '#fff' }}>@{user.username || user.name || 'user'}</div>
+                                                                    {user.role && (
+                                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                                            {user.role === 'admin' || user.role === 'super_admin' ? 'Admin' : user.role}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {filteredUsers.length === 0 && !showAdmin && (
+                                                            <div style={{
+                                                                padding: '16px',
+                                                                textAlign: 'center',
+                                                                color: 'var(--text-muted)',
+                                                                fontSize: '0.875rem'
+                                                            }}>
+                                                                No users found
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+                                    )}
                                     
                                     <div className="chat-input-buttons">
                                         {/* File Upload Button */}
