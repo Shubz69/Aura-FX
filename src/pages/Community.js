@@ -367,11 +367,11 @@ const Community = () => {
         fetchCategoryOrder();
         fetchChannelOrder();
 
-        // Poll for updates every 10 seconds to sync across users
+        // Poll for updates every 5 seconds to sync across users (optimized for production)
         const intervalId = setInterval(() => {
             fetchCategoryOrder();
             fetchChannelOrder();
-        }, 10000);
+        }, 5000);
 
         // Also check when window regains focus
         const handleFocus = () => {
@@ -680,27 +680,50 @@ const Community = () => {
                 updateChannelBadge(messageChannelId, 'unread');
             }
             
-            // Only add message if it's for the current channel
+            // INSTANT UI update - only add message if it's for the current channel
             if (isCurrentChannel) {
+                // Use functional update for instant state change (no batching delay)
                 setMessages(prev => {
+                    // Fast duplicate check using Set for O(1) lookup
+                    const existingIds = new Set(prev.map(m => m.id));
+                    if (message.id && existingIds.has(message.id)) {
+                        return prev; // Duplicate - skip
+                    }
+                    
+                    // Fast content-based duplicate check (optimized)
                     const isDuplicate = prev.some(m => 
-                        m.id === message.id ||
-                        (m.content === message.content && 
+                        !m.id && !message.id && // Both lack IDs
+                        m.content === message.content && 
                         m.sender?.username === message.sender?.username &&
-                        Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 5000)
+                        Math.abs(new Date(m.timestamp || 0).getTime() - new Date(message.timestamp || 0).getTime()) < 2000
                     );
                     
                     if (isDuplicate) {
                         return prev;
                     }
                     
+                    // Add message instantly
                     const newMessages = [...prev, message];
-                    // Save to localStorage as backup
+                    
+                    // Save to localStorage asynchronously (non-blocking)
                     if (selectedChannel?.id) {
-                        saveMessagesToStorage(selectedChannel.id, newMessages);
+                        // Use requestIdleCallback for non-blocking save (or setTimeout 0)
+                        if (window.requestIdleCallback) {
+                            requestIdleCallback(() => {
+                                saveMessagesToStorage(selectedChannel.id, newMessages);
+                            });
+                        } else {
+                            setTimeout(() => saveMessagesToStorage(selectedChannel.id, newMessages), 0);
+                        }
                     }
-                    // Scroll to bottom immediately when new message arrives
-                    setTimeout(() => scrollToBottom(), 0);
+                    
+                    // Scroll to bottom instantly (use requestAnimationFrame for smooth scroll)
+                    if (window.requestAnimationFrame) {
+                        requestAnimationFrame(() => scrollToBottom());
+                    } else {
+                        setTimeout(() => scrollToBottom(), 0);
+                    }
+                    
                     return newMessages;
                 });
             }
@@ -1529,7 +1552,7 @@ const Community = () => {
         // Initial check already done above if needed, then every 10 seconds
         const interval = setInterval(() => {
             checkSubscriptionFromDB();
-        }, 10000); // Reduced from 3s to 10s
+        }, 30000); // Check subscription every 30s (not critical for real-time)
         
         return () => clearInterval(interval);
     }, [userId, isAuthenticated, checkSubscriptionFromDB]);
@@ -1818,9 +1841,8 @@ const Community = () => {
         // Update immediately
         updateConnectionStatus();
         
-        // Update status every 3 seconds for real-time updates
-        // OPTIMIZATION: Check connection status less frequently (5 seconds instead of 3)
-        const statusCheckInterval = setInterval(updateConnectionStatus, 5000);
+        // Update status every 2 seconds for real-time updates (optimized for production)
+        const statusCheckInterval = setInterval(updateConnectionStatus, 2000);
         
         return () => clearInterval(statusCheckInterval);
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
@@ -1834,9 +1856,9 @@ const Community = () => {
         setOnlineCount(fakeUsers.online);
         setTotalUsers(fakeUsers.total);
 
-        // Then fetch real data periodically
+        // Then fetch real data periodically (optimized for production)
         fetchOnlineStatus();
-        const statusInterval = setInterval(fetchOnlineStatus, 15000);
+        const statusInterval = setInterval(fetchOnlineStatus, 10000); // Reduced from 15s to 10s
 
         return () => clearInterval(statusInterval);
     }, [isAuthenticated, fetchOnlineStatus, generateFakeUsers]);
@@ -1886,8 +1908,9 @@ const Community = () => {
         // Store previous message count for notification detection
         let previousMessageCount = messages.length;
         
-        // Poll interval: 3 seconds when WebSocket is down (optimized for 500 users)
-        const pollInterval = 3000;
+        // Poll interval: 1 second when WebSocket is down (optimized for instant updates)
+        // When WebSocket is connected, polling is completely disabled
+        const pollInterval = 1000; // Reduced to 1s for faster fallback when WS is down
         
         // Start polling immediately
         const pollMessages = async () => {

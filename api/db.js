@@ -22,13 +22,19 @@ const getDbPool = () => {
     database: process.env.MYSQL_DATABASE,
     port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
     waitForConnections: true,
-    connectionLimit: 50, // Optimized for 100-500 concurrent users
+    connectionLimit: 100, // PRODUCTION: Increased for high traffic (500+ concurrent users)
     queueLimit: 0, // Unlimited queue
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
-    acquireTimeout: 60000, // 60 second timeout for getting connection
-    timeout: 60000, // 60 second query timeout
-    ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false
+    acquireTimeout: 10000, // PRODUCTION: Reduced to 10s for faster failure detection
+    timeout: 5000, // PRODUCTION: Reduced to 5s query timeout for instant responses
+    ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    // PRODUCTION OPTIMIZATIONS:
+    multipleStatements: false, // Security: prevent SQL injection
+    dateStrings: false, // Use Date objects for better performance
+    supportBigNumbers: true, // Support large numbers
+    bigNumberStrings: false, // Use numbers, not strings
+    typeCast: true // Enable type casting for performance
   });
 
   console.log('Database connection pool created');

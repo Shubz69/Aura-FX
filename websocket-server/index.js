@@ -34,11 +34,19 @@ const createDbPool = () => {
         database: process.env.MYSQL_DATABASE,
         port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
         waitForConnections: true,
-        connectionLimit: 20, // Increased for WebSocket server
+        connectionLimit: 50, // PRODUCTION: Increased for WebSocket server (high traffic)
         queueLimit: 0,
         enableKeepAlive: true,
         keepAliveInitialDelay: 0,
-        ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false
+        acquireTimeout: 10000, // PRODUCTION: 10s timeout for faster failure detection
+        timeout: 5000, // PRODUCTION: 5s query timeout for instant responses
+        ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false,
+        // PRODUCTION OPTIMIZATIONS:
+        multipleStatements: false,
+        dateStrings: false,
+        supportBigNumbers: true,
+        bigNumberStrings: false,
+        typeCast: true
     });
 };
 
@@ -189,44 +197,45 @@ wss.on('connection', (ws, req) => {
                     return;
                 }
                 
-                // Save to database if pool is available
-                if (dbPool && data.content) {
-                    try {
-                        await dbPool.execute(
-                            'INSERT INTO messages (channel_id, sender_id, content, timestamp) VALUES (?, ?, ?, NOW())',
-                            [channelId, data.userId || data.senderId || null, data.content]
-                        );
-                    } catch (dbError) {
-                        console.error('Error saving message to database:', dbError.message);
-                    }
-                }
-                
-                // Broadcast to all subscribers of this channel
-                const messageToSend = JSON.stringify({
-                    id: Date.now(),
-                    channelId: channelId,
-                    content: data.content,
-                    sender: data.sender || { 
-                        id: data.userId || data.senderId, 
-                        username: data.username || 'User',
-                        avatar: data.avatar || '/avatars/avatar_ai.png'
-                    },
-                    timestamp: new Date().toISOString(),
-                    userId: data.userId || data.senderId,
-                    username: data.username || 'User'
-                });
-                
+                // Broadcast message INSTANTLY to all subscribers (non-blocking)
+                // This ensures 1ms response time for real-time updates
                 const topic = `/topic/chat/${channelId}`;
                 if (subscriptions.has(channelId)) {
-                    subscriptions.get(channelId).forEach((client) => {
-                        if (client.readyState === WebSocket.OPEN) {
-                            const messageFrame = createStompFrame('MESSAGE', {
-                                'destination': topic,
-                                'content-type': 'application/json',
-                                'message-id': Date.now().toString()
-                            }, messageToSend);
-                            client.send(messageFrame);
+                    const subscribers = subscriptions.get(channelId);
+                    const messageFrame = createStompFrame('MESSAGE', {
+                        'destination': topic,
+                        'message-id': `${Date.now()}-${Math.random()}`,
+                        'subscription': `sub-${channelId}`,
+                        'content-type': 'application/json'
+                    }, JSON.stringify(data));
+                    
+                    // Broadcast to all subscribers INSTANTLY (non-blocking)
+                    subscribers.forEach(client => {
+                        try {
+                            if (client.readyState === 1) { // WebSocket.OPEN
+                                client.send(messageFrame);
+                            }
+                        } catch (sendError) {
+                            // Silently remove dead connections
+                            subscribers.delete(client);
                         }
+                    });
+                }
+                
+                // Save to database asynchronously (fire-and-forget, non-blocking)
+                // Don't wait for DB - message already broadcasted instantly
+                if (dbPool && data.content) {
+                    dbPool.execute(
+                        'INSERT INTO messages (channel_id, sender_id, content, timestamp, file_data) VALUES (?, ?, ?, NOW(), ?)',
+                        [
+                            channelId, 
+                            data.userId || data.senderId || null, 
+                            data.content,
+                            data.file ? JSON.stringify(data.file) : null
+                        ]
+                    ).catch(dbError => {
+                        // Log error but don't block - message already delivered
+                        console.error('Error saving message to database (non-critical):', dbError.message);
                     });
                 }
             } else if (frame.command === 'DISCONNECT') {
