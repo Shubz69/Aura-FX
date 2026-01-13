@@ -325,9 +325,22 @@ const Community = () => {
     const [isDeletingMessage, setIsDeletingMessage] = useState(false);
     
     // Category order - load from backend or use default
+    // Try to load from localStorage first for instant display, then update from backend
     const [categoryOrderState, setCategoryOrderState] = useState(() => {
+        // Try localStorage first for instant display
+        const saved = localStorage.getItem('channelCategoryOrder');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            } catch (e) {
+                // Invalid JSON, use default
+            }
+        }
         // Default order - will be replaced by backend data
-        return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
+        return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
     });
     
     const categoryOrder = categoryOrderState;
@@ -3034,7 +3047,7 @@ Let's build generational wealth together! 💰🚀`,
                                     setDraggedCategory(null);
                                 }}
                                 onDragOver={(e) => {
-                                    if (draggedCategory && draggedCategory !== categoryName) {
+                                    if ((draggedCategory && draggedCategory !== categoryName) || draggedChannel) {
                                         e.preventDefault();
                                         e.dataTransfer.dropEffect = 'move';
                                     }
@@ -3044,7 +3057,45 @@ Let's build generational wealth together! 💰🚀`,
                                         e.preventDefault();
                                     }
                                 }}
-                                onDrop={(e) => {
+                                onDrop={async (e) => {
+                                    // Check if a channel is being dropped on category header
+                                    if (draggedChannel && !draggedCategory) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        
+                                        // Move channel to this category
+                                        try {
+                                            const response = await fetch(`/api/community/channels`, {
+                                                method: 'PUT',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                },
+                                                body: JSON.stringify({
+                                                    id: draggedChannel,
+                                                    category: categoryName
+                                                })
+                                            });
+                                            
+                                            if (response.ok) {
+                                                // Refresh channel list to show updated category
+                                                const refreshResponse = await fetch('/api/community/channels');
+                                                if (refreshResponse.ok) {
+                                                    const data = await refreshResponse.json();
+                                                    if (data.success && Array.isArray(data.channels)) {
+                                                        setChannelList(data.channels);
+                                                    }
+                                                }
+                                                setDraggedChannel(null);
+                                            } else {
+                                                console.error('Failed to move channel to category:', await response.text());
+                                            }
+                                        } catch (error) {
+                                            console.error('Error moving channel to category:', error);
+                                        }
+                                        return;
+                                    }
+                                    
+                                    // Handle category reordering
                                     if (draggedCategory && draggedCategory !== categoryName) {
                                         e.preventDefault();
                                         e.stopPropagation();
@@ -3148,22 +3199,58 @@ Let's build generational wealth together! 💰🚀`,
                                                         e.preventDefault();
                                                     }
                                                 }}
-                                                onDrop={(e) => {
+                                                onDrop={async (e) => {
                                                     if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
                                                         e.preventDefault();
                                                         e.stopPropagation();
                                                         
-                                                        // Reorder channels within category
-                                                        const currentOrder = channelOrder[categoryName] || channels.map(c => c.id);
-                                                        const draggedIndex = currentOrder.indexOf(draggedChannel);
-                                                        const dropIndex = currentOrder.indexOf(channel.id);
+                                                        // Find the dragged channel to get its current category
+                                                        const draggedChannelObj = channelList.find(c => c.id === draggedChannel);
+                                                        const sourceCategory = draggedChannelObj?.category || 'general';
                                                         
-                                                        if (draggedIndex !== -1 && dropIndex !== -1) {
-                                                            const newOrder = [...currentOrder];
-                                                            newOrder.splice(draggedIndex, 1);
-                                                            newOrder.splice(dropIndex, 0, draggedChannel);
-                                                            saveChannelOrder(categoryName, newOrder);
-                                                            setDraggedChannel(null);
+                                                        // If dropped in same category, just reorder
+                                                        if (sourceCategory === categoryName) {
+                                                            const currentOrder = channelOrder[categoryName] || channels.map(c => c.id);
+                                                            const draggedIndex = currentOrder.indexOf(draggedChannel);
+                                                            const dropIndex = currentOrder.indexOf(channel.id);
+                                                            
+                                                            if (draggedIndex !== -1 && dropIndex !== -1) {
+                                                                const newOrder = [...currentOrder];
+                                                                newOrder.splice(draggedIndex, 1);
+                                                                newOrder.splice(dropIndex, 0, draggedChannel);
+                                                                saveChannelOrder(categoryName, newOrder);
+                                                                setDraggedChannel(null);
+                                                            }
+                                                        } else {
+                                                            // Moving to different category - update channel category
+                                                            try {
+                                                                const response = await fetch(`/api/community/channels`, {
+                                                                    method: 'PUT',
+                                                                    headers: {
+                                                                        'Content-Type': 'application/json'
+                                                                    },
+                                                                    body: JSON.stringify({
+                                                                        id: draggedChannel,
+                                                                        category: categoryName
+                                                                    })
+                                                                });
+                                                                
+                                                                if (response.ok) {
+                                                                    // Refresh channel list to show updated category
+                                                                    const refreshResponse = await fetch('/api/community/channels');
+                                                                    if (refreshResponse.ok) {
+                                                                        const data = await refreshResponse.json();
+                                                                        if (data.success && Array.isArray(data.channels)) {
+                                                                            setChannelList(data.channels);
+                                                                        }
+                                                                    }
+                                                                    setDraggedChannel(null);
+                                                                } else {
+                                                                    console.error('Failed to move channel to category:', await response.text());
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error moving channel to category:', error);
+                                                            }
                                                         }
                                                     }
                                                 }}

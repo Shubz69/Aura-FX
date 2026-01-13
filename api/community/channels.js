@@ -858,8 +858,18 @@ module.exports = async (req, res) => {
   }
 
   // Handle channel order POST
-  if (req.method === 'POST' && req.body.channelOrder) {
+  if (req.method === 'POST' && (req.body?.channelOrder || (typeof req.body === 'string' && req.body.includes('channelOrder')))) {
     try {
+      // Parse request body if needed (Vercel sometimes passes it as a string)
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
+        }
+      }
+      
       const db = await getDbConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
@@ -867,7 +877,7 @@ module.exports = async (req, res) => {
 
       try {
         await ensureSettingsTable(db);
-        const channelOrder = req.body.channelOrder;
+        const channelOrder = body.channelOrder;
         
         if (typeof channelOrder !== 'object' || channelOrder === null) {
           return res.status(400).json({ success: false, message: 'Invalid channel order format' });
@@ -891,8 +901,18 @@ module.exports = async (req, res) => {
     }
   }
 
-  if (req.method === 'POST' && req.body.categoryOrder) {
+  if (req.method === 'POST' && (req.body?.categoryOrder || (typeof req.body === 'string' && req.body.includes('categoryOrder')))) {
     try {
+      // Parse request body if needed (Vercel sometimes passes it as a string)
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
+        }
+      }
+      
       const db = await getDbConnection();
       if (!db) {
         return res.status(500).json({
@@ -903,7 +923,7 @@ module.exports = async (req, res) => {
 
       try {
         await ensureSettingsTable(db);
-        const order = Array.isArray(req.body.categoryOrder) ? req.body.categoryOrder : [];
+        const order = Array.isArray(body.categoryOrder) ? body.categoryOrder : [];
         
         // Validate order array
         if (order.length === 0) {
