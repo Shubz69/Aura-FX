@@ -189,8 +189,9 @@ const Community = () => {
         const saved = localStorage.getItem('collapsedCategories');
         return saved ? JSON.parse(saved) : {};
     });
-    const [draggedChannel, setDraggedChannel] = useState(null);
     const [draggedCategory, setDraggedCategory] = useState(null);
+    const [draggedChannel, setDraggedChannel] = useState(null);
+    const [channelOrder, setChannelOrder] = useState({}); // { category: [channelIds] }
     const [messageReactions, setMessageReactions] = useState({}); // messageId -> { emoji: count }
     const [contextMenu, setContextMenu] = useState(null); // { x, y, messageId }
     const [isAdminUser, setIsAdminUser] = useState(false);
@@ -315,7 +316,7 @@ const Community = () => {
     
     const categoryOrder = categoryOrderState;
 
-    // Load category order from backend
+    // Load category order and channel order from backend
     useEffect(() => {
         const fetchCategoryOrder = async () => {
             try {
@@ -339,14 +340,43 @@ const Community = () => {
                 }
             }
         };
+        
+        const fetchChannelOrder = async () => {
+            try {
+                const response = await fetch('/api/community/channels?channelOrder=true');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.channelOrder) {
+                        setChannelOrder(data.channelOrder);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching channel order:', error);
+                // Fallback to localStorage if backend fails
+                const saved = localStorage.getItem('channelOrder');
+                if (saved) {
+                    try {
+                        setChannelOrder(JSON.parse(saved));
+                    } catch (e) {
+                        // Use default
+                    }
+                }
+            }
+        };
+        
         fetchCategoryOrder();
+        fetchChannelOrder();
 
-        // Poll for category order updates every 10 seconds to sync across users
-        const intervalId = setInterval(fetchCategoryOrder, 10000);
+        // Poll for updates every 10 seconds to sync across users
+        const intervalId = setInterval(() => {
+            fetchCategoryOrder();
+            fetchChannelOrder();
+        }, 10000);
 
         // Also check when window regains focus
         const handleFocus = () => {
             fetchCategoryOrder();
+            fetchChannelOrder();
         };
         window.addEventListener('focus', handleFocus);
 
@@ -378,6 +408,36 @@ const Community = () => {
             console.error('Error saving category order:', error);
             // Fallback to localStorage
             localStorage.setItem('channelCategoryOrder', JSON.stringify(newOrder));
+            return false;
+        }
+        return false;
+    };
+    
+    // Save channel order to backend
+    const saveChannelOrder = async (category, newOrder) => {
+        const updatedOrder = { ...channelOrder, [category]: newOrder };
+        try {
+            const response = await fetch('/api/community/channels', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ channelOrder: updatedOrder })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setChannelOrder(updatedOrder);
+                    // Also save to localStorage as fallback
+                    localStorage.setItem('channelOrder', JSON.stringify(updatedOrder));
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.error('Error saving channel order:', error);
+            // Fallback to localStorage
+            setChannelOrder(updatedOrder);
+            localStorage.setItem('channelOrder', JSON.stringify(updatedOrder));
             return false;
         }
         return false;
@@ -2524,8 +2584,9 @@ Let's build generational wealth together! 💰🚀`,
 
     // Group channels by category - Show ALL channels to ALL users
     // Admin can control access via access_level in database
+    // Sort channels within each category by their order
     const groupedChannels = useMemo(() => {
-        return channelList.reduce((acc, channel) => {
+        const grouped = channelList.reduce((acc, channel) => {
             // Show ALL channels regardless of category
             const category = channel.category || 'general';
             if (!acc[category]) {
@@ -2534,7 +2595,27 @@ Let's build generational wealth together! 💰🚀`,
             acc[category].push(channel);
             return acc;
         }, {});
-    }, [channelList]);
+        
+        // Sort channels within each category by their order
+        Object.keys(grouped).forEach(category => {
+            const categoryOrder = channelOrder[category] || [];
+            grouped[category].sort((a, b) => {
+                const aIndex = categoryOrder.indexOf(a.id);
+                const bIndex = categoryOrder.indexOf(b.id);
+                // If both are in order, use order
+                if (aIndex !== -1 && bIndex !== -1) {
+                    return aIndex - bIndex;
+                }
+                // If only one is in order, prioritize it
+                if (aIndex !== -1) return -1;
+                if (bIndex !== -1) return 1;
+                // If neither is in order, maintain current order (by name)
+                return (a.name || '').localeCompare(b.name || '');
+            });
+        });
+        
+        return grouped;
+    }, [channelList, channelOrder]);
     
     // Update category order when channels change
     useEffect(() => {
@@ -2957,29 +3038,111 @@ Let's build generational wealth together! 💰🚀`,
                                 
                                 {!isCollapsed && (
                                 <ul className="channels-list">
-                                    {channels.map(channel => {
+                                    {channels.map((channel, channelIndex) => {
                                         // Only hide admin-only channels from non-admins
                                         // All other channels are visible to everyone
                                         const canAccess = canUserAccessChannel(channel);
-                                        if (!canAccess) return null; // Skip admin-only channels for non-admins
+                                        const accessLevel = (channel.accessLevel || 'open').toLowerCase();
+                                        const isAdminOnly = accessLevel === 'admin-only';
+                                        
+                                        // Hide admin-only channels from non-admins, but show locked premium/a7fx channels
+                                        if (isAdminOnly && !canAccess) return null;
                                         
                                         const isActive = selectedChannel?.id === channel.id;
                                         const badge = channelBadges[channel.id] || { unread: 0, mentions: 0 };
                                         const hasUnread = badge.unread > 0;
                                         const hasMentions = badge.mentions > 0;
+                                        const isLocked = !canAccess && !isAdminOnly;
+                                        const isDragging = draggedChannel === channel.id;
+                                        
+                                        // Determine subscription requirement message
+                                        let subscriptionRequirement = '';
+                                        if (isLocked) {
+                                            if (accessLevel === 'premium') {
+                                                subscriptionRequirement = 'Premium';
+                                            } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                                                subscriptionRequirement = 'A7FX Elite';
+                                            }
+                                        }
                                         
                                         return (
                                             <li 
                                                 key={channel.id}
-                                                className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''}`}
-                                                onClick={() => setSelectedChannel(channel)}
+                                                className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''} ${isLocked ? 'locked' : ''} ${isDragging ? 'dragging' : ''}`}
+                                                draggable={!isLocked}
+                                                onDragStart={(e) => {
+                                                    if (isLocked) {
+                                                        e.preventDefault();
+                                                        return;
+                                                    }
+                                                    setDraggedChannel(channel.id);
+                                                    e.dataTransfer.effectAllowed = 'move';
+                                                    e.dataTransfer.setData('text/plain', channel.id);
+                                                    e.currentTarget.style.opacity = '0.5';
+                                                }}
+                                                onDragEnd={(e) => {
+                                                    e.currentTarget.style.opacity = '';
+                                                    setDraggedChannel(null);
+                                                }}
+                                                onDragOver={(e) => {
+                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                        e.preventDefault();
+                                                        e.dataTransfer.dropEffect = 'move';
+                                                    }
+                                                }}
+                                                onDragEnter={(e) => {
+                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                                onDrop={(e) => {
+                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        
+                                                        // Reorder channels within category
+                                                        const currentOrder = channelOrder[categoryName] || channels.map(c => c.id);
+                                                        const draggedIndex = currentOrder.indexOf(draggedChannel);
+                                                        const dropIndex = currentOrder.indexOf(channel.id);
+                                                        
+                                                        if (draggedIndex !== -1 && dropIndex !== -1) {
+                                                            const newOrder = [...currentOrder];
+                                                            newOrder.splice(draggedIndex, 1);
+                                                            newOrder.splice(dropIndex, 0, draggedChannel);
+                                                            saveChannelOrder(categoryName, newOrder);
+                                                            setDraggedChannel(null);
+                                                        }
+                                                    }
+                                                }}
+                                                onClick={() => {
+                                                    if (isLocked) {
+                                                        // Show clear message about subscription requirement
+                                                        const currentRole = getCurrentUserRole();
+                                                        let message = `🔒 This channel requires a ${subscriptionRequirement} subscription.\n\n`;
+                                                        if (accessLevel === 'premium') {
+                                                            message += `You need an Aura FX Premium subscription (£99/month) to access this channel.\n\n`;
+                                                            message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium (but subscription may be inactive)' : currentRole}\n\n`;
+                                                        } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                                                            message += `You need an A7FX Elite subscription (£250/month) to access this channel.\n\n`;
+                                                            message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' ? 'A7FX (but subscription may be inactive)' : currentRole}\n\n`;
+                                                        }
+                                                        message += `Would you like to subscribe now?`;
+                                                        if (window.confirm(message)) {
+                                                            window.location.href = '/subscription';
+                                                        }
+                                                        return;
+                                                    }
+                                                    setSelectedChannel(channel);
+                                                }}
                                                 style={{ 
-                                                    cursor: 'pointer',
+                                                    cursor: isLocked ? 'not-allowed' : 'pointer',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'space-between',
-                                                    gap: '8px'
+                                                    gap: '8px',
+                                                    opacity: isLocked ? 0.6 : (isDragging ? 0.5 : 1)
                                                 }}
+                                                title={isLocked ? `🔒 Requires ${subscriptionRequirement} subscription - Click to subscribe` : 'Drag to reorder'}
                                             >
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
                                                     <span className="channel-icon">

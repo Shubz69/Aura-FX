@@ -771,6 +771,44 @@ module.exports = async (req, res) => {
   }
 
   // Handle category order GET/POST
+  // Handle channel order request
+  if (req.method === 'GET' && req.query.channelOrder === 'true') {
+    try {
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({ success: false, message: 'Database connection error' });
+      }
+
+      try {
+        await ensureSettingsTable(db);
+        const [rows] = await db.execute(
+          'SELECT value FROM community_settings WHERE id = ?',
+          ['channelOrder']
+        );
+
+        if (rows && rows.length > 0) {
+          try {
+            const channelOrder = JSON.parse(rows[0].value);
+            await db.end();
+            return res.status(200).json({ success: true, channelOrder });
+          } catch (parseError) {
+            console.error('Error parsing channel order:', parseError);
+          }
+        }
+
+        await db.end();
+        return res.status(200).json({ success: true, channelOrder: {} });
+      } catch (dbError) {
+        console.error('Database error fetching channel order:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({ success: false, message: 'Database error' });
+      }
+    } catch (error) {
+      console.error('Error in channel order handler:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  }
+
   if (req.method === 'GET' && req.query.categoryOrder === 'true') {
     try {
       const db = await getDbConnection();
@@ -816,6 +854,40 @@ module.exports = async (req, res) => {
         success: false,
         message: 'Internal server error'
       });
+    }
+  }
+
+  // Handle channel order POST
+  if (req.method === 'POST' && req.body.channelOrder) {
+    try {
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({ success: false, message: 'Database connection error' });
+      }
+
+      try {
+        await ensureSettingsTable(db);
+        const channelOrder = req.body.channelOrder;
+        
+        if (typeof channelOrder !== 'object' || channelOrder === null) {
+          return res.status(400).json({ success: false, message: 'Invalid channel order format' });
+        }
+
+        await db.execute(
+          'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
+          ['channelOrder', JSON.stringify(channelOrder), JSON.stringify(channelOrder)]
+        );
+
+        await db.end();
+        return res.status(200).json({ success: true, message: 'Channel order saved' });
+      } catch (dbError) {
+        console.error('Database error saving channel order:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({ success: false, message: 'Database error' });
+      }
+    } catch (error) {
+      console.error('Error in channel order save handler:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
 
