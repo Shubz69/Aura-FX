@@ -21,7 +21,27 @@ const PaymentSuccess = () => {
         const courseIdFromUrl = params.get("courseId");
         const sessionId = params.get("session_id");
         const paymentSuccess = params.get("payment_success");
+        const planParam = params.get("plan");
         const isSubscription = params.get("subscription") === "true" || !courseIdFromUrl;
+        
+        // Determine purchase type and name
+        let purchaseType = "course";
+        let purchaseName = "your course";
+        
+        if (isSubscription) {
+            purchaseType = "subscription";
+            // Determine subscription plan name
+            if (planParam === "a7fx") {
+                purchaseName = "A7FX Elite subscription";
+            } else {
+                purchaseName = "Aura FX subscription";
+            }
+            setMessage(`Purchasing ${purchaseName}...`);
+        } else {
+            const courseTitle = localStorage.getItem("purchasedCourseTitle") || "your course";
+            purchaseName = courseTitle;
+            setMessage(`Purchasing ${purchaseName}...`);
+        }
         
         // If this is a subscription payment, redirect to community after processing
         if (isSubscription && (paymentSuccess === "true" || sessionId || params.get("redirect_status") === "succeeded")) {
@@ -72,11 +92,17 @@ const PaymentSuccess = () => {
                                     user.role = 'premium';
                                     localStorage.setItem('user', JSON.stringify(user));
                                     
+                                    // Show success message before redirect
+                                    setMessage(`Purchased ${purchaseName}!`);
+                                    setProcessing(false);
+                                    
                                     // Clear URL params
                                     window.history.replaceState({}, document.title, window.location.pathname);
                                     
-                                    // Redirect to community immediately
-                                    window.location.href = '/community';
+                                    // Redirect to community after a brief delay to show success message
+                                    setTimeout(() => {
+                                        window.location.href = '/community';
+                                    }, 1500);
                                     return;
                                 } else {
                                     // Retry once more after another second
@@ -100,8 +126,17 @@ const PaymentSuccess = () => {
                                         const user = JSON.parse(localStorage.getItem('user') || '{}');
                                         user.role = 'premium';
                                         localStorage.setItem('user', JSON.stringify(user));
+                                        
+                                        // Show success message before redirect
+                                        setMessage(`Purchased ${purchaseName}!`);
+                                        setProcessing(false);
+                                        
                                         window.history.replaceState({}, document.title, window.location.pathname);
-                                        window.location.href = '/community';
+                                        
+                                        // Redirect to community after a brief delay to show success message
+                                        setTimeout(() => {
+                                            window.location.href = '/community';
+                                        }, 1500);
                                         return;
                                     }
                                     
@@ -204,7 +239,7 @@ const PaymentSuccess = () => {
                     }
 
                     if (response.status === 200) {
-                        setMessage(`🎉 Your purchase of "${courseTitle}" was successful! Course added and community access unlocked!`);
+                        setMessage(`🎉 Purchased ${courseTitle}! Course added and community access unlocked!`);
                     } else {
                         setMessage("Your payment was processed but there was an issue with course enrollment. Please contact support.");
                         setError(true);

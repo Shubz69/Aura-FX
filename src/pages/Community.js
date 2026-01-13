@@ -1001,16 +1001,13 @@ const Community = () => {
         if (file) {
             setSelectedFile(file);
             
-            // Create preview for images
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setFilePreview(reader.result);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                setFilePreview(null);
-            }
+            // Create preview/data URL for all files (images and documents)
+            // This allows files to be downloaded later
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFilePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -1072,7 +1069,12 @@ const Community = () => {
                         type: blob.type || 'application/octet-stream'
                     });
                     setSelectedFile(file);
-                    setFilePreview(null); // No preview for non-image files
+                    // Create data URL for all files so they can be downloaded later
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFilePreview(reader.result);
+                    };
+                    reader.readAsDataURL(file);
                 }
                 return;
             }
@@ -1959,6 +1961,116 @@ Let's build generational wealth together! 💰🚀`,
         setEditingMessageId(null);
         setEditingMessageContent('');
         setNewMessage('');
+    };
+
+    // Handle opening/downloading files
+    const handleFileClick = (file) => {
+        if (!file) return;
+        
+        // If it's an image with preview, open in new tab
+        if (file.preview && file.type && file.type.startsWith('image/')) {
+            const newWindow = window.open();
+            if (newWindow) {
+                newWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>${file.name}</title>
+                            <style>
+                                body {
+                                    margin: 0;
+                                    padding: 20px;
+                                    background: #1a1a1a;
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                    min-height: 100vh;
+                                }
+                                img {
+                                    max-width: 100%;
+                                    max-height: 100vh;
+                                    border-radius: 8px;
+                                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <img src="${file.preview}" alt="${file.name}" />
+                        </body>
+                    </html>
+                `);
+            }
+        } else if (file.preview) {
+            // For documents with preview (base64 data), download the file
+            try {
+                // Convert base64 to blob
+                const base64Data = file.preview.includes(',') 
+                    ? file.preview.split(',')[1] 
+                    : file.preview;
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: file.type || 'application/octet-stream' });
+                
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = file.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error downloading file:', error);
+                // Fallback: try to open in new tab if it's a viewable format
+                if (file.type && (file.type.includes('pdf') || file.type.includes('text'))) {
+                    const newWindow = window.open();
+                    if (newWindow && file.preview) {
+                        newWindow.document.write(`
+                            <html>
+                                <head>
+                                    <title>${file.name}</title>
+                                    <style>
+                                        body {
+                                            margin: 0;
+                                            padding: 20px;
+                                            background: #1a1a1a;
+                                            color: #fff;
+                                            font-family: Arial, sans-serif;
+                                        }
+                                        .container {
+                                            max-width: 800px;
+                                            margin: 0 auto;
+                                            padding: 20px;
+                                        }
+                                        iframe {
+                                            width: 100%;
+                                            height: 80vh;
+                                            border: none;
+                                            border-radius: 8px;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class="container">
+                                        <h2>${file.name}</h2>
+                                        <iframe src="${file.preview}"></iframe>
+                                    </div>
+                                </body>
+                            </html>
+                        `);
+                    }
+                } else {
+                    alert(`File "${file.name}" cannot be downloaded. File data is not available.`);
+                }
+            }
+        } else {
+            // No preview available - file data not stored
+            alert(`File "${file.name}" cannot be opened. The file data was not saved when the message was sent.`);
+        }
     };
 
     // Handle send message (or update if editing)
@@ -3007,9 +3119,6 @@ Let's build generational wealth together! 💰🚀`,
                         <div className="chat-header">
                             <h2>
                                 {selectedChannel.name}
-                                <span className="channel-access-badge">
-                                    FREE FOR ALL USERS
-                                </span>
                             </h2>
                         </div>
                         
@@ -3222,7 +3331,23 @@ Let's build generational wealth together! 💰🚀`,
                                                 </div>
                                             )}
                                             {message.file && message.file.preview && (
-                                                <div className="message-attachment">
+                                                <div 
+                                                    className="message-attachment clickable-file"
+                                                    onClick={() => handleFileClick(message.file)}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        transition: 'transform 0.2s ease, opacity 0.2s ease'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.transform = 'scale(1.02)';
+                                                        e.currentTarget.style.opacity = '0.9';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                        e.currentTarget.style.opacity = '1';
+                                                    }}
+                                                    title="Click to open in new window"
+                                                >
                                                     <img 
                                                         src={message.file.preview} 
                                                         alt={message.file.name}
@@ -3230,23 +3355,57 @@ Let's build generational wealth together! 💰🚀`,
                                                             maxWidth: '400px',
                                                             maxHeight: '300px',
                                                             borderRadius: '8px',
-                                                            marginTop: '8px'
+                                                            marginTop: '8px',
+                                                            display: 'block',
+                                                            pointerEvents: 'none'
                                                         }}
                                                     />
+                                                    <div style={{
+                                                        marginTop: '4px',
+                                                        fontSize: '0.75rem',
+                                                        color: 'var(--text-muted)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px'
+                                                    }}>
+                                                        <FaImage style={{ fontSize: '0.7rem' }} />
+                                                        <span>{message.file.name}</span>
+                                                        {message.file.size && (
+                                                            <span>({(message.file.size / 1024).toFixed(2)} KB)</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                             {message.file && !message.file.preview && (
-                                                <div className="message-file" style={{
-                                                    marginTop: '8px',
-                                                    padding: '12px',
-                                                    background: 'var(--bg-elevated)',
-                                                    borderRadius: '8px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '10px'
-                                                }}>
-                                                    <FaPaperclip />
-                                                    <span>{message.file.name}</span>
+                                                <div 
+                                                    className="message-file clickable-file"
+                                                    onClick={() => handleFileClick(message.file)}
+                                                    style={{
+                                                        marginTop: '8px',
+                                                        padding: '12px',
+                                                        background: 'var(--bg-elevated)',
+                                                        borderRadius: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '10px',
+                                                        cursor: 'pointer',
+                                                        transition: 'background 0.2s ease, transform 0.2s ease',
+                                                        border: '1px solid transparent'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.background = 'var(--hover-bg)';
+                                                        e.currentTarget.style.borderColor = 'var(--accent-blue)';
+                                                        e.currentTarget.style.transform = 'translateX(4px)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.background = 'var(--bg-elevated)';
+                                                        e.currentTarget.style.borderColor = 'transparent';
+                                                        e.currentTarget.style.transform = 'translateX(0)';
+                                                    }}
+                                                    title="Click to download"
+                                                >
+                                                    <FaPaperclip style={{ fontSize: '1.2rem', color: 'var(--accent-blue)' }} />
+                                                    <span style={{ flex: 1, fontWeight: 500 }}>{message.file.name}</span>
                                                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                                         ({(message.file.size / 1024).toFixed(2)} KB)
                                                     </span>

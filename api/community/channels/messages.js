@@ -1,4 +1,4 @@
-const { getDbConnection } = require('../db');
+const { getDbConnection } = require('../../db');
 
 // Ensure messages table exists with correct schema
 const ensureMessagesTable = async (db) => {
