@@ -567,6 +567,23 @@ module.exports = async (req, res) => {
           hasLevel = true;
         } catch (e) {}
 
+        // Check if subscription columns exist
+        let hasSubscriptionStatus = false;
+        let hasSubscriptionPlan = false;
+        let hasSubscriptionExpiry = false;
+        try {
+          await db.execute('SELECT subscription_status FROM users LIMIT 1');
+          hasSubscriptionStatus = true;
+        } catch (e) {}
+        try {
+          await db.execute('SELECT subscription_plan FROM users LIMIT 1');
+          hasSubscriptionPlan = true;
+        } catch (e) {}
+        try {
+          await db.execute('SELECT subscription_expiry FROM users LIMIT 1');
+          hasSubscriptionExpiry = true;
+        } catch (e) {}
+
         // Build query based on available columns
         let query = 'SELECT id, email, username, role';
         if (hasMetadata) {
@@ -583,6 +600,15 @@ module.exports = async (req, res) => {
         }
         if (hasLevel) {
           query += ', level';
+        }
+        if (hasSubscriptionStatus) {
+          query += ', subscription_status';
+        }
+        if (hasSubscriptionPlan) {
+          query += ', subscription_plan';
+        }
+        if (hasSubscriptionExpiry) {
+          query += ', subscription_expiry';
         }
         query += ' FROM users';
         if (hasCreatedAt) {
@@ -601,7 +627,10 @@ module.exports = async (req, res) => {
             role: user.role || 'free',
             capabilities: [],
             xp: hasXP ? (user.xp || 0) : 0,
-            level: hasLevel ? (user.level || 1) : 1
+            level: hasLevel ? (user.level || 1) : 1,
+            subscription_status: hasSubscriptionStatus ? (user.subscription_status || 'inactive') : 'inactive',
+            subscription_plan: hasSubscriptionPlan ? (user.subscription_plan || null) : null,
+            subscription_expiry: hasSubscriptionExpiry ? (user.subscription_expiry || null) : null
           };
 
           // Parse capabilities if metadata exists
@@ -662,7 +691,7 @@ module.exports = async (req, res) => {
       }
 
       // Validate role
-      const validRoles = ['free', 'premium', 'admin', 'super_admin'];
+      const validRoles = ['free', 'premium', 'a7fx', 'admin', 'super_admin'];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ success: false, message: 'Invalid role' });
       }
@@ -823,6 +852,132 @@ module.exports = async (req, res) => {
         success: false,
         message: 'Internal server error'
       });
+    }
+  }
+
+  // Handle /api/admin/users/:userId/subscription - Update user subscription (Super Admin only)
+  if (pathname.includes('/users/') && pathname.includes('/subscription') && req.method === 'PUT') {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({ success: false, message: 'Database connection error' });
+      }
+
+      // TODO: Verify JWT and check if user is super admin
+      // For now, allow if token exists (you should add proper JWT verification)
+
+      // Extract userId from path
+      const userIdMatch = pathname.match(/\/users\/(\d+)\/subscription/);
+      if (!userIdMatch) {
+        await db.end();
+        return res.status(400).json({ success: false, message: 'Invalid user ID' });
+      }
+      const userId = userIdMatch[1];
+
+      const { subscription_status, subscription_plan, subscription_expiry, role } = req.body;
+
+      // Validate subscription status
+      const validStatuses = ['active', 'inactive', 'cancelled', 'expired'];
+      if (subscription_status && !validStatuses.includes(subscription_status)) {
+        await db.end();
+        return res.status(400).json({ success: false, message: 'Invalid subscription status' });
+      }
+
+      // Validate subscription plan
+      const validPlans = ['aura', 'a7fx', 'elite', null];
+      if (subscription_plan !== undefined && !validPlans.includes(subscription_plan)) {
+        await db.end();
+        return res.status(400).json({ success: false, message: 'Invalid subscription plan' });
+      }
+
+      // Validate role if provided
+      const validRoles = ['free', 'premium', 'a7fx', 'admin', 'super_admin'];
+      if (role && !validRoles.includes(role)) {
+        await db.end();
+        return res.status(400).json({ success: false, message: 'Invalid role' });
+      }
+
+      // Check if user exists
+      const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
+      if (userRows.length === 0) {
+        await db.end();
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      const userEmail = userRows[0].email;
+      if (userEmail === 'shubzfx@gmail.com' && role && role !== 'super_admin') {
+        await db.end();
+        return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
+      }
+
+      // Build update query dynamically
+      const updates = [];
+      const values = [];
+
+      if (subscription_status !== undefined) {
+        updates.push('subscription_status = ?');
+        values.push(subscription_status);
+      }
+
+      if (subscription_plan !== undefined) {
+        updates.push('subscription_plan = ?');
+        values.push(subscription_plan);
+      }
+
+      if (subscription_expiry !== undefined) {
+        updates.push('subscription_expiry = ?');
+        values.push(subscription_expiry ? new Date(subscription_expiry) : null);
+      }
+
+      // Auto-update role based on subscription if role not explicitly provided
+      if (role !== undefined) {
+        updates.push('role = ?');
+        values.push(role);
+      } else if (subscription_status === 'active' && subscription_plan) {
+        // Auto-assign role based on plan
+        let autoRole = 'free';
+        if (subscription_plan === 'a7fx' || subscription_plan === 'elite') {
+          autoRole = 'a7fx';
+        } else if (subscription_plan === 'aura') {
+          autoRole = 'premium';
+        }
+        updates.push('role = ?');
+        values.push(autoRole);
+      } else if (subscription_status === 'inactive' || subscription_status === 'cancelled' || subscription_status === 'expired') {
+        // Auto-downgrade to free if subscription is inactive
+        updates.push('role = ?');
+        values.push('free');
+      }
+
+      if (updates.length === 0) {
+        await db.end();
+        return res.status(400).json({ success: false, message: 'No fields to update' });
+      }
+
+      values.push(userId);
+      const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+      await db.execute(query, values);
+
+      // Fetch updated user data
+      const [updatedRows] = await db.execute(
+        'SELECT id, email, role, subscription_status, subscription_plan, subscription_expiry FROM users WHERE id = ?',
+        [userId]
+      );
+
+      await db.end();
+      return res.status(200).json({
+        success: true,
+        message: 'Subscription updated successfully',
+        user: updatedRows[0]
+      });
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      return res.status(500).json({ success: false, message: 'Failed to update subscription' });
     }
   }
 

@@ -27,6 +27,12 @@ const Settings = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('users');
   const [deleteAdminModal, setDeleteAdminModal] = useState({ isOpen: false, adminUser: null });
+  
+  // Subscription management state
+  const [selectedSubUser, setSelectedSubUser] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState('inactive');
+  const [subscriptionPlan, setSubscriptionPlan] = useState('aura');
+  const [subscriptionExpiry, setSubscriptionExpiry] = useState('');
 
   const superAdmin = isSuperAdmin(user);
   const admin = isAdmin(user);
@@ -145,6 +151,55 @@ const Settings = () => {
     }
   };
 
+  const handleSaveSubscription = async () => {
+    if (!selectedSubUser) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/admin/users/${selectedSubUser.id}/subscription`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          subscription_status: subscriptionStatus,
+          subscription_plan: subscriptionPlan || null,
+          subscription_expiry: subscriptionExpiry || null
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to update subscription');
+      }
+
+      // Reload users to get updated data
+      await loadUsers();
+
+      toast.success('Subscription updated successfully!', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setSelectedSubUser(null);
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      toast.error('Failed to update subscription: ' + (error.message || 'Unknown error'), {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  };
+
   const handleDeleteAdmin = (adminUser) => {
     if (!superAdmin) return;
     if (adminUser.email === SUPER_ADMIN_EMAIL) {
@@ -240,6 +295,12 @@ const Settings = () => {
               onClick={() => setActiveTab('capabilities')}
             >
               Capabilities
+            </button>
+            <button 
+              className={activeTab === 'subscriptions' ? 'active' : ''}
+              onClick={() => setActiveTab('subscriptions')}
+            >
+              Subscription Management
             </button>
           </>
         )}
@@ -391,6 +452,113 @@ const Settings = () => {
                 </ul>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'subscriptions' && superAdmin && (
+        <div className="settings-content">
+          <div className="settings-section">
+            <h2>Subscription Management</h2>
+            <p className="help-text">
+              Manage user subscriptions manually. Changes will update user roles automatically.
+            </p>
+            
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search users by email or username..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="users-list">
+              {filteredUsers.map(u => (
+                <div 
+                  key={u.id} 
+                  className={`user-item ${selectedSubUser?.id === u.id ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedSubUser(u);
+                    setSubscriptionStatus(u.subscription_status || 'inactive');
+                    setSubscriptionPlan(u.subscription_plan || 'aura');
+                    if (u.subscription_expiry) {
+                      const expiryDate = new Date(u.subscription_expiry);
+                      setSubscriptionExpiry(expiryDate.toISOString().split('T')[0]);
+                    } else {
+                      setSubscriptionExpiry('');
+                    }
+                  }}
+                >
+                  <div className="user-info">
+                    <div className="user-email">{u.email}</div>
+                    <div className="user-role">
+                      {u.role || 'free'} | 
+                      {u.subscription_status || 'inactive'} | 
+                      {u.subscription_plan || 'none'}
+                    </div>
+                    {u.subscription_expiry && (
+                      <div className="user-subscription-expiry">
+                        Expires: {new Date(u.subscription_expiry).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {selectedSubUser && (
+              <div className="user-edit-panel">
+                <h3>Manage Subscription: {selectedSubUser.email}</h3>
+                
+                <div className="form-group">
+                  <label>Subscription Status</label>
+                  <select 
+                    value={subscriptionStatus} 
+                    onChange={(e) => setSubscriptionStatus(e.target.value)}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="expired">Expired</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Subscription Plan</label>
+                  <select 
+                    value={subscriptionPlan} 
+                    onChange={(e) => setSubscriptionPlan(e.target.value)}
+                  >
+                    <option value="aura">Aura FX (£99/month)</option>
+                    <option value="a7fx">A7FX Elite (£250/month)</option>
+                    <option value="">None (Free)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Expiry Date</label>
+                  <input
+                    type="date"
+                    value={subscriptionExpiry}
+                    onChange={(e) => setSubscriptionExpiry(e.target.value)}
+                    placeholder="Leave empty for no expiry"
+                  />
+                  <p className="help-text">
+                    Leave empty for no expiry. Format: YYYY-MM-DD
+                  </p>
+                </div>
+
+                <div className="form-actions">
+                  <button onClick={handleSaveSubscription} className="btn-primary">
+                    Save Subscription Changes
+                  </button>
+                  <button onClick={() => setSelectedSubUser(null)} className="btn-secondary">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
