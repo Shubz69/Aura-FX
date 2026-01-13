@@ -834,7 +834,7 @@ module.exports = async (req, res) => {
           });
         } else {
           // Return default order if not set
-          const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium'];
+          const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
           return res.status(200).json({
             success: true,
             data: defaultOrder

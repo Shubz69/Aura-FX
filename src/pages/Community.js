@@ -168,7 +168,23 @@ const getCategoryIcon = (category) => {
         case 'general': return '💬';
         case 'support': return '🆘';
         case 'premium': return '⭐';
+        case 'a7fx': return '💎';
         default: return '#';
+    }
+};
+
+// Format category name for display
+const formatCategoryName = (category) => {
+    switch(category) {
+        case 'a7fx': return 'A7FX';
+        case 'announcements': return 'ANNOUNCEMENTS';
+        case 'staff': return 'STAFF';
+        case 'courses': return 'COURSES';
+        case 'trading': return 'TRADING';
+        case 'general': return 'GENERAL';
+        case 'support': return 'SUPPORT';
+        case 'premium': return 'PREMIUM';
+        default: return category.toUpperCase();
     }
 };
 
@@ -3069,7 +3085,7 @@ Let's build generational wealth together! 💰🚀`,
                                 >
                                     <span className={`category-chevron ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
                                     <span className="category-icon">{getCategoryIcon(categoryName)}</span>
-                                    <h3 className="category-title">{categoryName}</h3>
+                                    <h3 className="category-title">{formatCategoryName(categoryName)}</h3>
                                     <span className="category-count">{channels.length}</span>
                                 </div>
                                 
@@ -3368,7 +3384,7 @@ Let's build generational wealth together! 💰🚀`,
                             
                             return (
                                 <option key={channel.id} value={channel.id} disabled={isLocked}>
-                                    {categoryName.toUpperCase()}: {channel.displayName || channel.name}{lockIndicator}
+                                    {formatCategoryName(categoryName)}: {channel.displayName || channel.name}{lockIndicator}
                                 </option>
                             );
                         });
@@ -4253,6 +4269,7 @@ Let's build generational wealth together! 💰🚀`,
                                         <option value="general">General</option>
                                         <option value="support">Support</option>
                                         <option value="premium">Premium</option>
+                                        <option value="a7fx">A7FX</option>
                                         <option value="staff">Staff</option>
                                     </select>
                                 </div>
