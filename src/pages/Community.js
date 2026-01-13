@@ -721,7 +721,12 @@ const Community = () => {
                     if (window.requestAnimationFrame) {
                         requestAnimationFrame(() => scrollToBottom());
                     } else {
+                        // Instant scroll using requestAnimationFrame for smooth, immediate update
+                    if (window.requestAnimationFrame) {
+                        requestAnimationFrame(() => scrollToBottom());
+                    } else {
                         setTimeout(() => scrollToBottom(), 0);
+                    }
                     }
                     
                     return newMessages;
