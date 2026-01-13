@@ -42,6 +42,21 @@ const Login = () => {
             navigate('/community');
         }
     }, [isAuthenticated, navigate]);
+    
+    // Prevent form from submitting and refreshing page
+    useEffect(() => {
+        const handleFormSubmit = (e) => {
+            const form = document.querySelector('form');
+            if (form && form.contains(e.target)) {
+                e.preventDefault();
+            }
+        };
+        
+        document.addEventListener('submit', handleFormSubmit, true);
+        return () => {
+            document.removeEventListener('submit', handleFormSubmit, true);
+        };
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -107,15 +122,23 @@ const Login = () => {
             }
 
             console.log('Setting error message:', errorMessage);
+            // Ensure error is set and persists
             setError(errorMessage);
             setIsLoading(false);
             
-            // Force a re-render to ensure error is visible
+            // Force error to persist and be visible
             setTimeout(() => {
-                if (!errorMessage) {
-                    console.warn('Error message was cleared unexpectedly');
+                // Re-check error state to ensure it's still set
+                if (!error) {
+                    console.warn('Error message was cleared, re-setting...');
+                    setError(errorMessage);
                 }
             }, 100);
+            
+            // Prevent any navigation or page refresh
+            if (e && e.preventDefault) {
+                e.preventDefault();
+            }
         }
     };
 
@@ -271,7 +294,25 @@ const Login = () => {
                 </div>
                 
                 {error && error.trim() && (
-                    <div className="error-message" role="alert" aria-live="polite" style={{ display: 'block' }}>
+                    <div 
+                        className="error-message" 
+                        role="alert" 
+                        aria-live="polite" 
+                        style={{ 
+                            display: 'block',
+                            visibility: 'visible',
+                            opacity: 1,
+                            marginBottom: '16px',
+                            padding: '12px 16px',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            borderRadius: '8px',
+                            color: '#ff6b6b',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            textAlign: 'center'
+                        }}
+                    >
                         <strong>⚠️ {error}</strong>
                     </div>
                 )}

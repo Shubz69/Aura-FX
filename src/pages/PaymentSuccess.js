@@ -112,7 +112,7 @@ const PaymentSuccess = () => {
                                     
                                     // Redirect to community after a brief delay to show success message
                                     setTimeout(() => {
-                                        window.location.href = '/community';
+                                        navigate('/community', { replace: true });
                                     }, 1500);
                                     return;
                                 } else {
@@ -153,7 +153,7 @@ const PaymentSuccess = () => {
                                         
                                         // Redirect to community after a brief delay to show success message
                                         setTimeout(() => {
-                                            window.location.href = '/community';
+                                            navigate('/community', { replace: true });
                                         }, 1500);
                                         return;
                                     }
@@ -164,20 +164,20 @@ const PaymentSuccess = () => {
                                 console.error('Subscription verification error:', verifyError);
                                 // Still redirect to community - the check there will handle it
                                 window.history.replaceState({}, document.title, window.location.pathname);
-                                window.location.href = '/community';
+                                navigate('/community', { replace: true });
                                 return;
                             }
                         } else {
                             // Still redirect to community even if activation failed
                             window.history.replaceState({}, document.title, window.location.pathname);
-                            window.location.href = '/community';
+                            navigate('/community', { replace: true });
                             return;
                         }
                     } catch (error) {
                         console.error('Error activating subscription:', error);
                         // Still redirect to community
                         window.history.replaceState({}, document.title, window.location.pathname);
-                        window.location.href = '/community';
+                        navigate('/community', { replace: true });
                         return;
                     }
                 };

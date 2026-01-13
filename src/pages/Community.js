@@ -2950,8 +2950,23 @@ Let's build generational wealth together! 💰🚀`,
     };
 
     // Render
+    // Ensure component always renders something, even during initialization
+    if (!isAuthenticated && !localStorage.getItem('token')) {
+        // Don't render anything if not authenticated - will redirect
+        return null;
+    }
+    
     return (
-        <div className="community-container" style={{ position: 'relative' }}>
+        <div className="community-container" style={{ 
+            position: 'relative',
+            background: '#0a0a0a !important',
+            minHeight: '100vh',
+            height: 'auto',
+            display: 'flex !important',
+            flexDirection: 'column',
+            width: '100%',
+            maxWidth: '100%'
+        }}>
             <CosmicBackground />
             
             {/* PAYMENT FAILED BANNER - Show if payment failed */}
