@@ -125,56 +125,21 @@ const Courses = () => {
                     Choose the perfect plan for your trading journey. Upgrade, downgrade, or cancel anytime.
                 </p>
                 
-                <div className="subscriptions-grid" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                    gap: '24px',
-                    marginBottom: '20px',
-                    width: '100%',
-                    maxWidth: '1200px',
-                    margin: '0 auto 20px',
-                    padding: '0 20px'
-                }}>
+                <div className="subscriptions-grid">
                     {/* Free Plan */}
-                    <div style={{
-                    padding: 'clamp(16px, 3vw, 24px)',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    textAlign: 'center',
-                    minWidth: '0',
-                    maxWidth: '100%'
-                }}>
-                        <h3 style={{ color: '#fff', fontSize: 'clamp(20px, 4vw, 24px)', marginBottom: '12px' }}>Free</h3>
-                        <div style={{ fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
-                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px' }}>per month</div>
-                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px', paddingLeft: '20px' }}>
+                    <div className="subscription-plan-card">
+                        <h3 className="subscription-plan-title">Free</h3>
+                        <div className="subscription-plan-price">£0</div>
+                        <div className="subscription-plan-period">per month</div>
+                        <ul className="subscription-plan-features">
                             <li>✅ Access to general channels</li>
                             <li>✅ Basic community features</li>
                             <li>✅ View announcements</li>
                         </ul>
                         <button
+                            className="subscription-plan-button"
                             onClick={() => {
-                                // Redirect to subscription page to manage (downgrade to free)
                                 window.location.href = '/subscription';
-                            }}
-                            style={{
-                                width: '100%',
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                color: 'white',
-                                border: '1px solid rgba(255, 255, 255, 0.3)',
-                                padding: '12px 24px',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.background = 'rgba(255, 255, 255, 0.1)';
                             }}
                         >
                             Select Free Plan
@@ -182,25 +147,18 @@ const Courses = () => {
                     </div>
 
                     {/* Premium Plan */}
-                    <div style={{
-                    padding: 'clamp(16px, 3vw, 24px)',
-                    background: 'rgba(139, 92, 246, 0.15)',
-                    borderRadius: '12px',
-                    border: '2px solid rgba(139, 92, 246, 0.4)',
-                    textAlign: 'center',
-                    minWidth: '0',
-                    maxWidth: '100%'
-                }}>
-                        <h3 style={{ color: '#fff', fontSize: 'clamp(20px, 4vw, 24px)', marginBottom: '12px' }}>Aura FX</h3>
-                        <div style={{ fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
-                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px' }}>per month</div>
-                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px', paddingLeft: '20px' }}>
+                    <div className="subscription-plan-card premium">
+                        <h3 className="subscription-plan-title">Aura FX</h3>
+                        <div className="subscription-plan-price">£99</div>
+                        <div className="subscription-plan-period">per month</div>
+                        <ul className="subscription-plan-features">
                             <li>✅ All free features</li>
                             <li>✅ Premium channels</li>
                             <li>✅ Trading signals</li>
                             <li>✅ Market analysis</li>
                         </ul>
                         <button
+                            className="subscription-plan-button premium"
                             onClick={() => {
                                 const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
                                 const userEmail = storedUser?.email;
@@ -210,58 +168,18 @@ const Courses = () => {
                                     : `${STRIPE_PAYMENT_LINK_AURA}${STRIPE_PAYMENT_LINK_AURA.includes('?') ? '&' : '?'}plan=aura`;
                                 window.location.href = paymentLink;
                             }}
-                            style={{
-                                width: '100%',
-                                background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-                                color: 'white',
-                                border: 'none',
-                                padding: '12px 24px',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.transform = 'translateY(-2px)';
-                                e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
-                            }}
                         >
                             Select Premium Plan
                         </button>
                     </div>
 
                     {/* A7FX Elite Plan */}
-                    <div style={{
-                    padding: 'clamp(16px, 3vw, 24px)',
-                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)',
-                    borderRadius: '12px',
-                    border: '2px solid rgba(139, 92, 246, 0.5)',
-                    textAlign: 'center',
-                    position: 'relative',
-                    minWidth: '0',
-                    maxWidth: '100%'
-                }}>
-                        <div style={{
-                            position: 'absolute',
-                            top: '12px',
-                            right: '12px',
-                            background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-                            color: 'white',
-                            padding: '4px 12px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                        }}>ELITE</div>
-                        <h3 style={{ color: '#fff', fontSize: 'clamp(20px, 4vw, 24px)', marginBottom: '12px' }}>A7FX Elite</h3>
-                        <div style={{ fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
-                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px' }}>per month</div>
-                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px', paddingLeft: '20px' }}>
+                    <div className="subscription-plan-card elite">
+                        <div className="elite-badge">ELITE</div>
+                        <h3 className="subscription-plan-title">A7FX Elite</h3>
+                        <div className="subscription-plan-price">£250</div>
+                        <div className="subscription-plan-period">per month</div>
+                        <ul className="subscription-plan-features">
                             <li>✅ Everything in Premium</li>
                             <li>✅ Elite-only channels</li>
                             <li>✅ 1-to-1 mentorship</li>
@@ -269,6 +187,7 @@ const Courses = () => {
                             <li>✅ Direct founder access</li>
                         </ul>
                         <button
+                            className="subscription-plan-button elite"
                             onClick={() => {
                                 const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
                                 const userEmail = storedUser?.email;
@@ -277,27 +196,6 @@ const Courses = () => {
                                     ? `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=a7fx`
                                     : `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}plan=a7fx`;
                                 window.location.href = paymentLink;
-                            }}
-                            style={{
-                                width: '100%',
-                                background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-                                color: 'white',
-                                border: 'none',
-                                padding: '12px 24px',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.transform = 'translateY(-2px)';
-                                e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
                             }}
                         >
                             Select Elite Plan

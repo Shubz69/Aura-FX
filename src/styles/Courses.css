@@ -449,6 +449,120 @@
     }
 }
 
+/* Subscription Plan Cards */
+.subscription-plan-card {
+    padding: clamp(20px, 4vw, 32px);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.subscription-plan-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+.subscription-plan-card.premium {
+    background: rgba(139, 92, 246, 0.15);
+    border: 2px solid rgba(139, 92, 246, 0.4);
+}
+
+.subscription-plan-card.elite {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%);
+    border: 2px solid rgba(139, 92, 246, 0.5);
+}
+
+.subscription-plan-title {
+    color: #fff;
+    font-size: clamp(22px, 4.5vw, 28px);
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+
+.subscription-plan-price {
+    font-size: clamp(32px, 7vw, 48px);
+    font-weight: 700;
+    color: #8B5CF6;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.subscription-plan-period {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: clamp(13px, 2.5vw, 16px);
+    margin-bottom: 24px;
+}
+
+.subscription-plan-features {
+    text-align: left;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(13px, 2.5vw, 15px);
+    margin-bottom: 24px;
+    padding-left: 20px;
+    list-style: none;
+    flex: 1;
+}
+
+.subscription-plan-features li {
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.subscription-plan-button {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: clamp(12px, 2.5vw, 16px) clamp(20px, 4vw, 28px);
+    border-radius: 10px;
+    font-size: clamp(13px, 2.5vw, 15px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: auto;
+}
+
+.subscription-plan-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.subscription-plan-button.premium,
+.subscription-plan-button.elite {
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.subscription-plan-button.premium:hover,
+.subscription-plan-button.elite:hover {
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+    transform: translateY(-2px);
+}
+
+.elite-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: clamp(11px, 2vw, 13px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* Responsive - Tablets and iPads */
 @media (max-width: 1024px) {
     .courses-grid {
@@ -462,19 +576,20 @@
     }
     
     .subscriptions-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
-        gap: 20px !important;
-        padding: 0 15px !important;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+        gap: 24px !important;
+        padding: 0 20px !important;
+        max-width: 900px !important;
     }
     
     .subscriptions-title,
     .courses-section-title {
-        font-size: 32px !important;
+        font-size: clamp(28px, 5vw, 36px) !important;
     }
     
     .subscriptions-description,
     .courses-section-description {
-        font-size: 16px !important;
+        font-size: clamp(15px, 3vw, 18px) !important;
     }
 }
 
@@ -493,19 +608,28 @@
 
 @media (max-width: 768px) {
     .courses-container {
-        padding: 140px 10px 20px;
+        padding: 140px 15px 20px;
     }
     
     .courses-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
-        padding: 0 10px;
+        gap: 20px;
+        padding: 0 15px;
+        max-width: 500px;
+        margin: 40px auto 0;
     }
     
     .subscriptions-grid {
         grid-template-columns: 1fr !important;
-        gap: 20px !important;
-        padding: 0 10px !important;
+        gap: 24px !important;
+        padding: 0 15px !important;
+        max-width: 500px !important;
+        margin: 0 auto 20px !important;
+    }
+    
+    .subscription-plan-card {
+        max-width: 100%;
+        padding: 24px 20px;
     }
     
     .glitch {
@@ -521,34 +645,41 @@
     
     .courses-header p {
         font-size: 16px;
-        padding: 0 10px;
+        padding: 0 15px;
     }
     
     .course-card {
         margin: 0 auto;
-        max-width: 350px;
+        max-width: 100%;
     }
     
     .subscriptions-title,
     .courses-section-title {
-        font-size: 28px !important;
+        font-size: clamp(26px, 6vw, 32px) !important;
+        padding: 0 15px !important;
     }
     
     .subscriptions-description,
     .courses-section-description {
-        font-size: 15px !important;
+        font-size: clamp(14px, 3.5vw, 17px) !important;
+        padding: 0 15px !important;
     }
 }
 
 @media (max-width: 480px) {
     .courses-container {
-        padding: 120px 5px 15px;
+        padding: 120px 12px 15px;
     }
     
     .subscriptions-grid {
         grid-template-columns: 1fr !important;
-        gap: 16px !important;
-        padding: 0 10px !important;
+        gap: 20px !important;
+        padding: 0 12px !important;
+        max-width: 100% !important;
+    }
+    
+    .subscription-plan-card {
+        padding: 20px 16px;
     }
     
     .glitch {
@@ -559,10 +690,17 @@
     .courses-header {
         padding-top: 15px;
         margin-top: 10px;
+        margin-bottom: 24px;
     }
     
     .courses-header p {
-        font-size: 14px;
+        font-size: clamp(13px, 3.5vw, 15px);
+        padding: 0 12px;
+    }
+    
+    .courses-grid {
+        padding: 0 12px;
+        gap: 16px;
     }
     
     .course-card {
@@ -570,22 +708,33 @@
     }
     
     .course-info {
-        padding: 15px;
+        padding: 16px;
     }
     
     .enroll-button {
-        padding: 10px 20px;
-        font-size: 12px;
+        padding: 10px 18px;
+        font-size: 13px;
     }
     
     .subscriptions-title,
     .courses-section-title {
-        font-size: 24px !important;
+        font-size: clamp(24px, 7vw, 28px) !important;
+        padding: 0 12px !important;
+        margin-bottom: 10px !important;
     }
     
     .subscriptions-description,
     .courses-section-description {
-        font-size: 14px !important;
+        font-size: clamp(13px, 3.5vw, 15px) !important;
+        padding: 0 12px !important;
+        margin-bottom: 32px !important;
+    }
+    
+    .elite-badge {
+        top: 12px;
+        right: 12px;
+        padding: 5px 12px;
+        font-size: 11px;
     }
 }
 
