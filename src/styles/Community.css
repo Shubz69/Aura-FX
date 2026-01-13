@@ -1232,12 +1232,16 @@
 @media (max-width: 768px) {
     .community-container {
         grid-template-columns: 1fr !important;
-        padding-top: 140px;
+        padding-top: 140px !important;
         background: #0a0a0a !important;
-        min-height: 100vh;
-        height: auto;
+        min-height: 100vh !important;
+        height: 100vh !important;
         display: flex !important;
-        flex-direction: column;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow: hidden !important;
+        position: relative !important;
     }
     
     .community-sidebar {
@@ -1252,20 +1256,82 @@
     .mobile-channel-selector {
         display: block !important;
         top: 80px;
+        position: fixed !important;
+        z-index: 1000 !important;
+        background: var(--bg-secondary) !important;
     }
     
     .mobile-user-stats {
         top: 80px;
+        position: fixed !important;
+        z-index: 999 !important;
     }
     
     .chat-main {
-        height: calc(100vh - 200px);
-        min-height: calc(100vh - 200px);
+        height: calc(100vh - 200px) !important;
+        min-height: calc(100vh - 200px) !important;
         display: flex !important;
-        flex-direction: column;
-        width: 100%;
-        max-width: 100%;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
         background: var(--bg-tertiary) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    .chat-messages {
+        background: var(--bg-tertiary) !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .no-channel-selected {
+        background: var(--bg-tertiary) !important;
+        display: flex !important;
+        min-height: calc(100vh - 200px) !important;
+    }
+}
+
+/* iPhone and small mobile devices (320px - 480px) */
+@media (max-width: 480px) {
+    .community-container {
+        padding-top: 120px !important;
+        background: #0a0a0a !important;
+        min-height: 100vh !important;
+        height: 100vh !important;
+    }
+    
+    .mobile-channel-selector {
+        top: 60px !important;
+        padding: 10px 12px !important;
+    }
+    
+    .mobile-user-stats {
+        top: 60px !important;
+        padding: 10px 12px !important;
+        margin: 0 12px 8px 12px !important;
+    }
+    
+    .chat-main {
+        height: calc(100vh - 180px) !important;
+        min-height: calc(100vh - 180px) !important;
+        padding-top: 0 !important;
+    }
+    
+    .chat-header {
+        padding: 10px 12px !important;
+        min-height: 48px !important;
+    }
+    
+    .chat-messages {
+        padding: 8px 4px !important;
+    }
+    
+    .no-channel-selected {
+        padding: 20px 12px !important;
+        min-height: calc(100vh - 180px) !important;
     }
 }
 
