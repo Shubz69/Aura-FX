@@ -18,6 +18,9 @@ node_modules/
 .env.production.local
 lerna-debug.log*
 
+# API Keys and Secrets - NEVER COMMIT
+API_KEYS_SECURE.md
+
 # IDE
 .idea/
 .vscode/
