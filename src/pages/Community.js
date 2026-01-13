@@ -216,6 +216,8 @@ const Community = () => {
     const [categoryContextMenu, setCategoryContextMenu] = useState(null); // { x, y, categoryName }
     const [editingChannel, setEditingChannel] = useState(null); // { id, name, description, category, accessLevel }
     const [editingCategory, setEditingCategory] = useState(null); // { name }
+    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false); // Show subscription selection modal
+    const [requiredSubscriptionType, setRequiredSubscriptionType] = useState(null); // 'premium' or 'a7fx' - for channel access
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -2857,21 +2859,26 @@ Let's build generational wealth together! 💰🚀`,
     const showSubscribeBanner = !isAdminForBanner && !hasActiveSubscription;
     const showPaymentFailedBanner = !isAdminForBanner && paymentFailed;
 
-    // Handle subscribe button click - redirect to Stripe payment link
-    const handleSubscribe = () => {
+    // Handle subscribe button click - show subscription selection modal
+    const handleSubscribe = (requiredType = null) => {
+        setRequiredSubscriptionType(requiredType); // 'premium' or 'a7fx' if coming from locked channel
+        setShowSubscriptionModal(true);
+    };
+
+    // Handle subscription plan selection and redirect to Stripe
+    const handleSelectSubscription = (planType) => {
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = storedUser?.email;
         
-        // Note: Stripe payment links don't support cancel_url as query parameter
-        // Cancel URL must be configured in Stripe Dashboard (if available)
-        // Success URL is configured in Stripe Dashboard, not as query parameter
+        const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+        const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
         
-        const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+        const selectedPaymentLink = planType === 'a7fx' ? STRIPE_PAYMENT_LINK_A7FX : STRIPE_PAYMENT_LINK_AURA;
         const paymentLink = userEmail
-            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}`
-            : STRIPE_PAYMENT_LINK;
+            ? `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
+            : `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
         
-        // Redirect to Stripe payment link
+        setShowSubscriptionModal(false);
         window.location.href = paymentLink;
     };
 
@@ -2906,7 +2913,7 @@ Let's build generational wealth together! 💰🚀`,
                         </p>
                     </div>
                     <button
-                        onClick={handleSubscribe}
+                        onClick={() => handleSubscribe()}
                         style={{
                             background: 'white',
                             color: '#EF4444',
@@ -2982,10 +2989,10 @@ Let's build generational wealth together! 💰🚀`,
                         </p>
                     </div>
                     <button
-                        onClick={handleSubscribe}
+                        onClick={() => handleSubscribe()}
                         style={{
                             background: 'white',
-                            color: 'rgba(255, 255, 255, 0.2)',
+                            color: '#6D28D9',
                             border: 'none',
                             padding: '12px 32px',
                             borderRadius: '8px',
@@ -3004,7 +3011,7 @@ Let's build generational wealth together! 💰🚀`,
                             e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
                         }}
                     >
-                        SUBSCRIBE NOW
+                        CHOOSE PLAN
                     </button>
                 </div>
             )}
@@ -3530,7 +3537,7 @@ Let's build generational wealth together! 💰🚀`,
                                                             }
                                                             message += `Would you like to subscribe now?`;
                                                             if (window.confirm(message)) {
-                                                                window.location.href = '/subscription';
+                                                                handleSubscribe(accessLevel === 'premium' ? 'premium' : 'a7fx');
                                                             }
                                                             return;
                                                         }
@@ -3882,7 +3889,7 @@ Let's build generational wealth together! 💰🚀`,
                                                 )}
                                             </div>
                                             <button
-                                                onClick={() => window.location.href = '/subscription'}
+                                                onClick={() => handleSubscribe(accessLevel === 'premium' ? 'premium' : 'a7fx')}
                                                 style={{
                                                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                                     color: 'white',
@@ -3904,7 +3911,7 @@ Let's build generational wealth together! 💰🚀`,
                                                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
                                                 }}
                                             >
-                                                Subscribe Now - {price}
+                                                Choose Subscription - {price}
                                             </button>
                                         </>
                                     );
@@ -5299,6 +5306,260 @@ Let's build generational wealth together! 💰🚀`,
                                 Save Changes
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Subscription Selection Modal */}
+            {showSubscriptionModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.85)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10002,
+                    padding: '20px'
+                }} onClick={() => setShowSubscriptionModal(false)}>
+                    <div style={{
+                        background: '#1E1E1E',
+                        borderRadius: '16px',
+                        padding: '32px',
+                        maxWidth: '800px',
+                        width: '100%',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h2 style={{ 
+                                color: '#fff', 
+                                margin: 0, 
+                                fontSize: '1.75rem',
+                                fontWeight: 'bold',
+                                background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text'
+                            }}>
+                                Choose Your Subscription Plan
+                            </h2>
+                            <button
+                                onClick={() => setShowSubscriptionModal(false)}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#fff',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.background = 'transparent';
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        {requiredSubscriptionType && (
+                            <div style={{
+                                background: 'rgba(139, 92, 246, 0.2)',
+                                border: '1px solid rgba(139, 92, 246, 0.4)',
+                                borderRadius: '8px',
+                                padding: '12px 16px',
+                                marginBottom: '24px'
+                            }}>
+                                <p style={{ color: '#fff', margin: 0, fontSize: '0.9rem' }}>
+                                    <strong>💡 This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura FX Premium (£99/month)' : 'A7FX Elite (£250/month)'}
+                                </p>
+                            </div>
+                        )}
+                        
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                            gap: '20px',
+                            marginBottom: '24px'
+                        }}>
+                            {/* Aura FX Premium Plan */}
+                            <div style={{
+                                padding: '24px',
+                                background: requiredSubscriptionType === 'premium' 
+                                    ? 'rgba(139, 92, 246, 0.2)' 
+                                    : 'rgba(255, 255, 255, 0.05)',
+                                borderRadius: '12px',
+                                border: requiredSubscriptionType === 'premium'
+                                    ? '2px solid rgba(139, 92, 246, 0.6)'
+                                    : '1px solid rgba(255, 255, 255, 0.1)',
+                                textAlign: 'center',
+                                position: 'relative',
+                                transition: 'all 0.3s ease'
+                            }}>
+                                {requiredSubscriptionType === 'premium' && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '12px',
+                                        right: '12px',
+                                        background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                        color: 'white',
+                                        padding: '4px 12px',
+                                        borderRadius: '12px',
+                                        fontSize: '11px',
+                                        fontWeight: 'bold'
+                                    }}>REQUIRED</div>
+                                )}
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura FX</h3>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
+                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
+                                <ul style={{ 
+                                    textAlign: 'left', 
+                                    color: 'rgba(255, 255, 255, 0.8)', 
+                                    fontSize: '13px', 
+                                    marginBottom: '20px', 
+                                    paddingLeft: '20px',
+                                    listStyle: 'none'
+                                }}>
+                                    <li style={{ marginBottom: '8px' }}>✅ Access to premium channels</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Trading signals</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Market analysis</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Community access</li>
+                                </ul>
+                                <button
+                                    onClick={() => handleSelectSubscription('aura')}
+                                    style={{
+                                        width: '100%',
+                                        background: requiredSubscriptionType === 'premium'
+                                            ? 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)'
+                                            : 'rgba(139, 92, 246, 0.3)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '12px 24px',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: requiredSubscriptionType === 'premium'
+                                            ? '0 4px 12px rgba(139, 92, 246, 0.4)'
+                                            : 'none'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (requiredSubscriptionType !== 'premium') {
+                                            e.target.style.background = 'rgba(139, 92, 246, 0.3)';
+                                            e.target.style.boxShadow = 'none';
+                                        }
+                                        e.target.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    Select Aura FX
+                                </button>
+                            </div>
+
+                            {/* A7FX Elite Plan */}
+                            <div style={{
+                                padding: '24px',
+                                background: requiredSubscriptionType === 'a7fx'
+                                    ? 'rgba(139, 92, 246, 0.2)'
+                                    : 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(167, 139, 250, 0.1) 100%)',
+                                borderRadius: '12px',
+                                border: requiredSubscriptionType === 'a7fx'
+                                    ? '2px solid rgba(139, 92, 246, 0.6)'
+                                    : '2px solid rgba(139, 92, 246, 0.4)',
+                                textAlign: 'center',
+                                position: 'relative',
+                                transition: 'all 0.3s ease'
+                            }}>
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '12px',
+                                    right: '12px',
+                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                    color: 'white',
+                                    padding: '4px 12px',
+                                    borderRadius: '12px',
+                                    fontSize: '11px',
+                                    fontWeight: 'bold'
+                                }}>{requiredSubscriptionType === 'a7fx' ? 'REQUIRED' : 'ELITE'}</div>
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>A7FX Elite</h3>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
+                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
+                                <ul style={{ 
+                                    textAlign: 'left', 
+                                    color: 'rgba(255, 255, 255, 0.8)', 
+                                    fontSize: '13px', 
+                                    marginBottom: '20px', 
+                                    paddingLeft: '20px',
+                                    listStyle: 'none'
+                                }}>
+                                    <li style={{ marginBottom: '8px' }}>✅ Everything in Aura FX</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Elite-only channels</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ 1-to-1 mentorship</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Exclusive signals</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Direct founder access</li>
+                                </ul>
+                                <button
+                                    onClick={() => handleSelectSubscription('a7fx')}
+                                    style={{
+                                        width: '100%',
+                                        background: requiredSubscriptionType === 'a7fx'
+                                            ? 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)'
+                                            : 'rgba(139, 92, 246, 0.3)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '12px 24px',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: requiredSubscriptionType === 'a7fx'
+                                            ? '0 4px 12px rgba(139, 92, 246, 0.4)'
+                                            : 'none'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (requiredSubscriptionType !== 'a7fx') {
+                                            e.target.style.background = 'rgba(139, 92, 246, 0.3)';
+                                            e.target.style.boxShadow = 'none';
+                                        }
+                                        e.target.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    Select A7FX Elite
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p style={{
+                            textAlign: 'center',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            fontSize: '12px',
+                            marginTop: '20px',
+                            marginBottom: 0
+                        }}>
+                            Cancel anytime • No hidden fees • Switch plans anytime
+                        </p>
                     </div>
                 </div>
             )}
