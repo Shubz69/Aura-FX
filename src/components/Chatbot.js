@@ -146,7 +146,7 @@ const Chatbot = () => {
             
             // Pricing
             if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription")) {
-                return "We offer Aura FX subscription at $99/month and A7FX Elite at $250/month. Visit our <a href='/subscription' style='color: #1E90FF; text-decoration: underline;'>Subscription page</a> for details. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Create an account</a> to get started!";
+                return "We offer Aura FX subscription at £79/month and A7FX Elite at £199/month. Visit our <a href='/subscription' style='color: #1E90FF; text-decoration: underline;'>Subscription page</a> for details. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Create an account</a> to get started!";
             }
             
             // Sign up/Login
@@ -193,7 +193,7 @@ const Chatbot = () => {
         
         // Pricing related queries
         if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription") || msg.includes("pay") || msg.includes("fee")) {
-            return "AURA FX offers two subscription plans: Aura FX at $99/month and A7FX Elite at $250/month. Visit our <a href='/subscription' style='color: #1E90FF; text-decoration: underline;'>Subscription page</a> for full details.";
+            return "AURA FX offers two subscription plans: Aura FX at £79/month and A7FX Elite at £199/month. Visit our <a href='/subscription' style='color: #1E90FF; text-decoration: underline;'>Subscription page</a> for full details.";
         }
         
         // Platform features

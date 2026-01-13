@@ -6,7 +6,6 @@ import axios from 'axios';
 import '../styles/Subscription.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://www.aurafx.com';
-// Stripe payment links for each subscription plan
 const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
 const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
 
@@ -50,17 +49,15 @@ const Subscription = () => {
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email || storedUser?.email;
         
-        // Select the correct Stripe payment link based on plan type
-        const basePaymentLink = planType === 'a7fx' ? STRIPE_PAYMENT_LINK_A7FX : STRIPE_PAYMENT_LINK_AURA;
-        
         // Note: Stripe payment links don't support success_url or cancel_url as query parameters
         // These must be configured in the Stripe Dashboard under "After payment" settings
-        // Success URL should be: https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true&plan={planType}
+        // Success URL should be: https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true
         
-        // Add plan parameter and email if available
+        // Use appropriate Stripe payment link based on plan type
+        const selectedPaymentLink = planType === 'a7fx' ? STRIPE_PAYMENT_LINK_A7FX : STRIPE_PAYMENT_LINK_AURA;
         const paymentLink = userEmail
-            ? `${basePaymentLink}${basePaymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
-            : `${basePaymentLink}${basePaymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
+            ? `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
+            : `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
 
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);
@@ -275,7 +272,7 @@ const Subscription = () => {
                                 <div className="plan-badge">Standard</div>
                             </div>
                             <div className="plan-pricing">
-                                <span className="plan-price">$99</span>
+                                <span className="plan-price">£79</span>
                                 <span className="plan-period">/month</span>
                             </div>
                             <div className="plan-benefits">
@@ -304,7 +301,7 @@ const Subscription = () => {
                                 <div className="plan-badge elite-badge">ELITE</div>
                             </div>
                             <div className="plan-pricing">
-                                <span className="plan-price">$250</span>
+                                <span className="plan-price">£199</span>
                                 <span className="plan-period">/month</span>
                             </div>
                             <div className="plan-benefits">

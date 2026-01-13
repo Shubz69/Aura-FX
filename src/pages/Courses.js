@@ -177,7 +177,7 @@ const Courses = () => {
                             fontWeight: 'bold',
                             color: '#8B5CF6',
                             marginBottom: '8px'
-                        }}>$250</div>
+                        }}>£199</div>
                         <div style={{
                             color: 'rgba(255, 255, 255, 0.7)',
                             fontSize: '14px'
