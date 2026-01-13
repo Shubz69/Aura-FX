@@ -272,31 +272,50 @@ const Profile = () => {
                 }
             );
 
-            if (res.status === 200) {
-                setStatus("Profile updated successfully.");
+            if (res.status === 200 && res.data.success) {
+                setStatus("✅ Saved successfully!");
                 
                 // If username was updated, update cooldown info
-                if (field === 'username' && res.data.last_username_change) {
-                    setLastUsernameChange(res.data.last_username_change);
-                    const cooldownCheck = canChangeUsername(res.data.last_username_change);
+                if (field === 'username' && res.data.user?.last_username_change) {
+                    setLastUsernameChange(res.data.user.last_username_change);
+                    const cooldownCheck = canChangeUsername(res.data.user.last_username_change);
                     setUsernameCooldownInfo(cooldownCheck);
                 }
                 
-                // Update both states with the new value
+                // Update with server response data
+                const serverValue = res.data.user?.[field] || formData[field];
                 const updatedData = {
                     ...formData,
-                    [field]: formData[field]
+                    [field]: serverValue
                 };
                 setFormData(updatedData);
                 setEditedUserData(prev => ({
                     ...prev,
-                    [field]: formData[field]
+                    [field]: serverValue
                 }));
                 
                 // Update local storage with the new value
-                updateLocalUserData({ [field]: formData[field] });
+                updateLocalUserData({ [field]: serverValue });
+                
+                // Update auth context
+                if (setUser) {
+                    setUser(prev => ({
+                        ...prev,
+                        [field]: serverValue
+                    }));
+                }
+                
+                // Update localStorage 'user' object
+                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                storedUser[field] = serverValue;
+                localStorage.setItem('user', JSON.stringify(storedUser));
+                
+                // Clear status after 2 seconds
+                setTimeout(() => {
+                    setStatus("");
+                }, 2000);
             } else {
-                setStatus("Update failed.");
+                setStatus("❌ Update failed.");
             }
 
             setEditField(null);
@@ -327,21 +346,69 @@ const Profile = () => {
             return;
         }
 
-        try {
-            // Save all current form data to database (updates for everyone)
-            const dataToSave = {
-                name: formData.name || "",
-                username: formData.username || "",
-                email: formData.email || "",
-                phone: formData.phone || "",
-                address: formData.address || "",
-                bio: formData.bio || "",
-                avatar: formData.avatar || "avatar_ai.png"
-            };
+        // Validate username if it's being updated
+        if (formData.username) {
+            const validation = validateUsername(formData.username);
+            if (!validation.valid) {
+                setStatus(validation.error);
+                setUsernameValidationError(validation.error);
+                return;
+            }
+            
+            // Check cooldown if username is changing
+            if (lastUsernameChange) {
+                const cooldownCheck = canChangeUsername(lastUsernameChange);
+                if (!cooldownCheck.canChange) {
+                    setStatus(getCooldownMessage(cooldownCheck.daysRemaining));
+                    setUsernameValidationError(getCooldownMessage(cooldownCheck.daysRemaining));
+                    return;
+                }
+            }
+        }
 
+        // Prepare data to save
+        const dataToSave = {
+            name: formData.name || "",
+            username: formData.username || "",
+            email: formData.email || "",
+            phone: formData.phone || "",
+            address: formData.address || "",
+            bio: formData.bio || "",
+            avatar: formData.avatar || "avatar_ai.png"
+        };
+
+        // Optimistic update - update UI immediately
+        setFormData(prev => ({
+            ...prev,
+            ...dataToSave
+        }));
+        
+        setEditedUserData(dataToSave);
+        updateLocalUserData(dataToSave);
+        
+        // Update auth context immediately
+        if (setUser) {
+            setUser(prev => ({
+                ...prev,
+                ...dataToSave
+            }));
+        }
+
+        // Also update localStorage 'user' object
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedStoredUser = { ...storedUser, ...dataToSave };
+        localStorage.setItem('user', JSON.stringify(updatedStoredUser));
+
+        setStatus("Saving...");
+
+        try {
+            // Save to database
             const res = await axios.put(
                 `${resolveApiBaseUrl()}/api/users/${user.id}/update`,
-                dataToSave,
+                {
+                    ...dataToSave,
+                    ...(formData.username ? { updateUsername: true } : {})
+                },
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -350,36 +417,112 @@ const Profile = () => {
                 }
             );
 
-            if (res.status === 200) {
-                setStatus("Profile updated successfully and saved for everyone.");
+            if (res.status === 200 && res.data.success) {
+                setStatus("✅ Profile saved successfully!");
                 
-                // Update form data
-                setFormData(prev => ({
-                    ...prev,
-                    ...dataToSave
-                }));
-                
-                // Update edited user data
-                setEditedUserData(dataToSave);
-                
-                // Update local storage
-                updateLocalUserData(dataToSave);
-                
-                // Update auth context if setUser is available
-                if (setUser) {
-                    setUser(prev => ({
+                // Update with server response data (includes last_username_change)
+                if (res.data.user) {
+                    const serverData = {
+                        name: res.data.user.name || dataToSave.name,
+                        username: res.data.user.username || dataToSave.username,
+                        email: res.data.user.email || dataToSave.email,
+                        phone: res.data.user.phone || dataToSave.phone,
+                        address: res.data.user.address || dataToSave.address,
+                        bio: res.data.user.bio || dataToSave.bio,
+                        avatar: res.data.user.avatar || dataToSave.avatar
+                    };
+                    
+                    setFormData(prev => ({
                         ...prev,
-                        ...dataToSave
+                        ...serverData
+                    }));
+                    
+                    updateLocalUserData(serverData);
+                    
+                    if (setUser) {
+                        setUser(prev => ({
+                            ...prev,
+                            ...serverData
+                        }));
+                    }
+                    
+                    // Update last_username_change if provided
+                    if (res.data.user.last_username_change) {
+                        setLastUsernameChange(res.data.user.last_username_change);
+                        const cooldownCheck = canChangeUsername(res.data.user.last_username_change);
+                        setUsernameCooldownInfo(cooldownCheck);
+                    }
+                    
+                    // Update localStorage 'user' object
+                    const updatedUser = { ...updatedStoredUser, ...serverData };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
+                
+                // Clear status after 3 seconds
+                setTimeout(() => {
+                    setStatus("");
+                }, 3000);
+            } else {
+                setStatus("❌ Update failed. Please try again.");
+                // Revert optimistic update on failure
+                // Reload from server
+                const refreshResponse = await axios.get(
+                    `${resolveApiBaseUrl()}/api/users/${user.id}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`
+                        }
+                    }
+                );
+                if (refreshResponse.status === 200) {
+                    const userData = refreshResponse.data;
+                    setFormData(prev => ({
+                        ...prev,
+                        name: userData.name || "",
+                        username: userData.username || "",
+                        email: userData.email || "",
+                        phone: userData.phone || "",
+                        address: userData.address || "",
+                        bio: userData.bio || "",
+                        avatar: userData.avatar || "avatar_ai.png"
                     }));
                 }
-            } else {
-                setStatus("Update failed.");
             }
 
             setEditField(null);
         } catch (err) {
             console.error("Error updating profile:", err);
-            setStatus("Failed to update profile. Please try again.");
+            
+            // Revert optimistic update on error
+            const refreshResponse = await axios.get(
+                `${resolveApiBaseUrl()}/api/users/${user.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    }
+                }
+            ).catch(() => null);
+            
+            if (refreshResponse && refreshResponse.status === 200) {
+                const userData = refreshResponse.data;
+                setFormData(prev => ({
+                    ...prev,
+                    name: userData.name || "",
+                    username: userData.username || "",
+                    email: userData.email || "",
+                    phone: userData.phone || "",
+                    address: userData.address || "",
+                    bio: userData.bio || "",
+                    avatar: userData.avatar || "avatar_ai.png"
+                }));
+            }
+            
+            const errorMessage = err.response?.data?.message || err.message || "Failed to update profile. Please try again.";
+            setStatus(`❌ ${errorMessage}`);
+            
+            if (err.response?.data?.message && formData.username) {
+                setUsernameValidationError(err.response.data.message);
+            }
         }
     };
 
