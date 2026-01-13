@@ -103,10 +103,20 @@ I can also answer general questions, but my specialty is trading knowledge. Ask 
         })
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, read as text to get error message
+        const text = await response.text();
+        throw new Error(text || `Server error (${response.status})`);
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to get AI response');
+        throw new Error(data.message || data.error || `Server error (${response.status})`);
       }
 
       if (data.success) {
@@ -123,17 +133,29 @@ I can also answer general questions, but my specialty is trading knowledge. Ask 
 
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error(error.message || 'Failed to send message. Please try again.', {
+      
+      // Extract a clean error message
+      let errorMessage = 'Failed to send message. Please try again.';
+      if (error.message) {
+        // If error message is too long or contains HTML, use a generic message
+        if (error.message.length > 100 || error.message.includes('<')) {
+          errorMessage = 'Server error. Please try again or contact support.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(errorMessage, {
         position: 'bottom-right',
         autoClose: 3000,
       });
 
       // Add error message to chat
-      const errorMessage = {
+      const chatErrorMessage = {
         role: 'assistant',
-        content: `⚠️ I encountered an error: ${error.message}. Please try again or contact support if the issue persists.`
+        content: `⚠️ I encountered an error: ${errorMessage}. Please try again or contact support if the issue persists.`
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, chatErrorMessage]);
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();

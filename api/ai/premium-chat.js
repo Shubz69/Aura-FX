@@ -1,4 +1,4 @@
-const { getDbConnection } = require('../../db');
+const { getDbConnection } = require('../db');
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -45,7 +45,9 @@ module.exports = async (req, res) => {
       try {
         const tokenParts = token.split('.');
         if (tokenParts.length !== 3) {
-          await db.end();
+          if (db && typeof db.release === 'function') {
+            db.release();
+          }
           return res.status(401).json({ success: false, message: 'Invalid token format' });
         }
         
@@ -63,12 +65,16 @@ module.exports = async (req, res) => {
         
         // Check if token is expired
         if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
-          await db.end();
+          if (db && typeof db.release === 'function') {
+            db.release();
+          }
           return res.status(401).json({ success: false, message: 'Token expired' });
         }
       } catch (decodeError) {
         console.error('Token decode error:', decodeError);
-        await db.end();
+        if (db && typeof db.release === 'function') {
+          db.release();
+        }
         return res.status(401).json({ success: false, message: 'Invalid token' });
       }
 
@@ -82,7 +88,9 @@ module.exports = async (req, res) => {
       );
 
       if (userRows.length === 0) {
-        await db.end();
+        if (db && typeof db.release === 'function') {
+          db.release();
+        }
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
@@ -97,7 +105,9 @@ module.exports = async (req, res) => {
         (user.subscription_status === 'active' && (user.subscription_plan === 'aura' || user.subscription_plan === 'a7fx'));
 
       if (!hasAccess) {
-        await db.end();
+        if (db && typeof db.release === 'function') {
+          db.release();
+        }
         return res.status(403).json({ 
           success: false, 
           message: 'Premium subscription required. Please upgrade to access the AI assistant.' 
@@ -108,7 +118,9 @@ module.exports = async (req, res) => {
       const { message, conversationHistory = [] } = req.body;
 
       if (!message || typeof message !== 'string' || message.trim().length === 0) {
-        await db.end();
+        if (db && typeof db.release === 'function') {
+          db.release();
+        }
         return res.status(400).json({ success: false, message: 'Message is required' });
       }
 
@@ -152,7 +164,10 @@ User's subscription tier: ${user.role === 'a7fx' ? 'A7FX Elite' : 'Premium'}`;
 
       const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
 
-      await db.end();
+      // Release database connection back to pool
+      if (db && typeof db.release === 'function') {
+        db.release();
+      }
 
       return res.status(200).json({
         success: true,
@@ -163,7 +178,10 @@ User's subscription tier: ${user.role === 'a7fx' ? 'A7FX Elite' : 'Premium'}`;
 
     } catch (dbError) {
       console.error('Database error:', dbError);
-      if (db && !db.ended) await db.end();
+      // Release connection if it exists
+      if (db && typeof db.release === 'function') {
+        db.release();
+      }
       return res.status(500).json({ success: false, message: 'Database error' });
     }
 
