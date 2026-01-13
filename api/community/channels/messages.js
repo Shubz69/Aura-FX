@@ -203,7 +203,7 @@ module.exports = async (req, res) => {
           // LIMIT to last 200 messages for performance (most recent messages)
           // Using timestamp index for sub-millisecond queries
           [rows] = await db.execute(
-            `SELECT m.*, u.username, u.name, u.email 
+            `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
              FROM messages m 
              LEFT JOIN users u ON m.sender_id = u.id 
              WHERE m.channel_id = ? 
@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
           const numericChannelId = parseInt(channelId);
           if (!isNaN(numericChannelId)) {
             [rows] = await db.execute(
-              `SELECT m.*, u.username, u.name, u.email 
+              `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                FROM messages m 
                LEFT JOIN users u ON m.sender_id = u.id 
                WHERE m.channel_id = ? 
@@ -232,7 +232,7 @@ module.exports = async (req, res) => {
             // If channelId is not numeric and query failed, try ordering by id
             try {
               [rows] = await db.execute(
-                `SELECT m.*, u.username, u.name, u.email 
+                `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                  FROM messages m 
                  LEFT JOIN users u ON m.sender_id = u.id 
                  WHERE m.channel_id = ? 
@@ -245,7 +245,7 @@ module.exports = async (req, res) => {
             } catch (fallbackError) {
               if (!isNaN(numericChannelId)) {
                 [rows] = await db.execute(
-                  `SELECT m.*, u.username, u.name, u.email 
+                  `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                    FROM messages m 
                    LEFT JOIN users u ON m.sender_id = u.id 
                    WHERE m.channel_id = ? 
@@ -278,6 +278,12 @@ module.exports = async (req, res) => {
           // Get username from joined user table, fallback to name, then email prefix, then Anonymous
           const username = row.username || row.name || (row.email ? row.email.split('@')[0] : 'Anonymous');
           
+          // Get avatar from user table, fallback to default
+          const avatar = row.avatar || '/avatars/avatar_ai.png';
+          
+          // Get role from user table
+          const role = row.role || 'USER';
+          
           // Parse file_data if present
           let fileData = null;
           if (row.file_data) {
@@ -302,8 +308,8 @@ module.exports = async (req, res) => {
             sender: {
               id: row.sender_id,
               username: username,
-              avatar: '/avatars/avatar_ai.png',
-              role: 'USER'
+              avatar: avatar,
+              role: role
             }
           };
         });

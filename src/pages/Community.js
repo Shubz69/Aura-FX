@@ -4030,8 +4030,38 @@ Let's build generational wealth together! 💰🚀`,
                                             style={{ cursor: 'context-menu' }}
                                         >
                                             {!isGrouped && (
-                                                <div className="message-avatar-text">
-                                                    {(message.sender?.username || 'U').substring(0, 2).toUpperCase()}
+                                                <div className="message-avatar" style={{
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    borderRadius: '50%',
+                                                    overflow: 'hidden',
+                                                    flexShrink: 0,
+                                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: 'white',
+                                                    fontWeight: 'bold',
+                                                    fontSize: '0.875rem'
+                                                }}>
+                                                    {message.sender?.avatar && message.sender.avatar !== '/avatars/avatar_ai.png' ? (
+                                                        <img 
+                                                            src={message.sender.avatar} 
+                                                            alt={message.sender?.username || 'User'}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover'
+                                                            }}
+                                                            onError={(e) => {
+                                                                // Fallback to initials if image fails to load
+                                                                e.target.style.display = 'none';
+                                                                e.target.parentElement.textContent = (message.sender?.username || 'U').substring(0, 2).toUpperCase();
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <span>{(message.sender?.username || 'U').substring(0, 2).toUpperCase()}</span>
+                                                    )}
                                                 </div>
                                             )}
                                             <div className="message-content">
@@ -4698,15 +4728,34 @@ Let's build generational wealth together! 💰🚀`,
                                                                     width: '32px',
                                                                     height: '32px',
                                                                     borderRadius: '50%',
+                                                                    overflow: 'hidden',
                                                                     background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     justifyContent: 'center',
                                                                     color: 'white',
                                                                     fontWeight: 'bold',
-                                                                    fontSize: '0.875rem'
+                                                                    fontSize: '0.875rem',
+                                                                    flexShrink: 0
                                                                 }}>
-                                                                    {(user.username || user.name || 'U').substring(0, 2).toUpperCase()}
+                                                                    {user.avatar && user.avatar !== '/avatars/avatar_ai.png' ? (
+                                                                        <img 
+                                                                            src={user.avatar} 
+                                                                            alt={user.username || user.name || 'User'}
+                                                                            style={{
+                                                                                width: '100%',
+                                                                                height: '100%',
+                                                                                objectFit: 'cover'
+                                                                            }}
+                                                                            onError={(e) => {
+                                                                                // Fallback to initials if image fails to load
+                                                                                e.target.style.display = 'none';
+                                                                                e.target.parentElement.textContent = (user.username || user.name || 'U').substring(0, 2).toUpperCase();
+                                                                            }}
+                                                                        />
+                                                                    ) : (
+                                                                        <span>{(user.username || user.name || 'U').substring(0, 2).toUpperCase()}</span>
+                                                                    )}
                                                                 </div>
                                                                 <div>
                                                                     <div style={{ fontWeight: 600, color: '#fff' }}>@{user.username || user.name || 'user'}</div>
