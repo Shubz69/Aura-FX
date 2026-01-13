@@ -135,13 +135,15 @@
 }
 
 .courses-title {
-    font-size: 42px;
+    font-size: clamp(28px, 6vw, 42px);
     font-weight: 200;
     line-height: 1.2;
     color: #ffffff;
     letter-spacing: 0.15em;
     z-index: 1;
     font-family: 'Space Grotesk', sans-serif;
+    padding: 0 20px;
+    text-align: center;
 }
 
 
@@ -406,7 +408,7 @@
     font-weight: 300;
 }
 
-/* Responsive */
+/* Responsive - Tablets and iPads */
 @media (max-width: 1024px) {
     .courses-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -417,6 +419,37 @@
     .courses-container {
         padding: 160px 15px 30px;
     }
+    
+    .courses-title {
+        font-size: clamp(24px, 5vw, 36px);
+    }
+    
+    .subscriptions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+        gap: 20px !important;
+        padding: 0 15px !important;
+    }
+    
+    .section-title {
+        font-size: clamp(22px, 4vw, 32px) !important;
+    }
+    
+    .section-description {
+        font-size: clamp(14px, 2vw, 16px) !important;
+    }
+}
+
+/* Tablets (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .subscriptions-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        max-width: 800px !important;
+    }
+    
+    .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 800px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -424,10 +457,20 @@
         padding: 140px 10px 20px;
     }
     
+    .courses-title {
+        font-size: clamp(22px, 5vw, 32px);
+    }
+    
     .courses-grid {
         grid-template-columns: 1fr;
         gap: 15px;
         padding: 0 10px;
+    }
+    
+    .subscriptions-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+        padding: 0 10px !important;
     }
     
     .glitch {
@@ -450,11 +493,29 @@
         margin: 0 auto;
         max-width: 350px;
     }
+    
+    .section-title {
+        font-size: clamp(20px, 5vw, 28px) !important;
+    }
+    
+    .section-description {
+        font-size: clamp(13px, 2.5vw, 15px) !important;
+    }
 }
 
 @media (max-width: 480px) {
     .courses-container {
         padding: 120px 5px 15px;
+    }
+    
+    .courses-title {
+        font-size: clamp(20px, 5vw, 28px);
+    }
+    
+    .subscriptions-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 0 10px !important;
     }
     
     .glitch {
@@ -482,6 +543,14 @@
     .enroll-button {
         padding: 10px 20px;
         font-size: 12px;
+    }
+    
+    .section-title {
+        font-size: clamp(18px, 5vw, 24px) !important;
+    }
+    
+    .section-description {
+        font-size: clamp(12px, 2.5vw, 14px) !important;
     }
 }
 

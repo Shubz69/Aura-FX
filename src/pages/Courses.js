@@ -100,47 +100,55 @@ const Courses = () => {
                 marginTop: '40px',
                 marginBottom: '60px'
             }}>
-                <h2 style={{
+                <h2 className="section-title" style={{
                     color: '#ffffff',
-                    fontSize: '36px',
+                    fontSize: 'clamp(24px, 5vw, 36px)',
                     fontWeight: 'bold',
                     marginBottom: '12px',
                     textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
+                    backgroundClip: 'text',
+                    padding: '0 20px'
                 }}>
                     💎 SUBSCRIPTIONS
                 </h2>
-                <p style={{
+                <p className="section-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '18px',
+                    fontSize: 'clamp(14px, 2.5vw, 18px)',
                     marginBottom: '40px',
                     textAlign: 'center',
-                    lineHeight: '1.6'
+                    lineHeight: '1.6',
+                    padding: '0 20px'
                 }}>
                     Choose the perfect plan for your trading journey. Upgrade, downgrade, or cancel anytime.
                 </p>
                 
-                <div style={{
+                <div className="subscriptions-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                     gap: '24px',
-                    marginBottom: '20px'
+                    marginBottom: '20px',
+                    width: '100%',
+                    maxWidth: '1200px',
+                    margin: '0 auto 20px',
+                    padding: '0 20px'
                 }}>
                     {/* Free Plan */}
                     <div style={{
-                        padding: '24px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        textAlign: 'center'
-                    }}>
-                        <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>Free</h3>
-                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
-                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
-                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
+                    padding: 'clamp(16px, 3vw, 24px)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    textAlign: 'center',
+                    minWidth: '0',
+                    maxWidth: '100%'
+                }}>
+                        <h3 style={{ color: '#fff', fontSize: 'clamp(20px, 4vw, 24px)', marginBottom: '12px' }}>Free</h3>
+                        <div style={{ fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px' }}>per month</div>
+                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px', paddingLeft: '20px' }}>
                             <li>✅ Access to general channels</li>
                             <li>✅ Basic community features</li>
                             <li>✅ View announcements</li>
@@ -175,16 +183,18 @@ const Courses = () => {
 
                     {/* Premium Plan */}
                     <div style={{
-                        padding: '24px',
-                        background: 'rgba(139, 92, 246, 0.15)',
-                        borderRadius: '12px',
-                        border: '2px solid rgba(139, 92, 246, 0.4)',
-                        textAlign: 'center'
-                    }}>
-                        <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>Aura FX</h3>
-                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
-                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
-                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
+                    padding: 'clamp(16px, 3vw, 24px)',
+                    background: 'rgba(139, 92, 246, 0.15)',
+                    borderRadius: '12px',
+                    border: '2px solid rgba(139, 92, 246, 0.4)',
+                    textAlign: 'center',
+                    minWidth: '0',
+                    maxWidth: '100%'
+                }}>
+                        <h3 style={{ color: '#fff', fontSize: 'clamp(20px, 4vw, 24px)', marginBottom: '12px' }}>Aura FX</h3>
+                        <div style={{ fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px' }}>per month</div>
+                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px', paddingLeft: '20px' }}>
                             <li>✅ All free features</li>
                             <li>✅ Premium channels</li>
                             <li>✅ Trading signals</li>
@@ -228,13 +238,15 @@ const Courses = () => {
 
                     {/* A7FX Elite Plan */}
                     <div style={{
-                        padding: '24px',
-                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)',
-                        borderRadius: '12px',
-                        border: '2px solid rgba(139, 92, 246, 0.5)',
-                        textAlign: 'center',
-                        position: 'relative'
-                    }}>
+                    padding: 'clamp(16px, 3vw, 24px)',
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)',
+                    borderRadius: '12px',
+                    border: '2px solid rgba(139, 92, 246, 0.5)',
+                    textAlign: 'center',
+                    position: 'relative',
+                    minWidth: '0',
+                    maxWidth: '100%'
+                }}>
                         <div style={{
                             position: 'absolute',
                             top: '12px',
@@ -246,10 +258,10 @@ const Courses = () => {
                             fontSize: '12px',
                             fontWeight: 'bold'
                         }}>ELITE</div>
-                        <h3 style={{ color: '#fff', fontSize: '24px', marginBottom: '12px' }}>A7FX Elite</h3>
-                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
-                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '20px' }}>per month</div>
-                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px', paddingLeft: '20px' }}>
+                        <h3 style={{ color: '#fff', fontSize: 'clamp(20px, 4vw, 24px)', marginBottom: '12px' }}>A7FX Elite</h3>
+                        <div style={{ fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
+                        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px' }}>per month</div>
+                        <ul style={{ textAlign: 'left', color: 'rgba(255, 255, 255, 0.8)', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '20px', paddingLeft: '20px' }}>
                             <li>✅ Everything in Premium</li>
                             <li>✅ Elite-only channels</li>
                             <li>✅ 1-to-1 mentorship</li>
@@ -296,8 +308,9 @@ const Courses = () => {
                 <p style={{
                     textAlign: 'center',
                     color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: '14px',
-                    marginTop: '20px'
+                    fontSize: 'clamp(12px, 2vw, 14px)',
+                    marginTop: '20px',
+                    padding: '0 20px'
                 }}>
                     Cancel anytime • No hidden fees • Switch plans anytime
                 </p>
@@ -308,25 +321,27 @@ const Courses = () => {
                 marginTop: '80px',
                 marginBottom: '40px'
             }}>
-                <h2 style={{
+                <h2 className="section-title" style={{
                     color: '#ffffff',
-                    fontSize: '36px',
+                    fontSize: 'clamp(24px, 5vw, 36px)',
                     fontWeight: 'bold',
                     marginBottom: '12px',
                     textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
+                    backgroundClip: 'text',
+                    padding: '0 20px'
                 }}>
                     📚 COURSES
                 </h2>
-                <p style={{
+                <p className="section-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '18px',
+                    fontSize: 'clamp(14px, 2.5vw, 18px)',
                     marginBottom: '40px',
                     textAlign: 'center',
-                    lineHeight: '1.6'
+                    lineHeight: '1.6',
+                    padding: '0 20px'
                 }}>
                     Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs
                 </p>

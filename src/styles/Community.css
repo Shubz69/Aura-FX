@@ -392,6 +392,19 @@
     overflow: hidden;
     position: relative;
     z-index: 1;
+    height: calc(100vh - 80px);
+}
+
+@media (max-width: 1024px) {
+    .chat-main {
+        height: calc(100vh - 200px); /* Account for mobile channel selector and user stats */
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-main {
+        height: calc(100vh - 200px);
+    }
 }
 
 /* Chat Header */
@@ -1109,26 +1122,54 @@
 
 @media (max-width: 1024px) {
     .community-container {
-        grid-template-columns: 220px 1fr;
-    }
-    
-    .online-sidebar {
-        display: none;
-    }
-}
-
-@media (max-width: 768px) {
-    .community-container {
         grid-template-columns: 1fr;
+        padding-top: 140px; /* Extra space for mobile channel selector */
     }
     
     .community-sidebar {
         display: none;
     }
     
+    .online-sidebar {
+        display: none;
+    }
+    
+    /* Show mobile channel selector on tablets */
+    .mobile-channel-selector {
+        display: block !important;
+    }
+    
+    .mobile-user-stats {
+        display: flex !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .community-container {
+        grid-template-columns: 1fr;
+        padding-top: 140px;
+    }
+    
+    .community-sidebar {
+        display: none;
+    }
+    
+    .online-sidebar {
+        display: none;
+    }
+    
     /* Mobile channel selector dropdown */
     .mobile-channel-selector {
         display: block !important;
+        top: 80px;
+    }
+    
+    .mobile-user-stats {
+        top: 80px;
+    }
+    
+    .chat-main {
+        height: calc(100vh - 200px);
     }
 }
 
@@ -1174,7 +1215,7 @@
 .mobile-channel-selector {
     display: none;
     position: fixed;
-    top: 140px;
+    top: 80px;
     left: 0;
     right: 0;
     z-index: 1000;
@@ -1182,6 +1223,16 @@
     border-bottom: 1px solid var(--border-color);
     padding: 12px 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 1024px) {
+    .mobile-channel-selector {
+        top: 80px;
+    }
+    
+    .mobile-user-stats {
+        top: 80px;
+    }
 }
 
 .mobile-channel-selector select {
@@ -1237,8 +1288,8 @@
 }
 
 /* Emoji Picker Styles */
-    .emoji-picker {
-  position: fixed;
+.emoji-picker {
+    position: fixed;
     bottom: 120px;
     right: 320px;
     width: 350px;
@@ -1248,9 +1299,28 @@
     border: 1px solid var(--border-color);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     z-index: 1000;
-  display: flex;
+    display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+    .emoji-picker {
+        right: 20px;
+        bottom: 100px;
+        width: 300px;
+        height: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    .emoji-picker {
+        right: 10px;
+        left: 10px;
+        bottom: 80px;
+        width: auto;
+        height: 300px;
+    }
 }
 
 .emoji-picker-header {
@@ -1528,20 +1598,37 @@
     .gif-picker {
         right: 50%;
         transform: translateX(50%);
+        width: 350px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .gif-picker {
+        right: 20px;
+        bottom: 100px;
+        width: 300px;
+        max-height: 400px;
+        transform: none;
     }
 }
 
 @media (max-width: 768px) {
     .emoji-picker {
-        width: 90%;
-        max-width: 350px;
-        bottom: 100px;
+        width: calc(100% - 20px);
+        max-width: none;
+        bottom: 80px;
+        right: 10px;
+        left: 10px;
+        height: 300px;
     }
     
     .gif-picker {
-        width: 90%;
-        max-width: 350px;
-        bottom: 100px;
+        width: calc(100% - 20px);
+        max-width: none;
+        bottom: 80px;
+        right: 10px;
+        left: 10px;
+        max-height: 350px;
     }
     
     .gif-grid {

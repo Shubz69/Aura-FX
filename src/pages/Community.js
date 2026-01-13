@@ -318,7 +318,8 @@ const Community = () => {
     const [newChannelCategory, setNewChannelCategory] = useState('trading');
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
-    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 1024);
+    const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' && window.innerWidth > 768 && window.innerWidth <= 1024);
     const [channelActionStatus, setChannelActionStatus] = useState(null);
     const [channelActionLoading, setChannelActionLoading] = useState(false);
     
@@ -1602,10 +1603,12 @@ const Community = () => {
         return () => clearInterval(interval);
     }, [userId, isAuthenticated, checkSubscriptionFromDB]);
 
-    // Handle window resize for mobile detection
+    // Handle window resize for mobile/tablet detection
     useEffect(() => {
         const handleResize = () => {
-            setIsMobile(window.innerWidth <= 768);
+            const width = window.innerWidth;
+            setIsMobile(width <= 1024); // Show mobile UI for tablets too
+            setIsTablet(width > 768 && width <= 1024);
         };
         
         window.addEventListener('resize', handleResize);
@@ -3597,7 +3600,7 @@ Let's build generational wealth together! 💰🚀`,
                 </div>
             )}
             
-            {/* MOBILE CHANNEL SELECTOR - Only visible on mobile/tablet */}
+            {/* MOBILE/TABLET CHANNEL SELECTOR - Visible on mobile and tablets */}
             <div className="mobile-channel-selector" style={{ display: isMobile ? 'block' : 'none' }}>
                 <select
                     value={selectedChannel?.id || ''}
