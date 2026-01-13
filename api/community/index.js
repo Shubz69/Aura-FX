@@ -54,10 +54,16 @@ module.exports = async (req, res) => {
   // Extract the path to determine which endpoint to handle
   let path = '';
   try {
-    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    path = url.pathname;
+    // Handle relative URLs properly without triggering url.parse() deprecation
+    if (req.url && (req.url.startsWith('http://') || req.url.startsWith('https://'))) {
+      const url = new URL(req.url);
+      path = url.pathname;
+    } else {
+      // For relative URLs, extract pathname directly
+      path = req.url ? req.url.split('?')[0] : '';
+    }
   } catch (e) {
-    path = req.url || '';
+    path = req.url ? req.url.split('?')[0] : '';
   }
 
   // Handle /api/community/users

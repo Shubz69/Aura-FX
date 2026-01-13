@@ -109,16 +109,24 @@ module.exports = async (req, res) => {
   }
 
   // Extract pathname to determine which endpoint
+  // Use WHATWG URL API to avoid deprecation warnings
   let pathname = '';
   try {
     if (req.url) {
-      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-      pathname = url.pathname;
+      // Handle relative URLs properly without triggering url.parse() deprecation
+      if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+        const url = new URL(req.url);
+        pathname = url.pathname;
+      } else {
+        // For relative URLs, extract pathname directly
+        const urlPath = req.url.split('?')[0]; // Remove query string
+        pathname = urlPath;
+      }
     } else if (req.path) {
       pathname = req.path;
     }
   } catch (e) {
-    pathname = req.url || '';
+    pathname = req.url ? req.url.split('?')[0] : '';
   }
 
   // Handle /api/stripe/subscription-success

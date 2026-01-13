@@ -759,7 +759,7 @@ const Community = () => {
                     if (window.requestAnimationFrame) {
                         requestAnimationFrame(() => scrollToBottom());
                     } else {
-                        setTimeout(() => scrollToBottom(), 0);
+                    setTimeout(() => scrollToBottom(), 0);
                     }
                     }
                     
@@ -909,7 +909,7 @@ const Community = () => {
         
         // If subscription is inactive/expired, downgrade to free
         if (subscriptionStatus === 'inactive' || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') {
-            return 'free';
+        return 'free';
         }
         
         // Return stored role or default to free
@@ -3543,18 +3543,18 @@ Let's build generational wealth together! 💰🚀`,
                                                         }
                                                         setSelectedChannel(channel);
                                                     }}
-                                                    style={{ 
+                                                style={{ 
                                                         cursor: isLocked ? 'not-allowed' : ((isAdminUser || isSuperAdminUser) ? 'grab' : 'pointer'),
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'space-between',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
                                                         gap: '8px',
                                                         transition: 'all 0.2s ease',
                                                         opacity: isLocked ? 0.6 : (isDragging ? 0.4 : 1),
                                                         transform: isDragging ? 'scale(0.98)' : 'scale(1)'
-                                                    }}
+                                                }}
                                                     title={isLocked ? `🔒 Requires ${subscriptionRequirement} subscription - Click to subscribe` : ((isAdminUser || isSuperAdminUser) ? 'Drag to reorder' : '')}
-                                                >
+                                            >
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
                                                     <span className="channel-icon">
                                                         {getChannelIcon(channel)}
@@ -3593,7 +3593,7 @@ Let's build generational wealth together! 💰🚀`,
                                                 onDragOver={(e) => {
                                                     if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
                                                         e.preventDefault();
-                                                        e.stopPropagation();
+                                                            e.stopPropagation();
                                                         e.dataTransfer.dropEffect = 'move';
                                                         setDragOverChannel(channel.id);
                                                         setDragPosition('below');
@@ -3921,16 +3921,16 @@ Let's build generational wealth together! 💰🚀`,
                                 })()}
                             </div>
                         ) : (
-                            <>
-                                {/* Chat Header */}
-                                <div className="chat-header">
-                                    <h2>
+                    <>
+                        {/* Chat Header */}
+                        <div className="chat-header">
+                            <h2>
                                         {selectedChannel.displayName || selectedChannel.name}
-                                    </h2>
-                                </div>
-                                
-                                {/* Messages */}
-                                <div className="chat-messages">
+                            </h2>
+                        </div>
+                        
+                        {/* Messages */}
+                        <div className="chat-messages">
                             {messages.length === 0 ? (
                                 <div className="empty-state">
                                     <h3>Welcome to #{selectedChannel.displayName || selectedChannel.name}</h3>
@@ -5566,7 +5566,7 @@ Let's build generational wealth together! 💰🚀`,
                     </div>
                 </div>
             )}
-
+            
             {/* Context Menu */}
             {contextMenu && (
                 <div

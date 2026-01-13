@@ -112,17 +112,25 @@ module.exports = async (req, res) => {
 
   // Extract the path to determine which endpoint to handle
   // Vercel passes the path in req.url or we can construct it
+  // Use WHATWG URL API to avoid deprecation warnings
   let pathname = '';
   try {
     if (req.url) {
-      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-      pathname = url.pathname;
+      // Handle relative URLs properly without triggering url.parse() deprecation
+      if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+        const url = new URL(req.url);
+        pathname = url.pathname;
+      } else {
+        // For relative URLs, extract pathname directly
+        const urlPath = req.url.split('?')[0]; // Remove query string
+        pathname = urlPath;
+      }
     } else if (req.path) {
       pathname = req.path;
     }
   } catch (e) {
     // Fallback: check if this is a contact request based on query or body
-    pathname = req.url || '';
+    pathname = req.url ? req.url.split('?')[0] : '';
   }
 
   // Handle /api/subscription/check

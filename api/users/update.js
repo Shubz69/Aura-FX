@@ -136,8 +136,7 @@ module.exports = async (req, res) => {
         await ensureColumn('address TEXT', 'SELECT address FROM users LIMIT 1');
         await ensureColumn('bio TEXT', 'SELECT bio FROM users LIMIT 1');
         
-        // Avatar column - check if it exists and if it's TEXT (for base64) or VARCHAR
-        let avatarColumnType = 'VARCHAR(255)';
+        // Avatar column - ensure it's TEXT (for base64 images which can be very long)
         try {
           const [columns] = await db.execute(`
             SELECT COLUMN_TYPE 
@@ -148,31 +147,33 @@ module.exports = async (req, res) => {
           `, [process.env.MYSQL_DATABASE]);
           
           if (columns.length > 0) {
-            const columnType = columns[0].COLUMN_TYPE;
-            // If it's VARCHAR and less than TEXT, we might want to keep it
-            // But base64 images can be long, so we'll check the length
+            const columnType = columns[0].COLUMN_TYPE.toLowerCase();
+            // If it's VARCHAR (not TEXT), convert it to TEXT to handle long base64 strings
             if (columnType.includes('varchar') && !columnType.includes('text')) {
-              // Check if we need to convert to TEXT for base64 images
-              // For now, we'll try to use it as is, but VARCHAR(255) might be too small
-              // Let's check if the incoming data is base64 and longer than 255
+              try {
+                await db.execute('ALTER TABLE users MODIFY COLUMN avatar TEXT');
+                console.log('Avatar column converted to TEXT');
+              } catch (alterError) {
+                console.warn('Could not convert avatar column to TEXT:', alterError.message);
+              }
             }
           } else {
-            // Column doesn't exist, create it
+            // Column doesn't exist, create it as TEXT
             await db.execute('ALTER TABLE users ADD COLUMN avatar TEXT');
-            avatarColumnType = 'TEXT';
+            console.log('Avatar column created as TEXT');
           }
         } catch (e) {
           // If we can't check, try to alter to TEXT to be safe for base64
           try {
             await db.execute('ALTER TABLE users MODIFY COLUMN avatar TEXT');
-            avatarColumnType = 'TEXT';
+            console.log('Avatar column modified to TEXT');
           } catch (alterError) {
             // If modification fails, try to add it
             try {
               await db.execute('ALTER TABLE users ADD COLUMN avatar TEXT');
-              avatarColumnType = 'TEXT';
+              console.log('Avatar column added as TEXT');
             } catch (addError) {
-              console.warn('Could not modify avatar column, using existing type');
+              console.warn('Could not modify avatar column:', addError.message);
             }
           }
         }
@@ -313,8 +314,27 @@ module.exports = async (req, res) => {
           values.push(cleanValue(bio));
         }
         if (avatar !== undefined) {
+          let avatarValue = cleanValue(avatar);
+          // If avatar is a base64 string, ensure it's not too long (TEXT can handle up to 65KB)
+          // But we'll truncate if it's extremely long to prevent issues
+          if (avatarValue && typeof avatarValue === 'string') {
+            // Base64 images can be long, but TEXT column can handle up to 65,535 bytes
+            // We'll limit to 60KB to be safe (60,000 characters for base64)
+            if (avatarValue.length > 60000) {
+              console.warn('Avatar data too long, truncating to 60KB');
+              avatarValue = avatarValue.substring(0, 60000);
+            }
+            // If it's not a base64 data URL and not a simple filename, default to avatar_ai.png
+            if (avatarValue && !avatarValue.startsWith('data:') && !avatarValue.match(/^[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif|webp)$/)) {
+              // If it looks like it might be corrupted or invalid, use default
+              if (avatarValue.length > 1000 && !avatarValue.includes('base64')) {
+                console.warn('Avatar value seems invalid, using default');
+                avatarValue = 'avatar_ai.png';
+              }
+            }
+          }
           updates.push('avatar = ?');
-          values.push(cleanValue(avatar) || 'avatar_ai.png');
+          values.push(avatarValue || 'avatar_ai.png');
         }
 
         if (updates.length === 0) {

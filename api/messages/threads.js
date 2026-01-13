@@ -40,8 +40,14 @@ module.exports = async (req, res) => {
   let pathname = '';
   try {
     if (req.url) {
-      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-      pathname = url.pathname;
+      // Handle relative URLs properly without triggering url.parse() deprecation
+      if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+        const url = new URL(req.url);
+        pathname = url.pathname;
+      } else {
+        // For relative URLs, extract pathname directly
+        pathname = req.url.split('?')[0]; // Remove query string
+      }
     } else if (req.path) {
       pathname = req.path;
     }
