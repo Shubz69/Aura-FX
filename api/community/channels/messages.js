@@ -1,5 +1,20 @@
 const { getDbConnection } = require('../../db');
 
+// Suppress url.parse() deprecation warnings from dependencies (Express, Vercel runtime)
+// These warnings come from internal Node.js dependencies, not our code
+if (typeof process !== 'undefined' && process.emitWarning) {
+  const originalEmitWarning = process.emitWarning;
+  process.emitWarning = function(warning, ...args) {
+    if (typeof warning === 'string' && warning.includes('url.parse()')) {
+      return; // Suppress url.parse() deprecation warnings
+    }
+    if (warning && typeof warning === 'object' && warning.name === 'DeprecationWarning' && warning.message && warning.message.includes('url.parse()')) {
+      return; // Suppress url.parse() deprecation warnings
+    }
+    return originalEmitWarning.call(this, warning, ...args);
+  };
+}
+
 // Ensure messages table exists with correct schema
 const ensureMessagesTable = async (db) => {
   if (!db || !process.env.MYSQL_DATABASE) {
@@ -144,18 +159,21 @@ module.exports = async (req, res) => {
   }
 
   // Extract channel ID from query, URL path, or request body
+  // Use req.path when available (Express/Vercel) to avoid triggering url.parse() deprecation
   let channelId = req.query.channelId || req.query.id;
   
   // If not in query, try to extract from URL path
   // Vercel routes: /api/community/channels/[channelId]/messages
-  if (!channelId && req.url) {
+  // Prefer req.path over req.url to avoid triggering internal URL parsing
+  const urlPath = req.path || (req.url ? req.url.split('?')[0] : '');
+  if (!channelId && urlPath) {
     // Handle different URL formats
-    const urlMatch = req.url.match(/\/channels\/([^\/]+)\/messages/);
+    const urlMatch = urlPath.match(/\/channels\/([^\/]+)\/messages/);
     if (urlMatch && urlMatch[1]) {
       channelId = urlMatch[1];
     } else {
       // Fallback: split URL and find channel ID
-      const urlParts = req.url.split('/');
+      const urlParts = urlPath.split('/');
       const channelsIndex = urlParts.indexOf('channels');
       if (channelsIndex !== -1 && urlParts[channelsIndex + 1]) {
         channelId = urlParts[channelsIndex + 1];
@@ -170,7 +188,7 @@ module.exports = async (req, res) => {
 
   if (!channelId) {
     console.error('Channel ID not found in request:', { 
-      url: req.url, 
+      path: req.path,
       query: req.query, 
       body: req.body,
       method: req.method 
@@ -325,7 +343,7 @@ module.exports = async (req, res) => {
           sqlState: error.sqlState,
           channelId: channelId,
           channelIdType: typeof channelId,
-          url: req.url,
+          path: req.path,
           query: req.query,
           stack: error.stack
         });
@@ -758,7 +776,7 @@ module.exports = async (req, res) => {
     console.error('Error details:', {
       message: error.message,
       stack: error.stack,
-      url: req.url,
+      path: req.path,
       method: req.method,
       query: req.query
     });

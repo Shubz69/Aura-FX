@@ -1,6 +1,21 @@
 const mysql = require('mysql2/promise');
 const nodemailer = require('nodemailer');
 
+// Suppress url.parse() deprecation warnings from dependencies (Express, Vercel runtime)
+// These warnings come from internal Node.js dependencies, not our code
+if (typeof process !== 'undefined' && process.emitWarning) {
+  const originalEmitWarning = process.emitWarning;
+  process.emitWarning = function(warning, ...args) {
+    if (typeof warning === 'string' && warning.includes('url.parse()')) {
+      return; // Suppress url.parse() deprecation warnings
+    }
+    if (warning && typeof warning === 'object' && warning.name === 'DeprecationWarning' && warning.message && warning.message.includes('url.parse()')) {
+      return; // Suppress url.parse() deprecation warnings
+    }
+    return originalEmitWarning.call(this, warning, ...args);
+  };
+}
+
 const getDbConnection = async () => {
   if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
     return null;
