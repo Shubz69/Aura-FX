@@ -5,11 +5,6 @@ import "../styles/Register.css";
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
-// Import avatar images
-// import avatar1 from '../../public/avatars/avatar_ai.png';
-// import avatar2 from '../../public/avatars/avatar_money.png';
-// import avatar3 from '../../public/avatars/avatar_tech.png';
-// import avatar4 from '../../public/avatars/avatar_trading.png';
 
 const Register = () => {
     const [step, setStep] = useState(1); // 1: email/password entry, 2: email verification code, 3: complete registration

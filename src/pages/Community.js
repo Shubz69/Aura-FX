@@ -330,7 +330,6 @@ const Community = () => {
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 1024);
-    const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' && window.innerWidth > 768 && window.innerWidth <= 1024);
     const [channelActionStatus, setChannelActionStatus] = useState(null);
     const [channelActionLoading, setChannelActionLoading] = useState(false);
     
@@ -758,12 +757,7 @@ const Community = () => {
                     if (window.requestAnimationFrame) {
                         requestAnimationFrame(() => scrollToBottom());
                     } else {
-                        // Instant scroll using requestAnimationFrame for smooth, immediate update
-                    if (window.requestAnimationFrame) {
-                        requestAnimationFrame(() => scrollToBottom());
-                    } else {
-                    setTimeout(() => scrollToBottom(), 0);
-                    }
+                        setTimeout(() => scrollToBottom(), 0);
                     }
                     
                     return newMessages;
@@ -1781,7 +1775,6 @@ const Community = () => {
         const handleResize = () => {
             const width = window.innerWidth;
             setIsMobile(width <= 1024); // Show mobile UI for tablets too
-            setIsTablet(width > 768 && width <= 1024);
         };
         
         window.addEventListener('resize', handleResize);
@@ -2101,8 +2094,8 @@ const Community = () => {
             }
             
             // Fetch fresh messages in parallel (non-blocking)
-            fetchMessages(selectedChannel.id).catch(err => {
-                console.debug('Failed to fetch messages:', err.message);
+            fetchMessages(selectedChannel.id).catch(() => {
+                // Silently handle fetch errors
             });
         }
     }, [selectedChannel, fetchMessages, navigate]);
@@ -2191,7 +2184,6 @@ const Community = () => {
                 }
             } catch (err) {
                 // Silently handle errors to avoid console spam
-                console.debug('Polling fetch error:', err.message);
             }
         };
         
@@ -2789,7 +2781,6 @@ Let's build generational wealth together! 💰🚀`,
 
     const handleDeleteMessage = (messageId) => {
         if (!isAdminUser) {
-            console.warn('Only admins can delete messages');
             return;
         }
 
@@ -2800,7 +2791,6 @@ Let's build generational wealth together! 💰🚀`,
         // Find the message to show in confirmation
         const messageToDelete = messages.find(msg => msg.id === messageId);
         if (!messageToDelete) {
-            console.warn('Message not found:', messageId);
             return;
         }
 
@@ -2826,7 +2816,6 @@ Let's build generational wealth together! 💰🚀`,
             
             if (isTemporaryMessage) {
                 // Temporary messages don't exist in the database, just remove from local state
-                console.log('Deleting temporary message (not in database):', messageId);
             } else {
                 // Real message - delete from database via API
                 try {
