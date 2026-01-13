@@ -4609,15 +4609,6 @@ Let's build generational wealth together! 💰🚀`,
                                                     })()
                                         }
                                         disabled={!canUserPostInChannel(selectedChannel)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleSendMessage(e);
-                                            }
-                                            if (e.key === 'Escape' && editingMessageId) {
-                                                handleCancelEdit();
-                                            }
-                                        }}
                                         rows="3"
                                         style={{ 
                                             paddingRight: '120px',
