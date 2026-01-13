@@ -3863,7 +3863,7 @@ Let's build generational wealth together! 💰🚀`,
                                                                 message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium (but subscription may be inactive)' : currentRole}\n\n`;
                                                             } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
                                                                 message += `You need an A7FX Elite subscription (£250/month) to access this channel.\n\n`;
-                                                                message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' ? 'A7FX (but subscription may be inactive)' : currentRole}\n\n`;
+                                                                message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' || currentRole === 'elite' ? 'A7FX Elite (but subscription may be inactive)' : currentRole}\n\n`;
                                                             }
                                                             message += `Would you like to subscribe now?`;
                                                             if (window.confirm(message)) {
@@ -4209,9 +4209,9 @@ Let's build generational wealth together! 💰🚀`,
                                                     margin: '0 0 8px 0',
                                                     fontSize: '14px'
                                                 }}>
-                                                    <strong>Your Current Status:</strong> {currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' ? 'A7FX Elite User' : currentRole}
+                                                    <strong>Your Current Status:</strong> {currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' || currentRole === 'elite' ? 'A7FX Elite User' : currentRole}
                                                 </p>
-                                                {(currentRole === 'premium' || currentRole === 'a7fx') && (
+                                                {(currentRole === 'premium' || currentRole === 'a7fx' || currentRole === 'elite') && (
                                                     <p style={{ 
                                                         color: '#fbbf24', 
                                                         margin: '8px 0 0 0',
