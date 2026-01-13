@@ -524,23 +524,20 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Fetch the newly created message - execute returns [rows, fields]
-        const [newMessageRows] = await db.execute('SELECT * FROM messages WHERE id = ?', [result.insertId]);
+        // Fetch the newly created message with user info - execute returns [rows, fields]
+        const [newMessageRows] = await db.execute(
+          `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
+           FROM messages m 
+           LEFT JOIN users u ON m.sender_id = u.id 
+           WHERE m.id = ?`, 
+          [result.insertId]
+        );
         const newMessage = newMessageRows[0]; // Get first row
         
-        // Also fetch username from users table if userId is provided
-        let senderUsername = username || 'Anonymous';
-        if (userId) {
-          try {
-            const [userRows] = await db.execute('SELECT username FROM users WHERE id = ?', [userId]);
-            if (userRows && userRows[0]) {
-              senderUsername = userRows[0].username || username || 'Anonymous';
-            }
-          } catch (userError) {
-            console.warn('Could not fetch username from users table:', userError);
-            // Use provided username as fallback
-          }
-        }
+        // Get username and avatar from joined user table
+        const senderUsername = newMessage.username || newMessage.name || (newMessage.email ? newMessage.email.split('@')[0] : 'Anonymous');
+        const senderAvatar = newMessage.avatar || '/avatars/avatar_ai.png';
+        const senderRole = newMessage.role || 'USER';
         
         // Release connection back to pool
         try {
@@ -578,8 +575,8 @@ module.exports = async (req, res) => {
           sender: {
             id: newMessage.sender_id,
             username: senderUsername,
-            avatar: '/avatars/avatar_ai.png',
-            role: 'USER'
+            avatar: senderAvatar,
+            role: senderRole
           }
         };
 
