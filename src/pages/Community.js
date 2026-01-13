@@ -212,6 +212,10 @@ const Community = () => {
     const [channelOrder, setChannelOrder] = useState({}); // { category: [channelIds] }
     const [messageReactions, setMessageReactions] = useState({}); // messageId -> { emoji: count }
     const [contextMenu, setContextMenu] = useState(null); // { x, y, messageId }
+    const [channelContextMenu, setChannelContextMenu] = useState(null); // { x, y, channelId, channel }
+    const [categoryContextMenu, setCategoryContextMenu] = useState(null); // { x, y, categoryName }
+    const [editingChannel, setEditingChannel] = useState(null); // { id, name, description, category, accessLevel }
+    const [editingCategory, setEditingCategory] = useState(null); // { name }
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -287,9 +291,11 @@ const Community = () => {
     useEffect(() => {
         const handleClickOutside = () => {
             setContextMenu(null);
+            setChannelContextMenu(null);
+            setCategoryContextMenu(null);
         };
         
-        if (contextMenu) {
+        if (contextMenu || channelContextMenu || categoryContextMenu) {
             document.addEventListener('click', handleClickOutside);
             document.addEventListener('contextmenu', handleClickOutside);
         }
@@ -298,7 +304,7 @@ const Community = () => {
             document.removeEventListener('click', handleClickOutside);
             document.removeEventListener('contextmenu', handleClickOutside);
         };
-    }, [contextMenu]);
+    }, [contextMenu, channelContextMenu, categoryContextMenu]);
 
     useEffect(() => {
         channelListRef.current = channelList;
@@ -1437,14 +1443,12 @@ const Community = () => {
             return;
         }
 
-        // Use confirmation modal instead of window.confirm
-        // This will be handled by the channel manager modal
-        // For now, keep the confirm but we'll replace it with modal later
         const confirmed = window.confirm(`Delete channel "${channel.displayName || channel.name}"? This cannot be undone.`);
         if (!confirmed) return;
 
         setChannelActionLoading(true);
         setChannelActionStatus(null);
+        setChannelContextMenu(null);
 
         try {
             await Api.deleteChannel(channel.id);
@@ -1464,6 +1468,145 @@ const Community = () => {
             });
         } finally {
             setChannelActionLoading(false);
+        }
+    };
+
+    const handleEditChannel = async (channelData) => {
+        if (!channelData || !channelData.id) return;
+
+        setChannelActionLoading(true);
+        setChannelActionStatus(null);
+        setChannelContextMenu(null);
+        setEditingChannel(null);
+
+        try {
+            const response = await fetch('/api/community/channels', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: channelData.id,
+                    name: channelData.name,
+                    displayName: channelData.displayName || channelData.name,
+                    description: channelData.description || '',
+                    category: channelData.category,
+                    accessLevel: channelData.accessLevel
+                })
+            });
+
+            if (response.ok) {
+                await refreshChannelList();
+                setChannelActionStatus({ type: 'success', message: 'Channel updated successfully.' });
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update channel');
+            }
+        } catch (error) {
+            console.error('Failed to update channel:', error);
+            setChannelActionStatus({
+                type: 'error',
+                message: error.message || 'Failed to update channel.'
+            });
+        } finally {
+            setChannelActionLoading(false);
+        }
+    };
+
+    const handleDeleteCategory = async (categoryName) => {
+        // Check if category has channels
+        const channelsInCategory = channelList.filter(c => (c.category || 'general') === categoryName);
+        if (channelsInCategory.length > 0) {
+            alert(`Cannot delete category "${categoryName}" because it contains ${channelsInCategory.length} channel(s). Please move or delete all channels first.`);
+            setCategoryContextMenu(null);
+            return;
+        }
+
+        const confirmed = window.confirm(`Delete category "${formatCategoryName(categoryName)}"? This cannot be undone.`);
+        if (!confirmed) {
+            setCategoryContextMenu(null);
+            return;
+        }
+
+        try {
+            // Remove category from category order
+            const currentOrder = [...categoryOrderState];
+            const updatedOrder = currentOrder.filter(cat => cat !== categoryName);
+            
+            const response = await fetch('/api/community/channels', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ categoryOrder: updatedOrder })
+            });
+
+            if (response.ok) {
+                setCategoryOrderState(updatedOrder);
+                localStorage.setItem('channelCategoryOrder', JSON.stringify(updatedOrder));
+                setCategoryContextMenu(null);
+                triggerNotification('Category deleted successfully', 'success');
+            } else {
+                throw new Error('Failed to delete category');
+            }
+        } catch (error) {
+            console.error('Failed to delete category:', error);
+            alert('Failed to delete category. Please try again.');
+            setCategoryContextMenu(null);
+        }
+    };
+
+    const handleEditCategory = async (oldName, newName) => {
+        if (!newName || newName.trim() === '') {
+            alert('Category name cannot be empty');
+            return;
+        }
+
+        if (oldName === newName) {
+            setCategoryContextMenu(null);
+            setEditingCategory(null);
+            return;
+        }
+
+        try {
+            // Update category name in all channels
+            const channelsToUpdate = channelList.filter(c => (c.category || 'general') === oldName);
+            
+            for (const channel of channelsToUpdate) {
+                await fetch('/api/community/channels', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: channel.id,
+                        category: newName
+                    })
+                });
+            }
+
+            // Update category order
+            const currentOrder = [...categoryOrderState];
+            const index = currentOrder.indexOf(oldName);
+            if (index !== -1) {
+                currentOrder[index] = newName;
+            }
+            
+            const response = await fetch('/api/community/channels', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ categoryOrder: currentOrder })
+            });
+
+            if (response.ok) {
+                await refreshChannelList();
+                setCategoryOrderState(currentOrder);
+                localStorage.setItem('channelCategoryOrder', JSON.stringify(currentOrder));
+                setCategoryContextMenu(null);
+                setEditingCategory(null);
+                triggerNotification('Category renamed successfully', 'success');
+            } else {
+                throw new Error('Failed to rename category');
+            }
+        } catch (error) {
+            console.error('Failed to rename category:', error);
+            alert('Failed to rename category. Please try again.');
+            setCategoryContextMenu(null);
+            setEditingCategory(null);
         }
     };
 
@@ -3256,6 +3399,17 @@ Let's build generational wealth together! 💰🚀`,
                                                 <li 
                                                     className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''} ${isLocked ? 'locked' : ''} ${isDragging ? 'dragging' : ''} ${showDropAbove ? 'drop-above' : ''} ${showDropBelow ? 'drop-below' : ''}`}
                                                     draggable={!isLocked && (isAdminUser || isSuperAdminUser)}
+                                                    onContextMenu={(e) => {
+                                                        if (!isSuperAdminUser) return;
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setChannelContextMenu({
+                                                            x: e.clientX,
+                                                            y: e.clientY,
+                                                            channelId: channel.id,
+                                                            channel: channel
+                                                        });
+                                                    }}
                                                     onDragStart={(e) => {
                                                         if (isLocked || (!isAdminUser && !isSuperAdminUser)) {
                                                             e.preventDefault();
@@ -3423,31 +3577,6 @@ Let's build generational wealth together! 💰🚀`,
                                                     }}>
                                                         {hasMentions ? badge.mentions : badge.unread > 99 ? '99+' : badge.unread}
                                                     </span>
-                                                )}
-                                                {(isAdminUser || isSuperAdminUser) && !protectedChannelIds.includes(channel.id) && (
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Delete channel ${channel.displayName || channel.name}`}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteChannel(channel);
-                                                        }}
-                                                        style={{
-                                                            background: 'transparent',
-                                                            border: 'none',
-                                                            color: '#f87171',
-                                                            opacity: 0.7,
-                                                            cursor: 'pointer',
-                                                            padding: '4px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
-                                                        onMouseLeave={(e) => e.currentTarget.style.opacity = 0.7}
-                                                    >
-                                                        <FaTrash size={12} />
-                                                    </button>
                                                 )}
                                             </li>
                                             
@@ -4850,6 +4979,330 @@ Let's build generational wealth together! 💰🚀`,
                 />
             )}
             
+            {/* Channel Context Menu - Super Admin Only */}
+            {channelContextMenu && isSuperAdminUser && (
+                <div
+                    className="message-context-menu"
+                    style={{
+                        position: 'fixed',
+                        top: `${channelContextMenu.y}px`,
+                        left: `${channelContextMenu.x}px`,
+                        background: '#2B2D31',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        padding: '4px',
+                        minWidth: '200px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                        zIndex: 10000,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        pointerEvents: 'auto'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            const channel = channelContextMenu.channel;
+                            setEditingChannel({
+                                id: channel.id,
+                                name: channel.name,
+                                displayName: channel.displayName || channel.name,
+                                description: channel.description || '',
+                                category: channel.category || 'general',
+                                accessLevel: channel.accessLevel || 'open'
+                            });
+                            setChannelContextMenu(null);
+                        }}
+                    >
+                        <FaEdit size={14} /> Edit Channel
+                    </button>
+                    {!protectedChannelIds.includes(channelContextMenu.channelId) && (
+                        <>
+                            <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
+                            <button
+                                className="context-menu-item"
+                                onClick={() => {
+                                    handleDeleteChannel(channelContextMenu.channel);
+                                }}
+                                style={{ color: '#f87171' }}
+                            >
+                                <FaTrash size={14} /> Delete Channel
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* Category Context Menu - Super Admin Only */}
+            {categoryContextMenu && isSuperAdminUser && (
+                <div
+                    className="message-context-menu"
+                    style={{
+                        position: 'fixed',
+                        top: `${categoryContextMenu.y}px`,
+                        left: `${categoryContextMenu.x}px`,
+                        background: '#2B2D31',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        padding: '4px',
+                        minWidth: '200px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                        zIndex: 10000,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        pointerEvents: 'auto'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            setEditingCategory({
+                                oldName: categoryContextMenu.categoryName,
+                                newName: categoryContextMenu.categoryName
+                            });
+                            setCategoryContextMenu(null);
+                        }}
+                    >
+                        <FaEdit size={14} /> Edit Category
+                    </button>
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '4px 0' }} />
+                    <button
+                        className="context-menu-item"
+                        onClick={() => {
+                            handleDeleteCategory(categoryContextMenu.categoryName);
+                        }}
+                        style={{ color: '#f87171' }}
+                    >
+                        <FaTrash size={14} /> Delete Category
+                    </button>
+                </div>
+            )}
+
+            {/* Edit Channel Modal */}
+            {editingChannel && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10001,
+                    padding: '20px'
+                }} onClick={() => setEditingChannel(null)}>
+                    <div style={{
+                        background: '#1E1E1E',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '500px',
+                        width: '100%',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.5rem' }}>Edit Channel</h3>
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Channel Name</label>
+                            <input
+                                type="text"
+                                value={editingChannel.displayName || editingChannel.name}
+                                onChange={(e) => setEditingChannel({ ...editingChannel, displayName: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#2B2D31',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    fontSize: '0.9rem'
+                                }}
+                            />
+                        </div>
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Description</label>
+                            <textarea
+                                value={editingChannel.description}
+                                onChange={(e) => setEditingChannel({ ...editingChannel, description: e.target.value })}
+                                rows={3}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#2B2D31',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    fontSize: '0.9rem',
+                                    resize: 'vertical'
+                                }}
+                            />
+                        </div>
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Category</label>
+                            <select
+                                value={editingChannel.category}
+                                onChange={(e) => setEditingChannel({ ...editingChannel, category: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#2B2D31',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    fontSize: '0.9rem'
+                                }}
+                            >
+                                <option value="general">General</option>
+                                <option value="trading">Trading</option>
+                                <option value="premium">Premium</option>
+                                <option value="a7fx">A7FX</option>
+                                <option value="announcements">Announcements</option>
+                                <option value="staff">Staff</option>
+                                <option value="support">Support</option>
+                            </select>
+                        </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Access Level</label>
+                            <select
+                                value={editingChannel.accessLevel}
+                                onChange={(e) => setEditingChannel({ ...editingChannel, accessLevel: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#2B2D31',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    fontSize: '0.9rem'
+                                }}
+                            >
+                                <option value="open">Open - Everyone can view and post</option>
+                                <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
+                                <option value="admin-only">Admin-Only - Only admins can view and post</option>
+                                <option value="premium">Premium - Only premium subscribers</option>
+                                <option value="a7fx">A7FX Elite - Only A7FX subscribers</option>
+                            </select>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setEditingChannel(null)}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'transparent',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem'
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleEditChannel(editingChannel)}
+                                disabled={channelActionLoading}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    cursor: channelActionLoading ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '600',
+                                    opacity: channelActionLoading ? 0.6 : 1
+                                }}
+                            >
+                                {channelActionLoading ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Category Modal */}
+            {editingCategory && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10001,
+                    padding: '20px'
+                }} onClick={() => setEditingCategory(null)}>
+                    <div style={{
+                        background: '#1E1E1E',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '400px',
+                        width: '100%',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.5rem' }}>Edit Category</h3>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Category Name</label>
+                            <input
+                                type="text"
+                                value={editingCategory.newName}
+                                onChange={(e) => setEditingCategory({ ...editingCategory, newName: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#2B2D31',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    fontSize: '0.9rem'
+                                }}
+                                placeholder="Enter category name"
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setEditingCategory(null)}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'transparent',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem'
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleEditCategory(editingCategory.oldName, editingCategory.newName)}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '600'
+                                }}
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Context Menu */}
             {contextMenu && (
                 <div
