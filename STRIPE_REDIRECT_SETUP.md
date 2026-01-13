@@ -30,13 +30,23 @@ https://aura-fx-ten.vercel.app/subscription
 ## Payment Link URLs
 
 ### For Aura FX Standard ($99/month)
-**Success URL:**
+**Stripe Payment Link:**
+```
+https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j
+```
+
+**Success URL (configure in Stripe Dashboard):**
 ```
 https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true&plan=aura
 ```
 
 ### For A7FX Elite ($250/month)
-**Success URL:**
+**Stripe Payment Link:**
+```
+https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k
+```
+
+**Success URL (configure in Stripe Dashboard):**
 ```
 https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true&plan=a7fx
 ```

@@ -205,10 +205,10 @@ const Courses = () => {
                     onClick={() => {
                         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
                         const userEmail = storedUser?.email;
-                        const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+                        const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
                         const paymentLink = userEmail
-                            ? `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=a7fx`
-                            : `${STRIPE_PAYMENT_LINK}${STRIPE_PAYMENT_LINK.includes('?') ? '&' : '?'}plan=a7fx`;
+                            ? `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=a7fx`
+                            : `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}plan=a7fx`;
                         window.location.href = paymentLink;
                     }}
                     style={{
