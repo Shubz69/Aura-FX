@@ -207,6 +207,8 @@ const Community = () => {
     });
     const [draggedCategory, setDraggedCategory] = useState(null);
     const [draggedChannel, setDraggedChannel] = useState(null);
+    const [dragOverChannel, setDragOverChannel] = useState(null); // Channel being dragged over
+    const [dragPosition, setDragPosition] = useState(null); // 'above' or 'below' for drop position
     const [channelOrder, setChannelOrder] = useState({}); // { category: [channelIds] }
     const [messageReactions, setMessageReactions] = useState({}); // messageId -> { emoji: count }
     const [contextMenu, setContextMenu] = useState(null); // { x, y, messageId }
@@ -3169,121 +3171,226 @@ Let's build generational wealth together! 💰🚀`,
                                             }
                                         }
                                         
+                                        const isDragOver = dragOverChannel === channel.id;
+                                        const showDropAbove = isDragOver && dragPosition === 'above';
+                                        const showDropBelow = isDragOver && dragPosition === 'below';
+                                        
                                         return (
-                                            <li 
-                                                key={channel.id}
-                                                className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''} ${isLocked ? 'locked' : ''} ${isDragging ? 'dragging' : ''}`}
-                                                draggable={!isLocked}
-                                                onDragStart={(e) => {
-                                                    if (isLocked) {
-                                                        e.preventDefault();
-                                                        return;
-                                                    }
-                                                    setDraggedChannel(channel.id);
-                                                    e.dataTransfer.effectAllowed = 'move';
-                                                    e.dataTransfer.setData('text/plain', channel.id);
-                                                    e.currentTarget.style.opacity = '0.5';
-                                                }}
-                                                onDragEnd={(e) => {
-                                                    e.currentTarget.style.opacity = '';
-                                                    setDraggedChannel(null);
-                                                }}
-                                                onDragOver={(e) => {
-                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
-                                                        e.preventDefault();
-                                                        e.dataTransfer.dropEffect = 'move';
-                                                    }
-                                                }}
-                                                onDragEnter={(e) => {
-                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                                onDrop={async (e) => {
-                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        
-                                                        // Find the dragged channel to get its current category
-                                                        const draggedChannelObj = channelList.find(c => c.id === draggedChannel);
-                                                        const sourceCategory = draggedChannelObj?.category || 'general';
-                                                        
-                                                        // If dropped in same category, just reorder
-                                                        if (sourceCategory === categoryName) {
-                                                            const currentOrder = channelOrder[categoryName] || channels.map(c => c.id);
-                                                            const draggedIndex = currentOrder.indexOf(draggedChannel);
-                                                            const dropIndex = currentOrder.indexOf(channel.id);
-                                                            
-                                                            if (draggedIndex !== -1 && dropIndex !== -1) {
-                                                                const newOrder = [...currentOrder];
-                                                                newOrder.splice(draggedIndex, 1);
-                                                                newOrder.splice(dropIndex, 0, draggedChannel);
-                                                                saveChannelOrder(categoryName, newOrder);
-                                                                setDraggedChannel(null);
+                                            <React.Fragment key={channel.id}>
+                                                {/* Drop zone above first channel */}
+                                                {channelIndex === 0 && (
+                                                    <li
+                                                        className={`drop-zone ${draggedChannel && draggedChannel !== channel.id && !isLocked ? 'drop-zone-active' : ''} ${showDropAbove && channelIndex === 0 ? 'drop-zone-highlight' : ''}`}
+                                                        onDragOver={(e) => {
+                                                            if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                e.dataTransfer.dropEffect = 'move';
+                                                                setDragOverChannel(channel.id);
+                                                                setDragPosition('above');
                                                             }
-                                                        } else {
-                                                            // Moving to different category - update channel category
-                                                            try {
-                                                                const response = await fetch(`/api/community/channels`, {
-                                                                    method: 'PUT',
-                                                                    headers: {
-                                                                        'Content-Type': 'application/json'
-                                                                    },
-                                                                    body: JSON.stringify({
-                                                                        id: draggedChannel,
-                                                                        category: categoryName
-                                                                    })
-                                                                });
-                                                                
-                                                                if (response.ok) {
-                                                                    // Refresh channel list to show updated category
-                                                                    const refreshResponse = await fetch('/api/community/channels');
-                                                                    if (refreshResponse.ok) {
-                                                                        const data = await refreshResponse.json();
-                                                                        if (data.success && Array.isArray(data.channels)) {
-                                                                            setChannelList(data.channels);
-                                                                        }
-                                                                    }
-                                                                    setDraggedChannel(null);
-                                                                } else {
-                                                                    console.error('Failed to move channel to category:', await response.text());
+                                                        }}
+                                                        onDragLeave={(e) => {
+                                                            if (!e.currentTarget.contains(e.relatedTarget)) {
+                                                                if (dragOverChannel === channel.id && dragPosition === 'above') {
+                                                                    setDragOverChannel(null);
+                                                                    setDragPosition(null);
                                                                 }
-                                                            } catch (error) {
-                                                                console.error('Error moving channel to category:', error);
+                                                            }
+                                                        }}
+                                                        onDrop={async (e) => {
+                                                            if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                
+                                                                const draggedChannelObj = channelList.find(c => c.id === draggedChannel);
+                                                                const sourceCategory = draggedChannelObj?.category || 'general';
+                                                                
+                                                                if (sourceCategory === categoryName) {
+                                                                    const currentOrder = channelOrder[categoryName] || channels.map(c => c.id);
+                                                                    const draggedIndex = currentOrder.indexOf(draggedChannel);
+                                                                    const dropIndex = 0;
+                                                                    
+                                                                    if (draggedIndex !== -1 && draggedIndex !== dropIndex) {
+                                                                        const newOrder = [...currentOrder];
+                                                                        newOrder.splice(draggedIndex, 1);
+                                                                        newOrder.splice(0, 0, draggedChannel);
+                                                                        await saveChannelOrder(categoryName, newOrder);
+                                                                        setDraggedChannel(null);
+                                                                        setDragOverChannel(null);
+                                                                        setDragPosition(null);
+                                                                    }
+                                                                } else {
+                                                                    try {
+                                                                        const response = await fetch(`/api/community/channels`, {
+                                                                            method: 'PUT',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ id: draggedChannel, category: categoryName })
+                                                                        });
+                                                                        
+                                                                        if (response.ok) {
+                                                                            const refreshResponse = await fetch('/api/community/channels');
+                                                                            if (refreshResponse.ok) {
+                                                                                const data = await refreshResponse.json();
+                                                                                if (data.success && Array.isArray(data.channels)) {
+                                                                                    setChannelList(data.channels);
+                                                                                }
+                                                                            }
+                                                                            setDraggedChannel(null);
+                                                                            setDragOverChannel(null);
+                                                                            setDragPosition(null);
+                                                                        }
+                                                                    } catch (error) {
+                                                                        console.error('Error moving channel:', error);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                )}
+                                                
+                                                {/* Channel item */}
+                                                <li 
+                                                    className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''} ${isLocked ? 'locked' : ''} ${isDragging ? 'dragging' : ''} ${showDropAbove ? 'drop-above' : ''} ${showDropBelow ? 'drop-below' : ''}`}
+                                                    draggable={!isLocked && (isAdminUser || isSuperAdminUser)}
+                                                    onDragStart={(e) => {
+                                                        if (isLocked || (!isAdminUser && !isSuperAdminUser)) {
+                                                            e.preventDefault();
+                                                            return;
+                                                        }
+                                                        setDraggedChannel(channel.id);
+                                                        e.dataTransfer.effectAllowed = 'move';
+                                                        e.dataTransfer.setData('text/plain', channel.id);
+                                                        e.currentTarget.style.opacity = '0.4';
+                                                        e.currentTarget.style.transform = 'scale(0.98)';
+                                                    }}
+                                                    onDragEnd={(e) => {
+                                                        e.currentTarget.style.opacity = '';
+                                                        e.currentTarget.style.transform = '';
+                                                        setDraggedChannel(null);
+                                                        setDragOverChannel(null);
+                                                        setDragPosition(null);
+                                                    }}
+                                                    onDragOver={(e) => {
+                                                        if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            e.dataTransfer.dropEffect = 'move';
+                                                            
+                                                            // Determine if we're in the top or bottom half of the channel
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            const y = e.clientY - rect.top;
+                                                            const midpoint = rect.height / 2;
+                                                            
+                                                            if (y < midpoint) {
+                                                                setDragOverChannel(channel.id);
+                                                                setDragPosition('above');
+                                                            } else {
+                                                                setDragOverChannel(channel.id);
+                                                                setDragPosition('below');
                                                             }
                                                         }
-                                                    }
-                                                }}
-                                                onClick={() => {
-                                                    if (isLocked) {
-                                                        // Show clear message about subscription requirement
-                                                        const currentRole = getCurrentUserRole();
-                                                        let message = `🔒 This channel requires a ${subscriptionRequirement} subscription.\n\n`;
-                                                        if (accessLevel === 'premium') {
-                                                            message += `You need an Aura FX Premium subscription (£99/month) to access this channel.\n\n`;
-                                                            message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium (but subscription may be inactive)' : currentRole}\n\n`;
-                                                        } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-                                                            message += `You need an A7FX Elite subscription (£250/month) to access this channel.\n\n`;
-                                                            message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' ? 'A7FX (but subscription may be inactive)' : currentRole}\n\n`;
+                                                    }}
+                                                    onDragLeave={(e) => {
+                                                        // Only clear if we're actually leaving the channel item
+                                                        if (!e.currentTarget.contains(e.relatedTarget)) {
+                                                            if (dragOverChannel === channel.id) {
+                                                                setDragOverChannel(null);
+                                                                setDragPosition(null);
+                                                            }
                                                         }
-                                                        message += `Would you like to subscribe now?`;
-                                                        if (window.confirm(message)) {
-                                                            window.location.href = '/subscription';
+                                                    }}
+                                                    onDrop={async (e) => {
+                                                        if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            
+                                                            const draggedChannelObj = channelList.find(c => c.id === draggedChannel);
+                                                            const sourceCategory = draggedChannelObj?.category || 'general';
+                                                            
+                                                            if (sourceCategory === categoryName) {
+                                                                const currentOrder = channelOrder[categoryName] || channels.map(c => c.id);
+                                                                const draggedIndex = currentOrder.indexOf(draggedChannel);
+                                                                const dropIndex = currentOrder.indexOf(channel.id);
+                                                                
+                                                                if (draggedIndex !== -1 && dropIndex !== -1 && draggedIndex !== dropIndex) {
+                                                                    const newOrder = [...currentOrder];
+                                                                    newOrder.splice(draggedIndex, 1);
+                                                                    // Insert based on drag position
+                                                                    let insertIndex = dropIndex;
+                                                                    if (dragPosition === 'below') {
+                                                                        insertIndex = dropIndex + 1;
+                                                                    } else if (dragPosition === 'above') {
+                                                                        insertIndex = dropIndex;
+                                                                    }
+                                                                    // Adjust if dragging from before the drop position
+                                                                    if (draggedIndex < insertIndex) {
+                                                                        insertIndex--;
+                                                                    }
+                                                                    newOrder.splice(insertIndex, 0, draggedChannel);
+                                                                    await saveChannelOrder(categoryName, newOrder);
+                                                                    setDraggedChannel(null);
+                                                                    setDragOverChannel(null);
+                                                                    setDragPosition(null);
+                                                                }
+                                                            } else {
+                                                                // Move to different category
+                                                                try {
+                                                                    const response = await fetch(`/api/community/channels`, {
+                                                                        method: 'PUT',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ id: draggedChannel, category: categoryName })
+                                                                    });
+                                                                    
+                                                                    if (response.ok) {
+                                                                        const refreshResponse = await fetch('/api/community/channels');
+                                                                        if (refreshResponse.ok) {
+                                                                            const data = await refreshResponse.json();
+                                                                            if (data.success && Array.isArray(data.channels)) {
+                                                                                setChannelList(data.channels);
+                                                                            }
+                                                                        }
+                                                                        setDraggedChannel(null);
+                                                                        setDragOverChannel(null);
+                                                                        setDragPosition(null);
+                                                                    }
+                                                                } catch (error) {
+                                                                    console.error('Error moving channel:', error);
+                                                                }
+                                                            }
                                                         }
-                                                        return;
-                                                    }
-                                                    setSelectedChannel(channel);
-                                                }}
-                                                style={{ 
-                                                    cursor: isLocked ? 'not-allowed' : 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    gap: '8px',
-                                                    opacity: isLocked ? 0.6 : (isDragging ? 0.5 : 1)
-                                                }}
-                                                title={isLocked ? `🔒 Requires ${subscriptionRequirement} subscription - Click to subscribe` : 'Drag to reorder'}
-                                            >
+                                                    }}
+                                                    onClick={() => {
+                                                        if (isLocked) {
+                                                            const currentRole = getCurrentUserRole();
+                                                            let message = `🔒 This channel requires a ${subscriptionRequirement} subscription.\n\n`;
+                                                            if (accessLevel === 'premium') {
+                                                                message += `You need an Aura FX Premium subscription (£99/month) to access this channel.\n\n`;
+                                                                message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium (but subscription may be inactive)' : currentRole}\n\n`;
+                                                            } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                                                                message += `You need an A7FX Elite subscription (£250/month) to access this channel.\n\n`;
+                                                                message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' ? 'A7FX (but subscription may be inactive)' : currentRole}\n\n`;
+                                                            }
+                                                            message += `Would you like to subscribe now?`;
+                                                            if (window.confirm(message)) {
+                                                                window.location.href = '/subscription';
+                                                            }
+                                                            return;
+                                                        }
+                                                        setSelectedChannel(channel);
+                                                    }}
+                                                    style={{ 
+                                                        cursor: isLocked ? 'not-allowed' : ((isAdminUser || isSuperAdminUser) ? 'grab' : 'pointer'),
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        gap: '8px',
+                                                        transition: 'all 0.2s ease',
+                                                        opacity: isLocked ? 0.6 : (isDragging ? 0.4 : 1),
+                                                        transform: isDragging ? 'scale(0.98)' : 'scale(1)'
+                                                    }}
+                                                    title={isLocked ? `🔒 Requires ${subscriptionRequirement} subscription - Click to subscribe` : ((isAdminUser || isSuperAdminUser) ? 'Drag to reorder' : '')}
+                                                >
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
                                                     <span className="channel-icon">
                                                         {getChannelIcon(channel)}
@@ -3340,6 +3447,78 @@ Let's build generational wealth together! 💰🚀`,
                                                     </button>
                                                 )}
                                             </li>
+                                            
+                                            {/* Drop zone below channel */}
+                                            <li
+                                                className={`drop-zone ${showDropBelow ? 'drop-zone-highlight' : ''}`}
+                                                onDragOver={(e) => {
+                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        e.dataTransfer.dropEffect = 'move';
+                                                        setDragOverChannel(channel.id);
+                                                        setDragPosition('below');
+                                                    }
+                                                }}
+                                                onDragLeave={(e) => {
+                                                    if (!e.currentTarget.contains(e.relatedTarget)) {
+                                                        if (dragOverChannel === channel.id && dragPosition === 'below') {
+                                                            setDragOverChannel(null);
+                                                            setDragPosition(null);
+                                                        }
+                                                    }
+                                                }}
+                                                onDrop={async (e) => {
+                                                    if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        
+                                                        const draggedChannelObj = channelList.find(c => c.id === draggedChannel);
+                                                        const sourceCategory = draggedChannelObj?.category || 'general';
+                                                        
+                                                        if (sourceCategory === categoryName) {
+                                                            const currentOrder = channelOrder[categoryName] || channels.map(c => c.id);
+                                                            const draggedIndex = currentOrder.indexOf(draggedChannel);
+                                                            const dropIndex = currentOrder.indexOf(channel.id);
+                                                            
+                                                            if (draggedIndex !== -1 && dropIndex !== -1 && draggedIndex !== dropIndex) {
+                                                                const newOrder = [...currentOrder];
+                                                                newOrder.splice(draggedIndex, 1);
+                                                                const newDropIndex = dropIndex > draggedIndex ? dropIndex : dropIndex + 1;
+                                                                newOrder.splice(newDropIndex, 0, draggedChannel);
+                                                                await saveChannelOrder(categoryName, newOrder);
+                                                                setDraggedChannel(null);
+                                                                setDragOverChannel(null);
+                                                                setDragPosition(null);
+                                                            }
+                                                        } else {
+                                                            try {
+                                                                const response = await fetch(`/api/community/channels`, {
+                                                                    method: 'PUT',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ id: draggedChannel, category: categoryName })
+                                                                });
+                                                                
+                                                                if (response.ok) {
+                                                                    const refreshResponse = await fetch('/api/community/channels');
+                                                                    if (refreshResponse.ok) {
+                                                                        const data = await refreshResponse.json();
+                                                                        if (data.success && Array.isArray(data.channels)) {
+                                                                            setChannelList(data.channels);
+                                                                        }
+                                                                    }
+                                                                    setDraggedChannel(null);
+                                                                    setDragOverChannel(null);
+                                                                    setDragPosition(null);
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error moving channel:', error);
+                                                            }
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                        </React.Fragment>
                                         );
                                     })}
                                 </ul>

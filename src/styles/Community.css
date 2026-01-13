@@ -205,6 +205,60 @@
     opacity: 0.7;
 }
 
+/* Drop zones for channel reordering */
+.drop-zone {
+    height: 2px;
+    margin: 2px 0;
+    background: transparent;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.drop-zone-active {
+    pointer-events: auto;
+    opacity: 1;
+    background: rgba(139, 92, 246, 0.3);
+}
+
+.drop-zone-highlight {
+    height: 3px;
+    background: linear-gradient(135deg, var(--purple-primary), var(--accent-blue));
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+    opacity: 1;
+    pointer-events: auto;
+    animation: dropZonePulse 1s ease-in-out infinite;
+}
+
+@keyframes dropZonePulse {
+    0%, 100% {
+        opacity: 0.8;
+        box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 12px rgba(139, 92, 246, 0.9);
+    }
+}
+
+/* Channel item drag states */
+.channel-item.dragging {
+    opacity: 0.4 !important;
+    transform: scale(0.98) !important;
+    transition: all 0.2s ease;
+}
+
+.channel-item.drop-above {
+    border-top: 2px solid var(--purple-primary);
+    box-shadow: 0 -2px 8px rgba(139, 92, 246, 0.4);
+}
+
+.channel-item.drop-below {
+    border-bottom: 2px solid var(--purple-primary);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+}
+
 .channel-item::before {
     content: '';
     position: absolute;
