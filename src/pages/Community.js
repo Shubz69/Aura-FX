@@ -1074,7 +1074,11 @@ const Community = () => {
         setNewMessage('');
         
         // Scroll to bottom immediately to show new message
-        setTimeout(() => scrollToBottom(), 0);
+        if (window.requestAnimationFrame) {
+            requestAnimationFrame(() => scrollToBottom());
+        } else {
+            setTimeout(() => scrollToBottom(), 0);
+        }
 
         try {
             // Save to backend API for permanent persistence
@@ -2527,7 +2531,11 @@ Let's build generational wealth together! 💰🚀`,
         removeSelectedFile();
         
         // Scroll to bottom immediately to show new message
-        setTimeout(() => scrollToBottom(), 0);
+        if (window.requestAnimationFrame) {
+            requestAnimationFrame(() => scrollToBottom());
+        } else {
+            setTimeout(() => scrollToBottom(), 0);
+        }
 
         try {
             // Save to backend API for permanent persistence
