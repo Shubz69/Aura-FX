@@ -17,6 +17,7 @@ const Login = () => {
     const [canResendCode, setCanResendCode] = useState(false);
     const { login: loginWithAuth, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const errorRef = useRef('');
     
     useEffect(() => {
         // Reset countdown timer if MFA verification is shown
