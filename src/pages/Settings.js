@@ -57,10 +57,15 @@ const Settings = () => {
 
   const loadUsers = async () => {
     try {
-      // This would call your API to get all users
-      // For now, we'll use a placeholder
       const response = await Api.getUsers?.() || { data: [] };
-      setUsers(response.data || []);
+      const usersData = response.data || [];
+      // Ensure subscription fields are included
+      setUsers(usersData.map(u => ({
+        ...u,
+        subscription_status: u.subscription_status || 'inactive',
+        subscription_plan: u.subscription_plan || null,
+        subscription_expiry: u.subscription_expiry || null
+      })));
     } catch (error) {
       console.error('Error loading users:', error);
     }
