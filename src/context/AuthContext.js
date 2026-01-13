@@ -115,29 +115,35 @@ export const AuthProvider = ({ children }) => {
           }
           
           // Verify user still exists in database (account might have been deleted)
-          try {
-            const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
-            if (userId) {
-              const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
-              const verifyResponse = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
+          // Do this asynchronously and non-blocking to avoid blocking app load
+          const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
+          if (userId) {
+            // Run verification in background - don't block app loading
+            setTimeout(async () => {
+              try {
+                const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
+                const verifyResponse = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  },
+                  signal: AbortSignal.timeout(3000) // 3 second timeout
+                });
+                
+                if (!verifyResponse.ok || verifyResponse.status === 404) {
+                  // User doesn't exist - account was deleted
+                  console.warn('User account not found - logging out');
+                  logout();
                 }
-              });
-              
-              if (!verifyResponse.ok || verifyResponse.status === 404) {
-                // User doesn't exist - account was deleted
-                console.warn('User account not found - logging out');
-                logout();
-                setLoading(false);
-                return;
+              } catch (verifyError) {
+                // If verification fails, don't block - just log warning
+                // Network errors or timeouts shouldn't prevent app from loading
+                if (verifyError.name !== 'AbortError') {
+                  console.warn('Could not verify user existence:', verifyError);
+                }
               }
-            }
-          } catch (verifyError) {
-            // If verification fails, still allow login but log warning
-            console.warn('Could not verify user existence:', verifyError);
+            }, 100); // Small delay to let app load first
           }
           
           // Token is valid, get minimal user info from token
