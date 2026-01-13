@@ -1,28 +1,5 @@
-const mysql = require('mysql2/promise');
-
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    return null;
-  }
-
-  try {
-    const connection = await mysql.createConnection({
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 5000,
-      ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false
-    });
-    await connection.ping();
-    return connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return null;
-  }
-};
+const { getDbConnection, executeQuery } = require('./db');
+const { getCached, setCached } = require('./cache');
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -41,6 +18,13 @@ module.exports = async (req, res) => {
 
   try {
     const timeframe = req.query.timeframe || 'all-time';
+    
+    // Check cache first (5 minute cache for leaderboard)
+    const cacheKey = `leaderboard_${timeframe}`;
+    const cached = getCached(cacheKey, 300000); // 5 minutes
+    if (cached) {
+      return res.status(200).json({ success: true, leaderboard: cached });
+    }
     
     const db = await getDbConnection();
     if (!db) {
@@ -89,6 +73,7 @@ module.exports = async (req, res) => {
       query += ' LIMIT 100'; // Limit to top 100
 
       const [users] = await db.execute(query);
+      db.release(); // Release connection back to pool
 
       // Create real user accounts if we have less than 20 users to populate leaderboard
       const fakeUsernames = [
@@ -155,6 +140,7 @@ module.exports = async (req, res) => {
         const [updatedUsers] = await db.execute(query);
         users.length = 0;
         users.push(...updatedUsers);
+        db.release(); // Release connection back to pool
       }
 
       // Update users with generic trading-related usernames to more realistic names
@@ -212,11 +198,19 @@ module.exports = async (req, res) => {
         strikes: 0
       }));
 
-      await db.end();
+      // Cache the result
+      setCached(cacheKey, leaderboard);
+      
       return res.status(200).json({ success: true, leaderboard });
     } catch (dbError) {
       console.error('Database error fetching leaderboard:', dbError);
-      if (db && !db.ended) await db.end();
+      if (db) {
+        try {
+          db.release(); // Release connection if still held
+        } catch (e) {
+          // Ignore release errors
+        }
+      }
       return res.status(200).json({ success: true, leaderboard: [] });
     }
   } catch (error) {

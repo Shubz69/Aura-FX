@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaBell, FaTimes, FaEnvelope, FaAt } from 'react-icons/fa';
 import '../styles/NotificationSystem.css';
 
 const NotificationSystem = ({ user, onNotificationClick }) => {
+    const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -90,10 +92,16 @@ const NotificationSystem = ({ user, onNotificationClick }) => {
 
     const handleNotificationClick = (notification) => {
         markAsRead(notification.id);
-        if (notification.link && onNotificationClick) {
-            onNotificationClick(notification.link);
-        }
         setIsOpen(false);
+        
+        if (notification.link) {
+            // Use React Router navigate for SPA navigation
+            if (notification.link.startsWith('/')) {
+                navigate(notification.link);
+            } else if (onNotificationClick) {
+                onNotificationClick(notification.link);
+            }
+        }
     };
 
     const getNotificationIcon = (type) => {

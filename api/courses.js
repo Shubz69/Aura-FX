@@ -1,35 +1,5 @@
-const mysql = require('mysql2/promise');
-
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 5000 // 5 second timeout
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    await connection.ping(); // Test connection
-    return connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return null;
-  }
-};
+const { getDbConnection } = require('./db');
+const { getCached, setCached } = require('./cache');
 
 module.exports = async (req, res) => {
   // Set JSON content type first
@@ -62,6 +32,13 @@ module.exports = async (req, res) => {
 
   try {
     console.log('Courses API: Starting request');
+
+    // Check cache first (1 hour cache for courses - they rarely change)
+    const cacheKey = 'courses_list';
+    const cached = getCached(cacheKey, 3600000); // 1 hour
+    if (cached) {
+      return res.status(200).json(cached);
+    }
 
     // Try to fetch from database
     console.log('Courses API: Attempting database connection');
@@ -143,7 +120,7 @@ module.exports = async (req, res) => {
         if (needsUpdate) {
           console.log('Courses API: Re-fetching courses after sync');
           const [updatedRows] = await db.execute('SELECT * FROM courses ORDER BY id ASC');
-          await db.end();
+          db.release(); // Release connection back to pool
           
           if (updatedRows && updatedRows.length > 0) {
             const courses = updatedRows.map(row => ({
@@ -155,6 +132,10 @@ module.exports = async (req, res) => {
               price: parseFloat(row.price) || 0,
               imageUrl: row.image_url || ''
             })).filter(course => course.id !== null && course.title !== 'Unnamed Course');
+            
+            // Cache the result
+            setCached(cacheKey, courses);
+            
             console.log(`Courses API: Returning ${courses.length} courses from database after sync`);
             return res.status(200).json(courses);
           }
@@ -162,7 +143,7 @@ module.exports = async (req, res) => {
         
         // If we have courses in DB, return them
         if (rows && rows.length > 0) {
-          await db.end();
+          db.release(); // Release connection back to pool
           const courses = rows.map(row => ({
             id: row.id || null,
             title: row.title || 'Unnamed Course',
@@ -172,11 +153,15 @@ module.exports = async (req, res) => {
             price: parseFloat(row.price) || 0,
             imageUrl: row.image_url || ''
           })).filter(course => course.id !== null && course.title !== 'Unnamed Course');
+          
+          // Cache the result
+          setCached(cacheKey, courses);
+          
           console.log(`Courses API: Returning ${courses.length} courses from database`);
           return res.status(200).json(courses);
         }
         
-        await db.end();
+        db.release(); // Release connection back to pool
       } catch (dbError) {
         console.error('Database error fetching courses:', dbError);
         console.error('Error details:', {
@@ -184,10 +169,12 @@ module.exports = async (req, res) => {
           code: dbError.code,
           errno: dbError.errno
         });
-        try {
-          await db.end();
-        } catch (endError) {
-          console.error('Error closing database connection:', endError);
+        if (db) {
+          try {
+            db.release(); // Release connection back to pool
+          } catch (releaseError) {
+            console.error('Error releasing database connection:', releaseError);
+          }
         }
       }
     } else {

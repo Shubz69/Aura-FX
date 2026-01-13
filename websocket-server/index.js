@@ -34,8 +34,10 @@ const createDbPool = () => {
         database: process.env.MYSQL_DATABASE,
         port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
         waitForConnections: true,
-        connectionLimit: 10,
+        connectionLimit: 20, // Increased for WebSocket server
         queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 0,
         ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false
     });
 };

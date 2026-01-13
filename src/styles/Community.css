@@ -1296,17 +1296,49 @@
 }
 
 /* File Preview/Attachment in Messages */
+.message-attachment {
+    position: relative;
+}
+
 .message-attachment img {
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid transparent;
 }
 
 .message-attachment img:hover {
     transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+    border-color: var(--accent-blue);
+}
+
+.clickable-file {
+    user-select: none;
+}
+
+.clickable-file:active {
+    transform: scale(0.98) !important;
 }
 
 .message-file {
     font-size: 0.9rem;
+    position: relative;
+}
+
+.message-file::after {
+    content: 'Click to download';
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.message-file:hover::after {
+    opacity: 1;
 }
 
 /* GIF Picker */
