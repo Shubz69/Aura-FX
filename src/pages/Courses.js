@@ -302,6 +302,74 @@ const Courses = () => {
                     Cancel anytime • No hidden fees • Switch plans anytime
                 </p>
             </div>
+
+            {/* COURSES SECTION */}
+            <div style={{
+                marginTop: '80px',
+                marginBottom: '40px'
+            }}>
+                <h2 style={{
+                    color: '#ffffff',
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    marginBottom: '12px',
+                    textAlign: 'center',
+                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                }}>
+                    📚 COURSES
+                </h2>
+                <p style={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: '18px',
+                    marginBottom: '40px',
+                    textAlign: 'center',
+                    lineHeight: '1.6'
+                }}>
+                    Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs
+                </p>
+                
+                <div className="courses-grid">
+                    {Array.isArray(courses) && courses.length > 0 ? (
+                        courses
+                            .filter(course => course && course.id && course.title)
+                            .map(course => (
+                            <div className="course-card" key={course.id}>
+                                <div className="course-image">
+                                    {course.imageUrl ? (
+                                        <img src={course.imageUrl} alt={course.title || 'Course'} />
+                                    ) : (
+                                        <div className="placeholder-image">{(course.title && course.title.length > 0) ? course.title.charAt(0).toUpperCase() : '?'}</div>
+                                    )}
+                                </div>
+                                <div className="course-info">
+                                    <h3>{(course.title || 'Unnamed Course').toUpperCase()}</h3>
+                                    <p className="course-description" style={{ whiteSpace: 'pre-line' }}>{course.description || 'No description available'}</p>
+                                    <div className="course-cta">
+                                        <span className="coming-soon-badge">
+                                            COMING SOON
+                                        </span>
+                                        <button 
+                                            className="enroll-button disabled"
+                                            disabled={true}
+                                        >
+                                            <span>Buy Now</span>
+                                            <span className="button-glow"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="no-courses">
+                            <h2>NO COURSES AVAILABLE</h2>
+                            <p>Check back later for new course offerings.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
