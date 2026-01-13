@@ -62,6 +62,103 @@
     z-index: 1;
 }
 
+/* Mobile Sidebar - Discord-like slide in/out */
+.community-sidebar.mobile-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    border-right: 1px solid var(--border-color);
+}
+
+.community-sidebar.mobile-sidebar.sidebar-open {
+    transform: translateX(0);
+}
+
+/* Mobile sidebar header */
+.mobile-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    min-height: 60px;
+    flex-shrink: 0;
+}
+
+.mobile-sidebar-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    flex: 1;
+}
+
+/* Mobile sidebar toggle button */
+.mobile-sidebar-toggle {
+    position: fixed;
+    top: 80px;
+    left: 12px;
+    z-index: 1002;
+    background: rgba(43, 45, 49, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.mobile-sidebar-toggle:hover {
+    background: rgba(43, 45, 49, 1);
+    transform: scale(1.05);
+}
+
+.mobile-sidebar-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Mobile sidebar overlay */
+.mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Prevent body scroll when sidebar is open on mobile */
+body.sidebar-open-mobile {
+    overflow: hidden !important;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
 .sidebar-header {
     padding: 16px;
     border-bottom: 1px solid var(--border-color);
@@ -1280,7 +1377,7 @@
 @media (max-width: 1024px) {
     .community-container {
         grid-template-columns: 1fr !important;
-        padding-top: 140px; /* Extra space for mobile channel selector */
+        padding-top: 80px; /* Reduced since we have slideable sidebar */
         background: #0a0a0a !important;
         min-height: 100vh;
         height: auto;
@@ -1288,17 +1385,22 @@
         flex-direction: column;
     }
     
-    .community-sidebar {
+    /* Hide desktop sidebar, show mobile sidebar with slide animation */
+    .community-sidebar:not(.mobile-sidebar) {
         display: none !important;
+    }
+    
+    .community-sidebar.mobile-sidebar {
+        display: flex !important;
     }
     
     .online-sidebar {
         display: none !important;
     }
     
-    /* Show mobile channel selector on tablets */
+    /* Hide old mobile channel selector - we have slideable sidebar now */
     .mobile-channel-selector {
-        display: block !important;
+        display: none !important;
     }
     
     .mobile-user-stats {
@@ -1320,7 +1422,7 @@
 @media (max-width: 768px) {
     .community-container {
         grid-template-columns: 1fr !important;
-        padding-top: 140px !important;
+        padding-top: 80px !important; /* Reduced since we have slideable sidebar */
         background: #0a0a0a !important;
         min-height: 100vh !important;
         height: 100vh !important;
@@ -1332,21 +1434,22 @@
         position: relative !important;
     }
     
-    .community-sidebar {
+    /* Hide desktop sidebar, show mobile sidebar with slide animation */
+    .community-sidebar:not(.mobile-sidebar) {
         display: none !important;
+    }
+    
+    .community-sidebar.mobile-sidebar {
+        display: flex !important;
     }
     
     .online-sidebar {
         display: none !important;
     }
     
-    /* Mobile channel selector dropdown */
+    /* Hide old mobile channel selector - we have slideable sidebar now */
     .mobile-channel-selector {
-        display: block !important;
-        top: 80px;
-        position: fixed !important;
-        z-index: 1000 !important;
-        background: var(--bg-secondary) !important;
+        display: none !important;
     }
     
     .mobile-user-stats {
@@ -1931,7 +2034,7 @@
     
     .community-container {
         grid-template-columns: 1fr !important;
-        padding-top: 140px !important;
+        padding-top: 80px !important; /* Reduced since we have slideable sidebar */
         background: #0a0a0a !important;
         min-height: 100vh !important;
         height: 100vh !important;

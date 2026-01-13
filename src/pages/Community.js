@@ -10,7 +10,7 @@ import { triggerNotification } from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
 
 // Icons
-import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit } from 'react-icons/fa';
+import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft } from 'react-icons/fa';
 
 // All API calls use real endpoints only - no mock mode
 
@@ -332,6 +332,8 @@ const Community = () => {
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 1024);
+    const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
+    const [touchStartX, setTouchStartX] = useState(null); // For swipe gestures
     const [channelActionStatus, setChannelActionStatus] = useState(null);
     const [channelActionLoading, setChannelActionLoading] = useState(false);
     
@@ -1780,7 +1782,12 @@ const Community = () => {
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
-            setIsMobile(width <= 1024); // Show mobile UI for tablets too
+            const isMobileWidth = width <= 1024;
+            setIsMobile(isMobileWidth);
+            // Close sidebar when switching to desktop
+            if (!isMobileWidth && sidebarOpen) {
+                setSidebarOpen(false);
+            }
         };
         
         window.addEventListener('resize', handleResize);
@@ -1788,7 +1795,75 @@ const Community = () => {
         handleResize();
         
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [sidebarOpen]);
+    
+    // Close sidebar when clicking outside on mobile and prevent body scroll
+    useEffect(() => {
+        if (!isMobile) {
+            // Clean up on desktop
+            document.body.classList.remove('sidebar-open-mobile');
+            document.body.style.overflow = '';
+            return;
+        }
+        
+        if (sidebarOpen) {
+            // Prevent body scroll when sidebar is open
+            document.body.classList.add('sidebar-open-mobile');
+            document.body.style.overflow = 'hidden';
+        } else {
+            // Restore body scroll when sidebar is closed
+            document.body.classList.remove('sidebar-open-mobile');
+            document.body.style.overflow = '';
+        }
+        
+        const handleClickOutside = (e) => {
+            if (!sidebarOpen) return;
+            const sidebar = document.querySelector('.community-sidebar');
+            const toggleButton = document.querySelector('.mobile-sidebar-toggle');
+            if (sidebar && !sidebar.contains(e.target) && !toggleButton?.contains(e.target)) {
+                setSidebarOpen(false);
+            }
+        };
+        
+        if (sidebarOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+        }
+        
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+            document.body.classList.remove('sidebar-open-mobile');
+            document.body.style.overflow = '';
+        };
+    }, [isMobile, sidebarOpen]);
+    
+    // Handle swipe gestures for mobile sidebar
+    const handleTouchStart = (e) => {
+        if (!isMobile) return;
+        setTouchStartX(e.touches[0].clientX);
+    };
+    
+    const handleTouchMove = (e) => {
+        if (!isMobile || touchStartX === null) return;
+        const touchEndX = e.touches[0].clientX;
+        const diff = touchStartX - touchEndX;
+        
+        // Swipe right to open (if closed) - swipe from left edge
+        if (diff < -50 && !sidebarOpen && touchStartX < 20) {
+            setSidebarOpen(true);
+            setTouchStartX(null);
+        }
+        // Swipe left to close (if open)
+        else if (diff > 50 && sidebarOpen) {
+            setSidebarOpen(false);
+            setTouchStartX(null);
+        }
+    };
+    
+    const handleTouchEnd = () => {
+        setTouchStartX(null);
+    };
 
     // Check subscription before allowing access to community
     useEffect(() => {
@@ -2994,14 +3069,20 @@ Let's build generational wealth together! 💰🚀`,
     }
     
     return (
-        <div className="community-container" style={{ 
-            position: 'relative',
-            background: '#0a0a0a',
-            minHeight: '100vh',
-            height: 'auto',
-            width: '100%',
-            maxWidth: '100%'
-        }}>
+        <div 
+            className="community-container" 
+            style={{ 
+                position: 'relative',
+                background: '#0a0a0a',
+                minHeight: '100vh',
+                height: 'auto',
+                width: '100%',
+                maxWidth: '100%'
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+        >
             <CosmicBackground />
             
             {/* PAYMENT FAILED BANNER - Show if payment failed */}
@@ -3252,46 +3333,178 @@ Let's build generational wealth together! 💰🚀`,
                 </>
             )}
             
+            {/* MOBILE SIDEBAR TOGGLE BUTTON */}
+            {isMobile && (
+                <button
+                    className="mobile-sidebar-toggle"
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    aria-label="Toggle channels"
+                    style={{
+                        position: 'fixed',
+                        top: '80px',
+                        left: '12px',
+                        zIndex: 1002,
+                        background: 'rgba(43, 45, 49, 0.95)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        color: '#fff',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(43, 45, 49, 1)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(43, 45, 49, 0.95)';
+                    }}
+                >
+                    <FaBars size={18} />
+                </button>
+            )}
+            
+            {/* MOBILE OVERLAY - Dark backdrop when sidebar is open */}
+            {isMobile && sidebarOpen && (
+                <div
+                    className="mobile-sidebar-overlay"
+                    onClick={() => setSidebarOpen(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        zIndex: 1000,
+                        animation: 'fadeIn 0.2s ease'
+                    }}
+                />
+            )}
+            
             {/* LEFT SIDEBAR - CHANNELS */}
-            <div className="community-sidebar" style={{
-                filter: (showSubscribeBanner || showPaymentFailedBanner) ? 'blur(8px)' : 'none',
-                pointerEvents: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
-                userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto'
-            }}>
-                <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <h2 style={{ margin: 0 }}>Channels</h2>
-                    {(isAdminUser || isSuperAdminUser) && (
+            <div 
+                className={`community-sidebar ${isMobile ? 'mobile-sidebar' : ''} ${sidebarOpen ? 'sidebar-open' : ''}`}
+                style={{
+                    filter: (showSubscribeBanner || showPaymentFailedBanner) ? 'blur(8px)' : 'none',
+                    pointerEvents: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
+                    userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto'
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                {/* Mobile sidebar header with close button */}
+                {isMobile && (
+                    <div className="mobile-sidebar-header" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '16px',
+                        borderBottom: '1px solid var(--border-color)',
+                        background: 'var(--bg-primary)',
+                        gap: '8px'
+                    }}>
+                        <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#fff', flex: 1 }}>Channels</h2>
+                        {(isAdminUser || isSuperAdminUser) && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setChannelActionStatus(null);
+                                    setShowChannelManager(true);
+                                    setSidebarOpen(false); // Close sidebar when opening channel manager
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: 'rgba(139, 92, 246, 0.15)',
+                                    border: '1px solid rgba(139, 92, 246, 0.4)',
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.25)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                                }}
+                            >
+                                <FaPlus size={10} /> Manage
+                            </button>
+                        )}
                         <button
-                            type="button"
-                            onClick={() => {
-                                setChannelActionStatus(null);
-                                setShowChannelManager(true);
-                            }}
+                            onClick={() => setSidebarOpen(false)}
                             style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                padding: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '6px',
-                                background: 'rgba(139, 92, 246, 0.15)',
-                                border: '1px solid rgba(139, 92, 246, 0.4)',
-                                color: 'rgba(255, 255, 255, 0.15)',
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
+                                justifyContent: 'center',
+                                borderRadius: '4px',
+                                transition: 'background 0.2s ease',
+                                marginLeft: '8px'
                             }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.25)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                                e.currentTarget.style.background = 'transparent';
                             }}
                         >
-                            <FaPlus size={10} /> Manage
+                            <FaChevronLeft size={18} />
                         </button>
-                    )}
-                </div>
+                    </div>
+                )}
+                
+                {/* Desktop sidebar header */}
+                {!isMobile && (
+                    <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                        <h2 style={{ margin: 0 }}>Channels</h2>
+                        {(isAdminUser || isSuperAdminUser) && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setChannelActionStatus(null);
+                                    setShowChannelManager(true);
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: 'rgba(139, 92, 246, 0.15)',
+                                    border: '1px solid rgba(139, 92, 246, 0.4)',
+                                    color: 'rgba(255, 255, 255, 0.15)',
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.25)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                                }}
+                            >
+                                <FaPlus size={10} /> Manage
+                            </button>
+                        )}
+                    </div>
+                )}
                 
                 <div className="channels-section">
                     {categoryOrder.map(categoryName => {
@@ -3854,7 +4067,8 @@ Let's build generational wealth together! 💰🚀`,
             )}
             
             {/* MOBILE/TABLET CHANNEL SELECTOR - Visible on mobile and tablets */}
-            <div className="mobile-channel-selector" style={{ display: isMobile ? 'block' : 'none' }}>
+            {/* OLD MOBILE CHANNEL SELECTOR - Hidden, replaced by slideable sidebar */}
+            <div className="mobile-channel-selector" style={{ display: 'none' }}>
                 <select
                     value={selectedChannel?.id || ''}
                     onChange={(e) => {
