@@ -714,7 +714,7 @@ module.exports = async (req, res) => {
       }
 
       // Validate role
-      const validRoles = ['free', 'premium', 'a7fx', 'admin', 'super_admin'];
+      const validRoles = ['free', 'premium', 'a7fx', 'elite', 'admin', 'super_admin'];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ success: false, message: 'Invalid role' });
       }
@@ -954,7 +954,7 @@ module.exports = async (req, res) => {
       }
 
       // Validate role if provided
-      const validRoles = ['free', 'premium', 'a7fx', 'admin', 'super_admin'];
+      const validRoles = ['free', 'premium', 'a7fx', 'elite', 'admin', 'super_admin'];
       if (role && !validRoles.includes(role)) {
         await db.end();
         return res.status(400).json({ success: false, message: 'Invalid role' });

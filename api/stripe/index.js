@@ -196,7 +196,7 @@ module.exports = async (req, res) => {
         // Determine role based on plan type
         let userRole = 'premium'; // Default to premium for Aura FX
         if (planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
-          userRole = 'a7fx'; // A7FX Elite subscription
+          userRole = 'elite'; // A7FX Elite subscription - assign Elite role
         }
 
         // Update subscription status AND role based on plan
@@ -346,7 +346,7 @@ module.exports = async (req, res) => {
               [userId]
             );
             const subscriptionPlan = userRows[0]?.subscription_plan || 'aura';
-            const userRole = (subscriptionPlan === 'a7fx' || subscriptionPlan === 'A7FX' || subscriptionPlan === 'elite') ? 'a7fx' : 'premium';
+            const userRole = (subscriptionPlan === 'a7fx' || subscriptionPlan === 'A7FX' || subscriptionPlan === 'elite') ? 'elite' : 'premium';
             
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + 30); // 1 month from now

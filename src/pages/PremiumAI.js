@@ -28,6 +28,7 @@ const PremiumAI = () => {
     const hasAccess = 
       userRole === 'premium' || 
       userRole === 'a7fx' || 
+      userRole === 'elite' || 
       userRole === 'admin' || 
       userRole === 'super_admin' ||
       (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
@@ -261,7 +262,7 @@ I can also answer general questions, but my specialty is trading knowledge. Ask 
           💡 <strong>Tip:</strong> Ask me about technical analysis, trading strategies, risk management, or any trading-related questions.
         </p>
         <p className="subscription-info">
-          {user?.role === 'a7fx' ? '✨ A7FX Elite Member' : '⭐ Premium Member'}
+          {user?.role === 'a7fx' || user?.role === 'elite' ? '✨ A7FX Elite Member' : '⭐ Premium Member'}
         </p>
       </div>
     </div>

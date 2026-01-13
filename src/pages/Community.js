@@ -901,7 +901,7 @@ const Community = () => {
                 return 'premium';
             }
             // If no plan specified but has active subscription, check role
-            if (userRole === 'a7fx' || userRole === 'premium') {
+            if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
                 return userRole;
             }
             // Default to premium if subscription is active but no plan specified
@@ -941,12 +941,12 @@ const Community = () => {
         
         // Premium channels: premium and a7fx users can see
         if (accessLevel === 'premium') {
-            return userRole === 'premium' || userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+            return userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
         // A7FX channels: only a7fx users can see
         if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-            return userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+            return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
         // Default: show to all (backward compatibility)
@@ -979,12 +979,12 @@ const Community = () => {
         
         // Premium channels: premium and a7fx users can post
         if (accessLevel === 'premium') {
-            return userRole === 'premium' || userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+            return userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
         // A7FX channels: only a7fx users can post
         if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-            return userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+            return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
         // Default: allow posting (backward compatibility)

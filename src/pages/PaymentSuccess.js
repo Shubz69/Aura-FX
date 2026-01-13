@@ -95,9 +95,9 @@ const PaymentSuccess = () => {
                                     
                                     // Update user role in localStorage AND AuthContext immediately
                                     const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                    // Set role based on plan: 'a7fx' for A7FX Elite, 'premium' for Aura FX
+                                    // Set role based on plan: 'elite' for A7FX Elite, 'premium' for Aura FX
                                     if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
-                                        user.role = 'a7fx';
+                                        user.role = 'elite'; // A7FX purchases get Elite role
                                     } else {
                                         user.role = 'premium'; // Default to premium for 'aura' or any other plan
                                     }
@@ -142,9 +142,9 @@ const PaymentSuccess = () => {
                                             localStorage.setItem('subscriptionExpiry', retryResponse.data.expiry);
                                         }
                                         const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                        // Set role based on plan: 'a7fx' for A7FX Elite, 'premium' for Aura FX
+                                        // Set role based on plan: 'elite' for A7FX Elite, 'premium' for Aura FX
                                         if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
-                                            user.role = 'a7fx';
+                                            user.role = 'elite'; // A7FX purchases get Elite role
                                         } else {
                                             user.role = 'premium'; // Default to premium for 'aura' or any other plan
                                         }
@@ -177,7 +177,7 @@ const PaymentSuccess = () => {
                                 // Update user role anyway based on plan param
                                 const user = JSON.parse(localStorage.getItem('user') || '{}');
                                 if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
-                                    user.role = 'a7fx';
+                                    user.role = 'elite'; // A7FX purchases get Elite role
                                 } else {
                                     user.role = 'premium';
                                 }
@@ -196,7 +196,7 @@ const PaymentSuccess = () => {
                             // Update user role anyway based on plan param
                             const user = JSON.parse(localStorage.getItem('user') || '{}');
                             if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
-                                user.role = 'a7fx';
+                                user.role = 'elite'; // A7FX purchases get Elite role
                             } else {
                                 user.role = 'premium';
                             }
@@ -216,7 +216,7 @@ const PaymentSuccess = () => {
                         // Update user role anyway based on plan param
                         const user = JSON.parse(localStorage.getItem('user') || '{}');
                         if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
-                            user.role = 'a7fx';
+                            user.role = 'elite'; // A7FX purchases get Elite role
                         } else {
                             user.role = 'premium';
                         }

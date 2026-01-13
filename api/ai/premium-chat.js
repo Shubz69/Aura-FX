@@ -100,6 +100,7 @@ module.exports = async (req, res) => {
       const hasAccess = 
         user.role === 'premium' || 
         user.role === 'a7fx' || 
+        user.role === 'elite' || 
         user.role === 'admin' || 
         user.role === 'super_admin' ||
         (user.subscription_status === 'active' && (user.subscription_plan === 'aura' || user.subscription_plan === 'a7fx'));
@@ -142,7 +143,7 @@ module.exports = async (req, res) => {
 
 You are conversational, helpful, and provide actionable trading advice. You can also answer general questions, but your specialty is trading knowledge. Always prioritize accuracy and risk awareness in your trading advice.
 
-User's subscription tier: ${user.role === 'a7fx' ? 'A7FX Elite' : 'Premium'}`;
+User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7FX Elite' : 'Premium'}`;
 
       // Format conversation history for OpenAI
       const messages = [

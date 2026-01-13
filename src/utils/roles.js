@@ -6,6 +6,7 @@ export const ROLES = {
   FREE: 'free',
   PREMIUM: 'premium',
   A7FX: 'a7fx',
+  ELITE: 'elite',
   ADMIN: 'admin',
   SUPER_ADMIN: 'super_admin'
 };
@@ -120,6 +121,7 @@ export const isPremium = (user = null) => {
     
     return role === ROLES.PREMIUM || 
            role === ROLES.A7FX || 
+           role === ROLES.ELITE || 
            role === ROLES.ADMIN || 
            role === ROLES.SUPER_ADMIN ||
            (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
@@ -131,6 +133,7 @@ export const isPremium = (user = null) => {
   
   return role === ROLES.PREMIUM || 
          role === ROLES.A7FX || 
+         role === ROLES.ELITE || 
          role === ROLES.ADMIN || 
          role === ROLES.SUPER_ADMIN ||
          (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));

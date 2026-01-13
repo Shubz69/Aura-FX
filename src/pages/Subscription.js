@@ -41,7 +41,7 @@ const Subscription = () => {
         const subscriptionExpiry = localStorage.getItem('subscriptionExpiry');
         
         // If user has premium or A7FX role, redirect to community
-        if (userRole === 'premium' || userRole === 'a7fx' || userRole === 'admin' || userRole === 'super_admin') {
+        if (userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || userRole === 'admin' || userRole === 'super_admin') {
             navigate('/community');
             return;
         }

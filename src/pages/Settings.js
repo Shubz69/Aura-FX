@@ -131,7 +131,7 @@ const Settings = () => {
         } else if (subscriptionFilter === 'premium') {
           return u.role === 'premium' || u.subscription_plan === 'aura';
         } else if (subscriptionFilter === 'a7fx') {
-          return u.role === 'a7fx' || u.subscription_plan === 'a7fx';
+          return u.role === 'a7fx' || u.role === 'elite' || u.subscription_plan === 'a7fx';
         } else if (subscriptionFilter === 'expired') {
           return u.subscription_status === 'expired' || 
                  (u.subscription_expiry && new Date(u.subscription_expiry) < new Date());
