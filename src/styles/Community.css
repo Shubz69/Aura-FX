@@ -21,8 +21,9 @@
 .community-container {
     display: grid;
     grid-template-columns: 280px 1fr 280px;
+    min-height: 100vh;
     height: calc(100vh - 60px);
-    background: #0a0a0a;
+    background: #0a0a0a !important;
     color: var(--text-normal);
     font-family: 'Space Grotesk', sans-serif;
     overflow: hidden;
@@ -30,6 +31,9 @@
     padding-bottom: 0;
     position: relative;
     margin-bottom: 0;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
 }
 
 /* Subtle Background Glow */
@@ -386,13 +390,17 @@
 
 /* ============= MAIN CHAT AREA ============= */
 .chat-main {
-    background: var(--bg-tertiary);
+    background: var(--bg-tertiary) !important;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
     z-index: 1;
     height: calc(100vh - 80px);
+    min-height: calc(100vh - 80px);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {
@@ -1183,16 +1191,21 @@
 
 @media (max-width: 1024px) {
     .community-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         padding-top: 140px; /* Extra space for mobile channel selector */
+        background: #0a0a0a !important;
+        min-height: 100vh;
+        height: auto;
+        display: flex !important;
+        flex-direction: column;
     }
     
     .community-sidebar {
-        display: none;
+        display: none !important;
     }
     
     .online-sidebar {
-        display: none;
+        display: none !important;
     }
     
     /* Show mobile channel selector on tablets */
@@ -1203,20 +1216,36 @@
     .mobile-user-stats {
         display: flex !important;
     }
+    
+    /* Ensure chat-main is visible and properly sized */
+    .chat-main {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        background: var(--bg-tertiary) !important;
+        min-height: calc(100vh - 200px);
+        position: relative;
+    }
 }
 
 @media (max-width: 768px) {
     .community-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         padding-top: 140px;
+        background: #0a0a0a !important;
+        min-height: 100vh;
+        height: auto;
+        display: flex !important;
+        flex-direction: column;
     }
     
     .community-sidebar {
-        display: none;
+        display: none !important;
     }
     
     .online-sidebar {
-        display: none;
+        display: none !important;
     }
     
     /* Mobile channel selector dropdown */
@@ -1231,6 +1260,12 @@
     
     .chat-main {
         height: calc(100vh - 200px);
+        min-height: calc(100vh - 200px);
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        background: var(--bg-tertiary) !important;
     }
 }
 
@@ -1727,5 +1762,49 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
         padding: 10px;
+    }
+}
+
+/* iPad and Tablet Specific Fixes (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .community-container {
+        grid-template-columns: 1fr !important;
+        padding-top: 140px !important;
+        background: #0a0a0a !important;
+        min-height: 100vh !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .chat-main {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: var(--bg-tertiary) !important;
+        min-height: calc(100vh - 200px) !important;
+        height: calc(100vh - 200px) !important;
+        position: relative !important;
+    }
+    
+    .chat-messages {
+        background: var(--bg-tertiary) !important;
+        flex: 1;
+        overflow-y: auto;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .no-channel-selected {
+        background: var(--bg-tertiary) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .empty-state {
+        background: transparent !important;
     }
 }

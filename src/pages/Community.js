@@ -3802,7 +3802,10 @@ Let's build generational wealth together! 💰🚀`,
                 filter: (showSubscribeBanner || showPaymentFailedBanner) ? 'blur(8px)' : 'none',
                 pointerEvents: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
                 userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
-                position: 'relative'
+                position: 'relative',
+                background: 'var(--bg-tertiary)',
+                width: '100%',
+                maxWidth: '100%'
             }}>
                 {selectedChannel ? (
                     <>
