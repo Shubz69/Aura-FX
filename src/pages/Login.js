@@ -92,37 +92,55 @@ const Login = () => {
         } catch (err) {
             console.error('Login error details:', err);
 
-            let errorMessage = 'An error occurred. Please try again.';
+            let errorMessage = '';
 
             // Check if error has a response from the server
             if (err.response) {
                 const status = err.response.status;
                 const serverMessage = err.response.data?.message || err.response.data?.error;
 
-                // Always prioritize server message if available
-                if (serverMessage) {
-                    errorMessage = serverMessage;
-                } else if (status === 404) {
-                    errorMessage = 'No account with this email exists. Please check your email or sign up for a new account.';
+                // Handle specific HTTP status codes with very specific messages
+                if (status === 404) {
+                    // 404 could mean API endpoint not found OR user not found
+                    if (serverMessage && serverMessage.toLowerCase().includes('account') || serverMessage.toLowerCase().includes('email')) {
+                        errorMessage = serverMessage;
+                    } else {
+                        errorMessage = '❌ LOGIN API ENDPOINT NOT FOUND: The login service is currently unavailable. This is a server configuration issue. Please contact support or try again in a few minutes.';
+                    }
                 } else if (status === 401) {
-                    errorMessage = 'Incorrect password. Please try again or reset your password.';
+                    errorMessage = serverMessage || '❌ INCORRECT PASSWORD: The password you entered is incorrect. Please check your password and try again, or click "Forgot Password?" to reset it.';
+                } else if (status === 400) {
+                    errorMessage = serverMessage || '❌ INVALID REQUEST: Email and password are required. Please fill in both fields.';
                 } else if (status === 500) {
-                    errorMessage = 'Server error. Please try again later.';
+                    errorMessage = serverMessage || '❌ SERVER ERROR: The server encountered an error processing your login. This could be a database connection issue. Please try again in a few moments or contact support.';
+                } else if (status === 503) {
+                    errorMessage = '❌ SERVICE UNAVAILABLE: The login service is temporarily down for maintenance. Please try again later.';
+                } else if (status === 429) {
+                    errorMessage = '❌ TOO MANY ATTEMPTS: You have made too many login attempts. Please wait a few minutes before trying again.';
+                } else if (serverMessage) {
+                    errorMessage = `❌ LOGIN FAILED: ${serverMessage}`;
                 } else {
-                    errorMessage = err.message || 'An error occurred. Please try again.';
+                    errorMessage = `❌ LOGIN FAILED: Server returned error code ${status}. Please try again or contact support if the problem persists.`;
                 }
+            } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+                errorMessage = '❌ NETWORK ERROR: Cannot connect to the server. Please check your internet connection and try again.';
+            } else if (err.code === 'ETIMEDOUT' || err.message?.includes('timeout')) {
+                errorMessage = '❌ CONNECTION TIMEOUT: The server took too long to respond. Please check your internet connection and try again.';
             } else if (err.message) {
-                // Use the error message from AuthContext (which should already be user-friendly)
-                // Check if it's a specific error message
-                if (err.message.includes('email') || err.message.includes('Email')) {
-                    errorMessage = err.message;
-                } else if (err.message.includes('password') || err.message.includes('Password')) {
-                    errorMessage = err.message;
-                } else if (err.message.includes('Database connection')) {
-                    errorMessage = 'Database connection error. Please try again later.';
+                // Use the error message from AuthContext or API
+                if (err.message.toLowerCase().includes('email') || err.message.toLowerCase().includes('account')) {
+                    errorMessage = `❌ ${err.message}`;
+                } else if (err.message.toLowerCase().includes('password')) {
+                    errorMessage = `❌ ${err.message}`;
+                } else if (err.message.toLowerCase().includes('database')) {
+                    errorMessage = '❌ DATABASE CONNECTION ERROR: The database is currently unavailable. Please try again in a few moments or contact support.';
+                } else if (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('authentication')) {
+                    errorMessage = '❌ AUTHENTICATION ERROR: There was a problem with authentication. Please try logging in again.';
                 } else {
-                    errorMessage = err.message;
+                    errorMessage = `❌ LOGIN ERROR: ${err.message}`;
                 }
+            } else {
+                errorMessage = '❌ UNKNOWN ERROR: An unexpected error occurred during login. Please try again or contact support if the problem persists.';
             }
 
             console.log('Setting error message:', errorMessage);
@@ -385,6 +403,60 @@ const Login = () => {
                     >
                         {isLoading ? 'AUTHENTICATING...' : 'LOGIN'}
                     </button>
+                    
+                    {/* Error message displayed prominently right under login button */}
+                    {error && error.trim() && (
+                        <div 
+                            className="error-message-under-button" 
+                            role="alert" 
+                            aria-live="assertive"
+                            style={{ 
+                                display: 'block !important',
+                                visibility: 'visible !important',
+                                opacity: '1 !important',
+                                marginTop: '20px',
+                                marginBottom: '16px',
+                                padding: '20px 24px',
+                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                                border: '2px solid #EF4444',
+                                borderRadius: '12px',
+                                color: '#FFFFFF',
+                                fontSize: '15px',
+                                fontWeight: '700',
+                                textAlign: 'center',
+                                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.1)',
+                                animation: 'errorPulse 0.5s ease-in-out',
+                                zIndex: 1000,
+                                position: 'relative',
+                                textTransform: 'none',
+                                letterSpacing: '0.3px',
+                                lineHeight: '1.6',
+                                wordWrap: 'break-word',
+                                maxWidth: '100%'
+                            }}
+                        >
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                gap: '12px',
+                                fontSize: '20px',
+                                marginBottom: '10px'
+                            }}>
+                                <span style={{ fontSize: '28px' }}>⚠️</span>
+                                <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>LOGIN FAILED</strong>
+                            </div>
+                            <div style={{ 
+                                fontSize: '15px', 
+                                color: '#FFFFFF', 
+                                fontWeight: '600',
+                                marginTop: '8px',
+                                whiteSpace: 'pre-wrap'
+                            }}>
+                                {error}
+                            </div>
+                        </div>
+                    )}
                     
                     <Link to="/forgot-password" className="forgot-password">
                         Forgot Password?

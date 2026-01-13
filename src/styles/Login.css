@@ -250,6 +250,33 @@
     line-height: 1.6 !important;
 }
 
+/* Error message displayed under login button - EXTREMELY visible */
+.error-message-under-button {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%) !important;
+    border: 3px solid #EF4444 !important;
+    color: #FFFFFF !important;
+    padding: 24px 28px !important;
+    border-radius: 12px !important;
+    margin-top: 20px !important;
+    margin-bottom: 16px !important;
+    font-size: 15px !important;
+    font-family: var(--font-secondary) !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    box-shadow: 0 6px 30px rgba(239, 68, 68, 0.5), 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
+    animation: errorPulse 0.5s ease-in-out !important;
+    position: relative !important;
+    z-index: 1001 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
+    line-height: 1.7 !important;
+    word-wrap: break-word !important;
+    max-width: 100% !important;
+}
+
 @keyframes errorPulse {
     0% {
         opacity: 0;
