@@ -1493,6 +1493,8 @@
     text-align: center;
     color: var(--text-muted);
     padding: 40px 20px;
+    background: var(--bg-tertiary) !important;
+    min-height: calc(100vh - 200px);
 }
 
 .no-channel-selected h2 {
