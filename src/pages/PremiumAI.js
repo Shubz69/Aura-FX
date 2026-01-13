@@ -45,17 +45,17 @@ const PremiumAI = () => {
     // Initialize with welcome message
     const welcomeMessage = {
       role: 'assistant',
-      content: `👋 Welcome to your Premium AI Trading Assistant, ${user?.username || user?.name || 'there'}!
+      content: `Welcome to AURA AI, ${user?.username || user?.name || 'Trader'}.
 
-I'm your advanced trading AI powered by GPT-4. I can help you with:
+I am your dedicated financial analyst and trading strategist. My expertise encompasses:
 
-📈 **Trading Analysis** - Technical analysis, chart patterns, indicators
-💡 **Trading Strategies** - Scalping, swing trading, day trading strategies  
-🎯 **Risk Management** - Position sizing, stop losses, risk-reward ratios
-📊 **Market Insights** - Market psychology, trading mindset, discipline
-🔧 **Platform Help** - Navigate AURA FX courses and features
+• **Technical Analysis** - Chart pattern recognition, indicator interpretation, support/resistance analysis
+• **Strategic Planning** - Scalping, swing trading, day trading, and position trading methodologies
+• **Risk Assessment** - Position sizing calculations, stop-loss placement, risk-reward optimization
+• **Market Analysis** - Fundamental analysis, market sentiment evaluation, economic indicator interpretation
+• **Portfolio Management** - Asset allocation, diversification strategies, performance optimization
 
-I can also answer general questions, but my specialty is trading knowledge. Ask me anything!`
+I provide data-driven analysis and actionable trading insights. How may I assist with your trading objectives today?`
     };
 
     setMessages([welcomeMessage]);
@@ -174,7 +174,7 @@ I can also answer general questions, but my specialty is trading knowledge. Ask 
     if (window.confirm('Are you sure you want to clear this conversation?')) {
       const welcomeMessage = {
         role: 'assistant',
-        content: `👋 Conversation cleared! How can I help you with your trading today?`
+        content: `Conversation cleared. Ready for your next analysis request.`
       };
       setMessages([welcomeMessage]);
       setConversationHistory([welcomeMessage]);
@@ -185,8 +185,8 @@ I can also answer general questions, but my specialty is trading knowledge. Ask 
     <div className="premium-ai-container">
       <div className="premium-ai-header">
         <div className="premium-ai-title">
-          <h1>🤖 Premium AI Trading Assistant</h1>
-          <p>Powered by GPT-4 • Advanced Trading Knowledge</p>
+          <h1>📊 AURA AI Financial Analyst</h1>
+          <p>Professional Trading Intelligence & Market Analysis</p>
         </div>
         <button 
           className="clear-conversation-btn"
@@ -243,7 +243,7 @@ I can also answer general questions, but my specialty is trading knowledge. Ask 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me anything about trading, strategies, analysis, or AURA FX..."
+            placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis..."
             rows="1"
             disabled={isLoading}
           />
@@ -259,7 +259,7 @@ I can also answer general questions, but my specialty is trading knowledge. Ask 
 
       <div className="premium-ai-footer">
         <p>
-          💡 <strong>Tip:</strong> Ask me about technical analysis, trading strategies, risk management, or any trading-related questions.
+          💡 <strong>Note:</strong> Request technical analysis, trading strategies, risk assessments, or market insights for professional trading decisions.
         </p>
         <p className="subscription-info">
           {user?.role === 'a7fx' || user?.role === 'elite' ? '✨ A7FX Elite Member' : '⭐ Premium Member'}
