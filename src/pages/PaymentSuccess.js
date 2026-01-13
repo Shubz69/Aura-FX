@@ -54,7 +54,11 @@ const PaymentSuccess = () => {
                         const token = localStorage.getItem("token");
                         const response = await axios.post(
                             `${API_BASE_URL}/api/stripe/subscription-success`,
-                            { userId, session_id: sessionId || `stripe-${Date.now()}` },
+                            { 
+                                userId, 
+                                session_id: sessionId || `stripe-${Date.now()}`,
+                                plan: planParam || 'aura' // Pass plan type to backend
+                            },
                             {
                                 headers: {
                                     'Authorization': `Bearer ${token}`,

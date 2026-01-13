@@ -5,6 +5,7 @@
 export const ROLES = {
   FREE: 'free',
   PREMIUM: 'premium',
+  A7FX: 'a7fx',
   ADMIN: 'admin',
   SUPER_ADMIN: 'super_admin'
 };

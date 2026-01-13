@@ -29,9 +29,12 @@ const normalizeAccessLevel = (value) => {
 
   const allowedLevels = new Set([
     'open',
+    'free',
     'read-only',
     'admin-only',
     'premium',
+    'a7fx',
+    'elite',
     'support',
     'staff'
   ]);

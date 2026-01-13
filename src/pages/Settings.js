@@ -288,7 +288,8 @@ const Settings = () => {
                     disabled={selectedUser.email === SUPER_ADMIN_EMAIL}
                   >
                     <option value="free">Free</option>
-                    <option value="premium">Premium</option>
+                    <option value="premium">Premium (Aura FX)</option>
+                    <option value="a7fx">A7FX Elite</option>
                     <option value="admin">Admin</option>
                     {superAdmin && <option value="super_admin">Super Admin</option>}
                   </select>

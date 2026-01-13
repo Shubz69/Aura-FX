@@ -773,29 +773,44 @@ const Community = () => {
     };
 
     // Check if user can access channel (view)
-    // ADMIN CONTROLS VISIBILITY - No automatic filtering
-    // Admins set access_level in database to control who can see channels
-    // If admin wants to hide a channel, they set access_level to 'admin-only' or delete it
+    // 3-tier subscription system: free, premium, a7fx
+    // Channel access levels: 'open'/'free' (all users), 'premium' (premium + a7fx), 'a7fx' (a7fx only), 'admin-only' (admins only)
     const canUserAccessChannel = (channel) => {
         const userRole = getCurrentUserRole();
+        const accessLevel = (channel.accessLevel || 'open').toLowerCase();
         
         // Admin-only channels: only admins can see
-        if (channel.accessLevel === 'admin-only') {
+        if (accessLevel === 'admin-only') {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // Show ALL other channels to ALL users
-        // Admin controls visibility via access_level in database
+        // Open/Free channels: all users can see
+        if (accessLevel === 'open' || accessLevel === 'free') {
+            return true;
+        }
+        
+        // Premium channels: premium and a7fx users can see
+        if (accessLevel === 'premium') {
+            return userRole === 'premium' || userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+        }
+        
+        // A7FX channels: only a7fx users can see
+        if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+            return userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+        }
+        
+        // Default: show to all (backward compatibility)
         return true;
     };
 
     // Check if user can post in channel
-    // ADMIN CONTROLS POSTING - No automatic filtering
-    // Admins set access_level in database to control who can post
+    // 3-tier subscription system: free, premium, a7fx
+    // Posting permissions follow same access level rules as viewing
     const canUserPostInChannel = (channel) => {
         const userRole = getCurrentUserRole();
+        const accessLevel = (channel.accessLevel || 'open').toLowerCase();
         const channelName = (channel.name || '').toLowerCase();
-        const isAdminChannel = channel.accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
+        const isAdminChannel = accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
         
         // Admin-only channels: only admins can post
         if (isAdminChannel) {
@@ -803,12 +818,26 @@ const Community = () => {
         }
         
         // Read-only channels: only admins can post
-        if (channel.accessLevel === 'read-only') {
+        if (accessLevel === 'read-only') {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // All other channels: everyone can post (admin controls via access_level)
-        // If admin wants to restrict posting, they set access_level to 'read-only' or 'admin-only'
+        // Open/Free channels: all users can post
+        if (accessLevel === 'open' || accessLevel === 'free') {
+            return true;
+        }
+        
+        // Premium channels: premium and a7fx users can post
+        if (accessLevel === 'premium') {
+            return userRole === 'premium' || userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+        }
+        
+        // A7FX channels: only a7fx users can post
+        if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+            return userRole === 'a7fx' || isAdminUser || isSuperAdminUser;
+        }
+        
+        // Default: allow posting (backward compatibility)
         return true;
     };
 
@@ -3877,9 +3906,12 @@ Let's build generational wealth together! 💰🚀`,
                                             color: 'white'
                                         }}
                                     >
-                                        <option value="open">Open</option>
-                                        <option value="read-only">Read Only</option>
+                                        <option value="open">Open/Free - Everyone</option>
+                                        <option value="free">Free - Everyone</option>
+                                        <option value="read-only">Read Only - View only</option>
                                         <option value="admin-only">Admin Only</option>
+                                        <option value="premium">Premium - Premium & A7FX</option>
+                                        <option value="a7fx">A7FX Elite - A7FX only</option>
                                     </select>
                                 </div>
                             </div>

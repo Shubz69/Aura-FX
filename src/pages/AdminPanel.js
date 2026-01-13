@@ -603,10 +603,13 @@ const AdminPanel = () => {
                                                         cursor: 'pointer'
                                                     }}
                                                 >
-                                                    <option value="open">Open - Everyone can view and post</option>
+                                                    <option value="open">Open/Free - Everyone can view and post</option>
+                                                    <option value="free">Free - Everyone can view and post</option>
                                                     <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
                                                     <option value="admin-only">Admin-Only - Only admins can view and post</option>
-                                                    <option value="premium">Premium - Only premium subscribers</option>
+                                                    <option value="premium">Premium - Premium and A7FX subscribers</option>
+                                                    <option value="a7fx">A7FX Elite - Only A7FX Elite subscribers</option>
+                                                    <option value="elite">Elite - Only A7FX Elite subscribers</option>
                                                 </select>
                                             </div>
                                         </div>

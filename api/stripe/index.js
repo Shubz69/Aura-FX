@@ -126,6 +126,7 @@ module.exports = async (req, res) => {
     try {
       const userId = req.query.userId || req.body?.userId;
       const sessionId = req.query.session_id || req.body?.session_id;
+      const planType = req.query.plan || req.body?.plan || 'aura'; // Default to 'aura' if not specified
       
       if (!userId) {
         return res.status(400).json({
@@ -154,14 +155,28 @@ module.exports = async (req, res) => {
             ADD COLUMN subscription_expiry DATETIME NULL,
             ADD COLUMN subscription_started DATETIME NULL,
             ADD COLUMN stripe_session_id VARCHAR(255) NULL,
-            ADD COLUMN payment_failed BOOLEAN DEFAULT FALSE
+            ADD COLUMN payment_failed BOOLEAN DEFAULT FALSE,
+            ADD COLUMN subscription_plan VARCHAR(50) DEFAULT NULL
           `);
         }
 
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 90); // 3 months free trial
+        // Check if subscription_plan column exists, add if not
+        try {
+          await db.execute('SELECT subscription_plan FROM users LIMIT 1');
+        } catch (err) {
+          await db.execute('ALTER TABLE users ADD COLUMN subscription_plan VARCHAR(50) DEFAULT NULL');
+        }
 
-        // Update subscription status AND role to premium
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 30); // 1 month subscription
+
+        // Determine role based on plan type
+        let userRole = 'premium'; // Default to premium for Aura FX
+        if (planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
+          userRole = 'a7fx'; // A7FX Elite subscription
+        }
+
+        // Update subscription status AND role based on plan
         await db.execute(
           `UPDATE users 
            SET subscription_status = 'active',
@@ -169,9 +184,10 @@ module.exports = async (req, res) => {
                subscription_started = NOW(),
                stripe_session_id = ?,
                payment_failed = FALSE,
-               role = 'premium'
+               role = ?,
+               subscription_plan = ?
            WHERE id = ?`,
-          [expiryDate, sessionId || null, userId]
+          [expiryDate, sessionId || null, userRole, planType, userId]
         );
 
         const [updatedUser] = await db.execute(
@@ -301,14 +317,22 @@ module.exports = async (req, res) => {
           }
 
           if (userId) {
+            // Get user's current subscription plan to maintain correct role
+            const [userRows] = await db.execute(
+              'SELECT subscription_plan FROM users WHERE id = ?',
+              [userId]
+            );
+            const subscriptionPlan = userRows[0]?.subscription_plan || 'aura';
+            const userRole = (subscriptionPlan === 'a7fx' || subscriptionPlan === 'A7FX' || subscriptionPlan === 'elite') ? 'a7fx' : 'premium';
+            
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + 30); // 1 month from now
             
             await db.execute(
               'UPDATE users SET payment_failed = FALSE, subscription_status = ?, subscription_expiry = ?, role = ? WHERE id = ?',
-              ['active', expiryDate.toISOString().slice(0, 19).replace('T', ' '), 'premium', userId]
+              ['active', expiryDate.toISOString().slice(0, 19).replace('T', ' '), userRole, userId]
             );
-            console.log('Reactivated subscription for user:', userId);
+            console.log('Reactivated subscription for user:', userId, 'with role:', userRole);
           }
           
           await db.end();
