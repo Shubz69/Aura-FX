@@ -39,21 +39,40 @@ module.exports = async (req, res) => {
     }
 
     try {
-      // Decode JWT to get user ID (simplified - you may need to use your JWT library)
-      // For now, we'll query by token or use a different method
-      // This is a placeholder - you should use your actual JWT verification
-      const jwt = require('jsonwebtoken');
-      const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-      
+      // Decode token (custom format used by AURA FX - base64url encoded)
+      // The system uses a custom token format: header.payload.signature
       let decoded;
       try {
-        decoded = jwt.verify(token, JWT_SECRET);
-      } catch (jwtError) {
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) {
+          await db.end();
+          return res.status(401).json({ success: false, message: 'Invalid token format' });
+        }
+        
+        // Decode payload (second part)
+        const payloadBase64 = tokenParts[1]
+          .replace(/-/g, '+')
+          .replace(/_/g, '/');
+        
+        // Add padding if needed
+        const padding = payloadBase64.length % 4;
+        const paddedPayload = padding ? payloadBase64 + '='.repeat(4 - padding) : payloadBase64;
+        
+        const payloadJson = Buffer.from(paddedPayload, 'base64').toString('utf-8');
+        decoded = JSON.parse(payloadJson);
+        
+        // Check if token is expired
+        if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+          await db.end();
+          return res.status(401).json({ success: false, message: 'Token expired' });
+        }
+      } catch (decodeError) {
+        console.error('Token decode error:', decodeError);
         await db.end();
         return res.status(401).json({ success: false, message: 'Invalid token' });
       }
 
-      const userId = decoded.userId || decoded.id;
+      const userId = decoded.id || decoded.userId;
 
       // Get user with subscription info
       const [userRows] = await db.execute(
