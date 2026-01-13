@@ -66,7 +66,7 @@ const Courses = () => {
         <div className="courses-container">
             <CosmicBackground />
             <div className="courses-header">
-                <h1 className="courses-title">COURSES/SUBSCRIPTIONS</h1>
+                <h1 className="courses-title">COURSES & SUBSCRIPTIONS</h1>
                 <p>Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs</p>
             </div>
             
@@ -94,66 +94,24 @@ const Courses = () => {
                     }}>Try Again</button>
                 </div>
             )}
-            
-            <div className="courses-grid">
-                {Array.isArray(courses) && courses.length > 0 ? (
-                    courses
-                        .filter(course => course && course.id && course.title)
-                        .map(course => (
-                        <div className="course-card" key={course.id}>
-                            <div className="course-image">
-                                {course.imageUrl ? (
-                                    <img src={course.imageUrl} alt={course.title || 'Course'} />
-                                ) : (
-                                    <div className="placeholder-image">{(course.title && course.title.length > 0) ? course.title.charAt(0).toUpperCase() : '?'}</div>
-                                )}
-                            </div>
-                            <div className="course-info">
-                                <h3>{(course.title || 'Unnamed Course').toUpperCase()}</h3>
-                                <p className="course-description" style={{ whiteSpace: 'pre-line' }}>{course.description || 'No description available'}</p>
-                                <div className="course-cta">
-                                    <span className="coming-soon-badge">
-                                        COMING SOON
-                                    </span>
-                                    <button 
-                                        className="enroll-button disabled"
-                                        disabled={true}
-                                    >
-                                        <span>Buy Now</span>
-                                        <span className="button-glow"></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="no-courses">
-                        <h2>NO COURSES AVAILABLE</h2>
-                        <p>Check back later for new course offerings.</p>
-                    </div>
-                )}
-            </div>
-            
-            {/* Subscription Management Section */}
+
+            {/* SUBSCRIPTIONS SECTION */}
             <div style={{
-                marginTop: '60px',
-                padding: '40px',
-                background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                borderRadius: '16px',
-                border: '2px solid rgba(139, 92, 246, 0.3)'
+                marginTop: '40px',
+                marginBottom: '60px'
             }}>
                 <h2 style={{
                     color: '#ffffff',
-                    fontSize: '32px',
+                    fontSize: '36px',
                     fontWeight: 'bold',
-                    marginBottom: '16px',
+                    marginBottom: '12px',
                     textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
                 }}>
-                    📦 MANAGE YOUR SUBSCRIPTION
+                    💎 SUBSCRIPTIONS
                 </h2>
                 <p style={{
                     color: 'rgba(255, 255, 255, 0.8)',
@@ -162,7 +120,7 @@ const Courses = () => {
                     textAlign: 'center',
                     lineHeight: '1.6'
                 }}>
-                    Choose or switch between subscription plans. Cancel anytime, no hidden fees.
+                    Choose the perfect plan for your trading journey. Upgrade, downgrade, or cancel anytime.
                 </p>
                 
                 <div style={{
