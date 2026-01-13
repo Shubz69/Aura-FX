@@ -705,16 +705,10 @@ const Community = () => {
                     // Add message instantly
                     const newMessages = [...prev, message];
                     
-                    // Save to localStorage asynchronously (non-blocking)
+                    // Save to localStorage IMMEDIATELY (critical for persistence)
+                    // Don't defer - messages must be saved to prevent loss
                     if (selectedChannel?.id) {
-                        // Use requestIdleCallback for non-blocking save (or setTimeout 0)
-                        if (window.requestIdleCallback) {
-                            requestIdleCallback(() => {
-                                saveMessagesToStorage(selectedChannel.id, newMessages);
-                            });
-                        } else {
-                            setTimeout(() => saveMessagesToStorage(selectedChannel.id, newMessages), 0);
-                        }
+                        saveMessagesToStorage(selectedChannel.id, newMessages);
                     }
                     
                     // Scroll to bottom instantly (use requestAnimationFrame for smooth scroll)
@@ -1302,13 +1296,28 @@ const Community = () => {
                         setMessages([]);
                     }
                     
-                    // Only update if messages actually changed (avoid unnecessary re-renders)
-                    if (JSON.stringify(apiMessages) !== JSON.stringify(cachedMessages)) {
-                        // Save to localStorage as backup/cache
+                    // Always update with fresh messages from API (ensure persistence)
+                    // Compare by message count and IDs to determine if update is needed
+                    const cachedIds = new Set(cachedMessages.map(m => String(m.id || m.tempId || '')));
+                    const apiIds = new Set(apiMessages.map(m => String(m.id || '')));
+                    const hasNewMessages = apiMessages.length !== cachedMessages.length || 
+                                         apiMessages.some(m => !cachedIds.has(String(m.id))) ||
+                                         cachedMessages.some(m => m.id && !apiIds.has(String(m.id)));
+                    
+                    // Always save and update if:
+                    // 1. There are new messages from API
+                    // 2. API has messages (even if count matches, content might differ)
+                    // 3. API messages exist (to ensure persistence)
+                    if (hasNewMessages || apiMessages.length > 0) {
+                        // Save to localStorage as backup/cache (CRITICAL for persistence)
                         saveMessagesToStorage(channelId, apiMessages);
                         
-                        // Update with fresh messages from API
+                        // Update with fresh messages from API (always use API as source of truth)
                         setMessages(apiMessages);
+                    } else if (apiMessages.length === 0 && cachedMessages.length > 0) {
+                        // If API returns empty but we have cached messages, keep cached (might be loading)
+                        // But still save empty array to localStorage to sync state
+                        saveMessagesToStorage(channelId, []);
                     }
                 }
                 return;
