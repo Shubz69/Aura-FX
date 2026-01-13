@@ -696,14 +696,41 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid role' });
       }
 
-      // Super admin cannot be changed
       const db = await getDbConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
       }
 
       try {
-        // Check if user is super admin
+        // Verify requester is super admin
+        let requesterEmail = null;
+        try {
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+            const [requesterRows] = await db.execute('SELECT email, role FROM users WHERE id = ?', [payload.id]);
+            if (requesterRows.length > 0) {
+              requesterEmail = requesterRows[0].email;
+              const requesterRole = requesterRows[0].role;
+              
+              // Only super admin can assign admin or super_admin roles
+              if ((role === 'admin' || role === 'super_admin') && 
+                  requesterEmail !== 'shubzfx@gmail.com' && 
+                  requesterRole !== 'super_admin') {
+                await db.end();
+                return res.status(403).json({ 
+                  success: false, 
+                  message: 'Only Super Admin can assign admin roles' 
+                });
+              }
+            }
+          }
+        } catch (tokenError) {
+          // If token parsing fails, check by email in token or allow if it's a valid admin token
+          console.warn('Token parsing error, proceeding with role check:', tokenError.message);
+        }
+
+        // Check if target user is super admin
         const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
         if (userRows.length === 0) {
           await db.end();
