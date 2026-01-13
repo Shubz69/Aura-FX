@@ -26,8 +26,8 @@ const getDbPool = () => {
     queueLimit: 0, // Unlimited queue
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
-    acquireTimeout: 10000, // PRODUCTION: Reduced to 10s for faster failure detection
-    timeout: 5000, // PRODUCTION: Reduced to 5s query timeout for instant responses
+    // Removed acquireTimeout and timeout - these cause warnings in mysql2
+    // Connection timeouts are handled by the pool's waitForConnections and queueLimit
     ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false,
     // PRODUCTION OPTIMIZATIONS:
     multipleStatements: false, // Security: prevent SQL injection

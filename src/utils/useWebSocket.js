@@ -23,12 +23,15 @@ const resolveWebSocketBaseUrl = () => {
       return origin;
     }
 
-    // Production fallback when env var is missing
-    if (hostname && hostname.includes('aurafx.com')) {
+    // For Vercel deployments, use Railway WebSocket service
+    // For custom domains, check if it's aurafx.com
+    if (hostname && (hostname.includes('vercel.app') || hostname.includes('aurafx.com'))) {
+      // Use Railway WebSocket service for production
       return 'https://aura-fx-production.up.railway.app';
     }
   }
 
+  // Default fallback to Railway WebSocket service
   return 'https://aura-fx-production.up.railway.app';
 };
 
@@ -394,18 +397,18 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
           ? 'Cannot connect to server. Server may be unavailable.'
           : (error.message || 'Connection failed');
 
-        // Only log detailed error on first attempt to help diagnose
+        // Only log detailed error on first attempt, and only if it's a real error (not just a transient connection issue)
+        // Suppress verbose logging - connection will retry automatically
         if (reconnectAttempts.current === 0 && !hasReachedMaxAttempts.current && !wsDisabledRef.current) {
-          console.error('WebSocket Error:', error);
-          console.error(`Failed to connect to: ${WS_BASE_URL}/ws`);
-          console.error('This usually means:');
-          console.error('1. Railway WebSocket service is down or not running');
-          console.error('2. The WebSocket endpoint URL is incorrect');
-          console.error('3. Network/CORS/firewall issues');
-          console.error('Please check your Railway dashboard to ensure the WebSocket service is running.');
-        } else if (!hasReachedMaxAttempts.current && !wsDisabledRef.current) {
-          // Less verbose for subsequent attempts
-          console.error('WebSocket Error:', errorMessage);
+          // Only log if it's not a transient error (connection closed before established is usually transient)
+          const isTransientError = errorMessage.includes('closed before the connection is established') || 
+                                   errorMessage.includes('WebSocket is closed');
+          
+          if (!isTransientError) {
+            console.warn('WebSocket connection issue:', errorMessage);
+            console.warn('Retrying automatically...');
+          }
+          // Don't spam console with Railway-specific messages - connection will retry
         }
         setConnectionError(`WebSocket Error: ${errorMessage}`);
         setIsConnected(false);
