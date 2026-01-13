@@ -364,6 +364,25 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
               console.error('Error parsing online users update:', error);
             }
           });
+
+          // Subscribe to account deletion notifications
+          client.subscribe('/topic/account-deleted', (message) => {
+            try {
+              if (message.body) {
+                const data = JSON.parse(message.body);
+                if (data.type === 'ACCOUNT_DELETED') {
+                  console.warn('Account deletion notification received:', data);
+                  // Trigger logout immediately
+                  if (typeof window !== 'undefined') {
+                    localStorage.clear();
+                    window.location.href = '/login?deleted=true';
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error parsing account deletion notification:', error);
+            }
+          });
         }
       };
 

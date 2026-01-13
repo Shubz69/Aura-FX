@@ -38,6 +38,14 @@ const Login = () => {
     }, [showMfaVerification, countdown]);
     
     useEffect(() => {
+        // Check if account was deleted
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('deleted') === 'true') {
+            setError('Your account has been deleted by an administrator. You have been logged out.');
+            // Clear the URL parameter
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
         // Redirect if already authenticated
         if (isAuthenticated) {
             navigate('/community');

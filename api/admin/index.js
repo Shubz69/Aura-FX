@@ -847,6 +847,27 @@ module.exports = async (req, res) => {
         // Delete user
         await db.execute('DELETE FROM users WHERE id = ?', [userId]);
 
+        // Notify WebSocket server to logout user immediately
+        try {
+            const wsServerUrl = process.env.WEBSOCKET_SERVER_URL || 'https://aura-fx-production.up.railway.app';
+            const notifyResponse = await fetch(`${wsServerUrl}/api/notify-user-deleted`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId: userId })
+            });
+            
+            if (notifyResponse.ok) {
+                console.log(`User ${userId} notified of account deletion via WebSocket`);
+            } else {
+                console.warn(`Failed to notify user ${userId} via WebSocket, but user was deleted`);
+            }
+        } catch (wsError) {
+            console.warn('WebSocket notification failed (user still deleted):', wsError.message);
+            // Don't fail the deletion if WebSocket notification fails
+        }
+
         await db.end();
         return res.status(200).json({ 
           success: true, 

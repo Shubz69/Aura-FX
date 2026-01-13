@@ -59,6 +59,9 @@ const subscriptions = new Map();
 // Store client info
 const clients = new Map();
 
+// Store user connections: userId -> Set of WebSocket connections
+const userConnections = new Map();
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', service: 'websocket-server' });
@@ -112,7 +115,8 @@ function createStompFrame(command, headers = {}, body = '') {
 wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection');
     const clientId = Date.now().toString();
-    clients.set(ws, { id: clientId, subscriptions: new Set() });
+    let userId = null;
+    clients.set(ws, { id: clientId, subscriptions: new Set(), userId: null });
     
     // Send CONNECTED frame
     const connectedFrame = createStompFrame('CONNECTED', {
@@ -126,8 +130,41 @@ wss.on('connection', (ws, req) => {
             const frame = parseStompFrame(data.toString());
             
             if (frame.command === 'CONNECT' || frame.command === 'STOMP') {
-                // Already sent CONNECTED, nothing more needed
-                console.log('Client connected:', clientId);
+                // Extract userId from Authorization header if present
+                const authHeader = frame.headers['Authorization'] || frame.headers['authorization'];
+                if (authHeader && authHeader.startsWith('Bearer ')) {
+                    try {
+                        const token = authHeader.replace('Bearer ', '');
+                        const tokenParts = token.split('.');
+                        if (tokenParts.length === 3) {
+                            const payloadBase64 = tokenParts[1]
+                                .replace(/-/g, '+')
+                                .replace(/_/g, '/');
+                            const padding = payloadBase64.length % 4;
+                            const paddedPayload = padding ? payloadBase64 + '='.repeat(4 - padding) : payloadBase64;
+                            const payloadJson = Buffer.from(paddedPayload, 'base64').toString('utf-8');
+                            const decoded = JSON.parse(payloadJson);
+                            userId = decoded.id || decoded.userId;
+                            
+                            // Store userId in client info
+                            const clientInfo = clients.get(ws);
+                            if (clientInfo) {
+                                clientInfo.userId = userId;
+                            }
+                            
+                            // Add to userConnections map
+                            if (userId) {
+                                if (!userConnections.has(userId)) {
+                                    userConnections.set(userId, new Set());
+                                }
+                                userConnections.get(userId).add(ws);
+                            }
+                        }
+                    } catch (tokenError) {
+                        console.warn('Could not extract userId from token:', tokenError.message);
+                    }
+                }
+                console.log('Client connected:', clientId, userId ? `(User: ${userId})` : '');
             } else if (frame.command === 'SUBSCRIBE') {
                 const destination = frame.headers.destination;
                 console.log(`Client ${clientId} subscribed to: ${destination}`);
@@ -269,6 +306,14 @@ wss.on('connection', (ws, req) => {
         console.log('WebSocket connection closed:', clientId);
         const clientInfo = clients.get(ws);
         if (clientInfo) {
+            // Remove from userConnections if userId was set
+            if (clientInfo.userId && userConnections.has(clientInfo.userId.toString())) {
+                userConnections.get(clientInfo.userId.toString()).delete(ws);
+                if (userConnections.get(clientInfo.userId.toString()).size === 0) {
+                    userConnections.delete(clientInfo.userId.toString());
+                }
+            }
+            
             // Remove from all subscriptions
             clientInfo.subscriptions.forEach(channelId => {
                 if (subscriptions.has(channelId)) {
