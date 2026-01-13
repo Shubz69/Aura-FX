@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../utils/useWebSocket';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
+import { FaSearch, FaUserShield, FaTimes } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
 
 const AdminPanel = () => {
@@ -18,6 +19,7 @@ const AdminPanel = () => {
     const [channels, setChannels] = useState([]);
     const [channelsLoading, setChannelsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('users'); // 'users' or 'channels'
+    const [searchTerm, setSearchTerm] = useState(''); // Search filter for users
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -295,6 +297,65 @@ const AdminPanel = () => {
         }
     };
 
+    const handleGrantAdminAccess = async (userId, userEmail) => {
+        if (!window.confirm(`Grant admin access to ${userEmail}? This will give them admin privileges.`)) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/admin/users/${userId}/role`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    role: 'admin',
+                    capabilities: [] // Default admin capabilities
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to grant admin access');
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                fetchUsers();
+                setError(null);
+                alert(`✅ Admin access granted to ${userEmail}!\n\nThey now have admin privileges.`);
+            } else {
+                throw new Error(result.message || 'Failed to grant admin access');
+            }
+        } catch (err) {
+            console.error('Error granting admin access:', err);
+            setError(err.message || 'Failed to grant admin access. Please try again.');
+        }
+    };
+
+    // Filter users based on search term
+    const filteredUsers = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return users;
+        }
+        
+        const searchLower = searchTerm.toLowerCase();
+        return users.filter(u => 
+            u.email?.toLowerCase().includes(searchLower) ||
+            u.username?.toLowerCase().includes(searchLower) ||
+            u.name?.toLowerCase().includes(searchLower) ||
+            u.id?.toString().includes(searchLower)
+        );
+    }, [users, searchTerm]);
+
+    // Navigate to user profile
+    const handleUserClick = (userId) => {
+        navigate(`/profile/${userId}`);
+    };
+
     const handleGiveXP = async (userId, userEmail, currentXP = 0) => {
         const xpAmount = window.prompt(`Give XP points to ${userEmail}\n\nCurrent XP: ${currentXP}\n\nEnter amount of XP to give:`, '100');
         
@@ -408,7 +469,7 @@ const AdminPanel = () => {
                         <>
                             <h1 className="admin-title">REGISTERED USERS</h1>
                             <div className="user-summary">
-                                <span>Total: {users.length} | Online: {onlineUsersCount} | Offline: {offlineUsersCount}</span>
+                                <span>Total: {users.length} | Showing: {filteredUsers.length} | Online: {onlineUsersCount} | Offline: {offlineUsersCount}</span>
                                 {!isConnected && <span className="connection-status offline"> (Offline)</span>}
                                 {isConnected && <span className="connection-status online"> (Live)</span>}
                             </div>
@@ -449,23 +510,104 @@ const AdminPanel = () => {
 
                 {activeTab === 'users' && (
                     <>
+                        {/* Search Bar */}
+                        <div style={{
+                            marginBottom: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '12px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                            <FaSearch style={{ color: '#8B5CF6', fontSize: '18px' }} />
+                            <input
+                                type="text"
+                                placeholder="Search by email, username, name, or ID..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{
+                                    flex: 1,
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    borderRadius: '8px',
+                                    padding: '10px 16px',
+                                    color: '#fff',
+                                    fontSize: '14px',
+                                    outline: 'none'
+                                }}
+                            />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#fff',
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    title="Clear search"
+                                >
+                                    <FaTimes />
+                                </button>
+                            )}
+                        </div>
+
                         {loading ? (
                             <div className="loading-container">
                                 <div className="loading-spinner"></div>
                                 <div className="loading-text">Loading users...</div>
                             </div>
-                        ) : users.length === 0 ? (
+                        ) : filteredUsers.length === 0 ? (
                             <div className="no-users-message">
-                                <p>No users found.</p>
-                                <button onClick={fetchUsers} className="retry-btn">Retry</button>
+                                <p>{searchTerm ? 'No users found matching your search.' : 'No users found.'}</p>
+                                {searchTerm && (
+                                    <button onClick={() => setSearchTerm('')} className="retry-btn">Clear Search</button>
+                                )}
+                                {!searchTerm && (
+                                    <button onClick={fetchUsers} className="retry-btn">Retry</button>
+                                )}
                             </div>
                         ) : (
                             <div className="users-grid">
-                                {users.map(userItem => (
+                                {filteredUsers.map(userItem => (
                                     <div key={userItem.id || userItem.email} className="user-card">
                                         <div className="user-info">
-                                            <div className="user-email">{userItem.email || 'No email'}</div>
-                                            <div className="user-name">({userItem.name || userItem.username || 'N/A'})</div>
+                                            <div 
+                                                className="user-email"
+                                                onClick={() => handleUserClick(userItem.id)}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    color: '#8B5CF6',
+                                                    textDecoration: 'underline',
+                                                    transition: 'color 0.2s ease',
+                                                    fontWeight: '600'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.color = '#a78bfa'}
+                                                onMouseLeave={(e) => e.target.style.color = '#8B5CF6'}
+                                            >
+                                                {userItem.email || 'No email'}
+                                            </div>
+                                            <div 
+                                                className="user-name"
+                                                onClick={() => handleUserClick(userItem.id)}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    color: '#8B5CF6',
+                                                    textDecoration: 'underline',
+                                                    transition: 'color 0.2s ease',
+                                                    marginTop: '4px'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.color = '#a78bfa'}
+                                                onMouseLeave={(e) => e.target.style.color = '#8B5CF6'}
+                                            >
+                                                ({userItem.name || userItem.username || 'N/A'})
+                                            </div>
                                             <div className="user-role">{userItem.role || 'USER'}</div>
                                             <div className="user-xp" style={{ 
                                                 display: 'flex', 
@@ -527,6 +669,30 @@ const AdminPanel = () => {
                                     >
                                         Grant Community Access
                                     </button>
+                                    {(user?.role === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com') && 
+                                     userItem.role !== 'admin' && userItem.role !== 'super_admin' && (
+                                        <button 
+                                            className="grant-admin-btn"
+                                            onClick={() => handleGrantAdminAccess(userItem.id, userItem.email)}
+                                            style={{
+                                                background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '8px 16px',
+                                                borderRadius: '8px',
+                                                cursor: 'pointer',
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                marginRight: '8px',
+                                                transition: 'all 0.3s ease',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <FaUserShield /> Grant Admin Access
+                                        </button>
+                                    )}
                                     <button 
                                         className="revoke-access-btn"
                                         onClick={() => handleRevokeCommunityAccess(userItem.id, userItem.email)}

@@ -784,14 +784,22 @@ module.exports = async (req, res) => {
           );
         }
 
-        await db.end();
+        if (db && typeof db.release === 'function') {
+          db.release();
+        } else if (db && typeof db.end === 'function') {
+          await db.end();
+        }
         return res.status(200).json({ 
           success: true, 
           message: 'User role and capabilities updated successfully' 
         });
       } catch (dbError) {
         console.error('Database error updating user role:', dbError);
-        if (db && !db.ended) await db.end();
+        if (db && typeof db.release === 'function') {
+          db.release();
+        } else if (db && typeof db.end === 'function' && !db.ended) {
+          await db.end();
+        }
         return res.status(500).json({ success: false, message: 'Failed to update user role' });
       }
     } catch (error) {
