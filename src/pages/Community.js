@@ -2950,20 +2950,36 @@ Let's build generational wealth together! 💰🚀`,
     };
 
     // Render
-    // Ensure component always renders something, even during initialization
-    if (!isAuthenticated && !localStorage.getItem('token')) {
-        // Don't render anything if not authenticated - will redirect
-        return null;
+    // Always render something to prevent white screen, even during initialization
+    const hasToken = localStorage.getItem('token');
+    
+    if (!isAuthenticated && !hasToken) {
+        // Show loading state instead of null to prevent white screen
+        return (
+            <div style={{ 
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: '#0a0a0a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999
+            }}>
+                <CosmicBackground />
+                <div style={{ color: '#fff', fontSize: '18px' }}>Loading...</div>
+            </div>
+        );
     }
     
     return (
         <div className="community-container" style={{ 
             position: 'relative',
-            background: '#0a0a0a !important',
+            background: '#0a0a0a',
             minHeight: '100vh',
             height: 'auto',
-            display: 'flex !important',
-            flexDirection: 'column',
             width: '100%',
             maxWidth: '100%'
         }}>
