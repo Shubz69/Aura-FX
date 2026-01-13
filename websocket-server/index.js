@@ -67,6 +67,57 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', service: 'websocket-server' });
 });
 
+// Endpoint to notify user of account deletion (called by admin API)
+app.post('/api/notify-user-deleted', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({ success: false, message: 'User ID required' });
+        }
+        
+        // Send logout notification to all connections for this user
+        const userIdStr = userId.toString();
+        if (userConnections.has(userIdStr)) {
+            const connections = userConnections.get(userIdStr);
+            const logoutMessage = JSON.stringify({
+                type: 'ACCOUNT_DELETED',
+                message: 'Your account has been deleted by an administrator. You will be logged out immediately.',
+                timestamp: new Date().toISOString()
+            });
+            
+            const logoutFrame = createStompFrame('MESSAGE', {
+                'destination': '/topic/account-deleted',
+                'content-type': 'application/json',
+                'message-id': `${Date.now()}-logout`
+            }, logoutMessage);
+            
+            let notifiedCount = 0;
+            connections.forEach((ws) => {
+                try {
+                    if (ws.readyState === 1) { // WebSocket.OPEN
+                        ws.send(logoutFrame);
+                        notifiedCount++;
+                    }
+                } catch (error) {
+                    console.error('Error sending logout notification:', error);
+                }
+            });
+            
+            console.log(`Sent logout notification to ${notifiedCount} connection(s) for user ${userId}`);
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'User notified',
+            connectionsNotified: userConnections.has(userIdStr) ? userConnections.get(userIdStr).size : 0
+        });
+    } catch (error) {
+        console.error('Error notifying user deletion:', error);
+        res.status(500).json({ success: false, message: 'Failed to notify user' });
+    }
+});
+
 // Simple STOMP frame parser
 function parseStompFrame(data) {
     const lines = data.split('\n');
