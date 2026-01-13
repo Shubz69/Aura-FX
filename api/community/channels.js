@@ -456,9 +456,125 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Handle channel order POST - MUST come before general POST handler
+  if (req.method === 'POST' && (req.body?.channelOrder || (typeof req.body === 'string' && req.body.includes('channelOrder')))) {
+    try {
+      // Parse request body if needed (Vercel sometimes passes it as a string)
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
+        }
+      }
+      
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({ success: false, message: 'Database connection error' });
+      }
+
+      try {
+        await ensureSettingsTable(db);
+        const channelOrder = body.channelOrder;
+        
+        if (typeof channelOrder !== 'object' || channelOrder === null) {
+          return res.status(400).json({ success: false, message: 'Invalid channel order format' });
+        }
+
+        await db.execute(
+          'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
+          ['channelOrder', JSON.stringify(channelOrder), JSON.stringify(channelOrder)]
+        );
+
+        await db.end();
+        return res.status(200).json({ success: true, message: 'Channel order saved' });
+      } catch (dbError) {
+        console.error('Database error saving channel order:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({ success: false, message: 'Database error' });
+      }
+    } catch (error) {
+      console.error('Error in channel order save handler:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  }
+
+  // Handle category order POST - MUST come before general POST handler
+  if (req.method === 'POST' && (req.body?.categoryOrder || (typeof req.body === 'string' && req.body.includes('categoryOrder')))) {
+    try {
+      // Parse request body if needed (Vercel sometimes passes it as a string)
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
+        }
+      }
+      
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database connection error'
+        });
+      }
+
+      try {
+        await ensureSettingsTable(db);
+        const order = Array.isArray(body.categoryOrder) ? body.categoryOrder : [];
+        
+        // Validate order array
+        if (order.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Category order cannot be empty'
+          });
+        }
+
+        // Upsert category order
+        await db.execute(
+          'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
+          ['category_order', JSON.stringify(order), JSON.stringify(order)]
+        );
+
+        await db.end();
+        return res.status(200).json({
+          success: true,
+          message: 'Category order updated successfully',
+          data: order
+        });
+      } catch (dbError) {
+        console.error('Database error saving category order:', dbError);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to save category order'
+        });
+      }
+    } catch (error) {
+      console.error('Error saving category order:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   if (req.method === 'POST') {
     try {
-      const { id, name, displayName, category, description, accessLevel } = req.body || {};
+      // Parse request body if needed (Vercel sometimes passes it as a string)
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
+        }
+      }
+      
+      const { id, name, displayName, category, description, accessLevel } = body || {};
       const sourceName = displayName || name;
 
       if (!sourceName || !sourceName.trim()) {
@@ -661,7 +777,17 @@ module.exports = async (req, res) => {
 
   if (req.method === 'PUT' || req.method === 'PATCH') {
     try {
-      const { id, name, displayName, category, description, accessLevel } = req.body || {};
+      // Parse request body if needed (Vercel sometimes passes it as a string)
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
+        }
+      }
+      
+      const { id, name, displayName, category, description, accessLevel } = body || {};
       const channelId = id || req.query.id;
 
       if (!channelId) {
@@ -850,111 +976,6 @@ module.exports = async (req, res) => {
       }
     } catch (error) {
       console.error('Error fetching category order:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
-    }
-  }
-
-  // Handle channel order POST
-  if (req.method === 'POST' && (req.body?.channelOrder || (typeof req.body === 'string' && req.body.includes('channelOrder')))) {
-    try {
-      // Parse request body if needed (Vercel sometimes passes it as a string)
-      let body = req.body;
-      if (typeof body === 'string') {
-        try {
-          body = JSON.parse(body);
-        } catch (parseError) {
-          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
-        }
-      }
-      
-      const db = await getDbConnection();
-      if (!db) {
-        return res.status(500).json({ success: false, message: 'Database connection error' });
-      }
-
-      try {
-        await ensureSettingsTable(db);
-        const channelOrder = body.channelOrder;
-        
-        if (typeof channelOrder !== 'object' || channelOrder === null) {
-          return res.status(400).json({ success: false, message: 'Invalid channel order format' });
-        }
-
-        await db.execute(
-          'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
-          ['channelOrder', JSON.stringify(channelOrder), JSON.stringify(channelOrder)]
-        );
-
-        await db.end();
-        return res.status(200).json({ success: true, message: 'Channel order saved' });
-      } catch (dbError) {
-        console.error('Database error saving channel order:', dbError);
-        if (db && !db.ended) await db.end();
-        return res.status(500).json({ success: false, message: 'Database error' });
-      }
-    } catch (error) {
-      console.error('Error in channel order save handler:', error);
-      return res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  }
-
-  if (req.method === 'POST' && (req.body?.categoryOrder || (typeof req.body === 'string' && req.body.includes('categoryOrder')))) {
-    try {
-      // Parse request body if needed (Vercel sometimes passes it as a string)
-      let body = req.body;
-      if (typeof body === 'string') {
-        try {
-          body = JSON.parse(body);
-        } catch (parseError) {
-          return res.status(400).json({ success: false, message: 'Invalid JSON in request body' });
-        }
-      }
-      
-      const db = await getDbConnection();
-      if (!db) {
-        return res.status(500).json({
-          success: false,
-          message: 'Database connection error'
-        });
-      }
-
-      try {
-        await ensureSettingsTable(db);
-        const order = Array.isArray(body.categoryOrder) ? body.categoryOrder : [];
-        
-        // Validate order array
-        if (order.length === 0) {
-          return res.status(400).json({
-            success: false,
-            message: 'Category order cannot be empty'
-          });
-        }
-
-        // Upsert category order
-        await db.execute(
-          'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
-          ['category_order', JSON.stringify(order), JSON.stringify(order)]
-        );
-
-        await db.end();
-        return res.status(200).json({
-          success: true,
-          message: 'Category order updated successfully',
-          data: order
-        });
-      } catch (dbError) {
-        console.error('Database error saving category order:', dbError);
-        if (db && !db.ended) await db.end();
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to save category order'
-        });
-      }
-    } catch (error) {
-      console.error('Error saving category order:', error);
       return res.status(500).json({
         success: false,
         message: 'Internal server error'
