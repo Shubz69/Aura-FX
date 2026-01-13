@@ -4093,6 +4093,8 @@ Let's build generational wealth together! 💰🚀`,
                                 </button>
                             </form>
                         </div>
+                            </>
+                        )}
                     </>
                 ) : (
                     <div className="no-channel-selected">
