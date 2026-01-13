@@ -30,19 +30,38 @@ const Subscription = () => {
             return;
         }
         
-        // Check if user already has active subscription
-        const subscriptionStatus = localStorage.getItem('hasActiveSubscription');
+        // Check user's role and subscription status
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const userRole = (user?.role || storedUser?.role || 'free').toLowerCase();
+        const subscriptionStatus = user?.subscription_status || storedUser?.subscription_status || 'inactive';
+        const subscriptionPlan = user?.subscription_plan || storedUser?.subscription_plan;
+        
+        // Check localStorage subscription status as fallback
+        const hasActiveSubscriptionLocal = localStorage.getItem('hasActiveSubscription') === 'true';
         const subscriptionExpiry = localStorage.getItem('subscriptionExpiry');
         
-        if (subscriptionStatus === 'true') {
+        // If user has premium or A7FX role, redirect to community
+        if (userRole === 'premium' || userRole === 'a7fx' || userRole === 'admin' || userRole === 'super_admin') {
+            navigate('/community');
+            return;
+        }
+        
+        // If user has active subscription status, redirect to community
+        if (subscriptionStatus === 'active') {
+            navigate('/community');
+            return;
+        }
+        
+        // If localStorage indicates active subscription and not expired, redirect
+        if (hasActiveSubscriptionLocal) {
             const expiryDate = subscriptionExpiry ? new Date(subscriptionExpiry) : null;
-            if (expiryDate && expiryDate > new Date()) {
+            if (!expiryDate || expiryDate > new Date()) {
                 // Has active subscription - redirect to community
                 navigate('/community');
                 return;
             }
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, user]);
 
     const handleSubscribe = (planType = 'aura') => {
         setSelectedPlan(planType);
