@@ -428,6 +428,27 @@
     font-weight: 300;
 }
 
+@media (max-width: 1024px) {
+    .courses-header p {
+        font-size: 16px;
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .courses-header p {
+        font-size: 15px;
+        padding: 0 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .courses-header p {
+        font-size: 14px;
+        padding: 0 10px;
+    }
+}
+
 /* Responsive - Tablets and iPads */
 @media (max-width: 1024px) {
     .courses-grid {
