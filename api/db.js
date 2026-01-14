@@ -1,4 +1,6 @@
 const mysql = require('mysql2/promise');
+// Suppress url.parse() deprecation warnings from dependencies
+require('./utils/suppress-warnings');
 
 let pool = null;
 
