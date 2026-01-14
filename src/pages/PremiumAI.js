@@ -186,7 +186,6 @@ I provide data-driven analysis and actionable trading insights. How may I assist
       });
 
       // Add user-friendly error message to chat
-      const isQuotaError = errorMessage.toLowerCase().includes('quota');
       const chatErrorMessage = {
         role: 'assistant',
         content: isQuotaError
