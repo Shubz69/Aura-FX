@@ -888,7 +888,7 @@ const Community = () => {
         if (isAdminUser) return 'admin';
         
         // Check subscription status and plan from user object
-        const subscriptionStatus = storedUser?.subscription_status || subscriptionStatusFromDB;
+        const subscriptionStatus = storedUser?.subscription_status;
         const subscriptionPlan = storedUser?.subscription_plan;
         const userRole = storedUser?.role?.toLowerCase() || 'free';
         
