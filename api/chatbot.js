@@ -71,10 +71,9 @@ module.exports = async (req, res) => {
                  (user.subscription_plan === 'aura' || user.subscription_plan === 'a7fx'));
             }
             
+            // Release database connection
             if (db && typeof db.release === 'function') {
               db.release();
-            } else if (db && typeof db.end === 'function') {
-              await db.end();
             }
           }
         } catch (dbError) {
