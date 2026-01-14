@@ -219,6 +219,8 @@ const Community = () => {
     const [editingCategory, setEditingCategory] = useState(null); // { name }
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false); // Show subscription selection modal
     const [requiredSubscriptionType, setRequiredSubscriptionType] = useState(null); // 'premium' or 'a7fx' - for channel access
+    const [showChannelAccessModal, setShowChannelAccessModal] = useState(false); // Show channel access modal
+    const [lockedChannelInfo, setLockedChannelInfo] = useState(null); // Info about the locked channel
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [allUsers, setAllUsers] = useState([]); // All users for @mention autocomplete
@@ -731,18 +733,22 @@ const Community = () => {
                 // Use functional update for instant state change (no batching delay)
                 setMessages(prev => {
                     // Fast duplicate check using Set for O(1) lookup
-                    const existingIds = new Set(prev.map(m => m.id));
-                    if (message.id && existingIds.has(message.id)) {
+                    const existingIds = new Set(prev.map(m => String(m.id || '')));
+                    if (message.id && existingIds.has(String(message.id))) {
                         return prev; // Duplicate - skip
                     }
                     
                     // Fast content-based duplicate check (optimized)
-                    const isDuplicate = prev.some(m => 
-                        !m.id && !message.id && // Both lack IDs
-                        m.content === message.content && 
-                        m.sender?.username === message.sender?.username &&
-                        Math.abs(new Date(m.timestamp || 0).getTime() - new Date(message.timestamp || 0).getTime()) < 2000
-                    );
+                    // Check for same content, same sender, within 3 seconds
+                    const isDuplicate = prev.some(m => {
+                        const sameContent = m.content === message.content;
+                        const sameSender = String(m.userId || m.sender?.id || '') === String(message.userId || message.sender?.id || '');
+                        const timeDiff = Math.abs(
+                            new Date(m.timestamp || m.createdAt || 0).getTime() - 
+                            new Date(message.timestamp || message.createdAt || 0).getTime()
+                        );
+                        return sameContent && sameSender && timeDiff < 3000;
+                    });
                     
                     if (isDuplicate) {
                         return prev;
@@ -2635,31 +2641,71 @@ Let's build generational wealth together! 💰🚀`,
         }
 
         try {
-            // Save to backend API for permanent persistence
-            try {
-                const response = await Api.sendMessage(selectedChannel.id, messageToSend);
-                
-                if (response && response.data) {
-                    // Replace optimistic message with server response (has real ID)
-                    const serverMessage = response.data;
-                    setMessages(prev => {
-                        const final = replaceMessageById(prev, optimisticMessage.id, serverMessage);
-                        saveMessagesToStorage(selectedChannel.id, final);
-                        return final;
-                    });
-                    
-                    // Check for @mentions and send notifications
-                    const mentionRegex = /@(\w+)/g;
-                    const mentions = messageContent.match(mentionRegex);
-                    if (mentions) {
-                        try {
-                            // Use cached allUsers or fetch if needed
-                            let usersForMentions = allUsers;
-                            if (usersForMentions.length === 0) {
-                            const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
-                                usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
-                                setAllUsers(usersForMentions);
+            // Send via WebSocket FIRST for instant delivery to all clients
+            if (sendWebSocketMessage && isConnected) {
+                const wsMessage = {
+                    ...messageToSend,
+                    id: optimisticMessage.id,
+                    timestamp: optimisticMessage.timestamp,
+                    sender: optimisticMessage.sender,
+                    channelId: selectedChannel.id
+                };
+                const wsSent = sendWebSocketMessage(wsMessage);
+                if (!wsSent && process.env.NODE_ENV === 'development') {
+                    console.warn('WebSocket send failed, message will be delivered via API');
+                }
+            }
+            
+            // Also save to backend API for permanent persistence (non-blocking)
+            // This ensures messages are saved even if WebSocket fails
+            Api.sendMessage(selectedChannel.id, messageToSend)
+                .then(response => {
+                    if (response && response.data) {
+                        // Replace optimistic message with server response (has real ID)
+                        const serverMessage = response.data;
+                        setMessages(prev => {
+                            // Check if message already exists (might have been added via WebSocket)
+                            const existingIndex = prev.findIndex(m => 
+                                m.id === optimisticMessage.id || 
+                                (m.content === serverMessage.content && 
+                                 String(m.userId) === String(serverMessage.userId) &&
+                                 Math.abs(new Date(m.timestamp) - new Date(serverMessage.timestamp)) < 5000)
+                            );
+                            
+                            if (existingIndex !== -1) {
+                                // Replace existing message
+                                const updated = [...prev];
+                                updated[existingIndex] = serverMessage;
+                                saveMessagesToStorage(selectedChannel.id, updated);
+                                return updated;
+                            } else {
+                                // Add new message if not already present
+                                const final = replaceMessageById(prev, optimisticMessage.id, serverMessage);
+                                saveMessagesToStorage(selectedChannel.id, final);
+                                return final;
                             }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving message to API:', error);
+                    // Message already shown via WebSocket, so this is just for persistence
+                });
+            
+            // Check for @mentions and send notifications (don't wait for API response)
+            const mentionRegex = /@(\w+)/g;
+            const mentions = messageContent.match(mentionRegex);
+            if (mentions) {
+                // Handle mentions asynchronously (don't block message sending)
+                (async () => {
+                    try {
+                        // Use cached allUsers or fetch if needed
+                        let usersForMentions = allUsers;
+                        if (usersForMentions.length === 0) {
+                            const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
+                            usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+                            setAllUsers(usersForMentions);
+                        }
                             
                             // Get unique mentioned usernames
                             const mentionedUsernames = [...new Set(mentions.map(m => m.substring(1).toLowerCase()))];
@@ -2724,77 +2770,11 @@ Let's build generational wealth together! 💰🚀`,
                                     );
                                 }
                             });
-                        } catch (error) {
-                            console.error('Error fetching users for mentions:', error);
-                            // Silently fail - don't break message sending if user lookup fails
-                        }
+                    } catch (error) {
+                        console.error('Error fetching users for mentions:', error);
+                        // Silently fail - don't break message sending if user lookup fails
                     }
-                    
-                    // Broadcast message via WebSocket so all users see it in real-time
-                    // Silently fail if WebSocket not available - REST API already saved the message
-                    if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
-                        try {
-                            sendWebSocketMessage({
-                                ...serverMessage,
-                                channelId: selectedChannel.id
-                            });
-                        } catch (wsError) {
-                            // WebSocket failed - that's okay, REST API already saved it
-                            // Other users will see it via polling or when they refresh
-                        }
-                    }
-                } else {
-                    // If response doesn't have expected format, keep optimistic message
-                    // Convert temp ID to permanent ID
-                    const permanentMessage = {
-                        ...optimisticMessage,
-                        id: Date.now()
-                    };
-                    setMessages(prev => {
-                        const final = replaceMessageById(prev, optimisticMessage.id, permanentMessage);
-                        saveMessagesToStorage(selectedChannel.id, final);
-                        return final;
-                    });
-                    
-                    // Still try to broadcast via WebSocket
-                    // Silently fail if WebSocket not available - REST API already saved the message
-                    if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
-                        try {
-                            sendWebSocketMessage({
-                                ...permanentMessage,
-                                channelId: selectedChannel.id
-                            });
-                        } catch (wsError) {
-                            // WebSocket failed - that's okay, REST API already saved it
-                        }
-                    }
-                }
-            } catch (apiError) {
-                console.error('Backend API unavailable, saving to localStorage:', apiError);
-                // Backend unavailable - save to localStorage for persistence
-                // Convert temp ID to permanent ID
-                const permanentMessage = {
-                    ...optimisticMessage,
-                    id: Date.now()
-                };
-                setMessages(prev => {
-                    const final = replaceMessageById(prev, optimisticMessage.id, permanentMessage);
-                    saveMessagesToStorage(selectedChannel.id, final);
-                    return final;
-                });
-                
-                // Still try to broadcast via WebSocket if available
-                // Silently fail if WebSocket not available - message saved to localStorage
-                if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
-                    try {
-                        sendWebSocketMessage({
-                            ...permanentMessage,
-                            channelId: selectedChannel.id
-                        });
-                    } catch (wsError) {
-                        // WebSocket failed - that's okay, message is in localStorage
-                    }
-                }
+                })();
             }
             
             // ***** AWARD XP FOR SENDING MESSAGE *****
@@ -3506,7 +3486,68 @@ Let's build generational wealth together! 💰🚀`,
                     </div>
                 )}
                 
-                <div className="channels-section">
+                {/* Online Users Stats - At top of sidebar */}
+                <div style={{
+                    padding: '12px 16px',
+                    borderBottom: '1px solid var(--border-color)',
+                    background: 'rgba(139, 92, 246, 0.05)',
+                    flexShrink: 0
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        marginBottom: '8px'
+                    }}>
+                        <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: 'var(--text-muted)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                        }}>
+                            Online Users
+                        </span>
+                        <span style={{
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            color: '#23A55A'
+                        }}>
+                            {onlineCount}
+                        </span>
+                    </div>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px'
+                    }}>
+                        <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: 'var(--text-muted)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                        }}>
+                            Total Users
+                        </span>
+                        <span style={{
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            color: 'var(--text-normal)'
+                        }}>
+                            {totalUsers}
+                        </span>
+                    </div>
+                </div>
+                
+                <div className="channels-section" style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    minHeight: 0
+                }}>
                     {categoryOrder.map(categoryName => {
                         const channels = groupedChannels[categoryName];
                         if (!channels || channels.length === 0) return null;
@@ -3857,18 +3898,13 @@ Let's build generational wealth together! 💰🚀`,
                                                     onClick={() => {
                                                         if (isLocked) {
                                                             const currentRole = getCurrentUserRole();
-                                                            let message = `🔒 This channel requires a ${subscriptionRequirement} subscription.\n\n`;
-                                                            if (accessLevel === 'premium') {
-                                                                message += `You need an Aura FX Premium subscription (£99/month) to access this channel.\n\n`;
-                                                                message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium (but subscription may be inactive)' : currentRole}\n\n`;
-                                                            } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-                                                                message += `You need an A7FX Elite subscription (£250/month) to access this channel.\n\n`;
-                                                                message += `Current status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' || currentRole === 'elite' ? 'A7FX Elite (but subscription may be inactive)' : currentRole}\n\n`;
-                                                            }
-                                                            message += `Would you like to subscribe now?`;
-                                                            if (window.confirm(message)) {
-                                                                handleSubscribe(accessLevel === 'premium' ? 'premium' : 'a7fx');
-                                                            }
+                                                            setLockedChannelInfo({
+                                                                channelName: channel.displayName || channel.name,
+                                                                accessLevel: accessLevel,
+                                                                subscriptionRequirement: subscriptionRequirement,
+                                                                currentRole: currentRole
+                                                            });
+                                                            setShowChannelAccessModal(true);
                                                             return;
                                                         }
                                                         setSelectedChannel(channel);
@@ -4052,20 +4088,6 @@ Let's build generational wealth together! 💰🚀`,
                 </div>
             </div>
             
-            {/* MOBILE USER STATS - Only visible on mobile/tablet */}
-            {isMobile && (
-                <div className="mobile-user-stats">
-                    <div className="mobile-stat-item">
-                        <span className="mobile-stat-label">Online:</span>
-                        <span className="mobile-stat-value">{onlineCount}</span>
-                    </div>
-                    <div className="mobile-stat-item">
-                        <span className="mobile-stat-label">Total Users:</span>
-                        <span className="mobile-stat-value">{totalUsers}</span>
-                    </div>
-                </div>
-            )}
-            
             {/* MOBILE/TABLET CHANNEL SELECTOR - Visible on mobile and tablets */}
             {/* OLD MOBILE CHANNEL SELECTOR - Hidden, replaced by slideable sidebar */}
             <div className="mobile-channel-selector" style={{ display: 'none' }}>
@@ -4150,102 +4172,210 @@ Let's build generational wealth together! 💰🚀`,
                                 height: '100%',
                                 padding: '40px',
                                 textAlign: 'center',
-                                background: 'rgba(0, 0, 0, 0.3)',
-                                borderRadius: '12px',
-                                border: '2px solid rgba(251, 191, 36, 0.3)'
+                                background: 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%)',
+                                borderRadius: '16px',
+                                border: '2px solid rgba(139, 92, 246, 0.3)',
+                                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.2)'
                             }}>
-                                <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔒</div>
+                                <div style={{ 
+                                    fontSize: '64px', 
+                                    marginBottom: '24px',
+                                    filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))'
+                                }}>🔒</div>
                                 <h2 style={{ 
-                                    color: '#fbbf24', 
-                                    marginBottom: '16px',
-                                    fontSize: '24px',
+                                    color: '#fff', 
+                                    marginBottom: '12px',
+                                    fontSize: '28px',
                                     fontWeight: 'bold'
                                 }}>
                                     Subscription Required
                                 </h2>
+                                <p style={{
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    fontSize: '16px',
+                                    marginBottom: '32px'
+                                }}>
+                                    #{selectedChannel.displayName || selectedChannel.name}
+                                </p>
                                 {(() => {
                                     const accessLevel = (selectedChannel.accessLevel || 'open').toLowerCase();
                                     const currentRole = getCurrentUserRole();
-                                    let message = '';
                                     let subscriptionType = '';
                                     let price = '';
                                     
                                     if (accessLevel === 'premium') {
                                         subscriptionType = 'Aura FX Premium';
                                         price = '£99/month';
-                                        message = `This channel requires an Aura FX Premium subscription (${price}).\n\n`;
-                                        message += `Current Status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User (but subscription may be inactive or expired)' : currentRole}\n\n`;
                                     } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
                                         subscriptionType = 'A7FX Elite';
                                         price = '£250/month';
-                                        message = `This channel requires an A7FX Elite subscription (${price}).\n\n`;
-                                        message += `Current Status: ${currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User (upgrade to A7FX Elite required)' : currentRole === 'a7fx' ? 'A7FX Elite (but subscription may be inactive or expired)' : currentRole}\n\n`;
                                     }
-                                    
-                                    message += `To access this channel, you need an active ${subscriptionType} subscription.\n\n`;
-                                    message += `Would you like to subscribe now?`;
                                     
                                     return (
                                         <>
-                                            <p style={{ 
-                                                color: 'var(--text-normal)', 
-                                                marginBottom: '24px',
-                                                fontSize: '16px',
-                                                lineHeight: '1.6',
-                                                maxWidth: '500px'
-                                            }}>
-                                                This channel requires a <strong style={{ color: '#fbbf24' }}>{subscriptionType}</strong> subscription ({price})
-                                            </p>
                                             <div style={{
-                                                background: 'rgba(251, 191, 36, 0.1)',
-                                                padding: '16px',
-                                                borderRadius: '8px',
+                                                background: 'rgba(139, 92, 246, 0.1)',
+                                                borderRadius: '12px',
+                                                padding: '24px',
                                                 marginBottom: '24px',
                                                 maxWidth: '500px',
-                                                width: '100%'
+                                                width: '100%',
+                                                border: '1px solid rgba(139, 92, 246, 0.3)'
                                             }}>
                                                 <p style={{ 
-                                                    color: 'var(--text-muted)', 
-                                                    margin: '0 0 8px 0',
-                                                    fontSize: '14px'
+                                                    color: '#fff', 
+                                                    marginBottom: '20px',
+                                                    fontSize: '16px',
+                                                    lineHeight: '1.6'
                                                 }}>
-                                                    <strong>Your Current Status:</strong> {currentRole === 'free' ? 'Free User' : currentRole === 'premium' ? 'Premium User' : currentRole === 'a7fx' || currentRole === 'elite' ? 'A7FX Elite User' : currentRole}
+                                                    This channel requires an <strong style={{ color: '#8B5CF6' }}>{subscriptionType}</strong> subscription ({price}) to access.
                                                 </p>
-                                                {(currentRole === 'premium' || currentRole === 'a7fx' || currentRole === 'elite') && (
-                                                    <p style={{ 
-                                                        color: '#fbbf24', 
-                                                        margin: '8px 0 0 0',
-                                                        fontSize: '14px',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        ⚠️ Your subscription may be inactive or expired. Please check your subscription status.
-                                                    </p>
+                                                
+                                                {accessLevel === 'premium' ? (
+                                                    currentRole === 'free' ? (
+                                                        <div style={{
+                                                            background: 'rgba(251, 191, 36, 0.1)',
+                                                            borderRadius: '8px',
+                                                            padding: '16px',
+                                                            border: '1px solid rgba(251, 191, 36, 0.3)'
+                                                        }}>
+                                                            <p style={{
+                                                                color: '#fbbf24',
+                                                                fontSize: '14px',
+                                                                margin: '0 0 8px 0',
+                                                                fontWeight: '600'
+                                                            }}>
+                                                                Your Status: Free User
+                                                            </p>
+                                                            <p style={{
+                                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                                fontSize: '14px',
+                                                                margin: 0
+                                                            }}>
+                                                                Upgrade to Premium to unlock this channel and access exclusive trading content.
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{
+                                                            background: 'rgba(139, 92, 246, 0.2)',
+                                                            borderRadius: '8px',
+                                                            padding: '16px',
+                                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                                        }}>
+                                                            <p style={{
+                                                                color: '#A78BFA',
+                                                                fontSize: '14px',
+                                                                margin: '0 0 8px 0',
+                                                                fontWeight: '600'
+                                                            }}>
+                                                                Your Status: Premium User
+                                                            </p>
+                                                            <p style={{
+                                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                                fontSize: '14px',
+                                                                margin: 0
+                                                            }}>
+                                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                                            </p>
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    currentRole === 'free' ? (
+                                                        <div style={{
+                                                            background: 'rgba(251, 191, 36, 0.1)',
+                                                            borderRadius: '8px',
+                                                            padding: '16px',
+                                                            border: '1px solid rgba(251, 191, 36, 0.3)'
+                                                        }}>
+                                                            <p style={{
+                                                                color: '#fbbf24',
+                                                                fontSize: '14px',
+                                                                margin: '0 0 8px 0',
+                                                                fontWeight: '600'
+                                                            }}>
+                                                                Your Status: Free User
+                                                            </p>
+                                                            <p style={{
+                                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                                fontSize: '14px',
+                                                                margin: 0
+                                                            }}>
+                                                                Upgrade to A7FX Elite to unlock this channel and access the most exclusive trading content and signals.
+                                                            </p>
+                                                        </div>
+                                                    ) : currentRole === 'premium' ? (
+                                                        <div style={{
+                                                            background: 'rgba(139, 92, 246, 0.2)',
+                                                            borderRadius: '8px',
+                                                            padding: '16px',
+                                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                                        }}>
+                                                            <p style={{
+                                                                color: '#A78BFA',
+                                                                fontSize: '14px',
+                                                                margin: '0 0 8px 0',
+                                                                fontWeight: '600'
+                                                            }}>
+                                                                Your Status: Premium User
+                                                            </p>
+                                                            <p style={{
+                                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                                fontSize: '14px',
+                                                                margin: 0
+                                                            }}>
+                                                                This channel requires A7FX Elite. Upgrade from Premium to Elite to access the most exclusive content.
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{
+                                                            background: 'rgba(251, 191, 36, 0.1)',
+                                                            borderRadius: '8px',
+                                                            padding: '16px',
+                                                            border: '1px solid rgba(251, 191, 36, 0.3)'
+                                                        }}>
+                                                            <p style={{
+                                                                color: '#fbbf24',
+                                                                fontSize: '14px',
+                                                                margin: '0 0 8px 0',
+                                                                fontWeight: '600'
+                                                            }}>
+                                                                Your Status: A7FX Elite User
+                                                            </p>
+                                                            <p style={{
+                                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                                fontSize: '14px',
+                                                                margin: 0
+                                                            }}>
+                                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                                            </p>
+                                                        </div>
+                                                    )
                                                 )}
                                             </div>
                                             <button
                                                 onClick={() => handleSubscribe(accessLevel === 'premium' ? 'premium' : 'a7fx')}
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                                                     color: 'white',
                                                     border: 'none',
-                                                    padding: '12px 32px',
+                                                    padding: '14px 32px',
                                                     borderRadius: '8px',
                                                     fontSize: '16px',
                                                     fontWeight: 'bold',
                                                     cursor: 'pointer',
                                                     transition: 'all 0.3s ease',
-                                                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                                                    boxShadow: '0 4px 12px rgba(139, 92, 234, 0.4)'
                                                 }}
                                                 onMouseEnter={(e) => {
                                                     e.currentTarget.style.transform = 'translateY(-2px)';
-                                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.6)';
+                                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 92, 234, 0.6)';
                                                 }}
                                                 onMouseLeave={(e) => {
                                                     e.currentTarget.style.transform = 'translateY(0)';
-                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 234, 0.4)';
                                                 }}
                                             >
-                                                Choose Subscription - {price}
+                                                Subscribe Now - {price}
                                             </button>
                                         </>
                                     );
@@ -5103,34 +5233,6 @@ Let's build generational wealth together! 💰🚀`,
                         <p>Select a channel to start chatting</p>
                     </div>
                 )}
-            </div>
-            
-            {/* RIGHT SIDEBAR - ONLINE USERS */}
-            <div className="online-sidebar" style={{
-                filter: (showSubscribeBanner || showPaymentFailedBanner) ? 'blur(8px)' : 'none',
-                pointerEvents: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
-                userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto'
-            }}>
-                <div className="online-section">
-                    <div className="online-header">
-                        <h3>Online Users</h3>
-                        <span className="online-count">
-                            {onlineCount} / {totalUsers}
-                        </span>
-                    </div>
-                    
-                    <div className="user-stats">
-                        <div className="stat-item">
-                            <span className="stat-label">Online:</span>
-                            <span className="stat-value">{onlineCount}</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">Total Users:</span>
-                            <span className="stat-value">{totalUsers}</span>
-                        </div>
-                    </div>
-                </div>
-                
             </div>
 
             {/* Channel Manager Modal */}
@@ -6259,6 +6361,313 @@ Let's build generational wealth together! 💰🚀`,
                     >
                         <FaFlag size={14} /> Report message
                     </button>
+                </div>
+            )}
+
+            {/* Channel Access Modal - Shows when clicking locked channels */}
+            {showChannelAccessModal && lockedChannelInfo && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.85)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10003,
+                    padding: '20px'
+                }} onClick={() => {
+                    setShowChannelAccessModal(false);
+                    setLockedChannelInfo(null);
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                        borderRadius: '16px',
+                        padding: '32px',
+                        maxWidth: '500px',
+                        width: '100%',
+                        border: '2px solid rgba(139, 92, 246, 0.3)',
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.2)',
+                        position: 'relative'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        {/* Close button */}
+                        <button
+                            onClick={() => {
+                                setShowChannelAccessModal(false);
+                                setLockedChannelInfo(null);
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '16px',
+                                right: '16px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '20px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                                e.currentTarget.style.transform = 'rotate(90deg)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                e.currentTarget.style.transform = 'rotate(0deg)';
+                            }}
+                        >
+                            ×
+                        </button>
+
+                        {/* Lock icon */}
+                        <div style={{
+                            textAlign: 'center',
+                            marginBottom: '24px'
+                        }}>
+                            <div style={{
+                                fontSize: '48px',
+                                marginBottom: '16px',
+                                filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))'
+                            }}>🔒</div>
+                            <h2 style={{
+                                color: '#fff',
+                                fontSize: '24px',
+                                fontWeight: 'bold',
+                                margin: 0,
+                                marginBottom: '8px'
+                            }}>
+                                Subscription Required
+                            </h2>
+                            <p style={{
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                fontSize: '16px',
+                                margin: 0
+                            }}>
+                                #{lockedChannelInfo.channelName}
+                            </p>
+                        </div>
+
+                        {/* Message based on user type */}
+                        <div style={{
+                            background: 'rgba(139, 92, 246, 0.1)',
+                            borderRadius: '12px',
+                            padding: '20px',
+                            marginBottom: '24px',
+                            border: '1px solid rgba(139, 92, 246, 0.3)'
+                        }}>
+                            {lockedChannelInfo.accessLevel === 'premium' ? (
+                                <>
+                                    <p style={{
+                                        color: '#fff',
+                                        fontSize: '16px',
+                                        lineHeight: '1.6',
+                                        margin: '0 0 16px 0'
+                                    }}>
+                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura FX Premium</strong> subscription (£99/month) to access.
+                                    </p>
+                                    {lockedChannelInfo.currentRole === 'free' ? (
+                                        <div style={{
+                                            background: 'rgba(251, 191, 36, 0.1)',
+                                            borderRadius: '8px',
+                                            padding: '12px',
+                                            border: '1px solid rgba(251, 191, 36, 0.3)'
+                                        }}>
+                                            <p style={{
+                                                color: '#fbbf24',
+                                                fontSize: '14px',
+                                                margin: 0,
+                                                fontWeight: '600'
+                                            }}>
+                                                Your Status: Free User
+                                            </p>
+                                            <p style={{
+                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                fontSize: '14px',
+                                                margin: '8px 0 0 0'
+                                            }}>
+                                                Upgrade to Premium to unlock this channel and access exclusive trading content.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div style={{
+                                            background: 'rgba(139, 92, 246, 0.2)',
+                                            borderRadius: '8px',
+                                            padding: '12px',
+                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                        }}>
+                                            <p style={{
+                                                color: '#A78BFA',
+                                                fontSize: '14px',
+                                                margin: 0,
+                                                fontWeight: '600'
+                                            }}>
+                                                Your Status: Premium User
+                                            </p>
+                                            <p style={{
+                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                fontSize: '14px',
+                                                margin: '8px 0 0 0'
+                                            }}>
+                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <p style={{
+                                        color: '#fff',
+                                        fontSize: '16px',
+                                        lineHeight: '1.6',
+                                        margin: '0 0 16px 0'
+                                    }}>
+                                        This channel requires an <strong style={{ color: '#fbbf24' }}>A7FX Elite</strong> subscription (£250/month) to access.
+                                    </p>
+                                    {lockedChannelInfo.currentRole === 'free' ? (
+                                        <div style={{
+                                            background: 'rgba(251, 191, 36, 0.1)',
+                                            borderRadius: '8px',
+                                            padding: '12px',
+                                            border: '1px solid rgba(251, 191, 36, 0.3)'
+                                        }}>
+                                            <p style={{
+                                                color: '#fbbf24',
+                                                fontSize: '14px',
+                                                margin: 0,
+                                                fontWeight: '600'
+                                            }}>
+                                                Your Status: Free User
+                                            </p>
+                                            <p style={{
+                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                fontSize: '14px',
+                                                margin: '8px 0 0 0'
+                                            }}>
+                                                Upgrade to A7FX Elite to unlock this channel and access the most exclusive trading content and signals.
+                                            </p>
+                                        </div>
+                                    ) : lockedChannelInfo.currentRole === 'premium' ? (
+                                        <div style={{
+                                            background: 'rgba(139, 92, 246, 0.2)',
+                                            borderRadius: '8px',
+                                            padding: '12px',
+                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                        }}>
+                                            <p style={{
+                                                color: '#A78BFA',
+                                                fontSize: '14px',
+                                                margin: 0,
+                                                fontWeight: '600'
+                                            }}>
+                                                Your Status: Premium User
+                                            </p>
+                                            <p style={{
+                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                fontSize: '14px',
+                                                margin: '8px 0 0 0'
+                                            }}>
+                                                This channel requires A7FX Elite. Upgrade from Premium to Elite to access the most exclusive content.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div style={{
+                                            background: 'rgba(251, 191, 36, 0.1)',
+                                            borderRadius: '8px',
+                                            padding: '12px',
+                                            border: '1px solid rgba(251, 191, 36, 0.3)'
+                                        }}>
+                                            <p style={{
+                                                color: '#fbbf24',
+                                                fontSize: '14px',
+                                                margin: 0,
+                                                fontWeight: '600'
+                                            }}>
+                                                Your Status: A7FX Elite User
+                                            </p>
+                                            <p style={{
+                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                fontSize: '14px',
+                                                margin: '8px 0 0 0'
+                                            }}>
+                                                Your subscription may be inactive or expired. Please check your subscription status or renew to access this channel.
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '12px',
+                            justifyContent: 'flex-end'
+                        }}>
+                            <button
+                                onClick={() => {
+                                    setShowChannelAccessModal(false);
+                                    setLockedChannelInfo(null);
+                                }}
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    color: '#fff',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    padding: '12px 24px',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowChannelAccessModal(false);
+                                    setLockedChannelInfo(null);
+                                    handleSubscribe(lockedChannelInfo.accessLevel === 'premium' ? 'premium' : 'a7fx');
+                                }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '12px 24px',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 4px 12px rgba(139, 92, 234, 0.4)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 92, 234, 0.6)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 234, 0.4)';
+                                }}
+                            >
+                                Subscribe Now
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

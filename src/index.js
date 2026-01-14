@@ -9,13 +9,16 @@ if (process.env.NODE_ENV === 'production') {
   
   console.warn = (...args) => {
     const message = args[0]?.toString() || '';
-    // Suppress Vercel instrumentation warnings
+    // Suppress Vercel instrumentation warnings and timeout errors
     if (
       message.includes('[DEPRECATED] Default export is deprecated') ||
       message.includes('zustand') ||
       message.includes('DialogContent') ||
       message.includes('DialogTitle') ||
-      message.includes('aria-describedby')
+      message.includes('aria-describedby') ||
+      message.includes('Could not verify user existence') ||
+      message.includes('TimeoutError') ||
+      message.includes('signal timed out')
     ) {
       return; // Suppress these warnings
     }

@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }) => {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                   },
-                  signal: AbortSignal.timeout(3000) // 3 second timeout
+                  signal: AbortSignal.timeout(5000) // 5 second timeout
                 });
                 
                 if (!verifyResponse.ok || verifyResponse.status === 404) {
@@ -139,9 +139,16 @@ export const AuthProvider = ({ children }) => {
               } catch (verifyError) {
                 // If verification fails, don't block - just log warning
                 // Network errors or timeouts shouldn't prevent app from loading
-                if (verifyError.name !== 'AbortError') {
+                // Suppress timeout errors as they're expected and non-critical
+                const isTimeoutError = verifyError.name === 'AbortError' || 
+                                      verifyError.name === 'TimeoutError' ||
+                                      verifyError.message?.toLowerCase().includes('timeout') ||
+                                      verifyError.message?.toLowerCase().includes('timed out');
+                
+                if (!isTimeoutError) {
                   console.warn('Could not verify user existence:', verifyError);
                 }
+                // Timeout errors are silently ignored - they're expected on slow connections
               }
             }, 100); // Small delay to let app load first
           }
@@ -307,8 +314,9 @@ export const AuthProvider = ({ children }) => {
         if (!wrappedError.response.data) {
           wrappedError.response.data = {};
         }
-        if (!wrappedError.response.data.message && friendlyMessage) {
-          wrappedError.response.data.message = friendlyMessage;
+        // Preserve original server message if it exists, otherwise use friendly message
+        if (!wrappedError.response.data.message) {
+          wrappedError.response.data.message = error.response.data?.message || friendlyMessage;
         }
       }
       throw wrappedError;

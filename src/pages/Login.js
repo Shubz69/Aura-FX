@@ -109,46 +109,39 @@ const Login = () => {
 
                 // Handle specific HTTP status codes with very specific messages
                 if (status === 404) {
-                    // 404 could mean API endpoint not found OR user not found
-                    if (serverMessage && serverMessage.toLowerCase().includes('account') || serverMessage.toLowerCase().includes('email')) {
-                        errorMessage = serverMessage;
-                    } else {
-                        errorMessage = '❌ LOGIN API ENDPOINT NOT FOUND: The login service is currently unavailable. This is a server configuration issue. Please contact support or try again in a few minutes.';
-                    }
+                    // 404 means account doesn't exist (API returns this for non-existent users)
+                    // Always use server message if available, otherwise show default
+                    errorMessage = serverMessage 
+                        ? serverMessage
+                        : 'No account with this email exists. Please check your email or sign up for a new account.';
                 } else if (status === 401) {
-                    errorMessage = serverMessage || '❌ INCORRECT PASSWORD: The password you entered is incorrect. Please check your password and try again, or click "Forgot Password?" to reset it.';
+                    // 401 means incorrect password (API returns this for wrong password)
+                    // Always use server message if available, otherwise show default
+                    errorMessage = serverMessage 
+                        ? serverMessage
+                        : 'The password you entered is incorrect. Please check your password and try again, or click "Forgot Password?" to reset it.';
                 } else if (status === 400) {
-                    errorMessage = serverMessage || '❌ INVALID REQUEST: Email and password are required. Please fill in both fields.';
+                    errorMessage = serverMessage || 'Email and password are required. Please fill in both fields.';
                 } else if (status === 500) {
-                    errorMessage = serverMessage || '❌ SERVER ERROR: The server encountered an error processing your login. This could be a database connection issue. Please try again in a few moments or contact support.';
+                    errorMessage = serverMessage || 'The server encountered an error processing your login. This could be a database connection issue. Please try again in a few moments or contact support.';
                 } else if (status === 503) {
-                    errorMessage = '❌ SERVICE UNAVAILABLE: The login service is temporarily down for maintenance. Please try again later.';
+                    errorMessage = 'The login service is temporarily down for maintenance. Please try again later.';
                 } else if (status === 429) {
-                    errorMessage = '❌ TOO MANY ATTEMPTS: You have made too many login attempts. Please wait a few minutes before trying again.';
+                    errorMessage = 'You have made too many login attempts. Please wait a few minutes before trying again.';
                 } else if (serverMessage) {
-                    errorMessage = `❌ LOGIN FAILED: ${serverMessage}`;
+                    errorMessage = serverMessage;
                 } else {
-                    errorMessage = `❌ LOGIN FAILED: Server returned error code ${status}. Please try again or contact support if the problem persists.`;
+                    errorMessage = `Login failed. Server returned error code ${status}. Please try again or contact support if the problem persists.`;
                 }
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
-                errorMessage = '❌ NETWORK ERROR: Cannot connect to the server. Please check your internet connection and try again.';
+                errorMessage = 'Cannot connect to the server. Please check your internet connection and try again.';
             } else if (err.code === 'ETIMEDOUT' || err.message?.includes('timeout')) {
-                errorMessage = '❌ CONNECTION TIMEOUT: The server took too long to respond. Please check your internet connection and try again.';
+                errorMessage = 'The server took too long to respond. Please check your internet connection and try again.';
             } else if (err.message) {
                 // Use the error message from AuthContext or API
-                if (err.message.toLowerCase().includes('email') || err.message.toLowerCase().includes('account')) {
-                    errorMessage = `❌ ${err.message}`;
-                } else if (err.message.toLowerCase().includes('password')) {
-                    errorMessage = `❌ ${err.message}`;
-                } else if (err.message.toLowerCase().includes('database')) {
-                    errorMessage = '❌ DATABASE CONNECTION ERROR: The database is currently unavailable. Please try again in a few moments or contact support.';
-                } else if (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('authentication')) {
-                    errorMessage = '❌ AUTHENTICATION ERROR: There was a problem with authentication. Please try logging in again.';
-                } else {
-                    errorMessage = `❌ LOGIN ERROR: ${err.message}`;
-                }
+                errorMessage = err.message;
             } else {
-                errorMessage = '❌ UNKNOWN ERROR: An unexpected error occurred during login. Please try again or contact support if the problem persists.';
+                errorMessage = 'An unexpected error occurred during login. Please try again or contact support if the problem persists.';
             }
 
             console.log('Setting error message:', errorMessage);
@@ -361,8 +354,7 @@ const Login = () => {
                             fontSize: '20px',
                             marginBottom: '8px'
                         }}>
-                            <span style={{ fontSize: '28px' }}>⚠️</span>
-                            <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>LOGIN ERROR</strong>
+                            <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>Login Error</strong>
                         </div>
                         <div style={{ 
                             fontSize: '16px', 
@@ -451,8 +443,7 @@ const Login = () => {
                                 fontSize: '20px',
                                 marginBottom: '10px'
                             }}>
-                                <span style={{ fontSize: '28px' }}>⚠️</span>
-                                <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>LOGIN FAILED</strong>
+                                <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>Login Failed</strong>
                             </div>
                             <div style={{ 
                                 fontSize: '15px', 

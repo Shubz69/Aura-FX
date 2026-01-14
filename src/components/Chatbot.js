@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "../styles/Chatbot.css";
 
 const Chatbot = () => {
     const { isAuthenticated, user } = useAuth();
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
@@ -81,11 +83,20 @@ const Chatbot = () => {
             });
 
             let replyText = "⚠️ The chatbot encountered an error. Please try again later.";
+            let shouldRedirect = false;
+            let redirectPath = null;
+            
             if (res.ok) {
                 const contentType = res.headers.get("content-type");
                 if (contentType && contentType.includes("application/json")) {
                     const data = await res.json();
                     replyText = data.reply || data.message || data.response || "I received your message but couldn't generate a proper response.";
+                    
+                    // Check if response indicates a redirect is needed
+                    if (data.redirectTo) {
+                        shouldRedirect = true;
+                        redirectPath = data.redirectTo;
+                    }
                 } else {
                     replyText = await res.text();
                 }
@@ -105,6 +116,13 @@ const Chatbot = () => {
             }
 
             setMessages((prev) => [...prev, { from: "bot", text: replyText }]);
+            
+            // Handle redirect if needed (after showing message)
+            if (shouldRedirect && redirectPath) {
+                setTimeout(() => {
+                    navigate(redirectPath);
+                }, 2000); // Give user time to read the message
+            }
         } catch (err) {
             console.error("Chatbot API error:", err);
             setConnectError(true);
@@ -121,6 +139,51 @@ const Chatbot = () => {
     // Improved fallback function with authentication-aware responses
     const getSimulatedResponse = (message) => {
         const msg = message.toLowerCase();
+        
+        // Detect financial/trading analysis questions that require Aura AI
+        const financialKeywords = [
+            'analyze', 'analysis', 'technical analysis', 'fundamental analysis',
+            'market analysis', 'chart analysis', 'price prediction', 'forecast',
+            'trading strategy', 'entry point', 'exit point', 'stop loss', 'take profit',
+            'risk reward', 'position sizing', 'portfolio', 'investment advice',
+            'buy signal', 'sell signal', 'indicator', 'rsi', 'macd', 'bollinger',
+            'support level', 'resistance level', 'trend', 'candlestick', 'pattern',
+            'what should i trade', 'should i buy', 'should i sell', 'when to enter',
+            'when to exit', 'how much to risk', 'what is my risk', 'calculate',
+            'trading plan', 'risk management', 'market outlook', 'price target'
+        ];
+
+        const isFinancialQuestion = financialKeywords.some(keyword => msg.includes(keyword));
+
+        if (isFinancialQuestion) {
+            // Check if user has premium access
+            const userRole = user?.role || 'free';
+            const subscriptionStatus = user?.subscription_status || 'inactive';
+            const subscriptionPlan = user?.subscription_plan;
+            
+            const hasPremiumAccess = 
+                userRole === 'premium' || 
+                userRole === 'a7fx' || 
+                userRole === 'elite' ||
+                userRole === 'admin' ||
+                userRole === 'super_admin' ||
+                (subscriptionStatus === 'active' && 
+                 (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
+
+            if (hasPremiumAccess) {
+                // Redirect to Aura AI after showing message
+                setTimeout(() => {
+                    navigate('/premium-ai');
+                }, 2000);
+                return `For detailed financial analysis and trading strategies, please use <a href="/premium-ai" onclick="event.preventDefault(); window.location.href='/premium-ai';" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>. Aura AI provides professional technical analysis, risk assessments, and trading recommendations tailored to your needs. Redirecting you now...`;
+            } else {
+                // Redirect to subscription page after showing message
+                setTimeout(() => {
+                    navigate('/subscription');
+                }, 2000);
+                return `For detailed financial analysis and trading strategies, you'll need access to <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>. Aura AI is available with a Premium subscription. <a href="/subscription" onclick="event.preventDefault(); window.location.href='/subscription';" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Subscribe now</a> to unlock professional trading analysis and insights. Redirecting you to subscription page...`;
+            }
+        }
         
         // If not logged in, only answer simple trading questions
         if (!isAuthenticated) {

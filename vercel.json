@@ -169,6 +169,10 @@
     {
       "source": "/api/ai/premium-chat",
       "destination": "/api/ai/premium-chat.js"
+    },
+    {
+      "source": "/api/chatbot",
+      "destination": "/api/chatbot.js"
     }
   ]
 }

@@ -174,12 +174,48 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       ];
 
       // Call OpenAI API
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o', // Using GPT-4o for best performance
-        messages: messages,
-        temperature: 0.6, // Lower temperature for more professional, consistent responses
-        max_tokens: 2000,
-      });
+      let completion;
+      try {
+        completion = await openai.chat.completions.create({
+          model: 'gpt-4o', // Using GPT-4o for best performance
+          messages: messages,
+          temperature: 0.6, // Lower temperature for more professional, consistent responses
+          max_tokens: 2000,
+        });
+      } catch (openaiError) {
+        // Handle OpenAI-specific errors
+        console.error('OpenAI API error:', openaiError);
+        
+        // Release database connection
+        if (db && typeof db.release === 'function') {
+          db.release();
+        }
+        
+        // Check for rate limit errors
+        if (openaiError.status === 429 || openaiError.code === 'insufficient_quota' || openaiError.code === 'rate_limit_exceeded') {
+          return res.status(429).json({ 
+            success: false, 
+            message: 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.',
+            errorType: 'rate_limit'
+          });
+        }
+        
+        // Check for authentication errors
+        if (openaiError.status === 401 || openaiError.status === 403) {
+          return res.status(500).json({ 
+            success: false, 
+            message: 'AI service configuration error. Please contact support.',
+            errorType: 'auth_error'
+          });
+        }
+        
+        // Generic OpenAI error
+        return res.status(500).json({ 
+          success: false, 
+          message: 'AI service temporarily unavailable. Please try again in a few moments.',
+          errorType: 'openai_error'
+        });
+      }
 
       const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
 
@@ -206,6 +242,16 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
   } catch (error) {
     console.error('Error in premium AI chat:', error);
+    
+    // Check if it's an OpenAI error that wasn't caught
+    if (error.status === 429 || error.code === 'insufficient_quota' || error.code === 'rate_limit_exceeded') {
+      return res.status(429).json({ 
+        success: false, 
+        message: 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.',
+        errorType: 'rate_limit'
+      });
+    }
+    
     return res.status(500).json({ 
       success: false, 
       message: error.message || 'Failed to process AI request' 

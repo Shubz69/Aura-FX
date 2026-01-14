@@ -117,6 +117,11 @@ I provide data-driven analysis and actionable trading insights. How may I assist
       }
 
       if (!response.ok) {
+        // Handle rate limit errors specifically
+        if (response.status === 429 || (data && data.errorType === 'rate_limit')) {
+          const rateLimitMessage = data?.message || 'AI service is currently at capacity. Please try again in a few moments.';
+          throw new Error(rateLimitMessage);
+        }
         throw new Error(data.message || data.error || `Server error (${response.status})`);
       }
 
@@ -137,24 +142,35 @@ I provide data-driven analysis and actionable trading insights. How may I assist
       
       // Extract a clean error message
       let errorMessage = 'Failed to send message. Please try again.';
+      let isRateLimit = false;
+      
       if (error.message) {
-        // If error message is too long or contains HTML, use a generic message
-        if (error.message.length > 100 || error.message.includes('<')) {
+        // Check if it's a rate limit error
+        if (error.message.toLowerCase().includes('capacity') || 
+            error.message.toLowerCase().includes('rate limit') ||
+            error.message.toLowerCase().includes('quota') ||
+            error.message.toLowerCase().includes('try again in a few moments')) {
+          isRateLimit = true;
+          errorMessage = 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.';
+        } else if (error.message.length > 150 || error.message.includes('<')) {
           errorMessage = 'Server error. Please try again or contact support.';
         } else {
           errorMessage = error.message;
         }
       }
       
+      // Show toast notification
       toast.error(errorMessage, {
         position: 'bottom-right',
-        autoClose: 3000,
+        autoClose: isRateLimit ? 5000 : 3000,
       });
 
-      // Add error message to chat
+      // Add user-friendly error message to chat
       const chatErrorMessage = {
         role: 'assistant',
-        content: `⚠️ I encountered an error: ${errorMessage}. Please try again or contact support if the issue persists.`
+        content: isRateLimit 
+          ? 'I apologize, but the AI service is currently experiencing high demand. Please try again in a few moments. If this issue continues, please contact support for assistance.'
+          : `I encountered an error processing your request: ${errorMessage}. Please try again or contact support if the issue persists.`
       };
       setMessages(prev => [...prev, chatErrorMessage]);
     } finally {
