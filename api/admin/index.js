@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 
 // Suppress url.parse() deprecation warnings from dependencies
-require('./utils/suppress-warnings');
+require('../utils/suppress-warnings');
 const nodemailer = require('nodemailer');
 
 // Configure email transporter (optional – logs warning if credentials missing)

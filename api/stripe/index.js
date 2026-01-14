@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 const nodemailer = require('nodemailer');
 
 // Suppress url.parse() deprecation warnings from dependencies
-require('./utils/suppress-warnings');
+require('../utils/suppress-warnings');
 
 const getDbConnection = async () => {
   if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
