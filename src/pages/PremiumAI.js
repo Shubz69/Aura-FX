@@ -24,13 +24,20 @@ const PremiumAI = () => {
     const userRole = user?.role || 'free';
     const subscriptionStatus = user?.subscription_status || 'inactive';
     const subscriptionPlan = user?.subscription_plan;
+    const userEmail = user?.email || '';
+    
+    // Check if user is super admin by email
+    const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+    const isSuperAdminByEmail = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
     const hasAccess = 
+      isSuperAdminByEmail ||
       userRole === 'premium' || 
       userRole === 'a7fx' || 
       userRole === 'elite' || 
       userRole === 'admin' || 
       userRole === 'super_admin' ||
+      userRole === 'SUPER_ADMIN' ||
       (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
 
     if (!hasAccess) {

@@ -96,8 +96,13 @@ module.exports = async (req, res) => {
 
       const user = userRows[0];
       
+      // Check if user is super admin by email (shubzfx@gmail.com)
+      const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+      const isSuperAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      
       // Check if user has premium or a7fx subscription
       const hasAccess = 
+        isSuperAdmin ||
         user.role === 'premium' || 
         user.role === 'a7fx' || 
         user.role === 'elite' || 
