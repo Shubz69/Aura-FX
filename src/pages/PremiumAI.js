@@ -152,11 +152,17 @@ I provide data-driven analysis and actionable trading insights. How may I assist
       let isRateLimit = false;
       
       if (error.message) {
-        // Check if it's a rate limit error
-        if (error.message.toLowerCase().includes('capacity') || 
-            error.message.toLowerCase().includes('rate limit') ||
-            error.message.toLowerCase().includes('quota') ||
-            error.message.toLowerCase().includes('try again in a few moments')) {
+        // Check if it's a quota error (more specific - requires admin action)
+        if (error.message.toLowerCase().includes('quota') || 
+            error.message.toLowerCase().includes('exceeded your current quota') ||
+            error.message.toLowerCase().includes('insufficient_quota')) {
+          isRateLimit = true;
+          errorMessage = 'AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.';
+        }
+        // Check if it's a rate limit error (temporary)
+        else if (error.message.toLowerCase().includes('capacity') || 
+                 error.message.toLowerCase().includes('rate limit') ||
+                 error.message.toLowerCase().includes('try again in a few moments')) {
           isRateLimit = true;
           errorMessage = 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.';
         } else if (error.message.length > 150 || error.message.includes('<')) {
@@ -166,10 +172,17 @@ I provide data-driven analysis and actionable trading insights. How may I assist
         }
       }
       
-      // Show toast notification
+      // Also check error response data for quota errors
+      if (error.response?.data?.errorType === 'quota_exceeded') {
+        isRateLimit = true;
+        errorMessage = 'AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.';
+      }
+      
+      // Show toast notification (longer for quota errors)
+      const isQuotaError = errorMessage.toLowerCase().includes('quota');
       toast.error(errorMessage, {
         position: 'bottom-right',
-        autoClose: isRateLimit ? 5000 : 3000,
+        autoClose: isQuotaError ? 8000 : (isRateLimit ? 5000 : 3000),
       });
 
       // Add user-friendly error message to chat
