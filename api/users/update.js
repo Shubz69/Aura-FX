@@ -418,22 +418,36 @@ module.exports = async (req, res) => {
         }
 
         const user = rows[0];
+        
+        // Check if this is a public profile request (exclude personal information)
+        const isPublicProfile = req.url && req.url.includes('/public-profile/');
+        
         // Return user data with formatted dates
-        return res.status(200).json({
+        const responseData = {
           id: user.id,
           username: user.username,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
-          address: user.address,
           bio: user.bio,
           avatar: user.avatar || '/avatars/avatar_ai.png',
           role: user.role,
           level: user.level || 1,
           xp: user.xp || 0,
-          lastUsernameChange: user.last_username_change,
-          createdAt: user.created_at
-        });
+          joinDate: user.created_at,
+          stats: {
+            reputation: Math.floor((user.xp || 0) / 100) // Calculate reputation from XP
+          }
+        };
+        
+        // Only include personal information if NOT a public profile request
+        if (!isPublicProfile) {
+          responseData.email = user.email;
+          responseData.name = user.name;
+          responseData.phone = user.phone;
+          responseData.address = user.address;
+          responseData.lastUsernameChange = user.last_username_change;
+          responseData.createdAt = user.created_at;
+        }
+        
+        return res.status(200).json(responseData);
       } catch (dbError) {
         console.error('Database error fetching user:', dbError);
         if (db && !db.ended) await db.end();

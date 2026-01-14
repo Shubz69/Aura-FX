@@ -3559,8 +3559,12 @@ Let's build generational wealth together! 💰🚀`,
                             <div 
                                 key={categoryName} 
                                 className={`channel-category ${draggedCategory === categoryName ? 'dragging' : ''} ${draggedCategory && draggedCategory !== categoryName ? 'drag-over' : ''}`}
-                                draggable={true}
+                                draggable={isSuperAdminUser}
                                 onDragStart={(e) => {
+                                    if (!isSuperAdminUser) {
+                                        e.preventDefault();
+                                        return;
+                                    }
                                     setDraggedCategory(categoryName);
                                     e.dataTransfer.effectAllowed = 'move';
                                     e.dataTransfer.setData('text/plain', categoryName);
@@ -3584,6 +3588,12 @@ Let's build generational wealth together! 💰🚀`,
                                     }
                                 }}
                                 onDrop={async (e) => {
+                                    // Only superadmin can drop
+                                    if (!isSuperAdminUser) {
+                                        e.preventDefault();
+                                        return;
+                                    }
+                                    
                                     // Check if a channel is being dropped on category header
                                     if (draggedChannel && !draggedCategory) {
                                         e.preventDefault();
@@ -3723,6 +3733,12 @@ Let's build generational wealth together! 💰🚀`,
                                                             }
                                                         }}
                                                         onDrop={async (e) => {
+                                                            // Only superadmin can drop
+                                                            if (!isSuperAdminUser) {
+                                                                e.preventDefault();
+                                                                return;
+                                                            }
+                                                            
                                                             if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
                                                                 e.preventDefault();
                                                                 e.stopPropagation();
@@ -3776,7 +3792,7 @@ Let's build generational wealth together! 💰🚀`,
                                                 {/* Channel item */}
                                                 <li 
                                                     className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''} ${isLocked ? 'locked' : ''} ${isDragging ? 'dragging' : ''} ${showDropAbove ? 'drop-above' : ''} ${showDropBelow ? 'drop-below' : ''}`}
-                                                    draggable={!isLocked && (isAdminUser || isSuperAdminUser)}
+                                                    draggable={!isLocked && isSuperAdminUser}
                                                     onContextMenu={(e) => {
                                                         if (!isSuperAdminUser) return;
                                                         e.preventDefault();
@@ -3789,7 +3805,7 @@ Let's build generational wealth together! 💰🚀`,
                                                         });
                                                     }}
                                                     onDragStart={(e) => {
-                                                        if (isLocked || (!isAdminUser && !isSuperAdminUser)) {
+                                                        if (isLocked || !isSuperAdminUser) {
                                                             e.preventDefault();
                                                             return;
                                                         }
@@ -3836,6 +3852,12 @@ Let's build generational wealth together! 💰🚀`,
                                                         }
                                                     }}
                                                     onDrop={async (e) => {
+                                                        // Only superadmin can drop
+                                                        if (!isSuperAdminUser) {
+                                                            e.preventDefault();
+                                                            return;
+                                                        }
+                                                        
                                                         if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
                                                             e.preventDefault();
                                                             e.stopPropagation();
@@ -3974,6 +3996,12 @@ Let's build generational wealth together! 💰🚀`,
                                                     }
                                                 }}
                                                 onDrop={async (e) => {
+                                                    // Only superadmin can drop
+                                                    if (!isSuperAdminUser) {
+                                                        e.preventDefault();
+                                                        return;
+                                                    }
+                                                    
                                                     if (draggedChannel && draggedChannel !== channel.id && !isLocked) {
                                                         e.preventDefault();
                                                         e.stopPropagation();
@@ -4424,20 +4452,38 @@ Let's build generational wealth together! 💰🚀`,
                                             style={{ cursor: 'context-menu' }}
                                         >
                                             {!isGrouped && (
-                                                <div className="message-avatar" style={{
-                                                    width: '40px',
-                                                    height: '40px',
-                                                    borderRadius: '50%',
-                                                    overflow: 'hidden',
-                                                    flexShrink: 0,
-                                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: 'white',
-                                                    fontWeight: 'bold',
-                                                    fontSize: '0.875rem'
-                                                }}>
+                                                <div 
+                                                    className="message-avatar" 
+                                                    onClick={() => {
+                                                        if (message.sender?.id || message.userId) {
+                                                            navigate(`/public-profile/${message.sender?.id || message.userId}`);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        borderRadius: '50%',
+                                                        overflow: 'hidden',
+                                                        flexShrink: 0,
+                                                        background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: 'white',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.875rem',
+                                                        cursor: 'pointer',
+                                                        transition: 'transform 0.2s ease, opacity 0.2s ease'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                                        e.currentTarget.style.opacity = '0.9';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                        e.currentTarget.style.opacity = '1';
+                                                    }}
+                                                >
                                                     {message.sender?.avatar && message.sender.avatar !== '/avatars/avatar_ai.png' ? (
                                                         <img 
                                                             src={message.sender.avatar} 
@@ -4462,7 +4508,25 @@ Let's build generational wealth together! 💰🚀`,
                                                 {!isGrouped && (
                                                     <div className="message-header-info" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                            <span className="message-author">
+                                                            <span 
+                                                                className="message-author"
+                                                                onClick={() => {
+                                                                    if (message.sender?.id || message.userId) {
+                                                                        navigate(`/public-profile/${message.sender?.id || message.userId}`);
+                                                                    }
+                                                                }}
+                                                                style={{
+                                                                    cursor: 'pointer',
+                                                                    transition: 'color 0.2s ease',
+                                                                    fontWeight: 600
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.color = 'var(--purple-primary)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.color = '';
+                                                                }}
+                                                            >
                                                                 {message.sender?.username || 'Unknown'}
                                                             </span>
                                                             <span className="message-timestamp">
