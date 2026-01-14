@@ -115,9 +115,9 @@ module.exports = async (req, res) => {
     else if (msg.includes('what') && (msg.includes('aura') || msg.includes('platform') || msg.includes('website'))) {
       reply = 'AURA FX is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship.';
     }
-    // Trading education (general)
+    // Trading education (general) - recommend premium AI
     else if (msg.includes('trade') || msg.includes('trading') || msg.includes('forex') || msg.includes('crypto') || msg.includes('stock')) {
-      reply = 'AURA FX specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to learn more.';
+      reply = 'AURA FX specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to learn more.\n\n💡 For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
     }
     // Courses
     else if (msg.includes('course') || msg.includes('learn') || msg.includes('mentorship')) {
@@ -139,11 +139,11 @@ module.exports = async (req, res) => {
     else if (msg.includes('community') || msg.includes('forum') || msg.includes('chat')) {
       reply = 'Our trading community is where traders connect and share strategies. Access it through the Community section. Subscription required for full access.';
     }
-    // Default response
+    // Default response - always recommend premium AI
     else {
       reply = authenticated
-        ? 'I can help with questions about AURA FX, our courses, and the platform. For detailed trading analysis, use <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline;">Aura AI</a> (Premium feature). What would you like to know?'
-        : 'I can help with questions about trading and the AURA FX platform. For personalized assistance, please <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up</a> or <a href="/login" style="color: #1E90FF; text-decoration: underline;">log in</a>!';
+        ? 'I can help with general questions about AURA FX, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a> - our professional AI trading assistant. What would you like to know?'
+        : 'I can help with questions about AURA FX, our courses, and subscriptions. For advanced trading analysis and strategies, <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up</a> and <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
     }
 
     return res.status(200).json({
