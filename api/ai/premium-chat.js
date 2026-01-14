@@ -198,12 +198,22 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           db.release();
         }
         
-        // Check for rate limit errors
+        // Check for quota/rate limit errors
         if (openaiError.status === 429 || openaiError.code === 'insufficient_quota' || openaiError.code === 'rate_limit_exceeded') {
+          const isQuotaError = openaiError.code === 'insufficient_quota';
+          console.error(`OpenAI ${isQuotaError ? 'quota' : 'rate limit'} error:`, {
+            code: openaiError.code,
+            message: openaiError.error?.message || openaiError.message,
+            status: openaiError.status
+          });
+          
           return res.status(429).json({ 
             success: false, 
-            message: 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.',
-            errorType: 'rate_limit'
+            message: isQuotaError 
+              ? 'AI service quota has been exceeded. Please add credits to your OpenAI account or upgrade your plan. Contact support if you need assistance.'
+              : 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.',
+            errorType: isQuotaError ? 'quota_exceeded' : 'rate_limit',
+            requiresAction: isQuotaError
           });
         }
         
