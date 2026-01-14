@@ -186,11 +186,14 @@ I provide data-driven analysis and actionable trading insights. How may I assist
       });
 
       // Add user-friendly error message to chat
+      const isQuotaError = errorMessage.toLowerCase().includes('quota');
       const chatErrorMessage = {
         role: 'assistant',
-        content: isRateLimit 
-          ? 'I apologize, but the AI service is currently experiencing high demand. Please try again in a few moments. If this issue continues, please contact support for assistance.'
-          : `I encountered an error processing your request: ${errorMessage}. Please try again or contact support if the issue persists.`
+        content: isQuotaError
+          ? 'I apologize, but the AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.'
+          : isRateLimit 
+            ? 'I apologize, but the AI service is currently experiencing high demand. Please try again in a few moments. If this issue continues, please contact support for assistance.'
+            : `I encountered an error processing your request: ${errorMessage}. Please try again or contact support if the issue persists.`
       };
       setMessages(prev => [...prev, chatErrorMessage]);
     } finally {
