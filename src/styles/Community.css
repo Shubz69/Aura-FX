@@ -710,12 +710,12 @@ body.sidebar-open-mobile {
     }
     
     .chat-header h2 {
-        font-size: 1rem;
+        font-size: 0.9rem;
         margin-top: 0 !important;
     }
     
     .chat-header h2::before {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 }
 
@@ -731,12 +731,12 @@ body.sidebar-open-mobile {
     }
     
     .chat-header h2 {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         margin-top: 0 !important;
     }
     
     .chat-header h2::before {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 }
 
