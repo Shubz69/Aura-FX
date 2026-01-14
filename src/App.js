@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { isPremium } from './utils/roles';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import Login from './pages/Login';
@@ -45,7 +46,8 @@ import GDPRModal from './components/GDPRModal';
 
 function AppRoutes() {
     const { user, loading } = useAuth();
-    const showChatbot = true;
+    // Only show chatbot for free users - premium users should use Aura AI
+    const showChatbot = !isPremium(user);
     const location = useLocation();
     const isHomePage = location.pathname === '/';
 

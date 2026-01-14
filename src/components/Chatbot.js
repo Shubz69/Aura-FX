@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { isPremium } from "../utils/roles";
 import "../styles/Chatbot.css";
 
 const Chatbot = () => {
     const { isAuthenticated, user } = useAuth();
     const navigate = useNavigate();
+    
+    // Hide chatbot for premium users - they should use Aura AI instead
+    if (isPremium(user)) {
+        return null;
+    }
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
@@ -26,8 +32,8 @@ const Chatbot = () => {
     useEffect(() => {
         if (isOpen) {
             const welcomeMessage = isAuthenticated 
-                ? `👋 Welcome back, ${user?.username || user?.name || 'there'}! I'm the AURA FX trading assistant. I can answer questions about trading, our courses, and the platform. Choose a question below or type your own!`
-                : "👋 Welcome to <span className='glitch-brand' data-text='AURA FX'>AURA FX</span>! I can answer questions about trading and our platform. <a href='/register' style='color: #1E90FF; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #1E90FF; text-decoration: underline;'>log in</a> to access full features!\nChoose a question or type your own.";
+                ? `Welcome back, ${user?.username || user?.name || 'there'}! I'm your AURA FX assistant. I can help with general questions about our platform, courses, and subscriptions.\n\n💡 <strong>Upgrade to Premium</strong> to unlock <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a> - our advanced AI assistant that provides professional trading analysis, market insights, and personalized trading strategies.\n\nChoose a question below or ask me anything!`
+                : "Welcome to <strong>AURA FX</strong>! I'm your free assistant. I can help with questions about our platform, courses, and subscriptions.\n\n💡 <strong>Upgrade to Premium</strong> to unlock <a href=\"/premium-ai\" style=\"color: #8B5CF6; text-decoration: underline; font-weight: bold;\">Aura AI</a> - our advanced AI assistant for professional trading analysis and strategies.\n\n<a href='/register' style='color: #1E90FF; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #1E90FF; text-decoration: underline;'>log in</a> to get started!\n\nChoose a question below or ask me anything!";
             
             setMessages([
                 {
@@ -284,8 +290,8 @@ const Chatbot = () => {
             return `Check your <a href='/my-courses' style='color: #1E90FF; text-decoration: underline;'>My Courses</a> page for your progress. Your profile shows your level and XP.`;
         }
         
-        // Default response - trading focused
-        return "I'm here to help with trading questions! Ask me about Forex, Stocks, Crypto, Options trading, our courses, or the platform. For account issues, visit our <a href='/contact' style='color: #1E90FF; text-decoration: underline;'>Contact page</a>. What would you like to know?";
+        // Default response - recommend premium AI for advanced questions
+        return "I can help with general questions about AURA FX, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href='/subscription' style='color: #8B5CF6; text-decoration: underline; font-weight: bold;'>upgrade to Premium</a> to access <a href='/premium-ai' style='color: #8B5CF6; text-decoration: underline; font-weight: bold;'>Aura AI</a> - our professional AI trading assistant. What would you like to know?";
     };
 
     const handleOption = (message) => {
@@ -300,45 +306,61 @@ const Chatbot = () => {
     };
 
     const groupedOptions = {
-        "📈 Trading": [
+        "Trading Education": [
             "What trading strategies do you teach?",
             "How do I get started with Forex trading?",
             "What's the difference between Forex and Crypto trading?",
             "Do you teach stock trading?",
             "What is options trading?",
         ],
-        "🎓 Courses & Mentorship": [
+        "Courses & Mentorship": [
             "What is the 1-to-1 mentorship program?",
             "How does the mentorship work?",
             "What will I learn in the mentorship?",
             "Is the mentorship personalized?",
             "How long is the mentorship program?",
         ],
-        "💳 Subscriptions": [
+        "Subscriptions": [
             "What's included in the Aura FX subscription?",
             "What's the difference between Aura FX and A7FX?",
             "How much does A7FX Elite cost?",
             "Can I cancel my subscription anytime?",
             "What payment methods are accepted?",
         ],
-        "💬 Platform & Support": [
+        "Platform & Support": [
             "What is AURA FX?",
             "How do I access the trading community?",
-            "Can I get help with my trades?",
             "How do I contact support?",
             "What trading markets do you cover?",
+            "How do I upgrade to Premium?",
         ]
     };
 
     return (
         <div className="chatbot-container">
-            <button className="chatbot-toggle" onClick={toggleChat}>💬</button>
+            <button className="chatbot-toggle" onClick={toggleChat} aria-label="Open chat assistant">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H6L4 18V4H20V16Z" fill="currentColor"/>
+                    <path d="M7 9H17V11H7V9ZM7 12H15V14H7V12Z" fill="currentColor"/>
+                </svg>
+            </button>
             {isOpen && (
                 <div className="chatbot-window">
                     <div className="chatbot-header">
-                        AURA FX Trading Chat
-                        {connectError && <span className="offline-indicator">⚠️ Offline Mode</span>}
-                        <button className="chatbot-close" onClick={toggleChat}>✕</button>
+                        <div className="chatbot-header-content">
+                            <div className="chatbot-header-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px' }}>
+                                    <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H6L4 18V4H20V16Z" fill="currentColor"/>
+                                </svg>
+                                <span>AURA FX Assistant</span>
+                            </div>
+                            {connectError && <span className="offline-indicator">Offline Mode</span>}
+                        </div>
+                        <button className="chatbot-close" onClick={toggleChat} aria-label="Close chat">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            </svg>
+                        </button>
                     </div>
                     <div className="chatbot-messages">
                         {messages.map((msg, i) => (
@@ -371,7 +393,13 @@ const Chatbot = () => {
                         )}
 
                         {isLoading && (
-                            <div className="message bot">🧠 Thinking...</div>
+                            <div className="message bot">
+                                <div className="typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
                         )}
 
                         <div ref={messagesEndRef} />
@@ -381,10 +409,14 @@ const Chatbot = () => {
                         <input
                             type="text"
                             value={input}
-                            placeholder="Ask me anything..."
+                            placeholder="Ask about our platform, courses, or subscriptions..."
                             onChange={(e) => setInput(e.target.value)}
                         />
-                        <button type="submit">➤</button>
+                        <button type="submit" aria-label="Send message">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
                     </form>
                 </div>
             )}
