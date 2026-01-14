@@ -668,26 +668,27 @@ body.sidebar-open-mobile {
 
 /* Chat Header */
 .chat-header {
-    padding: 16px 24px;
+    padding: 8px 16px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: var(--bg-secondary);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    min-height: 56px;
+    min-height: 40px;
     position: relative;
-    z-index: 10;
+    z-index: 100;
+    flex-shrink: 0;
 }
 
 .chat-header h2 {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     margin: 0;
     color: white;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .chat-header h2::before {
@@ -699,13 +700,13 @@ body.sidebar-open-mobile {
 
 @media (max-width: 1024px) {
     .chat-header {
-        padding: 14px 20px;
-        min-height: 52px;
+        padding: 8px 16px;
+        min-height: 40px;
         margin-top: 0 !important;
-        padding-top: 20px !important;
-        padding-bottom: 14px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
         position: relative !important;
-        z-index: 10 !important;
+        z-index: 100 !important;
     }
     
     .chat-header h2 {
@@ -720,13 +721,13 @@ body.sidebar-open-mobile {
 
 @media (max-width: 768px) {
     .chat-header {
-        padding: 12px 16px;
-        min-height: 48px;
+        padding: 8px 12px;
+        min-height: 40px;
         margin-top: 0 !important;
-        padding-top: 20px !important;
-        padding-bottom: 12px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
         position: relative !important;
-        z-index: 10 !important;
+        z-index: 100 !important;
     }
     
     .chat-header h2 {
@@ -766,10 +767,11 @@ body.sidebar-open-mobile {
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 0;
+    padding: 4px 0;
     display: flex;
     flex-direction: column;
     background: var(--bg-tertiary);
+    min-height: 0;
 }
 
 /* Empty State */
@@ -827,7 +829,7 @@ body.sidebar-open-mobile {
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0.25rem 16px;
+    padding: 0.125rem 12px;
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
@@ -853,8 +855,8 @@ body.sidebar-open-mobile {
 
 /* Group consecutive messages from same sender */
 .message-item.grouped {
-    padding-top: 0.125rem;
-    padding-bottom: 0.125rem;
+    padding-top: 0.0625rem;
+    padding-bottom: 0.0625rem;
 }
 
 .message-item.grouped .message-avatar,
@@ -864,14 +866,15 @@ body.sidebar-open-mobile {
 
 .message-item.grouped .message-content {
     margin-left: 0;
+    padding-left: 0;
 }
 
 .message-avatar {
     position: absolute;
-    left: 16px;
-    top: 0.25rem;
-    width: 40px;
-    height: 40px;
+    left: 12px;
+    top: 0.125rem;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     flex-shrink: 0;
     border: none;
@@ -885,16 +888,16 @@ body.sidebar-open-mobile {
 
 .message-avatar-text {
     position: absolute;
-    left: 16px;
-    top: 0.25rem;
-    width: 40px;
-    height: 40px;
+    left: 12px;
+    top: 0.125rem;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, #5865F2, #4752C4);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: white;
     flex-shrink: 0;
@@ -908,7 +911,7 @@ body.sidebar-open-mobile {
 }
 
 .message-content {
-    margin-left: 56px;
+    margin-left: 48px;
     min-width: 0;
     flex: 1;
     padding: 0;
@@ -918,16 +921,16 @@ body.sidebar-open-mobile {
 .message-header-info {
     display: flex;
     align-items: baseline;
-    gap: 6px;
-    margin-bottom: 0.125rem;
+    gap: 4px;
+    margin-bottom: 0.0625rem;
     flex-wrap: wrap;
-    line-height: 1.375;
+    line-height: 1.3;
 }
 
 .message-author {
     font-weight: 500;
     color: #FFFFFF;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     cursor: pointer;
     transition: color 0.15s ease;
     user-select: none;
@@ -953,8 +956,8 @@ body.sidebar-open-mobile {
 
 .message-text {
     color: #DCDDDE;
-    line-height: 1.375;
-    font-size: 0.9375rem;
+    line-height: 1.4;
+    font-size: 0.875rem;
     word-wrap: break-word;
     white-space: pre-wrap;
     margin: 0;
@@ -1029,9 +1032,10 @@ body.sidebar-open-mobile {
 
 /* Chat Input */
 .chat-input-container {
-    padding: 0 16px 24px 16px;
+    padding: 8px 12px 12px 12px;
     background: var(--bg-tertiary);
     border-top: none;
+    flex-shrink: 0;
 }
 
 .connection-status {
@@ -1078,7 +1082,7 @@ body.sidebar-open-mobile {
 .chat-form {
     display: flex;
     flex-direction: row;
-    gap: 12px;
+    gap: 8px;
     align-items: flex-end;
 }
 
@@ -1089,19 +1093,19 @@ body.sidebar-open-mobile {
 
 .chat-input {
     width: 100%;
-    padding: 12px 14px;
+    padding: 8px 12px;
     border-radius: 8px;
     border: none;
     background: #40444B;
     color: #DCDDDE;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     resize: none;
     outline: none;
     font-family: inherit;
     transition: all 0.2s ease;
-    min-height: 60px;
-    max-height: 400px;
-    line-height: 1.6;
+    min-height: 44px;
+    max-height: 200px;
+    line-height: 1.5;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
@@ -1165,17 +1169,19 @@ body.sidebar-open-mobile {
 }
 
 .send-btn {
-    padding: 14px 28px;
-    border-radius: 10px;
+    padding: 10px 20px;
+    border-radius: 8px;
     border: none;
     background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
     color: white;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
     white-space: nowrap;
+    height: 44px;
+    align-self: flex-end;
 }
 
 .send-btn:hover {
