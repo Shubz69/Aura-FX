@@ -1,6 +1,8 @@
 // Vercel serverless function for signup email verification (consolidated send + verify)
 const nodemailer = require('nodemailer');
 const mysql = require('mysql2/promise');
+// Suppress url.parse() deprecation warnings from dependencies
+require('../utils/suppress-warnings');
 
 // Function to create transporter
 const createEmailTransporter = () => {

@@ -1,4 +1,6 @@
 const { getDbConnection } = require('../db');
+// Suppress url.parse() deprecation warnings from dependencies
+require('../utils/suppress-warnings');
 
 module.exports = async (req, res) => {
   // Handle CORS

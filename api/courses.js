@@ -1,5 +1,7 @@
 const { getDbConnection } = require('./db');
 const { getCached, setCached } = require('./cache');
+// Suppress url.parse() deprecation warnings from dependencies
+require('./utils/suppress-warnings');
 
 module.exports = async (req, res) => {
   // Set JSON content type first

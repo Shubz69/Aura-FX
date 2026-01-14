@@ -1,19 +1,7 @@
 const { getDbConnection } = require('../../db');
 
-// Suppress url.parse() deprecation warnings from dependencies (Express, Vercel runtime)
-// These warnings come from internal Node.js dependencies, not our code
-if (typeof process !== 'undefined' && process.emitWarning) {
-  const originalEmitWarning = process.emitWarning;
-  process.emitWarning = function(warning, ...args) {
-    if (typeof warning === 'string' && warning.includes('url.parse()')) {
-      return; // Suppress url.parse() deprecation warnings
-    }
-    if (warning && typeof warning === 'object' && warning.name === 'DeprecationWarning' && warning.message && warning.message.includes('url.parse()')) {
-      return; // Suppress url.parse() deprecation warnings
-    }
-    return originalEmitWarning.call(this, warning, ...args);
-  };
-}
+// Suppress url.parse() deprecation warnings from dependencies
+require('../../utils/suppress-warnings');
 
 // Ensure messages table exists with correct schema
 const ensureMessagesTable = async (db) => {

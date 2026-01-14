@@ -1,6 +1,9 @@
 // Chatbot API endpoint - Provides helpful responses about the website
 // For financial/trading questions, redirects users to Aura AI (premium feature)
 
+// Suppress url.parse() deprecation warnings from dependencies
+require('./utils/suppress-warnings');
+
 module.exports = async (req, res) => {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');

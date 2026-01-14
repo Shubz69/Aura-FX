@@ -1,5 +1,7 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt'); // bcrypt is in package.json
+// Suppress url.parse() deprecation warnings from dependencies
+require('../utils/suppress-warnings');
 
 // Get database connection
 const getDbConnection = async () => {
