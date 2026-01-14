@@ -4449,6 +4449,61 @@ Let's build generational wealth together! 💰🚀`,
                                                     messageId: message.id
                                                 });
                                             }}
+                                            onTouchStart={(e) => {
+                                                // Long press for touch devices
+                                                const touch = e.touches[0];
+                                                const startX = touch.clientX;
+                                                const startY = touch.clientY;
+                                                const messageId = message.id;
+                                                
+                                                const longPressTimer = setTimeout(() => {
+                                                    // Show context menu on long press
+                                                    setContextMenu({
+                                                        x: startX,
+                                                        y: startY,
+                                                        messageId: messageId
+                                                    });
+                                                    // Prevent default touch behavior
+                                                    e.preventDefault();
+                                                }, 500); // 500ms long press
+                                                
+                                                // Store timer on element for cleanup
+                                                e.currentTarget._longPressTimer = longPressTimer;
+                                                
+                                                // Clean up on touch end/move
+                                                const handleTouchEnd = () => {
+                                                    if (e.currentTarget._longPressTimer) {
+                                                        clearTimeout(e.currentTarget._longPressTimer);
+                                                        e.currentTarget._longPressTimer = null;
+                                                    }
+                                                    document.removeEventListener('touchend', handleTouchEnd);
+                                                    document.removeEventListener('touchmove', handleTouchMove);
+                                                };
+                                                
+                                                const handleTouchMove = (moveEvent) => {
+                                                    const moveTouch = moveEvent.touches[0] || moveEvent.changedTouches[0];
+                                                    const moveX = moveTouch.clientX;
+                                                    const moveY = moveTouch.clientY;
+                                                    
+                                                    // Cancel long press if user moved too much
+                                                    if (Math.abs(moveX - startX) > 10 || Math.abs(moveY - startY) > 10) {
+                                                        if (e.currentTarget._longPressTimer) {
+                                                            clearTimeout(e.currentTarget._longPressTimer);
+                                                            e.currentTarget._longPressTimer = null;
+                                                        }
+                                                    }
+                                                };
+                                                
+                                                document.addEventListener('touchend', handleTouchEnd, { once: true });
+                                                document.addEventListener('touchmove', handleTouchMove, { once: true });
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                // Clean up any pending long press timer
+                                                if (e.currentTarget._longPressTimer) {
+                                                    clearTimeout(e.currentTarget._longPressTimer);
+                                                    e.currentTarget._longPressTimer = null;
+                                                }
+                                            }}
                                             style={{ cursor: 'context-menu' }}
                                         >
                                             {!isGrouped && (

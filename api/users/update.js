@@ -107,9 +107,12 @@ module.exports = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid user ID format' });
   }
 
-  // Check authentication
+  // Check if this is a public profile request - skip auth for public profiles
+  const isPublicProfileRequest = req.url && req.url.includes('/public-profile/');
+  
+  // Check authentication (skip for public profile requests)
   const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) {
+  if (!isPublicProfileRequest && !token) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 

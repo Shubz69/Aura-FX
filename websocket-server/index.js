@@ -288,17 +288,19 @@ wss.on('connection', (ws, req) => {
                 // PRODUCTION OPTIMIZATION: Broadcast INSTANTLY first (non-blocking)
                 // This ensures <1ms response time for real-time updates across all devices
                 const messageToSend = JSON.stringify({
-                    id: data.id || Date.now(),
+                    id: data.id || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     channelId: channelId,
+                    channel_id: channelId, // Include both formats for compatibility
                     content: data.content,
                     sender: data.sender || { 
-                        id: data.userId || data.senderId, 
-                        username: data.username || 'User',
-                        avatar: data.avatar || '/avatars/avatar_ai.png'
+                        id: data.userId || data.senderId || data.sender?.id, 
+                        username: data.username || data.sender?.username || 'User',
+                        avatar: data.avatar || data.sender?.avatar || '/avatars/avatar_ai.png'
                     },
                     timestamp: data.timestamp || new Date().toISOString(),
-                    userId: data.userId || data.senderId,
-                    username: data.username || 'User',
+                    createdAt: data.timestamp || new Date().toISOString(), // Include both formats
+                    userId: data.userId || data.senderId || data.sender?.id,
+                    username: data.username || data.sender?.username || 'User',
                     file: data.file || null
                 });
                 
