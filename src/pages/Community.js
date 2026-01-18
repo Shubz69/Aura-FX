@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import '../styles/Community.css';
 import { useWebSocket } from '../utils/useWebSocket';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
 import { SUPER_ADMIN_EMAIL } from '../utils/roles';
@@ -229,6 +229,7 @@ const Community = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
     const { id: channelIdParam } = useParams();
+    const location = useLocation();
     const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
     
     const [channelList, setChannelList] = useState([]);
@@ -720,7 +721,7 @@ const Community = () => {
                     'mention',
                     `You were mentioned in #${selectedChannel.name}`,
                     `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                    `/community/${selectedChannel.id}`,
+                    `/community/${selectedChannel.id}?message=${message.id}`,
                     userId
                 );
             } else if (!isCurrentChannel && !isOwnMessage) {
@@ -1005,6 +1006,35 @@ const Community = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Scroll to specific message when navigated from notification
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const messageId = params.get('message');
+        
+        if (messageId && messages.length > 0) {
+            // Wait for messages to render, then scroll to the message
+            setTimeout(() => {
+                const messageElement = document.getElementById(`message-${messageId}`);
+                if (messageElement) {
+                    messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Highlight the message briefly
+                    messageElement.style.backgroundColor = 'rgba(139, 92, 246, 0.3)';
+                    messageElement.style.transition = 'background-color 0.3s ease';
+                    setTimeout(() => {
+                        messageElement.style.backgroundColor = '';
+                        setTimeout(() => {
+                            messageElement.style.transition = '';
+                        }, 300);
+                    }, 2000);
+                    
+                    // Clean up URL parameter
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState({}, '', newUrl);
+                }
+            }, 500);
+        }
+    }, [location.search, messages, selectedChannel]);
 
     // Emoji selection handler
     const handleEmojiSelect = (emoji) => {
@@ -4451,7 +4481,8 @@ Let's build generational wealth together! 💰🚀`,
                                     
                                     return (
                                         <div 
-                                            key={message.id || index} 
+                                            key={message.id || index}
+                                            id={`message-${message.id}`}
                                             className={`message-item ${isGrouped ? 'grouped' : ''}`}
                                             onContextMenu={(e) => {
                                                 e.preventDefault();
