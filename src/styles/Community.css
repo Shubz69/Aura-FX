@@ -995,16 +995,19 @@ html.community-page-active {
     gap: 4px;
     margin-bottom: 0.0625rem;
     flex-wrap: wrap;
-    line-height: 1.3;
+    line-height: 1.375;
 }
 
 .message-author {
     font-weight: 500;
     color: #FFFFFF;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     cursor: pointer;
     transition: color 0.15s ease;
     user-select: none;
+    line-height: 1.375;
+    margin: 0;
+    padding: 0;
 }
 
 .message-author:hover {
@@ -1013,12 +1016,15 @@ html.community-page-active {
 }
 
 .message-timestamp {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     color: #72767D;
     font-weight: 400;
     opacity: 0;
     transition: opacity 0.15s ease;
     user-select: none;
+    line-height: 1.375;
+    margin: 0;
+    padding: 0;
 }
 
 .message-item:hover .message-timestamp {
@@ -1708,7 +1714,7 @@ html.community-page-active {
     
     /* Discord-like messages - fill all available space */
     .chat-messages {
-        padding: 16px 16px 8px 16px !important;
+        padding: 16px 0 8px 0 !important;
         background: #36393f !important;
         flex: 1 1 0 !important; /* Fill available space */
         overflow-y: auto !important;
@@ -1744,21 +1750,24 @@ html.community-page-active {
         line-height: 1.5 !important;
     }
     
-    /* Cleaner message styling */
+    /* Discord-like clean message styling */
     .message-item {
-        padding: 0.25rem 16px !important;
+        padding: 0.0625rem 16px 0.0625rem 72px !important;
         margin: 0 !important;
         min-height: auto !important;
         background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     
     .message-item:hover {
-        background: rgba(4, 4, 5, 0.3) !important;
+        background: rgba(4, 4, 5, 0.06) !important;
     }
     
     .message-item.grouped {
-        padding-top: 0.0625rem !important;
-        padding-bottom: 0.0625rem !important;
+        padding-top: 0.03125rem !important;
+        padding-bottom: 0.03125rem !important;
+        padding-left: 72px !important;
     }
     
     .message-avatar,
@@ -1766,7 +1775,7 @@ html.community-page-active {
         width: 40px !important;
         height: 40px !important;
         left: 16px !important;
-        top: 0.375rem !important;
+        top: 0.125rem !important;
         border-radius: 50% !important;
     }
     
@@ -1786,31 +1795,44 @@ html.community-page-active {
     .message-header-info {
         display: flex !important;
         align-items: baseline !important;
-        gap: 6px !important;
-        margin-bottom: 2px !important;
+        gap: 4px !important;
+        margin-bottom: 0.0625rem !important;
+        line-height: 1.375 !important;
     }
     
+    .message-author,
     .message-username {
-        font-size: 1rem !important;
+        font-size: 0.9375rem !important;
         font-weight: 500 !important;
         color: #ffffff !important;
-        line-height: 1.2 !important;
+        line-height: 1.375 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     .message-timestamp {
-        font-size: 0.75rem !important;
-        opacity: 0.4 !important;
+        font-size: 0.6875rem !important;
+        opacity: 0 !important;
         color: #72767D !important;
-        line-height: 1.2 !important;
+        line-height: 1.375 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-weight: 400 !important;
+    }
+    
+    .message-item:hover .message-timestamp {
+        opacity: 1 !important;
     }
     
     .message-text {
         font-size: 0.9375rem !important;
         line-height: 1.375 !important;
-        margin-top: 2px !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
         color: #DCDDDE !important;
         word-wrap: break-word !important;
         word-break: break-word !important;
+        padding: 0 !important;
     }
     
     /* Discord-like input bar */

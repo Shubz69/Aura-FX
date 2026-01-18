@@ -4612,8 +4612,8 @@ Let's build generational wealth together! 💰🚀`,
                                             )}
                                             <div className="message-content">
                                                 {!isGrouped && (
-                                                    <div className="message-header-info" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div className="message-header-info" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '4px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
                                                             <span 
                                                                 className="message-author"
                                                                 onClick={() => {
@@ -4624,13 +4624,13 @@ Let's build generational wealth together! 💰🚀`,
                                                                 style={{
                                                                     cursor: 'pointer',
                                                                     transition: 'color 0.2s ease',
-                                                                    fontWeight: 600
+                                                                    fontWeight: 500
                                                                 }}
                                                                 onMouseEnter={(e) => {
-                                                                    e.currentTarget.style.color = 'var(--purple-primary)';
+                                                                    e.currentTarget.style.textDecoration = 'underline';
                                                                 }}
                                                                 onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.color = '';
+                                                                    e.currentTarget.style.textDecoration = 'none';
                                                                 }}
                                                             >
                                                                 {message.sender?.username || 'Unknown'}
@@ -4640,9 +4640,10 @@ Let's build generational wealth together! 💰🚀`,
                                                             </span>
                                                             {message.edited && (
                                                                 <span style={{ 
-                                                                    fontSize: '0.75rem', 
-                                                                    color: 'var(--text-muted)',
-                                                                    fontStyle: 'italic'
+                                                                    fontSize: '0.6875rem', 
+                                                                    color: '#72767D',
+                                                                    fontStyle: 'italic',
+                                                                    lineHeight: '1.375'
                                                                 }}>
                                                                     (edited)
                                                                 </span>
