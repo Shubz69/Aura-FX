@@ -1637,7 +1637,9 @@ html.community-page-active {
         /* Discord gray background */
         min-height: 100vh !important;
         height: 100vh !important;
+        max-height: 100vh !important;
         top: 0 !important;
+        position: fixed !important;
     }
     
     .mobile-channel-selector {
@@ -1655,6 +1657,9 @@ html.community-page-active {
         max-height: 100vh !important;
         padding-top: 0 !important;
         background: #36393f !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
     }
     
     /* Discord-like header */
@@ -1696,6 +1701,8 @@ html.community-page-active {
         background: #36393f !important;
         flex: 1 !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
+        min-height: 0 !important;
     }
     
     .message-item {
