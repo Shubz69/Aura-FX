@@ -604,24 +604,7 @@ const Community = () => {
             });
         } else if (channelListRef.current.length > 0) {
             preparedChannels = channelListRef.current;
-        } else if (courses && courses.length > 0) {
-            const courseChannels = courses.map((course, index) => {
-                const courseTitle = course.title || course.name || `Course ${index + 1}`;
-                const slug = courseTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                return {
-                    id: `course-${course.id || index}`,
-                    name: slug,
-                    displayName: courseTitle,
-                    description: `${courseTitle} course channel`,
-                    accessLevel: 'open',
-                    category: 'courses',
-                    locked: false
-                };
-            });
-
-            // Add course channels to existing preparedChannels (don't overwrite)
-            preparedChannels = [...preparedChannels, ...courseChannels];
-        }
+        // Course channels removed - no longer needed
 
         if (preparedChannels.length === 0) {
             return channelListRef.current;
