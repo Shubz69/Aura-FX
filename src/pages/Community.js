@@ -981,7 +981,17 @@ const Community = () => {
 
     // Scroll to bottom of messages
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesEndRef.current) {
+            // Use instant scroll for real-time messages, smooth for user-initiated
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+    };
+    
+    // Immediate scroll function for real-time messages
+    const scrollToBottomInstant = () => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "auto", block: "end" });
+        }
     };
 
     useEffect(() => {
