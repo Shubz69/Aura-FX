@@ -4493,10 +4493,15 @@ Let's build generational wealth together! 💰🚀`,
                                             }}
                                             onTouchStart={(e) => {
                                                 // Long press for touch devices
+                                                if (!e.currentTarget) return;
+                                                
                                                 const touch = e.touches[0];
+                                                if (!touch) return;
+                                                
                                                 const startX = touch.clientX;
                                                 const startY = touch.clientY;
                                                 const messageId = message.id;
+                                                const targetElement = e.currentTarget;
                                                 
                                                 const longPressTimer = setTimeout(() => {
                                                     // Show context menu on long press
@@ -4505,18 +4510,20 @@ Let's build generational wealth together! 💰🚀`,
                                                         y: startY,
                                                         messageId: messageId
                                                     });
-                                                    // Prevent default touch behavior
-                                                    e.preventDefault();
+                                                    // Prevent default touch behavior only if cancelable
+                                                    if (e.cancelable) {
+                                                        e.preventDefault();
+                                                    }
                                                 }, 500); // 500ms long press
                                                 
                                                 // Store timer on element for cleanup
-                                                e.currentTarget._longPressTimer = longPressTimer;
+                                                targetElement._longPressTimer = longPressTimer;
                                                 
                                                 // Clean up on touch end/move
                                                 const handleTouchEnd = () => {
-                                                    if (e.currentTarget._longPressTimer) {
-                                                        clearTimeout(e.currentTarget._longPressTimer);
-                                                        e.currentTarget._longPressTimer = null;
+                                                    if (targetElement && targetElement._longPressTimer) {
+                                                        clearTimeout(targetElement._longPressTimer);
+                                                        targetElement._longPressTimer = null;
                                                     }
                                                     document.removeEventListener('touchend', handleTouchEnd);
                                                     document.removeEventListener('touchmove', handleTouchMove);
@@ -4524,14 +4531,16 @@ Let's build generational wealth together! 💰🚀`,
                                                 
                                                 const handleTouchMove = (moveEvent) => {
                                                     const moveTouch = moveEvent.touches[0] || moveEvent.changedTouches[0];
+                                                    if (!moveTouch) return;
+                                                    
                                                     const moveX = moveTouch.clientX;
                                                     const moveY = moveTouch.clientY;
                                                     
                                                     // Cancel long press if user moved too much
                                                     if (Math.abs(moveX - startX) > 10 || Math.abs(moveY - startY) > 10) {
-                                                        if (e.currentTarget._longPressTimer) {
-                                                            clearTimeout(e.currentTarget._longPressTimer);
-                                                            e.currentTarget._longPressTimer = null;
+                                                        if (targetElement && targetElement._longPressTimer) {
+                                                            clearTimeout(targetElement._longPressTimer);
+                                                            targetElement._longPressTimer = null;
                                                         }
                                                     }
                                                 };
@@ -4738,12 +4747,15 @@ Let's build generational wealth together! 💰🚀`,
                                                             if (match.index > lastIndex) {
                                                                 parts.push(<span key={`text-${keyCounter++}`}>{content.substring(lastIndex, match.index)}</span>);
                                                             }
+                                                            // Capture URL in a variable to avoid closure issues
+                                                            const imageUrl = match[2];
+                                                            const imageAlt = match[1] || 'GIF';
                                                             // Add image/GIF
                                                             parts.push(
                                                                 <img
                                                                     key={`img-${keyCounter++}`}
-                                                                    src={match[2]}
-                                                                    alt={match[1] || 'GIF'}
+                                                                    src={imageUrl}
+                                                                    alt={imageAlt}
                                                                     style={{
                                                                         maxWidth: '300px',
                                                                         maxHeight: '300px',
@@ -4752,7 +4764,11 @@ Let's build generational wealth together! 💰🚀`,
                                                                         display: 'block',
                                                                         cursor: 'pointer'
                                                                     }}
-                                                                    onClick={() => window.open(match[2], '_blank')}
+                                                                    onClick={() => {
+                                                                        if (imageUrl) {
+                                                                            window.open(imageUrl, '_blank');
+                                                                        }
+                                                                    }}
                                                                 />
                                                             );
                                                             lastIndex = match.index + match[0].length;

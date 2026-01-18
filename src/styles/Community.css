@@ -897,20 +897,20 @@ html.community-page-active {
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0.125rem 12px;
+    padding: 0.0625rem 16px 0.0625rem 72px;
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
     min-height: auto;
-    border: none;
-    background: none;
-    box-shadow: none;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
     cursor: context-menu;
     user-select: text;
 }
 
 .message-item:hover {
-    background: rgba(4, 4, 5, 0.3);
+    background: rgba(4, 4, 5, 0.06) !important;
 }
 
 .message-item:hover .message-timestamp {
@@ -979,11 +979,14 @@ html.community-page-active {
 }
 
 .message-content {
-    margin-left: 48px;
+    margin-left: 0;
     min-width: 0;
     flex: 1;
     padding: 0;
     position: relative;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .message-header-info {
@@ -1024,15 +1027,15 @@ html.community-page-active {
 
 .message-text {
     color: #DCDDDE;
-    line-height: 1.4;
-    font-size: 0.875rem;
+    line-height: 1.375;
+    font-size: 0.9375rem;
     word-wrap: break-word;
     white-space: pre-wrap;
     margin: 0;
     padding: 0;
-    background: none;
-    border: none;
-    box-shadow: none;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
     overflow-wrap: break-word;
 }
 
@@ -1768,13 +1771,16 @@ html.community-page-active {
     }
     
     .message-content {
-        margin-left: 56px !important;
+        margin-left: 0 !important;
         padding-right: 0 !important;
         padding-left: 0 !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     
     .message-item.grouped .message-content {
-        margin-left: 56px !important;
+        margin-left: 0 !important;
     }
     
     .message-header-info {
@@ -2111,6 +2117,8 @@ html.community-page-active {
         z-index: 1001 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     .emoji-picker-header {
@@ -2119,23 +2127,28 @@ html.community-page-active {
         background: #2f3136 !important;
         flex-shrink: 0 !important;
         box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .emoji-grid {
         padding: 12px !important;
         grid-template-columns: repeat(7, 1fr) !important; /* 7 columns for mobile */
-        gap: 8px !important;
+        gap: 6px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .emoji-item {
         font-size: 1.5rem !important;
-        padding: 8px !important;
+        padding: 6px !important;
         border-radius: 8px !important;
         box-sizing: border-box !important;
         max-width: 100% !important;
+        width: 100% !important;
     }
     
     .gif-picker {
@@ -2154,6 +2167,52 @@ html.community-page-active {
         z-index: 1001 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .gif-picker-header {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .gif-picker-search {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 12px !important;
+    }
+    
+    .gif-search-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .gif-grid {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        padding: 12px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+    }
+    
+    .gif-item {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .gif-item img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
     }
 }
 
