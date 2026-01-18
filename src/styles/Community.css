@@ -1637,6 +1637,9 @@ html.community-page-active {
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
+        margin-left: 0 !important;
+        position: relative !important;
+        z-index: 1 !important;
         background: var(--bg-tertiary) !important;
         position: relative !important;
         overflow: hidden !important;
