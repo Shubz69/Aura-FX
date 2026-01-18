@@ -633,7 +633,7 @@ const Community = () => {
         }
 
         return sortedChannels;
-    }, [isAuthenticated, courses, sortChannels, channelIdParam]);
+    }, [isAuthenticated, sortChannels, channelIdParam]);
     
     // Initialize WebSocket connection for real-time messaging
     const enableRealtime = useMemo(() => {
