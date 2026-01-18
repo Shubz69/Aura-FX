@@ -146,9 +146,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 1000;
     animation: fadeIn 0.2s ease;
+    backdrop-filter: blur(4px);
 }
 
 @keyframes fadeIn {
@@ -1662,6 +1663,18 @@ html.community-page-active {
         max-width: 100vw !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+    }
+    
+    /* Ensure sidebar doesn't block content when closed */
+    .community-sidebar.mobile-sidebar {
+        width: 260px !important;
+        max-width: 75vw !important;
+    }
+    
+    /* Ensure chat is always visible when sidebar is closed */
+    .chat-main {
+        width: 100vw !important;
+        max-width: 100vw !important;
     }
     
     .mobile-channel-selector {
