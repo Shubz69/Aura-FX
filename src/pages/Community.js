@@ -1653,24 +1653,7 @@ const Community = () => {
         setHasReadWelcome(readStatus);
     }, []);
 
-    // Fetch courses for channel naming - parallelize with channel list for faster load
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                const response = await Api.getCourses();
-                if (response && response.data && Array.isArray(response.data)) {
-                    setCourses(response.data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch courses:', error);
-            }
-        };
-        
-        if (isAuthenticated) {
-            // Fetch courses in parallel with channel list (no need to wait)
-            fetchCourses();
-        }
-    }, [isAuthenticated]);
+    // Courses fetching removed - no longer needed
 
     // Check subscription status from localStorage (fallback)
     const checkSubscriptionLocal = useCallback(() => {
