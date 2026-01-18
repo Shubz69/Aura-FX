@@ -1688,8 +1688,14 @@ html.community-page-active {
     }
     
     .message-item {
-        padding: 0.25rem 0 !important;
+        padding: 0.5rem 0 !important;
         margin: 0 !important;
+        min-height: auto !important;
+    }
+    
+    .message-item.grouped {
+        padding-top: 0.125rem !important;
+        padding-bottom: 0.125rem !important;
     }
     
     .message-avatar,
@@ -1698,71 +1704,99 @@ html.community-page-active {
         height: 40px !important;
         left: 16px !important;
         top: 0.5rem !important;
+        border-radius: 50% !important;
     }
     
     .message-content {
         margin-left: 56px !important; /* More space for larger avatar */
         padding-right: 16px !important;
+        padding-left: 0 !important;
+    }
+    
+    .message-item.grouped .message-content {
+        margin-left: 56px !important; /* Keep spacing even when grouped */
     }
     
     .message-username {
         font-size: 1rem !important;
         font-weight: 500 !important;
         margin-right: 8px !important;
+        color: #ffffff !important;
     }
     
     .message-timestamp {
         font-size: 0.75rem !important;
         opacity: 0.5 !important;
+        color: #72767D !important;
     }
     
     .message-text {
         font-size: 0.9375rem !important;
         line-height: 1.375 !important;
         margin-top: 4px !important;
+        color: #DCDDDE !important;
+        word-wrap: break-word !important;
     }
     
     /* Discord-like input bar */
     .chat-input-container {
-        padding: 8px 16px 16px 16px !important;
+        padding: 12px 16px !important;
         background: #36393f !important;
         border-top: 1px solid rgba(4, 4, 5, 0.3) !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 10 !important;
     }
     
     .chat-form {
         gap: 8px !important;
+        align-items: center !important;
+        display: flex !important;
+        flex-direction: row !important;
+    }
+    
+    .chat-input-wrapper {
+        flex: 1 !important;
+        position: relative !important;
+        display: flex !important;
         align-items: center !important;
     }
     
     .chat-input {
         background: #40444B !important; /* Discord input gray */
         border-radius: 20px !important; /* Rounded like Discord */
-        padding: 10px 16px !important;
+        padding: 10px 48px 10px 16px !important; /* Space for buttons on right */
         min-height: 44px !important;
+        max-height: 120px !important;
         font-size: 1rem !important;
         color: #DCDDDE !important;
         border: none !important;
+        width: 100% !important;
+        resize: none !important;
+        line-height: 1.375 !important;
     }
     
     .chat-input::placeholder {
         color: #72767D !important; /* Discord placeholder gray */
     }
     
-    /* Input action buttons - Discord style */
+    /* Input action buttons - Discord style (inside input on right) */
     .chat-input-buttons {
         display: flex !important;
         align-items: center !important;
         gap: 4px !important;
         position: absolute !important;
         right: 8px !important;
-        bottom: 8px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 5 !important;
     }
     
     .chat-form button,
     .chat-input-btn {
-        min-width: 36px !important;
-        width: 36px !important;
-        height: 36px !important;
+        min-width: 32px !important;
+        width: 32px !important;
+        height: 32px !important;
         border-radius: 50% !important;
         background: transparent !important;
         border: none !important;
@@ -1771,7 +1805,7 @@ html.community-page-active {
         align-items: center !important;
         justify-content: center !important;
         padding: 0 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.125rem !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
     }
@@ -1787,22 +1821,41 @@ html.community-page-active {
         transform: scale(0.95) !important;
     }
     
-    /* Send button - Discord style */
-    .chat-form button[type="submit"] {
-        background: #5865F2 !important; /* Discord blue */
-        color: #ffffff !important;
+    /* Send button - Discord style (only show when there's text) */
+    .send-btn {
         min-width: 36px !important;
         width: 36px !important;
         height: 36px !important;
+        border-radius: 50% !important;
+        background: #5865F2 !important; /* Discord blue */
+        color: #ffffff !important;
+        border: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        font-size: 1rem !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        flex-shrink: 0 !important;
     }
     
-    .chat-form button[type="submit"]:hover {
+    .send-btn:hover:not(:disabled) {
         background: #4752C4 !important;
     }
     
-    .chat-form button[type="submit"]:disabled {
-        background: rgba(88, 101, 242, 0.5) !important;
+    .send-btn:disabled {
+        background: rgba(88, 101, 242, 0.3) !important;
         cursor: not-allowed !important;
+        opacity: 0.5 !important;
+    }
+    
+    .send-btn svg {
+        margin-right: 0 !important; /* Remove margin on mobile */
+    }
+    
+    .send-btn span {
+        display: none !important; /* Hide "Send" text on mobile, show icon only */
     }
     
     /* Hide connection status on mobile */

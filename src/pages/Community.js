@@ -5359,8 +5359,8 @@ Let's build generational wealth together! 💰🚀`,
                                     className="send-btn"
                                     disabled={(!newMessage.trim() && !selectedFile) || !canUserPostInChannel(selectedChannel)}
                                 >
-                                    <FaPaperPlane style={{ marginRight: '8px' }} />
-                                    {editingMessageId ? 'Save' : 'Send'}
+                                    <FaPaperPlane />
+                                    <span>{editingMessageId ? 'Save' : 'Send'}</span>
                                 </button>
                             </form>
                         </div>
