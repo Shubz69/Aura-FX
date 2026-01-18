@@ -4205,7 +4205,7 @@ Let's build generational wealth together! 💰🚀`,
                 pointerEvents: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
                 userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
                 position: 'relative',
-                background: 'var(--bg-tertiary)',
+                background: '#36393f',
                 width: '100%',
                 maxWidth: '100%'
             }}>
