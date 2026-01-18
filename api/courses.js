@@ -28,8 +28,10 @@ module.exports = async (req, res) => {
   }
 
   // Default courses list (fallback if database is unavailable)
+  // Only show "1 TO 1" and "Subscriptions"
   const defaultCourses = [
-    { id: 1, title: "1 to 1", description: "Personalized one-on-one trading mentorship and guidance tailored to your specific goals and experience level", level: "All Levels", duration: 0, price: 0, imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" }
+    { id: 1, title: "1 TO 1", description: "Personalized one-on-one trading mentorship and guidance tailored to your specific goals and experience level", level: "All Levels", duration: 0, price: 0, imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" },
+    { id: 2, title: "Subscriptions", description: "Access premium trading education, community features, and exclusive resources with our subscription plans", level: "All Levels", duration: 0, price: 0, imageUrl: "https://images.unsplash.com/photo-1556740758-90de374c12ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80" }
   ];
 
   try {
@@ -125,7 +127,7 @@ module.exports = async (req, res) => {
           db.release(); // Release connection back to pool
           
           if (updatedRows && updatedRows.length > 0) {
-            const courses = updatedRows.map(row => ({
+            const allCourses = updatedRows.map(row => ({
               id: row.id || null,
               title: row.title || 'Unnamed Course',
               description: row.description || '',
@@ -135,18 +137,30 @@ module.exports = async (req, res) => {
               imageUrl: row.image_url || ''
             })).filter(course => course.id !== null && course.title !== 'Unnamed Course');
             
-            // Cache the result
-            setCached(cacheKey, courses);
+            // Only return "1 TO 1" and "Subscriptions" courses
+            const allowedTitles = ['1 TO 1', '1 to 1', 'Subscriptions', 'subscriptions'];
+            const courses = allCourses.filter(course => 
+              allowedTitles.some(allowed => course.title.toLowerCase() === allowed.toLowerCase())
+            );
             
-            console.log(`Courses API: Returning ${courses.length} courses from database after sync`);
-            return res.status(200).json(courses);
+            // Ensure we have both courses
+            const finalCourses = [];
+            const oneToOne = courses.find(c => c.title.toLowerCase().includes('1 to 1') || c.title.toLowerCase().includes('1to1')) || defaultCourses[0];
+            const subscriptions = courses.find(c => c.title.toLowerCase().includes('subscription')) || defaultCourses[1];
+            finalCourses.push(oneToOne, subscriptions);
+            
+            // Cache the result
+            setCached(cacheKey, finalCourses);
+            
+            console.log(`Courses API: Returning ${finalCourses.length} filtered courses from database after sync`);
+            return res.status(200).json(finalCourses);
           }
         }
         
-        // If we have courses in DB, return them
+        // If we have courses in DB, filter to only show "1 TO 1" and "Subscriptions"
         if (rows && rows.length > 0) {
           db.release(); // Release connection back to pool
-          const courses = rows.map(row => ({
+          const allCourses = rows.map(row => ({
             id: row.id || null,
             title: row.title || 'Unnamed Course',
             description: row.description || '',
@@ -156,10 +170,39 @@ module.exports = async (req, res) => {
             imageUrl: row.image_url || ''
           })).filter(course => course.id !== null && course.title !== 'Unnamed Course');
           
+          // Only return "1 TO 1" and "Subscriptions" courses
+          const allowedTitles = ['1 TO 1', '1 to 1', 'Subscriptions', 'subscriptions'];
+          const courses = allCourses.filter(course => 
+            allowedTitles.some(allowed => course.title.toLowerCase() === allowed.toLowerCase())
+          );
+          
+          // If we don't have both courses, use defaults
+          const hasOneToOne = courses.some(c => c.title.toLowerCase().includes('1 to 1') || c.title.toLowerCase().includes('1to1'));
+          const hasSubscriptions = courses.some(c => c.title.toLowerCase().includes('subscription'));
+          
+          if (!hasOneToOne || !hasSubscriptions) {
+            // Use default courses if missing
+            const finalCourses = [];
+            if (hasOneToOne) {
+              finalCourses.push(courses.find(c => c.title.toLowerCase().includes('1 to 1') || c.title.toLowerCase().includes('1to1')));
+            } else {
+              finalCourses.push(defaultCourses[0]);
+            }
+            if (hasSubscriptions) {
+              finalCourses.push(courses.find(c => c.title.toLowerCase().includes('subscription')));
+            } else {
+              finalCourses.push(defaultCourses[1]);
+            }
+            
+            setCached(cacheKey, finalCourses);
+            console.log(`Courses API: Returning ${finalCourses.length} filtered courses (1 TO 1 and Subscriptions)`);
+            return res.status(200).json(finalCourses);
+          }
+          
           // Cache the result
           setCached(cacheKey, courses);
           
-          console.log(`Courses API: Returning ${courses.length} courses from database`);
+          console.log(`Courses API: Returning ${courses.length} filtered courses from database`);
           return res.status(200).json(courses);
         }
         
