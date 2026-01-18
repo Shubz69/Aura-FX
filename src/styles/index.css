@@ -166,6 +166,15 @@ footer {
   padding-bottom: 0; /* No bottom padding needed since footer is relative */
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* Prevent page scrolling on community page */
+body.community-page-active .page-wrapper,
+html.community-page-active .page-wrapper {
+  overflow: hidden;
+  height: 100vh;
+  max-height: 100vh;
+}
   display: flex;
   flex-direction: column;
   background: var(--bg-dark);

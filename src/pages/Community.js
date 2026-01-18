@@ -1972,6 +1972,19 @@ const Community = () => {
         }
     }, [navigate, authUser, checkSubscriptionFromDB]);
 
+    // Prevent page scrolling - Discord-like behavior
+    useEffect(() => {
+        // Add class to body and html to prevent scrolling
+        document.body.classList.add('community-page-active');
+        document.documentElement.classList.add('community-page-active');
+        
+        return () => {
+            // Remove class when component unmounts
+            document.body.classList.remove('community-page-active');
+            document.documentElement.classList.remove('community-page-active');
+        };
+    }, []);
+
     // Check API connectivity - defined before useEffects that use it
     const checkApiConnectivity = useCallback(async () => {
         try {
