@@ -1666,10 +1666,11 @@ html.community-page-active {
         border-bottom: 1px solid rgba(4, 4, 5, 0.3) !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
         position: sticky !important;
         top: 0 !important;
         z-index: 100 !important;
+        gap: 12px !important;
     }
     
     .chat-header h2 {
@@ -1677,6 +1678,16 @@ html.community-page-active {
         font-weight: 600 !important;
         color: #ffffff !important;
         margin: 0 !important;
+        flex: 1 !important;
+    }
+    
+    .mobile-back-button {
+        flex-shrink: 0 !important;
+    }
+    
+    .mobile-back-button:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 4px !important;
     }
     
     /* Discord-like messages */

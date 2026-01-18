@@ -4433,8 +4433,28 @@ Let's build generational wealth together! 💰🚀`,
                     <>
                         {/* Chat Header */}
                         <div className="chat-header">
+                            {isMobile && (
+                                <button
+                                    className="mobile-back-button"
+                                    onClick={() => setSidebarOpen(true)}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#ffffff',
+                                        fontSize: '1.25rem',
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        marginRight: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <FaBars />
+                                </button>
+                            )}
                             <h2>
-                                        {selectedChannel.displayName || selectedChannel.name}
+                                {selectedChannel.displayName || selectedChannel.name}
                             </h2>
                         </div>
                         
