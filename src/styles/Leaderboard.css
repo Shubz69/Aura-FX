@@ -3,7 +3,8 @@
     background: #0a0a0a;
     color: #ffffff;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px;
 }
 
@@ -543,22 +544,195 @@
 }
 
 @media (max-width: 480px) {
+    .leaderboard-container {
+        padding: 12px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .leaderboard-header {
+        margin-bottom: 24px !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: #0a0a0a !important;
+        padding: 12px 0 !important;
+        z-index: 10 !important;
+        backdrop-filter: blur(10px) !important;
+    }
+    
+    .leaderboard-main-title {
+        font-size: 2rem !important;
+        letter-spacing: 2px !important;
+        margin-top: 0 !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .leaderboard-subtitle {
+        font-size: 0.9rem !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .timeframe-selector {
+        gap: 8px !important;
+        margin-bottom: 20px !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+    
+    .timeframe-btn {
+        padding: 8px 14px !important;
+        font-size: 0.85rem !important;
+        border-radius: 20px !important;
+    }
+    
+    .top3-podium {
+        margin-bottom: 32px !important;
+    }
+    
+    .podium-container {
+        flex-direction: column !important;
+        gap: 20px !important;
+        align-items: center !important;
+    }
+    
+    .first-place, .second-place, .third-place {
+        order: unset !important;
+        width: 100% !important;
+        max-width: 280px !important;
+    }
+    
+    .podium-avatar img {
+        width: 70px !important;
+        height: 70px !important;
+    }
+    
+    .podium-info {
+        padding: 12px !important;
+        min-width: auto !important;
+        width: 100% !important;
+    }
+    
+    .podium-rank {
+        font-size: 1.5rem !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .podium-username {
+        font-size: 1rem !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .podium-xp {
+        font-size: 0.9rem !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .podium-level {
+        font-size: 0.85rem !important;
+    }
+    
+    .top10-list {
+        margin-bottom: 32px !important;
+    }
+    
+    .section-title {
+        font-size: 1.25rem !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .leaderboard-table {
+        border-radius: 12px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
     .table-header,
     .leaderboard-row {
-        grid-template-columns: 50px 1fr 1fr;
-        gap: 10px;
+        grid-template-columns: 45px 1.5fr 1fr 1fr !important;
+        gap: 8px !important;
+        padding: 12px 8px !important;
+        font-size: 0.85rem !important;
     }
     
     .header-level,
     .header-status,
     .level-cell,
     .status-cell {
-        display: none;
+        display: none !important;
+    }
+    
+    .header-rank {
+        font-size: 0.75rem !important;
+    }
+    
+    .header-user {
+        font-size: 0.75rem !important;
+    }
+    
+    .header-xp {
+        font-size: 0.75rem !important;
     }
     
     .user-avatar img {
-        width: 30px;
-        height: 30px;
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
+    .user-info {
+        gap: 2px !important;
+    }
+    
+    .username {
+        font-size: 0.9rem !important;
+    }
+    
+    .user-role {
+        font-size: 0.7rem !important;
+    }
+    
+    .xp-value {
+        font-size: 0.85rem !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .xp-bar {
+        height: 5px !important;
+    }
+    
+    .rank-number {
+        font-size: 1rem !important;
+    }
+    
+    .xp-info-section {
+        padding: 20px 16px !important;
+        margin-bottom: 20px !important;
+        border-radius: 12px !important;
+    }
+    
+    .xp-info-section h3 {
+        font-size: 1.2rem !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .xp-rules {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    
+    .xp-rule {
+        padding: 10px !important;
+        gap: 8px !important;
+    }
+    
+    .rule-icon {
+        font-size: 1.1rem !important;
+    }
+    
+    .rule-text {
+        font-size: 0.85rem !important;
     }
 }
 
