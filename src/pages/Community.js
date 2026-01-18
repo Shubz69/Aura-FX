@@ -324,7 +324,7 @@ const Community = () => {
     
     // Welcome message and channel visibility
     const [hasReadWelcome, setHasReadWelcome] = useState(false);
-    const [courses, setCourses] = useState([]);
+    // Courses state removed - no longer needed
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
     const [paymentFailed, setPaymentFailed] = useState(false);
     const [showChannelManager, setShowChannelManager] = useState(false);
