@@ -53,7 +53,7 @@ const Navbar = () => {
             <ul className={`nav-links ${mobileMenuOpen ? 'show' : ''}`}>
                 {!user && <li><Link to="/">Home</Link></li>}
                 {user && <li><Link to="/community">Community</Link></li>}
-                <li><Link to="/courses">Courses</Link></li>
+                <li><Link to="/courses">C & S</Link></li>
                 {!user && <li><Link to="/explore">Explore</Link></li>}
                     {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
@@ -128,7 +128,7 @@ const Navbar = () => {
                 <ul className="mobile-nav-links">
                     {!user && <li><Link to="/" onClick={toggleMobileMenu}>Home</Link></li>}
                     {user && <li><Link to="/community" onClick={toggleMobileMenu}>Community</Link></li>}
-                    <li><Link to="/courses" onClick={toggleMobileMenu}>Courses</Link></li>
+                    <li><Link to="/courses" onClick={toggleMobileMenu}>C & S</Link></li>
                     {!user && <li><Link to="/explore" onClick={toggleMobileMenu}>Explore</Link></li>}
                     {!user && <li><Link to="/why-glitch" onClick={toggleMobileMenu}>Why AURA FX</Link></li>}
                     <li><Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link></li>
