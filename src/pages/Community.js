@@ -604,6 +604,7 @@ const Community = () => {
             });
         } else if (channelListRef.current.length > 0) {
             preparedChannels = channelListRef.current;
+        }
         // Course channels removed - no longer needed
 
         if (preparedChannels.length === 0) {
