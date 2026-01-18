@@ -907,6 +907,7 @@ html.community-page-active {
     box-shadow: none !important;
     cursor: context-menu;
     user-select: text;
+    align-items: flex-start;
 }
 
 .message-item:hover {
@@ -939,15 +940,16 @@ html.community-page-active {
 
 .message-avatar {
     position: absolute;
-    left: 12px;
+    left: 16px;
     top: 0.125rem;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     flex-shrink: 0;
     border: none;
     cursor: pointer;
     transition: transform 0.2s ease;
+    z-index: 1;
 }
 
 .message-avatar:hover {
@@ -956,22 +958,23 @@ html.community-page-active {
 
 .message-avatar-text {
     position: absolute;
-    left: 12px;
+    left: 16px;
     top: 0.125rem;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: linear-gradient(135deg, #5865F2, #4752C4);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: white;
     flex-shrink: 0;
     border: none;
     cursor: pointer;
     transition: transform 0.2s ease;
+    z-index: 1;
 }
 
 .message-avatar-text:hover {
@@ -1777,6 +1780,8 @@ html.community-page-active {
         left: 16px !important;
         top: 0.125rem !important;
         border-radius: 50% !important;
+        z-index: 1 !important;
+        position: absolute !important;
     }
     
     .message-content {
@@ -1786,6 +1791,8 @@ html.community-page-active {
         background: none !important;
         border: none !important;
         box-shadow: none !important;
+        z-index: 0 !important;
+        position: relative !important;
     }
     
     .message-item.grouped .message-content {

@@ -402,6 +402,9 @@
 @media (max-width: 768px) {
     .contact-container {
         padding-top: 80px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
     }
     
     .contact-content {
@@ -429,5 +432,97 @@
     .contact-icon {
         margin-right: 0;
         margin-bottom: 10px;
+    }
+}
+
+/* iPhone and small mobile devices */
+@media (max-width: 480px) {
+    .contact-container {
+        padding-top: 70px !important;
+        padding-bottom: 20px !important;
+        min-height: 100vh !important;
+        height: auto !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        position: relative !important;
+    }
+    
+    .contact-content {
+        padding: 0 16px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .contact-header {
+        margin-bottom: 24px !important;
+    }
+    
+    .glitch {
+        font-size: 1.75rem !important;
+        letter-spacing: 0.1em !important;
+    }
+    
+    .contact-subtitle {
+        font-size: 0.95rem !important;
+        margin-bottom: 24px !important;
+    }
+    
+    .contact-grid {
+        gap: 1.5rem !important;
+    }
+    
+    .contact-form-container, .contact-info-container {
+        padding: 16px !important;
+        border-radius: 12px !important;
+    }
+    
+    .form-group {
+        margin-bottom: 20px !important;
+    }
+    
+    .form-control {
+        padding: 10px 12px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .submit-btn {
+        padding: 10px 24px !important;
+        font-size: 0.95rem !important;
+        width: 100% !important;
+    }
+    
+    .contact-info-header {
+        font-size: 1.5rem !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .contact-info-list {
+        margin-bottom: 20px !important;
+    }
+    
+    .contact-info-item {
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .contact-icon {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 1.1rem !important;
+    }
+    
+    .contact-map {
+        height: 180px !important;
+        margin-top: 16px !important;
+    }
+    
+    .direct-email-option {
+        margin-top: 16px !important;
+        padding: 12px !important;
+    }
+    
+    .direct-email-option p {
+        font-size: 0.85rem !important;
     }
 }

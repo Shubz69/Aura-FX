@@ -4579,7 +4579,11 @@ Let's build generational wealth together! 💰🚀`,
                                                         fontWeight: 'bold',
                                                         fontSize: '0.875rem',
                                                         cursor: 'pointer',
-                                                        transition: 'transform 0.2s ease, opacity 0.2s ease'
+                                                        transition: 'transform 0.2s ease, opacity 0.2s ease',
+                                                        position: 'absolute',
+                                                        left: '16px',
+                                                        top: '0.125rem',
+                                                        zIndex: 1
                                                     }}
                                                     onMouseEnter={(e) => {
                                                         e.currentTarget.style.transform = 'scale(1.1)';

@@ -260,6 +260,9 @@
 @media (max-width: 768px) {
     .profile-container {
         padding: 15px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
     }
     
     .profile-title {
@@ -293,17 +296,96 @@
     }
 }
 
+/* iPhone and small mobile devices */
 @media (max-width: 480px) {
+    .profile-container {
+        padding: 12px !important;
+        min-height: 100vh !important;
+        height: auto !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        align-items: flex-start !important;
+        padding-top: 70px !important;
+        padding-bottom: 20px !important;
+    }
+    
+    .profile-content {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .profile-header {
+        margin-bottom: 20px !important;
+    }
+    
     .profile-title {
-        font-size: 1.5rem;
+        font-size: 1.5rem !important;
+        letter-spacing: 1px !important;
     }
     
     .profile-box {
-        padding: 15px;
+        padding: 16px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
     }
     
     .profile-avatar {
-        width: 100px;
-        height: 100px;
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .avatar-section {
+        margin-bottom: 16px !important;
+    }
+    
+    .profile-stats {
+        margin-bottom: 16px !important;
+        gap: 16px !important;
+    }
+    
+    .profile-level,
+    .profile-xp {
+        font-size: 1rem !important;
+    }
+    
+    .xp-progress-container {
+        margin-bottom: 16px !important;
+    }
+    
+    .info-section {
+        gap: 12px !important;
+    }
+    
+    .profile-field {
+        padding: 12px !important;
+        gap: 8px !important;
+    }
+    
+    .profile-field strong {
+        font-size: 0.85rem !important;
+        min-width: auto !important;
+    }
+    
+    .profile-field span {
+        font-size: 0.9rem !important;
+    }
+    
+    .profile-field input,
+    .profile-field textarea {
+        font-size: 0.9rem !important;
+        padding: 8px 10px !important;
+    }
+    
+    .profile-actions {
+        margin-top: 16px !important;
+        gap: 12px !important;
+    }
+    
+    .action-button {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 10px 20px !important;
+        font-size: 0.9rem !important;
     }
 }

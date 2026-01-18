@@ -88,10 +88,6 @@ const Navbar = () => {
                                 <Link to="/profile" className="dropdown-item">
                                     <FaUserCircle className="dropdown-icon" /> Profile
                                 </Link>
-                                <Link to="/my-courses" className="dropdown-item">
-                                    <FaBook className="dropdown-icon" /> My Courses
-                                </Link>
-
                                 <Link to="/leaderboard" className="dropdown-item">
                                     <FaTrophy className="dropdown-icon" /> Leaderboard
                                 </Link>
@@ -188,9 +184,6 @@ const Navbar = () => {
                         </Link></li>
                         <li><Link to="/profile" onClick={toggleMobileUserMenu}>
                             <FaUserCircle className="dropdown-icon" /> Profile
-                        </Link></li>
-                        <li><Link to="/my-courses" onClick={toggleMobileUserMenu}>
-                            <FaBook className="dropdown-icon" /> My Courses
                         </Link></li>
                         <li><Link to="/leaderboard" onClick={toggleMobileUserMenu}>
                             <FaTrophy className="dropdown-icon" /> Leaderboard
