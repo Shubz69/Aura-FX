@@ -684,7 +684,7 @@ const Community = () => {
                         'mention',
                         `You were mentioned in #${channelName}`,
                         `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                        `/community/${messageChannelId}`,
+                        `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
                         userId
                     );
                 } else {
@@ -692,7 +692,7 @@ const Community = () => {
                         'message',
                         `New message in #${channelName}`,
                         `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                        `/community/${messageChannelId}`,
+                        `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
                         null
                     );
                 }
@@ -995,25 +995,28 @@ const Community = () => {
         
         if (messageId && messages.length > 0) {
             // Wait for messages to render, then scroll to the message
-            setTimeout(() => {
-                const messageElement = document.getElementById(`message-${messageId}`);
-                if (messageElement) {
-                    messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Highlight the message briefly
-                    messageElement.style.backgroundColor = 'rgba(139, 92, 246, 0.3)';
-                    messageElement.style.transition = 'background-color 0.3s ease';
-                    setTimeout(() => {
-                        messageElement.style.backgroundColor = '';
+            // Use requestAnimationFrame for immediate execution after render
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const messageElement = document.getElementById(`message-${messageId}`);
+                    if (messageElement) {
+                        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Highlight the message briefly
+                        messageElement.style.backgroundColor = 'rgba(139, 92, 246, 0.3)';
+                        messageElement.style.transition = 'background-color 0.3s ease';
                         setTimeout(() => {
-                            messageElement.style.transition = '';
-                        }, 300);
-                    }, 2000);
-                    
-                    // Clean up URL parameter
-                    const newUrl = window.location.pathname;
-                    window.history.replaceState({}, '', newUrl);
-                }
-            }, 500);
+                            messageElement.style.backgroundColor = '';
+                            setTimeout(() => {
+                                messageElement.style.transition = '';
+                            }, 300);
+                        }, 2000);
+                        
+                        // Clean up URL parameter
+                        const newUrl = window.location.pathname;
+                        window.history.replaceState({}, '', newUrl);
+                    }
+                }, 100); // Reduced from 500ms to 100ms for faster navigation
+            });
         }
     }, [location.search, messages, selectedChannel]);
 
@@ -2290,7 +2293,7 @@ const Community = () => {
                                         'mention',
                                         `You were mentioned in #${selectedChannel.name}`,
                                         `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                                        `/community/${selectedChannel.id}`,
+                                        `/community/${selectedChannel.id}?message=${newMsg.id || newMsg.messageId || ''}`,
                                         userId
                                     );
                                 }

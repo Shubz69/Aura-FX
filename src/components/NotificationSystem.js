@@ -97,7 +97,8 @@ const NotificationSystem = ({ user, onNotificationClick }) => {
         if (notification.link) {
             // Use React Router navigate for SPA navigation
             if (notification.link.startsWith('/')) {
-                navigate(notification.link);
+                // Navigate immediately - don't wait
+                navigate(notification.link, { replace: false });
             } else if (onNotificationClick) {
                 onNotificationClick(notification.link);
             }
