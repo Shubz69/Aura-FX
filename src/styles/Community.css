@@ -1463,8 +1463,6 @@ html.community-page-active {
     box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
 }
 
-/* Premium Scrollbars */
-.channels-section::-webkit-scrollbar,
 /* Online users scrollbar */
 .online-users::-webkit-scrollbar {
     width: 8px;
