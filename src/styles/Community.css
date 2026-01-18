@@ -907,7 +907,7 @@ html.community-page-active {
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0.015625rem 16px 0.015625rem 72px;
+    padding: 0 16px 0 72px;
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
@@ -1006,7 +1006,8 @@ html.community-page-active {
     display: flex;
     align-items: baseline;
     gap: 4px;
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
     flex-wrap: wrap;
     line-height: 1.375;
 }
@@ -1060,8 +1061,8 @@ html.community-page-active {
 
 /* Discord-like tight spacing - new messages have small gap, grouped have none */
 .message-item:not(.grouped) {
-    padding-top: 0.25rem;
-    padding-bottom: 0.015625rem;
+    padding-top: 0.0625rem !important; /* 1px - much tighter spacing */
+    padding-bottom: 0 !important;
 }
 
 .message-text img {
@@ -1796,7 +1797,7 @@ html.community-page-active {
     
     /* Discord-like clean message styling */
     .message-item {
-        padding: 0.015625rem 16px 0.015625rem 72px !important;
+        padding: 0 16px 0 72px !important;
         margin: 0 !important;
         min-height: auto !important;
         background: transparent !important;
@@ -1812,6 +1813,12 @@ html.community-page-active {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         padding-left: 72px !important;
+        margin: 0 !important;
+    }
+    
+    .message-item:not(.grouped) {
+        padding-top: 0.0625rem !important; /* 1px - minimal gap for new messages */
+        padding-bottom: 0 !important;
     }
     
     .message-avatar,
