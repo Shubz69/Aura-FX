@@ -511,11 +511,13 @@ body.sidebar-open-mobile {
     box-sizing: border-box;
 }
 
-/* Prevent page scrolling when on community page */
+/* Prevent page scrolling when on community page - Discord-like behavior */
 body.community-page-active {
     overflow: hidden !important;
     height: 100vh !important;
     max-height: 100vh !important;
+    position: fixed !important;
+    width: 100% !important;
 }
 
 html.community-page-active {
