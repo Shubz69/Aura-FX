@@ -897,7 +897,7 @@ html.community-page-active {
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0.03125rem 16px 0.03125rem 72px;
+    padding: 0.015625rem 16px 0.015625rem 72px;
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
@@ -996,7 +996,7 @@ html.community-page-active {
     display: flex;
     align-items: baseline;
     gap: 4px;
-    margin-bottom: 0.0625rem;
+    margin-bottom: 0;
     flex-wrap: wrap;
     line-height: 1.375;
 }
@@ -1046,6 +1046,12 @@ html.community-page-active {
     border: none !important;
     box-shadow: none !important;
     overflow-wrap: break-word;
+}
+
+/* Discord-like tight spacing - new messages have small gap, grouped have none */
+.message-item:not(.grouped) {
+    padding-top: 0.25rem;
+    padding-bottom: 0.015625rem;
 }
 
 .message-text img {
@@ -1755,7 +1761,7 @@ html.community-page-active {
     
     /* Discord-like clean message styling */
     .message-item {
-        padding: 0.03125rem 16px 0.03125rem 72px !important;
+        padding: 0.015625rem 16px 0.015625rem 72px !important;
         margin: 0 !important;
         min-height: auto !important;
         background: transparent !important;
@@ -1768,8 +1774,8 @@ html.community-page-active {
     }
     
     .message-item.grouped {
-        padding-top: 0.015625rem !important;
-        padding-bottom: 0.015625rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
         padding-left: 72px !important;
     }
     
@@ -1803,7 +1809,7 @@ html.community-page-active {
         display: flex !important;
         align-items: baseline !important;
         gap: 4px !important;
-        margin-bottom: 0.0625rem !important;
+        margin-bottom: 0 !important;
         line-height: 1.375 !important;
     }
     
