@@ -3095,12 +3095,13 @@ Let's build generational wealth together! 💰🚀`,
         <div 
             className="community-container" 
             style={{ 
-                position: 'relative',
-                background: '#0a0a0a',
-                minHeight: '100vh',
-                height: 'auto',
-                width: '100%',
-                maxWidth: '100%'
+                position: 'fixed',
+                background: '#36393f',
+                height: 'calc(100vh - 60px)',
+                maxHeight: 'calc(100vh - 60px)',
+                minHeight: 'calc(100vh - 60px)',
+                width: '100vw',
+                maxWidth: '100vw'
             }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
