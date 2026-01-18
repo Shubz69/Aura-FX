@@ -717,14 +717,15 @@ html.community-page-active {
 
 /* Chat Header */
 .chat-header {
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--border-color);
+    padding: 0 16px;
+    border-bottom: 1px solid rgba(4, 4, 5, 0.3);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--bg-secondary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    min-height: 40px;
+    background: #36393f;
+    box-shadow: none;
+    min-height: 48px;
+    height: 48px;
     position: relative;
     z-index: 100;
     flex-shrink: 0;
@@ -732,9 +733,9 @@ html.community-page-active {
 
 .chat-header h2 {
     font-size: 0.95rem;
-    font-weight: 700;
+    font-weight: 600;
     margin: 0;
-    color: white;
+    color: #ffffff;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -742,9 +743,9 @@ html.community-page-active {
 
 .chat-header h2::before {
     content: '#';
-    color: var(--purple-secondary);
-    font-weight: 700;
-    font-size: 1.3rem;
+    color: #8e9297;
+    font-weight: 600;
+    font-size: 1.2rem;
 }
 
 @media (max-width: 1024px) {
