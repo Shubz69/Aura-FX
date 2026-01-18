@@ -1465,7 +1465,7 @@ html.community-page-active {
 
 /* Premium Scrollbars */
 .channels-section::-webkit-scrollbar,
-/* Scrollbar styles are now defined individually for each section above */
+/* Online users scrollbar */
 .online-users::-webkit-scrollbar {
     width: 8px;
 }
