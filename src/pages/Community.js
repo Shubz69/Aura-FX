@@ -164,7 +164,6 @@ const getCategoryIcon = (category) => {
     switch(category) {
         case 'announcements': return '📢';
         case 'staff': return '👨‍💼';
-        case 'courses': return '📚';
         case 'trading': return '📈';
         case 'general': return '💬';
         case 'support': return '🆘';
@@ -180,7 +179,6 @@ const formatCategoryName = (category) => {
         case 'a7fx': return 'A7FX';
         case 'announcements': return 'ANNOUNCEMENTS';
         case 'staff': return 'STAFF';
-        case 'courses': return 'COURSES';
         case 'trading': return 'TRADING';
         case 'general': return 'GENERAL';
         case 'support': return 'SUPPORT';
@@ -359,8 +357,8 @@ const Community = () => {
                 // Invalid JSON, use default
             }
         }
-        // Default order - will be replaced by backend data
-        return ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
+        // Default order - will be replaced by backend data (courses removed)
+        return ['announcements', 'staff', 'trading', 'general', 'support', 'premium', 'a7fx'];
     });
     
     const categoryOrder = categoryOrderState;
@@ -2982,13 +2980,16 @@ Let's build generational wealth together! 💰🚀`,
         setDeleteMessageModal(null);
     };
 
-    // Group channels by category - Show ALL channels to ALL users
+    // Group channels by category - Show ALL channels to ALL users (except courses)
     // Admin can control access via access_level in database
     // Sort channels within each category by their order
     const groupedChannels = useMemo(() => {
         const grouped = channelList.reduce((acc, channel) => {
-            // Show ALL channels regardless of category
+            // Filter out courses category
             const category = channel.category || 'general';
+            if (category.toLowerCase() === 'courses') {
+                return acc; // Skip courses category
+            }
             if (!acc[category]) {
                 acc[category] = [];
             }
@@ -5507,7 +5508,6 @@ Let's build generational wealth together! 💰🚀`,
                                         }}
                                     >
                                         <option value="trading">Trading</option>
-                                        <option value="courses">Courses</option>
                                         <option value="general">General</option>
                                         <option value="support">Support</option>
                                         <option value="premium">Premium</option>

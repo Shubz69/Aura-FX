@@ -293,8 +293,8 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
           }
         },
         reconnectDelay: 0, // Disable STOMP's automatic reconnection - we handle it manually
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+        heartbeatIncoming: 10000, // Increased from 4s to 10s for better performance
+        heartbeatOutgoing: 10000, // Increased from 4s to 10s for better performance
       });
 
       // Set connection handlers
