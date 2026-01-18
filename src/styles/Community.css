@@ -839,10 +839,6 @@ html.community-page-active {
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
     background: #1a1c1f;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-tertiary);
-    min-height: 0;
 }
 
 /* Empty State */
@@ -1468,28 +1464,22 @@ html.community-page-active {
 
 /* Premium Scrollbars */
 .channels-section::-webkit-scrollbar,
-.chat-messages::-webkit-scrollbar,
+/* Scrollbar styles are now defined individually for each section above */
 .online-users::-webkit-scrollbar {
     width: 8px;
 }
 
-.channels-section::-webkit-scrollbar-track,
-.chat-messages::-webkit-scrollbar-track,
 .online-users::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.channels-section::-webkit-scrollbar-thumb,
-.chat-messages::-webkit-scrollbar-thumb,
 .online-users::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--purple-primary), var(--purple-dark));
-    border-radius: 8px;
+    background: #202225;
+    border-radius: 4px;
 }
 
-.channels-section::-webkit-scrollbar-thumb:hover,
-.chat-messages::-webkit-scrollbar-thumb:hover,
 .online-users::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--purple-secondary), var(--purple-primary));
+    background: #1a1c1f;
 }
 
 /* Message Context Menu */
