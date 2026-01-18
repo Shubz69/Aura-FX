@@ -2670,12 +2670,8 @@ Let's build generational wealth together! 💰🚀`,
         setEditingMessageContent('');
         removeSelectedFile();
         
-        // Scroll to bottom immediately to show new message
-        if (window.requestAnimationFrame) {
-            requestAnimationFrame(() => scrollToBottom());
-        } else {
-        setTimeout(() => scrollToBottom(), 0);
-        }
+        // Scroll to bottom immediately to show new message (instant for sent messages)
+        scrollToBottomInstant();
 
         try {
             // Send via WebSocket FIRST for instant delivery to all clients
