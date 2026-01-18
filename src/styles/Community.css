@@ -897,7 +897,7 @@ html.community-page-active {
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0.0625rem 16px 0.0625rem 72px;
+    padding: 0.03125rem 16px 0.03125rem 72px;
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
@@ -924,8 +924,8 @@ html.community-page-active {
 
 /* Group consecutive messages from same sender */
 .message-item.grouped {
-    padding-top: 0.0625rem;
-    padding-bottom: 0.0625rem;
+    padding-top: 0.015625rem;
+    padding-bottom: 0.015625rem;
 }
 
 .message-item.grouped .message-avatar,
@@ -1755,7 +1755,7 @@ html.community-page-active {
     
     /* Discord-like clean message styling */
     .message-item {
-        padding: 0.0625rem 16px 0.0625rem 72px !important;
+        padding: 0.03125rem 16px 0.03125rem 72px !important;
         margin: 0 !important;
         min-height: auto !important;
         background: transparent !important;
@@ -1768,8 +1768,8 @@ html.community-page-active {
     }
     
     .message-item.grouped {
-        padding-top: 0.03125rem !important;
-        padding-bottom: 0.03125rem !important;
+        padding-top: 0.015625rem !important;
+        padding-bottom: 0.015625rem !important;
         padding-left: 72px !important;
     }
     

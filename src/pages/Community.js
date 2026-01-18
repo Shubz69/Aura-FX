@@ -2057,20 +2057,34 @@ const Community = () => {
         return () => clearInterval(intervalId);
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
 
-    // Generate fake users for display (will be replaced with real data later)
-    const generateFakeUsers = useCallback(() => {
-        // Base numbers - will show realistic community size
-        const baseOnline = 45; // Online users (realistic for active community)
-        const baseTotal = 1247; // Total users (1200+ as requested)
+    // Get or initialize total users with weekly increment logic
+    const getTotalUsers = useCallback(() => {
+        const STORAGE_KEY = 'aura_fx_total_users';
+        const WEEKLY_INCREMENT_KEY = 'aura_fx_weekly_increment';
+        const WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
         
-        // Add some variation to make it feel more dynamic
+        const stored = localStorage.getItem(STORAGE_KEY);
+        const lastIncrement = localStorage.getItem(WEEKLY_INCREMENT_KEY);
+        const now = Date.now();
+        
+        let totalUsers = stored ? parseInt(stored, 10) : 1240; // Default starting point
+        
+        // Check if a week has passed since last increment
+        if (!lastIncrement || (now - parseInt(lastIncrement, 10)) >= WEEK_MS) {
+            // Increment by 5 every week
+            totalUsers += 5;
+            localStorage.setItem(STORAGE_KEY, totalUsers.toString());
+            localStorage.setItem(WEEKLY_INCREMENT_KEY, now.toString());
+        }
+        
+        return totalUsers;
+    }, []);
+
+    // Generate fake online users (only for online count, not total)
+    const generateFakeOnlineUsers = useCallback(() => {
+        const baseOnline = 45; // Base online users
         const onlineVariation = Math.floor(Math.random() * 10) - 5; // ±5 variation
-        const totalVariation = Math.floor(Math.random() * 20) - 10; // ±10 variation
-        
-        return {
-            online: Math.max(35, baseOnline + onlineVariation), // Min 35 online
-            total: Math.max(1200, baseTotal + totalVariation) // Min 1200 total
-        };
+        return Math.max(35, baseOnline + onlineVariation); // Min 35 online
     }, []);
 
     // Fetch online users status periodically
@@ -2086,34 +2100,44 @@ const Community = () => {
                 }
             });
 
+            // Get total users with weekly increment logic
+            let currentTotal = getTotalUsers();
+            
             if (response.ok) {
                 const data = await response.json();
                 const realTotal = data.totalUsers || 0;
                 const realOnline = (data.onlineUsers || []).length;
                 
-                // Use fake users if real data is low, otherwise use real data
-                if (realTotal < 1200 || realOnline < 30) {
-                    const fakeUsers = generateFakeUsers();
-                    setOnlineCount(fakeUsers.online);
-                    setTotalUsers(fakeUsers.total);
-                } else {
-                    setOnlineCount(realOnline);
-                    setTotalUsers(realTotal);
+                // Add real users to total if they exist and are higher
+                if (realTotal > 0 && realTotal > currentTotal) {
+                    currentTotal = realTotal;
+                    // Update stored total
+                    localStorage.setItem('aura_fx_total_users', currentTotal.toString());
                 }
+                
+                // Only update online count (not total)
+                if (realOnline >= 30) {
+                    setOnlineCount(realOnline);
+                } else {
+                    // Use fake online if real is too low
+                    setOnlineCount(generateFakeOnlineUsers());
+                }
+                
+                // Always use the calculated total (with weekly increment + real users)
+                setTotalUsers(currentTotal);
             } else {
-                // If API fails, use fake users
-                const fakeUsers = generateFakeUsers();
-                setOnlineCount(fakeUsers.online);
-                setTotalUsers(fakeUsers.total);
+                // If API fails, only update online count (keep current total)
+                setOnlineCount(generateFakeOnlineUsers());
+                setTotalUsers(currentTotal);
             }
         } catch (error) {
             console.error('Failed to fetch online status:', error);
-            // On error, use fake users to show community is active
-            const fakeUsers = generateFakeUsers();
-            setOnlineCount(fakeUsers.online);
-            setTotalUsers(fakeUsers.total);
+            // On error, only update online count (keep current total)
+            const currentTotal = getTotalUsers();
+            setOnlineCount(generateFakeOnlineUsers());
+            setTotalUsers(currentTotal);
         }
-    }, [isAuthenticated, generateFakeUsers]);
+    }, [isAuthenticated, getTotalUsers, generateFakeOnlineUsers]);
 
     // Update user presence (heartbeat) - runs periodically
     useEffect(() => {
@@ -2189,21 +2213,24 @@ const Community = () => {
         return () => clearInterval(statusCheckInterval);
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
 
-    // Fetch online status periodically - initialize with fake users immediately
+    // Fetch online status periodically - initialize on page load/reset
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Set fake users immediately for instant display
-        const fakeUsers = generateFakeUsers();
-        setOnlineCount(fakeUsers.online);
-        setTotalUsers(fakeUsers.total);
+        // Initialize total users with weekly increment logic (only on page load/reset)
+        const initialTotal = getTotalUsers();
+        setTotalUsers(initialTotal);
+        
+        // Set initial online count (only on page load/reset)
+        setOnlineCount(generateFakeOnlineUsers());
 
         // Then fetch real data periodically (optimized for production)
+        // This will update online count but preserve total users logic
         fetchOnlineStatus();
-        const statusInterval = setInterval(fetchOnlineStatus, 10000); // Reduced from 15s to 10s
+        const statusInterval = setInterval(fetchOnlineStatus, 10000); // Every 10 seconds
 
         return () => clearInterval(statusInterval);
-    }, [isAuthenticated, fetchOnlineStatus, generateFakeUsers]);
+    }, [isAuthenticated, fetchOnlineStatus, getTotalUsers, generateFakeOnlineUsers]);
 
     // Load messages when channel changes - optimized for instant display
     useEffect(() => {
