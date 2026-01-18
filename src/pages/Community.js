@@ -4520,7 +4520,7 @@ Let's build generational wealth together! 💰🚀`,
                                             }}
                                             onTouchEnd={(e) => {
                                                 // Clean up any pending long press timer
-                                                if (e.currentTarget._longPressTimer) {
+                                                if (e.currentTarget && e.currentTarget._longPressTimer) {
                                                     clearTimeout(e.currentTarget._longPressTimer);
                                                     e.currentTarget._longPressTimer = null;
                                                 }
