@@ -1053,12 +1053,14 @@ html.community-page-active {
 
 .message-text {
     color: #DCDDDE;
-    line-height: 1.375;
+    line-height: 1.2 !important; /* Tighter line height */
     font-size: 0.9375rem;
     word-wrap: break-word;
     white-space: pre-wrap;
     margin: 0;
     padding: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     background: none !important;
     border: none !important;
     box-shadow: none !important;
