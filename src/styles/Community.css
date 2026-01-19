@@ -934,8 +934,10 @@ html.community-page-active {
 
 /* Group consecutive messages from same sender */
 .message-item.grouped {
-    padding-top: 0.015625rem;
-    padding-bottom: 0.015625rem;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
 
 .message-item.grouped .message-avatar,
@@ -1008,8 +1010,10 @@ html.community-page-active {
     gap: 4px;
     margin-bottom: 0 !important;
     margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     flex-wrap: wrap;
-    line-height: 1.375;
+    line-height: 1.2 !important; /* Tighter line height */
 }
 
 .message-author {
@@ -1019,9 +1023,11 @@ html.community-page-active {
     cursor: pointer;
     transition: color 0.15s ease;
     user-select: none;
-    line-height: 1.375;
+    line-height: 1.2 !important; /* Tighter line height */
     margin: 0;
     padding: 0;
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
 }
 
 .message-author:hover {
@@ -1059,10 +1065,12 @@ html.community-page-active {
     overflow-wrap: break-word;
 }
 
-/* Discord-like tight spacing - new messages have small gap, grouped have none */
+/* Discord-like tight spacing - new messages have minimal gap, grouped have none */
 .message-item:not(.grouped) {
-    padding-top: 0.0625rem !important; /* 1px - much tighter spacing */
+    padding-top: 0 !important; /* Zero gap - messages touch */
     padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
 
 .message-text img {
@@ -1814,11 +1822,15 @@ html.community-page-active {
         padding-bottom: 0 !important;
         padding-left: 72px !important;
         margin: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
     
     .message-item:not(.grouped) {
-        padding-top: 0.0625rem !important; /* 1px - minimal gap for new messages */
+        padding-top: 0 !important; /* Zero gap - messages touch */
         padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
     
     .message-avatar,
@@ -1881,8 +1893,11 @@ html.community-page-active {
     
     .message-text {
         font-size: 0.9375rem !important;
-        line-height: 1.375 !important;
+        line-height: 1.2 !important; /* Tighter line height */
         margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
         margin-bottom: 0 !important;
         color: #DCDDDE !important;
         word-wrap: break-word !important;
