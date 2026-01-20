@@ -33,7 +33,12 @@ module.exports = async (req, res) => {
 
     // Source 1: Alpha Vantage (free tier available)
     try {
-      const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
+      const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+      
+      if (!ALPHA_VANTAGE_API_KEY || ALPHA_VANTAGE_API_KEY === 'demo') {
+        console.log('Alpha Vantage API key not set, trying alternative sources...');
+        throw new Error('Alpha Vantage key not configured');
+      }
       
       if (type === 'quote') {
         const response = await axios.get(`https://www.alphavantage.co/query`, {
@@ -95,7 +100,43 @@ module.exports = async (req, res) => {
       console.log('Alpha Vantage error:', alphaVantageError.message);
     }
 
-    // Source 2: Yahoo Finance (fallback - using yfinance API)
+    // Source 2: Finnhub (if API key is available)
+    if (!marketData) {
+      try {
+        const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
+        
+        if (FINNHUB_API_KEY) {
+          // Try quote endpoint
+          const quoteResponse = await axios.get(`https://finnhub.io/api/v1/quote`, {
+            params: {
+              symbol: normalizedSymbol,
+              token: FINNHUB_API_KEY
+            },
+            timeout: 5000
+          });
+
+          if (quoteResponse.data && quoteResponse.data.c && quoteResponse.data.c > 0) {
+            const quote = quoteResponse.data;
+            marketData = {
+              symbol: normalizedSymbol,
+              price: quote.c, // current price
+              open: quote.o,
+              high: quote.h,
+              low: quote.l,
+              previousClose: quote.pc,
+              change: quote.c - quote.pc,
+              changePercent: ((quote.c - quote.pc) / quote.pc * 100).toFixed(2) + '%',
+              timestamp: quote.t * 1000, // convert to milliseconds
+              source: 'Finnhub'
+            };
+          }
+        }
+      } catch (finnhubError) {
+        console.log('Finnhub error:', finnhubError.message);
+      }
+    }
+
+    // Source 3: Yahoo Finance (fallback - using yfinance API)
     if (!marketData) {
       try {
         const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${normalizedSymbol}`, {
