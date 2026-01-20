@@ -147,6 +147,9 @@ module.exports = async (req, res) => {
       const { validateTradeSafety } = require('./safety-system');
       const { analyzeMarketStructure, identifySupportResistance, generateScenarios } = require('./price-action');
       
+      // Track citations from knowledge base searches
+      let responseCitations = [];
+      
       // Log user action
       await logUserAction(userId, 'ai_chat_message', { 
         hasImages: images && images.length > 0,
@@ -2148,7 +2151,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         response: aiResponse,
         model: completion?.model || 'gpt-4o',
         usage: completion?.usage || null,
-        citations: responseCitations.length > 0 ? responseCitations : undefined
+        citations: (responseCitations && responseCitations.length > 0) ? responseCitations : undefined
       });
 
     } catch (dbError) {

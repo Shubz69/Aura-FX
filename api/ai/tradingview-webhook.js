@@ -165,7 +165,7 @@ async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
     }
 
     query += ' ORDER BY timestamp DESC LIMIT ?';
-    params.push(limit);
+    params.push(parseInt(limit) || 10); // Ensure limit is an integer
 
     const [rows] = await db.execute(query, params);
     
