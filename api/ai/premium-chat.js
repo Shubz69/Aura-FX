@@ -139,8 +139,17 @@ module.exports = async (req, res) => {
         apiKey: OPENAI_API_KEY,
       });
 
-      // Import tool router
+      // Import tool router, logging, knowledge base, and TradingView
       const { detectIntent, determineRequiredTools, extractInstrument } = require('./tool-router');
+      const { logToolCall, logDataFetch, logUserAction, logError, isDataStale } = require('./logger');
+      const { kbSearch } = require('./knowledge-base');
+      const { getRecentAlerts } = require('./tradingview-webhook');
+      
+      // Log user action
+      await logUserAction(userId, 'ai_chat_message', { 
+        hasImages: images && images.length > 0,
+        messageLength: message?.length || 0
+      });
       
       // Detect user intent and determine required tools
       const intents = detectIntent(message, conversationHistory);
@@ -151,7 +160,15 @@ module.exports = async (req, res) => {
       const systemPrompt = `You are AURA AI, a professional trading assistant. You're knowledgeable, conversational, and direct. You help traders make better decisions by providing clear analysis and actionable insights.
 
 **CRITICAL - YOU HAVE ACCESS TO ALL DATA SOURCES**:
-You have full access to real-time market data, economic calendars, news feeds, and trading calculators. You MUST use these tools. Never say "I'm unable to access" or "I can't fetch" - you CAN and MUST call functions to get real data.
+You have full access to real-time market data, economic calendars, news feeds, trading calculators, knowledge base, and TradingView alerts. You MUST use these tools. Never say "I'm unable to access" or "I can't fetch" - you CAN and MUST call functions to get real data.
+
+**AVAILABLE FUNCTIONS**:
+- get_market_data: Fetch real-time prices for ANY instrument (stocks, forex, crypto, commodities, indices)
+- get_economic_calendar: Fetch ACTUAL economic events from Forex Factory and Trading Economics
+- get_market_news: Fetch breaking news from Bloomberg, Reuters, Alpha Vantage, Finnhub, NewsAPI
+- calculate_trading_math: Calculate position sizing, risk/reward, pip values, margin requirements
+- search_knowledge_base: Search trading strategies, rules, and educational content (CITE SOURCES when using)
+- get_tradingview_alerts: Get recent TradingView alerts for price action analysis
 
 **YOUR COMMUNICATION STYLE**:
 - Talk like a human trader would - natural, conversational, not robotic
@@ -297,12 +314,13 @@ You have full access to real-time market data, economic calendars, news feeds, a
    - Convert into: Actionable rules, flashcards, strategy templates
 
 8. **REAL-TIME DATA ACCESS**:
-   - TradingView live price feeds (via webhooks - can process TradingView alerts)
+   - TradingView live price feeds (via webhooks - use get_tradingview_alerts function to access recent alerts)
    - Multiple data sources for verification (Alpha Vantage, Yahoo Finance, Finnhub, Twelve Data)
-   - Economic calendar (verified events only - Forex Factory)
+   - Economic calendar (verified events only - Forex Factory, Trading Economics)
    - Market news (real-time breaking news from Bloomberg, Reuters, financial APIs)
    - Technical indicators and chart data (intraday, historical)
    - Price action data (OHLCV, market structure, key levels)
+   - When analyzing price action, call get_tradingview_alerts to see recent TradingView signals for that symbol
 
 9. **KNOWLEDGE SYSTEM** (RAG - Retrieval Augmented Generation):
    - Store and retrieve trading knowledge: books, strategies, broker specs
@@ -905,6 +923,14 @@ Help users journal their trades:
 - Adapt to account currency: Handle USD, EUR, GBP, etc. accounts
 - Warn about broker-specific risks: High leverage, wide spreads, etc.
 
+**DATA FRESHNESS & TRANSPARENCY**:
+- Always check data timestamps - if data is older than 5 minutes, mention it
+- If a data source fails, try alternative sources
+- If all data sources fail, acknowledge it but still provide analysis based on general knowledge
+- Never claim data is "real-time" if you didn't fetch it
+- Always cite sources: "According to [source]..." or "Based on [data provider]..."
+- When using knowledge base, cite: "According to [title] from the knowledge base..."
+
 **FINAL REMINDERS - CRITICAL FOR FUNCTIONING PROPERLY**:
 
 1. **YOU ARE A FUNCTIONING AI WITH TOOLS**: You have functions available - USE THEM. Don't just talk about what you would do - actually do it by calling functions.
@@ -941,6 +967,14 @@ Help users journal their trades:
 - You have FULL ACCESS to all data sources - use them actively
 
 REMEMBER: Your job is to PROTECT the trader's account while helping them profit. Risk management is NON-NEGOTIABLE. You are building long-term profitable traders, not gamblers. You are the ULTIMATE trading AI - act like it. USE YOUR FUNCTIONS - they make you powerful. You have access to everything - use it.
+
+**NEVER HALLUCINATE**:
+- If you didn't call a function, don't claim you have data
+- If you didn't fetch calendar, don't say "NFP is today" - call get_economic_calendar first
+- If you didn't fetch price, don't say "gold is trading at X" - call get_market_data first
+- If you didn't search knowledge base, don't cite it
+- Always be transparent: "Let me check the latest data..." then call the function
+- If data is missing or stale, say so: "The data I have is from [time], let me fetch the latest..."
 
 User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7FX Elite' : 'Premium'}`;
 
@@ -1046,6 +1080,47 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         {
           name: 'calculate_trading_math',
           description: 'MANDATORY: Calculate trading mathematics. You MUST call this function whenever you provide a trade recommendation or user asks about position sizing, risk calculations, or trading math. Operations: position_size (calculate position size based on account size, risk %, entry, stop loss), risk_reward (calculate R:R ratio), pip_value, margin (calculate margin requirements), atr_stop (ATR-based stop loss). DO NOT calculate manually - always use this function for accuracy.',
+        },
+        {
+          name: 'search_knowledge_base',
+          description: 'Search the knowledge base for trading strategies, rules, concepts, and educational content. Call this when user asks about trading concepts, strategies, or "how to" questions. Returns relevant knowledge base entries with sources. Always cite sources when using knowledge base information.',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Search query for knowledge base'
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum number of results (default: 5)'
+              }
+            },
+            required: ['query']
+          }
+        },
+        {
+          name: 'get_tradingview_alerts',
+          description: 'Get recent TradingView alerts for a symbol. Call this when analyzing price action or when user mentions TradingView alerts. Returns recent alerts with strategy, indicator, and action information.',
+          parameters: {
+            type: 'object',
+            properties: {
+              symbol: {
+                type: 'string',
+                description: 'Trading symbol (e.g., XAUUSD, EURUSD)'
+              },
+              timeframe: {
+                type: 'string',
+                description: 'Optional timeframe filter (e.g., 1h, 4h, 1d)'
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum number of alerts (default: 10)'
+              }
+            },
+            required: ['symbol']
+          }
+        }
           parameters: {
             type: 'object',
             properties: {
@@ -1185,6 +1260,19 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
       let aiResponse = completion.choices[0]?.message?.content || '';
       let functionCall = completion.choices[0]?.message?.function_call;
+      
+      // If images are present, enhance analysis with image processing
+      if (hasImages && images.length > 0 && !functionCall) {
+        // Images were sent - AI should analyze them
+        // The vision model already processed them, but we can enhance with structured analysis
+        try {
+          const { analyzeImage } = require('./image-analyzer');
+          // Note: Images are already in the messages, GPT-4o will analyze them
+          // This is just for additional structured analysis if needed
+        } catch (imgError) {
+          console.log('Image analysis enhancement error:', imgError.message);
+        }
+      }
 
       // Handle function calls for real-time market data and economic calendar
       // Set a hard timeout to prevent exceeding Vercel's 60-second limit
@@ -1208,6 +1296,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         const dataType = functionArgs.type || 'quote';
 
         // Fetch real-time market data - use longer timeout and let market-data.js handle fallbacks
+        const toolStartTime = Date.now();
         try {
           checkTimeout();
           // Market-data.js has multiple sources and fallbacks - give it time to try all sources
@@ -1223,6 +1312,21 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
           if (marketDataResponse.data && marketDataResponse.data.success) {
             const marketData = marketDataResponse.data.data;
+            
+            // Log successful tool call
+            const toolDuration = Date.now() - toolStartTime;
+            await logToolCall(userId, 'get_market_data', functionArgs, marketData, toolDuration, true);
+            await logDataFetch(userId, 'market_data', symbol, marketData.source || 'unknown', marketData.timestamp || marketData.lastUpdated, true);
+
+            // Check for TradingView alerts for this symbol
+            try {
+              const alerts = await getRecentAlerts(symbol, null, 5);
+              if (alerts.length > 0) {
+                marketData.tradingViewAlerts = alerts;
+              }
+            } catch (alertError) {
+              console.log('Error fetching TradingView alerts:', alertError.message);
+            }
 
             // Add function result to conversation and get AI response
             messages.push({
@@ -1400,6 +1504,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         } catch (marketDataError) {
           console.error('Error fetching market data:', marketDataError);
           
+          // Log failed tool call
+          const toolDuration = Date.now() - toolStartTime;
+          await logToolCall(userId, 'get_market_data', functionArgs, null, toolDuration, false, marketDataError);
+          await logError(userId, 'market_data_fetch_error', marketDataError.message, { symbol, dataType });
+          
           // Market data failed - but we should still provide a response
           // Don't show errors to users - just provide analysis without real-time data
           try {
@@ -1436,6 +1545,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       } else if (functionCall.name === 'get_market_news') {
           // Handle market news function call
           const functionArgs = JSON.parse(functionCall.arguments);
+          const newsToolStartTime = Date.now();
           
           try {
             checkTimeout();
@@ -1452,6 +1562,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             if (newsResponse.data && newsResponse.data.success) {
               const newsData = newsResponse.data.data;
+              
+              // Log successful tool call
+              const newsToolDuration = Date.now() - newsToolStartTime;
+              await logToolCall(userId, 'get_market_news', functionArgs, { count: newsData.count }, newsToolDuration, true);
+              await logDataFetch(userId, 'market_news', functionArgs.symbol, 'multiple', newsData.timestamp, true);
 
               messages.push({
                 role: 'assistant',
@@ -1483,6 +1598,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             }
           } catch (newsError) {
             console.error('Error fetching market news:', newsError);
+            
+            // Log failed tool call
+            const newsToolDuration = Date.now() - newsToolStartTime;
+            await logToolCall(userId, 'get_market_news', functionArgs, null, newsToolDuration, false, newsError);
+            await logError(userId, 'market_news_fetch_error', newsError.message, { symbol: functionArgs.symbol });
             
             // News failed - but continue without showing error to user
             // News is supplementary - AI can still provide analysis
@@ -1519,6 +1639,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       } else if (functionCall.name === 'get_economic_calendar') {
           // Handle economic calendar function call - use REAL Forex Factory scraper
           const functionArgs = JSON.parse(functionCall.arguments);
+          const calendarToolStartTime = Date.now();
           
           try {
             checkTimeout();
@@ -1534,6 +1655,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             if (calendarResponse.data && calendarResponse.data.success) {
               const calendarData = calendarResponse.data.data;
+              
+              // Log successful tool call
+              const calendarToolDuration = Date.now() - calendarToolStartTime;
+              await logToolCall(userId, 'get_economic_calendar', functionArgs, { eventCount: calendarData.events?.length || 0 }, calendarToolDuration, true);
+              await logDataFetch(userId, 'economic_calendar', null, calendarData.source || 'unknown', calendarData.date, true);
 
               messages.push({
                 role: 'assistant',
@@ -1565,6 +1691,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             }
           } catch (calendarError) {
             console.error('Error fetching economic calendar:', calendarError);
+            
+            // Log failed tool call
+            const calendarToolDuration = Date.now() - calendarToolStartTime;
+            await logToolCall(userId, 'get_economic_calendar', functionArgs, null, calendarToolDuration, false, calendarError);
+            await logError(userId, 'economic_calendar_fetch_error', calendarError.message, { date: functionArgs.date });
             
             // Calendar failed - continue without showing error
             // Calendar is supplementary - AI can still provide analysis
@@ -1601,6 +1732,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       } else if (functionCall.name === 'calculate_trading_math') {
           // Handle trading math calculations
           const functionArgs = JSON.parse(functionCall.arguments);
+          const calcToolStartTime = Date.now();
           
           try {
             checkTimeout();
@@ -1615,6 +1747,10 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             if (calcResponse.data && calcResponse.data.success) {
               const calcResult = calcResponse.data.result;
+              
+              // Log successful tool call
+              const calcToolDuration = Date.now() - calcToolStartTime;
+              await logToolCall(userId, 'calculate_trading_math', functionArgs, calcResult, calcToolDuration, true);
 
               messages.push({
                 role: 'assistant',
@@ -1644,8 +1780,104 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             }
           } catch (calcError) {
             console.error('Error calculating trading math:', calcError);
+            const calcToolDuration = Date.now() - calcToolStartTime;
+            await logToolCall(userId, 'calculate_trading_math', functionArgs, null, calcToolDuration, false, calcError);
             // Continue with existing response - don't fail the whole request
             // The AI can still provide a response without the calculation
+          }
+      } else if (functionCall.name === 'search_knowledge_base') {
+          // Handle knowledge base search
+          const functionArgs = JSON.parse(functionCall.arguments);
+          const kbToolStartTime = Date.now();
+          
+          try {
+            checkTimeout();
+            const kbResults = await kbSearch(functionArgs.query, functionArgs.limit || 5);
+            
+            // Log successful tool call
+            const kbToolDuration = Date.now() - kbToolStartTime;
+            await logToolCall(userId, 'search_knowledge_base', functionArgs, { resultCount: kbResults.length }, kbToolDuration, true);
+
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'search_knowledge_base',
+              content: JSON.stringify({
+                results: kbResults,
+                query: functionArgs.query
+              })
+            });
+
+            checkTimeout();
+            const kbCompletion = await Promise.race([
+              openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                functions: functions,
+                function_call: 'auto',
+                temperature: 0.8,
+                max_tokens: 1500,
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+            ]);
+
+            aiResponse = kbCompletion.choices[0]?.message?.content || aiResponse;
+          } catch (kbError) {
+            console.error('Error searching knowledge base:', kbError);
+            const kbToolDuration = Date.now() - kbToolStartTime;
+            await logToolCall(userId, 'search_knowledge_base', functionArgs, null, kbToolDuration, false, kbError);
+            // Continue without knowledge base results
+          }
+      } else if (functionCall.name === 'get_tradingview_alerts') {
+          // Handle TradingView alerts retrieval
+          const functionArgs = JSON.parse(functionCall.arguments);
+          const alertsToolStartTime = Date.now();
+          
+          try {
+            checkTimeout();
+            const alerts = await getRecentAlerts(functionArgs.symbol, functionArgs.timeframe, functionArgs.limit || 10);
+            
+            // Log successful tool call
+            const alertsToolDuration = Date.now() - alertsToolStartTime;
+            await logToolCall(userId, 'get_tradingview_alerts', functionArgs, { alertCount: alerts.length }, alertsToolDuration, true);
+
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'get_tradingview_alerts',
+              content: JSON.stringify({
+                alerts: alerts,
+                symbol: functionArgs.symbol
+              })
+            });
+
+            checkTimeout();
+            const alertsCompletion = await Promise.race([
+              openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                functions: functions,
+                function_call: 'auto',
+                temperature: 0.8,
+                max_tokens: 1500,
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+            ]);
+
+            aiResponse = alertsCompletion.choices[0]?.message?.content || aiResponse;
+          } catch (alertsError) {
+            console.error('Error fetching TradingView alerts:', alertsError);
+            const alertsToolDuration = Date.now() - alertsToolStartTime;
+            await logToolCall(userId, 'get_tradingview_alerts', functionArgs, null, alertsToolDuration, false, alertsError);
+            // Continue without alerts
           }
       }
     }

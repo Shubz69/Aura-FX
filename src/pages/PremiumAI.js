@@ -15,6 +15,8 @@ const PremiumAI = () => {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -213,6 +215,7 @@ const PremiumAI = () => {
     const imagesToSend = selectedImages;
     
     setInput('');
+    setVoiceTranscript('');
     setSelectedImages([]);
     setImagePreviews(prev => {
       prev.forEach(url => URL.revokeObjectURL(url));
@@ -550,21 +553,45 @@ const PremiumAI = () => {
           >
             📷
           </button>
-          <textarea
-            ref={inputRef}
-            className="message-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            onPaste={handlePaste}
-            placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis... (or paste/upload a chart/image)"
-            rows="1"
+          <VoiceInput
+            onTranscript={handleVoiceTranscript}
+            onStart={() => setIsVoiceListening(true)}
+            onStop={() => setIsVoiceListening(false)}
             disabled={isLoading}
           />
+          <div className="input-wrapper" style={{ flex: 1, position: 'relative' }}>
+            <textarea
+              ref={inputRef}
+              className="message-input"
+              value={input + (voiceTranscript ? ' ' + voiceTranscript : '')}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              onPaste={handlePaste}
+              placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis... (or paste/upload a chart/image)"
+              rows="1"
+              disabled={isLoading}
+            />
+            {isVoiceListening && (
+              <div className="voice-indicator" style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#ff4d4d',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <span style={{ animation: 'pulse 1.5s infinite' }}>🎤</span>
+                Listening...
+              </div>
+            )}
+          </div>
           <button 
             type="submit" 
             className="send-button"
-            disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
+            disabled={(!input.trim() && !voiceTranscript.trim() && selectedImages.length === 0) || isLoading}
           >
             {isLoading ? '⏳' : '📤'}
           </button>

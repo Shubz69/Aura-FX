@@ -11,6 +11,12 @@
   },
   "rewrites": [
     {
+      "source": "/api/ai/tradingview-webhook",
+      "destination": "/api/ai/tradingview-webhook.js"
+    }
+  ],
+  "rewrites": [
+    {
       "source": "/api/courses",
       "destination": "/api/courses.js"
     },
