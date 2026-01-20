@@ -1123,6 +1123,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         },
         {
           name: 'calculate_trading_math',
+          description: 'MANDATORY: Calculate trading mathematics. You MUST call this function whenever you provide a trade recommendation or user asks about position sizing, risk calculations, or trading math. Operations: position_size (calculate position size based on account size, risk %, entry, stop loss), risk_reward (calculate R:R ratio), pip_value, margin (calculate margin requirements), atr_stop (ATR-based stop loss). DO NOT calculate manually - always use this function for accuracy.',
+          parameters: {
             type: 'object',
             properties: {
               operation: {
