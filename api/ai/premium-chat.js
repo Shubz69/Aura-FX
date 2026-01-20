@@ -2141,19 +2141,13 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         db.release();
       }
 
-      // Extract citations from knowledge base if used
-      const citations = [];
-      if (aiResponse && aiResponse.includes('knowledge base') || aiResponse.includes('According to')) {
-        // Citations would be extracted from function call results
-        // For now, return empty array - can be enhanced
-      }
-
+      // Return citations collected from knowledge base searches
       return res.status(200).json({
         success: true,
         response: aiResponse,
         model: completion?.model || 'gpt-4o',
         usage: completion?.usage || null,
-        citations: citations.length > 0 ? citations : undefined
+        citations: responseCitations.length > 0 ? responseCitations : undefined
       });
 
     } catch (dbError) {

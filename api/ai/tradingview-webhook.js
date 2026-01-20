@@ -126,6 +126,31 @@ async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
   if (!db) return [];
 
   try {
+    // Create tradingview_alerts table if it doesn't exist (graceful handling)
+    try {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS tradingview_alerts (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          symbol VARCHAR(50) NOT NULL,
+          timeframe VARCHAR(20),
+          price DECIMAL(20, 8),
+          action VARCHAR(20),
+          message TEXT,
+          strategy VARCHAR(100),
+          indicator VARCHAR(50),
+          value DECIMAL(20, 8),
+          timestamp BIGINT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_symbol_timeframe (symbol, timeframe),
+          INDEX idx_timestamp (timestamp)
+        )
+      `);
+    } catch (createError) {
+      // Table might already exist or there's a permission issue
+      // Continue anyway - the SELECT will fail gracefully if table doesn't exist
+      console.log('Note: tradingview_alerts table creation check:', createError.message);
+    }
+
     let query = 'SELECT * FROM tradingview_alerts WHERE 1=1';
     const params = [];
 
@@ -150,10 +175,13 @@ async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
 
     return rows;
   } catch (error) {
-    console.error('Error fetching TradingView alerts:', error);
+    // Gracefully handle table not found or other database errors
+    // Don't break the entire AI request if alerts can't be fetched
+    console.error('Error fetching TradingView alerts (non-critical):', error.message);
     if (db && typeof db.release === 'function') {
       db.release();
     }
+    // Return empty array so AI can continue without alerts
     return [];
   }
 }

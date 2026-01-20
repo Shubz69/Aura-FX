@@ -355,6 +355,7 @@ const PremiumAI = () => {
       setMessages(prev => [...prev, chatErrorMessage]);
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false; // Reset submitting flag
       inputRef.current?.focus();
     }
   };
@@ -362,9 +363,40 @@ const PremiumAI = () => {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(e);
+      e.stopPropagation();
+      // Debounce to prevent rapid submissions
+      if (sendTimeoutRef.current) {
+        clearTimeout(sendTimeoutRef.current);
+      }
+      sendTimeoutRef.current = setTimeout(() => {
+        sendMessage(e);
+      }, 100);
     }
   };
+
+  // Prevent clicks outside input from affecting chat
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // Only prevent if clicking on the chat container but not on interactive elements
+      const chatContainer = document.querySelector('.premium-ai-container');
+      const isClickOnInput = inputRef.current?.contains(e.target);
+      const isClickOnButton = e.target.closest('button');
+      const isClickOnImage = e.target.closest('.image-upload-btn, .message-image');
+      
+      if (chatContainer && !isClickOnInput && !isClickOnButton && !isClickOnImage) {
+        // Don't prevent default, just ensure we're not interfering
+        // Focus input if clicking in chat area
+        if (chatContainer.contains(e.target) && !isLoading) {
+          inputRef.current?.focus();
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside, true);
+    return () => {
+      document.removeEventListener('click', handleClickOutside, true);
+    };
+  }, [isLoading]);
 
   const clearConversation = () => {
     if (window.confirm('Are you sure you want to clear this conversation?')) {
