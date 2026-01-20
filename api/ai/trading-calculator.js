@@ -61,12 +61,12 @@ module.exports = async (req, res) => {
           const lots = riskAmount / (pips * pipValuePerLot);
           
           result = {
-            positionSize: lots.toFixed(2),
-            riskAmount: riskAmount.toFixed(2),
+            positionSize: parseFloat(lots.toFixed(2)),
+            riskAmount: parseFloat(riskAmount.toFixed(2)),
             riskPercent,
-            pips: pips.toFixed(1),
+            pips: parseFloat(pips.toFixed(1)),
             pipValue: pipValuePerLot,
-            units: (lots * standardContractSize).toFixed(0),
+            units: parseFloat((lots * standardContractSize).toFixed(0)),
             calculation: `Risk: $${riskAmount.toFixed(2)} (${riskPercent}% of $${accountSize}) / ${pips.toFixed(1)} pips × $${pipValuePerLot} per pip = ${lots.toFixed(2)} lots`
           };
         } else {
@@ -76,13 +76,13 @@ module.exports = async (req, res) => {
           const totalValue = units * entryPrice;
           
           result = {
-            positionSize: units.toFixed(4),
-            riskAmount: riskAmount.toFixed(2),
+            positionSize: parseFloat(units.toFixed(4)),
+            riskAmount: parseFloat(riskAmount.toFixed(2)),
             riskPercent,
-            priceRisk: priceRisk.toFixed(4),
+            priceRisk: parseFloat(priceRisk.toFixed(4)),
             contractSize: standardContractSize,
-            totalValue: totalValue.toFixed(2),
-            units: (units * standardContractSize).toFixed(4),
+            totalValue: parseFloat(totalValue.toFixed(2)),
+            units: parseFloat((units * standardContractSize).toFixed(4)),
             calculation: `Risk: $${riskAmount.toFixed(2)} (${riskPercent}% of $${accountSize}) / $${priceRisk.toFixed(4)} price risk = ${units.toFixed(4)} units`
           };
         }
