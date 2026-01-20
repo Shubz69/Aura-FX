@@ -457,24 +457,32 @@ const PremiumAI = () => {
                 )}
                 {msg.content && (
                   <div className="message-text">
-                    <ReactMarkdown
-                      components={{
-                        p: ({node, ...props}) => <p className="markdown-paragraph" {...props} />,
-                        strong: ({node, ...props}) => <strong className="markdown-bold" {...props} />,
-                        em: ({node, ...props}) => <em className="markdown-italic" {...props} />,
-                        ul: ({node, ...props}) => <ul className="markdown-list" {...props} />,
-                        ol: ({node, ...props}) => <ol className="markdown-list" {...props} />,
-                        li: ({node, ...props}) => <li className="markdown-list-item" {...props} />,
-                        h1: ({node, ...props}) => <h1 className="markdown-heading markdown-h1" {...props} />,
-                        h2: ({node, ...props}) => <h2 className="markdown-heading markdown-h2" {...props} />,
-                        h3: ({node, ...props}) => <h3 className="markdown-heading markdown-h3" {...props} />,
-                        code: ({node, inline, ...props}) => 
-                          inline ? <code className="markdown-inline-code" {...props} /> : <code className="markdown-code-block" {...props} />,
-                        blockquote: ({node, ...props}) => <blockquote className="markdown-blockquote" {...props} />,
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
+                    {msg.role === 'user' ? (
+                      // User messages - plain text, no markdown processing to prevent formatting issues
+                      <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                        {msg.content}
+                      </div>
+                    ) : (
+                      // AI messages - use markdown for formatting
+                      <ReactMarkdown
+                        components={{
+                          p: ({node, ...props}) => <p className="markdown-paragraph" {...props} />,
+                          strong: ({node, ...props}) => <strong className="markdown-bold" {...props} />,
+                          em: ({node, ...props}) => <em className="markdown-italic" {...props} />,
+                          ul: ({node, ...props}) => <ul className="markdown-list" {...props} />,
+                          ol: ({node, ...props}) => <ol className="markdown-list" {...props} />,
+                          li: ({node, ...props}) => <li className="markdown-list-item" {...props} />,
+                          h1: ({node, ...props}) => <h1 className="markdown-heading markdown-h1" {...props} />,
+                          h2: ({node, ...props}) => <h2 className="markdown-heading markdown-h2" {...props} />,
+                          h3: ({node, ...props}) => <h3 className="markdown-heading markdown-h3" {...props} />,
+                          code: ({node, inline, ...props}) => 
+                            inline ? <code className="markdown-inline-code" {...props} /> : <code className="markdown-code-block" {...props} />,
+                          blockquote: ({node, ...props}) => <blockquote className="markdown-blockquote" {...props} />,
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    )}
                   </div>
                 )}
                 {msg.chartData && msg.symbol && (
