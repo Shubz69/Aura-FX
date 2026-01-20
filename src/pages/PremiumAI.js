@@ -13,8 +13,11 @@ const PremiumAI = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Check if user has premium access
   useEffect(() => {
@@ -94,20 +97,92 @@ How can I help you trade today?`
     inputRef.current?.focus();
   }, []);
 
+  // Convert file to base64
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Handle image file selection
+  const handleImageSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Validate files
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image file`);
+        return false;
+      }
+      if (file.size > 20 * 1024 * 1024) { // 20MB limit
+        toast.error(`${file.name} is too large (max 20MB)`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // Limit to 4 images max
+    const remainingSlots = 4 - selectedImages.length;
+    const filesToAdd = validFiles.slice(0, remainingSlots);
+    
+    if (validFiles.length > remainingSlots) {
+      toast.warning(`Only ${remainingSlots} image(s) can be added (max 4 total)`);
+    }
+
+    try {
+      const base64Images = await Promise.all(filesToAdd.map(convertToBase64));
+      setSelectedImages(prev => [...prev, ...base64Images]);
+      setImagePreviews(prev => [...prev, ...filesToAdd.map(f => URL.createObjectURL(f))]);
+    } catch (error) {
+      console.error('Error converting images:', error);
+      toast.error('Failed to process images');
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove image
+  const removeImage = (index) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const sendMessage = async (e) => {
     e?.preventDefault();
     
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && selectedImages.length === 0) || isLoading) return;
 
     const userMessage = {
       role: 'user',
-      content: input.trim()
+      content: input.trim() || '',
+      images: selectedImages.length > 0 ? selectedImages : undefined
     };
 
     // Add user message to UI immediately
     setMessages(prev => [...prev, userMessage]);
     setConversationHistory(prev => [...prev, userMessage]);
+    
+    const messageToSend = input.trim();
+    const imagesToSend = selectedImages;
+    
     setInput('');
+    setSelectedImages([]);
+    setImagePreviews(prev => {
+      prev.forEach(url => URL.revokeObjectURL(url));
+      return [];
+    });
     setIsLoading(true);
 
     try {
@@ -121,7 +196,8 @@ How can I help you trade today?`
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          message: userMessage.content,
+          message: messageToSend,
+          images: imagesToSend,
           conversationHistory: conversationHistory.slice(-10) // Last 10 messages for context
         })
       });
@@ -263,26 +339,41 @@ How can I help you trade today?`
                 {msg.role === 'user' ? '👤' : '🤖'}
               </div>
               <div className="message-content">
-                <div className="message-text">
-                  <ReactMarkdown
-                    components={{
-                      p: ({node, ...props}) => <p className="markdown-paragraph" {...props} />,
-                      strong: ({node, ...props}) => <strong className="markdown-bold" {...props} />,
-                      em: ({node, ...props}) => <em className="markdown-italic" {...props} />,
-                      ul: ({node, ...props}) => <ul className="markdown-list" {...props} />,
-                      ol: ({node, ...props}) => <ol className="markdown-list" {...props} />,
-                      li: ({node, ...props}) => <li className="markdown-list-item" {...props} />,
-                      h1: ({node, ...props}) => <h1 className="markdown-heading markdown-h1" {...props} />,
-                      h2: ({node, ...props}) => <h2 className="markdown-heading markdown-h2" {...props} />,
-                      h3: ({node, ...props}) => <h3 className="markdown-heading markdown-h3" {...props} />,
-                      code: ({node, inline, ...props}) => 
-                        inline ? <code className="markdown-inline-code" {...props} /> : <code className="markdown-code-block" {...props} />,
-                      blockquote: ({node, ...props}) => <blockquote className="markdown-blockquote" {...props} />,
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                </div>
+                {msg.images && msg.images.length > 0 && (
+                  <div className="message-images">
+                    {msg.images.map((img, imgIndex) => (
+                      <img 
+                        key={imgIndex} 
+                        src={img} 
+                        alt={`Uploaded ${imgIndex + 1}`}
+                        className="message-image"
+                        onClick={() => window.open(img, '_blank')}
+                      />
+                    ))}
+                  </div>
+                )}
+                {msg.content && (
+                  <div className="message-text">
+                    <ReactMarkdown
+                      components={{
+                        p: ({node, ...props}) => <p className="markdown-paragraph" {...props} />,
+                        strong: ({node, ...props}) => <strong className="markdown-bold" {...props} />,
+                        em: ({node, ...props}) => <em className="markdown-italic" {...props} />,
+                        ul: ({node, ...props}) => <ul className="markdown-list" {...props} />,
+                        ol: ({node, ...props}) => <ol className="markdown-list" {...props} />,
+                        li: ({node, ...props}) => <li className="markdown-list-item" {...props} />,
+                        h1: ({node, ...props}) => <h1 className="markdown-heading markdown-h1" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="markdown-heading markdown-h2" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="markdown-heading markdown-h3" {...props} />,
+                        code: ({node, inline, ...props}) => 
+                          inline ? <code className="markdown-inline-code" {...props} /> : <code className="markdown-code-block" {...props} />,
+                        blockquote: ({node, ...props}) => <blockquote className="markdown-blockquote" {...props} />,
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
                 {msg.chartData && msg.symbol && (
                   <MarketChart data={msg.chartData} symbol={msg.symbol} type="line" />
                 )}
@@ -306,21 +397,57 @@ How can I help you trade today?`
           <div ref={messagesEndRef} />
         </div>
 
+        {imagePreviews.length > 0 && (
+          <div className="image-previews">
+            {imagePreviews.map((preview, index) => (
+              <div key={index} className="image-preview-item">
+                <img src={preview} alt={`Preview ${index + 1}`} />
+                <button 
+                  type="button"
+                  className="remove-image-btn"
+                  onClick={() => removeImage(index)}
+                  title="Remove image"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
         <form className="input-container" onSubmit={sendMessage}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageSelect}
+            style={{ display: 'none' }}
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            className="image-upload-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading || selectedImages.length >= 4}
+            title="Upload image (max 4)"
+          >
+            📷
+          </button>
           <textarea
             ref={inputRef}
             className="message-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis..."
+            placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis... (or upload a chart/image)"
             rows="1"
             disabled={isLoading}
           />
           <button 
             type="submit" 
             className="send-button"
-            disabled={!input.trim() || isLoading}
+            disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
           >
             {isLoading ? '⏳' : '📤'}
           </button>

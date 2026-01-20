@@ -123,14 +123,14 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Get message and conversation history
-      const { message, conversationHistory = [] } = req.body;
+      // Get message, images, and conversation history
+      const { message, images = [], conversationHistory = [] } = req.body;
 
-      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      if ((!message || typeof message !== 'string' || message.trim().length === 0) && (!images || images.length === 0)) {
         if (db && typeof db.release === 'function') {
           db.release();
         }
-        return res.status(400).json({ success: false, message: 'Message is required' });
+        return res.status(400).json({ success: false, message: 'Message or image is required' });
       }
 
       // Initialize OpenAI
@@ -148,6 +148,12 @@ module.exports = async (req, res) => {
 - You give ACTIONABLE TRADING RECOMMENDATIONS with entry/exit levels, stop losses, and profit targets
 - You synthesize information from multiple sources into profitable insights
 - You think independently and analyze data like a professional trader
+- **IMAGE ANALYSIS**: You can analyze charts, screenshots, trading setups, and any financial images users send. When users upload images, analyze them for:
+  * Chart patterns (support/resistance, trends, patterns)
+  * Technical indicators visible in the image
+  * Trading setups and entry/exit points
+  * Market structure and price action
+  * Any relevant trading information visible in the image
 
 **CORE INTELLIGENCE PRINCIPLES**:
 1. **Independent Analysis**: You don't just fetch data - you ANALYZE it. Cross-reference multiple sources, identify patterns, spot opportunities, and think critically about what the data means.
@@ -373,11 +379,41 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       // Format conversation history for OpenAI
       const messages = [
         { role: 'system', content: systemPrompt },
-        ...conversationHistory.map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        })),
-        { role: 'user', content: message }
+        ...conversationHistory.map(msg => {
+          if (msg.role === 'user') {
+            // Handle user messages with images
+            if (msg.images && msg.images.length > 0) {
+              return {
+                role: 'user',
+                content: [
+                  ...msg.images.map(img => ({
+                    type: 'image_url',
+                    image_url: { url: img }
+                  })),
+                  { type: 'text', text: msg.content || '' }
+                ]
+              };
+            }
+            return { role: 'user', content: msg.content || '' };
+          }
+          return { role: 'assistant', content: msg.content || '' };
+        }),
+        // Add current user message with images if any
+        (() => {
+          if (images && images.length > 0) {
+            return {
+              role: 'user',
+              content: [
+                ...images.map(img => ({
+                  type: 'image_url',
+                  image_url: { url: img }
+                })),
+                { type: 'text', text: message || '' }
+              ]
+            };
+          }
+          return { role: 'user', content: message || '' };
+        })()
       ];
 
       // Define functions for real-time market data access
@@ -442,16 +478,24 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       ];
 
       // Call OpenAI API with function calling
-      let completion;
+      // Use gpt-4o for vision capabilities when images are present, otherwise use gpt-4o
+      const hasImages = images && images.length > 0;
+      let completion = null;
       try {
-        completion = await openai.chat.completions.create({
-          model: 'gpt-4o', // Using GPT-4o for best performance
+        const completionParams = {
+          model: 'gpt-4o', // GPT-4o supports vision
           messages: messages,
-          functions: functions,
-          function_call: 'auto', // Let the model decide when to call functions
-          temperature: 0.8, // Higher temperature for more natural, human-like, conversational responses
-          max_tokens: 1000, // Reduced for more concise responses - only provide details when asked
-        });
+          temperature: 0.8,
+          max_tokens: 2000, // Increased for image analysis
+        };
+
+        // Only add functions if no images (function calling with images can be complex)
+        if (!hasImages) {
+          completionParams.functions = functions;
+          completionParams.function_call = 'auto';
+        }
+
+        completion = await openai.chat.completions.create(completionParams);
       } catch (openaiError) {
         // Handle OpenAI-specific errors
         console.error('OpenAI API error:', openaiError);
@@ -820,7 +864,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             aiResponse = errorCompletion.choices[0]?.message?.content || 'I couldn\'t access the economic calendar right now. You can check Forex Factory directly for today\'s events.';
           }
         }
-        }
+      }
 
       if (!aiResponse) {
         aiResponse = 'I apologize, but I could not generate a response. Please try again.';
@@ -834,8 +878,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       return res.status(200).json({
         success: true,
         response: aiResponse,
-        model: completion.model,
-        usage: completion.usage
+        model: completion?.model || 'gpt-4o',
+        usage: completion?.usage || null
       });
 
     } catch (dbError) {
