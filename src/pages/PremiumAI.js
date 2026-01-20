@@ -159,6 +159,64 @@ How can I help you trade today?`
     });
   };
 
+  // Handle paste event for images and text
+  const handlePaste = async (e) => {
+    const clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+
+    const items = clipboardData.items;
+    if (!items || items.length === 0) return;
+
+    // Check for images first (highest priority)
+    let hasImage = false;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Handle image paste
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste behavior for images
+        
+        const blob = item.getAsFile();
+        if (blob) {
+          hasImage = true;
+          
+          // Validate image size
+          if (blob.size > 20 * 1024 * 1024) {
+            toast.error('Pasted image is too large (max 20MB)');
+            return;
+          }
+
+          // Check if we can add more images
+          if (selectedImages.length >= 4) {
+            toast.warning('Maximum 4 images allowed. Please remove an image first.');
+            return;
+          }
+
+          try {
+            // Convert blob to File object for consistency
+            const file = new File([blob], `pasted-image-${Date.now()}.png`, {
+              type: blob.type || 'image/png'
+            });
+
+            // Convert to base64 and add to selected images
+            const base64Image = await convertToBase64(file);
+            setSelectedImages(prev => [...prev, base64Image]);
+            setImagePreviews(prev => [...prev, URL.createObjectURL(file)]);
+            
+            toast.success('Image pasted! You can add text or send the image.');
+          } catch (error) {
+            console.error('Error processing pasted image:', error);
+            toast.error('Failed to process pasted image');
+          }
+        }
+        break; // Only process first image
+      }
+    }
+
+    // If no image was found, allow normal text paste (default behavior)
+    // Text pasting will work naturally without preventDefault
+  };
+
   const sendMessage = async (e) => {
     e?.preventDefault();
     
@@ -312,6 +370,60 @@ How can I help you trade today?`
     }
   };
 
+  // Add paste handler to container for better coverage (when clicking on container)
+  useEffect(() => {
+    const handleContainerPaste = async (e) => {
+      // Only handle if focus is not on textarea (textarea has its own handler)
+      if (document.activeElement !== inputRef.current && document.activeElement !== fileInputRef.current) {
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const items = clipboardData.items;
+        if (!items || items.length === 0) return;
+
+        // Check for images
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const blob = item.getAsFile();
+            if (blob) {
+              if (blob.size > 20 * 1024 * 1024) {
+                toast.error('Pasted image is too large (max 20MB)');
+                return;
+              }
+              if (selectedImages.length >= 4) {
+                toast.warning('Maximum 4 images allowed. Please remove an image first.');
+                return;
+              }
+              try {
+                const file = new File([blob], `pasted-image-${Date.now()}.png`, {
+                  type: blob.type || 'image/png'
+                });
+                const base64Image = await convertToBase64(file);
+                setSelectedImages(prev => [...prev, base64Image]);
+                setImagePreviews(prev => [...prev, URL.createObjectURL(file)]);
+                toast.success('Image pasted! You can add text or send the image.');
+              } catch (error) {
+                console.error('Error processing pasted image:', error);
+                toast.error('Failed to process pasted image');
+              }
+            }
+            break;
+          }
+        }
+      }
+    };
+
+    const container = document.querySelector('.premium-ai-container');
+    if (container) {
+      container.addEventListener('paste', handleContainerPaste);
+      return () => {
+        container.removeEventListener('paste', handleContainerPaste);
+      };
+    }
+  }, [selectedImages.length]);
+
   return (
     <div className="premium-ai-container">
       <div className="premium-ai-header">
@@ -440,7 +552,8 @@ How can I help you trade today?`
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis... (or upload a chart/image)"
+            onPaste={handlePaste}
+            placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis... (or paste/upload a chart/image)"
             rows="1"
             disabled={isLoading}
           />
