@@ -189,6 +189,10 @@
     {
       "source": "/api/ai/market-news",
       "destination": "/api/ai/market-news.js"
+    },
+    {
+      "source": "/api/ai/trading-calculator",
+      "destination": "/api/ai/trading-calculator.js"
     }
   ]
 }
