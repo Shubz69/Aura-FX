@@ -173,6 +173,10 @@
     {
       "source": "/api/chatbot",
       "destination": "/api/chatbot.js"
+    },
+    {
+      "source": "/api/ai/market-data",
+      "destination": "/api/ai/market-data.js"
     }
   ]
 }

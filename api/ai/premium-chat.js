@@ -1,4 +1,5 @@
 const { getDbConnection } = require('../db');
+const axios = require('axios');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 
@@ -139,34 +140,52 @@ module.exports = async (req, res) => {
       });
 
       // Build conversation context with system prompt for professional financial analyst
-      const systemPrompt = `You are AURA AI, a professional financial analyst and trading strategist for AURA FX, a premium trading education platform. Your communication style is:
+      const systemPrompt = `You are AURA AI, a professional financial analyst and trading strategist for AURA FX, a premium trading education platform with REAL-TIME market data access.
+
+**REAL-TIME CAPABILITIES**:
+- You have access to LIVE market data from Bloomberg, Forex Factory, Alpha Vantage, and Yahoo Finance
+- You can fetch real-time prices, charts, and market analysis for ANY trading instrument
+- You can analyze live charts and provide real-time trading signals
+- You can access economic calendars and news events in real-time
+- ALL data you provide is CURRENT and LIVE - never use outdated information
 
 **Professional & Analytical**: You speak like a seasoned financial analyst - precise, data-driven, and objective. You use professional terminology and maintain a formal yet accessible tone.
 
 **Key Characteristics**:
-- Provide quantitative analysis with specific metrics, percentages, and data points
-- Reference market conditions, economic indicators, and technical patterns professionally
+- ALWAYS fetch real-time data when users ask about prices, charts, or market analysis
+- Provide quantitative analysis with specific metrics, percentages, and data points from LIVE data
+- Reference CURRENT market conditions, economic indicators, and technical patterns professionally
 - Use financial terminology correctly (e.g., "support level" not "support area", "risk-reward ratio" not "risk reward")
-- Structure responses with clear sections: Analysis, Strategy, Risk Assessment, Action Items
+- Structure responses with clear sections: Executive Summary, Real-Time Data, Technical/Fundamental Analysis, Risk Assessment, Trading Recommendation
+- When providing charts or analysis, ALWAYS use current market data - fetch it in real-time
 - Avoid casual language, emojis in analysis, or overly conversational tone
 - Present multiple scenarios with probabilities when appropriate
 - Always include risk disclaimers and position sizing recommendations
 
 **Your Expertise**:
-1. Technical Analysis - Chart patterns, indicators (RSI, MACD, Bollinger Bands), support/resistance, trend analysis
-2. Fundamental Analysis - Economic indicators, earnings reports, market sentiment, sector analysis
+1. Technical Analysis - REAL-TIME chart pattern recognition, indicator interpretation (RSI, MACD, Bollinger Bands), support/resistance analysis with live data
+2. Fundamental Analysis - Economic indicators, earnings reports, CURRENT market sentiment evaluation, sector analysis
 3. Risk Management - Position sizing formulas, stop-loss calculations, risk-reward optimization, portfolio allocation
-4. Trading Strategies - Entry/exit criteria, timeframe analysis, strategy backtesting principles
+4. Trading Strategies - Entry/exit criteria based on LIVE prices, timeframe analysis, strategy backtesting principles
 5. Market Psychology - Behavioral finance, discipline frameworks, emotional control methodologies
+6. Real-Time Market Data - Access to Bloomberg, Forex Factory, and other professional trading platforms for live prices and analysis
+
+**IMPORTANT**: When users ask about:
+- Current prices → Fetch real-time quote data
+- Charts or technical analysis → Fetch intraday/historical data and analyze
+- Market conditions → Get latest market data before responding
+- Trading signals → Use real-time data to generate current signals
+- Economic events → Reference Forex Factory calendar and current events
 
 **Response Format**: Structure your analysis professionally:
-- Executive Summary (brief overview)
-- Technical/Fundamental Analysis (detailed findings)
+- Executive Summary (brief overview with current market status)
+- Real-Time Market Data (current prices, changes, volume from live sources)
+- Technical/Fundamental Analysis (detailed findings using current data)
 - Risk Assessment (specific risk metrics)
-- Trading Recommendation (clear action items with entry/exit levels)
+- Trading Recommendation (clear action items with entry/exit levels based on LIVE prices)
 - Risk Disclaimer (standard trading risk warnings)
 
-You maintain a professional financial analyst persona at all times. You can answer general questions, but your specialty is financial and trading analysis.
+You maintain a professional financial analyst persona at all times. You can answer general questions, but your specialty is financial and trading analysis with REAL-TIME data.
 
 User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7FX Elite' : 'Premium'}`;
 
@@ -180,12 +199,37 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         { role: 'user', content: message }
       ];
 
-      // Call OpenAI API
+      // Define functions for real-time market data access
+      const functions = [
+        {
+          name: 'get_market_data',
+          description: 'Fetch real-time market data for any trading symbol (stocks, forex, crypto, commodities). Returns current price, volume, change, and other market metrics.',
+          parameters: {
+            type: 'object',
+            properties: {
+              symbol: {
+                type: 'string',
+                description: 'The trading symbol (e.g., AAPL, EURUSD, BTCUSD, XAUUSD, SPY, etc.)'
+              },
+              type: {
+                type: 'string',
+                enum: ['quote', 'intraday'],
+                description: 'Type of data: "quote" for current price/quote, "intraday" for historical intraday data for charting'
+              }
+            },
+            required: ['symbol']
+          }
+        }
+      ];
+
+      // Call OpenAI API with function calling
       let completion;
       try {
         completion = await openai.chat.completions.create({
           model: 'gpt-4o', // Using GPT-4o for best performance
           messages: messages,
+          functions: functions,
+          function_call: 'auto', // Let the model decide when to call functions
           temperature: 0.6, // Lower temperature for more professional, consistent responses
           max_tokens: 2000,
         });
@@ -234,7 +278,138 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         });
       }
 
-      const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
+      let aiResponse = completion.choices[0]?.message?.content || '';
+      let functionCall = completion.choices[0]?.message?.function_call;
+
+      // Handle function calls for real-time market data
+      if (functionCall && functionCall.name === 'get_market_data') {
+        const functionArgs = JSON.parse(functionCall.arguments);
+        const symbol = functionArgs.symbol;
+        const dataType = functionArgs.type || 'quote';
+
+        // Fetch real-time market data
+        const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
+        try {
+          const marketDataResponse = await axios.post(`${API_BASE_URL}/api/ai/market-data`, {
+            symbol: symbol,
+            type: dataType
+          }, {
+            timeout: 10000
+          });
+
+          if (marketDataResponse.data && marketDataResponse.data.success) {
+            const marketData = marketDataResponse.data.data;
+
+            // Add function result to conversation and get AI response
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'get_market_data',
+              content: JSON.stringify(marketData)
+            });
+
+            // Get AI response with market data context
+            const secondCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: messages,
+              functions: functions,
+              function_call: 'auto',
+              temperature: 0.6,
+              max_tokens: 2000,
+            });
+
+            aiResponse = secondCompletion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
+            
+            // Check if there's another function call needed
+            if (secondCompletion.choices[0]?.message?.function_call) {
+              // Handle additional function calls if needed (e.g., for intraday data after quote)
+              const secondFunctionCall = secondCompletion.choices[0]?.message?.function_call;
+              if (secondFunctionCall.name === 'get_market_data') {
+                const secondArgs = JSON.parse(secondFunctionCall.arguments);
+                const secondMarketDataResponse = await axios.post(`${API_BASE_URL}/api/ai/market-data`, {
+                  symbol: secondArgs.symbol,
+                  type: secondArgs.type || 'intraday'
+                }, {
+                  timeout: 10000
+                });
+
+                if (secondMarketDataResponse.data && secondMarketDataResponse.data.success) {
+                  messages.push({
+                    role: 'assistant',
+                    content: null,
+                    function_call: secondFunctionCall
+                  });
+                  messages.push({
+                    role: 'function',
+                    name: 'get_market_data',
+                    content: JSON.stringify(secondMarketDataResponse.data.data)
+                  });
+
+                  const thirdCompletion = await openai.chat.completions.create({
+                    model: 'gpt-4o',
+                    messages: messages,
+                    temperature: 0.6,
+                    max_tokens: 2000,
+                  });
+
+                  aiResponse = thirdCompletion.choices[0]?.message?.content || aiResponse;
+                }
+              }
+            }
+          } else {
+            // Market data fetch failed, but continue with AI response
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'get_market_data',
+              content: JSON.stringify({ error: 'Market data not available for this symbol' })
+            });
+
+            const errorCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: messages,
+              temperature: 0.6,
+              max_tokens: 2000,
+            });
+
+            aiResponse = errorCompletion.choices[0]?.message?.content || 'I apologize, but I could not fetch market data for that symbol. Please check the symbol and try again.';
+          }
+        } catch (marketDataError) {
+          console.error('Error fetching market data:', marketDataError);
+          // Continue with AI response even if market data fails
+          messages.push({
+            role: 'assistant',
+            content: null,
+            function_call: functionCall
+          });
+          messages.push({
+            role: 'function',
+            name: 'get_market_data',
+            content: JSON.stringify({ error: 'Market data service temporarily unavailable' })
+          });
+
+          const errorCompletion = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: messages,
+            temperature: 0.6,
+            max_tokens: 2000,
+          });
+
+          aiResponse = errorCompletion.choices[0]?.message?.content || 'I apologize, but I encountered an error fetching market data. Please try again.';
+        }
+      }
+
+      if (!aiResponse) {
+        aiResponse = 'I apologize, but I could not generate a response. Please try again.';
+      }
 
       // Release database connection back to pool
       if (db && typeof db.release === 'function') {

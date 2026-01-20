@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
+import MarketChart from '../components/MarketChart';
 import '../styles/PremiumAI.css';
 
 const PremiumAI = () => {
@@ -56,13 +58,13 @@ const PremiumAI = () => {
 
 I am your dedicated financial analyst and trading strategist. My expertise encompasses:
 
-• **Technical Analysis** - Chart pattern recognition, indicator interpretation, support/resistance analysis
-• **Strategic Planning** - Scalping, swing trading, day trading, and position trading methodologies
-• **Risk Assessment** - Position sizing calculations, stop-loss placement, risk-reward optimization
-• **Market Analysis** - Fundamental analysis, market sentiment evaluation, economic indicator interpretation
-• **Portfolio Management** - Asset allocation, diversification strategies, performance optimization
+• Technical Analysis - Chart pattern recognition, indicator interpretation, support/resistance analysis
+• Strategic Planning - Scalping, swing trading, day trading, and position trading methodologies
+• Risk Assessment - Position sizing calculations, stop-loss placement, risk-reward optimization
+• Market Analysis - Fundamental analysis, market sentiment evaluation, economic indicator interpretation
+• Portfolio Management - Asset allocation, diversification strategies, performance optimization
 
-I provide data-driven analysis and actionable trading insights. How may I assist with your trading objectives today?`
+I provide real-time market data, live chart analysis, and actionable trading insights. I can access live prices from Bloomberg, Forex Factory, and other professional trading platforms. How may I assist with your trading objectives today?`
     };
 
     setMessages([welcomeMessage]);
@@ -135,7 +137,9 @@ I provide data-driven analysis and actionable trading insights. How may I assist
       if (data.success) {
         const aiMessage = {
           role: 'assistant',
-          content: data.response
+          content: data.response,
+          chartData: data.chartData || null, // Chart data if provided
+          symbol: data.symbol || null // Symbol for chart
         };
 
         setMessages(prev => [...prev, aiMessage]);
@@ -247,13 +251,11 @@ I provide data-driven analysis and actionable trading insights. How may I assist
               </div>
               <div className="message-content">
                 <div className="message-text">
-                  {msg.content.split('\n').map((line, i) => (
-                    <React.Fragment key={i}>
-                      {line}
-                      {i < msg.content.split('\n').length - 1 && <br />}
-                    </React.Fragment>
-                  ))}
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
+                {msg.chartData && msg.symbol && (
+                  <MarketChart data={msg.chartData} symbol={msg.symbol} type="line" />
+                )}
               </div>
             </div>
           ))}
