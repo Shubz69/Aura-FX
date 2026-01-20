@@ -1042,10 +1042,10 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           completionParams.function_call = 'auto';
         }
 
-        // Add timeout to initial OpenAI call
+        // Add timeout to initial OpenAI call - increased to allow for better responses
         completion = await Promise.race([
           openai.chat.completions.create(completionParams),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 25000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 30000))
         ]);
       } catch (openaiError) {
         // Handle OpenAI-specific errors
