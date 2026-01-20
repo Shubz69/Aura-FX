@@ -153,12 +153,19 @@ module.exports = async (req, res) => {
 
 **YOUR ANALYTICAL PROCESS**:
 When a user asks about markets, prices, or trading:
-1. Fetch REAL-TIME price data from multiple sources
-2. Fetch current economic calendar to see ACTUAL events (don't make up events)
-3. Fetch recent news that could affect the market
-4. ANALYZE the data: What do the numbers mean? What patterns do you see? What opportunities exist?
-5. Synthesize insights: Combine price data + news + events + technical patterns
-6. Provide actionable intelligence: Not just data, but what it means and how to use it
+1. AUTOMATICALLY fetch REAL-TIME price data from multiple sources
+2. AUTOMATICALLY fetch current economic calendar to see ACTUAL events happening TODAY (never make up events)
+3. AUTOMATICALLY fetch recent news (last 24 hours) that could affect the market
+4. ANALYZE the data independently: What do the numbers mean? What patterns do you see? What opportunities exist?
+5. Cross-reference: Compare price movements with news and events - do they align? What's driving the market?
+6. Synthesize insights: Combine price data + news + events + technical patterns into actionable intelligence
+7. Provide profitable recommendations: Not just data, but what it means and how to profit from it
+
+**AUTOMATIC DATA FETCHING**:
+- If user asks about a symbol (gold, EURUSD, AAPL, etc.) → Fetch price + news + calendar automatically
+- If user asks "what's happening today" → Fetch calendar + news automatically
+- If user asks about market conditions → Fetch prices + news + calendar for relevant instruments
+- Always verify events exist before mentioning them - use get_economic_calendar first
 
 **DATA SOURCES YOU HAVE ACCESS TO**:
 - Real-time prices: Alpha Vantage, Yahoo Finance, Finnhub, Twelve Data
@@ -183,11 +190,18 @@ When a user asks about markets, prices, or trading:
 
 **EXAMPLE THINKING PROCESS**:
 User: "what's been going on with gold?"
-1. Fetch current XAUUSD price → $2,724.87
-2. Fetch today's economic calendar → Check what events are ACTUALLY scheduled
-3. Fetch recent gold-related news → See what's moving the market
-4. Analyze: Price is up X%, news shows Y, events show Z → This suggests...
-5. Provide insight: "Gold is at $2,724.87, up 1.2% today. The move is likely driven by [specific news/event]. Looking at the technicals, [analysis]. For trading today, [actionable insight]."
+1. AUTOMATICALLY fetch current XAUUSD price from multiple sources → $2,724.87 (verify accuracy)
+2. AUTOMATICALLY fetch today's economic calendar → See ACTUAL events (if no NFP, don't say NFP)
+3. AUTOMATICALLY fetch recent gold-related news (last 24h) → Identify market-moving stories
+4. ANALYZE independently: 
+   - Price movement: +1.2% - is this significant?
+   - News correlation: Which news items align with price movement?
+   - Event impact: Are there events today that could affect gold?
+   - Technical patterns: What do the charts suggest?
+5. SYNTHESIZE: Combine all data points to understand WHY gold is moving
+6. PROVIDE ACTIONABLE INSIGHT: "Gold is at $2,724.87, up 1.2% today. The move is driven by [specific verified news/event]. Technical analysis shows [pattern]. For trading today, consider [specific entry/exit with reasoning]."
+
+**CRITICAL**: Always fetch calendar FIRST when discussing "today" or "this week" to verify events actually exist.
 
 **WHEN USER ASKS FOR DETAILS**:
 Provide comprehensive analysis:
@@ -363,19 +377,19 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               content: JSON.stringify(marketData)
             });
 
-            // Get AI response with market data context - more conversational
+            // Get AI response with market data context - AI may want to fetch additional data
             const secondCompletion = await openai.chat.completions.create({
               model: 'gpt-4o',
               messages: messages,
               functions: functions,
-              function_call: 'auto',
-              temperature: 0.8, // Higher temperature for more natural, human-like responses
-              max_tokens: 1000, // Reduced for more concise responses
+              function_call: 'auto', // AI can automatically fetch news/calendar if needed
+              temperature: 0.8,
+              max_tokens: 1500, // Allow for detailed analysis when needed
             });
 
             aiResponse = secondCompletion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
             
-            // Check if there's another function call needed
+            // Check if AI wants to fetch additional data (news, calendar) for better analysis
             if (secondCompletion.choices[0]?.message?.function_call) {
               // Handle additional function calls if needed (e.g., for intraday data after quote)
               const secondFunctionCall = secondCompletion.choices[0]?.message?.function_call;
@@ -403,11 +417,64 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   const thirdCompletion = await openai.chat.completions.create({
                     model: 'gpt-4o',
                     messages: messages,
-                    temperature: 0.6,
-                    max_tokens: 2000,
+                    functions: functions,
+                    function_call: 'auto',
+                    temperature: 0.8,
+                    max_tokens: 1500,
                   });
 
                   aiResponse = thirdCompletion.choices[0]?.message?.content || aiResponse;
+                  
+                  // Check for even more function calls (news, calendar)
+                  if (thirdCompletion.choices[0]?.message?.function_call) {
+                    // Continue chain if AI wants more data
+                  }
+                }
+              } else if (secondFunctionCall.name === 'get_economic_calendar' || secondFunctionCall.name === 'get_market_news') {
+                // AI wants to fetch calendar or news for better context
+                const additionalArgs = JSON.parse(secondFunctionCall.arguments);
+                
+                try {
+                  let additionalData = null;
+                  if (secondFunctionCall.name === 'get_economic_calendar') {
+                    const calendarResp = await axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
+                      date: additionalArgs.date,
+                      impact: additionalArgs.impact
+                    }, { timeout: 15000 });
+                    if (calendarResp.data?.success) additionalData = calendarResp.data.data;
+                  } else if (secondFunctionCall.name === 'get_market_news') {
+                    const newsResp = await axios.post(`${API_BASE_URL}/api/ai/market-news`, {
+                      symbol: additionalArgs.symbol,
+                      timeframe: additionalArgs.timeframe || '24h'
+                    }, { timeout: 10000 });
+                    });
+                    if (newsResp.data?.success) additionalData = newsResp.data.data;
+                  }
+                  
+                  if (additionalData) {
+                    messages.push({
+                      role: 'assistant',
+                      content: null,
+                      function_call: secondFunctionCall
+                    });
+                    messages.push({
+                      role: 'function',
+                      name: secondFunctionCall.name,
+                      content: JSON.stringify(additionalData)
+                    });
+                    
+                    const finalCompletion = await openai.chat.completions.create({
+                      model: 'gpt-4o',
+                      messages: messages,
+                      temperature: 0.8,
+                      max_tokens: 1500,
+                    });
+                    
+                    aiResponse = finalCompletion.choices[0]?.message?.content || aiResponse;
+                  }
+                } catch (additionalError) {
+                  console.log('Additional data fetch error:', additionalError.message);
+                  // Continue with existing response
                 }
               }
             }
