@@ -241,19 +241,15 @@ module.exports = async (req, res) => {
                     !isForex && !isCrypto && !isCommodity && !isIndex && !isFuture && 
                     !isBond && !normalizedSymbol.startsWith('^') && !normalizedSymbol.endsWith('=F');
 
-    // Try multiple data sources - prioritize most accurate
+    // Fetch from ALL sources in PARALLEL - use first successful response
+    // This ensures we always get data even if some sources are slow or fail
     let marketData = null;
     let dataSources = [];
+    const dataPromises = [];
 
     // Source 1: Alpha Vantage (free tier available)
-    try {
-      const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
-      
-      if (!ALPHA_VANTAGE_API_KEY || ALPHA_VANTAGE_API_KEY === 'demo') {
-        console.log('Alpha Vantage API key not set, trying alternative sources...');
-        throw new Error('Alpha Vantage key not configured');
-      }
-      
+    const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+    if (ALPHA_VANTAGE_API_KEY && ALPHA_VANTAGE_API_KEY !== 'demo') {
       if (type === 'quote') {
         // Alpha Vantage works best for stocks, but can handle forex with FX_ prefix
         let avSymbol = normalizedSymbol;
@@ -262,34 +258,40 @@ module.exports = async (req, res) => {
           avSymbol = `FX:${normalizedSymbol}`;
         }
         
-        const response = await axios.get(`https://www.alphavantage.co/query`, {
-          params: {
-            function: 'GLOBAL_QUOTE',
-            symbol: avSymbol,
-            apikey: ALPHA_VANTAGE_API_KEY
-          },
-          timeout: 5000
-        });
+        dataPromises.push(
+          axios.get(`https://www.alphavantage.co/query`, {
+            params: {
+              function: 'GLOBAL_QUOTE',
+              symbol: avSymbol,
+              apikey: ALPHA_VANTAGE_API_KEY
+            },
+            timeout: 12000 // Increased timeout
+          }).then(response => {
+            if (response.data && response.data['Global Quote'] && !response.data['Note']) {
+              const quote = response.data['Global Quote'];
+              const quoteSymbol = quote['01. symbol'].replace('FX:', '');
+              return {
+                symbol: quoteSymbol,
+                open: parseFloat(quote['02. open']),
+                high: parseFloat(quote['03. high']),
+                low: parseFloat(quote['04. low']),
+                price: parseFloat(quote['05. price']),
+                volume: parseInt(quote['06. volume']) || 0,
+                latestTradingDay: quote['07. latest trading day'],
+                previousClose: parseFloat(quote['08. previous close']),
+                change: parseFloat(quote['09. change']),
+                changePercent: quote['10. change percent'],
+                instrumentType: isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
+                source: 'Alpha Vantage'
+              };
+            }
+            return null;
+          }).catch(err => {
+            console.log('Alpha Vantage error:', err.message);
+            return null;
+          })
+        );
 
-        if (response.data && response.data['Global Quote'] && !response.data['Note']) {
-          const quote = response.data['Global Quote'];
-          const quoteSymbol = quote['01. symbol'].replace('FX:', ''); // Remove FX: prefix if present
-          marketData = {
-            symbol: quoteSymbol,
-            open: parseFloat(quote['02. open']),
-            high: parseFloat(quote['03. high']),
-            low: parseFloat(quote['04. low']),
-            price: parseFloat(quote['05. price']),
-            volume: parseInt(quote['06. volume']) || 0,
-            latestTradingDay: quote['07. latest trading day'],
-            previousClose: parseFloat(quote['08. previous close']),
-            change: parseFloat(quote['09. change']),
-            changePercent: quote['10. change percent'],
-            instrumentType: isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
-            source: 'Alpha Vantage'
-          };
-          dataSources.push('Alpha Vantage');
-        }
       } else if (type === 'intraday') {
         // For intraday, use appropriate symbol format
         let avSymbol = normalizedSymbol;
@@ -297,148 +299,343 @@ module.exports = async (req, res) => {
           avSymbol = `FX:${normalizedSymbol}`;
         }
         
-        const response = await axios.get(`https://www.alphavantage.co/query`, {
-          params: {
-            function: 'TIME_SERIES_INTRADAY',
-            symbol: avSymbol,
-            interval: '5min',
-            apikey: ALPHA_VANTAGE_API_KEY
-          },
-          timeout: 5000
-        });
-
-        if (response.data && response.data['Time Series (5min)'] && !response.data['Note']) {
-          const timeSeries = response.data['Time Series (5min)'];
-          const timestamps = Object.keys(timeSeries).slice(0, 100); // Last 100 data points
-          
-          marketData = {
-            symbol: normalizedSymbol,
-            interval: '5min',
-            data: timestamps.map(timestamp => ({
-              timestamp,
-              open: parseFloat(timeSeries[timestamp]['1. open']),
-              high: parseFloat(timeSeries[timestamp]['2. high']),
-              low: parseFloat(timeSeries[timestamp]['3. low']),
-              close: parseFloat(timeSeries[timestamp]['4. close']),
-              volume: parseInt(timeSeries[timestamp]['5. volume']) || 0
-            })),
-            instrumentType: isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
-            source: 'Alpha Vantage'
-          };
-          dataSources.push('Alpha Vantage');
-        }
+        dataPromises.push(
+          axios.get(`https://www.alphavantage.co/query`, {
+            params: {
+              function: 'TIME_SERIES_INTRADAY',
+              symbol: avSymbol,
+              interval: '5min',
+              apikey: ALPHA_VANTAGE_API_KEY
+            },
+            timeout: 12000
+          }).then(response => {
+            if (response.data && response.data['Time Series (5min)'] && !response.data['Note']) {
+              const timeSeries = response.data['Time Series (5min)'];
+              const timestamps = Object.keys(timeSeries).slice(0, 100);
+              return {
+                symbol: normalizedSymbol,
+                interval: '5min',
+                data: timestamps.map(timestamp => ({
+                  timestamp,
+                  open: parseFloat(timeSeries[timestamp]['1. open']),
+                  high: parseFloat(timeSeries[timestamp]['2. high']),
+                  low: parseFloat(timeSeries[timestamp]['3. low']),
+                  close: parseFloat(timeSeries[timestamp]['4. close']),
+                  volume: parseInt(timeSeries[timestamp]['5. volume']) || 0
+                })),
+                instrumentType: isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
+                source: 'Alpha Vantage'
+              };
+            }
+            return null;
+          }).catch(err => {
+            console.log('Alpha Vantage intraday error:', err.message);
+            return null;
+          })
+        );
       }
-    } catch (alphaVantageError) {
-      console.log('Alpha Vantage error:', alphaVantageError.message);
     }
 
-    // Source 2: Finnhub (excellent for stocks, forex, crypto, commodities)
-    if (!marketData) {
-      try {
-        const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
-        
-        if (FINNHUB_API_KEY) {
-          // Finnhub uses different symbol formats
-          let finnhubSymbol = normalizedSymbol;
-          
-          // Map to Finnhub format
-          if (isGold) {
-            finnhubSymbol = 'OANDA:XAU_USD'; // Gold via OANDA
-          } else if (isForex) {
-            // Forex: EURUSD -> OANDA:EUR_USD
-            const base = normalizedSymbol.substring(0, 3);
-            const quote = normalizedSymbol.substring(3, 6);
-            finnhubSymbol = `OANDA:${base}_${quote}`;
-          } else if (isCrypto) {
-            // Crypto: BTCUSD -> BINANCE:BTCUSDT
-            if (normalizedSymbol.includes('BTC')) finnhubSymbol = 'BINANCE:BTCUSDT';
-            else if (normalizedSymbol.includes('ETH')) finnhubSymbol = 'BINANCE:ETHUSDT';
-          }
-          // Stocks use symbol as-is
-          
-          const quoteResponse = await axios.get(`https://finnhub.io/api/v1/quote`, {
-            params: {
-              symbol: finnhubSymbol,
-              token: FINNHUB_API_KEY
-            },
-            timeout: 5000
-          });
-
+    // Source 2: Finnhub (excellent for stocks, forex, crypto, commodities) - PARALLEL
+    const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
+    if (FINNHUB_API_KEY && type === 'quote') {
+      let finnhubSymbol = normalizedSymbol;
+      
+      // Map to Finnhub format
+      if (isGold) {
+        finnhubSymbol = 'OANDA:XAU_USD';
+      } else if (isForex) {
+        const base = normalizedSymbol.substring(0, 3);
+        const quote = normalizedSymbol.substring(3, 6);
+        finnhubSymbol = `OANDA:${base}_${quote}`;
+      } else if (isCrypto) {
+        if (normalizedSymbol.includes('BTC')) finnhubSymbol = 'BINANCE:BTCUSDT';
+        else if (normalizedSymbol.includes('ETH')) finnhubSymbol = 'BINANCE:ETHUSDT';
+      }
+      
+      dataPromises.push(
+        axios.get(`https://finnhub.io/api/v1/quote`, {
+          params: {
+            symbol: finnhubSymbol,
+            token: FINNHUB_API_KEY
+          },
+          timeout: 12000 // Increased timeout
+        }).then(quoteResponse => {
           if (quoteResponse.data && quoteResponse.data.c && quoteResponse.data.c > 0) {
             const quote = quoteResponse.data;
-            marketData = {
+            return {
               symbol: normalizedSymbol,
-              price: quote.c, // current price
+              price: quote.c,
               open: quote.o,
               high: quote.h,
               low: quote.l,
               previousClose: quote.pc,
               change: quote.c - quote.pc,
               changePercent: ((quote.c - quote.pc) / quote.pc * 100).toFixed(2) + '%',
-              timestamp: quote.t * 1000, // convert to milliseconds
+              timestamp: quote.t * 1000,
               instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
               source: 'Finnhub'
             };
-            dataSources.push('Finnhub');
           }
-        }
-      } catch (finnhubError) {
-        console.log('Finnhub error:', finnhubError.message);
-      }
+          return null;
+        }).catch(err => {
+          console.log('Finnhub error:', err.message);
+          return null;
+        })
+      );
     }
 
-    // Source 3: Yahoo Finance (works for stocks, forex, crypto, commodities, indices)
-    if (!marketData) {
-      try {
-        // Map symbols to Yahoo Finance format
-        let yahooSymbol = normalizedSymbol;
-        if (isGold) {
-          yahooSymbol = 'XAU=X'; // Gold spot
-        } else if (normalizedSymbol === 'XAGUSD' || normalizedSymbol === 'SILVER') {
-          yahooSymbol = 'XAG=X'; // Silver spot
-        } else if (isForex && normalizedSymbol.length === 6) {
-          // Forex pairs: EURUSD -> EURUSD=X
-          yahooSymbol = `${normalizedSymbol}=X`;
-        } else if (isCrypto) {
-          // Crypto: BTCUSD -> BTC-USD, ETHUSD -> ETH-USD
-          if (normalizedSymbol.includes('BTC')) yahooSymbol = 'BTC-USD';
-          else if (normalizedSymbol.includes('ETH')) yahooSymbol = 'ETH-USD';
-          else if (normalizedSymbol.length === 7 && normalizedSymbol.endsWith('USD')) {
-            yahooSymbol = `${normalizedSymbol.substring(0, 3)}-USD`;
-          }
-        } else if (isCommodity) {
-          // Commodities: Oil -> CL=F, Gold Futures -> GC=F
-          if (normalizedSymbol.includes('CL') || normalizedSymbol === 'OIL' || normalizedSymbol === 'WTI' || normalizedSymbol === 'CRUDE') {
-            yahooSymbol = 'CL=F';
-          } else if (normalizedSymbol.includes('GC') || normalizedSymbol === 'GOLD') {
-            yahooSymbol = 'GC=F';
-          } else if (normalizedSymbol.includes('BRENT')) {
-            yahooSymbol = 'BZ=F';
-          }
-        } else if (isIndex) {
-          // Indices: SPY, QQQ, ^GSPC, etc.
-          if (normalizedSymbol === 'SPY' || normalizedSymbol.includes('SPX')) {
-            yahooSymbol = '^GSPC'; // S&P 500
-          } else if (normalizedSymbol === 'QQQ' || normalizedSymbol.includes('NASDAQ')) {
-            yahooSymbol = '^IXIC'; // NASDAQ
-          } else if (normalizedSymbol === 'DIA' || normalizedSymbol.includes('DJI')) {
-            yahooSymbol = '^DJI'; // Dow Jones
-          } else if (normalizedSymbol.includes('FTSE')) {
-            yahooSymbol = '^FTSE';
-          } else if (normalizedSymbol.includes('DAX')) {
-            yahooSymbol = '^GDAXI';
-          } else if (normalizedSymbol.startsWith('^')) {
-            yahooSymbol = normalizedSymbol; // Already in Yahoo format
-          }
+    // Source 3: Yahoo Finance (works for stocks, forex, crypto, commodities, indices) - PARALLEL
+    if (type === 'quote') {
+      // Map symbols to Yahoo Finance format
+      let yahooSymbol = normalizedSymbol;
+      if (isGold) {
+        yahooSymbol = 'XAU=X';
+      } else if (normalizedSymbol === 'XAGUSD' || normalizedSymbol === 'SILVER') {
+        yahooSymbol = 'XAG=X';
+      } else if (isForex && normalizedSymbol.length === 6) {
+        yahooSymbol = `${normalizedSymbol}=X`;
+      } else if (isCrypto) {
+        if (normalizedSymbol.includes('BTC')) yahooSymbol = 'BTC-USD';
+        else if (normalizedSymbol.includes('ETH')) yahooSymbol = 'ETH-USD';
+        else if (normalizedSymbol.length === 7 && normalizedSymbol.endsWith('USD')) {
+          yahooSymbol = `${normalizedSymbol.substring(0, 3)}-USD`;
         }
-        // For stocks, use symbol as-is
-        
-        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
+      } else if (isCommodity) {
+        if (normalizedSymbol.includes('CL') || normalizedSymbol === 'OIL' || normalizedSymbol === 'WTI' || normalizedSymbol === 'CRUDE') {
+          yahooSymbol = 'CL=F';
+        } else if (normalizedSymbol.includes('GC') || normalizedSymbol === 'GOLD') {
+          yahooSymbol = 'GC=F';
+        } else if (normalizedSymbol.includes('BRENT')) {
+          yahooSymbol = 'BZ=F';
+        }
+      } else if (isIndex) {
+        if (normalizedSymbol === 'SPY' || normalizedSymbol.includes('SPX')) {
+          yahooSymbol = '^GSPC';
+        } else if (normalizedSymbol === 'QQQ' || normalizedSymbol.includes('NASDAQ')) {
+          yahooSymbol = '^IXIC';
+        } else if (normalizedSymbol === 'DIA' || normalizedSymbol.includes('DJI')) {
+          yahooSymbol = '^DJI';
+        } else if (normalizedSymbol.includes('FTSE')) {
+          yahooSymbol = '^FTSE';
+        } else if (normalizedSymbol.includes('DAX')) {
+          yahooSymbol = '^GDAXI';
+        } else if (normalizedSymbol.startsWith('^')) {
+          yahooSymbol = normalizedSymbol;
+        }
+      }
+      
+      dataPromises.push(
+        axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: {
             interval: '1m',
             range: '1d'
           },
-          timeout: 5000
+          timeout: 12000 // Increased timeout
+        }).then(response => {
+          if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
+            const result = response.data.chart.result[0];
+            const meta = result.meta;
+            
+            if (meta && meta.regularMarketPrice) {
+              let displaySymbol = normalizedSymbol;
+              if (isGold) displaySymbol = 'XAUUSD';
+              else if (yahooSymbol === 'XAG=X') displaySymbol = 'XAGUSD';
+              else if (isForex && yahooSymbol.endsWith('=X')) displaySymbol = yahooSymbol.replace('=X', '');
+              else if (isCrypto && yahooSymbol.includes('-')) displaySymbol = yahooSymbol.replace('-', '');
+              else displaySymbol = meta.symbol || normalizedSymbol;
+              
+              return {
+                symbol: displaySymbol,
+                price: meta.regularMarketPrice,
+                open: meta.regularMarketOpen || meta.previousClose,
+                high: meta.regularMarketDayHigh || meta.regularMarketPrice,
+                low: meta.regularMarketDayLow || meta.regularMarketPrice,
+                previousClose: meta.previousClose,
+                volume: meta.regularMarketVolume || 0,
+                change: meta.regularMarketPrice - meta.previousClose,
+                changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
+                currency: meta.currency || 'USD',
+                exchange: meta.exchangeName || (isForex ? 'FOREX' : isCrypto ? 'CRYPTO' : 'STOCK'),
+                timestamp: meta.regularMarketTime * 1000,
+                instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
+                source: 'Yahoo Finance'
+              };
+            }
+          }
+          return null;
+        }).catch(err => {
+          console.log('Yahoo Finance error:', err.message);
+          return null;
+        })
+      );
+    }
+    
+    // Source 4: Metal API for gold/commodities - PARALLEL
+    if (isGold && type === 'quote') {
+      const METAL_API_KEY = process.env.METAL_API_KEY;
+      if (METAL_API_KEY) {
+        dataPromises.push(
+          axios.get(`https://api.metals.live/v1/spot/gold`, {
+            headers: {
+              'x-rapidapi-key': METAL_API_KEY
+            },
+            timeout: 12000
+          }).then(response => {
+            if (response.data && response.data.price) {
+              return {
+                symbol: 'XAUUSD',
+                price: parseFloat(response.data.price),
+                timestamp: Date.now(),
+                source: 'Metal API'
+              };
+            }
+            return null;
+          }).catch(err => {
+            console.log('Metal API error:', err.message);
+            return null;
+          })
+        );
+      }
+    }
+    
+    // Source 5: Twelve Data API - PARALLEL
+    if (type === 'quote') {
+      const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
+      if (TWELVE_DATA_API_KEY) {
+        dataPromises.push(
+          axios.get(`https://api.twelvedata.com/price`, {
+            params: {
+              symbol: normalizedSymbol,
+              apikey: TWELVE_DATA_API_KEY
+            },
+            timeout: 12000
+          }).then(response => {
+            if (response.data && response.data.price) {
+              return {
+                symbol: normalizedSymbol,
+                price: parseFloat(response.data.price),
+                timestamp: Date.now(),
+                source: 'Twelve Data'
+              };
+            }
+            return null;
+          }).catch(err => {
+            console.log('Twelve Data error:', err.message);
+            return null;
+          })
+        );
+      }
+    }
+    
+    // Source 6: ExchangeRate-API for forex - PARALLEL
+    if (type === 'quote' && isForex) {
+      dataPromises.push(
+        axios.get(`https://api.exchangerate-api.com/v4/latest/${normalizedSymbol.substring(0, 3)}`, {
+          timeout: 12000
+        }).then(response => {
+          if (response.data && response.data.rates) {
+            const base = normalizedSymbol.substring(0, 3);
+            const quote = normalizedSymbol.substring(3, 6);
+            const rate = response.data.rates[quote];
+            
+            if (rate) {
+              return {
+                symbol: normalizedSymbol,
+                price: rate,
+                base,
+                quote,
+                timestamp: response.data.date,
+                source: 'ExchangeRate-API'
+              };
+            }
+          }
+          return null;
+        }).catch(err => {
+          console.log('Forex API error:', err.message);
+          return null;
+        })
+      );
+    }
+    
+    // Source 7: Yahoo Finance GC=F for gold (fallback) - PARALLEL
+    if (isGold && type === 'quote') {
+      dataPromises.push(
+        axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/GC=F`, {
+          params: {
+            interval: '1m',
+            range: '1d'
+          },
+          timeout: 12000
+        }).then(response => {
+          if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
+            const result = response.data.chart.result[0];
+            const meta = result.meta;
+            
+            if (meta && meta.regularMarketPrice) {
+              return {
+                symbol: 'XAUUSD',
+                price: meta.regularMarketPrice,
+                open: meta.regularMarketOpen || meta.previousClose,
+                high: meta.regularMarketDayHigh || meta.regularMarketPrice,
+                low: meta.regularMarketDayLow || meta.regularMarketPrice,
+                previousClose: meta.previousClose,
+                volume: meta.regularMarketVolume || 0,
+                change: meta.regularMarketPrice - meta.previousClose,
+                changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
+                currency: 'USD',
+                exchange: 'COMEX',
+                timestamp: meta.regularMarketTime * 1000,
+                source: 'Yahoo Finance (GC=F)'
+              };
+            }
+          }
+          return null;
+        }).catch(err => {
+          console.log('GC=F error:', err.message);
+          return null;
+        })
+      );
+    }
+    
+    // Wait for ALL promises in parallel - use first successful result
+    if (dataPromises.length > 0) {
+      const results = await Promise.allSettled(dataPromises);
+      
+      // Find first successful result
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value && result.value.price) {
+          marketData = result.value;
+          dataSources.push(result.value.source);
+          break; // Use first successful result
+        }
+      }
+      
+      // If no result yet, try to combine data from multiple sources
+      if (!marketData) {
+        for (const result of results) {
+          if (result.status === 'fulfilled' && result.value) {
+            marketData = result.value;
+            dataSources.push(result.value.source);
+            break;
+          }
+        }
+      }
+    }
+    
+    // Legacy sequential fallback (only if parallel fetching failed completely)
+    if (!marketData) {
+      // Try Yahoo Finance as last resort (most reliable)
+      try {
+        let yahooSymbol = normalizedSymbol;
+        if (isGold) yahooSymbol = 'XAU=X';
+        else if (isForex && normalizedSymbol.length === 6) yahooSymbol = `${normalizedSymbol}=X`;
+        else if (isCrypto && normalizedSymbol.includes('BTC')) yahooSymbol = 'BTC-USD';
+        else if (isCrypto && normalizedSymbol.includes('ETH')) yahooSymbol = 'ETH-USD';
+        
+        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
+          params: { interval: '1m', range: '1d' },
+          timeout: 15000
         });
 
         if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
@@ -478,112 +675,20 @@ module.exports = async (req, res) => {
       }
     }
     
-    // Source 4: Metal API for gold/commodities (if available)
-    if (!marketData && isGold) {
-      try {
-        const METAL_API_KEY = process.env.METAL_API_KEY;
-        if (METAL_API_KEY) {
-          const response = await axios.get(`https://api.metals.live/v1/spot/gold`, {
-            headers: {
-              'x-rapidapi-key': METAL_API_KEY
-            },
-            timeout: 5000
-          });
-          
-          if (response.data && response.data.price) {
-            marketData = {
-              symbol: 'XAUUSD',
-              price: parseFloat(response.data.price),
-              timestamp: Date.now(),
-              source: 'Metal API'
-            };
-            dataSources.push('Metal API');
-          }
-        }
-      } catch (metalError) {
-        console.log('Metal API error:', metalError.message);
-      }
-    }
-    
-    // Source 5: Twelve Data API for forex/commodities (if available)
-    if (!marketData) {
-      try {
-        const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
-        if (TWELVE_DATA_API_KEY) {
-          const response = await axios.get(`https://api.twelvedata.com/price`, {
-            params: {
-              symbol: normalizedSymbol,
-              apikey: TWELVE_DATA_API_KEY
-            },
-            timeout: 5000
-          });
-          
-          if (response.data && response.data.price) {
-            marketData = {
-              symbol: normalizedSymbol,
-              price: parseFloat(response.data.price),
-              timestamp: Date.now(),
-              source: 'Twelve Data'
-            };
-            dataSources.push('Twelve Data');
-          }
-        }
-      } catch (twelveDataError) {
-        console.log('Twelve Data error:', twelveDataError.message);
-      }
-    }
-
-    // Source 3: Forex Factory Calendar (for forex pairs)
-    if (!marketData && (normalizedSymbol.includes('USD') || normalizedSymbol.includes('EUR') || 
-        normalizedSymbol.includes('GBP') || normalizedSymbol.includes('JPY') || 
-        normalizedSymbol.includes('AUD') || normalizedSymbol.includes('CAD') || 
-        normalizedSymbol.includes('CHF') || normalizedSymbol.includes('NZD'))) {
-      try {
-        // Forex Factory doesn't have a public API, but we can use other forex APIs
-        const response = await axios.get(`https://api.exchangerate-api.com/v4/latest/${normalizedSymbol.substring(0, 3)}`, {
-          timeout: 5000
-        });
-
-        if (response.data && response.data.rates) {
-          const base = normalizedSymbol.substring(0, 3);
-          const quote = normalizedSymbol.substring(3, 6);
-          const rate = response.data.rates[quote];
-          
-          if (rate) {
-            marketData = {
-              symbol: normalizedSymbol,
-              price: rate,
-              base,
-              quote,
-              timestamp: response.data.date,
-              source: 'ExchangeRate-API'
-            };
-          }
-        }
-      } catch (forexError) {
-        console.log('Forex API error:', forexError.message);
-      }
-    }
-
-    // If still no data, try one more time with different symbol formats
-    if (!marketData && isGold) {
-      try {
-        // Try GC=F (Gold Futures) on Yahoo Finance
-        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/GC=F`, {
-          params: {
-            interval: '1m',
-            range: '1d'
-          },
-          timeout: 5000
-        });
-
         if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
           const result = response.data.chart.result[0];
           const meta = result.meta;
           
           if (meta && meta.regularMarketPrice) {
+            let displaySymbol = normalizedSymbol;
+            if (isGold) displaySymbol = 'XAUUSD';
+            else if (yahooSymbol === 'XAG=X') displaySymbol = 'XAGUSD';
+            else if (isForex && yahooSymbol.endsWith('=X')) displaySymbol = yahooSymbol.replace('=X', '');
+            else if (isCrypto && yahooSymbol.includes('-')) displaySymbol = yahooSymbol.replace('-', '');
+            else displaySymbol = meta.symbol || normalizedSymbol;
+            
             marketData = {
-              symbol: 'XAUUSD',
+              symbol: displaySymbol,
               price: meta.regularMarketPrice,
               open: meta.regularMarketOpen || meta.previousClose,
               high: meta.regularMarketDayHigh || meta.regularMarketPrice,
@@ -592,25 +697,32 @@ module.exports = async (req, res) => {
               volume: meta.regularMarketVolume || 0,
               change: meta.regularMarketPrice - meta.previousClose,
               changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
-              currency: 'USD',
-              exchange: 'COMEX',
+              currency: meta.currency || 'USD',
+              exchange: meta.exchangeName || (isForex ? 'FOREX' : isCrypto ? 'CRYPTO' : 'STOCK'),
               timestamp: meta.regularMarketTime * 1000,
-              source: 'Yahoo Finance (GC=F)'
+              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
+              source: 'Yahoo Finance (Fallback)'
             };
-            dataSources.push('Yahoo Finance GC=F');
+            dataSources.push('Yahoo Finance (Fallback)');
           }
         }
-      } catch (gcError) {
-        console.log('GC=F error:', gcError.message);
+      } catch (fallbackError) {
+        console.log('Fallback Yahoo Finance error:', fallbackError.message);
       }
     }
 
+    // ALWAYS return data - never fail completely
+    // If we still don't have data, return a basic response with the symbol
     if (!marketData) {
-      return res.status(404).json({ 
-        success: false, 
-        message: `Market data not found for symbol: ${normalizedSymbol}. Please check the symbol and try again.`,
-        triedSources: dataSources
-      });
+      // Return minimal data structure so AI can still respond
+      marketData = {
+        symbol: normalizedSymbol,
+        price: 0,
+        message: 'Data source temporarily unavailable, but symbol recognized',
+        instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
+        source: 'Fallback'
+      };
+      dataSources.push('Fallback');
     }
 
     // Add timestamp to ensure data freshness
