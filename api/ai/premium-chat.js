@@ -1348,6 +1348,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       if (functionCall) {
         const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
         
+        // Ensure we have a fallback response in case function calls fail
+        if (!aiResponse) {
+          aiResponse = 'Processing your request...';
+        }
+        
         if (functionCall.name === 'get_market_data') {
         const functionArgs = JSON.parse(functionCall.arguments);
         const symbol = functionArgs.symbol;
@@ -1413,11 +1418,19 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 25000))
             ]);
 
-            aiResponse = secondCompletion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
+            // Check if we got a response or another function call
+            const secondFunctionCall = secondCompletion.choices[0]?.message?.function_call;
+            if (secondFunctionCall) {
+              // Another function call - we'll handle it, but ensure we have a fallback response
+              aiResponse = secondCompletion.choices[0]?.message?.content || aiResponse || 'Analyzing market data...';
+            } else {
+              // We got a proper response
+              aiResponse = secondCompletion.choices[0]?.message?.content || aiResponse || 'I apologize, but I could not generate a response. Please try again.';
+            }
             
             // Only fetch additional data if we have time left (prevent timeout)
             const timeElapsed = Date.now() - startTime;
-            if (timeElapsed < 35000 && secondCompletion.choices[0]?.message?.function_call) {
+            if (timeElapsed < 35000 && secondFunctionCall) {
               // Handle additional function calls if needed (e.g., for intraday data after quote)
               const secondFunctionCall = secondCompletion.choices[0]?.message?.function_call;
               if (secondFunctionCall.name === 'get_market_data') {
