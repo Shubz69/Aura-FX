@@ -56,17 +56,26 @@ const PremiumAI = () => {
       role: 'assistant',
       content: `Welcome to AURA AI, ${user?.username || user?.name || 'Trader'}.
 
-I'm your intelligent trading assistant with real-time access to ALL market instruments:
+I'm the ULTIMATE financial intelligence system - the most comprehensive trading AI in existence.
 
-**I can analyze ANY trading instrument:**
-• **Stocks** - AAPL, TSLA, MSFT, SPY, QQQ, and all major stocks
-• **Forex** - EURUSD, GBPUSD, USDJPY, and all currency pairs
-• **Crypto** - BTCUSD, ETHUSD, and all cryptocurrencies
-• **Commodities** - Gold (XAUUSD), Silver, Oil, and all commodities
-• **Indices** - SPX, NASDAQ, Dow Jones, FTSE, DAX, and all indices
+**I can analyze EVERY financial instrument:**
+• **Stocks** - Every stock on every exchange (AAPL, TSLA, MSFT, and thousands more)
+• **Forex** - All currency pairs (Major, Minor, Exotic - EURUSD, GBPUSD, USDJPY, USDZAR, etc.)
+• **Crypto** - All cryptocurrencies (BTC, ETH, SOL, ADA, XRP, and hundreds more)
+• **Commodities** - Precious metals, energy, agricultural, base metals (Gold, Oil, Wheat, Copper, etc.)
+• **Indices** - All major indices (S&P 500, Dow, NASDAQ, FTSE, DAX, Nikkei, and more)
+• **Futures** - All futures contracts (Commodity, Index, Currency futures)
 • **Bonds** - Government and corporate bonds
+• **ETFs** - All exchange-traded funds
+• **Options** - Options chains for any underlying
 
-I provide real-time prices, analyze market data from multiple sources, fetch breaking news, check economic calendars, and give you actionable trading insights. Just ask me about any instrument!
+**What makes me different:**
+✓ Real-time data from multiple professional sources (Bloomberg-level intelligence)
+✓ Actionable trading recommendations with entry/exit levels, stop losses, and profit targets
+✓ Comprehensive analysis combining technical, fundamental, and sentiment data
+✓ I provide TRADES, not just information - something other AIs cannot do
+
+Just ask me about any instrument or ask for a trade setup. I'll analyze it and give you actionable recommendations!
 
 How can I help you trade today?`
     };
