@@ -25,15 +25,57 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Symbol is required' });
     }
 
-    // Normalize symbol (remove spaces, convert to uppercase)
-    let normalizedSymbol = symbol.trim().toUpperCase();
+    // Normalize symbol (remove spaces, convert to uppercase, handle various formats)
+    let normalizedSymbol = symbol.trim().toUpperCase().replace(/\s+/g, '');
     
-    // Handle gold/commodity symbols - try multiple formats
-    const goldSymbols = ['XAUUSD', 'XAU/USD', 'GOLD', 'XAU'];
-    let isGold = goldSymbols.some(gs => normalizedSymbol.includes(gs));
-    if (isGold) {
-      normalizedSymbol = 'XAUUSD'; // Standardize to XAUUSD
+    // Handle various instrument types and normalize symbols
+    const symbolMappings = {
+      // Gold/Commodities
+      'GOLD': 'XAUUSD',
+      'XAU': 'XAUUSD',
+      'XAU/USD': 'XAUUSD',
+      // Silver
+      'SILVER': 'XAGUSD',
+      'XAG': 'XAGUSD',
+      'XAG/USD': 'XAGUSD',
+      // Oil
+      'OIL': 'CL=F',
+      'CRUDE': 'CL=F',
+      'WTI': 'CL=F',
+      'BRENT': 'BZ=F',
+      // Major Forex Pairs
+      'EUR/USD': 'EURUSD',
+      'GBP/USD': 'GBPUSD',
+      'USD/JPY': 'USDJPY',
+      'AUD/USD': 'AUDUSD',
+      'USD/CAD': 'USDCAD',
+      'NZD/USD': 'NZDUSD',
+      'USD/CHF': 'USDCHF',
+      // Crypto
+      'BITCOIN': 'BTCUSD',
+      'BTC': 'BTCUSD',
+      'BTC/USD': 'BTCUSD',
+      'ETHEREUM': 'ETHUSD',
+      'ETH': 'ETHUSD',
+      'ETH/USD': 'ETHUSD',
+    };
+    
+    // Check if symbol needs mapping
+    if (symbolMappings[normalizedSymbol]) {
+      normalizedSymbol = symbolMappings[normalizedSymbol];
     }
+    
+    // Detect instrument type for better data source selection
+    const isGold = normalizedSymbol === 'XAUUSD' || normalizedSymbol.includes('XAU');
+    const isForex = normalizedSymbol.length === 6 && /^[A-Z]{6}$/.test(normalizedSymbol) && 
+                    (normalizedSymbol.includes('USD') || normalizedSymbol.includes('EUR') || 
+                     normalizedSymbol.includes('GBP') || normalizedSymbol.includes('JPY'));
+    const isCrypto = normalizedSymbol.includes('BTC') || normalizedSymbol.includes('ETH') || 
+                     normalizedSymbol.includes('USDT') || normalizedSymbol.includes('USDC');
+    const isCommodity = normalizedSymbol.includes('XAU') || normalizedSymbol.includes('XAG') || 
+                        normalizedSymbol.includes('CL') || normalizedSymbol.includes('GC');
+    const isStock = /^[A-Z]{1,5}$/.test(normalizedSymbol) && normalizedSymbol.length <= 5 && 
+                    !isForex && !isCrypto && !isCommodity;
 
     // Try multiple data sources - prioritize most accurate
     let marketData = null;
@@ -108,16 +150,33 @@ module.exports = async (req, res) => {
       console.log('Alpha Vantage error:', alphaVantageError.message);
     }
 
-    // Source 2: Finnhub (if API key is available)
+    // Source 2: Finnhub (excellent for stocks, forex, crypto, commodities)
     if (!marketData) {
       try {
         const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
         
         if (FINNHUB_API_KEY) {
-          // Try quote endpoint
+          // Finnhub uses different symbol formats
+          let finnhubSymbol = normalizedSymbol;
+          
+          // Map to Finnhub format
+          if (isGold) {
+            finnhubSymbol = 'OANDA:XAU_USD'; // Gold via OANDA
+          } else if (isForex) {
+            // Forex: EURUSD -> OANDA:EUR_USD
+            const base = normalizedSymbol.substring(0, 3);
+            const quote = normalizedSymbol.substring(3, 6);
+            finnhubSymbol = `OANDA:${base}_${quote}`;
+          } else if (isCrypto) {
+            // Crypto: BTCUSD -> BINANCE:BTCUSDT
+            if (normalizedSymbol.includes('BTC')) finnhubSymbol = 'BINANCE:BTCUSDT';
+            else if (normalizedSymbol.includes('ETH')) finnhubSymbol = 'BINANCE:ETHUSDT';
+          }
+          // Stocks use symbol as-is
+          
           const quoteResponse = await axios.get(`https://finnhub.io/api/v1/quote`, {
             params: {
-              symbol: normalizedSymbol,
+              symbol: finnhubSymbol,
               token: FINNHUB_API_KEY
             },
             timeout: 5000
@@ -135,8 +194,10 @@ module.exports = async (req, res) => {
               change: quote.c - quote.pc,
               changePercent: ((quote.c - quote.pc) / quote.pc * 100).toFixed(2) + '%',
               timestamp: quote.t * 1000, // convert to milliseconds
+              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
               source: 'Finnhub'
             };
+            dataSources.push('Finnhub');
           }
         }
       } catch (finnhubError) {
@@ -144,11 +205,35 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Source 3: Yahoo Finance (for stocks and some commodities)
+    // Source 3: Yahoo Finance (works for stocks, forex, crypto, commodities, indices)
     if (!marketData) {
       try {
-        // For gold, try XAU=X format
-        const yahooSymbol = isGold ? 'XAU=X' : normalizedSymbol;
+        // Map symbols to Yahoo Finance format
+        let yahooSymbol = normalizedSymbol;
+        if (isGold) {
+          yahooSymbol = 'XAU=X'; // Gold spot
+        } else if (normalizedSymbol === 'XAGUSD' || normalizedSymbol === 'SILVER') {
+          yahooSymbol = 'XAG=X'; // Silver spot
+        } else if (isForex && normalizedSymbol.length === 6) {
+          // Forex pairs: EURUSD -> EURUSD=X
+          yahooSymbol = `${normalizedSymbol}=X`;
+        } else if (isCrypto) {
+          // Crypto: BTCUSD -> BTC-USD, ETHUSD -> ETH-USD
+          if (normalizedSymbol.includes('BTC')) yahooSymbol = 'BTC-USD';
+          else if (normalizedSymbol.includes('ETH')) yahooSymbol = 'ETH-USD';
+          else if (normalizedSymbol.length === 7 && normalizedSymbol.endsWith('USD')) {
+            yahooSymbol = `${normalizedSymbol.substring(0, 3)}-USD`;
+          }
+        } else if (isCommodity) {
+          // Commodities: Oil -> CL=F, Gold Futures -> GC=F
+          if (normalizedSymbol.includes('CL') || normalizedSymbol === 'OIL' || normalizedSymbol === 'WTI') {
+            yahooSymbol = 'CL=F';
+          } else if (normalizedSymbol.includes('GC')) {
+            yahooSymbol = 'GC=F';
+          }
+        }
+        // For stocks and indices, use symbol as-is
+        
         const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: {
             interval: '1m',
@@ -162,8 +247,16 @@ module.exports = async (req, res) => {
           const meta = result.meta;
           
           if (meta && meta.regularMarketPrice) {
+            // Determine original symbol format
+            let displaySymbol = normalizedSymbol;
+            if (isGold) displaySymbol = 'XAUUSD';
+            else if (yahooSymbol === 'XAG=X') displaySymbol = 'XAGUSD';
+            else if (isForex && yahooSymbol.endsWith('=X')) displaySymbol = yahooSymbol.replace('=X', '');
+            else if (isCrypto && yahooSymbol.includes('-')) displaySymbol = yahooSymbol.replace('-', '');
+            else displaySymbol = meta.symbol || normalizedSymbol;
+            
             marketData = {
-              symbol: isGold ? 'XAUUSD' : meta.symbol,
+              symbol: displaySymbol,
               price: meta.regularMarketPrice,
               open: meta.regularMarketOpen || meta.previousClose,
               high: meta.regularMarketDayHigh || meta.regularMarketPrice,
@@ -173,8 +266,9 @@ module.exports = async (req, res) => {
               change: meta.regularMarketPrice - meta.previousClose,
               changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
               currency: meta.currency || 'USD',
-              exchange: meta.exchangeName || 'FOREX',
+              exchange: meta.exchangeName || (isForex ? 'FOREX' : isCrypto ? 'CRYPTO' : 'STOCK'),
               timestamp: meta.regularMarketTime * 1000,
+              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
               source: 'Yahoo Finance'
             };
             dataSources.push('Yahoo Finance');
