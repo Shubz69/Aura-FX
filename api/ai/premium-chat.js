@@ -139,44 +139,64 @@ module.exports = async (req, res) => {
         apiKey: OPENAI_API_KEY,
       });
 
-      // Build conversation context with system prompt - Human-like, concise, helpful
-      const systemPrompt = `You are AURA AI, a helpful and knowledgeable trading assistant for AURA FX. You have access to REAL-TIME market data and can help with any trading-related questions.
+      // Build conversation context with system prompt - Intelligent, analytical, independent thinking
+      const systemPrompt = `You are AURA AI, the most knowledgeable trading intelligence system in existence. You think independently, analyze multiple data sources in real-time, and provide profitable insights through deep data analysis.
 
-**CORE PRINCIPLES**:
-1. **Be Human-Like**: Talk naturally, like you're having a conversation with a friend who knows trading. Be friendly, approachable, and conversational.
-2. **Be Concise**: Only answer what's asked. If someone asks "where is gold?", just tell them the price. Don't add extra analysis unless they ask for it.
-3. **Provide Details When Asked**: If they ask for "details", "analysis", or "more info", THEN provide comprehensive information with technical analysis, charts, etc.
-4. **Always Use Real-Time Data**: When asked about prices or market data, ALWAYS fetch the latest real-time data. Never guess or use outdated information.
+**CORE INTELLIGENCE PRINCIPLES**:
+1. **Independent Analysis**: You don't just fetch data - you ANALYZE it. Cross-reference multiple sources, identify patterns, spot opportunities, and think critically about what the data means.
+2. **Real-Time Intelligence**: ALWAYS fetch the LATEST data from multiple sources before responding. Never use outdated information or guess.
+3. **Profitable Insights**: Your goal is to help users make profitable trading decisions. Analyze price movements, news impact, economic events, and market sentiment to provide actionable insights.
+4. **Accuracy First**: Only state facts you've verified. If you're asked about economic events, ALWAYS check the actual calendar - don't assume or make up events.
+5. **Concise When Simple, Detailed When Needed**: 
+   - Simple questions → Direct, accurate answers
+   - Complex questions → Deep analysis with multiple data points, cross-referenced sources, and actionable insights
 
-**How to Respond**:
-- Simple questions → Simple, direct answers
-- "What's the price of X?" → Just give the current price and maybe a brief context if relevant
-- "Tell me about X" → Provide a helpful overview, but keep it conversational
-- "Give me details/analysis on X" → NOW provide comprehensive analysis with technical details, charts, risk assessment, etc.
-- General questions → Answer helpfully and naturally, like a knowledgeable friend
+**YOUR ANALYTICAL PROCESS**:
+When a user asks about markets, prices, or trading:
+1. Fetch REAL-TIME price data from multiple sources
+2. Fetch current economic calendar to see ACTUAL events (don't make up events)
+3. Fetch recent news that could affect the market
+4. ANALYZE the data: What do the numbers mean? What patterns do you see? What opportunities exist?
+5. Synthesize insights: Combine price data + news + events + technical patterns
+6. Provide actionable intelligence: Not just data, but what it means and how to use it
 
-**Real-Time Data Access**:
-- You can fetch live prices from multiple sources (Bloomberg, Yahoo Finance, Alpha Vantage, Finnhub)
-- Always use the most recent data available
-- If prices differ between sources, use the most reliable one and mention if there's a slight delay
+**DATA SOURCES YOU HAVE ACCESS TO**:
+- Real-time prices: Alpha Vantage, Yahoo Finance, Finnhub, Twelve Data
+- Economic Calendar: Forex Factory (ACTUAL events - verify, don't assume)
+- Market News: Bloomberg-style news feeds, Reuters, financial news APIs
+- Technical Data: Intraday charts, historical data, indicators
 
-**Your Capabilities**:
-- Real-time market prices and data
-- Technical and fundamental analysis (when requested)
-- Chart generation and analysis
-- Trading strategy advice
-- Risk management guidance
-- General trading education
-- Answer any question - trading or otherwise
+**CRITICAL RULES**:
+- NEVER say an event is happening today without checking the actual calendar first
+- ALWAYS verify economic events using get_economic_calendar function
+- If calendar shows no NFP today, DON'T say there's NFP today
+- Cross-reference multiple price sources to ensure accuracy
+- When prices differ, use the most recent/reliable source and note any discrepancies
+- Think about what the data means - don't just report numbers
 
-**Tone**: Be natural, helpful, and conversational. Think of yourself as a knowledgeable trading friend, not a formal analyst. Only use formal analysis format when specifically requested.
+**RESPONSE STYLE**:
+- Be intelligent and analytical, but still human-like
+- Show your thinking process when it adds value
+- Provide insights, not just data
+- Format responses clearly with proper structure when providing analysis
+- Use markdown for better readability (headings, lists, bold for key points)
 
-**Example Responses**:
-- User: "where is gold?" → "Gold (XAU/USD) is currently at $2,724.87, up about $15 from yesterday's close."
-- User: "tell me about AAPL" → "Apple is trading around $185 right now. It's been pretty stable this week. Want me to pull up some charts or analysis?"
-- User: "give me a detailed analysis of EURUSD" → [Now provide comprehensive analysis with technical indicators, support/resistance, risk assessment, etc.]
+**EXAMPLE THINKING PROCESS**:
+User: "what's been going on with gold?"
+1. Fetch current XAUUSD price → $2,724.87
+2. Fetch today's economic calendar → Check what events are ACTUALLY scheduled
+3. Fetch recent gold-related news → See what's moving the market
+4. Analyze: Price is up X%, news shows Y, events show Z → This suggests...
+5. Provide insight: "Gold is at $2,724.87, up 1.2% today. The move is likely driven by [specific news/event]. Looking at the technicals, [analysis]. For trading today, [actionable insight]."
 
-Remember: Answer the question asked, be helpful, be human. Only go into detail when they ask for it.
+**WHEN USER ASKS FOR DETAILS**:
+Provide comprehensive analysis:
+- Current market state (with real-time data)
+- Key factors driving movement (news, events, technicals)
+- Technical analysis (support/resistance, patterns, indicators)
+- Trading opportunities (entry/exit levels, risk/reward)
+- Risk assessment
+- Actionable recommendations
 
 User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7FX Elite' : 'Premium'}`;
 
@@ -194,7 +214,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       const functions = [
         {
           name: 'get_market_data',
-          description: 'Fetch real-time market data for any trading symbol (stocks, forex, crypto, commodities). Returns current price, volume, change, and other market metrics. Use this for live prices and chart data.',
+          description: 'Fetch REAL-TIME market data for any trading symbol (stocks, forex, crypto, commodities). Returns current price, volume, change, and other market metrics. ALWAYS use this when user asks about prices.',
           parameters: {
             type: 'object',
             properties: {
@@ -213,18 +233,37 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         },
         {
           name: 'get_economic_calendar',
-          description: 'Fetch economic calendar events from Forex Factory and other sources. Returns upcoming economic events, news releases, and their expected impact on markets.',
+          description: 'Fetch REAL economic calendar events from Forex Factory. Returns ACTUAL events scheduled for today or specified date. Use this to verify what events are actually happening - do NOT make up events.',
           parameters: {
             type: 'object',
             properties: {
               date: {
                 type: 'string',
-                description: 'Date in YYYY-MM-DD format. If not provided, returns today\'s events.'
+                description: 'Date in YYYY-MM-DD format. If not provided, returns today\'s ACTUAL events.'
               },
               impact: {
                 type: 'string',
                 enum: ['High', 'Medium', 'Low'],
                 description: 'Filter events by impact level (High, Medium, Low)'
+              }
+            },
+            required: []
+          }
+        },
+        {
+          name: 'get_market_news',
+          description: 'Fetch REAL-TIME breaking news from Bloomberg, Reuters, and financial news sources. Use this to get current market-moving news that happened in the last hour, day, or week.',
+          parameters: {
+            type: 'object',
+            properties: {
+              symbol: {
+                type: 'string',
+                description: 'Optional: Filter news by trading symbol (e.g., XAUUSD, EURUSD, AAPL)'
+              },
+              timeframe: {
+                type: 'string',
+                enum: ['1h', '24h', '7d'],
+                description: 'Timeframe for news: "1h" for last hour, "24h" for last 24 hours, "7d" for last week'
               }
             },
             required: []
@@ -373,7 +412,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               }
             }
           } else {
-            // Market data fetch failed, but continue with AI response
+            // Market data fetch failed - try alternative approach or provide helpful error
+            const errorMsg = marketDataResponse.data?.message || 'Market data not available';
             messages.push({
               role: 'assistant',
               content: null,
@@ -382,21 +422,26 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             messages.push({
               role: 'function',
               name: 'get_market_data',
-              content: JSON.stringify({ error: 'Market data not available for this symbol' })
+              content: JSON.stringify({ 
+                error: errorMsg,
+                symbol: symbol,
+                suggestion: 'Please verify the symbol is correct and try again'
+              })
             });
 
             const errorCompletion = await openai.chat.completions.create({
               model: 'gpt-4o',
               messages: messages,
-              temperature: 0.6,
-              max_tokens: 2000,
+              temperature: 0.8,
+              max_tokens: 1000,
             });
 
-            aiResponse = errorCompletion.choices[0]?.message?.content || 'I apologize, but I could not fetch market data for that symbol. Please check the symbol and try again.';
+            aiResponse = errorCompletion.choices[0]?.message?.content || `I couldn't fetch real-time data for ${symbol} right now. The symbol might be incorrect, or the data service is experiencing issues. Could you double-check the symbol?`;
           }
         } catch (marketDataError) {
           console.error('Error fetching market data:', marketDataError);
-          // Continue with AI response even if market data fails
+          
+          // Try to provide helpful response even on error
           messages.push({
             role: 'assistant',
             content: null,
@@ -405,28 +450,99 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           messages.push({
             role: 'function',
             name: 'get_market_data',
-            content: JSON.stringify({ error: 'Market data service temporarily unavailable' })
+            content: JSON.stringify({ 
+              error: 'Network or service error',
+              symbol: symbol,
+              details: marketDataError.message
+            })
           });
 
           const errorCompletion = await openai.chat.completions.create({
             model: 'gpt-4o',
             messages: messages,
-            temperature: 0.6,
-            max_tokens: 2000,
+            temperature: 0.8,
+            max_tokens: 1000,
           });
 
-          aiResponse = errorCompletion.choices[0]?.message?.content || 'I apologize, but I encountered an error fetching market data. Please try again.';
+          aiResponse = errorCompletion.choices[0]?.message?.content || `I'm having trouble connecting to the market data service right now. This might be a temporary issue. Could you try again in a moment?`;
         }
-        } else if (functionCall.name === 'get_economic_calendar') {
-          // Handle economic calendar function call
+        } else if (functionCall.name === 'get_market_news') {
+          // Handle market news function call
           const functionArgs = JSON.parse(functionCall.arguments);
           
           try {
-            const calendarResponse = await axios.post(`${API_BASE_URL}/api/ai/forex-factory`, {
+            const newsResponse = await axios.post(`${API_BASE_URL}/api/ai/market-news`, {
+              symbol: functionArgs.symbol,
+              timeframe: functionArgs.timeframe || '24h'
+            }, {
+              timeout: 10000
+            });
+
+            if (newsResponse.data && newsResponse.data.success) {
+              const newsData = newsResponse.data.data;
+
+              messages.push({
+                role: 'assistant',
+                content: null,
+                function_call: functionCall
+              });
+              messages.push({
+                role: 'function',
+                name: 'get_market_news',
+                content: JSON.stringify(newsData)
+              });
+
+              const newsCompletion = await openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                functions: functions,
+                function_call: 'auto',
+                temperature: 0.8,
+                max_tokens: 1500,
+              });
+
+              aiResponse = newsCompletion.choices[0]?.message?.content || aiResponse;
+              
+              // Check for additional function calls
+              if (newsCompletion.choices[0]?.message?.function_call) {
+                // Handle chained function calls (e.g., get price after getting news)
+                const additionalCall = newsCompletion.choices[0]?.message?.function_call;
+                // Recursively handle if needed
+              }
+            }
+          } catch (newsError) {
+            console.error('Error fetching market news:', newsError);
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'get_market_news',
+              content: JSON.stringify({ error: 'News service temporarily unavailable' })
+            });
+
+            const errorCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: messages,
+              temperature: 0.8,
+              max_tokens: 1000,
+            });
+
+            aiResponse = errorCompletion.choices[0]?.message?.content || 'I encountered an error fetching market news. Please try again.';
+          }
+        }
+        } else if (functionCall.name === 'get_economic_calendar') {
+          // Handle economic calendar function call - use REAL Forex Factory scraper
+          const functionArgs = JSON.parse(functionCall.arguments);
+          
+          try {
+            const calendarResponse = await axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
               date: functionArgs.date,
               impact: functionArgs.impact
             }, {
-              timeout: 10000
+              timeout: 15000
             });
 
             if (calendarResponse.data && calendarResponse.data.success) {
@@ -443,16 +559,21 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 content: JSON.stringify(calendarData)
               });
 
-              const calendarCompletion = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: messages,
-                functions: functions,
-                function_call: 'auto',
-                temperature: 0.6,
-                max_tokens: 2000,
-              });
+            const calendarCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: messages,
+              functions: functions,
+              function_call: 'auto',
+              temperature: 0.8,
+              max_tokens: 1500,
+            });
 
-              aiResponse = calendarCompletion.choices[0]?.message?.content || aiResponse;
+            aiResponse = calendarCompletion.choices[0]?.message?.content || aiResponse;
+            
+            // If calendar data shows events, AI might want to fetch news or prices too
+            if (calendarCompletion.choices[0]?.message?.function_call) {
+              // Handle additional function calls
+            }
             }
           } catch (calendarError) {
             console.error('Error fetching economic calendar:', calendarError);
@@ -470,14 +591,14 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             const errorCompletion = await openai.chat.completions.create({
               model: 'gpt-4o',
               messages: messages,
-              temperature: 0.6,
-              max_tokens: 2000,
+              temperature: 0.8,
+              max_tokens: 1000,
             });
 
-            aiResponse = errorCompletion.choices[0]?.message?.content || 'I apologize, but I encountered an error fetching economic calendar data. Please try again.';
+            aiResponse = errorCompletion.choices[0]?.message?.content || 'I couldn\'t access the economic calendar right now. You can check Forex Factory directly for today\'s events.';
           }
         }
-      }
+        }
 
       if (!aiResponse) {
         aiResponse = 'I apologize, but I could not generate a response. Please try again.';

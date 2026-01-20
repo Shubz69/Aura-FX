@@ -272,12 +272,57 @@ module.exports = async (req, res) => {
       }
     }
 
+    // If still no data, try one more time with different symbol formats
+    if (!marketData && isGold) {
+      try {
+        // Try GC=F (Gold Futures) on Yahoo Finance
+        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/GC=F`, {
+          params: {
+            interval: '1m',
+            range: '1d'
+          },
+          timeout: 5000
+        });
+
+        if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
+          const result = response.data.chart.result[0];
+          const meta = result.meta;
+          
+          if (meta && meta.regularMarketPrice) {
+            marketData = {
+              symbol: 'XAUUSD',
+              price: meta.regularMarketPrice,
+              open: meta.regularMarketOpen || meta.previousClose,
+              high: meta.regularMarketDayHigh || meta.regularMarketPrice,
+              low: meta.regularMarketDayLow || meta.regularMarketPrice,
+              previousClose: meta.previousClose,
+              volume: meta.regularMarketVolume || 0,
+              change: meta.regularMarketPrice - meta.previousClose,
+              changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
+              currency: 'USD',
+              exchange: 'COMEX',
+              timestamp: meta.regularMarketTime * 1000,
+              source: 'Yahoo Finance (GC=F)'
+            };
+            dataSources.push('Yahoo Finance GC=F');
+          }
+        }
+      } catch (gcError) {
+        console.log('GC=F error:', gcError.message);
+      }
+    }
+
     if (!marketData) {
       return res.status(404).json({ 
         success: false, 
-        message: `Market data not found for symbol: ${normalizedSymbol}. Please check the symbol and try again.` 
+        message: `Market data not found for symbol: ${normalizedSymbol}. Please check the symbol and try again.`,
+        triedSources: dataSources
       });
     }
+
+    // Add timestamp to ensure data freshness
+    marketData.lastUpdated = new Date().toISOString();
+    marketData.dataSources = dataSources;
 
     return res.status(200).json({
       success: true,

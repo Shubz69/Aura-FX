@@ -181,6 +181,14 @@
     {
       "source": "/api/ai/forex-factory",
       "destination": "/api/ai/forex-factory.js"
+    },
+    {
+      "source": "/api/ai/forex-factory-calendar",
+      "destination": "/api/ai/forex-factory-calendar.js"
+    },
+    {
+      "source": "/api/ai/market-news",
+      "destination": "/api/ai/market-news.js"
     }
   ]
 }

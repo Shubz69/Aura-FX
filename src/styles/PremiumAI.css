@@ -144,18 +144,20 @@
 .message-text {
   padding: 16px 20px;
   border-radius: 12px;
-  line-height: 1.7;
+  line-height: 1.8;
   word-wrap: break-word;
   font-size: 15px;
   color: #e4e4e7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
 
 /* Markdown Styling - Clean and Professional */
 .message-text .markdown-paragraph {
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
   padding: 0;
-  line-height: 1.7;
+  line-height: 1.8;
   color: inherit;
+  text-rendering: optimizeLegibility;
 }
 
 .message-text .markdown-paragraph:last-child {
@@ -174,10 +176,11 @@
 }
 
 .message-text .markdown-heading {
-  margin: 20px 0 12px 0;
+  margin: 24px 0 14px 0;
   font-weight: 600;
   color: #ffffff;
   line-height: 1.4;
+  letter-spacing: -0.02em;
 }
 
 .message-text .markdown-h1 {
