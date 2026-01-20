@@ -56,15 +56,19 @@ const PremiumAI = () => {
       role: 'assistant',
       content: `Welcome to AURA AI, ${user?.username || user?.name || 'Trader'}.
 
-I am your dedicated financial analyst and trading strategist. My expertise encompasses:
+I'm your intelligent trading assistant with real-time access to ALL market instruments:
 
-• Technical Analysis - Chart pattern recognition, indicator interpretation, support/resistance analysis
-• Strategic Planning - Scalping, swing trading, day trading, and position trading methodologies
-• Risk Assessment - Position sizing calculations, stop-loss placement, risk-reward optimization
-• Market Analysis - Fundamental analysis, market sentiment evaluation, economic indicator interpretation
-• Portfolio Management - Asset allocation, diversification strategies, performance optimization
+**I can analyze ANY trading instrument:**
+• **Stocks** - AAPL, TSLA, MSFT, SPY, QQQ, and all major stocks
+• **Forex** - EURUSD, GBPUSD, USDJPY, and all currency pairs
+• **Crypto** - BTCUSD, ETHUSD, and all cryptocurrencies
+• **Commodities** - Gold (XAUUSD), Silver, Oil, and all commodities
+• **Indices** - SPX, NASDAQ, Dow Jones, FTSE, DAX, and all indices
+• **Bonds** - Government and corporate bonds
 
-I provide real-time market data, live chart analysis, and actionable trading insights. I can access live prices from Bloomberg, Forex Factory, and other professional trading platforms. How may I assist with your trading objectives today?`
+I provide real-time prices, analyze market data from multiple sources, fetch breaking news, check economic calendars, and give you actionable trading insights. Just ask me about any instrument!
+
+How can I help you trade today?`
     };
 
     setMessages([welcomeMessage]);
