@@ -576,7 +576,7 @@ const PremiumAI = () => {
             onStop={() => setIsVoiceListening(false)}
             disabled={isLoading}
           />
-          <div className="input-wrapper" style={{ flex: 1, position: 'relative' }}>
+          <div className="input-wrapper" style={{ flex: 1, position: 'relative', minWidth: 0, width: '100%' }}>
             <textarea
               ref={inputRef}
               className="message-input"
@@ -587,6 +587,7 @@ const PremiumAI = () => {
               placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis... (or paste/upload a chart/image)"
               rows="1"
               disabled={isLoading}
+              style={{ width: '100%' }}
             />
             {isVoiceListening && (
               <div className="voice-indicator" style={{

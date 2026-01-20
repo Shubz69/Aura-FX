@@ -1,17 +1,19 @@
 .voice-input-btn {
-  padding: 12px 16px;
+  padding: 10px 12px;
   background: rgba(102, 126, 234, 0.2);
   border: 1px solid rgba(102, 126, 234, 0.5);
   border-radius: 12px;
   color: #667eea;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 50px;
-  height: 50px;
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
 }
 
 .voice-input-btn:hover:not(:disabled) {
