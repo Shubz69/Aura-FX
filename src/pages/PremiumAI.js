@@ -293,10 +293,24 @@ const PremiumAI = () => {
                  error.message.toLowerCase().includes('try again in a few moments')) {
           isRateLimit = true;
           errorMessage = 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.';
-        } else if (error.message.length > 150 || error.message.includes('<')) {
-          errorMessage = 'Server error. Please try again or contact support.';
+        } else if (error.message.toLowerCase().includes('timeout')) {
+          isRateLimit = true;
+          errorMessage = 'The AI is taking longer than expected to respond. This can happen during high demand. Please try again in a moment.';
+        } else if (error.message.length > 150 || error.message.includes('<') || error.message.includes('Error:') || error.message.includes('timeout')) {
+          errorMessage = 'I\'m having trouble processing your request right now. Please try again in a moment.';
         } else {
-          errorMessage = error.message;
+          // Clean up technical error messages
+          errorMessage = error.message
+            .replace(/Error:/g, '')
+            .replace(/timeout/gi, 'taking longer than expected')
+            .replace(/ECONNREFUSED/gi, 'connection issue')
+            .replace(/ENOTFOUND/gi, 'service unavailable')
+            .trim();
+          
+          // If it still looks technical, use a generic message
+          if (errorMessage.includes('at ') || errorMessage.includes('http://') || errorMessage.includes('https://')) {
+            errorMessage = 'I\'m having trouble processing your request right now. Please try again in a moment.';
+          }
         }
       }
       
@@ -313,14 +327,14 @@ const PremiumAI = () => {
         autoClose: isQuotaError ? 8000 : (isRateLimit ? 5000 : 3000),
       });
 
-      // Add user-friendly error message to chat
+      // Add user-friendly error message to chat (never show technical details)
       const chatErrorMessage = {
         role: 'assistant',
         content: isQuotaError
           ? 'I apologize, but the AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.'
           : isRateLimit 
             ? 'I apologize, but the AI service is currently experiencing high demand. Please try again in a few moments. If this issue continues, please contact support for assistance.'
-            : `I encountered an error processing your request: ${errorMessage}. Please try again or contact support if the issue persists.`
+            : errorMessage // Already cleaned up above
       };
       setMessages(prev => [...prev, chatErrorMessage]);
     } finally {

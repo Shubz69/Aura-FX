@@ -1084,10 +1084,19 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           });
         }
         
+        // Check for timeout errors
+        if (openaiError.message && (openaiError.message.includes('timeout') || openaiError.message.includes('Timeout'))) {
+          return res.status(504).json({ 
+            success: false, 
+            message: 'The AI is taking longer than expected to respond. This can happen during high demand. Please try again in a moment.',
+            errorType: 'timeout'
+          });
+        }
+        
         // Generic OpenAI error
         return res.status(500).json({ 
           success: false, 
-          message: 'AI service temporarily unavailable. Please try again in a few moments.',
+          message: 'I\'m having trouble processing your request right now. Please try again in a moment. If this continues, please contact support.',
           errorType: 'openai_error'
         });
       }
@@ -1096,14 +1105,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       let functionCall = completion.choices[0]?.message?.function_call;
 
       // Handle function calls for real-time market data and economic calendar
-      // Set a hard timeout to prevent exceeding Vercel's limit
-      const FUNCTION_TIMEOUT = 50000; // 50 seconds max for all function calls
+      // Set a hard timeout to prevent exceeding Vercel's 60-second limit
+      // Timeouts are necessary to prevent the function from being killed by Vercel
+      const FUNCTION_TIMEOUT = 50000; // 50 seconds max for all function calls (leaves 10s buffer)
       const startTime = Date.now();
       
       // Helper function to check timeout
       const checkTimeout = () => {
         if (Date.now() - startTime > FUNCTION_TIMEOUT) {
-          throw new Error('Function execution timeout - returning partial response');
+          throw new Error('Request is taking longer than expected');
         }
       };
       
@@ -1267,6 +1277,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 } catch (additionalError) {
                   console.log('Additional data fetch error:', additionalError.message);
                   // Continue with existing response - don't fail the whole request
+                  // The AI already has enough data to respond, so we just continue
                 }
               }
             }
@@ -1303,37 +1314,41 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         } catch (marketDataError) {
           console.error('Error fetching market data:', marketDataError);
           
-          // Try to provide helpful response even on error, but with timeout
-          try {
-            messages.push({
-              role: 'assistant',
-              content: null,
-              function_call: functionCall
-            });
-            messages.push({
-              role: 'function',
-              name: 'get_market_data',
-              content: JSON.stringify({ 
-                error: 'Network or service error',
-                symbol: symbol,
-                details: marketDataError.message
-              })
-            });
+          // Check if it's a timeout
+          if (marketDataError.message && (marketDataError.message.includes('timeout') || marketDataError.message.includes('Timeout'))) {
+            aiResponse = `I'm having trouble fetching real-time data for ${symbol} right now. The data service is taking longer than expected. Please try again in a moment.`;
+          } else {
+            // Try to provide helpful response even on error, but with timeout
+            try {
+              messages.push({
+                role: 'assistant',
+                content: null,
+                function_call: functionCall
+              });
+              messages.push({
+                role: 'function',
+                name: 'get_market_data',
+                content: JSON.stringify({ 
+                  error: 'Unable to fetch market data at this time',
+                  symbol: symbol
+                })
+              });
 
-            const errorCompletion = await Promise.race([
-              openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: messages,
-                temperature: 0.8,
-                max_tokens: 1000,
-              }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-            ]);
+              const errorCompletion = await Promise.race([
+                openai.chat.completions.create({
+                  model: 'gpt-4o',
+                  messages: messages,
+                  temperature: 0.8,
+                  max_tokens: 1000,
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
+              ]);
 
-            aiResponse = errorCompletion.choices[0]?.message?.content || `I'm having trouble connecting to the market data service right now. This might be a temporary issue. Could you try again in a moment?`;
-          } catch (timeoutError) {
-            // If even error handling times out, return a simple message
-            aiResponse = `I'm having trouble connecting to the market data service right now. Please try again in a moment.`;
+              aiResponse = errorCompletion.choices[0]?.message?.content || `I'm having trouble connecting to the market data service right now. This might be a temporary issue. Could you try again in a moment?`;
+            } catch (timeoutError) {
+              // If even error handling times out, return a simple user-friendly message
+              aiResponse = `I'm having trouble fetching real-time data right now. Please try again in a moment.`;
+            }
           }
         }
       } else if (functionCall.name === 'get_market_news') {
@@ -1385,31 +1400,37 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             }
           } catch (newsError) {
             console.error('Error fetching market news:', newsError);
-            try {
-              messages.push({
-                role: 'assistant',
-                content: null,
-                function_call: functionCall
-              });
-              messages.push({
-                role: 'function',
-                name: 'get_market_news',
-                content: JSON.stringify({ error: 'News service temporarily unavailable' })
-              });
+            
+            // Check if it's a timeout
+            if (newsError.message && (newsError.message.includes('timeout') || newsError.message.includes('Timeout'))) {
+              aiResponse = 'I\'m having trouble fetching the latest market news right now. The news service is taking longer than expected. I can still help you with analysis based on the data I have.';
+            } else {
+              try {
+                messages.push({
+                  role: 'assistant',
+                  content: null,
+                  function_call: functionCall
+                });
+                messages.push({
+                  role: 'function',
+                  name: 'get_market_news',
+                  content: JSON.stringify({ error: 'News service temporarily unavailable' })
+                });
 
-              const errorCompletion = await Promise.race([
-                openai.chat.completions.create({
-                  model: 'gpt-4o',
-                  messages: messages,
-                  temperature: 0.8,
-                  max_tokens: 1000,
-                }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-              ]);
+                const errorCompletion = await Promise.race([
+                  openai.chat.completions.create({
+                    model: 'gpt-4o',
+                    messages: messages,
+                    temperature: 0.8,
+                    max_tokens: 1000,
+                  }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
+                ]);
 
-              aiResponse = errorCompletion.choices[0]?.message?.content || 'I encountered an error fetching market news. Please try again.';
-            } catch (timeoutError) {
-              aiResponse = 'I encountered an error fetching market news. Please try again.';
+                aiResponse = errorCompletion.choices[0]?.message?.content || 'I\'m having trouble fetching the latest market news right now. Please try again in a moment.';
+              } catch (timeoutError) {
+                aiResponse = 'I\'m having trouble fetching the latest market news right now. Please try again in a moment.';
+              }
             }
           }
       } else if (functionCall.name === 'get_economic_calendar') {
@@ -1527,6 +1548,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           } catch (calcError) {
             console.error('Error calculating trading math:', calcError);
             // Continue with existing response - don't fail the whole request
+            // The AI can still provide a response without the calculation
           }
       }
     }
