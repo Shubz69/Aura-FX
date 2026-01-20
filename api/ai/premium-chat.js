@@ -1485,11 +1485,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           const functionArgs = JSON.parse(functionCall.arguments);
           
           try {
-            const calcResponse = await axios.post(`${API_BASE_URL}/api/ai/trading-calculator`, {
-              ...functionArgs
-            }, {
-              timeout: 10000
-            });
+            checkTimeout();
+            const calcResponse = await Promise.race([
+              axios.post(`${API_BASE_URL}/api/ai/trading-calculator`, {
+                ...functionArgs
+              }, {
+                timeout: 5000 // Calculator should be fast
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+            ]);
 
             if (calcResponse.data && calcResponse.data.success) {
               const calcResult = calcResponse.data.result;
