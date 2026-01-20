@@ -154,8 +154,8 @@ const Courses = () => {
                         <ul className="subscription-plan-features">
                             <li>✅ All free features</li>
                             <li>✅ Premium channels</li>
-                            <li>✅ Trading signals</li>
                             <li>✅ Market analysis</li>
+                            <li>✅ Weekly Briefs</li>
                         </ul>
                         <button
                             className="subscription-plan-button premium"
