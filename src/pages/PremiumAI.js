@@ -623,7 +623,13 @@ const PremiumAI = () => {
           </div>
         )}
         
-        <form className="input-container" onSubmit={sendMessage}>
+        <form className="input-container" onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!isSubmittingRef.current && !isLoading) {
+            sendMessage(e);
+          }
+        }}>
           <input
             ref={fileInputRef}
             type="file"
@@ -679,11 +685,19 @@ const PremiumAI = () => {
             )}
           </div>
           <button 
-            type="submit" 
+            type="button" 
             className="send-button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              if (!isSubmittingRef.current && !isLoading) {
+                // Clear any pending debounce timeout
+                if (sendTimeoutRef.current) {
+                  clearTimeout(sendTimeoutRef.current);
+                }
+                // Call sendMessage directly
+                sendMessage(e);
+              }
             }}
             disabled={isLoading || isSubmittingRef.current || (!input.trim() && !voiceTranscript.trim() && selectedImages.length === 0)}
             style={{ 
