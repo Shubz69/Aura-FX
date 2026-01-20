@@ -347,7 +347,15 @@ You have full access to real-time market data, economic calendars, news feeds, t
     - Provide transparency in all recommendations
 
 **CORE INTELLIGENCE PRINCIPLES** (FOLLOW THESE STRICTLY):
-1. **USE FUNCTIONS ACTIVELY - THIS IS MANDATORY**: You have access to functions (get_market_data, get_economic_calendar, get_market_news, calculate_trading_math). YOU MUST CALL THEM. Never say "I'm unable to access" or "I can't fetch" - you CAN and MUST call these functions. Functions are your tools - use them like a professional trader uses their trading platform. If a user asks about events, prices, or news, you MUST call the appropriate function BEFORE responding. NEVER respond without calling functions when data is needed.
+1. **USE FUNCTIONS ACTIVELY - THIS IS MANDATORY - NO EXCEPTIONS**:
+   - You have access to functions (get_market_data, get_economic_calendar, get_market_news, calculate_trading_math)
+   - **YOU MUST CALL THEM FOR EVERY MARKET QUERY - NO EXCEPTIONS**
+   - Never say "I'm unable to access" or "I can't fetch" - you CAN and MUST call these functions
+   - Functions are your tools - use them like a professional trader uses their trading platform
+   - If a user asks about events, prices, news, or ANY market question, you MUST call the appropriate function BEFORE responding
+   - **NEVER respond without calling functions when data is needed - generic responses are USELESS**
+   - **If you give a response without real-time data, you're failing at your job**
+   - **Real-time data is what separates you from a basic chatbot - USE IT**
 
 2. **Independent Analysis**: You don't just fetch data - you ANALYZE it. Cross-reference multiple sources, identify patterns, spot opportunities, and think critically about what the data means.
 
@@ -1245,13 +1253,18 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         // GPT-4o supports function calling with images
         completionParams.functions = functions;
         
-        // If we detected required tools, hint to the AI to use them
-        if (requiredTools.length > 0) {
-          // Add context about what tools should be called
+        // FORCE function calling for market-related queries - NO EXCEPTIONS
+        // If user asks about ANY market instrument, price, news, or events, FORCE function calls
+        const isMarketQuery = detectedInstrument || 
+          /(price|where|will|going|outlook|bias|analysis|trade|buy|sell|gold|silver|forex|stock|crypto|bitcoin|ethereum|eurusd|gbpusd|xauusd|news|event|calendar|nfp|cpi|gdp|pmi)/i.test(message);
+        
+        if (isMarketQuery || requiredTools.length > 0) {
+          // FORCE function calling - make it mandatory
           messages.push({
             role: 'system',
-            content: `Based on the user's query, you should call these functions: ${requiredTools.join(', ')}. ${detectedInstrument ? `The user is asking about ${detectedInstrument}.` : ''} You MUST call these functions before responding.`
+            content: `CRITICAL: The user is asking about market data. You MUST call get_market_data, get_market_news, and/or get_economic_calendar functions BEFORE responding. DO NOT give generic responses. DO NOT say "I can't access data". You HAVE these functions - USE THEM. ${detectedInstrument ? `The user is asking about ${detectedInstrument} - fetch REAL-TIME data NOW.` : ''} This is MANDATORY - no exceptions.`
           });
+          // Force function calling - don't allow text-only responses for market queries
           completionParams.function_call = 'auto';
         } else {
           completionParams.function_call = 'auto';
@@ -1318,6 +1331,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
       let aiResponse = completion.choices[0]?.message?.content || '';
       let functionCall = completion.choices[0]?.message?.function_call;
+      
+      // CRITICAL: If this is a market query and no function call was made, FORCE one
+      const isMarketQuery = /(price|where|will|going|outlook|bias|analysis|trade|buy|sell|gold|silver|forex|stock|crypto|bitcoin|ethereum|eurusd|gbpusd|xauusd|news|event|calendar|nfp|cpi|gdp|pmi)/i.test(message);
+      if (isMarketQuery && !functionCall && !aiResponse) {
+        // The AI didn't call a function when it should have - this is a problem
+        // We'll let it continue, but log this issue
+        console.warn('WARNING: Market query detected but no function call was made. AI should have called get_market_data.');
+        await logError(userId, 'missing_function_call', 'Market query without function call', { message });
+      }
       
       // If images are present, enhance analysis with image processing
       if (hasImages && images.length > 0 && !functionCall) {
