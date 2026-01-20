@@ -1463,43 +1463,57 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 content: JSON.stringify(calendarData)
               });
 
-            const calendarCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: messages,
-              functions: functions,
-              function_call: 'auto',
-              temperature: 0.8,
-              max_tokens: 1500,
-            });
+            checkTimeout();
+            const calendarCompletion = await Promise.race([
+              openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                functions: functions,
+                function_call: 'auto',
+                temperature: 0.8,
+                max_tokens: 1500,
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+            ]);
 
             aiResponse = calendarCompletion.choices[0]?.message?.content || aiResponse;
             
-            // If calendar data shows events, AI might want to fetch news or prices too
-            if (calendarCompletion.choices[0]?.message?.function_call) {
-              // Handle additional function calls
-            }
+            // Don't continue chain - return response to prevent timeout
             }
           } catch (calendarError) {
             console.error('Error fetching economic calendar:', calendarError);
-            messages.push({
-              role: 'assistant',
-              content: null,
-              function_call: functionCall
-            });
-            messages.push({
-              role: 'function',
-              name: 'get_economic_calendar',
-              content: JSON.stringify({ error: 'Economic calendar service temporarily unavailable' })
-            });
+            
+            // Check if it's a timeout
+            if (calendarError.message && (calendarError.message.includes('timeout') || calendarError.message.includes('Timeout'))) {
+              aiResponse = 'I\'m having trouble accessing the economic calendar right now. The service is taking longer than expected. You can check Forex Factory directly for today\'s events, or try asking me again in a moment.';
+            } else {
+              try {
+                messages.push({
+                  role: 'assistant',
+                  content: null,
+                  function_call: functionCall
+                });
+                messages.push({
+                  role: 'function',
+                  name: 'get_economic_calendar',
+                  content: JSON.stringify({ error: 'Calendar service temporarily unavailable' })
+                });
 
-            const errorCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: messages,
-              temperature: 0.8,
-              max_tokens: 1000,
-            });
+                const errorCompletion = await Promise.race([
+                  openai.chat.completions.create({
+                    model: 'gpt-4o',
+                    messages: messages,
+                    temperature: 0.8,
+                    max_tokens: 1000,
+                  }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
+                ]);
 
-            aiResponse = errorCompletion.choices[0]?.message?.content || 'I couldn\'t access the economic calendar right now. You can check Forex Factory directly for today\'s events.';
+                aiResponse = errorCompletion.choices[0]?.message?.content || 'I couldn\'t access the economic calendar right now. You can check Forex Factory directly for today\'s events, or try again in a moment.';
+              } catch (timeoutError) {
+                aiResponse = 'I couldn\'t access the economic calendar right now. You can check Forex Factory directly for today\'s events, or try again in a moment.';
+              }
+            }
           }
       } else if (functionCall.name === 'calculate_trading_math') {
           // Handle trading math calculations
@@ -1580,6 +1594,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
   } catch (error) {
     console.error('Error in premium AI chat:', error);
+    
+    // Check if it's a timeout error
+    if (error.message && (error.message.includes('timeout') || error.message.includes('Timeout') || error.message.includes('taking longer than expected'))) {
+      return res.status(504).json({
+        success: false,
+        message: 'The AI is taking longer than expected to respond. This can happen during high demand. Please try again in a moment.',
+        errorType: 'timeout'
+      });
+    }
     
     // Check if it's an OpenAI error that wasn't caught
     if (error.status === 429 || error.code === 'insufficient_quota' || error.code === 'rate_limit_exceeded') {
