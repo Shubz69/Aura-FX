@@ -35,7 +35,9 @@ class DataProvider {
   }
 
   async getOrderbook(symbol, venue = null) {
-    throw new Error('getOrderbook must be implemented by provider');
+    // Orderbook not available from most free APIs
+    // In production, integrate with broker APIs or paid data providers
+    return null;
   }
 
   async getInstrumentSpecs(symbol, venue = null) {
@@ -213,6 +215,12 @@ class FinnhubProvider extends DataProvider {
       console.error(`Finnhub error for ${symbol}:`, error.message);
       return null;
     }
+  }
+
+  async getOrderbook(symbol, venue = null) {
+    // Finnhub doesn't provide orderbook data in free tier
+    // Would need WebSocket subscription for real-time orderbook
+    return null;
   }
 }
 

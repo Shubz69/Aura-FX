@@ -278,7 +278,8 @@ const PremiumAI = () => {
           role: 'assistant',
           content: data.response,
           chartData: data.chartData || null, // Chart data if provided
-          symbol: data.symbol || null // Symbol for chart
+          symbol: data.symbol || null, // Symbol for chart
+          citations: data.citations || [] // Knowledge base citations if any
         };
 
         setMessages(prev => [...prev, aiMessage]);
@@ -508,6 +509,24 @@ const PremiumAI = () => {
                         <VoiceOutput text={msg.content} disabled={isLoading} />
                       </div>
                     )}
+                  </div>
+                )}
+                {msg.citations && msg.citations.length > 0 && (
+                  <div className="message-citations" style={{
+                    marginTop: '8px',
+                    padding: '8px 12px',
+                    background: 'rgba(102, 126, 234, 0.1)',
+                    borderLeft: '3px solid rgba(102, 126, 234, 0.5)',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.7)'
+                  }}>
+                    <strong>Sources:</strong>
+                    <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
+                      {msg.citations.map((citation, idx) => (
+                        <li key={idx}>{citation.title || citation.source || 'Knowledge base'}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
                 {msg.chartData && msg.symbol && (

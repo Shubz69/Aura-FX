@@ -197,6 +197,18 @@
     {
       "source": "/api/tradingview-webhook",
       "destination": "/api/ai/tradingview-webhook.js"
+    },
+    {
+      "source": "/api/ai/fundamentals",
+      "destination": "/api/ai/fundamentals.js"
+    },
+    {
+      "source": "/api/admin/kb-ingest",
+      "destination": "/api/admin/kb-ingest.js"
+    },
+    {
+      "source": "/api/admin/ai-debug",
+      "destination": "/api/admin/ai-debug.js"
     }
   ]
 }

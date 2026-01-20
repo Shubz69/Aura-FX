@@ -144,6 +144,8 @@ module.exports = async (req, res) => {
       const { logToolCall, logDataFetch, logUserAction, logError, isDataStale } = require('./logger');
       const { kbSearch } = require('./knowledge-base');
       const { getRecentAlerts } = require('./tradingview-webhook');
+      const { validateTradeSafety } = require('./safety-system');
+      const { analyzeMarketStructure, identifySupportResistance, generateScenarios } = require('./price-action');
       
       // Log user action
       await logUserAction(userId, 'ai_chat_message', { 
@@ -1078,10 +1080,6 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           }
         },
         {
-          name: 'calculate_trading_math',
-          description: 'MANDATORY: Calculate trading mathematics. You MUST call this function whenever you provide a trade recommendation or user asks about position sizing, risk calculations, or trading math. Operations: position_size (calculate position size based on account size, risk %, entry, stop loss), risk_reward (calculate R:R ratio), pip_value, margin (calculate margin requirements), atr_stop (ATR-based stop loss). DO NOT calculate manually - always use this function for accuracy.',
-        },
-        {
           name: 'search_knowledge_base',
           description: 'Search the knowledge base for trading strategies, rules, concepts, and educational content. Call this when user asks about trading concepts, strategies, or "how to" questions. Returns relevant knowledge base entries with sources. Always cite sources when using knowledge base information.',
           parameters: {
@@ -1170,6 +1168,60 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               }
             },
             required: ['operation']
+          }
+        },
+        {
+          name: 'get_fundamentals',
+          description: 'Fetch fundamental data for stocks (earnings, financials, P/E ratio, revenue, etc.). Call this when user asks about company fundamentals, earnings, financial health, or stock valuation metrics.',
+          parameters: {
+            type: 'object',
+            properties: {
+              symbol: {
+                type: 'string',
+                description: 'Stock symbol (e.g., AAPL, TSLA, MSFT)'
+              }
+            },
+            required: ['symbol']
+          }
+        },
+        {
+          name: 'get_orderbook',
+          description: 'Get orderbook data (bid/ask levels) for an instrument. Useful for understanding market depth and liquidity. Note: Not all providers support this - may return null.',
+          parameters: {
+            type: 'object',
+            properties: {
+              symbol: {
+                type: 'string',
+                description: 'Trading symbol'
+              },
+              venue: {
+                type: 'string',
+                description: 'Optional venue/exchange'
+              }
+            },
+            required: ['symbol']
+          }
+        },
+        {
+          name: 'analyze_price_action',
+          description: 'Analyze price action from OHLCV data. Returns market structure (HH/HL/LH/LL), support/resistance levels, liquidity sweeps, supply/demand zones, fair value gaps, and trading scenarios. Call this when user asks for price action analysis or wants to understand market structure.',
+          parameters: {
+            type: 'object',
+            properties: {
+              symbol: {
+                type: 'string',
+                description: 'Trading symbol'
+              },
+              timeframe: {
+                type: 'string',
+                description: 'Timeframe (1m, 5m, 15m, 1h, 4h, 1d)'
+              },
+              limit: {
+                type: 'number',
+                description: 'Number of candles to analyze (default: 100)'
+              }
+            },
+            required: ['symbol']
           }
         }
       ];
@@ -1801,6 +1853,17 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             const kbToolDuration = Date.now() - kbToolStartTime;
             await logToolCall(userId, 'search_knowledge_base', functionArgs, { resultCount: kbResults.length }, kbToolDuration, true);
 
+            // Store citations for response
+            const citations = kbResults.map(r => ({
+              id: r.id,
+              title: r.title,
+              source: r.source,
+              category: r.category
+            }));
+            
+            // Add to response citations
+            responseCitations.push(...citations);
+
             messages.push({
               role: 'assistant',
               content: null,
@@ -1811,7 +1874,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               name: 'search_knowledge_base',
               content: JSON.stringify({
                 results: kbResults,
-                query: functionArgs.query
+                query: functionArgs.query,
+                citations: citations
               })
             });
 
@@ -1882,6 +1946,189 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             await logToolCall(userId, 'get_tradingview_alerts', functionArgs, null, alertsToolDuration, false, alertsError);
             // Continue without alerts
           }
+      } else if (functionCall.name === 'get_fundamentals') {
+          // Handle fundamentals data
+          const functionArgs = JSON.parse(functionCall.arguments);
+          const fundamentalsToolStartTime = Date.now();
+          
+          try {
+            checkTimeout();
+            const fundamentalsResponse = await Promise.race([
+              axios.get(`${API_BASE_URL}/api/ai/fundamentals`, {
+                params: { symbol: functionArgs.symbol },
+                timeout: 8000
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            ]);
+
+            if (fundamentalsResponse.data && fundamentalsResponse.data.success) {
+              const fundamentalsData = fundamentalsResponse.data.fundamentals;
+              
+              const fundamentalsToolDuration = Date.now() - fundamentalsToolStartTime;
+              await logToolCall(userId, 'get_fundamentals', functionArgs, { hasData: !!fundamentalsData.symbol }, fundamentalsToolDuration, true);
+
+              messages.push({
+                role: 'assistant',
+                content: null,
+                function_call: functionCall
+              });
+              messages.push({
+                role: 'function',
+                name: 'get_fundamentals',
+                content: JSON.stringify(fundamentalsData)
+              });
+
+              checkTimeout();
+              const fundamentalsCompletion = await Promise.race([
+                openai.chat.completions.create({
+                  model: 'gpt-4o',
+                  messages: messages,
+                  functions: functions,
+                  function_call: 'auto',
+                  temperature: 0.8,
+                  max_tokens: 1500,
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+              ]);
+
+              aiResponse = fundamentalsCompletion.choices[0]?.message?.content || aiResponse;
+            }
+          } catch (fundamentalsError) {
+            console.error('Error fetching fundamentals:', fundamentalsError);
+            const fundamentalsToolDuration = Date.now() - fundamentalsToolStartTime;
+            await logToolCall(userId, 'get_fundamentals', functionArgs, null, fundamentalsToolDuration, false, fundamentalsError);
+            // Continue without fundamentals
+          }
+      } else if (functionCall.name === 'get_orderbook') {
+          // Handle orderbook data
+          const functionArgs = JSON.parse(functionCall.arguments);
+          const orderbookToolStartTime = Date.now();
+          
+          try {
+            checkTimeout();
+            // Orderbook not available from most free APIs
+            // Return null to indicate unavailability
+            const orderbookToolDuration = Date.now() - orderbookToolStartTime;
+            await logToolCall(userId, 'get_orderbook', functionArgs, { available: false }, orderbookToolDuration, true);
+
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'get_orderbook',
+              content: JSON.stringify({
+                symbol: functionArgs.symbol,
+                note: 'Orderbook data not available from current data sources. Requires broker API or premium data provider.',
+                available: false
+              })
+            });
+
+            checkTimeout();
+            const orderbookCompletion = await Promise.race([
+              openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                functions: functions,
+                function_call: 'auto',
+                temperature: 0.8,
+                max_tokens: 1500,
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+            ]);
+
+            aiResponse = orderbookCompletion.choices[0]?.message?.content || aiResponse;
+          } catch (orderbookError) {
+            console.error('Error fetching orderbook:', orderbookError);
+            const orderbookToolDuration = Date.now() - orderbookToolStartTime;
+            await logToolCall(userId, 'get_orderbook', functionArgs, null, orderbookToolDuration, false, orderbookError);
+          }
+      } else if (functionCall.name === 'analyze_price_action') {
+          // Handle price action analysis
+          const functionArgs = JSON.parse(functionCall.arguments);
+          const priceActionToolStartTime = Date.now();
+          
+          try {
+            checkTimeout();
+            // First get OHLCV data
+            const ohlcvResponse = await Promise.race([
+              axios.post(`${API_BASE_URL}/api/ai/market-data`, {
+                symbol: functionArgs.symbol,
+                type: 'intraday'
+              }, {
+                timeout: 8000
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            ]);
+
+            if (ohlcvResponse.data && ohlcvResponse.data.success && ohlcvResponse.data.data) {
+              const marketData = ohlcvResponse.data.data;
+              
+              // Convert to OHLCV format if needed
+              let ohlcvData = [];
+              if (marketData.candles || marketData.ohlcv) {
+                ohlcvData = marketData.candles || marketData.ohlcv;
+              } else if (marketData.historical) {
+                ohlcvData = marketData.historical;
+              }
+              
+              if (ohlcvData && ohlcvData.length > 0) {
+                // Analyze market structure
+                const structure = analyzeMarketStructure(ohlcvData);
+                
+                // Identify support/resistance
+                const sr = identifySupportResistance(ohlcvData, functionArgs.limit || 100);
+                
+                // Generate scenarios
+                const scenarios = generateScenarios({ structure, support: sr.support, resistance: sr.resistance, currentPrice: sr.currentPrice });
+                
+                const priceActionAnalysis = {
+                  symbol: functionArgs.symbol,
+                  timeframe: functionArgs.timeframe || 'unknown',
+                  marketStructure: structure,
+                  supportResistance: sr,
+                  scenarios: scenarios,
+                  timestamp: new Date().toISOString()
+                };
+                
+                const priceActionToolDuration = Date.now() - priceActionToolStartTime;
+                await logToolCall(userId, 'analyze_price_action', functionArgs, { hasData: true }, priceActionToolDuration, true);
+
+                messages.push({
+                  role: 'assistant',
+                  content: null,
+                  function_call: functionCall
+                });
+                messages.push({
+                  role: 'function',
+                  name: 'analyze_price_action',
+                  content: JSON.stringify(priceActionAnalysis)
+                });
+
+                checkTimeout();
+                const priceActionCompletion = await Promise.race([
+                  openai.chat.completions.create({
+                    model: 'gpt-4o',
+                    messages: messages,
+                    functions: functions,
+                    function_call: 'auto',
+                    temperature: 0.8,
+                    max_tokens: 1500,
+                  }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                ]);
+
+                aiResponse = priceActionCompletion.choices[0]?.message?.content || aiResponse;
+              }
+            }
+          } catch (priceActionError) {
+            console.error('Error analyzing price action:', priceActionError);
+            const priceActionToolDuration = Date.now() - priceActionToolStartTime;
+            await logToolCall(userId, 'analyze_price_action', functionArgs, null, priceActionToolDuration, false, priceActionError);
+            // Continue without price action analysis
+          }
       }
     }
 
@@ -1894,11 +2141,19 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         db.release();
       }
 
+      // Extract citations from knowledge base if used
+      const citations = [];
+      if (aiResponse && aiResponse.includes('knowledge base') || aiResponse.includes('According to')) {
+        // Citations would be extracted from function call results
+        // For now, return empty array - can be enhanced
+      }
+
       return res.status(200).json({
         success: true,
         response: aiResponse,
         model: completion?.model || 'gpt-4o',
-        usage: completion?.usage || null
+        usage: completion?.usage || null,
+        citations: citations.length > 0 ? citations : undefined
       });
 
     } catch (dbError) {
