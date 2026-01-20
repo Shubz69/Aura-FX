@@ -1100,15 +1100,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       const FUNCTION_TIMEOUT = 50000; // 50 seconds max for all function calls
       const startTime = Date.now();
       
+      // Helper function to check timeout
+      const checkTimeout = () => {
+        if (Date.now() - startTime > FUNCTION_TIMEOUT) {
+          throw new Error('Function execution timeout - returning partial response');
+        }
+      };
+      
       if (functionCall) {
         const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
-        
-        // Helper function to check timeout
-        const checkTimeout = () => {
-          if (Date.now() - startTime > FUNCTION_TIMEOUT) {
-            throw new Error('Function execution timeout - returning partial response');
-          }
-        };
         
         if (functionCall.name === 'get_market_data') {
         const functionArgs = JSON.parse(functionCall.arguments);
