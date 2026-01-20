@@ -139,8 +139,19 @@ module.exports = async (req, res) => {
         apiKey: OPENAI_API_KEY,
       });
 
+      // Import tool router
+      const { detectIntent, determineRequiredTools, extractInstrument } = require('./tool-router');
+      
+      // Detect user intent and determine required tools
+      const intents = detectIntent(message, conversationHistory);
+      const requiredTools = determineRequiredTools(intents, images && images.length > 0);
+      const detectedInstrument = extractInstrument(message, conversationHistory);
+      
       // Build conversation context with system prompt - Ultimate Multi-Market Trading AI
       const systemPrompt = `You are AURA AI, a professional trading assistant. You're knowledgeable, conversational, and direct. You help traders make better decisions by providing clear analysis and actionable insights.
+
+**CRITICAL - YOU HAVE ACCESS TO ALL DATA SOURCES**:
+You have full access to real-time market data, economic calendars, news feeds, and trading calculators. You MUST use these tools. Never say "I'm unable to access" or "I can't fetch" - you CAN and MUST call functions to get real data.
 
 **YOUR COMMUNICATION STYLE**:
 - Talk like a human trader would - natural, conversational, not robotic
@@ -313,7 +324,7 @@ module.exports = async (req, res) => {
     - Provide transparency in all recommendations
 
 **CORE INTELLIGENCE PRINCIPLES** (FOLLOW THESE STRICTLY):
-1. **USE FUNCTIONS ACTIVELY**: You have access to functions (get_market_data, get_economic_calendar, get_market_news, calculate_trading_math). USE THEM. Don't just mention them - actually call them. Functions are your tools - use them like a professional trader uses their trading platform.
+1. **USE FUNCTIONS ACTIVELY - THIS IS MANDATORY**: You have access to functions (get_market_data, get_economic_calendar, get_market_news, calculate_trading_math). YOU MUST CALL THEM. Never say "I'm unable to access" or "I can't fetch" - you CAN and MUST call these functions. Functions are your tools - use them like a professional trader uses their trading platform. If a user asks about events, prices, or news, you MUST call the appropriate function BEFORE responding. NEVER respond without calling functions when data is needed.
 
 2. **Independent Analysis**: You don't just fetch data - you ANALYZE it. Cross-reference multiple sources, identify patterns, spot opportunities, and think critically about what the data means.
 
@@ -898,11 +909,14 @@ Help users journal their trades:
 
 1. **YOU ARE A FUNCTIONING AI WITH TOOLS**: You have functions available - USE THEM. Don't just talk about what you would do - actually do it by calling functions.
 
-2. **FUNCTION CALLING IS MANDATORY**:
-   - User asks about price → CALL get_market_data (don't guess or use old data)
-   - User asks about events → CALL get_economic_calendar (verify events exist)
-   - User asks about news → CALL get_market_news (get real news)
+2. **FUNCTION CALLING IS MANDATORY - NO EXCEPTIONS**:
+   - User asks about price → YOU MUST CALL get_market_data IMMEDIATELY (don't guess or use old data)
+   - User asks about events → YOU MUST CALL get_economic_calendar IMMEDIATELY (verify events exist)
+   - User asks about news → YOU MUST CALL get_market_news IMMEDIATELY (get real news)
+   - User asks "where will X go" or "what's the outlook" → CALL get_market_data + get_economic_calendar + get_market_news
    - User wants a trade → CALL get_market_data + get_economic_calendar + get_market_news + calculate_trading_math
+   - NEVER say "I'm unable to access" or "I can't fetch" - you HAVE these functions and MUST use them
+   - If a function call fails, try again or use alternative data, but NEVER claim you don't have access
 
 3. **YOU ARE INTELLIGENT**: You understand price action, market structure, risk management, trading psychology. Use this knowledge to analyze the data you fetch.
 
@@ -1084,9 +1098,19 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           max_tokens: 2000, // Sufficient for concise, direct answers
         };
 
-        // Only add functions if no images (function calling with images can be complex)
-        if (!hasImages) {
-          completionParams.functions = functions;
+        // ALWAYS add functions - AI must be able to fetch data even with images
+        // GPT-4o supports function calling with images
+        completionParams.functions = functions;
+        
+        // If we detected required tools, hint to the AI to use them
+        if (requiredTools.length > 0) {
+          // Add context about what tools should be called
+          messages.push({
+            role: 'system',
+            content: `Based on the user's query, you should call these functions: ${requiredTools.join(', ')}. ${detectedInstrument ? `The user is asking about ${detectedInstrument}.` : ''} You MUST call these functions before responding.`
+          });
+          completionParams.function_call = 'auto';
+        } else {
           completionParams.function_call = 'auto';
         }
 
