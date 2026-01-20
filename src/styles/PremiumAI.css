@@ -157,9 +157,11 @@
 .message-text .markdown-paragraph {
   margin: 0;
   padding: 0;
-  line-height: 1.6;
+  line-height: 1.5;
   color: inherit;
   text-rendering: optimizeLegibility;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .message-text .markdown-paragraph:last-child {
