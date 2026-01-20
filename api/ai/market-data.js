@@ -635,7 +635,7 @@ module.exports = async (req, res) => {
         
         const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: { interval: '1m', range: '1d' },
-          timeout: 10000 // Optimized for real-time
+          timeout: 8000 // Optimized for real-time
         });
 
         if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
@@ -672,42 +672,6 @@ module.exports = async (req, res) => {
         }
       } catch (yahooError) {
         console.log('Yahoo Finance error:', yahooError.message);
-      }
-    }
-    
-        if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
-          const result = response.data.chart.result[0];
-          const meta = result.meta;
-          
-          if (meta && meta.regularMarketPrice) {
-            let displaySymbol = normalizedSymbol;
-            if (isGold) displaySymbol = 'XAUUSD';
-            else if (yahooSymbol === 'XAG=X') displaySymbol = 'XAGUSD';
-            else if (isForex && yahooSymbol.endsWith('=X')) displaySymbol = yahooSymbol.replace('=X', '');
-            else if (isCrypto && yahooSymbol.includes('-')) displaySymbol = yahooSymbol.replace('-', '');
-            else displaySymbol = meta.symbol || normalizedSymbol;
-            
-            marketData = {
-              symbol: displaySymbol,
-              price: meta.regularMarketPrice,
-              open: meta.regularMarketOpen || meta.previousClose,
-              high: meta.regularMarketDayHigh || meta.regularMarketPrice,
-              low: meta.regularMarketDayLow || meta.regularMarketPrice,
-              previousClose: meta.previousClose,
-              volume: meta.regularMarketVolume || 0,
-              change: meta.regularMarketPrice - meta.previousClose,
-              changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
-              currency: meta.currency || 'USD',
-              exchange: meta.exchangeName || (isForex ? 'FOREX' : isCrypto ? 'CRYPTO' : 'STOCK'),
-              timestamp: meta.regularMarketTime * 1000,
-              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
-              source: 'Yahoo Finance (Fallback)'
-            };
-            dataSources.push('Yahoo Finance (Fallback)');
-          }
-        }
-      } catch (fallbackError) {
-        console.log('Fallback Yahoo Finance error:', fallbackError.message);
       }
     }
 
