@@ -265,7 +265,7 @@ module.exports = async (req, res) => {
               symbol: avSymbol,
               apikey: ALPHA_VANTAGE_API_KEY
             },
-            timeout: 12000 // Increased timeout
+            timeout: 8000 // Optimized for real-time (8s max per source)
           }).then(response => {
             if (response.data && response.data['Global Quote'] && !response.data['Note']) {
               const quote = response.data['Global Quote'];
@@ -359,7 +359,7 @@ module.exports = async (req, res) => {
             symbol: finnhubSymbol,
             token: FINNHUB_API_KEY
           },
-          timeout: 12000 // Increased timeout
+          timeout: 8000 // Optimized for real-time (8s max per source)
         }).then(quoteResponse => {
           if (quoteResponse.data && quoteResponse.data.c && quoteResponse.data.c > 0) {
             const quote = quoteResponse.data;
@@ -431,7 +431,7 @@ module.exports = async (req, res) => {
             interval: '1m',
             range: '1d'
           },
-          timeout: 12000 // Increased timeout
+          timeout: 8000 // Optimized for real-time (8s max per source)
         }).then(response => {
           if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
             const result = response.data.chart.result[0];
@@ -635,7 +635,7 @@ module.exports = async (req, res) => {
         
         const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: { interval: '1m', range: '1d' },
-          timeout: 15000
+          timeout: 10000 // Optimized for real-time
         });
 
         if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {

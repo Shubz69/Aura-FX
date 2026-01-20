@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
             apikey: ALPHA_VANTAGE_API_KEY,
             limit: 50
           },
-          timeout: 12000 // Increased timeout
+          timeout: 8000 // Optimized for real-time (8s max per source)
         }).then(response => {
           if (response.data && response.data.feed) {
             return response.data.feed.map(item => ({
@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
             category: 'general',
             token: FINNHUB_API_KEY
           },
-          timeout: 12000 // Increased timeout
+          timeout: 8000 // Optimized for real-time (8s max per source)
         }).then(response => {
           if (response.data && Array.isArray(response.data)) {
             return response.data.slice(0, 20).map(item => ({
@@ -96,7 +96,7 @@ module.exports = async (req, res) => {
             pageSize: 20,
             apiKey: NEWS_API_KEY
           },
-          timeout: 12000 // Increased timeout
+          timeout: 8000 // Optimized for real-time (8s max per source)
         }).then(response => {
           if (response.data && response.data.articles) {
             return response.data.articles.map(item => ({

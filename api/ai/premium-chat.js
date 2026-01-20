@@ -1308,9 +1308,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               symbol: symbol,
               type: dataType
             }, {
-              timeout: 20000 // Increased to 20s to allow all sources to be tried
+              timeout: 12000 // Optimized for real-time - parallel fetching handles speed
             }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Market data timeout')), 20000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Market data timeout')), 12000))
           ]);
 
           if (marketDataResponse.data && marketDataResponse.data.success) {
@@ -1558,9 +1558,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 symbol: functionArgs.symbol,
                 timeframe: functionArgs.timeframe || '24h'
               }, {
-                timeout: 20000 // Increased to allow all news sources to be tried
+                timeout: 12000 // Optimized for real-time - parallel fetching handles speed
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 12000))
             ]);
 
             if (newsResponse.data && newsResponse.data.success) {
@@ -1651,7 +1651,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 date: functionArgs.date,
                 impact: functionArgs.impact
               }, {
-                timeout: 15000 // Increased to allow retries and fallbacks
+                timeout: 10000 // Optimized for real-time
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
             ]);
