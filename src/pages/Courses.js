@@ -156,6 +156,7 @@ const Courses = () => {
                             <li>✅ Premium channels</li>
                             <li>✅ Market analysis</li>
                             <li>✅ Weekly Briefs</li>
+                            <li>✅ Premium AURA AI</li>
                         </ul>
                         <button
                             className="subscription-plan-button premium"
@@ -185,6 +186,7 @@ const Courses = () => {
                             <li>✅ Direct founder access</li>
                             <li>✅ Daily Briefs</li>
                             <li>✅ Weekly Briefs</li>
+                            <li>✅ Premium AURA AI</li>
                         </ul>
                         <button
                             className="subscription-plan-button elite"

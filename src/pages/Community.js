@@ -6316,6 +6316,7 @@ Let's build generational wealth together! 💰🚀`,
                                     <li style={{ marginBottom: '8px' }}>✅ Market analysis</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Community access</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Premium AURA AI</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('aura')}
@@ -6394,6 +6395,7 @@ Let's build generational wealth together! 💰🚀`,
                                     <li style={{ marginBottom: '8px' }}>✅ Direct founder access</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Daily Briefs</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Premium AURA AI</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('a7fx')}

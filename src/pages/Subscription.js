@@ -302,6 +302,7 @@ const Subscription = () => {
                                     <li>✅ Priority access to premium course content</li>
                                     <li>✅ Exclusive market insights and expert commentary</li>
                                     <li>✅ Weekly Briefs</li>
+                                    <li>✅ Premium AURA AI</li>
                                 </ul>
                             </div>
                             <button 
@@ -332,6 +333,7 @@ const Subscription = () => {
                                     <li>✅ First access to cutting-edge features and tools</li>
                                     <li>✅ Daily Briefs</li>
                                     <li>✅ Weekly Briefs</li>
+                                    <li>✅ Premium AURA AI</li>
                                 </ul>
                             </div>
                             <button 
