@@ -24,6 +24,34 @@ const PremiumAI = () => {
   const isSubmittingRef = useRef(false); // Prevent double submissions
   const sendTimeoutRef = useRef(null); // For debouncing
 
+  // Load conversation history from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('aura_ai_conversation');
+      if (savedHistory) {
+        const parsed = JSON.parse(savedHistory);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          setConversationHistory(parsed);
+          return; // Don't reset if we have saved history
+        }
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+    }
+  }, []); // Only run on mount
+
+  // Save conversation history to localStorage whenever it changes
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem('aura_ai_conversation', JSON.stringify(messages));
+      } catch (error) {
+        console.error('Error saving conversation history:', error);
+      }
+    }
+  }, [messages]);
+
   // Check if user has premium access
   useEffect(() => {
     if (!isAuthenticated) {
@@ -59,15 +87,16 @@ const PremiumAI = () => {
       return;
     }
 
-    // Initialize with welcome message
-    const welcomeMessage = {
-      role: 'assistant',
-      content: `Hi I'm AURA AI, how can I help?`
-    };
-
-    setMessages([welcomeMessage]);
-    setConversationHistory([welcomeMessage]);
-  }, [isAuthenticated, user, navigate]);
+    // Only initialize with welcome message if no saved history exists
+    if (messages.length === 0) {
+      const welcomeMessage = {
+        role: 'assistant',
+        content: `Hi I'm AURA AI, how can I help?`
+      };
+      setMessages([welcomeMessage]);
+      setConversationHistory([welcomeMessage]);
+    }
+  }, [isAuthenticated, user, navigate, messages.length]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -421,9 +450,17 @@ const PremiumAI = () => {
 
   const clearConversation = () => {
     if (window.confirm('Are you sure you want to clear this conversation?')) {
+      // Clear localStorage
+      try {
+        localStorage.removeItem('aura_ai_conversation');
+      } catch (error) {
+        console.error('Error clearing conversation from localStorage:', error);
+      }
+      
+      // Reset to welcome message
       const welcomeMessage = {
         role: 'assistant',
-        content: `Conversation cleared. Ready for your next analysis request.`
+        content: `Hi I'm AURA AI, how can I help?`
       };
       setMessages([welcomeMessage]);
       setConversationHistory([welcomeMessage]);
