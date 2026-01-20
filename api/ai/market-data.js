@@ -28,36 +28,148 @@ module.exports = async (req, res) => {
     // Normalize symbol (remove spaces, convert to uppercase, handle various formats)
     let normalizedSymbol = symbol.trim().toUpperCase().replace(/\s+/g, '');
     
-    // Handle various instrument types and normalize symbols
+    // Comprehensive symbol mappings for ALL financial instruments
     const symbolMappings = {
-      // Gold/Commodities
-      'GOLD': 'XAUUSD',
-      'XAU': 'XAUUSD',
-      'XAU/USD': 'XAUUSD',
-      // Silver
-      'SILVER': 'XAGUSD',
-      'XAG': 'XAGUSD',
-      'XAG/USD': 'XAGUSD',
-      // Oil
-      'OIL': 'CL=F',
-      'CRUDE': 'CL=F',
-      'WTI': 'CL=F',
-      'BRENT': 'BZ=F',
+      // Precious Metals
+      'GOLD': 'XAUUSD', 'XAU': 'XAUUSD', 'XAU/USD': 'XAUUSD',
+      'SILVER': 'XAGUSD', 'XAG': 'XAGUSD', 'XAG/USD': 'XAGUSD',
+      'PLATINUM': 'XPTUSD', 'XPT': 'XPTUSD', 'XPT/USD': 'XPTUSD',
+      'PALLADIUM': 'XPDUSD', 'XPD': 'XPDUSD', 'XPD/USD': 'XPDUSD',
+      
+      // Energy Commodities
+      'OIL': 'CL=F', 'CRUDE': 'CL=F', 'WTI': 'CL=F', 'CRUDEOIL': 'CL=F',
+      'BRENT': 'BZ=F', 'BRENTOIL': 'BZ=F',
+      'NATURALGAS': 'NG=F', 'GAS': 'NG=F', 'NATGAS': 'NG=F',
+      'HEATINGOIL': 'HO=F', 'GASOIL': 'HO=F',
+      
+      // Agricultural Commodities
+      'CORN': 'ZC=F', 'WHEAT': 'ZW=F', 'SOYBEANS': 'ZS=F', 'SOYBEAN': 'ZS=F',
+      'SUGAR': 'SB=F', 'COFFEE': 'KC=F', 'COTTON': 'CT=F',
+      'COCOA': 'CC=F', 'ORANGEJUICE': 'OJ=F', 'LIVECATTLE': 'LE=F',
+      'FEEDERCATTLE': 'GF=F', 'LEANHOGS': 'HE=F',
+      
+      // Base Metals
+      'COPPER': 'HG=F', 'ALUMINUM': 'ALI=F', 'NICKEL': 'NI=F',
+      'ZINC': 'ZN=F', 'LEAD': 'PB=F', 'TIN': 'SN=F',
+      
       // Major Forex Pairs
-      'EUR/USD': 'EURUSD',
-      'GBP/USD': 'GBPUSD',
-      'USD/JPY': 'USDJPY',
-      'AUD/USD': 'AUDUSD',
-      'USD/CAD': 'USDCAD',
-      'NZD/USD': 'NZDUSD',
-      'USD/CHF': 'USDCHF',
-      // Crypto
-      'BITCOIN': 'BTCUSD',
-      'BTC': 'BTCUSD',
-      'BTC/USD': 'BTCUSD',
-      'ETHEREUM': 'ETHUSD',
-      'ETH': 'ETHUSD',
-      'ETH/USD': 'ETHUSD',
+      'EUR/USD': 'EURUSD', 'EURUSD': 'EURUSD',
+      'GBP/USD': 'GBPUSD', 'GBPUSD': 'GBPUSD', 'CABLE': 'GBPUSD',
+      'USD/JPY': 'USDJPY', 'USDJPY': 'USDJPY',
+      'AUD/USD': 'AUDUSD', 'AUDUSD': 'AUDUSD', 'AUSSIE': 'AUDUSD',
+      'USD/CAD': 'USDCAD', 'USDCAD': 'USDCAD', 'LOONIE': 'USDCAD',
+      'NZD/USD': 'NZDUSD', 'NZDUSD': 'NZDUSD', 'KIWI': 'NZDUSD',
+      'USD/CHF': 'USDCHF', 'USDCHF': 'USDCHF', 'SWISSIE': 'USDCHF',
+      
+      // Minor Forex Pairs
+      'EUR/GBP': 'EURGBP', 'EURGBP': 'EURGBP',
+      'EUR/JPY': 'EURJPY', 'EURJPY': 'EURJPY',
+      'GBP/JPY': 'GBPJPY', 'GBPJPY': 'GBPJPY',
+      'AUD/JPY': 'AUDJPY', 'AUDJPY': 'AUDJPY',
+      'EUR/AUD': 'EURAUD', 'EURAUD': 'EURAUD',
+      'EUR/CAD': 'EURCAD', 'EURCAD': 'EURCAD',
+      'GBP/AUD': 'GBPAUD', 'GBPAUD': 'GBPAUD',
+      'GBP/CAD': 'GBPCAD', 'GBPCAD': 'GBPCAD',
+      'AUD/CAD': 'AUDCAD', 'AUDCAD': 'AUDCAD',
+      'AUD/NZD': 'AUDNZD', 'AUDNZD': 'AUDNZD',
+      'NZD/JPY': 'NZDJPY', 'NZDJPY': 'NZDJPY',
+      'CAD/JPY': 'CADJPY', 'CADJPY': 'CADJPY',
+      'CHF/JPY': 'CHFJPY', 'CHFJPY': 'CHFJPY',
+      
+      // Exotic Forex Pairs
+      'USD/ZAR': 'USDZAR', 'USDZAR': 'USDZAR', // South African Rand
+      'USD/TRY': 'USDTRY', 'USDTRY': 'USDTRY', // Turkish Lira
+      'USD/MXN': 'USDMXN', 'USDMXN': 'USDMXN', // Mexican Peso
+      'USD/BRL': 'USDBRL', 'USDBRL': 'USDBRL', // Brazilian Real
+      'USD/CNH': 'USDCNH', 'USDCNH': 'USDCNH', // Chinese Yuan
+      'USD/INR': 'USDINR', 'USDINR': 'USDINR', // Indian Rupee
+      'USD/RUB': 'USDRUB', 'USDRUB': 'USDRUB', // Russian Ruble
+      'USD/SGD': 'USDSGD', 'USDSGD': 'USDSGD', // Singapore Dollar
+      'USD/HKD': 'USDHKD', 'USDHKD': 'USDHKD', // Hong Kong Dollar
+      'USD/KRW': 'USDKRW', 'USDKRW': 'USDKRW', // South Korean Won
+      
+      // Cryptocurrencies
+      'BITCOIN': 'BTCUSD', 'BTC': 'BTCUSD', 'BTC/USD': 'BTCUSD',
+      'ETHEREUM': 'ETHUSD', 'ETH': 'ETHUSD', 'ETH/USD': 'ETHUSD',
+      'BNB': 'BNBUSD', 'BINANCECOIN': 'BNBUSD',
+      'SOLANA': 'SOLUSD', 'SOL': 'SOLUSD',
+      'CARDANO': 'ADAUSD', 'ADA': 'ADAUSD',
+      'XRP': 'XRPUSD', 'RIPPLE': 'XRPUSD',
+      'POLKADOT': 'DOTUSD', 'DOT': 'DOTUSD',
+      'DOGECOIN': 'DOGEUSD', 'DOGE': 'DOGEUSD',
+      'AVALANCHE': 'AVAXUSD', 'AVAX': 'AVAXUSD',
+      'POLYGON': 'MATICUSD', 'MATIC': 'MATICUSD',
+      'LITECOIN': 'LTCUSD', 'LTC': 'LTCUSD',
+      'CHAINLINK': 'LINKUSD', 'LINK': 'LINKUSD',
+      'UNISWAP': 'UNIUSD', 'UNI': 'UNIUSD',
+      'BITCOINCASH': 'BCHUSD', 'BCH': 'BCHUSD',
+      
+      // Major Stock Indices
+      'SP500': '^GSPC', 'SPX': '^GSPC', 'S&P500': '^GSPC', 'S&P': '^GSPC',
+      'DOW': '^DJI', 'DOWJONES': '^DJI', 'DJI': '^DJI',
+      'NASDAQ': '^IXIC', 'NAS100': '^IXIC', 'COMP': '^IXIC',
+      'RUSSEL2000': '^RUT', 'RUT': '^RUT',
+      'FTSE': '^FTSE', 'FTSE100': '^FTSE',
+      'DAX': '^GDAXI', 'GERMANY': '^GDAXI',
+      'CAC40': '^FCHI', 'FRANCE': '^FCHI',
+      'NIKKEI': '^N225', 'JAPAN': '^N225',
+      'HANG SENG': '^HSI', 'HONGKONG': '^HSI',
+      'ASX200': '^AXJO', 'AUSTRALIA': '^AXJO',
+      'TSX': '^GSPTSE', 'CANADA': '^GSPTSE',
+      'IBEX35': '^IBEX', 'SPAIN': '^IBEX',
+      'SENSEX': '^BSESN', 'INDIA': '^BSESN',
+      
+      // ETF Indices
+      'SPY': 'SPY', 'SPDR': 'SPY',
+      'QQQ': 'QQQ', 'NASDAQ100': 'QQQ',
+      'DIA': 'DIA', 'DIAMONDS': 'DIA',
+      'IWM': 'IWM', 'RUSSELL2000ETF': 'IWM',
+      'VTI': 'VTI', 'VANGUARD': 'VTI',
+      
+      // Major Stocks (Tech)
+      'APPLE': 'AAPL', 'AAPL': 'AAPL',
+      'MICROSOFT': 'MSFT', 'MSFT': 'MSFT',
+      'GOOGLE': 'GOOGL', 'ALPHABET': 'GOOGL', 'GOOGL': 'GOOGL',
+      'AMAZON': 'AMZN', 'AMZN': 'AMZN',
+      'META': 'META', 'FACEBOOK': 'META', 'FB': 'META',
+      'TESLA': 'TSLA', 'TSLA': 'TSLA',
+      'NVIDIA': 'NVDA', 'NVDA': 'NVDA',
+      'NETFLIX': 'NFLX', 'NFLX': 'NFLX',
+      'AMD': 'AMD', 'ADVANCEDMICRO': 'AMD',
+      'INTEL': 'INTC', 'INTC': 'INTC',
+      'ORACLE': 'ORCL', 'ORCL': 'ORCL',
+      'SALESFORCE': 'CRM', 'CRM': 'CRM',
+      'ADOBE': 'ADBE', 'ADBE': 'ADBE',
+      'PAYPAL': 'PYPL', 'PYPL': 'PYPL',
+      'UBER': 'UBER', 'UBER': 'UBER',
+      'AIRBNB': 'ABNB', 'ABNB': 'ABNB',
+      
+      // Major Stocks (Finance)
+      'JPMORGAN': 'JPM', 'JPM': 'JPM',
+      'BANKOFAMERICA': 'BAC', 'BAC': 'BAC',
+      'WELLSFARGO': 'WFC', 'WFC': 'WFC',
+      'GOLDMANSACHS': 'GS', 'GS': 'GS',
+      'MORGANSTANLEY': 'MS', 'MS': 'MS',
+      'CITIGROUP': 'C', 'C': 'C',
+      'VISA': 'V', 'V': 'V',
+      'MASTERCARD': 'MA', 'MA': 'MA',
+      
+      // Major Stocks (Other Sectors)
+      'WALMART': 'WMT', 'WMT': 'WMT',
+      'JOHNSON&JOHNSON': 'JNJ', 'JNJ': 'JNJ',
+      'PROCTER&GAMBLE': 'PG', 'PG': 'PG',
+      'COCACOLA': 'KO', 'KO': 'KO',
+      'PEPSI': 'PEP', 'PEP': 'PEP',
+      'MCDONALDS': 'MCD', 'MCD': 'MCD',
+      'STARBUCKS': 'SBUX', 'SBUX': 'SBUX',
+      'NKE': 'NKE', 'NIKE': 'NKE',
+      'DISNEY': 'DIS', 'DIS': 'DIS',
+      'BOEING': 'BA', 'BA': 'BA',
+      'CATERPILLAR': 'CAT', 'CAT': 'CAT',
+      '3M': 'MMM', 'MMM': 'MMM',
+      'GENERALELECTRIC': 'GE', 'GE': 'GE',
+      'VERIZON': 'VZ', 'VZ': 'VZ',
+      'AT&T': 'T', 'T': 'T',
     };
     
     // Check if symbol needs mapping
@@ -65,31 +177,69 @@ module.exports = async (req, res) => {
       normalizedSymbol = symbolMappings[normalizedSymbol];
     }
     
-    // Detect instrument type for better data source selection
+    // Comprehensive instrument type detection
     const isGold = normalizedSymbol === 'XAUUSD' || normalizedSymbol.includes('XAU') || normalizedSymbol === 'GOLD';
     const isForex = (normalizedSymbol.length === 6 && /^[A-Z]{6}$/.test(normalizedSymbol) && 
                     (normalizedSymbol.includes('USD') || normalizedSymbol.includes('EUR') || 
                      normalizedSymbol.includes('GBP') || normalizedSymbol.includes('JPY') ||
                      normalizedSymbol.includes('AUD') || normalizedSymbol.includes('CAD') ||
-                     normalizedSymbol.includes('CHF') || normalizedSymbol.includes('NZD'))) ||
-                    normalizedSymbol.includes('EURUSD') || normalizedSymbol.includes('GBPUSD') ||
-                    normalizedSymbol.includes('USDJPY') || normalizedSymbol.includes('AUDUSD');
+                     normalizedSymbol.includes('CHF') || normalizedSymbol.includes('NZD') ||
+                     normalizedSymbol.includes('ZAR') || normalizedSymbol.includes('TRY') ||
+                     normalizedSymbol.includes('MXN') || normalizedSymbol.includes('BRL') ||
+                     normalizedSymbol.includes('CNH') || normalizedSymbol.includes('INR') ||
+                     normalizedSymbol.includes('RUB') || normalizedSymbol.includes('SGD') ||
+                     normalizedSymbol.includes('HKD') || normalizedSymbol.includes('KRW'))) ||
+                    /^(EUR|GBP|USD|AUD|NZD|CAD|CHF|JPY|ZAR|TRY|MXN|BRL|CNH|INR|RUB|SGD|HKD|KRW)(EUR|GBP|USD|AUD|NZD|CAD|CHF|JPY|ZAR|TRY|MXN|BRL|CNH|INR|RUB|SGD|HKD|KRW)$/.test(normalizedSymbol);
     const isCrypto = normalizedSymbol.includes('BTC') || normalizedSymbol.includes('ETH') || 
+                     normalizedSymbol.includes('BNB') || normalizedSymbol.includes('SOL') ||
+                     normalizedSymbol.includes('ADA') || normalizedSymbol.includes('XRP') ||
+                     normalizedSymbol.includes('DOT') || normalizedSymbol.includes('DOGE') ||
+                     normalizedSymbol.includes('AVAX') || normalizedSymbol.includes('MATIC') ||
+                     normalizedSymbol.includes('LTC') || normalizedSymbol.includes('LINK') ||
+                     normalizedSymbol.includes('UNI') || normalizedSymbol.includes('BCH') ||
                      normalizedSymbol.includes('USDT') || normalizedSymbol.includes('USDC') ||
                      normalizedSymbol.includes('BITCOIN') || normalizedSymbol.includes('ETHEREUM') ||
-                     normalizedSymbol === 'BTC' || normalizedSymbol === 'ETH';
+                     normalizedSymbol.includes('CRYPTO');
     const isCommodity = normalizedSymbol.includes('XAU') || normalizedSymbol.includes('XAG') || 
+                        normalizedSymbol.includes('XPT') || normalizedSymbol.includes('XPD') ||
                         normalizedSymbol.includes('CL') || normalizedSymbol.includes('GC') ||
+                        normalizedSymbol.includes('NG') || normalizedSymbol.includes('HO') ||
+                        normalizedSymbol.includes('ZC') || normalizedSymbol.includes('ZW') ||
+                        normalizedSymbol.includes('ZS') || normalizedSymbol.includes('SB') ||
+                        normalizedSymbol.includes('KC') || normalizedSymbol.includes('CT') ||
+                        normalizedSymbol.includes('CC') || normalizedSymbol.includes('OJ') ||
+                        normalizedSymbol.includes('LE') || normalizedSymbol.includes('GF') ||
+                        normalizedSymbol.includes('HE') || normalizedSymbol.includes('HG') ||
                         normalizedSymbol.includes('OIL') || normalizedSymbol.includes('SILVER') ||
-                        normalizedSymbol.includes('CRUDE') || normalizedSymbol.includes('WTI') ||
-                        normalizedSymbol.includes('BRENT');
-    const isIndex = normalizedSymbol.startsWith('^') || normalizedSymbol === 'SPY' || 
-                    normalizedSymbol === 'QQQ' || normalizedSymbol === 'DIA' ||
-                    normalizedSymbol.includes('SPX') || normalizedSymbol.includes('DJI') ||
+                        normalizedSymbol.includes('GOLD') || normalizedSymbol.includes('PLATINUM') ||
+                        normalizedSymbol.includes('PALLADIUM') || normalizedSymbol.includes('CRUDE') ||
+                        normalizedSymbol.includes('WTI') || normalizedSymbol.includes('BRENT') ||
+                        normalizedSymbol.includes('GAS') || normalizedSymbol.includes('CORN') ||
+                        normalizedSymbol.includes('WHEAT') || normalizedSymbol.includes('COFFEE') ||
+                        normalizedSymbol.includes('COTTON') || normalizedSymbol.includes('COPPER');
+    const isIndex = normalizedSymbol.startsWith('^') || 
+                    normalizedSymbol === 'SPY' || normalizedSymbol === 'QQQ' || normalizedSymbol === 'DIA' ||
+                    normalizedSymbol === 'IWM' || normalizedSymbol === 'VTI' ||
+                    normalizedSymbol.includes('SPX') || normalizedSymbol.includes('SP500') ||
+                    normalizedSymbol.includes('DJI') || normalizedSymbol.includes('DOW') ||
                     normalizedSymbol.includes('NASDAQ') || normalizedSymbol.includes('FTSE') ||
-                    normalizedSymbol.includes('DAX');
+                    normalizedSymbol.includes('DAX') || normalizedSymbol.includes('CAC') ||
+                    normalizedSymbol.includes('NIKKEI') || normalizedSymbol.includes('HANG') ||
+                    normalizedSymbol.includes('ASX') || normalizedSymbol.includes('TSX') ||
+                    normalizedSymbol.includes('IBEX') || normalizedSymbol.includes('SENSEX') ||
+                    normalizedSymbol.includes('RUT') || normalizedSymbol.includes('RUSSEL');
+    const isFuture = normalizedSymbol.endsWith('=F') || normalizedSymbol.includes('FUTURE') ||
+                     normalizedSymbol.includes('FUTURES') || /^[A-Z]{1,2}=F$/.test(normalizedSymbol);
+    const isBond = normalizedSymbol.includes('BOND') || normalizedSymbol.includes('TNOTE') ||
+                   normalizedSymbol.includes('TBOND') || normalizedSymbol.includes('TREASURY') ||
+                   normalizedSymbol.startsWith('^TNX') || normalizedSymbol.startsWith('^TYX') ||
+                   normalizedSymbol.startsWith('^FVX');
+    const isETF = normalizedSymbol === 'SPY' || normalizedSymbol === 'QQQ' || normalizedSymbol === 'DIA' ||
+                  normalizedSymbol === 'IWM' || normalizedSymbol === 'VTI' || normalizedSymbol === 'VOO' ||
+                  normalizedSymbol.includes('ETF');
     const isStock = /^[A-Z]{1,5}$/.test(normalizedSymbol) && normalizedSymbol.length <= 5 && 
-                    !isForex && !isCrypto && !isCommodity && !isIndex && !normalizedSymbol.startsWith('^');
+                    !isForex && !isCrypto && !isCommodity && !isIndex && !isFuture && 
+                    !isBond && !normalizedSymbol.startsWith('^') && !normalizedSymbol.endsWith('=F');
 
     // Try multiple data sources - prioritize most accurate
     let marketData = null;
