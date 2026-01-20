@@ -297,11 +297,11 @@ const Subscription = () => {
                             <div className="plan-benefits">
                                 <ul>
                                     <li>✅ Unlimited access to all premium community channels</li>
-                                    <li>✅ Real-time trading signals and market analysis</li>
                                     <li>✅ Network with 1,200+ successful traders</li>
                                     <li>✅ Share and receive exclusive trading strategies</li>
                                     <li>✅ Priority access to premium course content</li>
                                     <li>✅ Exclusive market insights and expert commentary</li>
+                                    <li>✅ Weekly Briefs</li>
                                 </ul>
                             </div>
                             <button 
@@ -326,12 +326,12 @@ const Subscription = () => {
                             <div className="plan-benefits">
                                 <ul>
                                     <li>✅ Everything included in Aura FX Standard</li>
-                                    <li>✅ Exclusive elite-only trading signals with highest accuracy</li>
-                                    <li>✅ Priority 1-to-1 mentorship with industry experts</li>
                                     <li>✅ Access to exclusive elite trader community</li>
                                     <li>✅ Advanced proprietary trading strategies</li>
                                     <li>✅ Direct communication channel with founders</li>
                                     <li>✅ First access to cutting-edge features and tools</li>
+                                    <li>✅ Daily Briefs</li>
+                                    <li>✅ Weekly Briefs</li>
                                 </ul>
                             </div>
                             <button 

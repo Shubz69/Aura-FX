@@ -182,9 +182,9 @@ const Courses = () => {
                         <ul className="subscription-plan-features">
                             <li>✅ Everything in Premium</li>
                             <li>✅ Elite-only channels</li>
-                            <li>✅ 1-to-1 mentorship</li>
-                            <li>✅ Exclusive signals</li>
                             <li>✅ Direct founder access</li>
+                            <li>✅ Daily Briefs</li>
+                            <li>✅ Weekly Briefs</li>
                         </ul>
                         <button
                             className="subscription-plan-button elite"

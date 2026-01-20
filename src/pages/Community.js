@@ -6313,9 +6313,9 @@ Let's build generational wealth together! 💰🚀`,
                                     listStyle: 'none'
                                 }}>
                                     <li style={{ marginBottom: '8px' }}>✅ Access to premium channels</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Trading signals</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Market analysis</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Community access</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('aura')}
@@ -6391,9 +6391,9 @@ Let's build generational wealth together! 💰🚀`,
                                 }}>
                                     <li style={{ marginBottom: '8px' }}>✅ Everything in Aura FX</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Elite-only channels</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ 1-to-1 mentorship</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Exclusive signals</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Direct founder access</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Daily Briefs</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Weekly Briefs</li>
                                 </ul>
                                 <button
                                     onClick={() => handleSelectSubscription('a7fx')}
