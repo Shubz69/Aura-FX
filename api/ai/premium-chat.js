@@ -1032,8 +1032,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         const completionParams = {
           model: 'gpt-4o', // GPT-4o supports vision
           messages: messages,
-          temperature: 0.7, // Lower for more consistent, professional, accurate responses
-          max_tokens: 3000, // Increased for detailed analysis, calculations, and comprehensive responses
+          temperature: 0.8, // Slightly higher for more natural, human-like responses
+          max_tokens: 2000, // Sufficient for concise, direct answers
         };
 
         // Only add functions if no images (function calling with images can be complex)
