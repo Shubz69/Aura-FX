@@ -57,30 +57,7 @@ const PremiumAI = () => {
     // Initialize with welcome message
     const welcomeMessage = {
       role: 'assistant',
-      content: `Welcome to AURA AI, ${user?.username || user?.name || 'Trader'}.
-
-I'm the ULTIMATE financial intelligence system - the most comprehensive trading AI in existence.
-
-**I can analyze EVERY financial instrument:**
-• **Stocks** - Every stock on every exchange (AAPL, TSLA, MSFT, and thousands more)
-• **Forex** - All currency pairs (Major, Minor, Exotic - EURUSD, GBPUSD, USDJPY, USDZAR, etc.)
-• **Crypto** - All cryptocurrencies (BTC, ETH, SOL, ADA, XRP, and hundreds more)
-• **Commodities** - Precious metals, energy, agricultural, base metals (Gold, Oil, Wheat, Copper, etc.)
-• **Indices** - All major indices (S&P 500, Dow, NASDAQ, FTSE, DAX, Nikkei, and more)
-• **Futures** - All futures contracts (Commodity, Index, Currency futures)
-• **Bonds** - Government and corporate bonds
-• **ETFs** - All exchange-traded funds
-• **Options** - Options chains for any underlying
-
-**What makes me different:**
-✓ Real-time data from multiple professional sources (Bloomberg-level intelligence)
-✓ Actionable trading recommendations with entry/exit levels, stop losses, and profit targets
-✓ Comprehensive analysis combining technical, fundamental, and sentiment data
-✓ I provide TRADES, not just information - something other AIs cannot do
-
-Just ask me about any instrument or ask for a trade setup. I'll analyze it and give you actionable recommendations!
-
-How can I help you trade today?`
+      content: `Hi I'm AURA AI, how can I help?`
     };
 
     setMessages([welcomeMessage]);
