@@ -26,10 +26,18 @@ module.exports = async (req, res) => {
     }
 
     // Normalize symbol (remove spaces, convert to uppercase)
-    const normalizedSymbol = symbol.trim().toUpperCase();
+    let normalizedSymbol = symbol.trim().toUpperCase();
+    
+    // Handle gold/commodity symbols - try multiple formats
+    const goldSymbols = ['XAUUSD', 'XAU/USD', 'GOLD', 'XAU'];
+    let isGold = goldSymbols.some(gs => normalizedSymbol.includes(gs));
+    if (isGold) {
+      normalizedSymbol = 'XAUUSD'; // Standardize to XAUUSD
+    }
 
-    // Try multiple data sources
+    // Try multiple data sources - prioritize most accurate
     let marketData = null;
+    let dataSources = [];
 
     // Source 1: Alpha Vantage (free tier available)
     try {
@@ -136,39 +144,99 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Source 3: Yahoo Finance (fallback - using yfinance API)
+    // Source 3: Yahoo Finance (for stocks and some commodities)
     if (!marketData) {
       try {
-        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${normalizedSymbol}`, {
+        // For gold, try XAU=X format
+        const yahooSymbol = isGold ? 'XAU=X' : normalizedSymbol;
+        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: {
-            interval: '1d',
+            interval: '1m',
             range: '1d'
           },
           timeout: 5000
         });
 
-        if (response.data && response.data.chart && response.data.chart.result) {
+        if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
           const result = response.data.chart.result[0];
           const meta = result.meta;
-          const quote = result.indicators.quote[0];
           
-          marketData = {
-            symbol: meta.symbol,
-            price: meta.regularMarketPrice,
-            open: meta.regularMarketOpen,
-            high: meta.regularMarketDayHigh,
-            low: meta.regularMarketDayLow,
-            previousClose: meta.previousClose,
-            volume: meta.regularMarketVolume,
-            change: meta.regularMarketPrice - meta.previousClose,
-            changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
-            currency: meta.currency,
-            exchange: meta.exchangeName,
-            source: 'Yahoo Finance'
-          };
+          if (meta && meta.regularMarketPrice) {
+            marketData = {
+              symbol: isGold ? 'XAUUSD' : meta.symbol,
+              price: meta.regularMarketPrice,
+              open: meta.regularMarketOpen || meta.previousClose,
+              high: meta.regularMarketDayHigh || meta.regularMarketPrice,
+              low: meta.regularMarketDayLow || meta.regularMarketPrice,
+              previousClose: meta.previousClose,
+              volume: meta.regularMarketVolume || 0,
+              change: meta.regularMarketPrice - meta.previousClose,
+              changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
+              currency: meta.currency || 'USD',
+              exchange: meta.exchangeName || 'FOREX',
+              timestamp: meta.regularMarketTime * 1000,
+              source: 'Yahoo Finance'
+            };
+            dataSources.push('Yahoo Finance');
+          }
         }
       } catch (yahooError) {
         console.log('Yahoo Finance error:', yahooError.message);
+      }
+    }
+    
+    // Source 4: Metal API for gold/commodities (if available)
+    if (!marketData && isGold) {
+      try {
+        const METAL_API_KEY = process.env.METAL_API_KEY;
+        if (METAL_API_KEY) {
+          const response = await axios.get(`https://api.metals.live/v1/spot/gold`, {
+            headers: {
+              'x-rapidapi-key': METAL_API_KEY
+            },
+            timeout: 5000
+          });
+          
+          if (response.data && response.data.price) {
+            marketData = {
+              symbol: 'XAUUSD',
+              price: parseFloat(response.data.price),
+              timestamp: Date.now(),
+              source: 'Metal API'
+            };
+            dataSources.push('Metal API');
+          }
+        }
+      } catch (metalError) {
+        console.log('Metal API error:', metalError.message);
+      }
+    }
+    
+    // Source 5: Twelve Data API for forex/commodities (if available)
+    if (!marketData) {
+      try {
+        const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
+        if (TWELVE_DATA_API_KEY) {
+          const response = await axios.get(`https://api.twelvedata.com/price`, {
+            params: {
+              symbol: normalizedSymbol,
+              apikey: TWELVE_DATA_API_KEY
+            },
+            timeout: 5000
+          });
+          
+          if (response.data && response.data.price) {
+            marketData = {
+              symbol: normalizedSymbol,
+              price: parseFloat(response.data.price),
+              timestamp: Date.now(),
+              source: 'Twelve Data'
+            };
+            dataSources.push('Twelve Data');
+          }
+        }
+      } catch (twelveDataError) {
+        console.log('Twelve Data error:', twelveDataError.message);
       }
     }
 
