@@ -447,7 +447,6 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                       symbol: additionalArgs.symbol,
                       timeframe: additionalArgs.timeframe || '24h'
                     }, { timeout: 10000 });
-                    });
                     if (newsResp.data?.success) additionalData = newsResp.data.data;
                   }
                   
