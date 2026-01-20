@@ -203,7 +203,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       const functions = [
         {
           name: 'get_market_data',
-          description: 'Fetch real-time market data for any trading symbol (stocks, forex, crypto, commodities). Returns current price, volume, change, and other market metrics.',
+          description: 'Fetch real-time market data for any trading symbol (stocks, forex, crypto, commodities). Returns current price, volume, change, and other market metrics. Use this for live prices and chart data.',
           parameters: {
             type: 'object',
             properties: {
@@ -218,6 +218,25 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               }
             },
             required: ['symbol']
+          }
+        },
+        {
+          name: 'get_economic_calendar',
+          description: 'Fetch economic calendar events from Forex Factory and other sources. Returns upcoming economic events, news releases, and their expected impact on markets.',
+          parameters: {
+            type: 'object',
+            properties: {
+              date: {
+                type: 'string',
+                description: 'Date in YYYY-MM-DD format. If not provided, returns today\'s events.'
+              },
+              impact: {
+                type: 'string',
+                enum: ['High', 'Medium', 'Low'],
+                description: 'Filter events by impact level (High, Medium, Low)'
+              }
+            },
+            required: []
           }
         }
       ];
@@ -281,14 +300,16 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       let aiResponse = completion.choices[0]?.message?.content || '';
       let functionCall = completion.choices[0]?.message?.function_call;
 
-      // Handle function calls for real-time market data
-      if (functionCall && functionCall.name === 'get_market_data') {
+      // Handle function calls for real-time market data and economic calendar
+      if (functionCall) {
+        const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
+        
+        if (functionCall.name === 'get_market_data') {
         const functionArgs = JSON.parse(functionCall.arguments);
         const symbol = functionArgs.symbol;
         const dataType = functionArgs.type || 'quote';
 
         // Fetch real-time market data
-        const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
         try {
           const marketDataResponse = await axios.post(`${API_BASE_URL}/api/ai/market-data`, {
             symbol: symbol,
@@ -404,6 +425,66 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           });
 
           aiResponse = errorCompletion.choices[0]?.message?.content || 'I apologize, but I encountered an error fetching market data. Please try again.';
+        }
+        } else if (functionCall.name === 'get_economic_calendar') {
+          // Handle economic calendar function call
+          const functionArgs = JSON.parse(functionCall.arguments);
+          
+          try {
+            const calendarResponse = await axios.post(`${API_BASE_URL}/api/ai/forex-factory`, {
+              date: functionArgs.date,
+              impact: functionArgs.impact
+            }, {
+              timeout: 10000
+            });
+
+            if (calendarResponse.data && calendarResponse.data.success) {
+              const calendarData = calendarResponse.data.data;
+
+              messages.push({
+                role: 'assistant',
+                content: null,
+                function_call: functionCall
+              });
+              messages.push({
+                role: 'function',
+                name: 'get_economic_calendar',
+                content: JSON.stringify(calendarData)
+              });
+
+              const calendarCompletion = await openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                functions: functions,
+                function_call: 'auto',
+                temperature: 0.6,
+                max_tokens: 2000,
+              });
+
+              aiResponse = calendarCompletion.choices[0]?.message?.content || aiResponse;
+            }
+          } catch (calendarError) {
+            console.error('Error fetching economic calendar:', calendarError);
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'get_economic_calendar',
+              content: JSON.stringify({ error: 'Economic calendar service temporarily unavailable' })
+            });
+
+            const errorCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: messages,
+              temperature: 0.6,
+              max_tokens: 2000,
+            });
+
+            aiResponse = errorCompletion.choices[0]?.message?.content || 'I apologize, but I encountered an error fetching economic calendar data. Please try again.';
+          }
         }
       }
 
