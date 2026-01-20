@@ -732,7 +732,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
           aiResponse = errorCompletion.choices[0]?.message?.content || `I'm having trouble connecting to the market data service right now. This might be a temporary issue. Could you try again in a moment?`;
         }
-        } else if (functionCall.name === 'get_market_news') {
+      } else if (functionCall.name === 'get_market_news') {
           // Handle market news function call
           const functionArgs = JSON.parse(functionCall.arguments);
           
@@ -798,8 +798,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
             aiResponse = errorCompletion.choices[0]?.message?.content || 'I encountered an error fetching market news. Please try again.';
           }
-        }
-        } else if (functionCall.name === 'get_economic_calendar') {
+      } else if (functionCall.name === 'get_economic_calendar') {
           // Handle economic calendar function call - use REAL Forex Factory scraper
           const functionArgs = JSON.parse(functionCall.arguments);
           
