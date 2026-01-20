@@ -66,16 +66,30 @@ module.exports = async (req, res) => {
     }
     
     // Detect instrument type for better data source selection
-    const isGold = normalizedSymbol === 'XAUUSD' || normalizedSymbol.includes('XAU');
-    const isForex = normalizedSymbol.length === 6 && /^[A-Z]{6}$/.test(normalizedSymbol) && 
+    const isGold = normalizedSymbol === 'XAUUSD' || normalizedSymbol.includes('XAU') || normalizedSymbol === 'GOLD';
+    const isForex = (normalizedSymbol.length === 6 && /^[A-Z]{6}$/.test(normalizedSymbol) && 
                     (normalizedSymbol.includes('USD') || normalizedSymbol.includes('EUR') || 
-                     normalizedSymbol.includes('GBP') || normalizedSymbol.includes('JPY'));
+                     normalizedSymbol.includes('GBP') || normalizedSymbol.includes('JPY') ||
+                     normalizedSymbol.includes('AUD') || normalizedSymbol.includes('CAD') ||
+                     normalizedSymbol.includes('CHF') || normalizedSymbol.includes('NZD'))) ||
+                    normalizedSymbol.includes('EURUSD') || normalizedSymbol.includes('GBPUSD') ||
+                    normalizedSymbol.includes('USDJPY') || normalizedSymbol.includes('AUDUSD');
     const isCrypto = normalizedSymbol.includes('BTC') || normalizedSymbol.includes('ETH') || 
-                     normalizedSymbol.includes('USDT') || normalizedSymbol.includes('USDC');
+                     normalizedSymbol.includes('USDT') || normalizedSymbol.includes('USDC') ||
+                     normalizedSymbol.includes('BITCOIN') || normalizedSymbol.includes('ETHEREUM') ||
+                     normalizedSymbol === 'BTC' || normalizedSymbol === 'ETH';
     const isCommodity = normalizedSymbol.includes('XAU') || normalizedSymbol.includes('XAG') || 
-                        normalizedSymbol.includes('CL') || normalizedSymbol.includes('GC');
+                        normalizedSymbol.includes('CL') || normalizedSymbol.includes('GC') ||
+                        normalizedSymbol.includes('OIL') || normalizedSymbol.includes('SILVER') ||
+                        normalizedSymbol.includes('CRUDE') || normalizedSymbol.includes('WTI') ||
+                        normalizedSymbol.includes('BRENT');
+    const isIndex = normalizedSymbol.startsWith('^') || normalizedSymbol === 'SPY' || 
+                    normalizedSymbol === 'QQQ' || normalizedSymbol === 'DIA' ||
+                    normalizedSymbol.includes('SPX') || normalizedSymbol.includes('DJI') ||
+                    normalizedSymbol.includes('NASDAQ') || normalizedSymbol.includes('FTSE') ||
+                    normalizedSymbol.includes('DAX');
     const isStock = /^[A-Z]{1,5}$/.test(normalizedSymbol) && normalizedSymbol.length <= 5 && 
-                    !isForex && !isCrypto && !isCommodity;
+                    !isForex && !isCrypto && !isCommodity && !isIndex && !normalizedSymbol.startsWith('^');
 
     // Try multiple data sources - prioritize most accurate
     let marketData = null;
@@ -91,10 +105,17 @@ module.exports = async (req, res) => {
       }
       
       if (type === 'quote') {
+        // Alpha Vantage works best for stocks, but can handle forex with FX_ prefix
+        let avSymbol = normalizedSymbol;
+        if (isForex && normalizedSymbol.length === 6) {
+          // Forex: EURUSD -> FX:EURUSD for Alpha Vantage
+          avSymbol = `FX:${normalizedSymbol}`;
+        }
+        
         const response = await axios.get(`https://www.alphavantage.co/query`, {
           params: {
             function: 'GLOBAL_QUOTE',
-            symbol: normalizedSymbol,
+            symbol: avSymbol,
             apikey: ALPHA_VANTAGE_API_KEY
           },
           timeout: 5000
@@ -102,25 +123,34 @@ module.exports = async (req, res) => {
 
         if (response.data && response.data['Global Quote'] && !response.data['Note']) {
           const quote = response.data['Global Quote'];
+          const quoteSymbol = quote['01. symbol'].replace('FX:', ''); // Remove FX: prefix if present
           marketData = {
-            symbol: quote['01. symbol'],
+            symbol: quoteSymbol,
             open: parseFloat(quote['02. open']),
             high: parseFloat(quote['03. high']),
             low: parseFloat(quote['04. low']),
             price: parseFloat(quote['05. price']),
-            volume: parseInt(quote['06. volume']),
+            volume: parseInt(quote['06. volume']) || 0,
             latestTradingDay: quote['07. latest trading day'],
             previousClose: parseFloat(quote['08. previous close']),
             change: parseFloat(quote['09. change']),
             changePercent: quote['10. change percent'],
+            instrumentType: isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
             source: 'Alpha Vantage'
           };
+          dataSources.push('Alpha Vantage');
         }
       } else if (type === 'intraday') {
+        // For intraday, use appropriate symbol format
+        let avSymbol = normalizedSymbol;
+        if (isForex && normalizedSymbol.length === 6) {
+          avSymbol = `FX:${normalizedSymbol}`;
+        }
+        
         const response = await axios.get(`https://www.alphavantage.co/query`, {
           params: {
             function: 'TIME_SERIES_INTRADAY',
-            symbol: normalizedSymbol,
+            symbol: avSymbol,
             interval: '5min',
             apikey: ALPHA_VANTAGE_API_KEY
           },
@@ -140,10 +170,12 @@ module.exports = async (req, res) => {
               high: parseFloat(timeSeries[timestamp]['2. high']),
               low: parseFloat(timeSeries[timestamp]['3. low']),
               close: parseFloat(timeSeries[timestamp]['4. close']),
-              volume: parseInt(timeSeries[timestamp]['5. volume'])
+              volume: parseInt(timeSeries[timestamp]['5. volume']) || 0
             })),
+            instrumentType: isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
             source: 'Alpha Vantage'
           };
+          dataSources.push('Alpha Vantage');
         }
       }
     } catch (alphaVantageError) {
@@ -194,7 +226,7 @@ module.exports = async (req, res) => {
               change: quote.c - quote.pc,
               changePercent: ((quote.c - quote.pc) / quote.pc * 100).toFixed(2) + '%',
               timestamp: quote.t * 1000, // convert to milliseconds
-              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
+              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
               source: 'Finnhub'
             };
             dataSources.push('Finnhub');
@@ -226,13 +258,30 @@ module.exports = async (req, res) => {
           }
         } else if (isCommodity) {
           // Commodities: Oil -> CL=F, Gold Futures -> GC=F
-          if (normalizedSymbol.includes('CL') || normalizedSymbol === 'OIL' || normalizedSymbol === 'WTI') {
+          if (normalizedSymbol.includes('CL') || normalizedSymbol === 'OIL' || normalizedSymbol === 'WTI' || normalizedSymbol === 'CRUDE') {
             yahooSymbol = 'CL=F';
-          } else if (normalizedSymbol.includes('GC')) {
+          } else if (normalizedSymbol.includes('GC') || normalizedSymbol === 'GOLD') {
             yahooSymbol = 'GC=F';
+          } else if (normalizedSymbol.includes('BRENT')) {
+            yahooSymbol = 'BZ=F';
+          }
+        } else if (isIndex) {
+          // Indices: SPY, QQQ, ^GSPC, etc.
+          if (normalizedSymbol === 'SPY' || normalizedSymbol.includes('SPX')) {
+            yahooSymbol = '^GSPC'; // S&P 500
+          } else if (normalizedSymbol === 'QQQ' || normalizedSymbol.includes('NASDAQ')) {
+            yahooSymbol = '^IXIC'; // NASDAQ
+          } else if (normalizedSymbol === 'DIA' || normalizedSymbol.includes('DJI')) {
+            yahooSymbol = '^DJI'; // Dow Jones
+          } else if (normalizedSymbol.includes('FTSE')) {
+            yahooSymbol = '^FTSE';
+          } else if (normalizedSymbol.includes('DAX')) {
+            yahooSymbol = '^GDAXI';
+          } else if (normalizedSymbol.startsWith('^')) {
+            yahooSymbol = normalizedSymbol; // Already in Yahoo format
           }
         }
-        // For stocks and indices, use symbol as-is
+        // For stocks, use symbol as-is
         
         const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: {
@@ -268,7 +317,7 @@ module.exports = async (req, res) => {
               currency: meta.currency || 'USD',
               exchange: meta.exchangeName || (isForex ? 'FOREX' : isCrypto ? 'CRYPTO' : 'STOCK'),
               timestamp: meta.regularMarketTime * 1000,
-              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : 'stock',
+              instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
               source: 'Yahoo Finance'
             };
             dataSources.push('Yahoo Finance');
