@@ -291,6 +291,12 @@
   backdrop-filter: blur(10px);
   word-break: keep-all;
   overflow-wrap: break-word;
+  margin-top: 0;
+}
+
+/* When message has images, adjust text spacing */
+.ai-message .message-content:has(.message-images) .message-text {
+  margin-top: 0;
 }
 
 .typing-indicator {
@@ -378,23 +384,48 @@
 
 .message-images {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  width: 100%;
 }
 
 .message-image {
-  max-width: 300px;
-  max-height: 300px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 100%;
+  max-height: 400px;
+  width: auto;
+  height: auto;
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.2);
+  display: block;
 }
 
 .message-image:hover {
-  transform: scale(1.05);
-  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* For user messages - align images to the right */
+.user-message .message-images {
+  justify-content: flex-end;
+}
+
+/* For AI messages - align images to the left */
+.ai-message .message-images {
+  justify-content: flex-start;
+}
+
+/* Responsive image sizing */
+@media (max-width: 768px) {
+  .message-image {
+    max-width: 100%;
+    max-height: 300px;
+  }
 }
 
 .input-container {

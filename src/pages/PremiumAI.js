@@ -451,6 +451,11 @@ const PremiumAI = () => {
                         alt={`Uploaded ${imgIndex + 1}`}
                         className="message-image"
                         onClick={() => window.open(img, '_blank')}
+                        loading="lazy"
+                        style={{ 
+                          maxWidth: 'min(400px, 100%)',
+                          height: 'auto'
+                        }}
                       />
                     ))}
                   </div>
