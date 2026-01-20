@@ -6,7 +6,10 @@
   "framework": "create-react-app",
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 30
+      "maxDuration": 60
+    },
+    "api/ai/premium-chat.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

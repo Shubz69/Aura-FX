@@ -1042,7 +1042,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           completionParams.function_call = 'auto';
         }
 
-        completion = await openai.chat.completions.create(completionParams);
+        // Add timeout to initial OpenAI call
+        completion = await Promise.race([
+          openai.chat.completions.create(completionParams),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 25000))
+        ]);
       } catch (openaiError) {
         // Handle OpenAI-specific errors
         console.error('OpenAI API error:', openaiError);
@@ -1092,22 +1096,37 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       let functionCall = completion.choices[0]?.message?.function_call;
 
       // Handle function calls for real-time market data and economic calendar
+      // Set a hard timeout to prevent exceeding Vercel's limit
+      const FUNCTION_TIMEOUT = 50000; // 50 seconds max for all function calls
+      const startTime = Date.now();
+      
       if (functionCall) {
         const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
+        
+        // Helper function to check timeout
+        const checkTimeout = () => {
+          if (Date.now() - startTime > FUNCTION_TIMEOUT) {
+            throw new Error('Function execution timeout - returning partial response');
+          }
+        };
         
         if (functionCall.name === 'get_market_data') {
         const functionArgs = JSON.parse(functionCall.arguments);
         const symbol = functionArgs.symbol;
         const dataType = functionArgs.type || 'quote';
 
-        // Fetch real-time market data
+        // Fetch real-time market data with shorter timeout
         try {
-          const marketDataResponse = await axios.post(`${API_BASE_URL}/api/ai/market-data`, {
-            symbol: symbol,
-            type: dataType
-          }, {
-            timeout: 10000
-          });
+          checkTimeout();
+          const marketDataResponse = await Promise.race([
+            axios.post(`${API_BASE_URL}/api/ai/market-data`, {
+              symbol: symbol,
+              type: dataType
+            }, {
+              timeout: 8000 // Reduced from 10s to 8s
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Market data timeout')), 8000))
+          ]);
 
           if (marketDataResponse.data && marketDataResponse.data.success) {
             const marketData = marketDataResponse.data.data;
@@ -1124,30 +1143,39 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               content: JSON.stringify(marketData)
             });
 
-            // Get AI response with market data context - AI may want to fetch additional data
-            const secondCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: messages,
-              functions: functions,
-              function_call: 'auto', // AI can automatically fetch news/calendar if needed
-              temperature: 0.8,
-              max_tokens: 1500, // Allow for detailed analysis when needed
-            });
+            // Get AI response with market data context - limit additional function calls to prevent timeout
+            checkTimeout();
+            const secondCompletion = await Promise.race([
+              openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                functions: functions,
+                function_call: 'auto',
+                temperature: 0.8,
+                max_tokens: 1500,
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 20000))
+            ]);
 
             aiResponse = secondCompletion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
             
-            // Check if AI wants to fetch additional data (news, calendar) for better analysis
-            if (secondCompletion.choices[0]?.message?.function_call) {
+            // Only fetch additional data if we have time left (prevent timeout)
+            const timeElapsed = Date.now() - startTime;
+            if (timeElapsed < 35000 && secondCompletion.choices[0]?.message?.function_call) {
               // Handle additional function calls if needed (e.g., for intraday data after quote)
               const secondFunctionCall = secondCompletion.choices[0]?.message?.function_call;
               if (secondFunctionCall.name === 'get_market_data') {
+                checkTimeout();
                 const secondArgs = JSON.parse(secondFunctionCall.arguments);
-                const secondMarketDataResponse = await axios.post(`${API_BASE_URL}/api/ai/market-data`, {
-                  symbol: secondArgs.symbol,
-                  type: secondArgs.type || 'intraday'
-                }, {
-                  timeout: 10000
-                });
+                const secondMarketDataResponse = await Promise.race([
+                  axios.post(`${API_BASE_URL}/api/ai/market-data`, {
+                    symbol: secondArgs.symbol,
+                    type: secondArgs.type || 'intraday'
+                  }, {
+                    timeout: 6000 // Reduced timeout
+                  }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
+                ]);
 
                 if (secondMarketDataResponse.data && secondMarketDataResponse.data.success) {
                   messages.push({
@@ -1161,43 +1189,58 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                     content: JSON.stringify(secondMarketDataResponse.data.data)
                   });
 
-                  const thirdCompletion = await openai.chat.completions.create({
-                    model: 'gpt-4o',
-                    messages: messages,
-                    functions: functions,
-                    function_call: 'auto',
-                    temperature: 0.8,
-                    max_tokens: 1500,
-                  });
+                  checkTimeout();
+                  const thirdCompletion = await Promise.race([
+                    openai.chat.completions.create({
+                      model: 'gpt-4o',
+                      messages: messages,
+                      functions: functions,
+                      function_call: 'auto',
+                      temperature: 0.8,
+                      max_tokens: 1500,
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                  ]);
 
                   aiResponse = thirdCompletion.choices[0]?.message?.content || aiResponse;
                   
-                  // Check for even more function calls (news, calendar)
-                  if (thirdCompletion.choices[0]?.message?.function_call) {
-                    // Continue chain if AI wants more data
-                  }
+                  // Don't continue chain - return response to prevent timeout
                 }
               } else if (secondFunctionCall.name === 'get_economic_calendar' || secondFunctionCall.name === 'get_market_news') {
-                // AI wants to fetch calendar or news for better context
+                // AI wants to fetch calendar or news - fetch in parallel if both needed, but limit time
+                checkTimeout();
                 const additionalArgs = JSON.parse(secondFunctionCall.arguments);
                 
                 try {
                   let additionalData = null;
+                  const timeLeft = FUNCTION_TIMEOUT - (Date.now() - startTime);
+                  if (timeLeft < 10000) {
+                    // Not enough time, skip additional calls
+                    throw new Error('Insufficient time for additional data');
+                  }
+                  
                   if (secondFunctionCall.name === 'get_economic_calendar') {
-                    const calendarResp = await axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
-                      date: additionalArgs.date,
-                      impact: additionalArgs.impact
-                    }, { timeout: 15000 });
+                    const calendarResp = await Promise.race([
+                      axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
+                        date: additionalArgs.date,
+                        impact: additionalArgs.impact
+                      }, { timeout: 8000 }),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
+                    ]);
                     if (calendarResp.data?.success) additionalData = calendarResp.data.data;
                   } else if (secondFunctionCall.name === 'get_market_news') {
-                    const newsResp = await axios.post(`${API_BASE_URL}/api/ai/market-news`, {
-                      symbol: additionalArgs.symbol,
-                      timeframe: additionalArgs.timeframe || '24h'
-                    }, { timeout: 10000 });
+                    const newsResp = await Promise.race([
+                      axios.post(`${API_BASE_URL}/api/ai/market-news`, {
+                        symbol: additionalArgs.symbol,
+                        timeframe: additionalArgs.timeframe || '24h'
+                      }, { timeout: 6000 }),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
+                    ]);
                     if (newsResp.data?.success) additionalData = newsResp.data.data;
                   }
                   
                   if (additionalData) {
+                    checkTimeout();
                     messages.push({
                       role: 'assistant',
                       content: null,
@@ -1209,18 +1252,21 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                       content: JSON.stringify(additionalData)
                     });
                     
-                    const finalCompletion = await openai.chat.completions.create({
-                      model: 'gpt-4o',
-                      messages: messages,
-                      temperature: 0.8,
-                      max_tokens: 1500,
-                    });
+                    const finalCompletion = await Promise.race([
+                      openai.chat.completions.create({
+                        model: 'gpt-4o',
+                        messages: messages,
+                        temperature: 0.8,
+                        max_tokens: 1500,
+                      }),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                    ]);
                     
                     aiResponse = finalCompletion.choices[0]?.message?.content || aiResponse;
                   }
                 } catch (additionalError) {
                   console.log('Additional data fetch error:', additionalError.message);
-                  // Continue with existing response
+                  // Continue with existing response - don't fail the whole request
                 }
               }
             }
@@ -1242,54 +1288,69 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               })
             });
 
-            const errorCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: messages,
-              temperature: 0.8,
-              max_tokens: 1000,
-            });
+            const errorCompletion = await Promise.race([
+              openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                temperature: 0.8,
+                max_tokens: 1000,
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            ]);
 
             aiResponse = errorCompletion.choices[0]?.message?.content || `I couldn't fetch real-time data for ${symbol} right now. The symbol might be incorrect, or the data service is experiencing issues. Could you double-check the symbol?`;
           }
         } catch (marketDataError) {
           console.error('Error fetching market data:', marketDataError);
           
-          // Try to provide helpful response even on error
-          messages.push({
-            role: 'assistant',
-            content: null,
-            function_call: functionCall
-          });
-          messages.push({
-            role: 'function',
-            name: 'get_market_data',
-            content: JSON.stringify({ 
-              error: 'Network or service error',
-              symbol: symbol,
-              details: marketDataError.message
-            })
-          });
+          // Try to provide helpful response even on error, but with timeout
+          try {
+            messages.push({
+              role: 'assistant',
+              content: null,
+              function_call: functionCall
+            });
+            messages.push({
+              role: 'function',
+              name: 'get_market_data',
+              content: JSON.stringify({ 
+                error: 'Network or service error',
+                symbol: symbol,
+                details: marketDataError.message
+              })
+            });
 
-          const errorCompletion = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: messages,
-            temperature: 0.8,
-            max_tokens: 1000,
-          });
+            const errorCompletion = await Promise.race([
+              openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: messages,
+                temperature: 0.8,
+                max_tokens: 1000,
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            ]);
 
-          aiResponse = errorCompletion.choices[0]?.message?.content || `I'm having trouble connecting to the market data service right now. This might be a temporary issue. Could you try again in a moment?`;
+            aiResponse = errorCompletion.choices[0]?.message?.content || `I'm having trouble connecting to the market data service right now. This might be a temporary issue. Could you try again in a moment?`;
+          } catch (timeoutError) {
+            // If even error handling times out, return a simple message
+            aiResponse = `I'm having trouble connecting to the market data service right now. Please try again in a moment.`;
+          }
         }
       } else if (functionCall.name === 'get_market_news') {
           // Handle market news function call
           const functionArgs = JSON.parse(functionCall.arguments);
           
           try {
-            const newsResponse = await axios.post(`${API_BASE_URL}/api/ai/market-news`, {
-              symbol: functionArgs.symbol,
-              timeframe: functionArgs.timeframe || '24h'
-            }, {
-              timeout: 10000
-            });
+            checkTimeout();
+            const newsResponse = await Promise.race([
+              axios.post(`${API_BASE_URL}/api/ai/market-news`, {
+                symbol: functionArgs.symbol,
+                timeframe: functionArgs.timeframe || '24h'
+              }, {
+                timeout: 6000 // Reduced timeout
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
+            ]);
 
             if (newsResponse.data && newsResponse.data.success) {
               const newsData = newsResponse.data.data;
@@ -1305,57 +1366,67 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 content: JSON.stringify(newsData)
               });
 
-              const newsCompletion = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: messages,
-                functions: functions,
-                function_call: 'auto',
-                temperature: 0.8,
-                max_tokens: 1500,
-              });
+              checkTimeout();
+              const newsCompletion = await Promise.race([
+                openai.chat.completions.create({
+                  model: 'gpt-4o',
+                  messages: messages,
+                  functions: functions,
+                  function_call: 'auto',
+                  temperature: 0.8,
+                  max_tokens: 1500,
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+              ]);
 
               aiResponse = newsCompletion.choices[0]?.message?.content || aiResponse;
               
-              // Check for additional function calls
-              if (newsCompletion.choices[0]?.message?.function_call) {
-                // Handle chained function calls (e.g., get price after getting news)
-                const additionalCall = newsCompletion.choices[0]?.message?.function_call;
-                // Recursively handle if needed
-              }
+              // Don't continue chain - return response to prevent timeout
             }
           } catch (newsError) {
             console.error('Error fetching market news:', newsError);
-            messages.push({
-              role: 'assistant',
-              content: null,
-              function_call: functionCall
-            });
-            messages.push({
-              role: 'function',
-              name: 'get_market_news',
-              content: JSON.stringify({ error: 'News service temporarily unavailable' })
-            });
+            try {
+              messages.push({
+                role: 'assistant',
+                content: null,
+                function_call: functionCall
+              });
+              messages.push({
+                role: 'function',
+                name: 'get_market_news',
+                content: JSON.stringify({ error: 'News service temporarily unavailable' })
+              });
 
-            const errorCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: messages,
-              temperature: 0.8,
-              max_tokens: 1000,
-            });
+              const errorCompletion = await Promise.race([
+                openai.chat.completions.create({
+                  model: 'gpt-4o',
+                  messages: messages,
+                  temperature: 0.8,
+                  max_tokens: 1000,
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+              ]);
 
-            aiResponse = errorCompletion.choices[0]?.message?.content || 'I encountered an error fetching market news. Please try again.';
+              aiResponse = errorCompletion.choices[0]?.message?.content || 'I encountered an error fetching market news. Please try again.';
+            } catch (timeoutError) {
+              aiResponse = 'I encountered an error fetching market news. Please try again.';
+            }
           }
       } else if (functionCall.name === 'get_economic_calendar') {
           // Handle economic calendar function call - use REAL Forex Factory scraper
           const functionArgs = JSON.parse(functionCall.arguments);
           
           try {
-            const calendarResponse = await axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
-              date: functionArgs.date,
-              impact: functionArgs.impact
-            }, {
-              timeout: 15000
-            });
+            checkTimeout();
+            const calendarResponse = await Promise.race([
+              axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
+                date: functionArgs.date,
+                impact: functionArgs.impact
+              }, {
+                timeout: 8000 // Reduced from 15s
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
+            ]);
 
             if (calendarResponse.data && calendarResponse.data.success) {
               const calendarData = calendarResponse.data.data;
@@ -1434,20 +1505,24 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 content: JSON.stringify(calcResult)
               });
 
-              const calcCompletion = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: messages,
-                functions: functions,
-                function_call: 'auto',
-                temperature: 0.7,
-                max_tokens: 2000,
-              });
+              checkTimeout();
+              const calcCompletion = await Promise.race([
+                openai.chat.completions.create({
+                  model: 'gpt-4o',
+                  messages: messages,
+                  functions: functions,
+                  function_call: 'auto',
+                  temperature: 0.7,
+                  max_tokens: 2000,
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+              ]);
 
               aiResponse = calcCompletion.choices[0]?.message?.content || aiResponse;
             }
           } catch (calcError) {
             console.error('Error calculating trading math:', calcError);
-            // Continue with existing response
+            // Continue with existing response - don't fail the whole request
           }
       }
     }
