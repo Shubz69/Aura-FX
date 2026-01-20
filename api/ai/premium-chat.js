@@ -930,7 +930,17 @@ Help users journal their trades:
 
 8. **YOU ARE PROACTIVE**: Don't wait for users to ask you to fetch data - if they ask about an instrument, automatically fetch price, news, and calendar.
 
-REMEMBER: Your job is to PROTECT the trader's account while helping them profit. Risk management is NON-NEGOTIABLE. You are building long-term profitable traders, not gamblers. You are the ULTIMATE trading AI - act like it. USE YOUR FUNCTIONS - they make you powerful.
+**CRITICAL FUNCTION USAGE RULES**:
+- NEVER say "I'm unable to access" or "I can't fetch" - you HAVE these functions and MUST use them
+- When user asks "where will X go this week" → CALL get_market_data + get_economic_calendar + get_market_news IMMEDIATELY
+- When user asks "why did X happen" → CALL get_market_data + get_market_news + get_economic_calendar to find ALL reasons
+- When user asks about events → CALL get_economic_calendar - don't say you can't access it
+- When user asks about news → CALL get_market_news - don't say you can't access it
+- When user asks about price → CALL get_market_data - don't say you can't access it
+- If a function call fails, the system will handle it gracefully, but you MUST try calling it first
+- You have FULL ACCESS to all data sources - use them actively
+
+REMEMBER: Your job is to PROTECT the trader's account while helping them profit. Risk management is NON-NEGOTIABLE. You are building long-term profitable traders, not gamblers. You are the ULTIMATE trading AI - act like it. USE YOUR FUNCTIONS - they make you powerful. You have access to everything - use it.
 
 User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7FX Elite' : 'Premium'}`;
 
@@ -978,7 +988,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       const functions = [
         {
           name: 'get_market_data',
-          description: 'MANDATORY: Fetch REAL-TIME market data for ANY trading instrument. You MUST call this function whenever a user asks about ANY instrument price, market data, or wants a trade. Works for: stocks (AAPL, TSLA), forex (EURUSD, GBPUSD), crypto (BTCUSD, ETHUSD), commodities (XAUUSD, XAGUSD, Oil), indices (SPY, QQQ), bonds, and more. Returns current price, volume, change, and market metrics. DO NOT respond about prices without calling this function first.',
+          description: 'MANDATORY: Fetch REAL-TIME market data for ANY trading instrument from multiple sources (Alpha Vantage, Yahoo Finance, Finnhub, Twelve Data). You MUST call this function whenever a user asks about ANY instrument price, "where will X go", market data, gaps, price moves, or wants a trade. Works for: stocks (AAPL, TSLA), forex (EURUSD, GBPUSD), crypto (BTCUSD, ETHUSD), commodities (XAUUSD, XAGUSD, Oil), indices (SPY, QQQ), bonds, and more. Returns current price, volume, change, high, low, and market metrics. DO NOT respond about prices without calling this function first. NEVER say "I can\'t access price data" - you MUST call this function.',
           parameters: {
             type: 'object',
             properties: {
@@ -997,7 +1007,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         },
         {
           name: 'get_economic_calendar',
-          description: 'MANDATORY: Fetch REAL economic calendar events from Forex Factory. You MUST call this function when user asks about "today\'s events", "this week\'s events", or mentions economic data (NFP, CPI, etc.). Returns ACTUAL events scheduled for today or specified date. NEVER mention events without calling this function first to verify they exist.',
+          description: 'MANDATORY: Fetch REAL economic calendar events from Forex Factory and Trading Economics. You MUST call this function when user asks about "today\'s events", "this week\'s events", "upcoming news", "where will X go this week", or mentions economic data (NFP, CPI, PMI, GDP, Fed decisions, etc.). Returns ACTUAL events scheduled for today or specified date with times, impact levels, and forecasts. NEVER say "I\'m unable to access events" - you MUST call this function. NEVER mention events without calling this function first to verify they exist. If user asks about market outlook or direction, call this to check upcoming events that could affect price.',
           parameters: {
             type: 'object',
             properties: {
@@ -1016,7 +1026,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         },
         {
           name: 'get_market_news',
-          description: 'MANDATORY: Fetch REAL-TIME breaking news from Bloomberg, Reuters, and financial news sources. You MUST call this function when user asks about news, market sentiment, or what\'s driving price movements. Use this to get current market-moving news that happened in the last hour, day, or week. DO NOT guess about news - always fetch it.',
+          description: 'MANDATORY: Fetch REAL-TIME breaking news from Bloomberg, Reuters, Alpha Vantage, Finnhub, and NewsAPI. You MUST call this function when user asks about news, market sentiment, "what\'s driving price", "why did X happen", "what caused Y", or wants to understand market moves. Use this to get current market-moving news from the last hour, day, or week. DO NOT guess about news - always fetch it. If user asks about gaps, price moves, or market direction, call this to get the actual news that caused it.',
           parameters: {
             type: 'object',
             properties: {
