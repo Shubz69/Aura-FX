@@ -1373,14 +1373,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             await logToolCall(userId, 'get_market_data', functionArgs, marketData, toolDuration, true);
             await logDataFetch(userId, 'market_data', symbol, marketData.source || 'unknown', marketData.timestamp || marketData.lastUpdated, true);
 
-            // Check for TradingView alerts for this symbol
+            // Check for TradingView alerts for this symbol (non-critical - continue if fails)
             try {
               const alerts = await getRecentAlerts(symbol, null, 5);
-              if (alerts.length > 0) {
+              if (alerts && alerts.length > 0) {
                 marketData.tradingViewAlerts = alerts;
               }
             } catch (alertError) {
-              console.log('Error fetching TradingView alerts:', alertError.message);
+              // Non-critical error - just log and continue
+              console.log('TradingView alerts unavailable (non-critical):', alertError.message);
             }
 
             // Add function result to conversation and get AI response
