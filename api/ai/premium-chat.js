@@ -1120,8 +1120,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             },
             required: ['symbol']
           }
-        }
-          parameters: {
+        },
+        {
+          name: 'calculate_trading_math',
             type: 'object',
             properties: {
               operation: {

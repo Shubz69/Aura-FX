@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ReactMarkdown from 'react-markdown';
 import MarketChart from '../components/MarketChart';
+import VoiceInput, { VoiceOutput } from '../components/VoiceInput';
 import '../styles/PremiumAI.css';
 
 const PremiumAI = () => {
@@ -196,14 +197,25 @@ const PremiumAI = () => {
     // Text pasting will work naturally without preventDefault
   };
 
+  // Handle voice transcript
+  const handleVoiceTranscript = (transcript, isInterim) => {
+    if (!isInterim && transcript.trim()) {
+      setInput(prev => prev + (prev ? ' ' : '') + transcript.trim());
+      setVoiceTranscript('');
+    } else {
+      setVoiceTranscript(transcript);
+    }
+  };
+
   const sendMessage = async (e) => {
     e?.preventDefault();
     
-    if ((!input.trim() && selectedImages.length === 0) || isLoading) return;
+    const messageToSend = (input.trim() || voiceTranscript.trim());
+    if ((!messageToSend && selectedImages.length === 0) || isLoading) return;
 
     const userMessage = {
       role: 'user',
-      content: input.trim() || '',
+      content: messageToSend || '',
       images: selectedImages.length > 0 ? selectedImages : undefined
     };
 
@@ -211,7 +223,6 @@ const PremiumAI = () => {
     setMessages(prev => [...prev, userMessage]);
     setConversationHistory(prev => [...prev, userMessage]);
     
-    const messageToSend = input.trim();
     const imagesToSend = selectedImages;
     
     setInput('');
@@ -237,7 +248,8 @@ const PremiumAI = () => {
           message: messageToSend,
           images: imagesToSend,
           conversationHistory: conversationHistory.slice(-10) // Last 10 messages for context
-        })
+        }),
+        signal: AbortSignal.timeout(55000) // 55 second timeout
       });
 
       // Check if response is JSON before parsing
@@ -471,25 +483,30 @@ const PremiumAI = () => {
                         {msg.content}
                       </div>
                     ) : (
-                      // AI messages - use markdown for formatting
-                      <ReactMarkdown
-                        components={{
-                          p: ({node, ...props}) => <p className="markdown-paragraph" {...props} />,
-                          strong: ({node, ...props}) => <strong className="markdown-bold" {...props} />,
-                          em: ({node, ...props}) => <em className="markdown-italic" {...props} />,
-                          ul: ({node, ...props}) => <ul className="markdown-list" {...props} />,
-                          ol: ({node, ...props}) => <ol className="markdown-list" {...props} />,
-                          li: ({node, ...props}) => <li className="markdown-list-item" {...props} />,
-                          h1: ({node, ...props}) => <h1 className="markdown-heading markdown-h1" {...props} />,
-                          h2: ({node, ...props}) => <h2 className="markdown-heading markdown-h2" {...props} />,
-                          h3: ({node, ...props}) => <h3 className="markdown-heading markdown-h3" {...props} />,
-                          code: ({node, inline, ...props}) => 
-                            inline ? <code className="markdown-inline-code" {...props} /> : <code className="markdown-code-block" {...props} />,
-                          blockquote: ({node, ...props}) => <blockquote className="markdown-blockquote" {...props} />,
-                        }}
-                      >
-                        {msg.content}
-                      </ReactMarkdown>
+                      // AI messages - use markdown for formatting with voice output
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
+                        <div style={{ flex: 1 }}>
+                          <ReactMarkdown
+                            components={{
+                              p: ({node, ...props}) => <p className="markdown-paragraph" {...props} />,
+                              strong: ({node, ...props}) => <strong className="markdown-bold" {...props} />,
+                              em: ({node, ...props}) => <em className="markdown-italic" {...props} />,
+                              ul: ({node, ...props}) => <ul className="markdown-list" {...props} />,
+                              ol: ({node, ...props}) => <ol className="markdown-list" {...props} />,
+                              li: ({node, ...props}) => <li className="markdown-list-item" {...props} />,
+                              h1: ({node, ...props}) => <h1 className="markdown-heading markdown-h1" {...props} />,
+                              h2: ({node, ...props}) => <h2 className="markdown-heading markdown-h2" {...props} />,
+                              h3: ({node, ...props}) => <h3 className="markdown-heading markdown-h3" {...props} />,
+                              code: ({node, inline, ...props}) => 
+                                inline ? <code className="markdown-inline-code" {...props} /> : <code className="markdown-code-block" {...props} />,
+                              blockquote: ({node, ...props}) => <blockquote className="markdown-blockquote" {...props} />,
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                        <VoiceOutput text={msg.content} disabled={isLoading} />
+                      </div>
                     )}
                   </div>
                 )}

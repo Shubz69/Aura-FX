@@ -11,12 +11,6 @@
   },
   "rewrites": [
     {
-      "source": "/api/ai/tradingview-webhook",
-      "destination": "/api/ai/tradingview-webhook.js"
-    }
-  ],
-  "rewrites": [
-    {
       "source": "/api/courses",
       "destination": "/api/courses.js"
     },
@@ -199,6 +193,10 @@
     {
       "source": "/api/ai/trading-calculator",
       "destination": "/api/ai/trading-calculator.js"
+    },
+    {
+      "source": "/api/tradingview-webhook",
+      "destination": "/api/ai/tradingview-webhook.js"
     }
   ]
 }
