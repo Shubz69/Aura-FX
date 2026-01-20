@@ -21,6 +21,8 @@ const PremiumAI = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const isSubmittingRef = useRef(false); // Prevent double submissions
+  const sendTimeoutRef = useRef(null); // For debouncing
 
   // Check if user has premium access
   useEffect(() => {
@@ -208,10 +210,29 @@ const PremiumAI = () => {
   };
 
   const sendMessage = async (e) => {
-    e?.preventDefault();
-    
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    // Prevent double-click or rapid submissions
+    if (isSubmittingRef.current || isLoading) {
+      return;
+    }
+
+    // Clear any pending debounce timeout
+    if (sendTimeoutRef.current) {
+      clearTimeout(sendTimeoutRef.current);
+      sendTimeoutRef.current = null;
+    }
+
     const messageToSend = (input.trim() || voiceTranscript.trim());
-    if ((!messageToSend && selectedImages.length === 0) || isLoading) return;
+    if ((!messageToSend && selectedImages.length === 0)) {
+      return;
+    }
+
+    // Set submitting flag immediately
+    isSubmittingRef.current = true;
 
     const userMessage = {
       role: 'user',
@@ -660,7 +681,15 @@ const PremiumAI = () => {
           <button 
             type="submit" 
             className="send-button"
-            disabled={(!input.trim() && !voiceTranscript.trim() && selectedImages.length === 0) || isLoading}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            disabled={isLoading || isSubmittingRef.current || (!input.trim() && !voiceTranscript.trim() && selectedImages.length === 0)}
+            style={{ 
+              cursor: (isLoading || isSubmittingRef.current) ? 'not-allowed' : 'pointer',
+              opacity: (isLoading || isSubmittingRef.current) ? 0.6 : 1
+            }}
           >
             {isLoading ? '⏳' : '📤'}
           </button>
