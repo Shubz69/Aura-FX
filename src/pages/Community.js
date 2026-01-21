@@ -3073,7 +3073,9 @@ Let's build generational wealth together! 💰🚀`,
         const userEmail = storedUser?.email;
         
         // Stripe payment links
-        const STRIPE_PAYMENT_LINK_FREE = 'https://buy.stripe.com/free-monthly'; // Replace with your free monthly Stripe link
+        // TODO: Create a $0/month subscription in Stripe and replace this link
+        // Go to Stripe Dashboard > Products > Create Product > Set price to £0/month > Copy Payment Link
+        const STRIPE_PAYMENT_LINK_FREE = 'https://buy.stripe.com/free-monthly'; // REPLACE WITH YOUR FREE MONTHLY STRIPE LINK
         const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
         const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
         
