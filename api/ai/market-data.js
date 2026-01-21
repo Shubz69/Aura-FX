@@ -265,7 +265,7 @@ module.exports = async (req, res) => {
               symbol: avSymbol,
               apikey: ALPHA_VANTAGE_API_KEY
             },
-            timeout: 8000 // Optimized for real-time (8s max per source)
+            timeout: 6000 // Faster timeout for real-time accuracy
           }).then(response => {
             if (response.data && response.data['Global Quote'] && !response.data['Note']) {
               const quote = response.data['Global Quote'];
