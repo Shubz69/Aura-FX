@@ -912,24 +912,31 @@ const Community = () => {
     };
 
     // Check if user can access channel (view)
-    // 3-tier subscription system: free, premium, a7fx
-    // Channel access levels: 'open'/'free' (all users), 'premium' (premium + a7fx), 'a7fx' (a7fx only), 'admin-only' (admins only)
+    // PAID ONLY - All channels require subscription (premium or a7fx)
+    // Channel access levels: 'premium' (premium + a7fx), 'a7fx' (a7fx only), 'admin-only' (admins only)
     const canUserAccessChannel = (channel) => {
         const userRole = getCurrentUserRole();
-        const accessLevel = (channel.accessLevel || 'open').toLowerCase();
+        const accessLevel = (channel.accessLevel || 'premium').toLowerCase(); // Default to premium instead of open
         
         // Admin-only channels: only admins can see
         if (accessLevel === 'admin-only') {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // Open/Free channels: all users can see
-        if (accessLevel === 'open' || accessLevel === 'free') {
-            return true;
+        // All channels now require subscription - no free access
+        // Check if user has active subscription
+        const hasActiveSubscription = subscriptionStatus 
+            ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
+            : checkSubscription();
+        
+        // If no subscription, deny access (except admins)
+        if (!hasActiveSubscription && !isAdminUser && !isSuperAdminUser) {
+            return false;
         }
         
         // Premium channels: premium and a7fx users can see
-        if (accessLevel === 'premium') {
+        if (accessLevel === 'premium' || accessLevel === 'open' || accessLevel === 'free') {
+            // Treat open/free as premium - require subscription
             return userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
@@ -938,16 +945,16 @@ const Community = () => {
             return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
-        // Default: show to all (backward compatibility)
-        return true;
+        // Default: require subscription
+        return hasActiveSubscription || isAdminUser || isSuperAdminUser;
     };
 
     // Check if user can post in channel
-    // 3-tier subscription system: free, premium, a7fx
+    // PAID ONLY - All channels require subscription (premium or a7fx)
     // Posting permissions follow same access level rules as viewing
     const canUserPostInChannel = (channel) => {
         const userRole = getCurrentUserRole();
-        const accessLevel = (channel.accessLevel || 'open').toLowerCase();
+        const accessLevel = (channel.accessLevel || 'premium').toLowerCase(); // Default to premium instead of open
         const channelName = (channel.name || '').toLowerCase();
         const isAdminChannel = accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
         
@@ -961,13 +968,20 @@ const Community = () => {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // Open/Free channels: all users can post
-        if (accessLevel === 'open' || accessLevel === 'free') {
-            return true;
+        // All channels now require subscription - no free posting
+        // Check if user has active subscription
+        const hasActiveSubscription = subscriptionStatus 
+            ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
+            : checkSubscription();
+        
+        // If no subscription, deny posting (except admins)
+        if (!hasActiveSubscription && !isAdminUser && !isSuperAdminUser) {
+            return false;
         }
         
         // Premium channels: premium and a7fx users can post
-        if (accessLevel === 'premium') {
+        if (accessLevel === 'premium' || accessLevel === 'open' || accessLevel === 'free') {
+            // Treat open/free as premium - require subscription
             return userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
@@ -976,8 +990,8 @@ const Community = () => {
             return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
         }
         
-        // Default: allow posting (backward compatibility)
-        return true;
+        // Default: require subscription
+        return hasActiveSubscription || isAdminUser || isSuperAdminUser;
     };
 
     // Scroll to bottom of messages
@@ -3058,10 +3072,21 @@ Let's build generational wealth together! 💰🚀`,
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = storedUser?.email;
         
+        // Stripe payment links
+        const STRIPE_PAYMENT_LINK_FREE = 'https://buy.stripe.com/free-monthly'; // Replace with your free monthly Stripe link
         const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
         const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
         
-        const selectedPaymentLink = planType === 'a7fx' ? STRIPE_PAYMENT_LINK_A7FX : STRIPE_PAYMENT_LINK_AURA;
+        // Select payment link based on plan type
+        let selectedPaymentLink;
+        if (planType === 'free') {
+            selectedPaymentLink = STRIPE_PAYMENT_LINK_FREE;
+        } else if (planType === 'a7fx') {
+            selectedPaymentLink = STRIPE_PAYMENT_LINK_A7FX;
+        } else {
+            selectedPaymentLink = STRIPE_PAYMENT_LINK_AURA;
+        }
+        
         const paymentLink = userEmail
             ? `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
             : `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
@@ -3211,7 +3236,7 @@ Let's build generational wealth together! 💰🚀`,
                             Subscribe to Access Full Community
                         </h3>
                         <p style={{ margin: '4px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
-                            Get 3 months free, then just £99/month
+                            Subscribe to access the community - Free monthly, Premium (£99/month), or Elite (£250/month)
                         </p>
                     </div>
                     <button
@@ -5574,11 +5599,9 @@ Let's build generational wealth together! 💰🚀`,
                                             color: 'white'
                                         }}
                                     >
-                                        <option value="open">Open/Free - Everyone</option>
-                                        <option value="free">Free - Everyone</option>
                                         <option value="read-only">Read Only - View only</option>
                                         <option value="admin-only">Admin Only</option>
-                                        <option value="premium">Premium - Premium & A7FX</option>
+                                        <option value="premium">Premium - Premium & A7FX (Subscription Required)</option>
                                         <option value="a7fx">A7FX Elite - A7FX only</option>
                                     </select>
                                 </div>
@@ -6274,6 +6297,60 @@ Let's build generational wealth together! 💰🚀`,
                             gap: '20px',
                             marginBottom: '24px'
                         }}>
+                            {/* Free Monthly Plan */}
+                            <div style={{
+                                padding: '24px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                textAlign: 'center',
+                                position: 'relative',
+                                transition: 'all 0.3s ease'
+                            }}>
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Free Monthly</h3>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
+                                <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
+                                <ul style={{ 
+                                    textAlign: 'left', 
+                                    color: 'rgba(255, 255, 255, 0.8)', 
+                                    fontSize: '13px', 
+                                    marginBottom: '20px', 
+                                    paddingLeft: '20px',
+                                    listStyle: 'none'
+                                }}>
+                                    <li style={{ marginBottom: '8px' }}>✅ Access to community channels</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Basic community features</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Monthly subscription via Stripe</li>
+                                </ul>
+                                <button
+                                    onClick={() => handleSelectSubscription('free')}
+                                    style={{
+                                        width: '100%',
+                                        background: 'rgba(139, 92, 246, 0.3)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '12px 24px',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.background = 'rgba(139, 92, 246, 0.3)';
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    Get Free Monthly
+                                </button>
+                            </div>
+
                             {/* Aura FX Premium Plan */}
                             <div style={{
                                 padding: '24px',
