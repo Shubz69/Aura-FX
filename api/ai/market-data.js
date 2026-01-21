@@ -432,7 +432,7 @@ module.exports = async (req, res) => {
             interval: '1m',
             range: '1d'
           },
-          timeout: 8000 // Optimized for real-time (8s max per source)
+          timeout: 6000 // Faster timeout for real-time accuracy
         }).then(response => {
           if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
             const result = response.data.chart.result[0];
@@ -502,6 +502,7 @@ module.exports = async (req, res) => {
     }
     
     // Source 5: Twelve Data API - PARALLEL
+    // Good for real-time data across multiple asset classes
     if (type === 'quote') {
       const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
       if (TWELVE_DATA_API_KEY) {
@@ -511,13 +512,13 @@ module.exports = async (req, res) => {
               symbol: normalizedSymbol,
               apikey: TWELVE_DATA_API_KEY
             },
-            timeout: 12000
+            timeout: 6000 // Faster timeout for real-time
           }).then(response => {
             if (response.data && response.data.price) {
               return {
                 symbol: normalizedSymbol,
                 price: parseFloat(response.data.price),
-                timestamp: Date.now(),
+                timestamp: Date.now(), // Real-time timestamp
                 source: 'Twelve Data'
               };
             }
@@ -560,7 +561,8 @@ module.exports = async (req, res) => {
       );
     }
     
-    // Source 7: Yahoo Finance GC=F for gold (fallback) - PARALLEL
+    // Source 7: Yahoo Finance GC=F for gold futures (fallback) - PARALLEL
+    // Note: We prefer spot (XAU=X) over futures (GC=F) for real-time accuracy
     if (isGold && type === 'quote') {
       dataPromises.push(
         axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/GC=F`, {
@@ -568,7 +570,7 @@ module.exports = async (req, res) => {
             interval: '1m',
             range: '1d'
           },
-          timeout: 12000
+          timeout: 6000 // Faster timeout for real-time
         }).then(response => {
           if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
             const result = response.data.chart.result[0];
@@ -612,39 +614,46 @@ module.exports = async (req, res) => {
         }
       }
       
-      // For gold (XAUUSD), prioritize sources in this order:
-      // 1. Finnhub (OANDA:XAU_USD) - most accurate spot gold
-      // 2. Metal API - dedicated metals API
-      // 3. Yahoo Finance XAU=X - spot gold
-      // 4. Twelve Data - general purpose
-      // 5. Alpha Vantage - general purpose
-      // Then use the most recent timestamp
+      // Prioritize sources based on instrument type for maximum accuracy
+      // Goal: Match TradingView prices exactly by using the most accurate real-time sources
       if (successfulResults.length > 0) {
+        let priorityOrder = [];
+        
         if (isGold) {
-          // Sort by priority for gold, then by timestamp
-          const priorityOrder = ['Finnhub', 'Metal API', 'Yahoo Finance', 'Yahoo Finance (XAU=X)', 'Twelve Data', 'Alpha Vantage'];
-          successfulResults.sort((a, b) => {
-            const aPriority = priorityOrder.indexOf(a.source) !== -1 ? priorityOrder.indexOf(a.source) : 999;
-            const bPriority = priorityOrder.indexOf(b.source) !== -1 ? priorityOrder.indexOf(b.source) : 999;
-            
-            // First sort by priority
-            if (aPriority !== bPriority) {
-              return aPriority - bPriority;
-            }
-            
-            // Then by most recent timestamp
-            const aTime = a.timestamp || 0;
-            const bTime = b.timestamp || 0;
-            return bTime - aTime;
-          });
+          // Gold: Prioritize spot prices from OANDA and dedicated metals APIs
+          priorityOrder = ['Finnhub', 'Metal API', 'Yahoo Finance (XAU=X)', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+        } else if (isForex) {
+          // Forex: Prioritize OANDA (Finnhub) for spot prices, then Yahoo Finance
+          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'ExchangeRate-API', 'Alpha Vantage'];
+        } else if (isCrypto) {
+          // Crypto: Prioritize real-time sources
+          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+        } else if (isCommodity) {
+          // Commodities: Prioritize spot prices over futures
+          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+        } else if (isIndex) {
+          // Indices: Yahoo Finance is usually most accurate
+          priorityOrder = ['Yahoo Finance', 'Finnhub', 'Twelve Data', 'Alpha Vantage'];
         } else {
-          // For non-gold, sort by most recent timestamp
-          successfulResults.sort((a, b) => {
-            const aTime = a.timestamp || 0;
-            const bTime = b.timestamp || 0;
-            return bTime - aTime;
-          });
+          // Stocks: Yahoo Finance for US stocks, Finnhub for international
+          priorityOrder = ['Yahoo Finance', 'Finnhub', 'Twelve Data', 'Alpha Vantage'];
         }
+        
+        // Sort by priority, then by most recent timestamp
+        successfulResults.sort((a, b) => {
+          const aPriority = priorityOrder.indexOf(a.source) !== -1 ? priorityOrder.indexOf(a.source) : 999;
+          const bPriority = priorityOrder.indexOf(b.source) !== -1 ? priorityOrder.indexOf(b.source) : 999;
+          
+          // First sort by priority (lower index = higher priority)
+          if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+          }
+          
+          // Then by most recent timestamp (higher timestamp = more recent)
+          const aTime = a.timestamp || 0;
+          const bTime = b.timestamp || 0;
+          return bTime - aTime;
+        });
         
         // Use the best result (first in sorted array)
         marketData = successfulResults[0];
@@ -675,7 +684,7 @@ module.exports = async (req, res) => {
         
         const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: { interval: '1m', range: '1d' },
-          timeout: 8000 // Optimized for real-time
+          timeout: 6000 // Faster timeout for real-time accuracy
         });
 
         if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
@@ -732,6 +741,13 @@ module.exports = async (req, res) => {
     // Add timestamp to ensure data freshness
     marketData.lastUpdated = new Date().toISOString();
     marketData.dataSources = dataSources;
+    
+    // Add note about real-time accuracy
+    if (marketData.accuracyNote) {
+      marketData.note = marketData.accuracyNote;
+    } else if (marketData.source) {
+      marketData.note = `Real-time price from ${marketData.source}`;
+    }
 
     // ALWAYS return success - never fail the request
     return res.status(200).json({
