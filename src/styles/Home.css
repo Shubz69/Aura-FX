@@ -70,8 +70,8 @@ body, html {
     }
 }
 
-/* Loading Screen */
-.loading-screen {
+/* Loading Screen - Scoped to Home page only */
+.home-container .loading-screen {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;

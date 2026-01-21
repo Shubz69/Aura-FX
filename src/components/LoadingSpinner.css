@@ -1,31 +1,34 @@
 /* Loading Screen Styles - Dark Theme Matching Website */
 .loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #0a0a0a; /* Match website dark background */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    overflow: hidden;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: #0a0a0a !important; /* Match website dark background */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 99999 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Animated background with binary digits - white/light theme */
 .loading-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
     background: radial-gradient(
         circle at center,
         rgba(255, 255, 255, 0.03) 0%,
         transparent 70%
-    );
+    ) !important;
+    z-index: 1 !important;
 }
 
 .binary-digit {
@@ -59,15 +62,15 @@
 
 /* Main content - improved center section */
 .loading-content {
-    text-align: center;
-    z-index: 10;
-    position: relative;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
+    text-align: center !important;
+    z-index: 100000 !important;
+    position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
 }
 
 .loading-title {
@@ -195,11 +198,11 @@
 
 /* Pulsing rings - improved design */
 .loading-rings {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 5;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 5 !important;
 }
 
 .ring {
