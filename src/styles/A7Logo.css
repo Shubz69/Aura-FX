@@ -10,7 +10,6 @@
     display: block;
     object-fit: contain;
     filter: brightness(0) invert(1); /* Makes the logo white */
-    vertical-align: middle;
 }
 
 /* For navbar - larger size to match AURA FX text */
