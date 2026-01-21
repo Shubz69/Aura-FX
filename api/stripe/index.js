@@ -178,33 +178,39 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN subscription_plan VARCHAR(50) DEFAULT NULL');
         }
 
-        // Check if has_used_free_monthly column exists, add if not
+        // Check if has_used_free_trial column exists, add if not
+        // This tracks if user has used a free trial on premium/elite plans (not free monthly)
         try {
-          await db.execute('SELECT has_used_free_monthly FROM users LIMIT 1');
+          await db.execute('SELECT has_used_free_trial FROM users LIMIT 1');
         } catch (err) {
-          await db.execute('ALTER TABLE users ADD COLUMN has_used_free_monthly BOOLEAN DEFAULT FALSE');
+          await db.execute('ALTER TABLE users ADD COLUMN has_used_free_trial BOOLEAN DEFAULT FALSE');
         }
 
-        // Check if user has already used free monthly subscription
+        // Check if user has already used a free trial on premium/elite plans
         const [userRows] = await db.execute(
-          'SELECT has_used_free_monthly FROM users WHERE id = ?',
+          'SELECT has_used_free_trial FROM users WHERE id = ?',
           [userId]
         );
-        const hasUsedFreeMonthly = userRows[0]?.has_used_free_monthly || false;
+        const hasUsedFreeTrial = userRows[0]?.has_used_free_trial || false;
 
-        // Calculate expiry date based on plan type and free monthly usage
+        // Calculate expiry date based on plan type and free trial usage
         const expiryDate = new Date();
         let subscriptionDays = 30; // Default 1 month
+        let markFreeTrialUsed = hasUsedFreeTrial; // Track if we should mark free trial as used
         
         if (planType === 'free') {
-          // Free monthly subscription - always 30 days
+          // Free monthly subscription - always 30 days, doesn't affect free trial tracking
           subscriptionDays = 30;
+          // Don't mark free trial as used for free monthly
         } else if (planType === 'aura' || planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
-          // Paid subscriptions: 3 months free if they haven't used free monthly, otherwise 1 month
-          if (!hasUsedFreeMonthly) {
-            subscriptionDays = 90; // 3 months free trial
+          // Paid subscriptions (Premium or Elite)
+          if (!hasUsedFreeTrial) {
+            // First time using a paid plan - give 90 days (3 months free trial)
+            subscriptionDays = 90;
+            markFreeTrialUsed = true; // Mark that they've used their free trial
           } else {
-            subscriptionDays = 30; // 1 month (no free trial - they already used free monthly)
+            // They've already used a free trial before - only 30 days (no free trial)
+            subscriptionDays = 30;
           }
         }
         
@@ -218,9 +224,6 @@ module.exports = async (req, res) => {
           userRole = 'premium'; // Free monthly also gets premium access
         }
 
-        // Mark has_used_free_monthly as true if they're subscribing to free monthly
-        const markFreeMonthlyUsed = planType === 'free' ? true : hasUsedFreeMonthly;
-
         // Update subscription status AND role based on plan
         await db.execute(
           `UPDATE users 
@@ -231,9 +234,9 @@ module.exports = async (req, res) => {
                payment_failed = FALSE,
                role = ?,
                subscription_plan = ?,
-               has_used_free_monthly = ?
+               has_used_free_trial = ?
            WHERE id = ?`,
-          [expiryDate, sessionId || null, userRole, planType, markFreeMonthlyUsed, userId]
+          [expiryDate, sessionId || null, userRole, planType, markFreeTrialUsed, userId]
         );
 
         const [updatedUser] = await db.execute(
@@ -363,18 +366,17 @@ module.exports = async (req, res) => {
           }
 
           if (userId) {
-            // Get user's current subscription plan and free monthly status
+            // Get user's current subscription plan to maintain correct role
             const [userRows] = await db.execute(
-              'SELECT subscription_plan, has_used_free_monthly FROM users WHERE id = ?',
+              'SELECT subscription_plan FROM users WHERE id = ?',
               [userId]
             );
             const subscriptionPlan = userRows[0]?.subscription_plan || 'aura';
-            const hasUsedFreeMonthly = userRows[0]?.has_used_free_monthly || false;
             const userRole = (subscriptionPlan === 'a7fx' || subscriptionPlan === 'A7FX' || subscriptionPlan === 'elite') ? 'elite' : 'premium';
             
-            // Calculate expiry: 30 days for free monthly users, 30 days for paid (no trial on renewal)
+            // Renewals always get 30 days (no free trial on renewals)
             const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + 30); // 1 month from now (renewals don't get free trial)
+            expiryDate.setDate(expiryDate.getDate() + 30); // 1 month from now
             
             await db.execute(
               'UPDATE users SET payment_failed = FALSE, subscription_status = ?, subscription_expiry = ?, role = ? WHERE id = ?',
