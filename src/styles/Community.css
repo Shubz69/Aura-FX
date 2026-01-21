@@ -907,7 +907,7 @@ html.community-page-active {
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0 16px 0 72px;
+    padding: 0.125rem 16px 0.125rem 72px; /* Minimal vertical padding */
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
@@ -1069,8 +1069,8 @@ html.community-page-active {
 
 /* Discord-like tight spacing - new messages have minimal gap, grouped have none */
 .message-item:not(.grouped) {
-    padding-top: 0 !important; /* Zero gap - messages touch */
-    padding-bottom: 0 !important;
+    padding-top: 0.125rem !important; /* Minimal gap between different senders */
+    padding-bottom: 0.125rem !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }

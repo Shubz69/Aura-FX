@@ -4,9 +4,9 @@ import './LoadingSpinner.css';
 const LoadingSpinner = () => {
     return (
         <div className="loading-screen">
-            {/* Animated background with binary code */}
+            {/* Animated background with binary code - more dense */}
             <div className="loading-background">
-                {Array.from({ length: 200 }, (_, i) => (
+                {Array.from({ length: 400 }, (_, i) => (
                     <div 
                         key={i} 
                         className="binary-digit"
