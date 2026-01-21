@@ -533,33 +533,41 @@ module.exports = async (req, res) => {
     
     // Source 6: ExchangeRate-API for forex - PARALLEL
     // Free forex rates, good for major pairs
-    if (type === 'quote' && isForex) {
-      dataPromises.push(
-        axios.get(`https://api.exchangerate-api.com/v4/latest/${normalizedSymbol.substring(0, 3)}`, {
-          timeout: 6000 // Faster timeout for real-time accuracy
-        }).then(response => {
-          if (response.data && response.data.rates) {
-            const base = normalizedSymbol.substring(0, 3);
-            const quote = normalizedSymbol.substring(3, 6);
-            const rate = response.data.rates[quote];
-            
-            if (rate) {
+    // Skip if base currency is invalid or not a standard forex pair
+    if (type === 'quote' && isForex && normalizedSymbol.length === 6) {
+      const base = normalizedSymbol.substring(0, 3);
+      const quote = normalizedSymbol.substring(3, 6);
+      
+      // Only use ExchangeRate-API for standard major/minor pairs (not exotic or invalid)
+      const validBases = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'NZD', 'SEK', 'NOK', 'DKK', 'PLN', 'HKD', 'SGD', 'ZAR', 'MXN', 'BRL', 'INR', 'KRW', 'TRY', 'RUB'];
+      
+      if (validBases.includes(base)) {
+        dataPromises.push(
+          axios.get(`https://api.exchangerate-api.com/v4/latest/${base}`, {
+            timeout: 5000 // Faster timeout - skip if slow
+          }).then(response => {
+            if (response.data && response.data.rates && response.data.rates[quote]) {
+              const rate = response.data.rates[quote];
               return {
                 symbol: normalizedSymbol,
                 price: rate,
                 base,
                 quote,
-                timestamp: response.data.date,
+                timestamp: Date.now(), // Use current timestamp for real-time
                 source: 'ExchangeRate-API'
               };
             }
-          }
-          return null;
-        }).catch(err => {
-          console.log('Forex API error:', err.message);
-          return null;
-        })
-      );
+            return null;
+          }).catch(err => {
+            // Silently fail - this is a fallback source
+            // Only log if it's not a 404 (which is expected for some pairs)
+            if (err.response?.status !== 404) {
+              console.log('Forex API error (non-critical):', err.message);
+            }
+            return null;
+          })
+        );
+      }
     }
     
     // Source 7: Yahoo Finance GC=F for gold futures (fallback) - PARALLEL

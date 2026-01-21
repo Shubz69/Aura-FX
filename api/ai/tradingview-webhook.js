@@ -154,18 +154,22 @@ async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
     let query = 'SELECT * FROM tradingview_alerts WHERE 1=1';
     const params = [];
 
-    if (symbol) {
+    if (symbol && typeof symbol === 'string' && symbol.trim()) {
       query += ' AND symbol = ?';
-      params.push(symbol);
+      params.push(symbol.trim().toUpperCase());
     }
 
-    if (timeframe) {
+    if (timeframe && typeof timeframe === 'string' && timeframe.trim()) {
       query += ' AND timeframe = ?';
-      params.push(timeframe);
+      params.push(timeframe.trim());
     }
 
+    // Ensure limit is a valid integer
+    const limitValue = parseInt(limit);
+    const safeLimit = (limitValue && limitValue > 0 && limitValue <= 100) ? limitValue : 10;
+    
     query += ' ORDER BY timestamp DESC LIMIT ?';
-    params.push(parseInt(limit) || 10); // Ensure limit is an integer
+    params.push(safeLimit);
 
     const [rows] = await db.execute(query, params);
     

@@ -1246,7 +1246,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           model: 'gpt-4o', // GPT-4o supports vision
           messages: messages,
           temperature: 0.8, // Slightly higher for more natural, human-like responses
-          max_tokens: 1000, // Reduced for faster generation - responses should be concise
+          max_tokens: 800, // Reduced for faster generation - responses should be concise but thorough
         };
 
         // ALWAYS add functions - AI must be able to fetch data even with images
@@ -1262,7 +1262,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           // FORCE function calling - make it mandatory, but limit to prevent long chains
           messages.push({
             role: 'system',
-            content: `CRITICAL: The user is asking about market data. You MUST call get_market_data, get_market_news, and/or get_economic_calendar functions BEFORE responding. DO NOT give generic responses. DO NOT say "I can't access data". You HAVE these functions - USE THEM. ${detectedInstrument ? `The user is asking about ${detectedInstrument} - fetch REAL-TIME data NOW.` : ''} IMPORTANT: After calling functions, provide your response immediately. Do NOT make multiple sequential function calls - fetch what you need and respond.`
+            content: `CRITICAL: The user is asking about market data. You MUST call get_market_data, get_market_news, and/or get_economic_calendar functions BEFORE responding. DO NOT give generic responses. DO NOT say "I can't access data". You HAVE these functions - USE THEM. ${detectedInstrument ? `The user is asking about ${detectedInstrument} - fetch REAL-TIME data NOW.` : ''} IMPORTANT: After calling functions, THINK DEEPLY about the data - analyze structure, levels, fundamentals, risk factors, and scenarios. Then provide a comprehensive but concise response immediately. Do NOT make multiple sequential function calls - fetch what you need, think through it, and respond.`
           });
           // Force function calling - don't allow text-only responses for market queries
           completionParams.function_call = 'auto';
@@ -1273,7 +1273,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         // Add timeout to initial OpenAI call - OPTIMIZED FOR SPEED
         completion = await Promise.race([
           openai.chat.completions.create(completionParams),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 12000)) // Reduced to 12s
+          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 10000)) // Reduced to 10s for faster responses
         ]);
       } catch (openaiError) {
         // Handle OpenAI-specific errors
@@ -1395,9 +1395,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               symbol: symbol,
               type: dataType
             }, {
-              timeout: 6000 // Reduced to 6s - parallel fetching should be fast
+              timeout: 5000 // Reduced to 5s - parallel fetching should be fast
             }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Market data timeout')), 6000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Market data timeout')), 5000))
           ]);
 
           if (marketDataResponse.data && marketDataResponse.data.success) {
@@ -1443,10 +1443,10 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 messages: messages,
                 functions: functions,
                 function_call: 'auto',
-                temperature: 0.8,
-                max_tokens: 1000, // Reduced for faster generation
+                temperature: 0.7, // Slightly lower for faster, more focused responses
+                max_tokens: 800, // Further reduced for faster generation
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 10000)) // Reduced to 10s
+              new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 8000)) // Reduced to 8s for faster responses
             ]);
 
             // Check if we got a response or another function call
@@ -1504,7 +1504,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                       functions: functions,
                       function_call: 'none', // Force final response - no more function calls
                       temperature: 0.8,
-                      max_tokens: 1000, // Reduced for speed
+                      max_tokens: 800, // Reduced for speed
                     }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
                   ]);
@@ -1568,7 +1568,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                           functions: functions,
                           function_call: 'none', // Force final response
                           temperature: 0.8,
-                          max_tokens: 1000, // Reduced for speed
+                          max_tokens: 800, // Reduced for speed
                         }),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
                       ]);
@@ -1606,7 +1606,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 model: 'gpt-4o',
                 messages: messages,
                 temperature: 0.8,
-                max_tokens: 1000,
+                max_tokens: 800,
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
             ]);
@@ -1645,7 +1645,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 model: 'gpt-4o',
                 messages: messages,
                 temperature: 0.8,
-                max_tokens: 1000,
+                max_tokens: 800,
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
             ]);
@@ -1740,7 +1740,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   model: 'gpt-4o',
                   messages: messages,
                   temperature: 0.8,
-                  max_tokens: 1000,
+                  max_tokens: 800,
                 }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
               ]);
@@ -1794,7 +1794,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 functions: functions,
                 function_call: 'none', // Force response - no more calls
                 temperature: 0.8,
-                max_tokens: 1000, // Reduced for speed
+                max_tokens: 800, // Reduced for speed
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
             ]);
@@ -1833,7 +1833,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   model: 'gpt-4o',
                   messages: messages,
                   temperature: 0.8,
-                  max_tokens: 1000,
+                  max_tokens: 800,
                 }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
               ]);
@@ -1885,7 +1885,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   functions: functions,
                   function_call: 'none', // Force response - no more calls
                   temperature: 0.7,
-                  max_tokens: 1000, // Reduced for speed
+                  max_tokens: 800, // Reduced for speed
                 }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
               ]);
@@ -1993,7 +1993,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 functions: functions,
                 function_call: 'none', // Force response - no more calls
                 temperature: 0.8,
-                max_tokens: 1000, // Reduced for speed
+                max_tokens: 800, // Reduced for speed
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
             ]);
@@ -2045,7 +2045,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   functions: functions,
                   function_call: 'none', // Force response - no more calls
                   temperature: 0.8,
-                  max_tokens: 1000, // Reduced for speed
+                  max_tokens: 800, // Reduced for speed
                 }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
               ]);
@@ -2174,7 +2174,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                     functions: functions,
                     function_call: 'none', // Force response - no more calls
                     temperature: 0.8,
-                    max_tokens: 1000, // Reduced for speed
+                    max_tokens: 800, // Reduced for speed
                   }),
                   new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
                 ]);
