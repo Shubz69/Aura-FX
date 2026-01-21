@@ -209,11 +209,13 @@ body.loading-active {
 /* Logo Section */
 .home-logo-section {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     margin-bottom: 1rem;
     position: relative;
     z-index: 10;
+    gap: 16px;
 }
 
 /* Brand Name - Large, Elegant, Centered */
@@ -222,7 +224,7 @@ body.loading-active {
     align-items: center;
     justify-content: center;
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 }
 
 .brand-name {

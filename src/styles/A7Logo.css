@@ -1,4 +1,5 @@
-/* A7 Logo Styling - Stylized geometric A7 symbol */
+/* A7 Logo Styling - Stylized geometric A7 symbol
+Matches the design: A formed by two angled strokes meeting at top, horizontal crossbar, 7 integrated with diagonal down-right */
 .a7-logo-container {
     display: flex;
     align-items: center;
@@ -15,54 +16,57 @@
     justify-content: center;
 }
 
-/* A shape - Left diagonal (angled left) */
+/* A shape - Left diagonal (angled left, meeting at top center) */
 .a7-diagonal-left {
     position: absolute;
-    width: 3px;
-    height: 60%;
+    width: 4px;
+    height: 65%;
     background: #000000;
-    transform: rotate(-20deg);
+    transform: rotate(-25deg);
     transform-origin: bottom center;
-    left: 30%;
-    bottom: 0;
+    left: 50%;
+    bottom: 15%;
+    margin-left: -2px;
     border-radius: 2px;
 }
 
-/* A shape - Right diagonal (angled right) */
+/* A shape - Right diagonal (angled right, meeting at top center) */
 .a7-diagonal-right {
     position: absolute;
-    width: 3px;
-    height: 60%;
+    width: 4px;
+    height: 65%;
     background: #000000;
-    transform: rotate(20deg);
+    transform: rotate(25deg);
     transform-origin: bottom center;
-    right: 30%;
-    bottom: 0;
+    left: 50%;
+    bottom: 15%;
+    margin-left: -2px;
     border-radius: 2px;
 }
 
-/* A shape - Horizontal crossbar (shared with 7) */
+/* A shape - Horizontal crossbar (shared with 7's top bar) */
 .a7-crossbar {
     position: absolute;
-    width: 45%;
-    height: 3px;
+    width: 50%;
+    height: 4px;
     background: #000000;
-    top: 45%;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     border-radius: 2px;
 }
 
 /* 7 shape - Diagonal stroke (down-right from crossbar) */
 .a7-diagonal-seven {
     position: absolute;
-    width: 3px;
-    height: 40%;
+    width: 4px;
+    height: 35%;
     background: #000000;
-    transform: rotate(45deg);
+    transform: rotate(50deg);
     transform-origin: top left;
-    top: 45%;
-    right: 25%;
+    top: 50%;
+    left: 75%;
+    margin-top: -2px;
     border-radius: 2px;
 }
 
