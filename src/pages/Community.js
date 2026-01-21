@@ -5011,15 +5011,6 @@ Let's build generational wealth together! 💰🚀`,
                                                         }}>
                                                             {getFileName(message.file.name)}
                                                         </span>
-                                                        {message.file.size && (
-                                                            <span style={{ 
-                                                                fontSize: '0.75rem', 
-                                                                color: 'var(--text-muted)',
-                                                                flexShrink: 0
-                                                            }}>
-                                                                {(message.file.size / 1024).toFixed(1)} KB
-                                                            </span>
-                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -5066,32 +5057,17 @@ Let's build generational wealth together! 💰🚀`,
                                                     }}>
                                                         <FaPaperclip style={{ fontSize: '1.1rem', color: '#ffffff' }} />
                                                     </div>
-                                                    <div style={{ 
+                                                    <span style={{ 
                                                         flex: 1, 
-                                                        minWidth: 0,
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        gap: '4px'
+                                                        fontWeight: 600,
+                                                        fontSize: '0.9375rem',
+                                                        color: '#ffffff',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
                                                     }}>
-                                                        <span style={{ 
-                                                            fontWeight: 600,
-                                                            fontSize: '0.9375rem',
-                                                            color: '#ffffff',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap'
-                                                        }}>
-                                                            {getFileName(message.file.name)}
-                                                        </span>
-                                                        {message.file.size && (
-                                                            <span style={{ 
-                                                                fontSize: '0.75rem', 
-                                                                color: 'var(--text-muted)'
-                                                            }}>
-                                                                {(message.file.size / 1024).toFixed(1)} KB
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                        {getFileName(message.file.name)}
+                                                    </span>
                                                 </div>
                                             )}
                                             
