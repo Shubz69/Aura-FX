@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/WhyInfinity.css";
 import CosmicBackground from "../components/CosmicBackground";
 import { FaChartLine, FaGraduationCap, FaArrowRight, FaUsers, FaLock, FaRocket, FaChartPie } from "react-icons/fa";
@@ -6,6 +7,7 @@ import { BiCodeAlt } from 'react-icons/bi';
 import { RiStockLine } from 'react-icons/ri';
 
 const WhyInfinity = () => {
+    const navigate = useNavigate();
     const [visibleSections, setVisibleSections] = useState({
         intro: false,
         features: false,
@@ -110,7 +112,7 @@ const WhyInfinity = () => {
                         <p className="why-text">
                             Success in trading comes from education, practice, and discipline. Our expert mentors have years of real trading experience and teach strategies that work in real market conditions. Join traders who understand that consistent profitability requires time, dedication, and the right education.
                         </p>
-                        <button className="why-cta-button">
+                        <button className="why-cta-button" onClick={() => navigate('/register')}>
                             Initialize Trading <FaArrowRight />
                         </button>
                     </div>
