@@ -1515,71 +1515,70 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 }
               } else if (secondFunctionCall.name === 'get_economic_calendar' || secondFunctionCall.name === 'get_market_news') {
                 // AI wants to fetch calendar or news - fetch in parallel for speed, but limit time
-                if (checkTimeout() || shouldStopFunctionCalls) {
-                  // Time's up - stop but continue
-                } else {
-                const additionalArgs = JSON.parse(secondFunctionCall.arguments);
-                
-                try {
-                  let additionalData = null;
-                  const timeLeft = FUNCTION_TIMEOUT - (Date.now() - startTime);
-                  if (timeLeft < 10000) {
-                    // Not enough time, skip additional calls
-                    throw new Error('Insufficient time for additional data');
-                  }
+                if (!checkTimeout() && !shouldStopFunctionCalls) {
+                  const additionalArgs = JSON.parse(secondFunctionCall.arguments);
                   
-                  if (secondFunctionCall.name === 'get_economic_calendar') {
-                    const calendarResp = await Promise.race([
-                      axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
-                        date: additionalArgs.date,
-                        impact: additionalArgs.impact
-                      }, { timeout: 5000 }), // Reduced for speed
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-                    ]);
-                    if (calendarResp.data?.success) additionalData = calendarResp.data.data;
-                  } else if (secondFunctionCall.name === 'get_market_news') {
-                    // Market news has multiple sources - fetch in parallel for speed
-                    const newsResp = await Promise.race([
-                      axios.post(`${API_BASE_URL}/api/ai/market-news`, {
-                        symbol: additionalArgs.symbol,
-                        timeframe: additionalArgs.timeframe || '24h'
-                      }, { timeout: 5000 }), // Reduced for speed
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-                    ]);
-                    if (newsResp.data?.success) additionalData = newsResp.data.data;
-                  }
-                  
-                  if (additionalData) {
-                    checkTimeout();
-                    messages.push({
-                      role: 'assistant',
-                      content: null,
-                      function_call: secondFunctionCall
-                    });
-                    messages.push({
-                      role: 'function',
-                      name: secondFunctionCall.name,
-                      content: JSON.stringify(additionalData)
-                    });
+                  try {
+                    let additionalData = null;
+                    const timeLeft = FUNCTION_TIMEOUT - (Date.now() - startTime);
+                    if (timeLeft < 10000) {
+                      // Not enough time, skip additional calls
+                      throw new Error('Insufficient time for additional data');
+                    }
                     
-                    const finalCompletion = await Promise.race([
-                      openai.chat.completions.create({
-                        model: 'gpt-4o',
-                        messages: messages,
-                        functions: functions,
-                        function_call: 'none', // Force final response
-                        temperature: 0.8,
-                        max_tokens: 1000, // Reduced for speed
-                      }),
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
-                    ]);
+                    if (secondFunctionCall.name === 'get_economic_calendar') {
+                      const calendarResp = await Promise.race([
+                        axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
+                          date: additionalArgs.date,
+                          impact: additionalArgs.impact
+                        }, { timeout: 5000 }), // Reduced for speed
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                      ]);
+                      if (calendarResp.data?.success) additionalData = calendarResp.data.data;
+                    } else if (secondFunctionCall.name === 'get_market_news') {
+                      // Market news has multiple sources - fetch in parallel for speed
+                      const newsResp = await Promise.race([
+                        axios.post(`${API_BASE_URL}/api/ai/market-news`, {
+                          symbol: additionalArgs.symbol,
+                          timeframe: additionalArgs.timeframe || '24h'
+                        }, { timeout: 5000 }), // Reduced for speed
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                      ]);
+                      if (newsResp.data?.success) additionalData = newsResp.data.data;
+                    }
                     
-                    aiResponse = finalCompletion.choices[0]?.message?.content || aiResponse;
+                    if (additionalData) {
+                      checkTimeout();
+                      messages.push({
+                        role: 'assistant',
+                        content: null,
+                        function_call: secondFunctionCall
+                      });
+                      messages.push({
+                        role: 'function',
+                        name: secondFunctionCall.name,
+                        content: JSON.stringify(additionalData)
+                      });
+                      
+                      const finalCompletion = await Promise.race([
+                        openai.chat.completions.create({
+                          model: 'gpt-4o',
+                          messages: messages,
+                          functions: functions,
+                          function_call: 'none', // Force final response
+                          temperature: 0.8,
+                          max_tokens: 1000, // Reduced for speed
+                        }),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
+                      ]);
+                      
+                      aiResponse = finalCompletion.choices[0]?.message?.content || aiResponse;
+                    }
+                  } catch (additionalError) {
+                    console.log('Additional data fetch error:', additionalError.message);
+                    // Continue with existing response - don't fail the whole request
+                    // The AI already has enough data to respond, so we just continue
                   }
-                } catch (additionalError) {
-                  console.log('Additional data fetch error:', additionalError.message);
-                  // Continue with existing response - don't fail the whole request
-                  // The AI already has enough data to respond, so we just continue
                 }
               }
             }
