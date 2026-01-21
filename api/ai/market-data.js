@@ -337,13 +337,14 @@ module.exports = async (req, res) => {
     }
 
     // Source 2: Finnhub (excellent for stocks, forex, crypto, commodities) - PARALLEL
+    // PRIORITY SOURCE for gold - uses OANDA spot prices which are very accurate
     const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
     if (FINNHUB_API_KEY && type === 'quote') {
       let finnhubSymbol = normalizedSymbol;
       
       // Map to Finnhub format
       if (isGold) {
-        finnhubSymbol = 'OANDA:XAU_USD';
+        finnhubSymbol = 'OANDA:XAU_USD'; // OANDA spot gold - most accurate for real-time
       } else if (isForex) {
         const base = normalizedSymbol.substring(0, 3);
         const quote = normalizedSymbol.substring(3, 6);
@@ -359,7 +360,7 @@ module.exports = async (req, res) => {
             symbol: finnhubSymbol,
             token: FINNHUB_API_KEY
           },
-          timeout: 8000 // Optimized for real-time (8s max per source)
+          timeout: 6000 // Faster timeout for priority source
         }).then(quoteResponse => {
           if (quoteResponse.data && quoteResponse.data.c && quoteResponse.data.c > 0) {
             const quote = quoteResponse.data;
@@ -372,7 +373,7 @@ module.exports = async (req, res) => {
               previousClose: quote.pc,
               change: quote.c - quote.pc,
               changePercent: ((quote.c - quote.pc) / quote.pc * 100).toFixed(2) + '%',
-              timestamp: quote.t * 1000,
+              timestamp: quote.t * 1000 || Date.now(), // Ensure timestamp exists
               instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
               source: 'Finnhub'
             };
@@ -457,9 +458,9 @@ module.exports = async (req, res) => {
                 changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
                 currency: meta.currency || 'USD',
                 exchange: meta.exchangeName || (isForex ? 'FOREX' : isCrypto ? 'CRYPTO' : 'STOCK'),
-                timestamp: meta.regularMarketTime * 1000,
+                timestamp: (meta.regularMarketTime * 1000) || Date.now(), // Ensure timestamp exists
                 instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
-                source: 'Yahoo Finance'
+                source: yahooSymbol === 'XAU=X' ? 'Yahoo Finance (XAU=X)' : 'Yahoo Finance' // Distinguish spot gold
               };
             }
           }
@@ -472,6 +473,7 @@ module.exports = async (req, res) => {
     }
     
     // Source 4: Metal API for gold/commodities - PARALLEL
+    // HIGH PRIORITY for gold - dedicated metals API with real-time spot prices
     if (isGold && type === 'quote') {
       const METAL_API_KEY = process.env.METAL_API_KEY;
       if (METAL_API_KEY) {
@@ -480,13 +482,13 @@ module.exports = async (req, res) => {
             headers: {
               'x-rapidapi-key': METAL_API_KEY
             },
-            timeout: 12000
+            timeout: 6000 // Faster timeout for priority source
           }).then(response => {
             if (response.data && response.data.price) {
               return {
                 symbol: 'XAUUSD',
                 price: parseFloat(response.data.price),
-                timestamp: Date.now(),
+                timestamp: Date.now(), // Real-time timestamp
                 source: 'Metal API'
               };
             }
@@ -598,27 +600,65 @@ module.exports = async (req, res) => {
       );
     }
     
-    // Wait for ALL promises in parallel - use first successful result
+    // Wait for ALL promises in parallel - collect ALL successful results
     if (dataPromises.length > 0) {
       const results = await Promise.allSettled(dataPromises);
+      const successfulResults = [];
       
-      // Find first successful result
+      // Collect ALL successful results with valid prices
       for (const result of results) {
-        if (result.status === 'fulfilled' && result.value && result.value.price) {
-          marketData = result.value;
-          dataSources.push(result.value.source);
-          break; // Use first successful result
+        if (result.status === 'fulfilled' && result.value && result.value.price && result.value.price > 0) {
+          successfulResults.push(result.value);
         }
       }
       
-      // If no result yet, try to combine data from multiple sources
-      if (!marketData) {
-        for (const result of results) {
-          if (result.status === 'fulfilled' && result.value) {
-            marketData = result.value;
-            dataSources.push(result.value.source);
-            break;
+      // For gold (XAUUSD), prioritize sources in this order:
+      // 1. Finnhub (OANDA:XAU_USD) - most accurate spot gold
+      // 2. Metal API - dedicated metals API
+      // 3. Yahoo Finance XAU=X - spot gold
+      // 4. Twelve Data - general purpose
+      // 5. Alpha Vantage - general purpose
+      // Then use the most recent timestamp
+      if (successfulResults.length > 0) {
+        if (isGold) {
+          // Sort by priority for gold, then by timestamp
+          const priorityOrder = ['Finnhub', 'Metal API', 'Yahoo Finance', 'Yahoo Finance (XAU=X)', 'Twelve Data', 'Alpha Vantage'];
+          successfulResults.sort((a, b) => {
+            const aPriority = priorityOrder.indexOf(a.source) !== -1 ? priorityOrder.indexOf(a.source) : 999;
+            const bPriority = priorityOrder.indexOf(b.source) !== -1 ? priorityOrder.indexOf(b.source) : 999;
+            
+            // First sort by priority
+            if (aPriority !== bPriority) {
+              return aPriority - bPriority;
+            }
+            
+            // Then by most recent timestamp
+            const aTime = a.timestamp || 0;
+            const bTime = b.timestamp || 0;
+            return bTime - aTime;
+          });
+        } else {
+          // For non-gold, sort by most recent timestamp
+          successfulResults.sort((a, b) => {
+            const aTime = a.timestamp || 0;
+            const bTime = b.timestamp || 0;
+            return bTime - aTime;
+          });
+        }
+        
+        // Use the best result (first in sorted array)
+        marketData = successfulResults[0];
+        
+        // Track all sources that provided data
+        successfulResults.forEach(r => {
+          if (!dataSources.includes(r.source)) {
+            dataSources.push(r.source);
           }
+        });
+        
+        // If we have multiple sources, note that we're using the most accurate/recent
+        if (successfulResults.length > 1) {
+          marketData.accuracyNote = `Using most accurate source (${marketData.source}) from ${successfulResults.length} available sources`;
         }
       }
     }
