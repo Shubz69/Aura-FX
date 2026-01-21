@@ -117,8 +117,8 @@ module.exports = async (req, res) => {
         for (let i = 0; i < Math.min(20 - users.length, fakeUsernames.length); i++) {
           const username = fakeUsernames[i];
           const email = `trader${i + 1}@aurafx.com`;
-          const fakeXP = Math.floor(Math.random() * 5000) + 100; // 100-5100 XP
-          const fakeLevel = Math.floor(Math.sqrt(fakeXP / 100)) + 1;
+          const fakeXP = Math.floor(Math.random() * 50000) + 1000; // 1000-51000 XP
+          const fakeLevel = Math.floor(Math.sqrt(fakeXP / 5000)) + 1; // HARD LEVELING
           
           // Check if user already exists
           const [existing] = await db.execute('SELECT id FROM users WHERE email = ?', [email]);

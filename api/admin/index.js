@@ -1105,8 +1105,8 @@ module.exports = async (req, res) => {
         const currentXP = parseFloat(userRows[0].xp || 0);
         const newXP = currentXP + parseFloat(xpAmount);
 
-        // Calculate level from XP: Level = floor(sqrt(XP / 100)) + 1
-        const newLevel = Math.floor(Math.sqrt(newXP / 100)) + 1;
+        // Calculate level from XP: Level = floor(sqrt(XP / 5000)) + 1 (HARD LEVELING)
+        const newLevel = Math.floor(Math.sqrt(newXP / 5000)) + 1;
 
         // Update user XP and level
         await db.execute(

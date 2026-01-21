@@ -799,24 +799,33 @@ const Community = () => {
 
     // ***** XP SYSTEM FUNCTIONS *****
     
-    // XP and Level calculation rules
-    const XP_PER_MESSAGE = 0.01; // Base XP for sending a message
-    const XP_PER_FILE = 20; // Extra XP for including a file/image
-    const XP_PER_EMOJI = 0.001; // Extra XP per emoji in message
+    // XP and Level calculation rules - HARD LEVELING SYSTEM
+    const XP_PER_MESSAGE = 1; // Base XP for sending a message (reduced from easy system)
+    const XP_PER_FILE = 5; // Extra XP for including a file/image (reduced)
+    const XP_PER_EMOJI = 0.1; // Extra XP per emoji in message (reduced)
     
-    // Level thresholds - XP required to reach each level
+    // Level thresholds - MUCH HARDER exponential growth
+    // Formula: Level = floor(sqrt(XP / 5000)) + 1
+    // Level 1 = 0 XP, Level 2 = 5,000 XP, Level 3 = 20,000 XP, Level 4 = 45,000 XP, Level 5 = 80,000 XP, Level 10 = 405,000 XP
     const getLevelFromXP = (xp) => {
-        // Level formula: Level = floor(sqrt(XP / 100)) + 1
-        // This means: Level 1 = 0 XP, Level 2 = 100 XP, Level 3 = 400 XP, Level 4 = 900 XP, etc.
-        return Math.floor(Math.sqrt(xp / 100)) + 1;
+        if (xp <= 0) return 1;
+        // Much harder exponential growth - requires significantly more XP per level
+        return Math.floor(Math.sqrt(xp / 5000)) + 1;
     };
     
-    // Award XP and update user data
-    const awardXP = (earnedXP) => {
+    // Get XP required for next level
+    const getXPForNextLevel = (currentLevel) => {
+        // Reverse the formula: XP = (level - 1)^2 * 5000
+        const nextLevelXP = Math.pow(currentLevel, 2) * 5000;
+        return nextLevelXP;
+    };
+    
+    // Award XP and update user data - Save to both localStorage and database
+    const awardXP = async (earnedXP) => {
         try {
             // Get current user data
             const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-            const currentXP = currentUser.xp || 0;
+            const currentXP = parseFloat(currentUser.xp || 0);
             const newXP = currentXP + earnedXP;
             const newLevel = getLevelFromXP(newXP);
             const oldLevel = getLevelFromXP(currentXP);
@@ -829,18 +838,44 @@ const Community = () => {
                 totalMessages: (currentUser.totalMessages || 0) + 1
             };
             
-            // Save to localStorage
+            // Save to localStorage immediately
             localStorage.setItem('user', JSON.stringify(updatedUser));
             
             // Update state
             setStoredUser(updatedUser);
             setUserLevel(newLevel);
             
+            // Save to database in background (don't block UI)
+            if (currentUser.id) {
+                try {
+                    const response = await fetch('/api/users/update-xp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({
+                            userId: currentUser.id,
+                            xp: newXP,
+                            level: newLevel
+                        })
+                    });
+                    if (!response.ok) {
+                        console.warn('Failed to sync XP to database, but saved locally');
+                    }
+                } catch (dbError) {
+                    console.warn('Error syncing XP to database:', dbError);
+                    // Continue anyway - XP is saved locally
+                }
+            }
+            
             return {
                 earnedXP,
                 newXP,
                 newLevel,
-                leveledUp: newLevel > oldLevel
+                leveledUp: newLevel > oldLevel,
+                xpForNextLevel: getXPForNextLevel(newLevel),
+                xpProgress: newXP - getXPForNextLevel(oldLevel)
             };
         } catch (error) {
             console.error('Error awarding XP:', error);
@@ -848,27 +883,28 @@ const Community = () => {
         }
     };
     
-    // Calculate XP for a message
+    // Calculate XP for a message - REDUCED REWARDS for harder leveling
     const calculateMessageXP = (messageContent, hasFile) => {
-        let totalXP = XP_PER_MESSAGE;
+        let totalXP = XP_PER_MESSAGE; // Base: 1 XP per message
         
-        // Bonus for file attachments
+        // Bonus for file attachments (reduced)
         if (hasFile) {
-            totalXP += XP_PER_FILE;
+            totalXP += XP_PER_FILE; // +5 XP for files
         }
         
-        // Bonus for emojis (count emojis in message)
+        // Bonus for emojis (count emojis in message, reduced)
         const emojiRegex = /[\p{Emoji}]/gu;
         const emojiMatches = messageContent.match(emojiRegex);
         if (emojiMatches) {
-            totalXP += emojiMatches.length * XP_PER_EMOJI;
+            totalXP += emojiMatches.length * XP_PER_EMOJI; // +0.1 XP per emoji
         }
         
-        // Bonus for longer messages (1 XP per 50 characters, max 20 bonus XP)
-        const lengthBonus = Math.min(20, Math.floor(messageContent.length / 50));
+        // Bonus for longer messages (reduced - 0.5 XP per 100 characters, max 10 bonus XP)
+        const lengthBonus = Math.min(10, Math.floor(messageContent.length / 100) * 0.5);
         totalXP += lengthBonus;
         
-        return totalXP;
+        // Round to 2 decimal places
+        return Math.round(totalXP * 100) / 100;
     };
 
     // Get user's role - check subscription status and plan
@@ -1206,7 +1242,7 @@ const Community = () => {
             
             // Award XP for sending message
             const earnedXP = calculateMessageXP(messageContent, false);
-            const xpResult = awardXP(earnedXP);
+            const xpResult = await awardXP(earnedXP);
             if (xpResult?.leveledUp) {
                 // Placeholder: trigger level-up UI feedback if desired
             }
@@ -2837,7 +2873,7 @@ Let's build generational wealth together! 💰🚀`,
             
             // ***** AWARD XP FOR SENDING MESSAGE *****
             const earnedXP = calculateMessageXP(messageContent, !!selectedFile);
-            const xpResult = awardXP(earnedXP);
+            const xpResult = await awardXP(earnedXP);
             if (xpResult?.leveledUp) {
                 // Placeholder: trigger level-up UI feedback if desired
             }

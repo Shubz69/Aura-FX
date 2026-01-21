@@ -155,6 +155,10 @@
       "destination": "/api/messages/threads.js"
     },
     {
+      "source": "/api/users/update-xp",
+      "destination": "/api/users/update-xp.js"
+    },
+    {
       "source": "/api/users/:userId/update",
       "destination": "/api/users/update.js?userId=:userId"
     },
