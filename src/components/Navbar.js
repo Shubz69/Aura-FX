@@ -39,7 +39,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="logo-container">
                 <Link to="/" className="logo-link">
-                    <div className="navbar-logo-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <div className="navbar-logo-wrapper" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
                         <A7Logo />
                         <span className="logo">AURA FX</span>
                     </div>

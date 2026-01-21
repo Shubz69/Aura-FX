@@ -1,5 +1,5 @@
 /* A7 Logo Styling - Stylized geometric A7 symbol
-Matches the design: A formed by two angled strokes meeting at top, horizontal crossbar, 7 integrated with diagonal down-right */
+Design: A = two diagonal strokes meeting at bottom (open at top), 7 = horizontal bar + diagonal down-left connecting to A */
 .a7-logo-container {
     display: flex;
     align-items: center;
@@ -16,58 +16,54 @@ Matches the design: A formed by two angled strokes meeting at top, horizontal cr
     justify-content: center;
 }
 
-/* A shape - Left diagonal (angled left, meeting at top center) */
+/* A shape - Left diagonal (angled left, meeting at bottom) */
 .a7-diagonal-left {
     position: absolute;
-    width: 4px;
-    height: 65%;
-    background: #000000;
-    transform: rotate(-25deg);
+    width: 5px;
+    height: 70%;
+    background: #ffffff;
+    transform: rotate(-22deg);
     transform-origin: bottom center;
-    left: 50%;
-    bottom: 15%;
-    margin-left: -2px;
-    border-radius: 2px;
+    left: 35%;
+    bottom: 10%;
+    border-radius: 2.5px;
 }
 
-/* A shape - Right diagonal (angled right, meeting at top center) */
+/* A shape - Right diagonal (angled right, meeting at bottom) */
 .a7-diagonal-right {
     position: absolute;
-    width: 4px;
-    height: 65%;
-    background: #000000;
-    transform: rotate(25deg);
+    width: 5px;
+    height: 70%;
+    background: #ffffff;
+    transform: rotate(22deg);
     transform-origin: bottom center;
-    left: 50%;
-    bottom: 15%;
-    margin-left: -2px;
-    border-radius: 2px;
+    right: 35%;
+    bottom: 10%;
+    border-radius: 2.5px;
 }
 
-/* A shape - Horizontal crossbar (shared with 7's top bar) */
+/* 7 shape - Horizontal bar at top (to the right of A) */
 .a7-crossbar {
     position: absolute;
-    width: 50%;
-    height: 4px;
-    background: #000000;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 2px;
+    width: 35%;
+    height: 5px;
+    background: #ffffff;
+    top: 15%;
+    right: 10%;
+    border-radius: 2.5px;
 }
 
-/* 7 shape - Diagonal stroke (down-right from crossbar) */
+/* 7 shape - Diagonal stroke (down-left from horizontal bar, connecting to A) */
 .a7-diagonal-seven {
     position: absolute;
-    width: 4px;
-    height: 35%;
-    background: #000000;
-    transform: rotate(50deg);
-    transform-origin: top left;
-    top: 50%;
-    left: 75%;
-    margin-top: -2px;
-    border-radius: 2px;
+    width: 5px;
+    height: 50%;
+    background: #ffffff;
+    transform: rotate(-45deg);
+    transform-origin: top right;
+    top: 20%;
+    right: 10%;
+    border-radius: 2.5px;
 }
 
 /* Responsive sizing */
@@ -76,16 +72,66 @@ Matches the design: A formed by two angled strokes meeting at top, horizontal cr
     min-height: 40px;
 }
 
-/* For navbar - smaller size */
+/* For navbar - smaller size, white color */
 .navbar-logo-wrapper .a7-logo-symbol {
-    width: 35px;
-    height: 35px;
+    width: 32px;
+    height: 32px;
 }
 
-/* For home page - larger size */
+.navbar-logo-wrapper .a7-diagonal-left,
+.navbar-logo-wrapper .a7-diagonal-right,
+.navbar-logo-wrapper .a7-crossbar,
+.navbar-logo-wrapper .a7-diagonal-seven {
+    background: #ffffff;
+    width: 3px;
+}
+
+.navbar-logo-wrapper .a7-diagonal-left,
+.navbar-logo-wrapper .a7-diagonal-right {
+    height: 60%;
+}
+
+.navbar-logo-wrapper .a7-crossbar {
+    width: 30%;
+    height: 3px;
+    top: 18%;
+}
+
+.navbar-logo-wrapper .a7-diagonal-seven {
+    height: 45%;
+    width: 3px;
+    top: 22%;
+}
+
+/* For home page - much larger size, white color */
 .home-logo-section .a7-logo-symbol {
-    width: 80px;
-    height: 80px;
+    width: 120px;
+    height: 120px;
+}
+
+.home-logo-section .a7-diagonal-left,
+.home-logo-section .a7-diagonal-right,
+.home-logo-section .a7-crossbar,
+.home-logo-section .a7-diagonal-seven {
+    background: #ffffff;
+    width: 8px;
+}
+
+.home-logo-section .a7-diagonal-left,
+.home-logo-section .a7-diagonal-right {
+    height: 70%;
+}
+
+.home-logo-section .a7-crossbar {
+    width: 35%;
+    height: 8px;
+    top: 15%;
+}
+
+.home-logo-section .a7-diagonal-seven {
+    height: 50%;
+    width: 8px;
+    top: 20%;
 }
 
 /* Adjust proportions for different sizes */
@@ -95,8 +141,22 @@ Matches the design: A formed by two angled strokes meeting at top, horizontal cr
         height: 28px;
     }
     
+    .navbar-logo-wrapper .a7-diagonal-left,
+    .navbar-logo-wrapper .a7-diagonal-right,
+    .navbar-logo-wrapper .a7-crossbar,
+    .navbar-logo-wrapper .a7-diagonal-seven {
+        width: 2.5px;
+    }
+    
     .home-logo-section .a7-logo-symbol {
-        width: 60px;
-        height: 60px;
+        width: 100px;
+        height: 100px;
+    }
+    
+    .home-logo-section .a7-diagonal-left,
+    .home-logo-section .a7-diagonal-right,
+    .home-logo-section .a7-crossbar,
+    .home-logo-section .a7-diagonal-seven {
+        width: 7px;
     }
 }
