@@ -24,7 +24,24 @@ const PremiumAI = () => {
   const isSubmittingRef = useRef(false); // Prevent double submissions
   const sendTimeoutRef = useRef(null); // For debouncing
 
-  // Check if user has premium access - run first
+  // Load conversation history from localStorage FIRST on mount (before anything else)
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('aura_ai_conversation');
+      if (savedHistory) {
+        const parsed = JSON.parse(savedHistory);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // We have saved history - use it immediately
+          setMessages(parsed);
+          setConversationHistory(parsed);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+    }
+  }, []); // Only run once on mount
+
+  // Check if user has premium access
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -59,30 +76,25 @@ const PremiumAI = () => {
       return;
     }
 
-    // Load conversation history from localStorage FIRST, before setting welcome message
-    try {
-      const savedHistory = localStorage.getItem('aura_ai_conversation');
-      if (savedHistory) {
-        const parsed = JSON.parse(savedHistory);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // We have saved history - use it
-          setMessages(parsed);
-          setConversationHistory(parsed);
-          return; // Don't set welcome message if we have saved history
+    // Only set welcome message if messages is still empty (no saved history was loaded)
+    // Use a small delay to ensure localStorage load completes first
+    const checkAndSetWelcome = setTimeout(() => {
+      setMessages(current => {
+        // Only set welcome if messages is still empty
+        if (current.length === 0) {
+          const welcomeMessage = {
+            role: 'assistant',
+            content: `Hi I'm AURA AI, how can I help?`
+          };
+          setConversationHistory([welcomeMessage]);
+          return [welcomeMessage];
         }
-      }
-    } catch (error) {
-      console.error('Error loading conversation history:', error);
-    }
+        return current; // Keep existing messages
+      });
+    }, 100);
 
-    // Only set welcome message if no saved history exists
-    const welcomeMessage = {
-      role: 'assistant',
-      content: `Hi I'm AURA AI, how can I help?`
-    };
-    setMessages([welcomeMessage]);
-    setConversationHistory([welcomeMessage]);
-  }, [isAuthenticated, user, navigate]); // Removed messages.length dependency
+    return () => clearTimeout(checkAndSetWelcome);
+  }, [isAuthenticated, user, navigate]);
 
   // Save conversation history to localStorage whenever it changes
   useEffect(() => {
