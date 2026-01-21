@@ -363,16 +363,18 @@ module.exports = async (req, res) => {
           }
 
           if (userId) {
-            // Get user's current subscription plan to maintain correct role
+            // Get user's current subscription plan and free monthly status
             const [userRows] = await db.execute(
-              'SELECT subscription_plan FROM users WHERE id = ?',
+              'SELECT subscription_plan, has_used_free_monthly FROM users WHERE id = ?',
               [userId]
             );
             const subscriptionPlan = userRows[0]?.subscription_plan || 'aura';
+            const hasUsedFreeMonthly = userRows[0]?.has_used_free_monthly || false;
             const userRole = (subscriptionPlan === 'a7fx' || subscriptionPlan === 'A7FX' || subscriptionPlan === 'elite') ? 'elite' : 'premium';
             
+            // Calculate expiry: 30 days for free monthly users, 30 days for paid (no trial on renewal)
             const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + 30); // 1 month from now
+            expiryDate.setDate(expiryDate.getDate() + 30); // 1 month from now (renewals don't get free trial)
             
             await db.execute(
               'UPDATE users SET payment_failed = FALSE, subscription_status = ?, subscription_expiry = ?, role = ? WHERE id = ?',
