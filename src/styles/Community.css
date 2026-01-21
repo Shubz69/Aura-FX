@@ -907,7 +907,7 @@ html.community-page-active {
 /* Message Items - Discord Compact Style */
 .message-item {
     display: flex;
-    padding: 0.125rem 16px 0.125rem 72px; /* Minimal vertical padding */
+    padding: 0.0625rem 16px 0.0625rem 72px; /* Ultra-minimal vertical padding */
     margin: 0;
     position: relative;
     transition: background 0.1s ease;
@@ -932,12 +932,14 @@ html.community-page-active {
     opacity: 1 !important;
 }
 
-/* Group consecutive messages from same sender */
+/* Group consecutive messages from same sender - zero spacing like Discord */
 .message-item.grouped {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
 }
 
 .message-item.grouped .message-avatar,
@@ -948,6 +950,10 @@ html.community-page-active {
 .message-item.grouped .message-content {
     margin-left: 0;
     padding-left: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 
 .message-avatar {
@@ -1053,7 +1059,7 @@ html.community-page-active {
 
 .message-text {
     color: #DCDDDE;
-    line-height: 1.2 !important; /* Tighter line height */
+    line-height: 1.375 !important; /* Discord-like line height */
     font-size: 0.9375rem;
     word-wrap: break-word;
     white-space: pre-wrap;
@@ -1067,10 +1073,19 @@ html.community-page-active {
     overflow-wrap: break-word;
 }
 
+/* Extra tight spacing for grouped messages - messages should touch */
+.message-item.grouped .message-text {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 1.375 !important;
+}
+
 /* Discord-like tight spacing - new messages have minimal gap, grouped have none */
 .message-item:not(.grouped) {
-    padding-top: 0.125rem !important; /* Minimal gap between different senders */
-    padding-bottom: 0.125rem !important;
+    padding-top: 0.0625rem !important; /* Ultra-minimal gap between different senders */
+    padding-bottom: 0.0625rem !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }
@@ -1826,11 +1841,13 @@ html.community-page-active {
         margin: 0 !important;
         margin-top: 0 !important;
         margin-bottom: 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
     }
     
     .message-item:not(.grouped) {
-        padding-top: 0 !important; /* Zero gap - messages touch */
-        padding-bottom: 0 !important;
+        padding-top: 0.0625rem !important; /* Ultra-minimal gap */
+        padding-bottom: 0.0625rem !important;
         margin-top: 0 !important;
         margin-bottom: 0 !important;
     }
@@ -1859,6 +1876,10 @@ html.community-page-active {
     
     .message-item.grouped .message-content {
         margin-left: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
     
     .message-header-info {
