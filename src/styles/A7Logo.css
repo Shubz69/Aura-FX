@@ -10,12 +10,15 @@
     display: block;
     object-fit: contain;
     filter: brightness(0) invert(1); /* Makes the logo white */
+    vertical-align: middle;
 }
 
 /* For navbar - larger size to match AURA FX text */
 .navbar-logo-wrapper .a7-logo-image {
     width: 42px;
     height: 42px;
+    align-self: flex-end; /* Align to bottom to match text baseline */
+    margin-bottom: 3px; /* Fine-tune alignment with text */
 }
 
 /* For home page - much larger size */
