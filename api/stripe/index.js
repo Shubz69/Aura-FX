@@ -178,14 +178,48 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN subscription_plan VARCHAR(50) DEFAULT NULL');
         }
 
+        // Check if has_used_free_monthly column exists, add if not
+        try {
+          await db.execute('SELECT has_used_free_monthly FROM users LIMIT 1');
+        } catch (err) {
+          await db.execute('ALTER TABLE users ADD COLUMN has_used_free_monthly BOOLEAN DEFAULT FALSE');
+        }
+
+        // Check if user has already used free monthly subscription
+        const [userRows] = await db.execute(
+          'SELECT has_used_free_monthly FROM users WHERE id = ?',
+          [userId]
+        );
+        const hasUsedFreeMonthly = userRows[0]?.has_used_free_monthly || false;
+
+        // Calculate expiry date based on plan type and free monthly usage
         const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 30); // 1 month subscription
+        let subscriptionDays = 30; // Default 1 month
+        
+        if (planType === 'free') {
+          // Free monthly subscription - always 30 days
+          subscriptionDays = 30;
+        } else if (planType === 'aura' || planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
+          // Paid subscriptions: 3 months free if they haven't used free monthly, otherwise 1 month
+          if (!hasUsedFreeMonthly) {
+            subscriptionDays = 90; // 3 months free trial
+          } else {
+            subscriptionDays = 30; // 1 month (no free trial - they already used free monthly)
+          }
+        }
+        
+        expiryDate.setDate(expiryDate.getDate() + subscriptionDays);
 
         // Determine role based on plan type
         let userRole = 'premium'; // Default to premium for Aura FX
         if (planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
           userRole = 'elite'; // A7FX Elite subscription - assign Elite role
+        } else if (planType === 'free') {
+          userRole = 'premium'; // Free monthly also gets premium access
         }
+
+        // Mark has_used_free_monthly as true if they're subscribing to free monthly
+        const markFreeMonthlyUsed = planType === 'free' ? true : hasUsedFreeMonthly;
 
         // Update subscription status AND role based on plan
         await db.execute(
@@ -196,9 +230,10 @@ module.exports = async (req, res) => {
                stripe_session_id = ?,
                payment_failed = FALSE,
                role = ?,
-               subscription_plan = ?
+               subscription_plan = ?,
+               has_used_free_monthly = ?
            WHERE id = ?`,
-          [expiryDate, sessionId || null, userRole, planType, userId]
+          [expiryDate, sessionId || null, userRole, planType, markFreeMonthlyUsed, userId]
         );
 
         const [updatedUser] = await db.execute(
