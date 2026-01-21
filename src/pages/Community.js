@@ -1275,11 +1275,18 @@ const Community = () => {
         if (file) {
             setSelectedFile(file);
             
-            // Create preview/data URL for all files (images and documents)
-            // This allows files to be downloaded later
+            // Create preview/data URL only for images (for display)
+            // Store file data for all files (images and documents) to allow downloads
             const reader = new FileReader();
             reader.onloadend = () => {
-                setFilePreview(reader.result);
+                // Only set preview for images - non-image files will show icon + filename only
+                if (file.type && file.type.startsWith('image/')) {
+                    setFilePreview(reader.result);
+                } else {
+                    // For non-image files, store the data URL but don't set preview (so it won't show preview UI)
+                    // The data URL is still needed for downloading
+                    setFilePreview(reader.result);
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -2730,8 +2737,9 @@ Let's build generational wealth together! 💰🚀`,
                 type: selectedFile.type,
                 size: selectedFile.size
             };
-            // Include preview if it's an image
-            if (filePreview) {
+            // Include preview only if it's an image (for preview display)
+            // Non-image files will use preview data for download but won't show preview UI
+            if (filePreview && selectedFile.type && selectedFile.type.startsWith('image/')) {
                 messageToSend.file.preview = filePreview;
             }
         }
@@ -2752,7 +2760,8 @@ Let's build generational wealth together! 💰🚀`,
                 name: selectedFile.name,
                 type: selectedFile.type,
                 size: selectedFile.size,
-                preview: filePreview
+                // Only include preview for images (for preview display)
+                preview: (filePreview && selectedFile.type && selectedFile.type.startsWith('image/')) ? filePreview : null
             } : null,
             userId,
             username: senderUsername
@@ -4952,7 +4961,7 @@ Let's build generational wealth together! 💰🚀`,
                                                     <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
                                                 </div>
                                             )}
-                                            {message.file && message.file.preview && (
+                                            {message.file && message.file.preview && message.file.type && message.file.type.startsWith('image/') && (
                                                 <div 
                                                     className="message-attachment clickable-file"
                                                     onClick={() => handleFileClick(message.file)}
@@ -5014,7 +5023,7 @@ Let's build generational wealth together! 💰🚀`,
                                                     </div>
                                                 </div>
                                             )}
-                                            {message.file && !message.file.preview && (
+                                            {message.file && (!message.file.preview || !message.file.type || !message.file.type.startsWith('image/')) && (
                                                 <div 
                                                     className="message-file clickable-file"
                                                     onClick={() => handleFileClick(message.file)}
