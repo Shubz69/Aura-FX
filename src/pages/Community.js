@@ -10,7 +10,7 @@ import { triggerNotification } from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
 
 // Icons
-import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft, FaDownload } from 'react-icons/fa';
+import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft } from 'react-icons/fa';
 
 // All API calls use real endpoints only - no mock mode
 
@@ -797,6 +797,16 @@ const Community = () => {
     const replaceMessageById = (list, messageId, replacement) =>
         list.map(msg => (msg.id === messageId ? replacement : msg));
 
+    // ***** HELPER FUNCTIONS *****
+    
+    // Extract just the filename from a path (remove directory path)
+    const getFileName = (filePath) => {
+        if (!filePath) return 'Unknown file';
+        // Handle both forward and backslash paths
+        const fileName = filePath.split(/[/\\]/).pop();
+        return fileName || filePath;
+    };
+    
     // ***** XP SYSTEM FUNCTIONS *****
     
     // XP and Level calculation rules - HARD LEVELING SYSTEM
@@ -4906,65 +4916,64 @@ Let's build generational wealth together! 💰🚀`,
                                                     onClick={() => handleFileClick(message.file)}
                                                     style={{
                                                         cursor: 'pointer',
+                                                        transition: 'all 0.2s ease',
                                                         marginTop: '8px',
                                                         borderRadius: '12px',
                                                         overflow: 'hidden',
                                                         background: 'var(--bg-elevated)',
-                                                        border: '1px solid var(--border-color)',
-                                                        transition: 'all 0.2s ease',
-                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
                                                     }}
                                                     onMouseEnter={(e) => {
-                                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(88, 101, 242, 0.3)';
+                                                        e.currentTarget.style.transform = 'scale(1.01)';
                                                         e.currentTarget.style.borderColor = 'var(--accent-blue)';
+                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.3)';
                                                     }}
                                                     onMouseLeave={(e) => {
-                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                                                        e.currentTarget.style.borderColor = 'var(--border-color)';
+                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                                                     }}
                                                     title="Click to open in new window"
                                                 >
                                                     <img 
                                                         src={message.file.preview} 
-                                                        alt={message.file.name}
+                                                        alt={getFileName(message.file.name)}
                                                         style={{
                                                             width: '100%',
                                                             maxWidth: '500px',
-                                                            maxHeight: '400px',
+                                                            maxHeight: '350px',
                                                             objectFit: 'contain',
                                                             display: 'block',
                                                             pointerEvents: 'none',
-                                                            background: 'var(--bg-primary)'
+                                                            background: 'var(--bg-tertiary)'
                                                         }}
                                                     />
                                                     <div style={{
                                                         padding: '10px 12px',
                                                         background: 'var(--bg-elevated)',
-                                                        borderTop: '1px solid var(--border-color)',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '8px',
-                                                        fontSize: '0.8125rem'
+                                                        borderTop: '1px solid rgba(255, 255, 255, 0.05)'
                                                     }}>
                                                         <FaImage style={{ fontSize: '0.875rem', color: 'var(--accent-blue)', flexShrink: 0 }} />
                                                         <span style={{ 
                                                             flex: 1, 
-                                                            fontWeight: 500, 
-                                                            color: 'var(--text-normal)',
+                                                            fontSize: '0.875rem',
+                                                            color: '#ffffff',
+                                                            fontWeight: 500,
                                                             overflow: 'hidden',
                                                             textOverflow: 'ellipsis',
                                                             whiteSpace: 'nowrap'
                                                         }}>
-                                                            {message.file.name}
+                                                            {getFileName(message.file.name)}
                                                         </span>
                                                         {message.file.size && (
                                                             <span style={{ 
                                                                 fontSize: '0.75rem', 
                                                                 color: 'var(--text-muted)',
-                                                                flexShrink: 0,
-                                                                fontWeight: 400
+                                                                flexShrink: 0
                                                             }}>
                                                                 {(message.file.size / 1024).toFixed(1)} KB
                                                             </span>
@@ -4986,20 +4995,20 @@ Let's build generational wealth together! 💰🚀`,
                                                         gap: '12px',
                                                         cursor: 'pointer',
                                                         transition: 'all 0.2s ease',
-                                                        border: '1px solid var(--border-color)',
-                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
                                                     }}
                                                     onMouseEnter={(e) => {
                                                         e.currentTarget.style.background = 'var(--hover-bg)';
                                                         e.currentTarget.style.borderColor = 'var(--accent-blue)';
-                                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(88, 101, 242, 0.3)';
+                                                        e.currentTarget.style.transform = 'translateX(4px)';
+                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.25)';
                                                     }}
                                                     onMouseLeave={(e) => {
                                                         e.currentTarget.style.background = 'var(--bg-elevated)';
-                                                        e.currentTarget.style.borderColor = 'var(--border-color)';
-                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                                                        e.currentTarget.style.transform = 'translateX(0)';
+                                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                                                     }}
                                                     title="Click to download"
                                                 >
@@ -5007,12 +5016,11 @@ Let's build generational wealth together! 💰🚀`,
                                                         width: '40px',
                                                         height: '40px',
                                                         borderRadius: '10px',
-                                                        background: 'linear-gradient(135deg, var(--accent-blue), var(--purple-secondary))',
+                                                        background: 'linear-gradient(135deg, var(--accent-blue), var(--purple-primary))',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        flexShrink: 0,
-                                                        boxShadow: '0 2px 8px rgba(88, 101, 242, 0.3)'
+                                                        flexShrink: 0
                                                     }}>
                                                         <FaPaperclip style={{ fontSize: '1.1rem', color: '#ffffff' }} />
                                                     </div>
@@ -5024,35 +5032,23 @@ Let's build generational wealth together! 💰🚀`,
                                                         gap: '4px'
                                                     }}>
                                                         <span style={{ 
-                                                            fontWeight: 600, 
-                                                            color: 'var(--text-normal)',
+                                                            fontWeight: 600,
                                                             fontSize: '0.9375rem',
+                                                            color: '#ffffff',
                                                             overflow: 'hidden',
                                                             textOverflow: 'ellipsis',
                                                             whiteSpace: 'nowrap'
                                                         }}>
-                                                            {message.file.name}
+                                                            {getFileName(message.file.name)}
                                                         </span>
-                                                        <span style={{ 
-                                                            fontSize: '0.75rem', 
-                                                            color: 'var(--text-muted)',
-                                                            fontWeight: 400
-                                                        }}>
-                                                            {message.file.size ? `${(message.file.size / 1024).toFixed(1)} KB` : 'File attachment'}
-                                                        </span>
-                                                    </div>
-                                                    <div style={{
-                                                        width: '32px',
-                                                        height: '32px',
-                                                        borderRadius: '8px',
-                                                        background: 'rgba(88, 101, 242, 0.1)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        flexShrink: 0,
-                                                        transition: 'all 0.2s ease'
-                                                    }}>
-                                                        <FaDownload style={{ fontSize: '0.875rem', color: 'var(--accent-blue)' }} />
+                                                        {message.file.size && (
+                                                            <span style={{ 
+                                                                fontSize: '0.75rem', 
+                                                                color: 'var(--text-muted)'
+                                                            }}>
+                                                                {(message.file.size / 1024).toFixed(1)} KB
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}

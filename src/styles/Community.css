@@ -2460,22 +2460,21 @@ html.community-page-active {
     flex-direction: column;
 }
 
-/* File Preview/Attachment in Messages - Enhanced Styling */
+/* File Preview/Attachment in Messages */
 .message-attachment {
     position: relative;
-    display: inline-block;
-    max-width: 100%;
 }
 
 .message-attachment img {
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: none;
-    display: block;
+    border: 2px solid transparent;
 }
 
-.message-attachment:hover img {
-    transform: scale(1.01);
+.message-attachment img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+    border-color: var(--accent-blue);
 }
 
 .clickable-file {
@@ -2489,12 +2488,22 @@ html.community-page-active {
 .message-file {
     font-size: 0.9rem;
     position: relative;
-    max-width: 100%;
 }
 
-/* Remove old hover tooltip */
 .message-file::after {
-    display: none;
+    content: 'Click to download';
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.message-file:hover::after {
+    opacity: 1;
 }
 
 /* GIF Picker */
