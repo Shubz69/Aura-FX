@@ -1246,7 +1246,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           model: 'gpt-4o', // GPT-4o supports vision
           messages: messages,
           temperature: 0.8, // Slightly higher for more natural, human-like responses
-          max_tokens: 2000, // Sufficient for concise, direct answers
+          max_tokens: 1000, // Reduced for faster generation - responses should be concise
         };
 
         // ALWAYS add functions - AI must be able to fetch data even with images
@@ -1259,10 +1259,10 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           /(price|where|will|going|outlook|bias|analysis|trade|buy|sell|gold|silver|forex|stock|crypto|bitcoin|ethereum|eurusd|gbpusd|xauusd|news|event|calendar|nfp|cpi|gdp|pmi)/i.test(message);
         
         if (isMarketQuery || requiredTools.length > 0) {
-          // FORCE function calling - make it mandatory
+          // FORCE function calling - make it mandatory, but limit to prevent long chains
           messages.push({
             role: 'system',
-            content: `CRITICAL: The user is asking about market data. You MUST call get_market_data, get_market_news, and/or get_economic_calendar functions BEFORE responding. DO NOT give generic responses. DO NOT say "I can't access data". You HAVE these functions - USE THEM. ${detectedInstrument ? `The user is asking about ${detectedInstrument} - fetch REAL-TIME data NOW.` : ''} This is MANDATORY - no exceptions.`
+            content: `CRITICAL: The user is asking about market data. You MUST call get_market_data, get_market_news, and/or get_economic_calendar functions BEFORE responding. DO NOT give generic responses. DO NOT say "I can't access data". You HAVE these functions - USE THEM. ${detectedInstrument ? `The user is asking about ${detectedInstrument} - fetch REAL-TIME data NOW.` : ''} IMPORTANT: After calling functions, provide your response immediately. Do NOT make multiple sequential function calls - fetch what you need and respond.`
           });
           // Force function calling - don't allow text-only responses for market queries
           completionParams.function_call = 'auto';
@@ -1270,10 +1270,10 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           completionParams.function_call = 'auto';
         }
 
-        // Add timeout to initial OpenAI call - increased to allow for better responses
+        // Add timeout to initial OpenAI call - OPTIMIZED FOR SPEED
         completion = await Promise.race([
           openai.chat.completions.create(completionParams),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 30000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 12000)) // Reduced to 12s
         ]);
       } catch (openaiError) {
         // Handle OpenAI-specific errors
@@ -1355,24 +1355,35 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       }
 
       // Handle function calls for real-time market data and economic calendar
-      // Set a hard timeout to prevent exceeding Vercel's 60-second limit
-      const FUNCTION_TIMEOUT = 55000; // 55 seconds max (leaves 5s buffer for response)
+      // OPTIMIZED FOR SPEED - responses must be within seconds, not minutes
+      const FUNCTION_TIMEOUT = 20000; // 20 seconds max - force fast responses
+      const MAX_FUNCTION_ITERATIONS = 2; // Limit to 2 iterations max to prevent long chains
       const startTime = Date.now();
+      let functionCallIterations = 0;
       
-      // Helper function to check timeout (only warn, don't throw - let parallel fetching continue)
+      // Helper function to check timeout and force early return
       const checkTimeout = () => {
         const elapsed = Date.now() - startTime;
         if (elapsed > FUNCTION_TIMEOUT) {
-          console.warn(`Function execution at ${elapsed}ms - approaching limit`);
+          console.warn(`Function execution at ${elapsed}ms - forcing early return for speed`);
+          return true; // Signal to stop
         }
+        return false;
       };
       
-      if (functionCall) {
+      if (functionCall && functionCallIterations < MAX_FUNCTION_ITERATIONS) {
+        functionCallIterations++;
         const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
         
         // Ensure we have a fallback response in case function calls fail
         if (!aiResponse) {
           aiResponse = 'Processing your request...';
+        }
+        
+        // Check timeout early - if we're already taking too long, return what we have
+        if (checkTimeout() && aiResponse && aiResponse !== 'Processing your request...') {
+          // We have a response and we're running out of time - return it
+          break;
         }
         
         if (functionCall.name === 'get_market_data') {
@@ -1384,15 +1395,15 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         const toolStartTime = Date.now();
         try {
           checkTimeout();
-          // Market-data.js has multiple sources and fallbacks - give it time to try all sources
+          // Market-data.js has multiple sources and fallbacks - OPTIMIZED FOR SPEED
           const marketDataResponse = await Promise.race([
             axios.post(`${API_BASE_URL}/api/ai/market-data`, {
               symbol: symbol,
               type: dataType
             }, {
-              timeout: 12000 // Optimized for real-time - parallel fetching handles speed
+              timeout: 6000 // Reduced to 6s - parallel fetching should be fast
             }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Market data timeout')), 12000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Market data timeout')), 6000))
           ]);
 
           if (marketDataResponse.data && marketDataResponse.data.success) {
@@ -1426,8 +1437,12 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               content: JSON.stringify(marketData)
             });
 
-            // Get AI response with market data context
-            checkTimeout();
+            // Get AI response with market data context - OPTIMIZED FOR SPEED
+            if (checkTimeout()) {
+              // Time is running out - return response now
+              break;
+            }
+            
             const secondCompletion = await Promise.race([
               openai.chat.completions.create({
                 model: 'gpt-4o',
@@ -1435,26 +1450,30 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 functions: functions,
                 function_call: 'auto',
                 temperature: 0.8,
-                max_tokens: 1500,
+                max_tokens: 1000, // Reduced for faster generation
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 25000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 10000)) // Reduced to 10s
             ]);
 
             // Check if we got a response or another function call
             const secondFunctionCall = secondCompletion.choices[0]?.message?.function_call;
-            if (secondFunctionCall) {
-              // Another function call - we'll handle it, but ensure we have a fallback response
-              aiResponse = secondCompletion.choices[0]?.message?.content || aiResponse || 'Analyzing market data...';
+            if (secondFunctionCall && functionCallIterations < MAX_FUNCTION_ITERATIONS) {
+              // Another function call - but limit iterations to prevent long chains
+              aiResponse = secondCompletion.choices[0]?.message?.content || aiResponse;
             } else {
-              // We got a proper response
-              aiResponse = secondCompletion.choices[0]?.message?.content || aiResponse || 'I apologize, but I could not generate a response. Please try again.';
+              // We got a proper response OR we've hit the iteration limit - return it
+              aiResponse = secondCompletion.choices[0]?.message?.content || aiResponse;
+              // If we still don't have a response and hit iteration limit, break
+              if (!aiResponse && functionCallIterations >= MAX_FUNCTION_ITERATIONS) {
+                aiResponse = 'I apologize, but I could not generate a response. Please try again.';
+                break; // Stop function call chain
+              }
             }
             
-            // Only fetch additional data if we have time left (prevent timeout)
+            // Only fetch additional data if we have time left AND haven't exceeded iterations
             const timeElapsed = Date.now() - startTime;
-            if (timeElapsed < 35000 && secondFunctionCall) {
-              // Handle additional function calls if needed (e.g., for intraday data after quote)
-              const secondFunctionCall = secondCompletion.choices[0]?.message?.function_call;
+            if (timeElapsed < 15000 && secondFunctionCall && functionCallIterations < MAX_FUNCTION_ITERATIONS) {
+              // Handle additional function calls if needed - but limit to prevent long chains
               if (secondFunctionCall.name === 'get_market_data') {
                 checkTimeout();
                 const secondArgs = JSON.parse(secondFunctionCall.arguments);
@@ -1463,9 +1482,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                     symbol: secondArgs.symbol,
                     type: secondArgs.type || 'intraday'
                   }, {
-                    timeout: 15000 // Increased to allow fallbacks
+                    timeout: 6000 // Reduced for speed
                   }),
-                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
                 ]);
 
                 if (secondMarketDataResponse.data && secondMarketDataResponse.data.success) {
@@ -1480,17 +1499,20 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                     content: JSON.stringify(secondMarketDataResponse.data.data)
                   });
 
-                  checkTimeout();
+                  if (checkTimeout()) {
+                    break; // Time's up - return what we have
+                  }
+                  
                   const thirdCompletion = await Promise.race([
                     openai.chat.completions.create({
                       model: 'gpt-4o',
                       messages: messages,
                       functions: functions,
-                      function_call: 'auto',
+                      function_call: 'none', // Force final response - no more function calls
                       temperature: 0.8,
-                      max_tokens: 1500,
+                      max_tokens: 1000, // Reduced for speed
                     }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
                   ]);
 
                   aiResponse = thirdCompletion.choices[0]?.message?.content || aiResponse;
@@ -1498,8 +1520,10 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   // Don't continue chain - return response to prevent timeout
                 }
               } else if (secondFunctionCall.name === 'get_economic_calendar' || secondFunctionCall.name === 'get_market_news') {
-                // AI wants to fetch calendar or news - fetch in parallel if both needed, but limit time
-                checkTimeout();
+                // AI wants to fetch calendar or news - fetch in parallel for speed, but limit time
+                if (checkTimeout()) {
+                  break; // Time's up
+                }
                 const additionalArgs = JSON.parse(secondFunctionCall.arguments);
                 
                 try {
@@ -1742,9 +1766,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 date: functionArgs.date,
                 impact: functionArgs.impact
               }, {
-                timeout: 10000 // Optimized for real-time
+                timeout: 6000 // Reduced for speed
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
             ]);
 
             if (calendarResponse.data && calendarResponse.data.success) {
@@ -1772,11 +1796,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 model: 'gpt-4o',
                 messages: messages,
                 functions: functions,
-                function_call: 'auto',
+                function_call: 'none', // Force response - no more calls
                 temperature: 0.8,
-                max_tokens: 1500,
+                max_tokens: 1000, // Reduced for speed
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
             ]);
 
             aiResponse = calendarCompletion.choices[0]?.message?.content || aiResponse;
@@ -1863,11 +1887,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   model: 'gpt-4o',
                   messages: messages,
                   functions: functions,
-                  function_call: 'auto',
+                  function_call: 'none', // Force response - no more calls
                   temperature: 0.7,
-                  max_tokens: 2000,
+                  max_tokens: 1000, // Reduced for speed
                 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
               ]);
 
               aiResponse = calcCompletion.choices[0]?.message?.content || aiResponse;
@@ -1971,11 +1995,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 model: 'gpt-4o',
                 messages: messages,
                 functions: functions,
-                function_call: 'auto',
+                function_call: 'none', // Force response - no more calls
                 temperature: 0.8,
-                max_tokens: 1500,
+                max_tokens: 1000, // Reduced for speed
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
             ]);
 
             aiResponse = alertsCompletion.choices[0]?.message?.content || aiResponse;
@@ -2023,11 +2047,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   model: 'gpt-4o',
                   messages: messages,
                   functions: functions,
-                  function_call: 'auto',
+                  function_call: 'none', // Force response - no more calls
                   temperature: 0.8,
-                  max_tokens: 1500,
+                  max_tokens: 1000, // Reduced for speed
                 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
               ]);
 
               aiResponse = fundamentalsCompletion.choices[0]?.message?.content || aiResponse;
@@ -2152,11 +2176,11 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                     model: 'gpt-4o',
                     messages: messages,
                     functions: functions,
-                    function_call: 'auto',
+                    function_call: 'none', // Force response - no more calls
                     temperature: 0.8,
-                    max_tokens: 1500,
+                    max_tokens: 1000, // Reduced for speed
                   }),
-                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
                 ]);
 
                 aiResponse = priceActionCompletion.choices[0]?.message?.content || aiResponse;
