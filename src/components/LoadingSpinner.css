@@ -1,29 +1,11 @@
-/* ========== VARIABLES (From Landing Page) ========== */
-:root {
-    /* Purple-Blue Colors */
-    --primary: #6366F1;      /* Indigo */
-    --secondary: #8B5CF6;    /* Purple-Blue */
-    --accent: #A78BFA;       /* Light Purple */
-    --dark-purple: #4C1D95;  /* Deep Purple */
-    
-    /* Greys */
-    --bg-dark: #0F0F1E;
-    --bg-medium: #1A1A2E;
-    --bg-light: #252541;
-    
-    /* Fonts */
-    --font-main: 'Space Grotesk', sans-serif;
-    --font-secondary: 'Inter', sans-serif;
-}
-
-/* Loading Screen Styles - Using Landing Page Colors & Fonts */
+/* Loading Screen Styles - Dark Theme Matching Website */
 .loading-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--bg-dark); /* #0F0F1E */
+    background: #0a0a0a; /* Match website dark background */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -31,7 +13,7 @@
     overflow: hidden;
 }
 
-/* Animated background with binary digits */
+/* Animated background with binary digits - white/light theme */
 .loading-background {
     position: absolute;
     top: 0;
@@ -39,14 +21,19 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.03) 0%,
+        transparent 70%
+    );
 }
 
 .binary-digit {
     position: absolute;
-    color: rgba(99, 102, 241, 0.4); /* var(--primary) with higher opacity for better visibility */
+    color: rgba(255, 255, 255, 0.15); /* White with low opacity for subtle effect */
     font-family: 'Space Grotesk', sans-serif;
     font-size: 11px;
-    font-weight: bold;
+    font-weight: 400;
     animation: binary-fall linear infinite;
     user-select: none;
     pointer-events: none;
@@ -59,10 +46,10 @@
         opacity: 0;
     }
     10% {
-        opacity: 1;
+        opacity: 0.15;
     }
     90% {
-        opacity: 1;
+        opacity: 0.15;
     }
     100% {
         transform: translateY(100vh);
@@ -70,76 +57,95 @@
     }
 }
 
-/* Main content */
+/* Main content - improved center section */
 .loading-content {
     text-align: center;
     z-index: 10;
     position: relative;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
 }
 
 .loading-title {
-    font-size: 4rem;
-    font-weight: 900;
-    color: var(--primary); /* #6366F1 */
+    font-size: 4.5rem;
+    font-weight: 700;
+    color: #ffffff; /* Pure white to match website */
     text-shadow: 
-        0 0 10px rgba(99, 102, 241, 0.8),
-        0 0 20px rgba(139, 92, 246, 0.5);
-    margin-bottom: 0.5rem; /* Reduced gap */
-    letter-spacing: 0.2em;
-    animation: title-glow 2s ease-in-out infinite alternate;
-    font-family: var(--font-main); /* 'Space Grotesk', sans-serif */
+        0 0 20px rgba(255, 255, 255, 0.5),
+        0 0 40px rgba(255, 255, 255, 0.3),
+        0 0 60px rgba(255, 255, 255, 0.1);
+    margin: 0;
+    letter-spacing: 0.15em;
+    animation: title-glow 2.5s ease-in-out infinite alternate;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    line-height: 1.1;
 }
 
 @keyframes title-glow {
     0% {
         text-shadow: 
-            0 0 10px rgba(99, 102, 241, 0.8),
-            0 0 20px rgba(139, 92, 246, 0.5);
+            0 0 20px rgba(255, 255, 255, 0.5),
+            0 0 40px rgba(255, 255, 255, 0.3),
+            0 0 60px rgba(255, 255, 255, 0.1);
+        opacity: 0.95;
     }
     100% {
         text-shadow: 
-            0 0 20px rgba(99, 102, 241, 1),
-            0 0 30px rgba(139, 92, 246, 0.8);
-    }
-}
-
-.loading-subtitle {
-    font-size: 1.2rem;
-    color: var(--accent); /* #A78BFA */
-    margin-bottom: 1.5rem; /* Reduced gap */
-    letter-spacing: 0.1em;
-    font-weight: 300;
-    animation: subtitle-pulse 3s ease-in-out infinite;
-    font-family: var(--font-secondary); /* 'Inter', sans-serif */
-}
-
-@keyframes subtitle-pulse {
-    0%, 100% {
-        opacity: 0.7;
-    }
-    50% {
+            0 0 30px rgba(255, 255, 255, 0.7),
+            0 0 60px rgba(255, 255, 255, 0.4),
+            0 0 90px rgba(255, 255, 255, 0.2);
         opacity: 1;
     }
 }
 
-/* Loading progress */
+.loading-subtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7); /* White with opacity */
+    margin: 0;
+    letter-spacing: 0.2em;
+    font-weight: 300;
+    animation: subtitle-pulse 3s ease-in-out infinite;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+}
+
+@keyframes subtitle-pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.9;
+    }
+}
+
+/* Loading progress - improved design */
 .loading-progress {
-    margin-top: 1rem; /* Reduced gap */
+    margin: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .loading-text {
-    color: var(--accent); /* #A78BFA */
-    font-size: 1rem;
-    margin-bottom: 1rem;
-    font-family: var(--font-secondary); /* 'Inter', sans-serif */
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 .loading-percentage {
-    color: var(--primary); /* #6366F1 */
-    font-weight: bold;
+    color: #ffffff;
+    font-weight: 600;
     animation: percentage-flicker 1.5s ease-in-out infinite;
 }
 
@@ -148,42 +154,46 @@
         opacity: 1;
     }
     50% {
-        opacity: 0.6;
+        opacity: 0.7;
     }
 }
 
 .loading-bar {
-    width: 300px;
-    height: 4px;
-    background: rgba(99, 102, 241, 0.2); /* var(--primary) with opacity */
+    width: 320px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1); /* White with low opacity */
     border-radius: 2px;
     overflow: hidden;
-    margin: 0 auto;
+    margin: 0;
     position: relative;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .loading-bar-fill {
     height: 100%;
     width: 63%;
-    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.9) 0%, 
+        rgba(255, 255, 255, 1) 50%, 
+        rgba(255, 255, 255, 0.9) 100%);
     border-radius: 2px;
     animation: loading-progress 2s ease-in-out infinite;
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
 }
 
 @keyframes loading-progress {
     0% {
-        box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
     }
     50% {
-        box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
     }
     100% {
-        box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
     }
 }
 
-/* Pulsing rings */
+/* Pulsing rings - improved design */
 .loading-rings {
     position: absolute;
     top: 50%;
@@ -197,29 +207,30 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border: 2px solid rgba(99, 102, 241, 0.3); /* var(--primary) with opacity */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* White with opacity */
     border-radius: 50%;
     animation: ring-pulse 3s ease-in-out infinite;
 }
 
 .ring-1 {
-    width: 180px;
-    height: 180px;
+    width: 200px;
+    height: 200px;
     animation-delay: 0s;
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .ring-2 {
-    width: 260px;
-    height: 260px;
+    width: 280px;
+    height: 280px;
     animation-delay: 1s;
-    border-color: rgba(139, 92, 246, 0.25); /* var(--secondary) with higher opacity */
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .ring-3 {
-    width: 340px;
-    height: 340px;
+    width: 360px;
+    height: 360px;
     animation-delay: 2s;
-    border-color: rgba(167, 139, 250, 0.15); /* var(--accent) with higher opacity */
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 @keyframes ring-pulse {
@@ -228,8 +239,8 @@
         opacity: 0.3;
     }
     50% {
-        transform: translate(-50%, -50%) scale(1.1);
-        opacity: 0.6;
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.5;
     }
 }
 
@@ -240,25 +251,25 @@
     }
     
     .loading-subtitle {
-        font-size: 1rem;
+        font-size: 0.875rem;
     }
     
     .loading-bar {
-        width: 250px;
+        width: 260px;
     }
     
     .ring-1 {
-        width: 150px;
-        height: 150px;
+        width: 160px;
+        height: 160px;
     }
     
     .ring-2 {
-        width: 225px;
-        height: 225px;
+        width: 220px;
+        height: 220px;
     }
     
     .ring-3 {
-        width: 300px;
-        height: 300px;
+        width: 280px;
+        height: 280px;
     }
 }
