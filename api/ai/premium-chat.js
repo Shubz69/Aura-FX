@@ -1360,31 +1360,25 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       const MAX_FUNCTION_ITERATIONS = 2; // Limit to 2 iterations max to prevent long chains
       const startTime = Date.now();
       let functionCallIterations = 0;
+      let shouldStopFunctionCalls = false; // Flag to stop function call chain
       
       // Helper function to check timeout and force early return
       const checkTimeout = () => {
         const elapsed = Date.now() - startTime;
         if (elapsed > FUNCTION_TIMEOUT) {
           console.warn(`Function execution at ${elapsed}ms - forcing early return for speed`);
+          shouldStopFunctionCalls = true; // Set flag to stop
           return true; // Signal to stop
         }
         return false;
       };
       
-      if (functionCall && functionCallIterations < MAX_FUNCTION_ITERATIONS) {
+      if (functionCall && functionCallIterations < MAX_FUNCTION_ITERATIONS && !shouldStopFunctionCalls) {
         functionCallIterations++;
         const API_BASE_URL = process.env.API_URL || req.headers.origin || 'http://localhost:3000';
         
-        // Ensure we have a fallback response in case function calls fail
-        if (!aiResponse) {
-          aiResponse = 'Processing your request...';
-        }
-        
-        // Check timeout early - if we're already taking too long, return what we have
-        if (checkTimeout() && aiResponse && aiResponse !== 'Processing your request...') {
-          // We have a response and we're running out of time - return it
-          break;
-        }
+        // Don't set "Processing..." - it causes stuck states. Only set if we truly have nothing.
+        // The AI should respond quickly, so we don't need this intermediate message.
         
         if (functionCall.name === 'get_market_data') {
         const functionArgs = JSON.parse(functionCall.arguments);
@@ -1438,9 +1432,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             });
 
             // Get AI response with market data context - OPTIMIZED FOR SPEED
-            if (checkTimeout()) {
-              // Time is running out - return response now
-              break;
+            if (checkTimeout() || shouldStopFunctionCalls) {
+              // Time is running out - stop function calls
+              // Continue to return response
             }
             
             const secondCompletion = await Promise.race([
@@ -1463,16 +1457,16 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
             } else {
               // We got a proper response OR we've hit the iteration limit - return it
               aiResponse = secondCompletion.choices[0]?.message?.content || aiResponse;
-              // If we still don't have a response and hit iteration limit, break
+              // If we still don't have a response and hit iteration limit, stop
               if (!aiResponse && functionCallIterations >= MAX_FUNCTION_ITERATIONS) {
                 aiResponse = 'I apologize, but I could not generate a response. Please try again.';
-                break; // Stop function call chain
+                shouldStopFunctionCalls = true; // Stop function call chain
               }
             }
             
             // Only fetch additional data if we have time left AND haven't exceeded iterations
             const timeElapsed = Date.now() - startTime;
-            if (timeElapsed < 15000 && secondFunctionCall && functionCallIterations < MAX_FUNCTION_ITERATIONS) {
+            if (timeElapsed < 15000 && secondFunctionCall && functionCallIterations < MAX_FUNCTION_ITERATIONS && !shouldStopFunctionCalls) {
               // Handle additional function calls if needed - but limit to prevent long chains
               if (secondFunctionCall.name === 'get_market_data') {
                 checkTimeout();
@@ -1521,9 +1515,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 }
               } else if (secondFunctionCall.name === 'get_economic_calendar' || secondFunctionCall.name === 'get_market_news') {
                 // AI wants to fetch calendar or news - fetch in parallel for speed, but limit time
-                if (checkTimeout()) {
-                  break; // Time's up
-                }
+                if (checkTimeout() || shouldStopFunctionCalls) {
+                  // Time's up - stop but continue
+                } else {
                 const additionalArgs = JSON.parse(secondFunctionCall.arguments);
                 
                 try {
@@ -1539,18 +1533,18 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                       axios.post(`${API_BASE_URL}/api/ai/forex-factory-calendar`, {
                         date: additionalArgs.date,
                         impact: additionalArgs.impact
-                      }, { timeout: 15000 }), // Increased to allow retries
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                      }, { timeout: 5000 }), // Reduced for speed
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
                     ]);
                     if (calendarResp.data?.success) additionalData = calendarResp.data.data;
                   } else if (secondFunctionCall.name === 'get_market_news') {
-                    // Market news has multiple sources - give it time to try all
+                    // Market news has multiple sources - fetch in parallel for speed
                     const newsResp = await Promise.race([
                       axios.post(`${API_BASE_URL}/api/ai/market-news`, {
                         symbol: additionalArgs.symbol,
                         timeframe: additionalArgs.timeframe || '24h'
-                      }, { timeout: 15000 }), // Increased to allow all sources to be tried
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                      }, { timeout: 5000 }), // Reduced for speed
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
                     ]);
                     if (newsResp.data?.success) additionalData = newsResp.data.data;
                   }
@@ -1572,13 +1566,16 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                       openai.chat.completions.create({
                         model: 'gpt-4o',
                         messages: messages,
+                        functions: functions,
+                        function_call: 'none', // Force final response
                         temperature: 0.8,
-                        max_tokens: 1500,
+                        max_tokens: 1000, // Reduced for speed
                       }),
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)) // Reduced to 8s
                     ]);
                     
                     aiResponse = finalCompletion.choices[0]?.message?.content || aiResponse;
+                    }
                   }
                 } catch (additionalError) {
                   console.log('Additional data fetch error:', additionalError.message);
@@ -1673,9 +1670,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                 symbol: functionArgs.symbol,
                 timeframe: functionArgs.timeframe || '24h'
               }, {
-                timeout: 12000 // Optimized for real-time - parallel fetching handles speed
+                timeout: 6000 // Reduced for speed
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 12000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
             ]);
 
             if (newsResponse.data && newsResponse.data.success) {
