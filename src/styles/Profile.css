@@ -28,23 +28,27 @@
 .profile-title {
     font-size: 3rem;
     font-weight: 700;
-    color: var(--gold-primary);
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
 }
 
 .profile-box {
     width: 100%;
-    background: rgba(42, 42, 42, 0.05);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 215, 0, 0.1);
+    background: linear-gradient(135deg, rgba(30, 30, 46, 0.95) 0%, rgba(20, 20, 35, 0.98) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.3);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
 }
 
 .avatar-section {
@@ -66,47 +70,81 @@
 }
 
 .avatar-section select {
-    background: rgba(42, 42, 42, 0.7);
-    border: 1px solid rgba(255, 215, 0, 0.3);
-    color: var(--gold-primary);
-    padding: 8px 12px;
-    border-radius: 6px;
+    background: rgba(20, 20, 35, 0.8);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #C4B5FD;
+    padding: 10px 14px;
+    border-radius: 10px;
     font-size: 0.9rem;
     cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
 }
 
 .avatar-section select:focus {
     outline: none;
-    border-color: rgba(255, 215, 0, 0.5);
+    border-color: rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+    background: rgba(25, 25, 40, 0.9);
 }
+
+.avatar-section select:hover {
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
 
 .profile-stats {
     display: flex;
     justify-content: space-around;
     margin-bottom: 20px;
+    gap: 20px;
 }
 
 .profile-level,
 .profile-xp {
     text-align: center;
-    color: var(--gold-primary);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%);
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #C4B5FD;
     font-size: 1.1rem;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.profile-level:hover,
+.profile-xp:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(167, 139, 250, 0.25) 100%);
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.profile-level strong,
+.profile-xp strong {
+    color: #A78BFA;
+    display: block;
+    margin-bottom: 5px;
 }
 
 .xp-progress-container {
     width: 100%;
-    height: 8px;
-    background: rgba(255, 215, 0, 0.1);
-    border-radius: 4px;
+    height: 10px;
+    background: rgba(30, 30, 46, 0.8);
+    border-radius: 10px;
     overflow: hidden;
     margin-bottom: 20px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .xp-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--gold-primary), var(--gold-accent));
-    border-radius: 4px;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
 }
 
 .info-section {
@@ -126,9 +164,11 @@
 }
 
 .profile-field strong {
-    color: var(--gold-primary);
+    color: #A78BFA;
     min-width: 100px;
     text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .profile-field span {
@@ -160,11 +200,6 @@
     color: rgba(255, 255, 255, 0.5);
 }
 
-.profile-field input:focus,
-.profile-field textarea:focus {
-    outline: none;
-    border-color: rgba(255, 215, 0, 0.5);
-}
 
 .profile-field button {
     background: rgba(255, 215, 0, 0.1);
@@ -186,12 +221,14 @@
 .user-role {
     text-align: center;
     padding: 15px;
-    background: rgba(0, 255, 0, 0.1);
-    border: 1px solid rgba(0, 255, 0, 0.3);
-    border-radius: 8px;
-    color: #00ff00;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(74, 222, 128, 0.1) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    border-radius: 12px;
+    color: #4ADE80;
     font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
 }
 
 .profile-actions {
@@ -202,26 +239,28 @@
 }
 
 .action-button {
-    background: linear-gradient(45deg, var(--gold-primary), var(--gold-accent));
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%);
     color: #ffffff;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
+    padding: 14px 32px;
+    border-radius: 12px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 1rem;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
 }
 
 .action-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6);
+    background: linear-gradient(135deg, #9F7AEA 0%, #B794F6 50%, #DDD6FE 100%);
 }
 
 .save-button {
-    background: linear-gradient(45deg, var(--gold-primary), var(--gold-secondary));
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%);
     color: #ffffff;
 }
 

@@ -569,25 +569,33 @@ const Profile = () => {
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
                             style={{
-                                background: 'rgba(255, 215, 0, 0.1)',
-                                color: 'var(--gold-primary)',
-                                border: '1px solid rgba(255, 215, 0, 0.3)',
-                                padding: '8px 16px',
-                                borderRadius: '6px',
+                                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)',
+                                color: '#C4B5FD',
+                                border: '1px solid rgba(139, 92, 246, 0.4)',
+                                padding: '10px 20px',
+                                borderRadius: '10px',
                                 cursor: 'pointer',
                                 fontSize: '0.9rem',
                                 marginBottom: '10px',
                                 width: '100%',
                                 maxWidth: '200px',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
+                                fontWeight: '600',
+                                letterSpacing: '0.5px'
                             }}
                             onMouseEnter={(e) => {
-                                e.target.style.background = 'rgba(255, 215, 0, 0.2)';
-                                e.target.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                                e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(167, 139, 250, 0.3) 100%)';
+                                e.target.style.borderColor = 'rgba(139, 92, 246, 0.6)';
+                                e.target.style.color = '#ffffff';
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
                             }}
                             onMouseLeave={(e) => {
-                                e.target.style.background = 'rgba(255, 215, 0, 0.1)';
-                                e.target.style.borderColor = 'rgba(255, 215, 0, 0.3)';
+                                e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)';
+                                e.target.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                                e.target.style.color = '#C4B5FD';
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = 'none';
                             }}
                         >
                             📷 Upload Photo
