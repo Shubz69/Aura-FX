@@ -2530,11 +2530,41 @@ Let's build generational wealth together! 💰🚀`,
         setNewMessage('');
     };
 
-    // Handle opening/downloading files
+    // Handle opening/downloading files - Always make files downloadable
     const handleFileClick = (file) => {
         if (!file) return;
         
-        // If it's an image with preview, open in new tab
+        // Always try to download the file first
+        if (file.preview) {
+            try {
+                // Convert base64 to blob for download
+                const base64Data = file.preview.includes(',') 
+                    ? file.preview.split(',')[1] 
+                    : file.preview;
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: file.type || 'application/octet-stream' });
+                
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = getFileName(file.name); // Use just filename, no path
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                return; // Download successful, don't open in new tab
+            } catch (error) {
+                console.error('Error downloading file:', error);
+            }
+        }
+        
+        // If it's an image with preview, also open in new tab after download attempt
         if (file.preview && file.type && file.type.startsWith('image/')) {
             const newWindow = window.open();
             if (newWindow) {
@@ -2685,9 +2715,10 @@ Let's build generational wealth together! 💰🚀`,
         const senderUsername = storedUser?.username || storedUser?.name || 'User';
 
         // Prepare message data - include file metadata if file exists
+        // Don't include file name in content - file attachment will display it
         const messageToSend = {
             channelId: selectedChannel.id,
-            content: messageContent || (selectedFile ? `[File: ${selectedFile.name}]` : ''),
+            content: messageContent || '', // Empty if no text, file will be shown separately
             userId,
             username: senderUsername
         };
@@ -4839,7 +4870,18 @@ Let's build generational wealth together! 💰🚀`,
                                                 ) : (
                                                     (() => {
                                                         // Parse message content for GIFs and images
-                                                        const content = message.content;
+                                                        // Remove file references from content (e.g., [File: ...] or [FILE: ...])
+                                                        let content = message.content || '';
+                                                        // Remove file references: [File: ...], [FILE: ...], etc.
+                                                        content = content.replace(/\[File:[^\]]*\]/gi, '').replace(/\[FILE:[^\]]*\]/gi, '').trim();
+                                                        
+                                                        // If message has a file attachment, don't show content if it's empty or only file references
+                                                        if (message.file && !content) {
+                                                            return null; // Don't render empty content when file is present
+                                                        }
+                                                        
+                                                        if (!content) return null;
+                                                        
                                                         // Check for markdown image syntax: ![alt](url)
                                                         const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
                                                         const parts = [];
