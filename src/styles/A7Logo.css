@@ -1,5 +1,6 @@
-/* A7 Logo Styling - Stylized geometric A7 symbol
-Design: A = two diagonal strokes meeting at bottom (open at top, extending upwards), 7 = horizontal bar at top-right + diagonal down-left connecting to A */
+/* A7 Logo Styling - Matches the exact geometric structure from the image
+Design: A with two diagonals meeting at apex, short high crossbar. 7 integrated with A, sharing right diagonal. 
+7 has horizontal top bar aligned with A's crossbar, plus diagonal down-left. */
 .a7-logo-container {
     display: flex;
     align-items: center;
@@ -16,53 +17,65 @@ Design: A = two diagonal strokes meeting at bottom (open at top, extending upwar
     justify-content: center;
 }
 
-/* A shape - Left diagonal (angled left, meeting at bottom, open at top) */
+/* A shape - Left diagonal (from bottom-left up to apex) */
 .a7-diagonal-left {
     position: absolute;
     width: 6px;
-    height: 75%;
+    height: 85%;
     background: #ffffff;
-    transform: rotate(-20deg);
-    transform-origin: bottom center;
-    left: 40%;
+    transform: rotate(-25deg);
+    transform-origin: bottom left;
+    left: 15%;
     bottom: 5%;
     border-radius: 3px;
 }
 
-/* A shape - Right diagonal (angled right, meeting at bottom, open at top) */
+/* A shape - Right diagonal (from apex down to bottom-center) - SHARED with 7's left side */
 .a7-diagonal-right {
     position: absolute;
     width: 6px;
-    height: 75%;
+    height: 85%;
     background: #ffffff;
-    transform: rotate(20deg);
+    transform: rotate(25deg);
     transform-origin: bottom center;
-    right: 40%;
+    left: 50%;
     bottom: 5%;
+    margin-left: -3px;
     border-radius: 3px;
 }
 
-/* 7 shape - Horizontal bar at top (to the right of A) */
+/* A shape - Short horizontal crossbar (high up, about 2/3 from base, connects the two diagonals) */
 .a7-crossbar {
     position: absolute;
-    width: 40%;
+    width: 25%;
     height: 6px;
     background: #ffffff;
-    top: 10%;
-    right: 5%;
+    top: 30%;
+    left: 37.5%;
     border-radius: 3px;
 }
 
-/* 7 shape - Diagonal stroke (down-left from horizontal bar, connecting to lower part of A) */
+/* 7 shape - Horizontal top bar (extends right from crossbar, aligns with it, forming continuous line) */
+.a7-topbar {
+    position: absolute;
+    width: 30%;
+    height: 6px;
+    background: #ffffff;
+    top: 30%;
+    left: 62.5%;
+    border-radius: 3px;
+}
+
+/* 7 shape - Diagonal stroke (from right end of top bar, down and slightly left) */
 .a7-diagonal-seven {
     position: absolute;
     width: 6px;
-    height: 55%;
+    height: 50%;
     background: #ffffff;
-    transform: rotate(-42deg);
+    transform: rotate(-35deg);
     transform-origin: top right;
-    top: 15%;
-    right: 5%;
+    top: 35%;
+    right: 8%;
     border-radius: 3px;
 }
 
@@ -74,76 +87,98 @@ Design: A = two diagonal strokes meeting at bottom (open at top, extending upwar
 
 /* For navbar - smaller size, white color */
 .navbar-logo-wrapper .a7-logo-symbol {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
 }
 
-.navbar-logo-wrapper .a7-diagonal-left,
-.navbar-logo-wrapper .a7-diagonal-right {
-    background: #ffffff;
+.navbar-logo-wrapper .a7-diagonal-left {
     width: 3px;
-    height: 70%;
-    transform: rotate(-20deg);
-    transform-origin: bottom center;
+    height: 80%;
+    transform: rotate(-25deg);
+    transform-origin: bottom left;
+    left: 15%;
+    bottom: 5%;
 }
 
 .navbar-logo-wrapper .a7-diagonal-right {
-    transform: rotate(20deg);
+    width: 3px;
+    height: 80%;
+    transform: rotate(25deg);
+    transform-origin: bottom center;
+    left: 50%;
+    bottom: 5%;
+    margin-left: -1.5px;
 }
 
 .navbar-logo-wrapper .a7-crossbar {
-    background: #ffffff;
-    width: 35%;
+    width: 25%;
     height: 3px;
-    top: 12%;
-    right: 8%;
+    top: 30%;
+    left: 37.5%;
+}
+
+.navbar-logo-wrapper .a7-topbar {
+    width: 30%;
+    height: 3px;
+    top: 30%;
+    left: 62.5%;
 }
 
 .navbar-logo-wrapper .a7-diagonal-seven {
-    background: #ffffff;
     width: 3px;
-    height: 50%;
-    transform: rotate(-42deg);
+    height: 45%;
+    transform: rotate(-35deg);
     transform-origin: top right;
-    top: 17%;
+    top: 35%;
     right: 8%;
 }
 
 /* For home page - much larger size, white color */
 .home-logo-section .a7-logo-symbol {
-    width: 150px;
-    height: 150px;
+    width: 160px;
+    height: 160px;
 }
 
-.home-logo-section .a7-diagonal-left,
+.home-logo-section .a7-diagonal-left {
+    width: 12px;
+    height: 85%;
+    transform: rotate(-25deg);
+    transform-origin: bottom left;
+    left: 15%;
+    bottom: 5%;
+}
+
 .home-logo-section .a7-diagonal-right {
-    background: #ffffff;
-    width: 10px;
-    height: 75%;
-    transform: rotate(-20deg);
+    width: 12px;
+    height: 85%;
+    transform: rotate(25deg);
     transform-origin: bottom center;
-}
-
-.home-logo-section .a7-diagonal-right {
-    transform: rotate(20deg);
+    left: 50%;
+    bottom: 5%;
+    margin-left: -6px;
 }
 
 .home-logo-section .a7-crossbar {
-    background: #ffffff;
-    width: 40%;
-    height: 10px;
-    top: 10%;
-    right: 5%;
+    width: 25%;
+    height: 12px;
+    top: 30%;
+    left: 37.5%;
+}
+
+.home-logo-section .a7-topbar {
+    width: 30%;
+    height: 12px;
+    top: 30%;
+    left: 62.5%;
 }
 
 .home-logo-section .a7-diagonal-seven {
-    background: #ffffff;
-    width: 10px;
-    height: 55%;
-    transform: rotate(-42deg);
+    width: 12px;
+    height: 50%;
+    transform: rotate(-35deg);
     transform-origin: top right;
-    top: 15%;
-    right: 5%;
+    top: 35%;
+    right: 8%;
 }
 
 /* Adjust proportions for different sizes */
@@ -156,19 +191,29 @@ Design: A = two diagonal strokes meeting at bottom (open at top, extending upwar
     .navbar-logo-wrapper .a7-diagonal-left,
     .navbar-logo-wrapper .a7-diagonal-right,
     .navbar-logo-wrapper .a7-crossbar,
+    .navbar-logo-wrapper .a7-topbar,
     .navbar-logo-wrapper .a7-diagonal-seven {
         width: 2.5px;
     }
     
+    .navbar-logo-wrapper .a7-crossbar,
+    .navbar-logo-wrapper .a7-topbar {
+        height: 2.5px;
+    }
+    
     .home-logo-section .a7-logo-symbol {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
     }
     
     .home-logo-section .a7-diagonal-left,
     .home-logo-section .a7-diagonal-right,
-    .home-logo-section .a7-crossbar,
     .home-logo-section .a7-diagonal-seven {
-        width: 7px;
+        width: 9px;
+    }
+    
+    .home-logo-section .a7-crossbar,
+    .home-logo-section .a7-topbar {
+        height: 9px;
     }
 }
