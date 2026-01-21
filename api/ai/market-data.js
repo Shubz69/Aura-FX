@@ -307,7 +307,7 @@ module.exports = async (req, res) => {
               interval: '5min',
               apikey: ALPHA_VANTAGE_API_KEY
             },
-            timeout: 12000
+            timeout: 6000 // Faster timeout for real-time accuracy
           }).then(response => {
             if (response.data && response.data['Time Series (5min)'] && !response.data['Note']) {
               const timeSeries = response.data['Time Series (5min)'];
@@ -532,10 +532,11 @@ module.exports = async (req, res) => {
     }
     
     // Source 6: ExchangeRate-API for forex - PARALLEL
+    // Free forex rates, good for major pairs
     if (type === 'quote' && isForex) {
       dataPromises.push(
         axios.get(`https://api.exchangerate-api.com/v4/latest/${normalizedSymbol.substring(0, 3)}`, {
-          timeout: 12000
+          timeout: 6000 // Faster timeout for real-time accuracy
         }).then(response => {
           if (response.data && response.data.rates) {
             const base = normalizedSymbol.substring(0, 3);
