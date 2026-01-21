@@ -5,14 +5,14 @@ import "../styles/Navbar.css";
 import "../styles/UserDropdown.css";
 import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH } from 'react-icons/fa';
 import { isSuperAdmin, isAdmin, isPremium } from '../utils/roles';
-import AuraLogo from './AuraLogo';
+import A7Logo from './A7Logo';
 import NotificationSystem, { triggerNotification } from './NotificationSystem';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false); 
     const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
     
     const handleNotificationClick = (link) => {
@@ -39,10 +39,10 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="logo-container">
                 <Link to="/" className="logo-link">
-                    <div className="navbar-logo-wrapper">
-                        <AuraLogo />
+                    <div className="navbar-logo-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <A7Logo />
+                        <span className="logo">AURA FX</span>
                     </div>
-                    <span className="logo">AURA FX</span>
                 </Link>
             </div>
 

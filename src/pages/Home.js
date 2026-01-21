@@ -4,7 +4,7 @@ import "../styles/Home.css";
 import { useAuth } from "../context/AuthContext";
 import Chatbot from "../components/Chatbot";
 import CosmicBackground from "../components/CosmicBackground";
-import AuraLogo from "../components/AuraLogo";
+import A7Logo from "../components/A7Logo";
 import { FaChartLine, FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaGlobe } from 'react-icons/fa';
 
 const Home = () => {
@@ -73,13 +73,12 @@ const Home = () => {
                 {showContent && (
                     <div className="home-content">
                         {/* Logo at Top Center */}
-                        <div className="home-logo-section">
-                            <AuraLogo />
-                        </div>
-
-                        {/* Brand Name - Styled exactly as shown */}
-                        <div className="brand-name-container">
-                            <h1 className="brand-name">AURA FX</h1>
+                        <div className="home-logo-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                            <A7Logo />
+                            {/* Brand Name - Styled exactly as shown */}
+                            <div className="brand-name-container">
+                                <h1 className="brand-name">AURA FX</h1>
+                            </div>
                         </div>
 
                         {/* Main Content Section */}

@@ -1,0 +1,98 @@
+/* A7 Logo Styling - Stylized geometric A7 symbol */
+.a7-logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.a7-logo-symbol {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* A shape - Left diagonal (angled left) */
+.a7-diagonal-left {
+    position: absolute;
+    width: 3px;
+    height: 60%;
+    background: #000000;
+    transform: rotate(-20deg);
+    transform-origin: bottom center;
+    left: 30%;
+    bottom: 0;
+    border-radius: 2px;
+}
+
+/* A shape - Right diagonal (angled right) */
+.a7-diagonal-right {
+    position: absolute;
+    width: 3px;
+    height: 60%;
+    background: #000000;
+    transform: rotate(20deg);
+    transform-origin: bottom center;
+    right: 30%;
+    bottom: 0;
+    border-radius: 2px;
+}
+
+/* A shape - Horizontal crossbar (shared with 7) */
+.a7-crossbar {
+    position: absolute;
+    width: 45%;
+    height: 3px;
+    background: #000000;
+    top: 45%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+/* 7 shape - Diagonal stroke (down-right from crossbar) */
+.a7-diagonal-seven {
+    position: absolute;
+    width: 3px;
+    height: 40%;
+    background: #000000;
+    transform: rotate(45deg);
+    transform-origin: top left;
+    top: 45%;
+    right: 25%;
+    border-radius: 2px;
+}
+
+/* Responsive sizing */
+.a7-logo-symbol {
+    min-width: 40px;
+    min-height: 40px;
+}
+
+/* For navbar - smaller size */
+.navbar-logo-wrapper .a7-logo-symbol {
+    width: 35px;
+    height: 35px;
+}
+
+/* For home page - larger size */
+.home-logo-section .a7-logo-symbol {
+    width: 80px;
+    height: 80px;
+}
+
+/* Adjust proportions for different sizes */
+@media (max-width: 768px) {
+    .navbar-logo-wrapper .a7-logo-symbol {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .home-logo-section .a7-logo-symbol {
+        width: 60px;
+        height: 60px;
+    }
+}
