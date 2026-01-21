@@ -1493,9 +1493,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                     content: JSON.stringify(secondMarketDataResponse.data.data)
                   });
 
-                  if (checkTimeout()) {
-                    break; // Time's up - return what we have
-                  }
+                  if (checkTimeout() || shouldStopFunctionCalls) {
+                    // Time's up - skip third completion
+                  } else {
                   
                   const thirdCompletion = await Promise.race([
                     openai.chat.completions.create({
@@ -1512,6 +1512,7 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                   aiResponse = thirdCompletion.choices[0]?.message?.content || aiResponse;
                   
                   // Don't continue chain - return response to prevent timeout
+                  }
                 }
               } else if (secondFunctionCall.name === 'get_economic_calendar' || secondFunctionCall.name === 'get_market_news') {
                 // AI wants to fetch calendar or news - fetch in parallel for speed, but limit time
