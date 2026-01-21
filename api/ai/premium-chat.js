@@ -1575,7 +1575,6 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
                     ]);
                     
                     aiResponse = finalCompletion.choices[0]?.message?.content || aiResponse;
-                    }
                   }
                 } catch (additionalError) {
                   console.log('Additional data fetch error:', additionalError.message);
