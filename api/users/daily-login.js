@@ -224,9 +224,9 @@ module.exports = async (req, res) => {
       const newLevel = getLevelFromXP(newXP);
       const leveledUp = newLevel > (parseInt(user.level) || 1);
 
-      // Update user streak, last login date, XP, and level (single query - optimized)
-      // Use atomic UPDATE with WHERE clause to prevent duplicate awards
-      // Only update if last_login_date is NULL or before today
+      // ATOMIC UPDATE: Use WHERE clause to prevent duplicate awards
+      // Only update if last_login_date is NULL or before today (not equal to today)
+      // This ensures that even if multiple requests come in simultaneously, only one will succeed
       const [updateResult] = await withTimeout(
         executeQuery(
           'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ? AND (last_login_date IS NULL OR last_login_date < CURDATE())',
@@ -238,29 +238,37 @@ module.exports = async (req, res) => {
       // Check if update actually affected any rows
       // executeQuery returns [rows, fields], and for UPDATE, rows[0] is an OkPacket with affectedRows
       // If affectedRows is 0, it means the WHERE condition failed (user already logged in today)
-      const affectedRows = updateResult && updateResult[0] && updateResult[0].affectedRows !== undefined 
-        ? updateResult[0].affectedRows 
-        : (updateResult && updateResult.affectedRows !== undefined ? updateResult.affectedRows : 1); // Default to 1 if can't determine
+      let affectedRows = 0;
+      if (updateResult && Array.isArray(updateResult) && updateResult.length > 0) {
+        // Check if first element is OkPacket (has affectedRows property)
+        if (updateResult[0] && typeof updateResult[0] === 'object' && 'affectedRows' in updateResult[0]) {
+          affectedRows = updateResult[0].affectedRows || 0;
+        } else if (updateResult[0] && typeof updateResult[0] === 'number') {
+          // Sometimes mysql2 returns just the number
+          affectedRows = updateResult[0];
+        }
+      }
       
+      // If no rows were affected, user already logged in today (race condition or concurrent request)
       if (affectedRows === 0) {
-        // Update didn't happen - user must have logged in between our check and update
         // Re-fetch user data to get current values
         const [currentUserRows] = await withTimeout(
           executeQuery(
-            'SELECT login_streak, xp, level FROM users WHERE id = ?',
+            'SELECT login_streak, xp, level, last_login_date FROM users WHERE id = ?',
             [userId]
           ),
           1000
         ).catch(() => [[user]]);
         
         const currentUser = currentUserRows && currentUserRows.length > 0 ? currentUserRows[0] : user;
+        const currentStreakFinal = currentUser.login_streak || currentStreak;
         
-        // Return already logged in response
+        // Return already logged in response - DO NOT award XP
         return res.status(200).json({
           success: true,
           alreadyLoggedIn: true,
-          streak: currentUser.login_streak || currentStreak,
-          xpAwarded: 0,
+          streak: currentStreakFinal,
+          xpAwarded: 0, // CRITICAL: Set to 0
           newXP: parseFloat(currentUser.xp) || parseFloat(user.xp) || 0,
           newLevel: parseInt(currentUser.level) || parseInt(user.level) || 1,
           message: 'Already logged in today'
