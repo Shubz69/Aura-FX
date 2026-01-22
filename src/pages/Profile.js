@@ -190,32 +190,49 @@ const Profile = () => {
 
                         // Load login streak and achievements
                         // Fetch latest streak from API (includes daily login check) - non-blocking with timeout
+                        // IMPORTANT: Only check if we haven't checked today (prevent duplicate XP awards)
                         const currentUserId = user?.id || userData.id;
                         if (currentUserId) {
-                            // Use Promise.race to timeout after 3 seconds
-                            const loginCheckPromise = Api.checkDailyLogin(currentUserId);
-                            const timeoutPromise = new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Timeout')), 3000)
-                            );
+                            const lastCheckKey = `daily_login_check_${currentUserId}`;
+                            const lastCheckDate = localStorage.getItem(lastCheckKey);
+                            const today = new Date().toDateString();
                             
-                            try {
-                                const loginResponse = await Promise.race([loginCheckPromise, timeoutPromise]);
-                                if (loginResponse.data && loginResponse.data.success) {
-                                    setLoginStreak(loginResponse.data.streak || userData.login_streak || 0);
-                                    // Update XP/level if they changed
-                                    if (loginResponse.data.newXP) {
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            xp: loginResponse.data.newXP,
-                                            level: loginResponse.data.newLevel || prev.level
-                                        }));
+                            // Only check if we haven't checked today
+                            if (lastCheckDate !== today) {
+                                // Use Promise.race to timeout after 3 seconds
+                                const loginCheckPromise = Api.checkDailyLogin(currentUserId);
+                                const timeoutPromise = new Promise((_, reject) => 
+                                    setTimeout(() => reject(new Error('Timeout')), 3000)
+                                );
+                                
+                                try {
+                                    const loginResponse = await Promise.race([loginCheckPromise, timeoutPromise]);
+                                    if (loginResponse.data && loginResponse.data.success) {
+                                        // Mark that we checked today
+                                        localStorage.setItem(lastCheckKey, today);
+                                        
+                                        setLoginStreak(loginResponse.data.streak || userData.login_streak || 0);
+                                        
+                                        // CRITICAL: Only update XP/level if XP was actually awarded (not already logged in)
+                                        if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                xp: loginResponse.data.newXP,
+                                                level: loginResponse.data.newLevel || prev.level
+                                            }));
+                                        }
+                                        // If already logged in, don't update XP/level - just update streak display
+                                    } else {
+                                        setLoginStreak(userData.login_streak || 0);
                                     }
-                                } else {
+                                } catch (error) {
+                                    // Fallback to stored value if API fails or times out
+                                    // Don't mark as checked on error, so it can retry later
+                                    console.warn('Daily login check failed or timed out, using stored value:', error);
                                     setLoginStreak(userData.login_streak || 0);
                                 }
-                            } catch (error) {
-                                // Fallback to stored value if API fails or times out
-                                console.warn('Daily login check failed or timed out, using stored value:', error);
+                            } else {
+                                // Already checked today - just use stored streak
                                 setLoginStreak(userData.login_streak || 0);
                             }
                         } else {
