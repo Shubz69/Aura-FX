@@ -185,6 +185,35 @@ module.exports = async (req, res) => {
         // daysDiff === 1 means user logged in yesterday, continue to increment streak
       }
 
+      // FINAL SAFETY CHECK: Verify last_login_date is NOT today before awarding XP
+      // This prevents duplicate awards even if date comparison had issues
+      const [verifyRows] = await withTimeout(
+        executeQuery(
+          'SELECT last_login_date, CURDATE() as today FROM users WHERE id = ?',
+          [userId]
+        ),
+        2000
+      );
+      
+      if (verifyRows && verifyRows.length > 0) {
+        const verifyUser = verifyRows[0];
+        const verifyLastLogin = verifyUser.last_login_date ? verifyUser.last_login_date.toString().split('T')[0] : null;
+        const verifyToday = verifyUser.today.toString();
+        
+        // If last_login_date equals today, user already logged in - return without awarding
+        if (verifyLastLogin === verifyToday) {
+          return res.status(200).json({
+            success: true,
+            alreadyLoggedIn: true,
+            streak: currentStreak,
+            xpAwarded: 0,
+            newXP: parseFloat(user.xp) || 0,
+            newLevel: parseInt(user.level) || 1,
+            message: 'Already logged in today'
+          });
+        }
+      }
+      
       // User logged in yesterday (daysDiff === 1) or first time (no lastLoginDate), increment streak
       // If daysDiff === 1, they logged in yesterday, so continue streak
       // If no lastLoginDate, this is their first login, start at 1
@@ -196,13 +225,38 @@ module.exports = async (req, res) => {
       const leveledUp = newLevel > (parseInt(user.level) || 1);
 
       // Update user streak, last login date, XP, and level (single query - optimized)
+      // Use a transaction-like approach: check and update atomically
       await withTimeout(
         executeQuery(
-          'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ?',
+          'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ? AND (last_login_date IS NULL OR last_login_date < CURDATE())',
           [newStreak, newXP, newLevel, userId]
         ),
         2000
       );
+      
+      // Verify the update actually happened (if no rows affected, user already logged in today)
+      const [verifyUpdate] = await withTimeout(
+        executeQuery(
+          'SELECT ROW_COUNT() as affected_rows'
+        ),
+        1000
+      ).catch(() => [{ affected_rows: 1 }]); // Assume success if check fails
+      
+      // If no rows were affected, it means the WHERE condition failed (user already logged in)
+      // This is an additional safety check
+      if (verifyUpdate && verifyUpdate.length > 0 && verifyUpdate[0].affected_rows === 0) {
+        // Update didn't happen - user must have logged in between our check and update
+        // Return already logged in response
+        return res.status(200).json({
+          success: true,
+          alreadyLoggedIn: true,
+          streak: currentStreak,
+          xpAwarded: 0,
+          newXP: parseFloat(user.xp) || 0,
+          newLevel: parseInt(user.level) || 1,
+          message: 'Already logged in today'
+        });
+      }
 
       // Log XP gain (fire and forget - don't wait)
       executeQuery(
