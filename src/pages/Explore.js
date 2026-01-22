@@ -12,7 +12,14 @@ import {
   FaBook,
   FaQuestionCircle,
   FaEnvelope,
-  FaRocket
+  FaRocket,
+  FaLaptop,
+  FaTrophy,
+  FaChartLine,
+  FaBuilding,
+  FaBrain,
+  FaRobot,
+  FaBitcoin
 } from 'react-icons/fa';
 
 const Explore = () => {
@@ -52,6 +59,58 @@ const Explore = () => {
 
     fetchCourses();
   }, []);
+
+  // Static courses from THE GLITCH
+  const staticCourses = [
+    {
+      id: 'ecommerce',
+      title: 'E-Commerce',
+      description: 'Master Amazon FBA, Shopify, and dropshipping',
+      icon: <FaLaptop />
+    },
+    {
+      id: 'health-fitness',
+      title: 'Health & Fitness',
+      description: 'Build profitable fitness brands, coaching businesses, and supplement companies',
+      icon: <FaTrophy />
+    },
+    {
+      id: 'trading',
+      title: 'Trading',
+      description: 'Master forex, stocks, and crypto trading strategies',
+      icon: <FaChartLine />
+    },
+    {
+      id: 'real-estate',
+      title: 'Real Estate',
+      description: 'Master strategic property investment, REIT analysis, and PropTech opportunities (Professor - Raj Johal)',
+      icon: <FaBuilding />
+    },
+    {
+      id: 'social-media',
+      title: 'Social Media',
+      description: 'Build massive personal brands and monetize digital influence',
+      icon: <FaUsers />
+    },
+    {
+      id: 'psychology-mindset',
+      title: 'Psychology and Mindset',
+      description: 'Master the psychological aspects of trading and develop the winning mindset',
+      icon: <FaBrain />
+    },
+    {
+      id: 'algorithmic-ai',
+      title: 'Algorithmic AI',
+      description: 'Learn to build and deploy algorithmic trading systems powered by artificial intelligence',
+      icon: <FaRobot />
+    },
+    {
+      id: 'crypto',
+      title: 'Crypto',
+      description: 'Master cryptocurrency trading, blockchain technology, and DeFi strategies',
+      icon: <FaBitcoin />
+    }
+  ];
 
   const sitePages = [
     {
@@ -178,37 +237,21 @@ const Explore = () => {
         {/* Courses Provided Section */}
         <div className="explore-courses-section">
           <h2 className="explore-section-heading">COURSES PROVIDED</h2>
-          {loadingCourses ? (
-            <div className="explore-courses-loading">
-              <p>Loading courses...</p>
-            </div>
-          ) : courses.length > 0 ? (
-            <div className="explore-courses-grid">
-              {courses.map((course) => (
-                <div key={course.id} className="explore-course-card">
-                  {course.imageUrl ? (
-                    <div className="explore-course-image-wrapper">
-                      <img src={course.imageUrl} alt={course.title} className="explore-course-image" />
-                    </div>
-                  ) : (
-                    <div className="explore-course-image-placeholder">
-                      <FaGraduationCap className="explore-course-placeholder-icon" />
-                    </div>
-                  )}
-                  <div className="explore-course-content">
-                    <h3 className="explore-course-title">{course.title}</h3>
-                    <p className="explore-course-description">
-                      {course.description || 'No description available'}
-                    </p>
-                  </div>
+          <div className="explore-courses-grid">
+            {staticCourses.map((course) => (
+              <div key={course.id} className="explore-course-card explore-course-card-static">
+                <div className="explore-course-image-placeholder explore-course-icon-wrapper">
+                  {course.icon}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="explore-courses-empty">
-              <p>No courses available at the moment.</p>
-            </div>
-          )}
+                <div className="explore-course-content">
+                  <h3 className="explore-course-title">{course.title}</h3>
+                  <p className="explore-course-description">
+                    {course.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Footer Section */}
