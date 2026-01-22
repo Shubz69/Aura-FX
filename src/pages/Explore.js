@@ -62,7 +62,7 @@ const Explore = () => {
       icon: <FaComments />,
       title: 'Community',
       description: 'Join 1,200+ active traders in our thriving community. Share strategies, discuss markets, and learn from experienced professionals.',
-      path: '/community'
+      path: '/register'
     },
     {
       icon: <FaQuestionCircle />,
