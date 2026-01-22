@@ -217,14 +217,18 @@ module.exports = async (req, res) => {
         expiryDate.setDate(expiryDate.getDate() + subscriptionDays);
 
         // Determine role based on plan type
+        // CRITICAL: Set role correctly to ensure premium users always have access
         let userRole = 'premium'; // Default to premium for Aura FX
         if (planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
-          userRole = 'elite'; // A7FX Elite subscription - assign Elite role
+          userRole = 'elite'; // A7FX Elite subscription - assign Elite role (also grants access)
         } else if (planType === 'free') {
           userRole = 'premium'; // Free monthly also gets premium access
+        } else if (planType === 'aura' || planType === 'Aura FX') {
+          userRole = 'premium'; // Aura FX subscription gets premium role
         }
 
-        // Update subscription status AND role based on plan
+        // CRITICAL: Update subscription status AND role based on plan
+        // This ensures users get both role-based AND subscription-based access
         await db.execute(
           `UPDATE users 
            SET subscription_status = 'active',
@@ -238,6 +242,9 @@ module.exports = async (req, res) => {
            WHERE id = ?`,
           [expiryDate, sessionId || null, userRole, planType, markFreeTrialUsed, userId]
         );
+        
+        // Log the role update for debugging
+        console.log(`✅ Subscription activated for user ${userId}: role=${userRole}, plan=${planType}, expiry=${expiryDate}`);
 
         const [updatedUser] = await db.execute(
           'SELECT id, subscription_status, subscription_expiry FROM users WHERE id = ?',

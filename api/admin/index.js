@@ -185,34 +185,40 @@ module.exports = async (req, res) => {
         const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN';
         const isPremium = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
         
-        // Admins always have access - no subscription required
+        // CRITICAL: Admins ALWAYS have access - no subscription required, no payment checks
         if (isAdmin) {
           return res.status(200).json({
             success: true,
             hasActiveSubscription: true,
             isAdmin: true,
+            isPremium: false,
             paymentFailed: false,
-            expiry: null
+            expiry: null,
+            message: 'Admin access granted'
           });
         }
 
-        // Premium role users (premium, a7fx, elite) always have access - grant access based on role
+        // CRITICAL: Premium role users (premium, a7fx, elite) ALWAYS have access - grant access based on role
+        // Even if subscription_status is inactive, premium role grants access
         if (isPremium) {
           return res.status(200).json({
             success: true,
             hasActiveSubscription: true,
             isAdmin: false,
             isPremium: true,
-            paymentFailed: false,
-            expiry: user.subscription_expiry || null
+            paymentFailed: false, // Premium role users never have payment failed blocking
+            expiry: user.subscription_expiry || null,
+            message: 'Premium role access granted'
           });
         }
 
+        // Only check payment_failed for non-admin, non-premium users
         if (user.payment_failed === 1 || user.payment_failed === true) {
           return res.status(200).json({
             success: true,
             hasActiveSubscription: false,
             isAdmin: false,
+            isPremium: false,
             paymentFailed: true,
             expiry: user.subscription_expiry,
             message: 'Your payment has failed. Please update your payment method to continue using the community.'

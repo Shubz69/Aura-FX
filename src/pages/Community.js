@@ -1144,30 +1144,41 @@ const Community = () => {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // All channels now require subscription - no free access
-        // Check if user has active subscription
+        // CRITICAL: Admins and premium role users ALWAYS have access to all channels
+        // Check premium role first (before subscription check)
+        const hasPremiumRole = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
+        if (isAdminUser || isSuperAdminUser || hasPremiumRole) {
+            // Admins and premium users can see all channels (except admin-only which is handled above)
+            if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                // A7FX channels: only a7fx/elite users and admins
+                return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
+            }
+            // All other channels: admins and premium users have access
+            return true;
+        }
+        
+        // For non-admin, non-premium users: check subscription
         const hasActiveSubscription = subscriptionStatus 
             ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
             : checkSubscription();
         
-        // If no subscription, deny access (except admins)
-        if (!hasActiveSubscription && !isAdminUser && !isSuperAdminUser) {
+        // If no subscription, deny access
+        if (!hasActiveSubscription) {
             return false;
         }
         
-        // Premium channels: premium and a7fx users can see
+        // Premium channels: users with active subscription can see
         if (accessLevel === 'premium' || accessLevel === 'open' || accessLevel === 'free') {
-            // Treat open/free as premium - require subscription
-            return userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
+            return hasActiveSubscription;
         }
         
-        // A7FX channels: only a7fx users can see
+        // A7FX channels: only a7fx/elite role users (already checked above) or active subscription with a7fx plan
         if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-            return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
+            return false; // Non-premium users without a7fx role cannot access
         }
         
-        // Default: require subscription
-        return hasActiveSubscription || isAdminUser || isSuperAdminUser;
+        // Default: require active subscription
+        return hasActiveSubscription;
     };
 
     // Check if user can post in channel
@@ -1195,30 +1206,41 @@ const Community = () => {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // All channels now require subscription - no free posting
-        // Check if user has active subscription
+        // CRITICAL: Admins and premium role users ALWAYS have posting access
+        // Check premium role first (before subscription check)
+        const hasPremiumRole = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
+        if (isAdminUser || isSuperAdminUser || hasPremiumRole) {
+            // Admins and premium users can post in all channels (except admin-only which is handled above)
+            if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                // A7FX channels: only a7fx/elite users and admins
+                return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
+            }
+            // All other channels: admins and premium users can post
+            return true;
+        }
+        
+        // For non-admin, non-premium users: check subscription
         const hasActiveSubscription = subscriptionStatus 
             ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
             : checkSubscription();
         
-        // If no subscription, deny posting (except admins)
-        if (!hasActiveSubscription && !isAdminUser && !isSuperAdminUser) {
+        // If no subscription, deny posting
+        if (!hasActiveSubscription) {
             return false;
         }
         
-        // Premium channels: premium and a7fx users can post
+        // Premium channels: users with active subscription can post
         if (accessLevel === 'premium' || accessLevel === 'open' || accessLevel === 'free') {
-            // Treat open/free as premium - require subscription
-            return userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
+            return hasActiveSubscription;
         }
         
-        // A7FX channels: only a7fx users can post
+        // A7FX channels: only a7fx/elite role users (already checked above)
         if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-            return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
+            return false; // Non-premium users without a7fx role cannot post
         }
         
-        // Default: require subscription
-        return hasActiveSubscription || isAdminUser || isSuperAdminUser;
+        // Default: require active subscription
+        return hasActiveSubscription;
     };
 
     // Scroll to bottom of messages
@@ -1982,8 +2004,9 @@ const Community = () => {
                 setSubscriptionStatus(result);
                 setPaymentFailed(result.paymentFailed || false);
                 
-                // User has access ONLY if they have active subscription status (all checks must pass)
-                const hasAccess = result.hasActiveSubscription && !result.paymentFailed;
+                // CRITICAL: User has access if: admin, premium role, OR active subscription
+                // Premium role and admin status from API override subscription status
+                const hasAccess = result.isAdmin || result.isPremium || (result.hasActiveSubscription && !result.paymentFailed);
                 
                 // Update localStorage to match database
                 if (hasAccess) {
@@ -1992,8 +2015,11 @@ const Community = () => {
                         localStorage.setItem('subscriptionExpiry', result.expiry);
                     }
                 } else {
-                    localStorage.removeItem('hasActiveSubscription');
-                    localStorage.removeItem('subscriptionExpiry');
+                    // Only remove if not admin/premium (they don't need subscription)
+                    if (!result.isAdmin && !result.isPremium) {
+                        localStorage.removeItem('hasActiveSubscription');
+                        localStorage.removeItem('subscriptionExpiry');
+                    }
                 }
                 
                 return hasAccess;
@@ -2006,9 +2032,18 @@ const Community = () => {
         }
     }, [userId, checkSubscriptionLocal]);
     
-    // Combined subscription check
+    // Combined subscription check with role-based fallback
     const checkSubscription = () => {
-        // Premium role alone does NOT grant access - must check subscription status
+        // CRITICAL: Check premium role first - premium role ALWAYS grants access
+        const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        const userRole = (storedUser?.role || storedUserData.role || 'free').toLowerCase();
+        const hasPremiumRole = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
+        
+        // Premium role users always have access
+        if (hasPremiumRole) {
+            return true;
+        }
+        
         // Use database status if available, otherwise fallback to localStorage
         if (subscriptionStatus) {
             return subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed;
@@ -3384,11 +3419,8 @@ Let's build generational wealth together! 💰🚀`,
         }
     }, [groupedChannels, categoryOrderState]);
 
-    // Check subscription status for banner and channel visibility
-    // Use subscriptionStatus from database check (most up-to-date) if available, otherwise fallback
-    const hasActiveSubscription = subscriptionStatus 
-        ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
-        : checkSubscription();
+    // CRITICAL: Comprehensive subscription check with multiple fallbacks
+    // Priority: Admin > Premium Role > Active Subscription Status > Database Check > LocalStorage
     
     // Get user data from multiple sources for comprehensive check
     const storedUserDataForBanner = JSON.parse(localStorage.getItem('user') || '{}');
@@ -3396,25 +3428,40 @@ Let's build generational wealth together! 💰🚀`,
     const subscriptionStatusForBanner = storedUser?.subscription_status || storedUserDataForBanner.subscription_status;
     const subscriptionPlanForBanner = storedUser?.subscription_plan || storedUserDataForBanner.subscription_plan;
     
-    // Check if user is admin (use state variables which are more reliable)
+    // Check if user is admin (use state variables which are more reliable, plus multiple checks)
     const isAdminForBanner = isAdminUser || isSuperAdminUser || 
         userRoleForBanner === 'admin' || 
         userRoleForBanner === 'super_admin' || 
-        userRoleForBanner === 'ADMIN';
+        userRoleForBanner === 'ADMIN' ||
+        subscriptionStatus?.isAdmin === true;
     
-    // Check if user has premium access (role-based OR subscription-based)
+    // Check if user has premium access (role-based - this ALWAYS grants access)
     const hasPremiumRole = userRoleForBanner === 'premium' || 
         userRoleForBanner === 'a7fx' || 
-        userRoleForBanner === 'elite';
+        userRoleForBanner === 'elite' ||
+        subscriptionStatus?.isPremium === true;
     
-    const hasActiveSubscriptionStatus = subscriptionStatusForBanner === 'active' || hasActiveSubscription;
+    // Check subscription status from database (if available)
+    const hasActiveSubscriptionFromDB = subscriptionStatus 
+        ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
+        : false;
     
-    // User has access if: admin, premium role, OR active subscription
-    const userHasAccess = isAdminForBanner || hasPremiumRole || hasActiveSubscriptionStatus;
+    // Check subscription status from user object
+    const hasActiveSubscriptionStatus = subscriptionStatusForBanner === 'active';
     
-    // Only show subscribe banner if user doesn't have access
-    const showSubscribeBanner = !userHasAccess && !paymentFailed;
-    const showPaymentFailedBanner = !isAdminForBanner && paymentFailed && !hasActiveSubscriptionStatus;
+    // Fallback to local check
+    const hasActiveSubscriptionLocal = checkSubscription();
+    
+    // User has access if ANY of these are true: admin, premium role, OR active subscription
+    // CRITICAL: Premium role and admin ALWAYS grant access, regardless of subscription_status
+    const userHasAccess = isAdminForBanner || hasPremiumRole || hasActiveSubscriptionFromDB || hasActiveSubscriptionStatus || hasActiveSubscriptionLocal;
+    
+    // Only show subscribe banner if user doesn't have access AND is not admin/premium
+    // CRITICAL: Never show banner to admins or premium role users
+    const showSubscribeBanner = !isAdminForBanner && !hasPremiumRole && !userHasAccess && !paymentFailed;
+    
+    // Only show payment failed banner if user is not admin/premium and payment actually failed
+    const showPaymentFailedBanner = !isAdminForBanner && !hasPremiumRole && paymentFailed && !hasActiveSubscriptionStatus;
 
     // Handle subscribe button click - show subscription selection modal
     const handleSubscribe = (requiredType = null) => {
