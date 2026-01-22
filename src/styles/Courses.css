@@ -514,6 +514,62 @@
     margin-bottom: 24px;
 }
 
+/* Promotional Pricing Styles */
+.subscription-pricing-container {
+    margin-bottom: 24px;
+}
+
+.promotional-pricing {
+    margin-bottom: 12px;
+}
+
+.promo-price {
+    font-size: clamp(40px, 8vw, 56px);
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 4px;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+}
+
+.promo-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(12px, 2.2vw, 14px);
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.original-pricing {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.original-price-strikethrough {
+    font-size: clamp(24px, 5vw, 32px);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: rgba(255, 255, 255, 0.6);
+    position: relative;
+}
+
+.original-price-strikethrough::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateY(-50%);
+}
+
 .subscription-plan-features {
     text-align: left;
     color: rgba(255, 255, 255, 0.9);

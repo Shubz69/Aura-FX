@@ -126,37 +126,25 @@ const Courses = () => {
                 </p>
                 
                 <div className="subscriptions-grid">
-                    {/* Free Plan */}
-                    <div className="subscription-plan-card">
-                        <h3 className="subscription-plan-title">Free</h3>
-                        <div className="subscription-plan-price">£0</div>
-                        <div className="subscription-plan-period">per month</div>
-                        <ul className="subscription-plan-features">
-                            <li>✅ Access to general channels</li>
-                            <li>✅ Basic community features</li>
-                            <li>✅ View announcements</li>
-                        </ul>
-                        <button
-                            className="subscription-plan-button"
-                            onClick={() => {
-                                window.location.href = '/subscription';
-                            }}
-                        >
-                            Select Free Plan
-                        </button>
-                    </div>
-
                     {/* Premium Plan */}
                     <div className="subscription-plan-card premium">
                         <h3 className="subscription-plan-title">Aura FX</h3>
-                        <div className="subscription-plan-price">£99</div>
-                        <div className="subscription-plan-period">per month</div>
+                        <div className="subscription-pricing-container">
+                            <div className="promotional-pricing">
+                                <div className="promo-price">£0</div>
+                                <div className="promo-text">for the first 2 months</div>
+                            </div>
+                            <div className="original-pricing">
+                                <div className="original-price-strikethrough">£99</div>
+                                <div className="subscription-plan-period">per month</div>
+                            </div>
+                        </div>
                         <ul className="subscription-plan-features">
-                            <li>✅ All free features</li>
                             <li>✅ Premium channels</li>
                             <li>✅ Market analysis</li>
                             <li>✅ Weekly Briefs</li>
                             <li>✅ Premium AURA AI</li>
+                            <li>✅ Advanced trading strategies</li>
                         </ul>
                         <button
                             className="subscription-plan-button premium"
