@@ -176,26 +176,38 @@ export const AuthProvider = ({ children }) => {
           
           // Check daily login streak (non-blocking, runs in background)
           // This runs every time the app loads to check if user logged in today
-          // IMPORTANT: Only check once per session to prevent duplicate XP awards
+          // IMPORTANT: Only check once per day to prevent duplicate XP awards
           if (userId) {
             // Check if we already checked today (prevent duplicate calls)
             const lastCheckKey = `daily_login_check_${userId}`;
             const lastCheckDate = localStorage.getItem(lastCheckKey);
             const today = new Date().toDateString();
             
-            // Only check if we haven't checked today OR if last check was more than 1 hour ago (in case of errors)
-            if (lastCheckDate !== today) {
-              // Mark that we're checking now (even if it fails, we won't retry today)
+            // Also check if there's an in-progress call to prevent race conditions
+            const inProgressKey = `daily_login_in_progress_${userId}`;
+            const isInProgress = localStorage.getItem(inProgressKey) === 'true';
+            
+            // Only check if we haven't checked today AND no call is in progress
+            if (lastCheckDate !== today && !isInProgress) {
+              // Mark that we're checking NOW (before API call) to prevent race conditions
               localStorage.setItem(lastCheckKey, today);
+              localStorage.setItem(inProgressKey, 'true');
               
               setTimeout(async () => {
                 try {
                   const loginResponse = await Api.checkDailyLogin(userId);
+                  
+                  // Clear in-progress flag
+                  localStorage.removeItem(inProgressKey);
+                  
                   if (loginResponse.data && loginResponse.data.success) {
                     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
                     
-                    // CRITICAL: Only update XP/level if XP was actually awarded (not already logged in)
-                    if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn) {
+                    // CRITICAL: Only update XP/level if XP was actually awarded AND not already logged in
+                    // Double-check: xpAwarded must be > 0 AND alreadyLoggedIn must be false
+                    if (loginResponse.data.xpAwarded && 
+                        loginResponse.data.xpAwarded > 0 && 
+                        !loginResponse.data.alreadyLoggedIn) {
                       // XP was awarded - update user data
                       const updatedUser = {
                         ...currentUser,
@@ -223,6 +235,9 @@ export const AuthProvider = ({ children }) => {
                     }
                   }
                 } catch (error) {
+                  // Clear in-progress flag on error
+                  localStorage.removeItem(inProgressKey);
+                  
                   // On error, remove the check flag so we can retry (but only after 1 hour)
                   // This prevents infinite retries but allows recovery from temporary errors
                   const errorRetryKey = `daily_login_error_${userId}`;
@@ -241,6 +256,15 @@ export const AuthProvider = ({ children }) => {
                   }
                 }
               }, 500); // Small delay to let app load first
+            } else if (isInProgress) {
+              // Another call is in progress, wait a bit and check again
+              setTimeout(() => {
+                const stillInProgress = localStorage.getItem(inProgressKey) === 'true';
+                if (stillInProgress) {
+                  // If still in progress after 5 seconds, clear it (stuck call)
+                  localStorage.removeItem(inProgressKey);
+                }
+              }, 5000);
             }
           }
           
@@ -336,16 +360,26 @@ export const AuthProvider = ({ children }) => {
           const lastCheckKey = `daily_login_check_${userId}`;
           const lastCheckDate = localStorage.getItem(lastCheckKey);
           const today = new Date().toDateString();
+          const inProgressKey = `daily_login_in_progress_${userId}`;
+          const isInProgress = localStorage.getItem(inProgressKey) === 'true';
           
-          // Only check if we haven't checked today
-          if (lastCheckDate !== today) {
+          // Only check if we haven't checked today AND no call is in progress
+          if (lastCheckDate !== today && !isInProgress) {
+            // Set flag BEFORE API call to prevent race conditions
             localStorage.setItem(lastCheckKey, today);
+            localStorage.setItem(inProgressKey, 'true');
             
             Api.checkDailyLogin(userId)
               .then((loginResponse) => {
+                // Clear in-progress flag
+                localStorage.removeItem(inProgressKey);
+                
                 if (loginResponse.data && loginResponse.data.success) {
                   // CRITICAL: Only update XP/level if XP was actually awarded
-                  if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
+                  // Triple-check: xpAwarded > 0 AND alreadyLoggedIn is false
+                  if (loginResponse.data.xpAwarded && 
+                      loginResponse.data.xpAwarded > 0 && 
+                      !loginResponse.data.alreadyLoggedIn) {
                     // XP was awarded - update user data
                     const updatedUser = {
                       ...data,
@@ -374,6 +408,9 @@ export const AuthProvider = ({ children }) => {
                 }
               })
               .catch((error) => {
+                // Clear in-progress flag on error
+                localStorage.removeItem(inProgressKey);
+                
                 // On error, remove check flag to allow retry (but only after delay)
                 const errorRetryKey = `daily_login_error_${userId}`;
                 const lastErrorTime = localStorage.getItem(errorRetryKey);

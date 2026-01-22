@@ -118,16 +118,32 @@ module.exports = async (req, res) => {
       }
       
       // Check if user already logged in today - EARLY RETURN (fastest path)
+      // CRITICAL: This check must be accurate to prevent duplicate XP awards
       if (lastLoginDate && daysDiff !== null && daysDiff === 0) {
         // Already logged in today, return immediately without any database updates
         // This is the most common case and should be super fast
+        // IMPORTANT: Return xpAwarded: 0 and alreadyLoggedIn: true to prevent frontend from awarding XP
         return res.status(200).json({
           success: true,
           alreadyLoggedIn: true,
           streak: currentStreak,
-          xpAwarded: 0, // Explicitly set to 0
+          xpAwarded: 0, // CRITICAL: Explicitly set to 0 to prevent frontend from awarding
           newXP: parseFloat(user.xp) || 0, // Return current XP (no change)
           newLevel: parseInt(user.level) || 1, // Return current level (no change)
+          message: 'Already logged in today'
+        });
+      }
+      
+      // Additional safety check: If last_login_date is today but daysDiff calculation failed
+      // Compare dates directly as strings to be absolutely sure
+      if (lastLoginDate && todayStr && lastLoginDate === todayStr) {
+        return res.status(200).json({
+          success: true,
+          alreadyLoggedIn: true,
+          streak: currentStreak,
+          xpAwarded: 0,
+          newXP: parseFloat(user.xp) || 0,
+          newLevel: parseInt(user.level) || 1,
           message: 'Already logged in today'
         });
       }
