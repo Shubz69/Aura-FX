@@ -339,6 +339,22 @@ module.exports = async (req, res) => {
             console.log('Note: is_system_channel column check:', alterError.message);
           }
 
+          // Check if permission_type column exists, add it with default if it doesn't
+          try {
+            const [permissionColumns] = await db.execute(`
+              SELECT COLUMN_NAME 
+              FROM INFORMATION_SCHEMA.COLUMNS 
+              WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'permission_type'
+            `, [process.env.MYSQL_DATABASE]);
+            
+            if (permissionColumns.length === 0) {
+              await db.execute('ALTER TABLE channels ADD COLUMN permission_type VARCHAR(50) DEFAULT \'read-write\'');
+              console.log('Added permission_type column to channels table');
+            }
+          } catch (alterError) {
+            console.log('Note: permission_type column check:', alterError.message);
+          }
+
           // Fetch channels from database, handle NULL categories safely
           let [rows] = [];
           try {
@@ -844,6 +860,13 @@ module.exports = async (req, res) => {
           const channelAccess = normalizeAccessLevel(accessLevel);
           updates.push('access_level = ?');
           values.push(channelAccess);
+        }
+
+        if (permissionType !== undefined) {
+          const channelPermission = (permissionType || 'read-write').toLowerCase();
+          // Check if permission_type column exists before trying to update
+          updates.push('permission_type = ?');
+          values.push(channelPermission);
         }
 
         if (updates.length === 0) {

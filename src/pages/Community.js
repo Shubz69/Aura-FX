@@ -213,7 +213,7 @@ const Community = () => {
     const [contextMenu, setContextMenu] = useState(null); // { x, y, messageId }
     const [channelContextMenu, setChannelContextMenu] = useState(null); // { x, y, channelId, channel }
     const [categoryContextMenu, setCategoryContextMenu] = useState(null); // { x, y, categoryName }
-    const [editingChannel, setEditingChannel] = useState(null); // { id, name, description, category, accessLevel }
+    const [editingChannel, setEditingChannel] = useState(null); // { id, name, description, category, accessLevel, permissionType }
     const [editingCategory, setEditingCategory] = useState(null); // { name }
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false); // Show subscription selection modal
     const [requiredSubscriptionType, setRequiredSubscriptionType] = useState(null); // 'premium' or 'a7fx' - for channel access
@@ -1001,15 +1001,21 @@ const Community = () => {
     const canUserPostInChannel = (channel) => {
         const userRole = getCurrentUserRole();
         const accessLevel = (channel.accessLevel || 'premium').toLowerCase(); // Default to premium instead of open
+        const permissionType = (channel.permissionType || 'read-write').toLowerCase();
         const channelName = (channel.name || '').toLowerCase();
         const isAdminChannel = accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
+        
+        // Check permission type first - if channel is read-only, only admins can post
+        if (permissionType === 'read-only') {
+            return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
+        }
         
         // Admin-only channels: only admins can post
         if (isAdminChannel) {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
         
-        // Read-only channels: only admins can post
+        // Legacy: Read-only access level (for backward compatibility)
         if (accessLevel === 'read-only') {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
@@ -1594,7 +1600,8 @@ const Community = () => {
                     displayName: channelData.displayName || channelData.name,
                     description: channelData.description || '',
                     category: channelData.category,
-                    accessLevel: channelData.accessLevel
+                    accessLevel: channelData.accessLevel,
+                    permissionType: channelData.permissionType || 'read-write'
                 })
             });
 
@@ -6058,7 +6065,8 @@ Let's build generational wealth together! 💰🚀`,
                                 displayName: channel.displayName || channel.name,
                                 description: channel.description || '',
                                 category: channel.category || 'general',
-                                accessLevel: channel.accessLevel || 'open'
+                                accessLevel: channel.accessLevel || 'open',
+                                permissionType: channel.permissionType || 'read-write'
                             });
                             setChannelContextMenu(null);
                         }}
@@ -6213,7 +6221,7 @@ Let's build generational wealth together! 💰🚀`,
                                 <option value="support">Support</option>
                             </select>
                         </div>
-                        <div style={{ marginBottom: '20px' }}>
+                        <div style={{ marginBottom: '16px' }}>
                             <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Access Level</label>
                             <select
                                 value={editingChannel.accessLevel}
@@ -6234,6 +6242,28 @@ Let's build generational wealth together! 💰🚀`,
                                 <option value="premium">Premium - Only premium subscribers</option>
                                 <option value="a7fx">A7FX Elite - Only A7FX subscribers</option>
                             </select>
+                        </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', color: '#fff', marginBottom: '8px', fontSize: '0.9rem' }}>Permission Type</label>
+                            <select
+                                value={editingChannel.permissionType || 'read-write'}
+                                onChange={(e) => setEditingChannel({ ...editingChannel, permissionType: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#2B2D31',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '6px',
+                                    color: '#fff',
+                                    fontSize: '0.9rem'
+                                }}
+                            >
+                                <option value="read-write">Read & Write - Users can text in channel</option>
+                                <option value="read-only">Read Only - Users can only see channel (cannot text)</option>
+                            </select>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.75rem', marginTop: '6px', marginBottom: 0 }}>
+                                This controls whether users with access can text or just view the channel
+                            </p>
                         </div>
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                             <button
