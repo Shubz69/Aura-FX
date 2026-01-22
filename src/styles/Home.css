@@ -309,7 +309,7 @@ body.loading-active {
 .ticker {
     display: inline-flex;
     white-space: nowrap;
-    animation: ticker 90s ease-in-out infinite;
+    animation: ticker 90s linear infinite;
     will-change: transform;
 }
 
@@ -331,6 +331,15 @@ body.loading-active {
     margin-right: 0.75rem;
     color: #ffffff;
     font-weight: 300;
+    transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+}
+
+.ticker-price.price-up {
+    color: #00ff88;
+}
+
+.ticker-price.price-down {
+    color: #ff4563;
 }
 
 .ticker-up {

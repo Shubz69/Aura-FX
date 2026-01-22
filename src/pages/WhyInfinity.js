@@ -69,14 +69,60 @@ const WhyInfinity = () => {
                         price = typeof marketData.c === 'string' ? parseFloat(marketData.c) : marketData.c;
                     }
                     
-                    // Validate price - allow 0 for some edge cases, but must be a valid number
-                    if (responseData.success && price !== null && !isNaN(price) && typeof price === 'number' && isFinite(price) && price >= 0) {
+                    // Extract daily percentage change - prioritize API's changePercent (daily change from previousClose)
+                    let changePercent = null;
+                    let isUp = true;
+                    
+                    // First, try to use API's changePercent (most accurate - daily change)
+                    if (marketData?.changePercent !== undefined) {
+                        // Remove % sign if present and parse
+                        const percentStr = marketData.changePercent.toString().replace('%', '');
+                        changePercent = parseFloat(percentStr);
+                        if (!isNaN(changePercent)) {
+                            isUp = changePercent >= 0;
+                        }
+                    }
+                    
+                    // If no changePercent, calculate from previousClose (daily change)
+                    if (changePercent === null && marketData?.previousClose !== undefined && price !== null) {
+                        const previousClose = typeof marketData.previousClose === 'string' 
+                            ? parseFloat(marketData.previousClose) 
+                            : marketData.previousClose;
+                        if (previousClose > 0 && !isNaN(previousClose)) {
+                            changePercent = ((price - previousClose) / previousClose) * 100;
+                            isUp = changePercent >= 0;
+                        }
+                    }
+                    
+                    // If still no changePercent, try change field
+                    if (changePercent === null && marketData?.change !== undefined && marketData?.previousClose !== undefined) {
+                        const change = typeof marketData.change === 'string' 
+                            ? parseFloat(marketData.change) 
+                            : marketData.change;
+                        const previousClose = typeof marketData.previousClose === 'string' 
+                            ? parseFloat(marketData.previousClose) 
+                            : marketData.previousClose;
+                        if (previousClose > 0 && !isNaN(change) && !isNaN(previousClose)) {
+                            changePercent = (change / previousClose) * 100;
+                            isUp = change >= 0;
+                        }
+                    }
+                    
+                    // Last resort: use localStorage comparison (but this is less accurate)
+                    if (changePercent === null && price !== null) {
                         const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || price;
                         const change = price - previousPrice;
-                        const changePercent = previousPrice > 0 ? ((change / previousPrice) * 100).toFixed(2) : '0.00';
-                        
+                        if (previousPrice > 0) {
+                            changePercent = (change / previousPrice) * 100;
+                            isUp = change >= 0;
+                        } else {
+                            changePercent = 0;
+                        }
                         localStorage.setItem(`prev_${symbol}`, price.toString());
-                        
+                    }
+                    
+                    // Validate price - allow 0 for some edge cases, but must be a valid number
+                    if (responseData.success && price !== null && !isNaN(price) && typeof price === 'number' && isFinite(price) && price >= 0) {
                         // Format price based on instrument type
                         let formattedPrice = price.toFixed(2);
                         if (symbol === 'BTC' || symbol === 'ETH') {
@@ -89,11 +135,19 @@ const WhyInfinity = () => {
                             formattedPrice = price.toFixed(2);
                         }
                         
+                        // Format changePercent - ensure it shows actual daily percentage, not 0% if there's a change
+                        let formattedChange = '0.00';
+                        if (changePercent !== null && !isNaN(changePercent) && isFinite(changePercent)) {
+                            // Round to 2 decimal places and format
+                            formattedChange = Math.abs(changePercent) < 0.01 ? '0.00' : changePercent.toFixed(2);
+                            formattedChange = changePercent >= 0 ? `+${formattedChange}` : formattedChange;
+                        }
+                        
                         return {
                             symbol: symbol,
                             price: formattedPrice,
-                            change: changePercent >= 0 ? `+${changePercent}` : changePercent.toString(),
-                            isUp: change >= 0
+                            change: formattedChange,
+                            isUp: isUp
                         };
                     } else {
                         console.warn(`No valid price data for ${symbol}:`, responseData);
