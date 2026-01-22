@@ -12,7 +12,26 @@ const Home = () => {
     const { isAuthenticated } = useAuth();
     const [showContent, setShowContent] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [marketData, setMarketData] = useState([]);
+    
+    // Initial static market data (fallback)
+    const initialMarketData = [
+        { symbol: 'AAPL', price: '192.53', change: '+2.38', isUp: true },
+        { symbol: 'MSFT', price: '426.74', change: '-1.28', isUp: false },
+        { symbol: 'GOOGL', price: '183.42', change: '+3.71', isUp: true },
+        { symbol: 'AMZN', price: '186.93', change: '+1.26', isUp: true },
+        { symbol: 'TSLA', price: '244.18', change: '-5.32', isUp: false },
+        { symbol: 'META', price: '484.32', change: '+2.95', isUp: true },
+        { symbol: 'NVDA', price: '947.52', change: '+18.67', isUp: true },
+        { symbol: 'EURUSD', price: '1.0850', change: '+0.15', isUp: true },
+        { symbol: 'GBPUSD', price: '1.2650', change: '-0.23', isUp: false },
+        { symbol: 'USDJPY', price: '150.25', change: '+0.45', isUp: true },
+        { symbol: 'AUDUSD', price: '0.6520', change: '+0.12', isUp: true },
+        { symbol: 'XAUUSD', price: '2724.50', change: '+15.30', isUp: true },
+        { symbol: 'XAGUSD', price: '31.25', change: '+0.45', isUp: true },
+        { symbol: 'OIL', price: '78.50', change: '-1.20', isUp: false }
+    ];
+    
+    const [marketData, setMarketData] = useState(initialMarketData);
 
     // Fetch live market data for ticker
     useEffect(() => {
@@ -63,13 +82,19 @@ const Home = () => {
             // Fetch all symbols in parallel
             const results = await Promise.all(symbols.map(fetchData));
             const validData = results.filter(item => item !== null);
-            setMarketData(validData);
+            
+            // Only update if we got valid data, otherwise keep static data
+            if (validData.length > 0) {
+                setMarketData(validData);
+            }
 
             // Update every 30 seconds
             const interval = setInterval(async () => {
                 const results = await Promise.all(symbols.map(fetchData));
                 const validData = results.filter(item => item !== null);
-                setMarketData(validData);
+                if (validData.length > 0) {
+                    setMarketData(validData);
+                }
             }, 30000);
 
             return () => clearInterval(interval);
@@ -158,21 +183,19 @@ const Home = () => {
                             </div>
 
                             {/* Stock Ticker Banner */}
-                            {marketData.length > 0 && (
-                                <div className="stock-ticker-compact">
-                                    <div className="ticker">
-                                        {marketData.concat(marketData).map((item, index) => (
-                                            <div key={`${item.symbol}-${index}`} className="ticker-item">
-                                                <span className="ticker-symbol">{item.symbol}</span>
-                                                <span className="ticker-price">{item.price}</span>
-                                                <span className={`ticker-change ${item.isUp ? 'ticker-up' : 'ticker-down'}`}>
-                                                    {item.isUp ? "▲" : "▼"} {item.change}%
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
+                            <div className="stock-ticker-compact">
+                                <div className="ticker">
+                                    {marketData.concat(marketData).map((item, index) => (
+                                        <div key={`${item.symbol}-${index}`} className="ticker-item">
+                                            <span className="ticker-symbol">{item.symbol}</span>
+                                            <span className="ticker-price">{item.price}</span>
+                                            <span className={`ticker-change ${item.isUp ? 'ticker-up' : 'ticker-down'}`}>
+                                                {item.isUp ? "▲" : "▼"} {item.change}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
+                            </div>
 
                             {/* Feature Cards */}
                             <div className="feature-cards-grid">
