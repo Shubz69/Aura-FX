@@ -491,6 +491,7 @@ module.exports = async (req, res) => {
           joinDate: user.created_at,
           createdAt: user.created_at,
           login_streak: (user.login_streak !== undefined && user.login_streak !== null) ? user.login_streak : 0,
+          last_seen: (hasLastSeen && user.last_seen) ? user.last_seen : null,
           stats: {
             reputation: Math.floor((user.xp || 0) / 100), // Calculate reputation from XP
             totalTrades: 0,
