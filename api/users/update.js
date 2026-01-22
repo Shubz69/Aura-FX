@@ -430,15 +430,22 @@ module.exports = async (req, res) => {
         // Return user data with formatted dates
         const responseData = {
           id: user.id,
-          username: user.username,
-          bio: user.bio,
-          avatar: user.avatar || '/avatars/avatar_ai.png',
-          role: user.role,
-          level: user.level || 1,
-          xp: user.xp || 0,
+          username: user.username || user.name || 'User',
+          name: user.name,
+          bio: user.bio || '',
+          avatar: user.avatar || 'avatar_ai.png',
+          banner: user.banner || '',
+          role: user.role || 'free',
+          level: parseInt(user.level || 1),
+          xp: parseFloat(user.xp || 0),
           joinDate: user.created_at,
+          createdAt: user.created_at,
+          login_streak: user.login_streak || 0,
           stats: {
-            reputation: Math.floor((user.xp || 0) / 100) // Calculate reputation from XP
+            reputation: Math.floor((user.xp || 0) / 100), // Calculate reputation from XP
+            totalTrades: 0,
+            winRate: 0,
+            totalProfit: 0
           }
         };
         

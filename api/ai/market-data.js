@@ -345,6 +345,8 @@ module.exports = async (req, res) => {
       // Map to Finnhub format
       if (isGold) {
         finnhubSymbol = 'OANDA:XAU_USD'; // OANDA spot gold - most accurate for real-time
+      } else if (normalizedSymbol === 'XAGUSD' || normalizedSymbol === 'SILVER' || normalizedSymbol === 'XAG') {
+        finnhubSymbol = 'OANDA:XAG_USD'; // OANDA spot silver
       } else if (isForex) {
         const base = normalizedSymbol.substring(0, 3);
         const quote = normalizedSymbol.substring(3, 6);

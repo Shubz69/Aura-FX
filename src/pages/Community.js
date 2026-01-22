@@ -18,6 +18,7 @@ import {
 
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft } from 'react-icons/fa';
+import ProfileModal from '../components/ProfileModal';
 
 // All API calls use real endpoints only - no mock mode
 
@@ -206,6 +207,8 @@ const Community = () => {
     const [userLevel, setUserLevel] = useState(1);
     const [storedUser, setStoredUser] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [profileModalData, setProfileModalData] = useState(null);
     
     // Listen for XP update events to update profile card in real-time
     useEffect(() => {
@@ -226,34 +229,41 @@ const Community = () => {
         
         window.addEventListener('xpUpdated', handleXPUpdate);
         
-        // Also check localStorage periodically for XP updates
+        // Also check localStorage periodically for XP updates (less frequent to avoid restarts)
         const xpCheckInterval = setInterval(() => {
             const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
             if (storedUserData.xp !== undefined && storedUserData.level !== undefined) {
                 const currentXP = parseFloat(storedUserData.xp || 0);
                 const currentLevel = parseInt(storedUserData.level || 1);
                 
-                if (storedUser) {
-                    const xpChanged = Math.abs(parseFloat(storedUser.xp || 0) - currentXP) > 0.01;
-                    const levelChanged = parseInt(storedUser.level || userLevel || 1) !== currentLevel;
+                setStoredUser(prev => {
+                    if (!prev) return prev;
+                    
+                    const xpChanged = Math.abs(parseFloat(prev.xp || 0) - currentXP) > 0.01;
+                    const levelChanged = parseInt(prev.level || 1) !== currentLevel;
                     
                     if (xpChanged || levelChanged) {
-                        setStoredUser(prev => ({
+                        return {
                             ...prev,
                             xp: currentXP,
                             level: currentLevel
-                        }));
-                        setUserLevel(currentLevel);
+                        };
                     }
-                }
+                    return prev; // Return same reference if no change
+                });
+                
+                setUserLevel(prevLevel => {
+                    const currentLevel = parseInt(storedUserData.level || 1);
+                    return prevLevel !== currentLevel ? currentLevel : prevLevel;
+                });
             }
-        }, 1000);
+        }, 2000); // Check every 2 seconds instead of 1 to reduce restarts
         
         return () => {
             window.removeEventListener('xpUpdated', handleXPUpdate);
             clearInterval(xpCheckInterval);
         };
-    }, [storedUser, userLevel]);
+    }, []); // Empty dependency array - only run once on mount
     const [collapsedCategories, setCollapsedCategories] = useState(() => {
         // Load collapsed state from localStorage
         const saved = localStorage.getItem('collapsedCategories');
@@ -4382,11 +4392,27 @@ Let's build generational wealth together! 💰🚀`,
                         transition: 'all 0.3s ease',
                         borderRadius: '8px 8px 0 0'
                     }}
-                    onClick={() => {
+                    onClick={async () => {
                         if (storedUser?.id) {
-                            navigate(`/public-profile/${storedUser.id}`);
-                        } else {
-                            navigate('/profile');
+                            // Fetch profile data for modal
+                            try {
+                                const baseUrl = window.location.origin;
+                                const response = await fetch(`${baseUrl}/api/users/public-profile/${storedUser.id}`);
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    setProfileModalData(data);
+                                    setShowProfileModal(true);
+                                } else {
+                                    // Fallback to current user data
+                                    setProfileModalData(storedUser);
+                                    setShowProfileModal(true);
+                                }
+                            } catch (error) {
+                                console.error('Error fetching profile:', error);
+                                // Use current user data as fallback
+                                setProfileModalData(storedUser);
+                                setShowProfileModal(true);
+                            }
                         }
                     }}
                     onMouseEnter={(e) => {

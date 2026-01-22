@@ -58,9 +58,9 @@ const WhyInfinity = () => {
                     const responseData = await response.json();
                     // API returns { success: true, data: { price: ... } }
                     const marketData = responseData.data || responseData;
-                    const price = marketData.price;
+                    const price = marketData?.price;
                     
-                    if (responseData.success && price && price > 0) {
+                    if (responseData.success && price && typeof price === 'number' && price > 0 && !isNaN(price)) {
                         const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || price;
                         const change = price - previousPrice;
                         const changePercent = previousPrice > 0 ? ((change / previousPrice) * 100).toFixed(2) : '0.00';
