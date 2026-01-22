@@ -5352,7 +5352,15 @@ Let's build generational wealth together! 💰🚀`,
                                                 : canUserPostInChannel(selectedChannel)
                                                     ? `Message #${selectedChannel.name}`
                                                     : (() => {
+                                                        const permissionType = (selectedChannel.permissionType || 'read-write').toLowerCase();
                                                         const accessLevel = (selectedChannel.accessLevel || 'open').toLowerCase();
+                                                        
+                                                        // Check permission type first
+                                                        if (permissionType === 'read-only') {
+                                                            return `🔒 This channel is read-only. Only admins can post messages.`;
+                                                        }
+                                                        
+                                                        // Then check access level
                                                         if (accessLevel === 'admin-only') {
                                                             return `🔒 Only admins can post in #${selectedChannel.name}`;
                                                         } else if (accessLevel === 'premium') {
