@@ -128,7 +128,7 @@ module.exports = async (req, res) => {
       }
 
       const [users] = await db.execute(query, timeframe === 'all-time' ? [] : [timeframe]);
-      db.release(); // Release connection back to pool
+      // Don't release connection yet - we might need it for creating fake users
 
       // Create real user accounts if we have less than 20 users to populate leaderboard
       const fakeUsernames = [
@@ -197,6 +197,7 @@ module.exports = async (req, res) => {
         };
 
         // Create real user accounts for leaderboard with realistic XP/Level progression
+        // For time-based leaderboards, we'll generate XP logs for different timeframes
         for (let i = 0; i < Math.min(20 - users.length, fakeUsernames.length); i++) {
           const username = fakeUsernames[i];
           const email = `trader${i + 1}@aurafx.com`;
@@ -210,28 +211,111 @@ module.exports = async (req, res) => {
           
           // Check if user already exists
           const [existing] = await db.execute('SELECT id FROM users WHERE email = ?', [email]);
+          let userId;
           
           if (existing.length === 0) {
             // Create new user account
-            await db.execute(
+            const [insertResult] = await db.execute(
               'INSERT INTO users (email, username, name, password, role, xp, level, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
               [email, username, username, 'leaderboard_user_' + Date.now(), 'free', fakeXP, fakeLevel]
             );
+            userId = insertResult.insertId;
           } else {
+            userId = existing[0].id;
             // Update existing user's XP and level
             await db.execute(
               'UPDATE users SET xp = ?, level = ? WHERE email = ?',
               [fakeXP, fakeLevel, email]
             );
           }
+          
+          // Generate XP logs for different timeframes to make bots beatable
+          // For Today: 50-200 XP (achievable by active users)
+          // For This Week: 200-800 XP (achievable by active users)
+          // For This Month: 800-3000 XP (achievable by active users)
+          // Make sure bots are beatable - top bot should have ~200 XP today, ~800 XP this week, ~3000 XP this month
+          
+          // Today's XP gain (50-200 XP range, top users have more)
+          const todayXP = Math.floor(50 + (rankMultiplier * 150)); // 50-200 XP
+          const todayDate = new Date();
+          todayDate.setHours(0, 0, 0, 0);
+          
+          // This Week's XP gain (200-800 XP range)
+          const weekXP = Math.floor(200 + (rankMultiplier * 600)); // 200-800 XP
+          const weekStartDate = new Date();
+          weekStartDate.setDate(weekStartDate.getDate() - 7);
+          weekStartDate.setHours(0, 0, 0, 0);
+          
+          // This Month's XP gain (800-3000 XP range)
+          const monthXP = Math.floor(800 + (rankMultiplier * 2200)); // 800-3000 XP
+          const monthStartDate = new Date();
+          monthStartDate.setDate(monthStartDate.getDate() - 30);
+          monthStartDate.setHours(0, 0, 0, 0);
+          
+          // Generate XP logs for today (multiple activities)
+          const todayActivities = Math.floor(2 + (rankMultiplier * 8)); // 2-10 activities
+          for (let j = 0; j < todayActivities; j++) {
+            const activityXP = Math.floor(todayXP / todayActivities);
+            const activityTime = new Date(todayDate);
+            activityTime.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60), 0, 0);
+            
+            try {
+              await db.execute(
+                'INSERT INTO xp_logs (user_id, xp_amount, action_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                [userId, activityXP, 'message', `Community message - Day ${j + 1}`, activityTime]
+              );
+            } catch (e) {
+              // Ignore duplicate or errors
+            }
+          }
+          
+          // Generate XP logs for this week (distributed across days)
+          const weekActivities = Math.floor(5 + (rankMultiplier * 20)); // 5-25 activities
+          for (let j = 0; j < weekActivities; j++) {
+            const activityXP = Math.floor(weekXP / weekActivities);
+            const daysAgo = Math.floor(Math.random() * 7);
+            const activityTime = new Date(weekStartDate);
+            activityTime.setDate(activityTime.getDate() + daysAgo);
+            activityTime.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60), 0, 0);
+            
+            try {
+              await db.execute(
+                'INSERT INTO xp_logs (user_id, xp_amount, action_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                [userId, activityXP, 'message', `Community message - Week activity ${j + 1}`, activityTime]
+              );
+            } catch (e) {
+              // Ignore duplicate or errors
+            }
+          }
+          
+          // Generate XP logs for this month (distributed across days)
+          const monthActivities = Math.floor(20 + (rankMultiplier * 80)); // 20-100 activities
+          for (let j = 0; j < monthActivities; j++) {
+            const activityXP = Math.floor(monthXP / monthActivities);
+            const daysAgo = Math.floor(Math.random() * 30);
+            const activityTime = new Date(monthStartDate);
+            activityTime.setDate(activityTime.getDate() + daysAgo);
+            activityTime.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60), 0, 0);
+            
+            try {
+              await db.execute(
+                'INSERT INTO xp_logs (user_id, xp_amount, action_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                [userId, activityXP, 'message', `Community message - Month activity ${j + 1}`, activityTime]
+              );
+            } catch (e) {
+              // Ignore duplicate or errors
+            }
+          }
         }
         
         // Re-fetch users after creating/updating
-        const [updatedUsers] = await db.execute(query);
+        const [updatedUsers] = await db.execute(query, timeframe === 'all-time' ? [] : [timeframe]);
         users.length = 0;
         users.push(...updatedUsers);
-        db.release(); // Release connection back to pool
       }
+      
+      // Release connection after all operations
+      db.release();
 
       // Update users with generic trading-related usernames to more realistic names
       const genericNames = ['ProTrader', 'CommodityTrader', 'MarketMaster', 'DayTrader', 'SwingTrader', 

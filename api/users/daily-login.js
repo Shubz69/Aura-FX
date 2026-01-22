@@ -2,6 +2,16 @@ const { getDbConnection } = require('../db');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 
+// Add timeout wrapper for database operations
+const withTimeout = (promise, timeoutMs = 5000) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Operation timeout')), timeoutMs)
+    )
+  ]);
+};
+
 /**
  * Calculate XP reward based on login streak
  * Base: 25 XP, scales with streak length
@@ -69,34 +79,42 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User ID is required' });
     }
 
-    const db = await getDbConnection();
+    // Use timeout wrapper for database connection
+    let db;
+    try {
+      db = await withTimeout(getDbConnection(), 3000);
+    } catch (error) {
+      console.error('Database connection timeout:', error);
+      return res.status(500).json({ success: false, message: 'Database connection timeout' });
+    }
+    
     if (!db) {
       return res.status(500).json({ success: false, message: 'Database connection error' });
     }
 
     try {
-      // Ensure required columns exist
+      // Ensure required columns exist (with timeout)
       try {
-        await db.execute('SELECT login_streak, last_login_date, xp, level FROM users LIMIT 1');
+        await withTimeout(db.execute('SELECT login_streak, last_login_date, xp, level FROM users LIMIT 1'), 2000);
       } catch (e) {
-        // Add missing columns
+        // Add missing columns (skip if timeout - columns might already exist)
         try {
-          await db.execute('ALTER TABLE users ADD COLUMN login_streak INT DEFAULT 0');
+          await withTimeout(db.execute('ALTER TABLE users ADD COLUMN login_streak INT DEFAULT 0'), 2000);
         } catch (e2) {}
         try {
-          await db.execute('ALTER TABLE users ADD COLUMN last_login_date DATE DEFAULT NULL');
+          await withTimeout(db.execute('ALTER TABLE users ADD COLUMN last_login_date DATE DEFAULT NULL'), 2000);
         } catch (e2) {}
         try {
-          await db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(10, 2) DEFAULT 0');
+          await withTimeout(db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(10, 2) DEFAULT 0'), 2000);
         } catch (e2) {}
         try {
-          await db.execute('ALTER TABLE users ADD COLUMN level INT DEFAULT 1');
+          await withTimeout(db.execute('ALTER TABLE users ADD COLUMN level INT DEFAULT 1'), 2000);
         } catch (e2) {}
       }
 
-      // Ensure xp_logs table exists
+      // Ensure xp_logs table exists (with timeout)
       try {
-        await db.execute(`
+        await withTimeout(db.execute(`
           CREATE TABLE IF NOT EXISTS xp_logs (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
@@ -108,15 +126,15 @@ module.exports = async (req, res) => {
             INDEX idx_created_at (created_at),
             INDEX idx_action_type (action_type)
           )
-        `);
+        `), 3000);
       } catch (tableError) {
-        // Table already exists
+        // Table already exists or timeout - continue
       }
 
-      // Get current user data
-      const [users] = await db.execute(
-        'SELECT id, login_streak, last_login_date, xp, level FROM users WHERE id = ?',
-        [userId]
+      // Get current user data (with timeout)
+      const [users] = await withTimeout(
+        db.execute('SELECT id, login_streak, last_login_date, xp, level FROM users WHERE id = ?', [userId]),
+        2000
       );
 
       if (!users || users.length === 0) {
@@ -128,8 +146,8 @@ module.exports = async (req, res) => {
       const currentStreak = user.login_streak || 0;
       
       // Use MySQL CURDATE() for server-side date (timezone-independent)
-      // Get today's date from database to ensure consistency
-      const [dateRows] = await db.execute('SELECT CURDATE() as today');
+      // Get today's date from database to ensure consistency (with timeout)
+      const [dateRows] = await withTimeout(db.execute('SELECT CURDATE() as today'), 2000);
       const todayStr = dateRows[0].today;
       
       // Handle last_login_date - can be DATE or DATETIME
@@ -155,7 +173,11 @@ module.exports = async (req, res) => {
         
         if (daysDiff === 0) {
           // Already logged in today, return current streak without awarding XP
-          await db.end();
+          if (db && !db.ended) {
+            try {
+              await db.end();
+            } catch (e) {}
+          }
           return res.status(200).json({
             success: true,
             alreadyLoggedIn: true,
@@ -165,10 +187,10 @@ module.exports = async (req, res) => {
         } else if (daysDiff > 1) {
           // Missed a day (or more), reset streak to 0 first, then start new streak at 1
           // First, reset streak to 0 to reflect the missed days
-          await db.execute(
+          await withTimeout(db.execute(
             'UPDATE users SET login_streak = 0 WHERE id = ?',
             [userId]
-          );
+          ), 2000);
           
           // Now start a new streak at 1 for today's login
           const newStreak = 1;
@@ -176,18 +198,27 @@ module.exports = async (req, res) => {
           const newXP = (parseFloat(user.xp) || 0) + xpReward;
           const newLevel = getLevelFromXP(newXP);
           
-          await db.execute(
+          await withTimeout(db.execute(
             'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ?',
             [newStreak, newXP, newLevel, userId]
-          );
+          ), 2000);
           
-          // Log XP gain
-          await db.execute(
-            'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
-            [userId, xpReward, 'daily_login', `Daily login - Streak reset to 0, new streak started (1 day)`]
-          );
+          // Log XP gain (non-blocking - don't wait if it times out)
+          try {
+            await withTimeout(db.execute(
+              'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
+              [userId, xpReward, 'daily_login', `Daily login - Streak reset to 0, new streak started (1 day)`]
+            ), 2000);
+          } catch (logError) {
+            // Log error but don't fail the request
+            console.warn('Failed to log XP gain:', logError);
+          }
           
-          await db.end();
+          if (db && !db.ended) {
+            try {
+              await db.end();
+            } catch (e) {}
+          }
           return res.status(200).json({
             success: true,
             streak: newStreak,
@@ -211,17 +242,22 @@ module.exports = async (req, res) => {
       const newLevel = getLevelFromXP(newXP);
       const leveledUp = newLevel > (parseInt(user.level) || 1);
 
-      // Update user streak, last login date, XP, and level
-      await db.execute(
+      // Update user streak, last login date, XP, and level (with timeout)
+      await withTimeout(db.execute(
         'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ?',
         [newStreak, newXP, newLevel, userId]
-      );
+      ), 2000);
 
-      // Log XP gain
-      await db.execute(
-        'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
-        [userId, xpReward, 'daily_login', `Daily login - ${newStreak} day streak`]
-      );
+      // Log XP gain (non-blocking - don't wait if it times out)
+      try {
+        await withTimeout(db.execute(
+          'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
+          [userId, xpReward, 'daily_login', `Daily login - ${newStreak} day streak`]
+        ), 2000);
+      } catch (logError) {
+        // Log error but don't fail the request
+        console.warn('Failed to log XP gain:', logError);
+      }
 
       // If user leveled up, trigger level-up notification (optional)
       if (leveledUp) {
@@ -229,7 +265,11 @@ module.exports = async (req, res) => {
         console.log(`User ${userId} leveled up to ${newLevel} from daily login`);
       }
 
-      await db.end();
+      if (db && !db.ended) {
+        try {
+          await db.end();
+        } catch (e) {}
+      }
 
       return res.status(200).json({
         success: true,

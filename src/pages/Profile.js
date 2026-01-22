@@ -189,11 +189,17 @@ const Profile = () => {
                         }
 
                         // Load login streak and achievements
-                        // Fetch latest streak from API (includes daily login check)
+                        // Fetch latest streak from API (includes daily login check) - non-blocking with timeout
                         const currentUserId = user?.id || userData.id;
                         if (currentUserId) {
+                            // Use Promise.race to timeout after 3 seconds
+                            const loginCheckPromise = Api.checkDailyLogin(currentUserId);
+                            const timeoutPromise = new Promise((_, reject) => 
+                                setTimeout(() => reject(new Error('Timeout')), 3000)
+                            );
+                            
                             try {
-                                const loginResponse = await Api.checkDailyLogin(currentUserId);
+                                const loginResponse = await Promise.race([loginCheckPromise, timeoutPromise]);
                                 if (loginResponse.data && loginResponse.data.success) {
                                     setLoginStreak(loginResponse.data.streak || userData.login_streak || 0);
                                     // Update XP/level if they changed
@@ -208,7 +214,8 @@ const Profile = () => {
                                     setLoginStreak(userData.login_streak || 0);
                                 }
                             } catch (error) {
-                                // Fallback to stored value if API fails
+                                // Fallback to stored value if API fails or times out
+                                console.warn('Daily login check failed or timed out, using stored value:', error);
                                 setLoginStreak(userData.login_streak || 0);
                             }
                         } else {

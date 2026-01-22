@@ -198,7 +198,10 @@ export const AuthProvider = ({ children }) => {
                 }
               } catch (error) {
                 // Silently fail - don't block app loading
-                console.error('Daily login check failed:', error);
+                // Only log if it's not a timeout (to reduce console noise)
+                if (!error.message || (!error.message.includes('timeout') && !error.message.includes('Timeout'))) {
+                  console.error('Daily login check failed:', error);
+                }
               }
             }, 500); // Small delay to let app load first
           }
