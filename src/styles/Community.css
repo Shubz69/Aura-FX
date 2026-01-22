@@ -1164,24 +1164,45 @@ html.community-page-active {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.75rem;
-    color: var(--accent-green);
+    font-size: 0;
+    color: transparent;
     margin-bottom: 8px;
     padding-left: 16px;
     font-weight: 600;
+    position: relative;
+}
+
+.connection-status span:last-child {
+    display: none; /* Hide the text, only show the circle */
 }
 
 .status-dot.connected {
     background: var(--accent-green);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
 }
 
 .status-dot.connecting {
     background: #F59E0B;
-    animation: pulse 2s infinite;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    animation: statusPulse 2s ease-in-out infinite;
 }
 
 .status-dot.error {
     background: #EF4444;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    animation: statusPulse 2s ease-in-out infinite;
 }
 
 .status-dot {
@@ -1189,6 +1210,8 @@ html.community-page-active {
     height: 8px;
     border-radius: 50%;
     background: var(--accent-green);
+    display: inline-block;
+    flex-shrink: 0;
     animation: statusPulse 2s ease-in-out infinite;
 }
 
