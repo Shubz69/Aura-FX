@@ -12,6 +12,73 @@ const Home = () => {
     const { isAuthenticated } = useAuth();
     const [showContent, setShowContent] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [marketData, setMarketData] = useState([]);
+
+    // Fetch live market data for ticker
+    useEffect(() => {
+        const fetchMarketData = async () => {
+            const symbols = [
+                // Stocks
+                'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA',
+                // Forex
+                'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD',
+                // Commodities
+                'XAUUSD', 'XAGUSD', 'CL=F' // Gold, Silver, Oil
+            ];
+
+            const fetchData = async (symbol) => {
+                try {
+                    const API_BASE_URL = window.location.origin;
+                    const response = await fetch(`${API_BASE_URL}/api/ai/market-data`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ symbol, type: 'quote' })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.price) {
+                            const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || data.price;
+                            const change = data.price - previousPrice;
+                            const changePercent = ((change / previousPrice) * 100).toFixed(2);
+                            
+                            localStorage.setItem(`prev_${symbol}`, data.price.toString());
+                            
+                            return {
+                                symbol: symbol.length > 6 ? symbol.substring(0, 6) : symbol,
+                                price: data.price.toFixed(2),
+                                change: changePercent >= 0 ? `+${changePercent}` : changePercent.toString(),
+                                isUp: change >= 0
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error fetching ${symbol}:`, error);
+                }
+                return null;
+            };
+
+            // Fetch all symbols in parallel
+            const results = await Promise.all(symbols.map(fetchData));
+            const validData = results.filter(item => item !== null);
+            setMarketData(validData);
+
+            // Update every 30 seconds
+            const interval = setInterval(async () => {
+                const results = await Promise.all(symbols.map(fetchData));
+                const validData = results.filter(item => item !== null);
+                setMarketData(validData);
+            }, 30000);
+
+            return () => clearInterval(interval);
+        };
+
+        if (showContent) {
+            fetchMarketData();
+        }
+    }, [showContent]);
 
     // Loading effect
     useEffect(() => {
@@ -89,6 +156,23 @@ const Home = () => {
                                     Transform Your Trading Career with Elite Education and Proven Strategies
                                 </p>
                             </div>
+
+                            {/* Stock Ticker Banner */}
+                            {marketData.length > 0 && (
+                                <div className="stock-ticker-compact">
+                                    <div className="ticker">
+                                        {marketData.concat(marketData).map((item, index) => (
+                                            <div key={`${item.symbol}-${index}`} className="ticker-item">
+                                                <span className="ticker-symbol">{item.symbol}</span>
+                                                <span className="ticker-price">{item.price}</span>
+                                                <span className={`ticker-change ${item.isUp ? 'ticker-up' : 'ticker-down'}`}>
+                                                    {item.isUp ? "▲" : "▼"} {item.change}%
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Feature Cards */}
                             <div className="feature-cards-grid">

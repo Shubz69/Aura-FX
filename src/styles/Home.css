@@ -291,6 +291,60 @@ body.loading-active {
     color: #ffffff;
     letter-spacing: 0.05em;
     line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+/* Stock Ticker Banner */
+.stock-ticker-compact {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin: 0 auto 3rem;
+    max-width: 1000px;
+    height: 48px;
+}
+
+.ticker {
+    display: inline-flex;
+    white-space: nowrap;
+    animation: ticker 30s linear infinite;
+}
+
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.7rem 1.5rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.ticker-symbol {
+    font-weight: 300;
+    margin-right: 0.75rem;
+    color: #ffffff;
+}
+
+.ticker-price {
+    margin-right: 0.75rem;
+    color: #ffffff;
+    font-weight: 300;
+}
+
+.ticker-up {
+    color: #ffffff;
+    font-weight: 300;
+}
+
+.ticker-down {
+    color: #ff4563;
+    font-weight: 300;
+}
+
+@keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
 /* Feature Cards Grid */
