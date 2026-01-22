@@ -630,9 +630,14 @@ module.exports = async (req, res) => {
       if (successfulResults.length > 0) {
         let priorityOrder = [];
         
+        const isSilver = normalizedSymbol === 'XAGUSD' || normalizedSymbol === 'SILVER' || normalizedSymbol === 'XAG' || normalizedSymbol.includes('XAG');
+        
         if (isGold) {
           // Gold: Prioritize spot prices from OANDA and dedicated metals APIs
           priorityOrder = ['Finnhub', 'Metal API', 'Yahoo Finance (XAU=X)', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
+        } else if (isSilver) {
+          // Silver: Prioritize OANDA (Finnhub) and Yahoo Finance spot prices
+          priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'Alpha Vantage'];
         } else if (isForex) {
           // Forex: Prioritize OANDA (Finnhub) for spot prices, then Yahoo Finance
           priorityOrder = ['Finnhub', 'Yahoo Finance', 'Twelve Data', 'ExchangeRate-API', 'Alpha Vantage'];
@@ -737,16 +742,55 @@ module.exports = async (req, res) => {
 
     // ALWAYS return data - never fail completely
     // If we still don't have data, return a basic response with the symbol
-    if (!marketData) {
-      // Return minimal data structure so AI can still respond
-      marketData = {
-        symbol: normalizedSymbol,
-        price: 0,
-        message: 'Data source temporarily unavailable, but symbol recognized',
-        instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
-        source: 'Fallback'
-      };
-      dataSources.push('Fallback');
+    if (!marketData || !marketData.price || marketData.price === 0) {
+      // Try one more time with Yahoo Finance as last resort for XAGUSD specifically
+      if (normalizedSymbol === 'XAGUSD' || normalizedSymbol === 'SILVER' || normalizedSymbol === 'XAG') {
+        try {
+          const yahooResponse = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/XAG=X`, {
+            params: { interval: '1m', range: '1d' },
+            timeout: 5000
+          });
+          
+          if (yahooResponse.data && yahooResponse.data.chart && yahooResponse.data.chart.result && yahooResponse.data.chart.result.length > 0) {
+            const result = yahooResponse.data.chart.result[0];
+            const meta = result.meta;
+            
+            if (meta && meta.regularMarketPrice) {
+              marketData = {
+                symbol: 'XAGUSD',
+                price: meta.regularMarketPrice,
+                open: meta.regularMarketOpen || meta.previousClose,
+                high: meta.regularMarketDayHigh || meta.regularMarketPrice,
+                low: meta.regularMarketDayLow || meta.regularMarketPrice,
+                previousClose: meta.previousClose,
+                volume: meta.regularMarketVolume || 0,
+                change: meta.regularMarketPrice - meta.previousClose,
+                changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2) + '%',
+                currency: 'USD',
+                exchange: 'FOREX',
+                timestamp: (meta.regularMarketTime * 1000) || Date.now(),
+                instrumentType: 'commodity',
+                source: 'Yahoo Finance (XAG=X)'
+              };
+              dataSources.push('Yahoo Finance (XAG=X)');
+            }
+          }
+        } catch (yahooError) {
+          console.log('Final Yahoo Finance fallback for XAGUSD failed:', yahooError.message);
+        }
+      }
+      
+      // If still no data, return minimal structure
+      if (!marketData || !marketData.price || marketData.price === 0) {
+        marketData = {
+          symbol: normalizedSymbol,
+          price: 0,
+          message: 'Data source temporarily unavailable, but symbol recognized',
+          instrumentType: isGold ? 'commodity' : isForex ? 'forex' : isCrypto ? 'crypto' : isCommodity ? 'commodity' : isIndex ? 'index' : 'stock',
+          source: 'Fallback'
+        };
+        dataSources.push('Fallback');
+      }
     }
 
     // Add timestamp to ensure data freshness

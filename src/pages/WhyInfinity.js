@@ -58,9 +58,19 @@ const WhyInfinity = () => {
                     const responseData = await response.json();
                     // API returns { success: true, data: { price: ... } }
                     const marketData = responseData.data || responseData;
-                    const price = marketData?.price;
                     
-                    if (responseData.success && price && typeof price === 'number' && price > 0 && !isNaN(price)) {
+                    // Extract price - handle multiple possible formats
+                    let price = null;
+                    if (marketData?.price !== undefined) {
+                        price = typeof marketData.price === 'string' ? parseFloat(marketData.price) : marketData.price;
+                    } else if (marketData?.regularMarketPrice !== undefined) {
+                        price = typeof marketData.regularMarketPrice === 'string' ? parseFloat(marketData.regularMarketPrice) : marketData.regularMarketPrice;
+                    } else if (marketData?.c !== undefined) {
+                        price = typeof marketData.c === 'string' ? parseFloat(marketData.c) : marketData.c;
+                    }
+                    
+                    // Validate price - allow 0 for some edge cases, but must be a valid number
+                    if (responseData.success && price !== null && !isNaN(price) && typeof price === 'number' && isFinite(price) && price >= 0) {
                         const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || price;
                         const change = price - previousPrice;
                         const changePercent = previousPrice > 0 ? ((change / previousPrice) * 100).toFixed(2) : '0.00';
