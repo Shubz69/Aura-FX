@@ -1218,8 +1218,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         const completionParams = {
           model: 'gpt-4o', // GPT-4o supports vision
           messages: messages,
-          temperature: 0.8, // Slightly higher for more natural, human-like responses
-          max_tokens: 800, // Reduced for faster generation - responses should be concise but thorough
+          temperature: 0.9, // Higher temperature for more natural, conversational, ChatGPT-like responses
+          max_tokens: 1500, // Increased for more comprehensive, natural responses
         };
 
         // ALWAYS add functions - AI must be able to fetch data even with images
