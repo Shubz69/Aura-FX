@@ -541,6 +541,12 @@ const Profile = () => {
                             src={bannerPreview || formData.banner} 
                             alt="Banner" 
                             className="profile-banner"
+                            style={{
+                                imageRendering: 'high-quality',
+                                imageRendering: '-webkit-optimize-contrast',
+                                imageRendering: 'crisp-edges'
+                            }}
+                            loading="eager"
                         />
                     ) : (
                         <div className="profile-banner-placeholder">
@@ -569,6 +575,12 @@ const Profile = () => {
                             src={avatarPreview || getAvatarPath(formData.avatar)} 
                             alt="Avatar" 
                             className="profile-avatar"
+                            style={{
+                                imageRendering: 'high-quality',
+                                imageRendering: '-webkit-optimize-contrast',
+                                imageRendering: 'crisp-edges'
+                            }}
+                            loading="eager"
                         />
                         <input
                             type="file"
