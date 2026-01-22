@@ -1305,8 +1305,25 @@ const Community = () => {
             const xpResult = await awardXP(earnedXP);
             if (xpResult) {
                 console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
+                
+                // Trigger XP update event
+                window.dispatchEvent(new CustomEvent('xpUpdated', {
+                    detail: {
+                        earnedXP: earnedXP,
+                        newXP: xpResult.newXP,
+                        newLevel: xpResult.newLevel,
+                        leveledUp: xpResult.leveledUp
+                    }
+                }));
+                
                 if (xpResult.leveledUp) {
                     console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
+                    window.dispatchEvent(new CustomEvent('levelUp', {
+                        detail: {
+                            newLevel: xpResult.newLevel,
+                            newXP: xpResult.newXP
+                        }
+                    }));
                 }
             } else {
                 console.error('❌ Failed to award XP for GIF');
@@ -2983,10 +3000,27 @@ Let's build generational wealth together! 💰🚀`,
             const xpResult = await awardXP(earnedXP);
             if (xpResult) {
                 console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
+                
+                // Trigger a custom event so profile page can listen for XP updates
+                window.dispatchEvent(new CustomEvent('xpUpdated', {
+                    detail: {
+                        earnedXP: earnedXP,
+                        newXP: xpResult.newXP,
+                        newLevel: xpResult.newLevel,
+                        leveledUp: xpResult.leveledUp
+                    }
+                }));
+                
                 if (xpResult.leveledUp) {
                     // Show level-up notification
                     console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
-                    // You can add a toast notification here if desired
+                    // Trigger level-up event
+                    window.dispatchEvent(new CustomEvent('levelUp', {
+                        detail: {
+                            newLevel: xpResult.newLevel,
+                            newXP: xpResult.newXP
+                        }
+                    }));
                 }
             } else {
                 console.error('❌ Failed to award XP');

@@ -290,15 +290,33 @@ export const getXPForNextLevel = (currentLevel) => {
  * Get XP progress for current level
  */
 export const getXPProgress = (currentXP, currentLevel) => {
+    if (currentLevel >= 1000) {
+        return {
+            current: 0,
+            needed: 0,
+            percentage: 100
+        };
+    }
+    
+    // Calculate XP thresholds for current and next level
     const xpForCurrentLevel = currentLevel > 1 ? getXPForNextLevel(currentLevel - 1) : 0;
     const xpForNextLevel = getXPForNextLevel(currentLevel);
-    const xpInCurrentLevel = currentXP - xpForCurrentLevel;
+    
+    // XP in current level (how much XP the user has earned in this level)
+    const xpInCurrentLevel = Math.max(0, currentXP - xpForCurrentLevel);
+    
+    // XP needed to reach next level from current level threshold
     const xpNeededForNext = xpForNextLevel - xpForCurrentLevel;
     
+    // Calculate percentage (ensure it's between 0 and 100)
+    const percentage = xpNeededForNext > 0 
+        ? Math.min(100, Math.max(0, (xpInCurrentLevel / xpNeededForNext) * 100))
+        : 100;
+    
     return {
-        current: xpInCurrentLevel,
-        needed: xpNeededForNext,
-        percentage: Math.min(100, (xpInCurrentLevel / xpNeededForNext) * 100)
+        current: Math.max(0, xpInCurrentLevel),
+        needed: Math.max(1, xpNeededForNext),
+        percentage: percentage
     };
 };
 

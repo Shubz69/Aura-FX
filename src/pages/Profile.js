@@ -204,19 +204,55 @@ const Profile = () => {
 
         loadProfile();
         
-        // Set up interval to refresh XP from localStorage every 2 seconds (for real-time updates)
+        // Listen for XP update events from Community page
+        const handleXPUpdate = (event) => {
+            const { newXP, newLevel } = event.detail;
+            setFormData(prev => ({
+                ...prev,
+                xp: newXP,
+                level: newLevel
+            }));
+        };
+        
+        // Listen for level-up events
+        const handleLevelUp = (event) => {
+            const { newLevel } = event.detail;
+            // Could show a toast notification here
+            console.log(`🎉 Level Up! You reached level ${newLevel}!`);
+        };
+        
+        window.addEventListener('xpUpdated', handleXPUpdate);
+        window.addEventListener('levelUp', handleLevelUp);
+        
+        // Set up interval to refresh XP from localStorage every 1 second (for real-time updates)
         const xpRefreshInterval = setInterval(() => {
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             if (storedUser.xp !== undefined && storedUser.level !== undefined) {
-                setFormData(prev => ({
-                    ...prev,
-                    xp: storedUser.xp || prev.xp,
-                    level: storedUser.level || prev.level
-                }));
+                const currentXP = parseFloat(storedUser.xp || 0);
+                const currentLevel = parseInt(storedUser.level || 1);
+                
+                setFormData(prev => {
+                    // Only update if values actually changed to trigger re-render
+                    const xpChanged = Math.abs(parseFloat(prev.xp || 0) - currentXP) > 0.01;
+                    const levelChanged = parseInt(prev.level || 1) !== currentLevel;
+                    
+                    if (xpChanged || levelChanged) {
+                        return {
+                            ...prev,
+                            xp: currentXP,
+                            level: currentLevel
+                        };
+                    }
+                    return prev;
+                });
             }
-        }, 2000);
+        }, 1000); // Check every second for real-time updates
         
-        return () => clearInterval(xpRefreshInterval);
+        return () => {
+            clearInterval(xpRefreshInterval);
+            window.removeEventListener('xpUpdated', handleXPUpdate);
+            window.removeEventListener('levelUp', handleLevelUp);
+        };
     }, [user]);
 
     const handleChange = (e) => {
@@ -480,20 +516,22 @@ const Profile = () => {
                 {/* XP Progress Bar */}
                 <div className="xp-progress-container">
                     <div className="xp-progress-header">
-                        <span>Progress to Level {formData.level + 1}</span>
+                        <span>Progress to Level {(formData.level || 1) + 1}</span>
                         <span>{Math.round(xpProgress.percentage)}%</span>
                     </div>
                     <div className="xp-progress-bar">
                         <div 
                             className="xp-progress-fill"
+                            key={`xp-${formData.xp}-${formData.level}`} // Force re-render on XP change
                             style={{ 
-                                width: `${xpProgress.percentage}%`,
-                                background: `linear-gradient(90deg, ${tierColor} 0%, ${tierColor}dd 100%)`
+                                width: `${Math.max(0, Math.min(100, xpProgress.percentage))}%`,
+                                background: `linear-gradient(90deg, ${tierColor} 0%, ${tierColor}dd 100%)`,
+                                transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
                             }}
                         ></div>
                     </div>
                     <div className="xp-progress-text">
-                        {xpProgress.current.toLocaleString()} / {xpProgress.needed.toLocaleString()} XP
+                        {Math.round(xpProgress.current).toLocaleString()} / {Math.round(xpProgress.needed).toLocaleString()} XP
                     </div>
                 </div>
 
