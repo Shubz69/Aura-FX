@@ -277,14 +277,19 @@ export const AuthProvider = ({ children }) => {
         
         const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
         const pendingSubscription = localStorage.getItem('pendingSubscription') === 'true';
-        const isAdmin = data.role === 'ADMIN' || data.role === 'admin' || data.role === 'super_admin';
+        const userRole = (data.role || '').toLowerCase();
+        const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN';
+        const isPremium = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
+        const hasActiveSubscriptionStatus = data.subscription_status === 'active';
         
-        // If no subscription and not admin, redirect to subscription page
-        if (!isAdmin && !hasActiveSubscription && !pendingSubscription) {
-            navigate('/subscription');
-        } else {
+        // CRITICAL: Admins and premium role users ALWAYS go to community
+        // Premium role grants access regardless of subscription_status
+        if (isAdmin || isPremium || hasActiveSubscription || hasActiveSubscriptionStatus || pendingSubscription) {
             // Redirect to community after successful login
             navigate('/community');
+        } else {
+            // Only redirect to subscription if user is truly free (no role, no subscription)
+            navigate('/subscription');
         }
         
         return data;
