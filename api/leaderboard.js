@@ -166,12 +166,47 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN level INT DEFAULT 1');
         }
 
-        // Create real user accounts for leaderboard
+        // Calculate level from XP using the correct XP system formula
+        const getLevelFromXP = (xp) => {
+          if (xp <= 0) return 1;
+          if (xp >= 1000000) return 1000;
+          
+          if (xp < 500) {
+            return Math.floor(Math.sqrt(xp / 50)) + 1;
+          } else if (xp < 5000) {
+            const baseLevel = 10;
+            const remainingXP = xp - 500;
+            return baseLevel + Math.floor(Math.sqrt(remainingXP / 100)) + 1;
+          } else if (xp < 20000) {
+            const baseLevel = 50;
+            const remainingXP = xp - 5000;
+            return baseLevel + Math.floor(Math.sqrt(remainingXP / 200)) + 1;
+          } else if (xp < 100000) {
+            const baseLevel = 100;
+            const remainingXP = xp - 20000;
+            return baseLevel + Math.floor(Math.sqrt(remainingXP / 500)) + 1;
+          } else if (xp < 500000) {
+            const baseLevel = 200;
+            const remainingXP = xp - 100000;
+            return baseLevel + Math.floor(Math.sqrt(remainingXP / 1000)) + 1;
+          } else {
+            const baseLevel = 500;
+            const remainingXP = xp - 500000;
+            return Math.min(1000, baseLevel + Math.floor(Math.sqrt(remainingXP / 2000)) + 1);
+          }
+        };
+
+        // Create real user accounts for leaderboard with realistic XP/Level progression
         for (let i = 0; i < Math.min(20 - users.length, fakeUsernames.length); i++) {
           const username = fakeUsernames[i];
           const email = `trader${i + 1}@aurafx.com`;
-          const fakeXP = Math.floor(Math.random() * 50000) + 1000; // 1000-51000 XP
-          const fakeLevel = Math.floor(Math.sqrt(fakeXP / 5000)) + 1; // HARD LEVELING
+          // Generate realistic XP values that make sense with level progression
+          // Top users should have higher XP (30k-50k), mid users (10k-30k), lower users (1k-10k)
+          const rankMultiplier = (20 - i) / 20; // Higher rank = more XP
+          const baseXP = 1000 + (rankMultiplier * 49000); // Range: 1000-50000
+          const variance = Math.random() * 5000; // Add some variance
+          const fakeXP = Math.floor(baseXP + variance);
+          const fakeLevel = getLevelFromXP(fakeXP); // Use correct level calculation
           
           // Check if user already exists
           const [existing] = await db.execute('SELECT id FROM users WHERE email = ?', [email]);
@@ -240,22 +275,64 @@ module.exports = async (req, res) => {
         }
       }
 
-      const leaderboard = users.map((user, index) => ({
-        rank: index + 1,
-        id: user.id,
-        userId: user.id,
-        username: user.username || user.name || user.email?.split('@')[0] || 'User',
-        email: user.email,
-        xp: timeframe === 'all-time' 
+      // Calculate level from XP function (same as above, for recalculating levels)
+      const getLevelFromXP = (xp) => {
+        if (xp <= 0) return 1;
+        if (xp >= 1000000) return 1000;
+        
+        if (xp < 500) {
+          return Math.floor(Math.sqrt(xp / 50)) + 1;
+        } else if (xp < 5000) {
+          const baseLevel = 10;
+          const remainingXP = xp - 500;
+          return baseLevel + Math.floor(Math.sqrt(remainingXP / 100)) + 1;
+        } else if (xp < 20000) {
+          const baseLevel = 50;
+          const remainingXP = xp - 5000;
+          return baseLevel + Math.floor(Math.sqrt(remainingXP / 200)) + 1;
+        } else if (xp < 100000) {
+          const baseLevel = 100;
+          const remainingXP = xp - 20000;
+          return baseLevel + Math.floor(Math.sqrt(remainingXP / 500)) + 1;
+        } else if (xp < 500000) {
+          const baseLevel = 200;
+          const remainingXP = xp - 100000;
+          return baseLevel + Math.floor(Math.sqrt(remainingXP / 1000)) + 1;
+        } else {
+          const baseLevel = 500;
+          const remainingXP = xp - 500000;
+          return Math.min(1000, baseLevel + Math.floor(Math.sqrt(remainingXP / 2000)) + 1);
+        }
+      };
+
+      const leaderboard = users.map((user, index) => {
+        const userXP = timeframe === 'all-time' 
           ? (hasXp ? (parseFloat(user.xp) || 0) : 0)
-          : (parseFloat(user.xp_gain) || 0), // Show XP gain for time-based leaderboards
-        xpGain: timeframe !== 'all-time' ? (parseFloat(user.xp_gain) || 0) : null, // Explicit XP gain field
-        totalXP: hasXp ? (parseFloat(user.xp) || 0) : 0, // Always include total XP for reference
-        level: hasLevel ? (parseInt(user.level) || 1) : 1,
-        avatar: user.avatar || 'avatar_ai.png',
-        role: user.role || 'free',
-        strikes: 0
-      }));
+          : (parseFloat(user.xp_gain) || 0);
+        const totalXP = hasXp ? (parseFloat(user.xp) || 0) : 0;
+        
+        // Recalculate level from XP to ensure it matches (fixes any inconsistencies)
+        const calculatedLevel = getLevelFromXP(totalXP || userXP);
+        const storedLevel = hasLevel ? (parseInt(user.level) || 1) : 1;
+        
+        // Use calculated level if it differs from stored (ensures consistency)
+        const finalLevel = Math.abs(calculatedLevel - storedLevel) > 1 ? calculatedLevel : storedLevel;
+        
+        return {
+          rank: index + 1,
+          id: user.id,
+          userId: user.id,
+          username: user.username || user.name || user.email?.split('@')[0] || 'User',
+          email: user.email,
+          xp: userXP,
+          xpGain: timeframe !== 'all-time' ? (parseFloat(user.xp_gain) || 0) : null,
+          totalXP: totalXP,
+          level: finalLevel,
+          avatar: user.avatar || 'avatar_ai.png',
+          role: user.role || 'free',
+          strikes: 0
+        };
+      });
 
       // Cache the result
       setCached(cacheKey, leaderboard);

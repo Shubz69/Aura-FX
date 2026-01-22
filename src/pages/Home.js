@@ -224,15 +224,27 @@ const Home = () => {
                             {/* Stock Ticker Banner */}
                             <div className="stock-ticker-compact">
                                 <div className="ticker">
-                                    {marketData.concat(marketData).map((item, index) => (
-                                        <div key={`${item.symbol}-${index}`} className="ticker-item">
-                                            <span className="ticker-symbol">{item.symbol}</span>
-                                            <span className="ticker-price">{item.price}</span>
-                                            <span className={`ticker-change ${item.isUp ? 'ticker-up' : 'ticker-down'}`}>
-                                                {item.isUp ? "▲" : "▼"} {item.change}
-                                            </span>
-                                        </div>
-                                    ))}
+                                    {marketData.concat(marketData).map((item, index) => {
+                                        const priceKey = `${item.symbol}-${item.price}`;
+                                        return (
+                                            <div key={`${item.symbol}-${index}`} className="ticker-item">
+                                                <span className="ticker-symbol">{item.symbol}</span>
+                                                <span 
+                                                    key={priceKey}
+                                                    className={`ticker-price ${item.isUp ? 'price-up' : 'price-down'}`}
+                                                    style={{
+                                                        transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                        display: 'inline-block'
+                                                    }}
+                                                >
+                                                    {item.price}
+                                                </span>
+                                                <span className={`ticker-change ${item.isUp ? 'ticker-up' : 'ticker-down'}`}>
+                                                    {item.isUp ? "▲" : "▼"} {item.change}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
