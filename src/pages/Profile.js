@@ -277,16 +277,66 @@ const Profile = () => {
         }
 
         try {
-            const base64 = await convertToBase64(file);
-            setAvatarPreview(base64);
-            setFormData(prev => ({
-                ...prev,
-                avatar: base64
-            }));
-            setEditedUserData(prev => ({
-                ...prev,
-                avatar: base64
-            }));
+            // Optimize image quality for clarity
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                // Set canvas size to maintain quality (max 512x512 for optimal clarity)
+                const maxSize = 512;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxSize) {
+                        height = (height * maxSize) / width;
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width = (width * maxSize) / height;
+                        height = maxSize;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Use high-quality rendering
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to base64 with high quality
+                const base64 = canvas.toDataURL('image/png', 1.0);
+                setAvatarPreview(base64);
+                setFormData(prev => ({
+                    ...prev,
+                    avatar: base64
+                }));
+                setEditedUserData(prev => ({
+                    ...prev,
+                    avatar: base64
+                }));
+            };
+            
+            img.onerror = () => {
+                // Fallback to original method if canvas fails
+                convertToBase64(file).then(base64 => {
+                    setAvatarPreview(base64);
+                    setFormData(prev => ({
+                        ...prev,
+                        avatar: base64
+                    }));
+                    setEditedUserData(prev => ({
+                        ...prev,
+                        avatar: base64
+                    }));
+                });
+            };
+            
+            img.src = URL.createObjectURL(file);
         } catch (error) {
             console.error("Error converting avatar:", error);
             setStatus("Failed to process avatar image");
@@ -303,16 +353,64 @@ const Profile = () => {
         }
 
         try {
-            const base64 = await convertToBase64(file);
-            setBannerPreview(base64);
-            setFormData(prev => ({
-                ...prev,
-                banner: base64
-            }));
-            setEditedUserData(prev => ({
-                ...prev,
-                banner: base64
-            }));
+            // Optimize banner image quality for clarity
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                // Set canvas size for banner (max 1920x600 for optimal clarity)
+                const maxWidth = 1920;
+                const maxHeight = 600;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Use high-quality rendering
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to base64 with high quality
+                const base64 = canvas.toDataURL('image/png', 0.95);
+                setBannerPreview(base64);
+                setFormData(prev => ({
+                    ...prev,
+                    banner: base64
+                }));
+                setEditedUserData(prev => ({
+                    ...prev,
+                    banner: base64
+                }));
+            };
+            
+            img.onerror = () => {
+                // Fallback to original method if canvas fails
+                convertToBase64(file).then(base64 => {
+                    setBannerPreview(base64);
+                    setFormData(prev => ({
+                        ...prev,
+                        banner: base64
+                    }));
+                    setEditedUserData(prev => ({
+                        ...prev,
+                        banner: base64
+                    }));
+                });
+            };
+            
+            img.src = URL.createObjectURL(file);
         } catch (error) {
             console.error("Error converting banner:", error);
             setStatus("Failed to process banner image");
