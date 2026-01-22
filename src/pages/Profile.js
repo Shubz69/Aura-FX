@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
 import CosmicBackground from '../components/CosmicBackground';
 import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
+import {
+    getRankTitle,
+    getTierName,
+    getTierColor,
+    getLevelFromXP,
+    getXPForNextLevel,
+    getXPProgress,
+    getNextRankMilestone
+} from '../utils/xpSystem';
 
 const resolveApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location?.origin) {
@@ -15,11 +24,9 @@ const resolveApiBaseUrl = () => {
 
 // Helper function to ensure avatar path is valid
 const getAvatarPath = (avatarName) => {
-    // If it's a base64 data URL, return it directly
     if (avatarName && avatarName.startsWith('data:image')) {
         return avatarName;
     }
-    
     const availableAvatars = [
         'avatar_ai.png',
         'avatar_money.png',
@@ -42,9 +49,8 @@ const convertToBase64 = (file) => {
 };
 
 const Profile = () => {
-    // eslint-disable-next-line no-unused-vars
     const { user, setUser } = useAuth();
-    const [editField, setEditField] = useState(null);
+    const [activeTab, setActiveTab] = useState('overview');
     const [status, setStatus] = useState("");
     const [formData, setFormData] = useState({
         username: "",
@@ -54,21 +60,28 @@ const Profile = () => {
         avatar: "avatar_ai.png",
         name: "",
         bio: "",
+        banner: "",
         level: 1,
         xp: 0
     });
     const [avatarPreview, setAvatarPreview] = useState(null);
+    const [bannerPreview, setBannerPreview] = useState(null);
     const fileInputRef = React.useRef(null);
+    const bannerInputRef = React.useRef(null);
     const [loading, setLoading] = useState(true);
     const [editedUserData, setEditedUserData] = useState({});
     const [userRole, setUserRole] = useState("");
-    // eslint-disable-next-line no-unused-vars
-    const [isEditing, setIsEditing] = useState(false);
-    // eslint-disable-next-line no-unused-vars
     const navigate = useNavigate();
     const [lastUsernameChange, setLastUsernameChange] = useState(null);
     const [usernameValidationError, setUsernameValidationError] = useState("");
     const [usernameCooldownInfo, setUsernameCooldownInfo] = useState(null);
+    const [loginStreak, setLoginStreak] = useState(0);
+    const [achievements, setAchievements] = useState([]);
+    const [tradingStats, setTradingStats] = useState({
+        totalTrades: 0,
+        winRate: 0,
+        totalProfit: 0
+    });
 
     // Function to update local storage with user profile data
     const updateLocalUserData = (data) => {
@@ -95,7 +108,7 @@ const Profile = () => {
             // First, check localStorage for latest XP data (updated in real-time from Community)
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             
-            // First, set data from auth context, but prioritize localStorage for XP/level
+            // Set data from auth context, but prioritize localStorage for XP/level
             const authData = {
                 username: user.username || storedUser.username || "",
                 email: user.email || storedUser.email || "",
@@ -103,8 +116,10 @@ const Profile = () => {
                 address: user.address || storedUser.address || "",
                 avatar: user.avatar || storedUser.avatar || "avatar_ai.png",
                 name: user.name || storedUser.name || "",
-                level: storedUser.level || user.level || 1, // Prioritize localStorage for real-time XP
-                xp: storedUser.xp || user.xp || 0 // Prioritize localStorage for real-time XP
+                bio: user.bio || storedUser.bio || "",
+                banner: user.banner || storedUser.banner || "",
+                level: storedUser.level || user.level || 1,
+                xp: storedUser.xp || user.xp || 0
             };
 
             setFormData(prev => ({
@@ -115,6 +130,9 @@ const Profile = () => {
             // Set avatar preview if it's a base64 image
             if (authData.avatar && authData.avatar.startsWith('data:image')) {
                 setAvatarPreview(authData.avatar);
+            }
+            if (authData.banner && authData.banner.startsWith('data:image')) {
+                setBannerPreview(authData.banner);
             }
 
             // Set user role
@@ -143,9 +161,10 @@ const Profile = () => {
                             address: userData.address || authData.address,
                             avatar: userData.avatar || authData.avatar,
                             name: userData.name || authData.name,
-                            bio: userData.bio || "",
-                            level: storedUser.level || userData.level || authData.level, // Real-time from localStorage
-                            xp: storedUser.xp || userData.xp || authData.xp // Real-time from localStorage
+                            bio: userData.bio || authData.bio || "",
+                            banner: userData.banner || authData.banner || "",
+                            level: storedUser.level || userData.level || authData.level,
+                            xp: storedUser.xp || userData.xp || authData.xp
                         };
                         
                         // Store last username change date if available
@@ -164,6 +183,13 @@ const Profile = () => {
                         if (backendData.avatar && backendData.avatar.startsWith('data:image')) {
                             setAvatarPreview(backendData.avatar);
                         }
+                        if (backendData.banner && backendData.banner.startsWith('data:image')) {
+                            setBannerPreview(backendData.banner);
+                        }
+
+                        // Load login streak and achievements
+                        setLoginStreak(userData.login_streak || 0);
+                        setAchievements(userData.achievements || []);
 
                         // Save to local storage
                         updateLocalUserData(backendData);
@@ -171,7 +197,6 @@ const Profile = () => {
                 }
             } catch (err) {
                 console.error("Error fetching profile data:", err);
-                // Use auth context data as fallback
             } finally {
                 setLoading(false);
             }
@@ -204,561 +229,466 @@ const Profile = () => {
             ...prev,
             [name]: value
         }));
-        
-        // If avatar dropdown changed, clear preview
-        if (name === 'avatar' && !value.startsWith('data:image')) {
-            setAvatarPreview(null);
-        }
     };
 
-    const handleAvatarUpload = async (e) => {
-        const file = e.target.files?.[0];
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files[0];
         if (!file) return;
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            setStatus("Please select an image file.");
-            return;
-        }
-
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            setStatus("Image size must be less than 5MB.");
+            setStatus("Avatar image must be less than 5MB");
             return;
         }
 
         try {
-            // Convert to base64
-            const base64Image = await convertToBase64(file);
-            
-            // Update form data with base64 image
+            const base64 = await convertToBase64(file);
+            setAvatarPreview(base64);
             setFormData(prev => ({
                 ...prev,
-                avatar: base64Image
+                avatar: base64
             }));
-            
-            // Set preview
-            setAvatarPreview(base64Image);
-            
-            setStatus("Image uploaded successfully. Click 'SAVE PROFILE' to save.");
+            setEditedUserData(prev => ({
+                ...prev,
+                avatar: base64
+            }));
         } catch (error) {
-            console.error("Error converting image:", error);
-            setStatus("Failed to process image. Please try again.");
+            console.error("Error converting avatar:", error);
+            setStatus("Failed to process avatar image");
         }
     };
 
-    const handleSave = async (field) => {
-        if (!user?.id) {
-            setStatus("Cannot update — user ID missing.");
+    const handleBannerChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+            setStatus("Banner image must be less than 10MB");
             return;
         }
 
-        // Special validation for username
-        if (field === 'username') {
-            const validation = validateUsername(formData.username);
-            if (!validation.valid) {
-                setUsernameValidationError(validation.error);
-                setStatus(validation.error);
-                return;
-            }
-            
-            // Check cooldown
-            if (lastUsernameChange) {
-                const cooldownCheck = canChangeUsername(lastUsernameChange);
-                if (!cooldownCheck.canChange) {
-                    setUsernameValidationError(getCooldownMessage(cooldownCheck.daysRemaining));
-                    setStatus(getCooldownMessage(cooldownCheck.daysRemaining));
-                    return;
-                }
-            }
-            
-            setUsernameValidationError("");
-        }
-
         try {
-            const res = await axios.put(
-                `${resolveApiBaseUrl()}/api/users/${user.id}/update`,
-                { 
-                    [field]: formData[field],
-                    ...(field === 'username' ? { updateUsername: true } : {})
-                },
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
-                }
-            );
-
-            if (res.status === 200 && res.data.success) {
-                setStatus("✅ Saved successfully!");
-                
-                // If username was updated, update cooldown info
-                if (field === 'username' && res.data.user?.last_username_change) {
-                    setLastUsernameChange(res.data.user.last_username_change);
-                    const cooldownCheck = canChangeUsername(res.data.user.last_username_change);
-                    setUsernameCooldownInfo(cooldownCheck);
-                }
-                
-                // Update with server response data
-                const serverValue = res.data.user?.[field] || formData[field];
-                const updatedData = {
-                    ...formData,
-                    [field]: serverValue
-                };
-                setFormData(updatedData);
-                setEditedUserData(prev => ({
-                    ...prev,
-                    [field]: serverValue
-                }));
-                
-                // Update local storage with the new value
-                updateLocalUserData({ [field]: serverValue });
-                
-                // Update auth context
-                if (setUser) {
-                    setUser(prev => ({
-                        ...prev,
-                        [field]: serverValue
-                    }));
-                }
-                
-                // Update localStorage 'user' object
-                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                storedUser[field] = serverValue;
-                localStorage.setItem('user', JSON.stringify(storedUser));
-                
-                // Clear status after 2 seconds
-                setTimeout(() => {
-                    setStatus("");
-                }, 2000);
-            } else {
-                setStatus("❌ Update failed.");
-            }
-
-            setEditField(null);
-        } catch (err) {
-            console.error(err);
-            if (err.response?.data?.message) {
-                setStatus(err.response.data.message);
-                if (field === 'username') {
-                    setUsernameValidationError(err.response.data.message);
-                }
-            } else {
-                setStatus("Server error.");
-            }
-        }
-    };
-
-    const handleEditToggle = () => {
-        if (editField) {
-            setEditField(null);
-        } else {
-            setEditedUserData(formData);
+            const base64 = await convertToBase64(file);
+            setBannerPreview(base64);
+            setFormData(prev => ({
+                ...prev,
+                banner: base64
+            }));
+            setEditedUserData(prev => ({
+                ...prev,
+                banner: base64
+            }));
+        } catch (error) {
+            console.error("Error converting banner:", error);
+            setStatus("Failed to process banner image");
         }
     };
 
     const handleSaveChanges = async () => {
         if (!user?.id) {
-            setStatus("Cannot update — user ID missing.");
+            setStatus("You must be logged in to save changes");
             return;
         }
-
-        // Validate username if it's being updated
-        if (formData.username) {
-            const validation = validateUsername(formData.username);
-            if (!validation.valid) {
-                setStatus(validation.error);
-                setUsernameValidationError(validation.error);
-                return;
-            }
-            
-            // Check cooldown if username is changing
-            if (lastUsernameChange) {
-                const cooldownCheck = canChangeUsername(lastUsernameChange);
-                if (!cooldownCheck.canChange) {
-                    setStatus(getCooldownMessage(cooldownCheck.daysRemaining));
-                    setUsernameValidationError(getCooldownMessage(cooldownCheck.daysRemaining));
-                    return;
-                }
-            }
-        }
-
-        // Prepare data to save
-        const dataToSave = {
-            name: formData.name || "",
-            username: formData.username || "",
-            email: formData.email || "",
-            phone: formData.phone || "",
-            address: formData.address || "",
-            bio: formData.bio || "",
-            avatar: formData.avatar || "avatar_ai.png"
-        };
-
-        // Optimistic update - update UI immediately
-        setFormData(prev => ({
-            ...prev,
-            ...dataToSave
-        }));
-        
-        setEditedUserData(dataToSave);
-        updateLocalUserData(dataToSave);
-        
-        // Update auth context immediately
-        if (setUser) {
-            setUser(prev => ({
-                ...prev,
-                ...dataToSave
-            }));
-        }
-
-        // Also update localStorage 'user' object
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const updatedStoredUser = { ...storedUser, ...dataToSave };
-        localStorage.setItem('user', JSON.stringify(updatedStoredUser));
 
         setStatus("Saving...");
 
         try {
-            // Save to database
-            const res = await axios.put(
+            const token = localStorage.getItem("token");
+            if (!token) {
+                setStatus("Authentication required");
+                return;
+            }
+
+            // Validate username if changed
+            if (editedUserData.username && editedUserData.username !== user.username) {
+                const validation = validateUsername(editedUserData.username);
+                if (!validation.isValid) {
+                    setUsernameValidationError(validation.error);
+                    setStatus("Username validation failed");
+                    return;
+                }
+
+                const cooldownCheck = canChangeUsername(lastUsernameChange);
+                if (!cooldownCheck.canChange) {
+                    setUsernameValidationError(getCooldownMessage(lastUsernameChange));
+                    setStatus("Username change on cooldown");
+                    return;
+                }
+            }
+
+            const dataToSave = {
+                ...editedUserData,
+                id: user.id
+            };
+
+            // Also update localStorage 'user' object
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const updatedStoredUser = { ...storedUser, ...dataToSave };
+            localStorage.setItem('user', JSON.stringify(updatedStoredUser));
+
+            setStatus("Saving...");
+
+            const response = await axios.put(
                 `${resolveApiBaseUrl()}/api/users/${user.id}/update`,
-                {
-                    ...dataToSave,
-                    ...(formData.username ? { updateUsername: true } : {})
-                },
+                dataToSave,
                 {
                     headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 }
             );
 
-            if (res.status === 200 && res.data.success) {
-                setStatus("✅ Profile saved successfully!");
+            if (response.status === 200) {
+                const serverData = response.data;
                 
-                // Update with server response data (includes last_username_change)
-                if (res.data.user) {
-                    const serverData = {
-                        name: res.data.user.name || dataToSave.name,
-                        username: res.data.user.username || dataToSave.username,
-                        email: res.data.user.email || dataToSave.email,
-                        phone: res.data.user.phone || dataToSave.phone,
-                        address: res.data.user.address || dataToSave.address,
-                        bio: res.data.user.bio || dataToSave.bio,
-                        avatar: res.data.user.avatar || dataToSave.avatar
-                    };
-                    
-                    setFormData(prev => ({
+                // Update form data with server response
+                setFormData(prev => ({
+                    ...prev,
+                    ...serverData
+                }));
+
+                // Update auth context
+                if (setUser) {
+                    setUser(prev => ({
                         ...prev,
                         ...serverData
                     }));
-                    
-                    updateLocalUserData(serverData);
-                    
-                    if (setUser) {
-                        setUser(prev => ({
-                            ...prev,
-                            ...serverData
-                        }));
-                    }
-                    
-                    // Update last_username_change if provided
-                    if (res.data.user.last_username_change) {
-                        setLastUsernameChange(res.data.user.last_username_change);
-                        const cooldownCheck = canChangeUsername(res.data.user.last_username_change);
-                        setUsernameCooldownInfo(cooldownCheck);
-                    }
-                    
-                    // Update localStorage 'user' object
+                }
+
+                // Update localStorage 'user' object
+                if (serverData) {
                     const updatedUser = { ...updatedStoredUser, ...serverData };
                     localStorage.setItem('user', JSON.stringify(updatedUser));
                 }
+                
+                setStatus("Profile updated successfully!");
+                setEditedUserData({});
                 
                 // Clear status after 3 seconds
                 setTimeout(() => {
                     setStatus("");
                 }, 3000);
             } else {
-                setStatus("❌ Update failed. Please try again.");
-                // Revert optimistic update on failure
-                // Reload from server
-                const refreshResponse = await axios.get(
-                    `${resolveApiBaseUrl()}/api/users/${user.id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("token")}`
-                        }
-                    }
-                );
-                if (refreshResponse.status === 200) {
-                    const userData = refreshResponse.data;
-                    setFormData(prev => ({
-                        ...prev,
-                        name: userData.name || "",
-                        username: userData.username || "",
-                        email: userData.email || "",
-                        phone: userData.phone || "",
-                        address: userData.address || "",
-                        bio: userData.bio || "",
-                        avatar: userData.avatar || "avatar_ai.png"
-                    }));
-                }
+                setStatus("Failed to update profile");
             }
-
-            setEditField(null);
-        } catch (err) {
-            console.error("Error updating profile:", err);
-            
-            // Revert optimistic update on error
-            const refreshResponse = await axios.get(
-                `${resolveApiBaseUrl()}/api/users/${user.id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
-                }
-            ).catch(() => null);
-            
-            if (refreshResponse && refreshResponse.status === 200) {
-                const userData = refreshResponse.data;
-                setFormData(prev => ({
-                    ...prev,
-                    name: userData.name || "",
-                    username: userData.username || "",
-                    email: userData.email || "",
-                    phone: userData.phone || "",
-                    address: userData.address || "",
-                    bio: userData.bio || "",
-                    avatar: userData.avatar || "avatar_ai.png"
-                }));
-            }
-            
-            const errorMessage = err.response?.data?.message || err.message || "Failed to update profile. Please try again.";
-            setStatus(`❌ ${errorMessage}`);
-            
-            if (err.response?.data?.message && formData.username) {
-                setUsernameValidationError(err.response.data.message);
-            }
+        } catch (error) {
+            console.error("Error saving profile:", error);
+            setStatus(error.response?.data?.message || "Failed to update profile");
         }
     };
 
-    const fields = [
-        { label: "Full Name", name: "name", editable: true },
-        { label: "Username", name: "username", editable: true },
-        { label: "Email", name: "email", editable: true },
-        { label: "Phone", name: "phone", editable: true },
-        { label: "Address", name: "address", editable: true },
-        { label: "Bio", name: "bio", editable: true }
-    ];
+    // Calculate XP progress
+    const xpProgress = getXPProgress(formData.xp || 0, formData.level || 1);
+    const rankTitle = getRankTitle(formData.level || 1);
+    const tierName = getTierName(formData.level || 1);
+    const tierColor = getTierColor(formData.level || 1);
+    const nextMilestone = getNextRankMilestone(formData.level || 1);
 
     if (loading) {
-        return <div className="profile-container"><div className="loading">Loading...</div></div>;
+        return (
+            <div className="profile-container">
+                <CosmicBackground />
+                <div className="loading-screen">
+                    <div className="loading-spinner"></div>
+                    <div className="loading-text">Loading Profile...</div>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="profile-container">
             <CosmicBackground />
             <div className="profile-content">
-                <div className="profile-header">
-                    <h1 className="profile-title">MY PROFILE</h1>
+                {/* Profile Banner */}
+                <div className="profile-banner-container">
+                    {bannerPreview || formData.banner ? (
+                        <img 
+                            src={bannerPreview || formData.banner} 
+                            alt="Banner" 
+                            className="profile-banner"
+                        />
+                    ) : (
+                        <div className="profile-banner-placeholder">
+                            <div className="banner-upload-hint">Click to upload banner</div>
+                        </div>
+                    )}
+                    <input
+                        type="file"
+                        ref={bannerInputRef}
+                        accept="image/*"
+                        onChange={handleBannerChange}
+                        style={{ display: 'none' }}
+                    />
+                    <button 
+                        className="banner-upload-btn"
+                        onClick={() => bannerInputRef.current?.click()}
+                    >
+                        📷
+                    </button>
                 </div>
-                
-                <div className="profile-box">
-                    <div className="avatar-section">
-                        <img
-                            src={avatarPreview || getAvatarPath(formData.avatar)}
-                            alt="Avatar"
+
+                {/* Profile Avatar & Header */}
+                <div className="profile-header-section">
+                    <div className="profile-avatar-wrapper">
+                        <img 
+                            src={avatarPreview || getAvatarPath(formData.avatar)} 
+                            alt="Avatar" 
                             className="profile-avatar"
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = "/avatars/avatar_ai.png";
-                            }}
                         />
                         <input
-                            ref={fileInputRef}
                             type="file"
+                            ref={fileInputRef}
                             accept="image/*"
-                            onChange={handleAvatarUpload}
+                            onChange={handleAvatarChange}
                             style={{ display: 'none' }}
                         />
-                        <button
-                            type="button"
+                        <button 
+                            className="avatar-upload-btn"
                             onClick={() => fileInputRef.current?.click()}
-                            style={{
-                                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)',
-                                color: '#C4B5FD',
-                                border: '1px solid rgba(139, 92, 246, 0.4)',
-                                padding: '10px 20px',
-                                borderRadius: '10px',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem',
-                                marginBottom: '10px',
-                                width: '100%',
-                                maxWidth: '200px',
-                                transition: 'all 0.3s ease',
-                                fontWeight: '600',
-                                letterSpacing: '0.5px'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(167, 139, 250, 0.3) 100%)';
-                                e.target.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                                e.target.style.color = '#ffffff';
-                                e.target.style.transform = 'translateY(-2px)';
-                                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%)';
-                                e.target.style.borderColor = 'rgba(139, 92, 246, 0.4)';
-                                e.target.style.color = '#C4B5FD';
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = 'none';
-                            }}
                         >
-                            📷 Upload Photo
+                            📷
                         </button>
-                        <select
-                            name="avatar"
-                            value={formData.avatar.startsWith('data:image') ? 'custom' : formData.avatar}
-                            onChange={(e) => {
-                                if (e.target.value === 'custom') {
-                                    fileInputRef.current?.click();
-                                } else {
-                                    handleChange(e);
-                                }
-                            }}
-                        >
-                            <option value="avatar_ai.png">AI Avatar</option>
-                            <option value="avatar_money.png">Money Avatar</option>
-                            <option value="avatar_tech.png">Tech Avatar</option>
-                            <option value="avatar_trading.png">Trading Avatar</option>
-                            {formData.avatar.startsWith('data:image') && (
-                                <option value="custom">Custom Image (Current)</option>
-                            )}
-                        </select>
                     </div>
+                    <div className="profile-header-info">
+                        <h1 className="profile-username">{formData.username || 'User'}</h1>
+                        <div className="profile-rank" style={{ color: tierColor }}>
+                            {rankTitle}
+                        </div>
+                        <div className="profile-tier">{tierName}</div>
+                    </div>
+                </div>
 
-                    <div className="profile-stats">
-                        <div className="profile-level">
-                            🧠 <strong>Level:</strong> {formData.level || 1}
-                        </div>
-                        <div className="profile-xp">
-                            🎯 <strong>XP:</strong> {formData.xp || 0}
-                        </div>
+                {/* Level & XP Display */}
+                <div className="profile-level-section">
+                    <div className="level-display">
+                        <span className="level-label">Power Level</span>
+                        <span className="level-value">{formData.level || 1}</span>
                     </div>
-                    
-                    {formData.level && (
-                        <div className="xp-progress-container">
-                            <div className="xp-progress-bar" 
-                                style={{
-                                    width: `${(formData.xp / (formData.level * 100)) * 100}%`
-                                }}>
-                            </div>
+                    <div className="xp-display">
+                        <span className="xp-label">Power Points</span>
+                        <span className="xp-value">{(formData.xp || 0).toLocaleString()}</span>
+                    </div>
+                    {nextMilestone && (
+                        <div className="next-milestone">
+                            <span className="milestone-label">Next Rank:</span>
+                            <span className="milestone-value">{nextMilestone.title} (Level {nextMilestone.level})</span>
                         </div>
                     )}
+                </div>
 
-                    <div className="info-section">
-                        {fields.map(({ label, name, editable }) => (
-                            <div key={name} className="profile-field">
-                                <strong>{label}:</strong>{" "}
-                                {editField === name ? (
-                                    <>
-                                        {name === "bio" ? (
-                                            <textarea
-                                                name={name}
-                                                value={formData[name]}
-                                                onChange={handleChange}
-                                                rows={3}
-                                                cols={40}
-                                            />
-                                        ) : (
-                                            <input
-                                                type="text"
-                                                name={name}
-                                                value={formData[name]}
-                                                onChange={(e) => {
-                                                    handleChange(e);
-                                                    // Real-time validation for username
-                                                    if (name === 'username') {
-                                                        const validation = validateUsername(e.target.value);
-                                                        if (!validation.valid) {
-                                                            setUsernameValidationError(validation.error);
-                                                        } else {
-                                                            setUsernameValidationError("");
-                                                        }
-                                                    }
-                                                }}
-                                                placeholder={name === 'username' ? 'Letters, numbers, spaces allowed' : ''}
-                                            />
-                                        )}
-                                        {name === 'username' && usernameValidationError && (
-                                            <div style={{ 
-                                                color: '#ff6b6b', 
-                                                fontSize: '12px', 
-                                                marginTop: '4px',
-                                                marginBottom: '4px'
-                                            }}>
-                                                {usernameValidationError}
-                                            </div>
-                                        )}
-                                        {name === 'username' && usernameCooldownInfo && !usernameCooldownInfo.canChange && (
-                                            <div style={{ 
-                                                color: '#ffa500', 
-                                                fontSize: '12px', 
-                                                marginTop: '4px',
-                                                marginBottom: '4px'
-                                            }}>
-                                                {getCooldownMessage(usernameCooldownInfo.daysRemaining)}
-                                            </div>
-                                        )}
-                                        <button 
-                                            onClick={() => handleSave(name)}
-                                            disabled={name === 'username' && (!!usernameValidationError || (usernameCooldownInfo && !usernameCooldownInfo.canChange))}
-                                        >
-                                            Save
-                                        </button>
-                                        <button onClick={() => {
-                                            setEditField(null);
-                                            setUsernameValidationError("");
-                                        }}>Cancel</button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>{formData[name] ? formData[name] : <i>None</i>}</span>
-                                        {editable && (
-                                            <button onClick={() => {
-                                                setEditField(name);
-                                                if (name === 'username' && lastUsernameChange) {
-                                                    const cooldownCheck = canChangeUsername(lastUsernameChange);
-                                                    setUsernameCooldownInfo(cooldownCheck);
-                                                }
-                                            }}>
-                                                Change
-                                                {name === 'username' && usernameCooldownInfo && !usernameCooldownInfo.canChange && (
-                                                    <span style={{ fontSize: '10px', display: 'block', color: '#ffa500' }}>
-                                                        ({usernameCooldownInfo.daysRemaining} days)
-                                                    </span>
-                                                )}
-                                            </button>
-                                        )}
-                                    </>
+                {/* XP Progress Bar */}
+                <div className="xp-progress-container">
+                    <div className="xp-progress-header">
+                        <span>Progress to Level {formData.level + 1}</span>
+                        <span>{Math.round(xpProgress.percentage)}%</span>
+                    </div>
+                    <div className="xp-progress-bar">
+                        <div 
+                            className="xp-progress-fill"
+                            style={{ 
+                                width: `${xpProgress.percentage}%`,
+                                background: `linear-gradient(90deg, ${tierColor} 0%, ${tierColor}dd 100%)`
+                            }}
+                        ></div>
+                    </div>
+                    <div className="xp-progress-text">
+                        {xpProgress.current.toLocaleString()} / {xpProgress.needed.toLocaleString()} XP
+                    </div>
+                </div>
+
+                {/* Login Streak */}
+                <div className="login-streak-section">
+                    <div className="streak-icon">🔥</div>
+                    <div className="streak-info">
+                        <span className="streak-label">Login Streak</span>
+                        <span className="streak-value">{loginStreak}+ days</span>
+                    </div>
+                </div>
+
+                {/* Navigation Tabs */}
+                <div className="profile-tabs">
+                    <button 
+                        className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('overview')}
+                    >
+                        Overview
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeTab === 'journey' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('journey')}
+                    >
+                        Journey
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeTab === 'statistics' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('statistics')}
+                    >
+                        Statistics
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeTab === 'achievements' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('achievements')}
+                    >
+                        Achievements
+                    </button>
+                </div>
+
+                {/* Tab Content */}
+                <div className="profile-tab-content">
+                    {activeTab === 'overview' && (
+                        <div className="tab-panel">
+                            <div className="section-title">Information</div>
+                            
+                            {/* Bio */}
+                            <div className="form-group">
+                                <label>Custom Bio</label>
+                                <textarea
+                                    name="bio"
+                                    value={formData.bio || ''}
+                                    onChange={handleChange}
+                                    placeholder="Tell us about your trading journey..."
+                                    rows="3"
+                                    className="form-input"
+                                />
+                            </div>
+
+                            {/* Username */}
+                            <div className="form-group">
+                                <label>Username</label>
+                                <input
+                                    type="text"
+                                    name="username"
+                                    value={formData.username || ''}
+                                    onChange={handleChange}
+                                    className="form-input"
+                                />
+                                {usernameValidationError && (
+                                    <div className="error-message">{usernameValidationError}</div>
                                 )}
                             </div>
-                        ))}
-                    </div>
 
-                    {userRole && (
-                        <div className="user-role">
-                            <strong>Role:</strong> {userRole}
+                            {/* Email */}
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email || ''}
+                                    onChange={handleChange}
+                                    className="form-input"
+                                    disabled
+                                />
+                            </div>
+
+                            {/* Name */}
+                            <div className="form-group">
+                                <label>Full Name</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name || ''}
+                                    onChange={handleChange}
+                                    className="form-input"
+                                />
+                            </div>
+
+                            {/* Role */}
+                            {userRole && (
+                                <div className="role-display">
+                                    <span className="role-label">Role:</span>
+                                    <span className="role-value">{userRole}</span>
+                                </div>
+                            )}
+
+                            <button className="save-button" onClick={handleSaveChanges}>
+                                SAVE PROFILE
+                            </button>
                         </div>
                     )}
 
-                    <div className="profile-actions">
-                        <button className="action-button save-button" onClick={handleSaveChanges}>
-                            SAVE PROFILE
-                        </button>
-                    </div>
+                    {activeTab === 'journey' && (
+                        <div className="tab-panel">
+                            <div className="section-title">Hero's Journey</div>
+                            <div className="journey-content">
+                                <div className="journey-stat">
+                                    <div className="journey-icon">📈</div>
+                                    <div className="journey-info">
+                                        <div className="journey-label">Current Level</div>
+                                        <div className="journey-value">{formData.level || 1}</div>
+                                    </div>
+                                </div>
+                                <div className="journey-stat">
+                                    <div className="journey-icon">🎯</div>
+                                    <div className="journey-info">
+                                        <div className="journey-label">Total XP</div>
+                                        <div className="journey-value">{(formData.xp || 0).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div className="journey-stat">
+                                    <div className="journey-icon">🏆</div>
+                                    <div className="journey-info">
+                                        <div className="journey-label">Rank</div>
+                                        <div className="journey-value">{rankTitle}</div>
+                                    </div>
+                                </div>
+                                {nextMilestone && (
+                                    <div className="milestone-card">
+                                        <div className="milestone-title">Next Milestone</div>
+                                        <div className="milestone-name">{nextMilestone.title}</div>
+                                        <div className="milestone-level">Level {nextMilestone.level}</div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'statistics' && (
+                        <div className="tab-panel">
+                            <div className="section-title">Trading Statistics</div>
+                            <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-icon">📊</div>
+                                    <div className="stat-value">{tradingStats.totalTrades}</div>
+                                    <div className="stat-label">Total Trades</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">✅</div>
+                                    <div className="stat-value">{tradingStats.winRate}%</div>
+                                    <div className="stat-label">Win Rate</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">💰</div>
+                                    <div className="stat-value">${tradingStats.totalProfit.toLocaleString()}</div>
+                                    <div className="stat-label">Total Profit</div>
+                                </div>
+                            </div>
+                            <div className="stats-note">
+                                Trading statistics will be available when you connect your trading account.
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'achievements' && (
+                        <div className="tab-panel">
+                            <div className="section-title">Achievements</div>
+                            {achievements.length > 0 ? (
+                                <div className="achievements-grid">
+                                    {achievements.map((achievement, index) => (
+                                        <div key={index} className="achievement-badge">
+                                            {achievement}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="no-achievements">
+                                    <div className="no-achievements-icon">🏅</div>
+                                    <div className="no-achievements-text">No achievements yet</div>
+                                    <div className="no-achievements-hint">Keep trading and engaging to unlock achievements!</div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {status && <p className="status-msg">{status}</p>}

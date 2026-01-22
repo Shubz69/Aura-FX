@@ -250,23 +250,49 @@ const Leaderboard = () => {
                         <span className="rule-text">+10 XP per message in community</span>
                     </div>
                     <div className="xp-rule">
+                        <span className="rule-icon">📎</span>
+                        <span className="rule-text">+5 XP for file attachments</span>
+                    </div>
+                    <div className="xp-rule">
+                        <span className="rule-icon">🔥</span>
+                        <span className="rule-text">+25 XP for daily login streak</span>
+                    </div>
+                    <div className="xp-rule">
                         <span className="rule-icon">📚</span>
                         <span className="rule-text">+50 XP per course completion</span>
                     </div>
                     <div className="xp-rule">
+                        <span className="rule-icon">📝</span>
+                        <span className="rule-text">+15 XP per journal entry</span>
+                    </div>
+                    <div className="xp-rule">
                         <span className="rule-icon">🎁</span>
                         <span className="rule-text">+100 XP for helping other users</span>
-                                </div>
+                    </div>
                     <div className="xp-rule">
+                        <span className="rule-icon">✅</span>
+                        <span className="rule-text">+XP for good behavior (moderation rewards)</span>
+                    </div>
+                    <div className="xp-rule negative">
                         <span className="rule-icon">⚠️</span>
                         <span className="rule-text">-200 XP for rule violations</span>
-                                </div>
-                    <div className="xp-rule">
+                    </div>
+                    <div className="xp-rule negative">
                         <span className="rule-icon">🚫</span>
                         <span className="rule-text">5 strikes = 1 month ban</span>
-                                    </div>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
+                <div className="xp-system-info">
+                    <h4>📊 XP System Details</h4>
+                    <ul>
+                        <li><strong>Level Cap:</strong> 1000 (Aura FX Legend)</li>
+                        <li><strong>Scaling:</strong> Early levels are easier, higher levels require more XP</li>
+                        <li><strong>Anti-Spam:</strong> Cooldowns prevent abuse (5s between messages, 24h for daily login)</li>
+                        <li><strong>Rank Titles:</strong> Earn unique trading rank titles every 10 levels</li>
+                        <li><strong>Tiers:</strong> Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → God</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     );
 };

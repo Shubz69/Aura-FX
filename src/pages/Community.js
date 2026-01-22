@@ -8,6 +8,13 @@ import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
+import {
+    getLevelFromXP,
+    getXPForNextLevel,
+    calculateMessageXP,
+    isOnCooldown,
+    XP_REWARDS
+} from '../utils/xpSystem';
 
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft } from 'react-icons/fa';
@@ -808,30 +815,7 @@ const Community = () => {
     };
     
     // ***** XP SYSTEM FUNCTIONS *****
-    
-    // XP and Level calculation rules - HARD LEVELING SYSTEM
-    const XP_PER_MESSAGE = 10; // Base XP for sending a message in community
-    const XP_PER_FILE = 5; // Extra XP for including a file/image
-    const XP_PER_EMOJI = 0.1; // Extra XP per emoji in message
-    
-    // Level thresholds - Balanced growth
-    // Formula: Level = floor(sqrt(XP / 100)) + 1
-    // Level 1 = 0 XP, Level 2 = 100 XP, Level 3 = 400 XP, Level 4 = 900 XP, Level 5 = 1,600 XP, Level 10 = 8,100 XP
-    // This makes leveling achievable: 10 messages = 100 XP = Level 2
-    const getLevelFromXP = (xp) => {
-        if (xp <= 0) return 1;
-        // Balanced exponential growth - achievable but requires activity
-        return Math.floor(Math.sqrt(xp / 100)) + 1;
-    };
-    
-    // Get XP required for next level
-    const getXPForNextLevel = (currentLevel) => {
-        // Reverse the formula: XP = (level - 1)^2 * 100
-        // For level 1: need 100 XP for level 2
-        // For level 2: need 400 XP for level 3
-        const nextLevelXP = Math.pow(currentLevel, 2) * 100;
-        return nextLevelXP;
-    };
+    // XP system utilities are imported at the top of the file
     
     // Award XP and update user data - Save to both localStorage and database
     const awardXP = async (earnedXP) => {
@@ -926,29 +910,7 @@ const Community = () => {
         }
     };
     
-    // Calculate XP for a message
-    const calculateMessageXP = (messageContent, hasFile) => {
-        let totalXP = XP_PER_MESSAGE; // Base: 10 XP per message
-        
-        // Bonus for file attachments (reduced)
-        if (hasFile) {
-            totalXP += XP_PER_FILE; // +5 XP for files
-        }
-        
-        // Bonus for emojis (count emojis in message, reduced)
-        const emojiRegex = /[\p{Emoji}]/gu;
-        const emojiMatches = messageContent.match(emojiRegex);
-        if (emojiMatches) {
-            totalXP += emojiMatches.length * XP_PER_EMOJI; // +0.1 XP per emoji
-        }
-        
-        // Bonus for longer messages (reduced - 0.5 XP per 100 characters, max 10 bonus XP)
-        const lengthBonus = Math.min(10, Math.floor(messageContent.length / 100) * 0.5);
-        totalXP += lengthBonus;
-        
-        // Round to 2 decimal places
-        return Math.round(totalXP * 100) / 100;
-    };
+    // XP calculation is now handled by the imported calculateMessageXP function from xpSystem.js
 
     // Get user's role - check subscription status and plan
     const getCurrentUserRole = () => {
