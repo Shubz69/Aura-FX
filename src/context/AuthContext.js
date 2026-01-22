@@ -203,11 +203,19 @@ export const AuthProvider = ({ children }) => {
                   if (loginResponse.data && loginResponse.data.success) {
                     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
                     
-                    // CRITICAL: Only update XP/level if XP was actually awarded AND not already logged in
-                    // Double-check: xpAwarded must be > 0 AND alreadyLoggedIn must be false
-                    if (loginResponse.data.xpAwarded && 
+                    // CRITICAL: Check alreadyLoggedIn FIRST - if true, NEVER update XP/level
+                    // This is the most important check to prevent duplicate XP awards
+                    if (loginResponse.data.alreadyLoggedIn === true) {
+                      // Already logged in today - DO NOT update XP/level, only update streak display
+                      const updatedUser = {
+                        ...currentUser,
+                        login_streak: loginResponse.data.streak || currentUser.login_streak || 0
+                        // DO NOT update xp or level - keep existing values
+                      };
+                      persistUser(updatedUser);
+                    } else if (loginResponse.data.xpAwarded && 
                         loginResponse.data.xpAwarded > 0 && 
-                        !loginResponse.data.alreadyLoggedIn) {
+                        loginResponse.data.alreadyLoggedIn !== true) {
                       // XP was awarded - update user data
                       const updatedUser = {
                         ...currentUser,
@@ -217,14 +225,6 @@ export const AuthProvider = ({ children }) => {
                       };
                       persistUser(updatedUser);
                       console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
-                    } else if (loginResponse.data.alreadyLoggedIn) {
-                      // Already logged in today - only update streak display, NOT XP/level
-                      const updatedUser = {
-                        ...currentUser,
-                        login_streak: loginResponse.data.streak || currentUser.login_streak || 0
-                        // DO NOT update xp or level - keep existing values
-                      };
-                      persistUser(updatedUser);
                     } else {
                       // No XP awarded but success - just update streak
                       const updatedUser = {
