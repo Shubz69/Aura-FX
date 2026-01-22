@@ -1640,9 +1640,7 @@ html.community-page-active {
     }
     
     /* Hide old mobile channel selector - we have slideable sidebar now */
-    .mobile-channel-selector {
-        display: none !important;
-    }
+    /* Mobile channel selector removed - using slideable sidebar */
     
     .mobile-user-stats {
         display: flex !important;
@@ -1689,9 +1687,7 @@ html.community-page-active {
     }
     
     /* Hide old mobile channel selector - we have slideable sidebar now */
-    .mobile-channel-selector {
-        display: none !important;
-    }
+    /* Mobile channel selector removed - using slideable sidebar */
     
     .mobile-user-stats {
         top: 80px;
