@@ -117,18 +117,24 @@ module.exports = async (req, res) => {
         daysDiff = Math.floor((today - lastLogin) / (1000 * 60 * 60 * 24));
       }
       
-      // Check if user already logged in today
+      // Check if user already logged in today - EARLY RETURN (fastest path)
+      if (lastLoginDate && daysDiff !== null && daysDiff === 0) {
+        // Already logged in today, return immediately without any database updates
+        // This is the most common case and should be super fast
+        return res.status(200).json({
+          success: true,
+          alreadyLoggedIn: true,
+          streak: currentStreak,
+          xpAwarded: 0, // Explicitly set to 0
+          newXP: parseFloat(user.xp) || 0, // Return current XP (no change)
+          newLevel: parseInt(user.level) || 1, // Return current level (no change)
+          message: 'Already logged in today'
+        });
+      }
+      
+      // User hasn't logged in today - continue with XP award logic
       if (lastLoginDate && daysDiff !== null) {
-        
-        if (daysDiff === 0) {
-          // Already logged in today, return current streak without awarding XP
-          return res.status(200).json({
-            success: true,
-            alreadyLoggedIn: true,
-            streak: currentStreak,
-            message: 'Already logged in today'
-          });
-        } else if (daysDiff > 1) {
+        if (daysDiff > 1) {
           // Missed a day (or more), reset streak to 0 first, then start new streak at 1
           const newStreak = 1;
           const xpReward = calculateLoginXP(newStreak); // Base 25 XP for new streak

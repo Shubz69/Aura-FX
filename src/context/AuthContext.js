@@ -176,34 +176,72 @@ export const AuthProvider = ({ children }) => {
           
           // Check daily login streak (non-blocking, runs in background)
           // This runs every time the app loads to check if user logged in today
+          // IMPORTANT: Only check once per session to prevent duplicate XP awards
           if (userId) {
-            setTimeout(async () => {
-              try {
-                const loginResponse = await Api.checkDailyLogin(userId);
-                if (loginResponse.data && loginResponse.data.success) {
-                  // Update user data with new XP and streak (even if already logged in, update streak display)
-                  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-                  const updatedUser = {
-                    ...currentUser,
-                    xp: loginResponse.data.newXP || currentUser.xp,
-                    level: loginResponse.data.newLevel || currentUser.level,
-                    login_streak: loginResponse.data.streak || 0
-                  };
-                  persistUser(updatedUser);
+            // Check if we already checked today (prevent duplicate calls)
+            const lastCheckKey = `daily_login_check_${userId}`;
+            const lastCheckDate = localStorage.getItem(lastCheckKey);
+            const today = new Date().toDateString();
+            
+            // Only check if we haven't checked today OR if last check was more than 1 hour ago (in case of errors)
+            if (lastCheckDate !== today) {
+              // Mark that we're checking now (even if it fails, we won't retry today)
+              localStorage.setItem(lastCheckKey, today);
+              
+              setTimeout(async () => {
+                try {
+                  const loginResponse = await Api.checkDailyLogin(userId);
+                  if (loginResponse.data && loginResponse.data.success) {
+                    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    
+                    // CRITICAL: Only update XP/level if XP was actually awarded (not already logged in)
+                    if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn) {
+                      // XP was awarded - update user data
+                      const updatedUser = {
+                        ...currentUser,
+                        xp: loginResponse.data.newXP,
+                        level: loginResponse.data.newLevel,
+                        login_streak: loginResponse.data.streak || 0
+                      };
+                      persistUser(updatedUser);
+                      console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
+                    } else if (loginResponse.data.alreadyLoggedIn) {
+                      // Already logged in today - only update streak display, NOT XP/level
+                      const updatedUser = {
+                        ...currentUser,
+                        login_streak: loginResponse.data.streak || currentUser.login_streak || 0
+                        // DO NOT update xp or level - keep existing values
+                      };
+                      persistUser(updatedUser);
+                    } else {
+                      // No XP awarded but success - just update streak
+                      const updatedUser = {
+                        ...currentUser,
+                        login_streak: loginResponse.data.streak || currentUser.login_streak || 0
+                      };
+                      persistUser(updatedUser);
+                    }
+                  }
+                } catch (error) {
+                  // On error, remove the check flag so we can retry (but only after 1 hour)
+                  // This prevents infinite retries but allows recovery from temporary errors
+                  const errorRetryKey = `daily_login_error_${userId}`;
+                  const lastErrorTime = localStorage.getItem(errorRetryKey);
+                  const now = Date.now();
                   
-                  // Show notification if XP was awarded (not already logged in today)
-                  if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn) {
-                    console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
+                  if (!lastErrorTime || (now - parseInt(lastErrorTime)) > 3600000) { // 1 hour
+                    localStorage.removeItem(lastCheckKey); // Allow retry after 1 hour
+                    localStorage.setItem(errorRetryKey, now.toString());
+                  }
+                  
+                  // Silently fail - don't block app loading
+                  // Only log if it's not a timeout (to reduce console noise)
+                  if (!error.message || (!error.message.includes('timeout') && !error.message.includes('Timeout') && !error.message.includes('504'))) {
+                    console.error('Daily login check failed:', error);
                   }
                 }
-              } catch (error) {
-                // Silently fail - don't block app loading
-                // Only log if it's not a timeout (to reduce console noise)
-                if (!error.message || (!error.message.includes('timeout') && !error.message.includes('Timeout'))) {
-                  console.error('Daily login check failed:', error);
-                }
-              }
-            }, 500); // Small delay to let app load first
+              }, 500); // Small delay to let app load first
+            }
           }
           
           setLoading(false);
@@ -292,29 +330,66 @@ export const AuthProvider = ({ children }) => {
         }
         
         // Check and award daily login streak XP (non-blocking)
+        // IMPORTANT: Only award XP once per day, not on every login
         if (data.id || data.userId) {
-          Api.checkDailyLogin(data.id || data.userId)
-            .then((loginResponse) => {
-              if (loginResponse.data && loginResponse.data.success) {
-                // Update user data with new XP and streak
-                const updatedUser = {
-                  ...data,
-                  xp: loginResponse.data.newXP || data.xp,
-                  level: loginResponse.data.newLevel || data.level,
-                  login_streak: loginResponse.data.streak || 0
-                };
-                persistUser(updatedUser);
-                
-                // Show notification if XP was awarded
-                if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn) {
-                  console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
+          const userId = data.id || data.userId;
+          const lastCheckKey = `daily_login_check_${userId}`;
+          const lastCheckDate = localStorage.getItem(lastCheckKey);
+          const today = new Date().toDateString();
+          
+          // Only check if we haven't checked today
+          if (lastCheckDate !== today) {
+            localStorage.setItem(lastCheckKey, today);
+            
+            Api.checkDailyLogin(userId)
+              .then((loginResponse) => {
+                if (loginResponse.data && loginResponse.data.success) {
+                  // CRITICAL: Only update XP/level if XP was actually awarded
+                  if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
+                    // XP was awarded - update user data
+                    const updatedUser = {
+                      ...data,
+                      xp: loginResponse.data.newXP,
+                      level: loginResponse.data.newLevel,
+                      login_streak: loginResponse.data.streak || 0
+                    };
+                    persistUser(updatedUser);
+                    console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
+                  } else if (loginResponse.data.alreadyLoggedIn) {
+                    // Already logged in today - only update streak, NOT XP/level
+                    const updatedUser = {
+                      ...data,
+                      login_streak: loginResponse.data.streak || data.login_streak || 0
+                      // DO NOT update xp or level
+                    };
+                    persistUser(updatedUser);
+                  } else {
+                    // No XP awarded - just update streak
+                    const updatedUser = {
+                      ...data,
+                      login_streak: loginResponse.data.streak || data.login_streak || 0
+                    };
+                    persistUser(updatedUser);
+                  }
                 }
-              }
-            })
-            .catch((error) => {
-              console.error('Error checking daily login:', error);
-              // Don't block login if daily login check fails
-            });
+              })
+              .catch((error) => {
+                // On error, remove check flag to allow retry (but only after delay)
+                const errorRetryKey = `daily_login_error_${userId}`;
+                const lastErrorTime = localStorage.getItem(errorRetryKey);
+                const now = Date.now();
+                
+                if (!lastErrorTime || (now - parseInt(lastErrorTime)) > 3600000) { // 1 hour
+                  localStorage.removeItem(lastCheckKey);
+                  localStorage.setItem(errorRetryKey, now.toString());
+                }
+                
+                // Don't block login if daily login check fails
+                if (!error.message || (!error.message.includes('timeout') && !error.message.includes('Timeout') && !error.message.includes('504'))) {
+                  console.error('Error checking daily login:', error);
+                }
+              });
+          }
         }
         
         // Check subscription status from database after login (not just localStorage)
