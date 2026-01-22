@@ -187,9 +187,10 @@ module.exports = async (req, res) => {
 
       // FINAL SAFETY CHECK: Verify last_login_date is NOT today before awarding XP
       // This prevents duplicate awards even if date comparison had issues
+      // Use a direct SQL comparison to be absolutely sure
       const [verifyRows] = await withTimeout(
         executeQuery(
-          'SELECT last_login_date, CURDATE() as today FROM users WHERE id = ?',
+          'SELECT last_login_date, CURDATE() as today, CASE WHEN last_login_date = CURDATE() THEN 1 ELSE 0 END as is_today FROM users WHERE id = ?',
           [userId]
         ),
         2000
@@ -197,11 +198,10 @@ module.exports = async (req, res) => {
       
       if (verifyRows && verifyRows.length > 0) {
         const verifyUser = verifyRows[0];
-        const verifyLastLogin = verifyUser.last_login_date ? verifyUser.last_login_date.toString().split('T')[0] : null;
-        const verifyToday = verifyUser.today.toString();
+        const isToday = verifyUser.is_today === 1 || verifyUser.is_today === '1';
         
-        // If last_login_date equals today, user already logged in - return without awarding
-        if (verifyLastLogin === verifyToday) {
+        // If last_login_date equals today (using SQL comparison), user already logged in - return without awarding
+        if (isToday) {
           return res.status(200).json({
             success: true,
             alreadyLoggedIn: true,
