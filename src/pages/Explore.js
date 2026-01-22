@@ -76,7 +76,7 @@ const Explore = () => {
       icon: <FaQuestionCircle />,
       title: 'Why AURA FX',
       description: 'Learn why AURA FX is the premier choice for professional trading education. Discover our approach to consistent profitability.',
-      path: '/why-aura-fx'
+      path: '/why-glitch'
     },
     {
       icon: <FaEnvelope />,
