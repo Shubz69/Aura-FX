@@ -206,6 +206,54 @@ const Community = () => {
     const [userLevel, setUserLevel] = useState(1);
     const [storedUser, setStoredUser] = useState(null);
     const [userId, setUserId] = useState(null);
+    
+    // Listen for XP update events to update profile card in real-time
+    useEffect(() => {
+        const handleXPUpdate = (event) => {
+            const { newXP, newLevel } = event.detail;
+            setStoredUser(prev => {
+                if (prev) {
+                    return {
+                        ...prev,
+                        xp: newXP,
+                        level: newLevel
+                    };
+                }
+                return prev;
+            });
+            setUserLevel(newLevel);
+        };
+        
+        window.addEventListener('xpUpdated', handleXPUpdate);
+        
+        // Also check localStorage periodically for XP updates
+        const xpCheckInterval = setInterval(() => {
+            const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+            if (storedUserData.xp !== undefined && storedUserData.level !== undefined) {
+                const currentXP = parseFloat(storedUserData.xp || 0);
+                const currentLevel = parseInt(storedUserData.level || 1);
+                
+                if (storedUser) {
+                    const xpChanged = Math.abs(parseFloat(storedUser.xp || 0) - currentXP) > 0.01;
+                    const levelChanged = parseInt(storedUser.level || userLevel || 1) !== currentLevel;
+                    
+                    if (xpChanged || levelChanged) {
+                        setStoredUser(prev => ({
+                            ...prev,
+                            xp: currentXP,
+                            level: currentLevel
+                        }));
+                        setUserLevel(currentLevel);
+                    }
+                }
+            }
+        }, 1000);
+        
+        return () => {
+            window.removeEventListener('xpUpdated', handleXPUpdate);
+            clearInterval(xpCheckInterval);
+        };
+    }, [storedUser, userLevel]);
     const [collapsedCategories, setCollapsedCategories] = useState(() => {
         // Load collapsed state from localStorage
         const saved = localStorage.getItem('collapsedCategories');
@@ -4320,26 +4368,71 @@ Let's build generational wealth together! 💰🚀`,
                     })}
                 </div>
                 
-                {/* User Profile at Bottom */}
-                <div className="sidebar-footer" style={{
-                    padding: '12px 16px',
-                    borderTop: '1px solid var(--border-color)',
-                    background: 'var(--bg-primary)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px'
-                }}>
+                {/* User Profile at Bottom - Clickable */}
+                <div 
+                    className="sidebar-footer profile-card-clickable" 
+                    style={{
+                        padding: '12px 16px',
+                        borderTop: '1px solid var(--border-color)',
+                        background: 'var(--bg-primary)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        borderRadius: '8px 8px 0 0'
+                    }}
+                    onClick={() => {
+                        if (storedUser?.id) {
+                            navigate(`/public-profile/${storedUser.id}`);
+                        } else {
+                            navigate('/profile');
+                        }
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'var(--bg-primary)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '12px'
                     }}>
+                        {/* Avatar with image or initials */}
+                        {storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' ? (
+                            <img 
+                                src={storedUser.avatar.startsWith('data:image') 
+                                    ? storedUser.avatar 
+                                    : `/avatars/${storedUser.avatar}`}
+                                alt="Avatar"
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    border: '2px solid rgba(139, 92, 246, 0.5)',
+                                    flexShrink: 0,
+                                    boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)'
+                                }}
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                        ) : null}
                         <div style={{
-                            width: '36px',
-                            height: '36px',
+                            width: '40px',
+                            height: '40px',
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
-                            display: 'flex',
+                            background: storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' 
+                                ? 'transparent' 
+                                : 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                            display: storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' ? 'none' : 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '1rem',
@@ -4356,19 +4449,27 @@ Let's build generational wealth together! 💰🚀`,
                                 color: 'white',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis'
+                                textOverflow: 'ellipsis',
+                                marginBottom: '2px'
                             }}>
                                 {storedUser?.username || storedUser?.name || 'User'}
                             </div>
                             <div style={{ 
-                                fontSize: '0.7rem',
-                                color: 'var(--text-muted)',
+                                fontSize: '0.75rem',
+                                color: 'rgba(255, 255, 255, 0.7)',
                                 display: 'flex',
-                                gap: '6px'
+                                gap: '6px',
+                                alignItems: 'center'
                             }}>
-                                <span>Level {userLevel}</span>
-                                <span>•</span>
-                                <span>{Math.floor(storedUser?.xp || 0).toLocaleString()} XP</span>
+                                <span style={{ 
+                                    fontWeight: 600,
+                                    color: '#C4B5FD'
+                                }}>Level {userLevel}</span>
+                                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>•</span>
+                                <span style={{ 
+                                    fontWeight: 600,
+                                    color: '#A78BFA'
+                                }}>{Math.floor(storedUser?.xp || 0).toLocaleString()} XP</span>
                             </div>
                         </div>
                     </div>
