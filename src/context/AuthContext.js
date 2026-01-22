@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }) => {
           
           // Token is valid, get minimal user info from token
           // No API call for now to avoid errors
-          const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
+          // userId already declared above, reuse it
           const userData = persistUser({
             id: userId,
             email: decodedToken.email || '',
