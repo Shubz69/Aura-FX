@@ -240,6 +240,24 @@ body.loading-active {
     position: relative;
 }
 
+/* Powered by THE GLITCH - Small text under AURA FX */
+.powered-by-glitch {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-top: 0.5rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    font-family: 'Space Grotesk', sans-serif;
+    animation: brandNameFadeIn 1.5s ease-out 0.5s both;
+}
+
+.powered-by-glitch strong {
+    color: #8B5CF6;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+}
+
 @keyframes brandNameFadeIn {
     0% {
         opacity: 0;

@@ -78,6 +78,7 @@ const Home = () => {
                             {/* Brand Name - Styled exactly as shown */}
                             <div className="brand-name-container">
                                 <h1 className="brand-name">AURA FX</h1>
+                                <p className="powered-by-glitch">powered by <strong>THE GLITCH</strong></p>
                             </div>
                         </div>
 
