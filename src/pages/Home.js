@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import Chatbot from "../components/Chatbot";
 import CosmicBackground from "../components/CosmicBackground";
 import A7Logo from "../components/A7Logo";
-import { FaChartLine, FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaGlobe } from 'react-icons/fa';
+import { FaChartLine, FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaGlobe, FaCoins, FaChartBar } from 'react-icons/fa';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -194,6 +194,16 @@ const Home = () => {
                                         <div className="market-icon"><FaGlobe /></div>
                                         <h3 className="market-title">Futures</h3>
                                         <p className="market-description">Master futures contracts and commodity trading with professional strategies</p>
+                                    </div>
+                                    <div className="market-item">
+                                        <div className="market-icon"><FaCoins /></div>
+                                        <h3 className="market-title">Commodities</h3>
+                                        <p className="market-description">Trade gold, oil, and other valuable resources</p>
+                                    </div>
+                                    <div className="market-item">
+                                        <div className="market-icon"><FaChartBar /></div>
+                                        <h3 className="market-title">Indices</h3>
+                                        <p className="market-description">Major global indices including S&P 500, NASDAQ, and more</p>
                                     </div>
                                 </div>
                             </div>
