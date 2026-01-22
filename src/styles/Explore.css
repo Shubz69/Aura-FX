@@ -412,7 +412,7 @@
     font-size: 2rem;
   }
 
-  .explore-markets-grid {
+  .explore-courses-grid {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
