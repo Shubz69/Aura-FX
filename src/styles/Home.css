@@ -221,6 +221,7 @@ body.loading-active {
 /* Brand Name - Large, Elegant, Centered */
 .brand-name-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
