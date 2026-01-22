@@ -36,19 +36,32 @@ module.exports = async (req, res) => {
                 console.log('XP/Level columns do not exist, adding them...');
                 try {
                     await db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(10, 2) DEFAULT 0');
-                } catch (e2) {}
+                    console.log('✅ Added xp column to users table');
+                } catch (e2) {
+                    console.warn('Could not add xp column:', e2.message);
+                }
                 try {
                     await db.execute('ALTER TABLE users ADD COLUMN level INT DEFAULT 1');
-                } catch (e2) {}
+                    console.log('✅ Added level column to users table');
+                } catch (e2) {
+                    console.warn('Could not add level column:', e2.message);
+                }
             }
 
             // Update user XP and level
-            await db.execute(
+            const [updateResult] = await db.execute(
                 'UPDATE users SET xp = ?, level = ? WHERE id = ?',
                 [parseFloat(xp), parseInt(level), userId]
             );
+            
+            console.log(`✅ XP updated for user ${userId}: ${xp} XP, Level ${level}`, updateResult);
 
-            await db.end();
+            // Release connection (don't use db.end() if using pool)
+            if (db && typeof db.release === 'function') {
+                db.release();
+            } else if (db && typeof db.end === 'function') {
+                await db.end();
+            }
 
             return res.status(200).json({
                 success: true,
@@ -57,11 +70,25 @@ module.exports = async (req, res) => {
                 level: parseInt(level)
             });
         } catch (dbError) {
-            console.error('Database error updating XP:', dbError);
-            if (db && !db.ended) await db.end();
+            console.error('❌ Database error updating XP:', dbError);
+            console.error('Error details:', {
+                message: dbError.message,
+                code: dbError.code,
+                errno: dbError.errno,
+                sqlState: dbError.sqlState
+            });
+            
+            // Release connection
+            if (db && typeof db.release === 'function') {
+                db.release();
+            } else if (db && typeof db.end === 'function' && !db.ended) {
+                await db.end();
+            }
+            
             return res.status(500).json({
                 success: false,
-                message: 'Failed to update XP and level'
+                message: 'Failed to update XP and level',
+                error: dbError.message
             });
         }
     } catch (error) {
