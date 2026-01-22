@@ -1,14 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Explore.css';
 import CosmicBackground from '../components/CosmicBackground';
+import Api from '../services/Api';
 import { 
-  FaChartLine, 
-  FaTrophy, 
-  FaRocket, 
-  FaGlobe,
-  FaCoins,
-  FaChartBar,
   FaUsers,
   FaGraduationCap,
   FaComments,
@@ -21,6 +16,34 @@ import {
 
 const Explore = () => {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+
+  // Fetch courses from API
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await Api.getCourses();
+        let coursesData = [];
+        if (Array.isArray(response.data)) {
+          coursesData = response.data;
+        } else if (response.data && Array.isArray(response.data.courses)) {
+          coursesData = response.data.courses;
+        } else if (response.data && response.data.success === false && Array.isArray(response.data.courses)) {
+          coursesData = response.data.courses;
+        }
+        coursesData = coursesData.filter(course => course && course.id && course.title);
+        setCourses(coursesData);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        setCourses([]);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   const sitePages = [
     {
@@ -65,11 +88,6 @@ const Explore = () => {
       icon: <FaUsers />,
       title: 'Active Community',
       description: 'Connect with 1,200+ traders sharing exclusive insights, real-time market analysis, and proven trading strategies.'
-    },
-    {
-      icon: <FaChartLine />,
-      title: 'Multiple Markets',
-      description: 'Master trading across Forex, Stocks, Crypto, Futures, Commodities, and Indices. Diversify your trading knowledge.'
     },
     {
       icon: <FaRocket />,
@@ -149,41 +167,40 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* Trading Markets Section */}
-        <div className="explore-markets-section">
-          <h2 className="explore-section-heading">TRADE MULTIPLE MARKETS</h2>
-          <div className="explore-markets-grid">
-            <div className="explore-market-item">
-              <div className="explore-market-icon"><FaChartLine /></div>
-              <h3 className="explore-market-title">FOREX</h3>
-              <p className="explore-market-description">Major, minor, and exotic currency pairs</p>
+        {/* Courses Provided Section */}
+        <div className="explore-courses-section">
+          <h2 className="explore-section-heading">COURSES PROVIDED</h2>
+          {loadingCourses ? (
+            <div className="explore-courses-loading">
+              <p>Loading courses...</p>
             </div>
-            <div className="explore-market-item">
-              <div className="explore-market-icon"><FaTrophy /></div>
-              <h3 className="explore-market-title">STOCKS</h3>
-              <p className="explore-market-description">US and international equity markets</p>
+          ) : courses.length > 0 ? (
+            <div className="explore-courses-grid">
+              {courses.map((course) => (
+                <div key={course.id} className="explore-course-card">
+                  {course.imageUrl ? (
+                    <div className="explore-course-image-wrapper">
+                      <img src={course.imageUrl} alt={course.title} className="explore-course-image" />
+                    </div>
+                  ) : (
+                    <div className="explore-course-image-placeholder">
+                      <FaGraduationCap className="explore-course-placeholder-icon" />
+                    </div>
+                  )}
+                  <div className="explore-course-content">
+                    <h3 className="explore-course-title">{course.title}</h3>
+                    <p className="explore-course-description">
+                      {course.description || 'No description available'}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="explore-market-item">
-              <div className="explore-market-icon"><FaRocket /></div>
-              <h3 className="explore-market-title">CRYPTO</h3>
-              <p className="explore-market-description">Bitcoin, Ethereum, and altcoins</p>
+          ) : (
+            <div className="explore-courses-empty">
+              <p>No courses available at the moment.</p>
             </div>
-            <div className="explore-market-item">
-              <div className="explore-market-icon"><FaGlobe /></div>
-              <h3 className="explore-market-title">FUTURES</h3>
-              <p className="explore-market-description">Master futures contracts and commodity trading with professional strategies</p>
-            </div>
-            <div className="explore-market-item">
-              <div className="explore-market-icon"><FaCoins /></div>
-              <h3 className="explore-market-title">COMMODITIES</h3>
-              <p className="explore-market-description">Trade gold, oil, and other valuable resources</p>
-            </div>
-            <div className="explore-market-item">
-              <div className="explore-market-icon"><FaChartBar /></div>
-              <h3 className="explore-market-title">INDICES</h3>
-              <p className="explore-market-description">Major global indices including S&P 500, NASDAQ, and more</p>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Footer Section */}
