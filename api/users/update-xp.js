@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Authentication required' });
         }
 
-        const { userId, xp, level } = req.body || {};
+        const { userId, xp, level, actionType, description } = req.body || {};
         
         if (!userId || xp === undefined || !level) {
             return res.status(400).json({ 
@@ -48,11 +48,49 @@ module.exports = async (req, res) => {
                 }
             }
 
+            // Ensure xp_logs table exists for tracking XP gains
+            try {
+                await db.execute(`
+                    CREATE TABLE IF NOT EXISTS xp_logs (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        user_id INT NOT NULL,
+                        xp_amount DECIMAL(10, 2) NOT NULL,
+                        action_type VARCHAR(50) NOT NULL,
+                        description TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_user_id (user_id),
+                        INDEX idx_created_at (created_at),
+                        INDEX idx_action_type (action_type)
+                    )
+                `);
+            } catch (tableError) {
+                console.warn('xp_logs table already exists or error creating:', tableError.message);
+            }
+
+            // Get previous XP to calculate gain
+            const [userRows] = await db.execute('SELECT xp FROM users WHERE id = ?', [userId]);
+            const previousXP = userRows.length > 0 ? parseFloat(userRows[0].xp || 0) : 0;
+            const xpGain = parseFloat(xp) - previousXP;
+
             // Update user XP and level
             const [updateResult] = await db.execute(
                 'UPDATE users SET xp = ?, level = ? WHERE id = ?',
                 [parseFloat(xp), parseInt(level), userId]
             );
+            
+            // Log XP transaction if there was a gain
+            if (xpGain > 0) {
+                try {
+                    const logActionType = actionType || 'system_update';
+                    const logDescription = description || `XP updated from ${previousXP} to ${xp}`;
+                    await db.execute(
+                        'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
+                        [userId, xpGain, logActionType, logDescription]
+                    );
+                } catch (logError) {
+                    console.warn('Failed to log XP transaction:', logError.message);
+                }
+            }
             
             console.log(`✅ XP updated for user ${userId}: ${xp} XP, Level ${level}`, updateResult);
 

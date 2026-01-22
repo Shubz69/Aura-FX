@@ -988,7 +988,9 @@ const Community = () => {
                         body: JSON.stringify({
                             userId: currentUser.id,
                             xp: newXP,
-                            level: newLevel
+                            level: newLevel,
+                            actionType: 'message',
+                            description: `Earned ${earnedXP} XP from sending a message`
                         })
                     });
                     

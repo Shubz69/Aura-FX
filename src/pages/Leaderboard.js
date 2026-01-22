@@ -89,10 +89,14 @@ const Leaderboard = () => {
                     <div className="podium-avatar">
                         <img src={`/avatars/${top3[1]?.avatar || 'avatar_ai.png'}`} alt={top3[1]?.username} />
                     </div>
-                    <div className="podium-info">
+                        <div className="podium-info">
                         <div className="podium-rank">🥈</div>
                         <div className="podium-username">{top3[1]?.username || 'Loading...'}</div>
-                        <div className="podium-xp">{top3[1]?.xp?.toLocaleString() || 0} XP</div>
+                        <div className="podium-xp">
+                            {selectedTimeframe === 'all-time' 
+                                ? `${top3[1]?.xp?.toLocaleString() || 0} XP`
+                                : `+${top3[1]?.xpGain || top3[1]?.xp || 0} XP`}
+                        </div>
                         <div className="podium-level">Level {top3[1]?.level || 0}</div>
                     </div>
                 </div>
@@ -106,7 +110,11 @@ const Leaderboard = () => {
                     <div className="podium-info">
                         <div className="podium-rank">🥇</div>
                         <div className="podium-username">{top3[0]?.username || 'Loading...'}</div>
-                        <div className="podium-xp">{top3[0]?.xp?.toLocaleString() || 0} XP</div>
+                        <div className="podium-xp">
+                            {selectedTimeframe === 'all-time' 
+                                ? `${top3[0]?.xp?.toLocaleString() || 0} XP`
+                                : `+${top3[0]?.xpGain || top3[0]?.xp || 0} XP`}
+                        </div>
                         <div className="podium-level">Level {top3[0]?.level || 0}</div>
                     </div>
                 </div>
@@ -119,7 +127,11 @@ const Leaderboard = () => {
                     <div className="podium-info">
                         <div className="podium-rank">🥉</div>
                         <div className="podium-username">{top3[2]?.username || 'Loading...'}</div>
-                        <div className="podium-xp">{top3[2]?.xp?.toLocaleString() || 0} XP</div>
+                        <div className="podium-xp">
+                            {selectedTimeframe === 'all-time' 
+                                ? `${top3[2]?.xp?.toLocaleString() || 0} XP`
+                                : `+${top3[2]?.xpGain || top3[2]?.xp || 0} XP`}
+                        </div>
                         <div className="podium-level">Level {top3[2]?.level || 0}</div>
                     </div>
                 </div>
@@ -158,11 +170,20 @@ const Leaderboard = () => {
                             </div>
                         </div>
                         <div className="xp-cell">
-                            <div className="xp-value">{user.xp.toLocaleString()}</div>
+                            <div className="xp-value">
+                                {selectedTimeframe === 'all-time' 
+                                    ? `${user.xp?.toLocaleString() || 0} XP`
+                                    : `+${user.xpGain || user.xp || 0} XP`}
+                            </div>
                             <div className="xp-bar">
                                 <div 
                                     className="xp-fill" 
-                                    style={{ width: `${(user.xp / 20000) * 100}%` }}
+                                    style={{ 
+                                        width: `${selectedTimeframe === 'all-time' 
+                                            ? Math.min((user.xp / 20000) * 100, 100)
+                                            : Math.min(((user.xpGain || user.xp || 0) / 1000) * 100, 100)
+                                        }%` 
+                                    }}
                                 ></div>
                             </div>
                         </div>
@@ -215,10 +236,16 @@ const Leaderboard = () => {
                 {/* Timeframe Selector */}
                 <div className="timeframe-selector">
                     <button 
-                        className={`timeframe-btn ${selectedTimeframe === 'all-time' ? 'active' : ''}`}
-                        onClick={() => setSelectedTimeframe('all-time')}
+                        className={`timeframe-btn ${selectedTimeframe === 'daily' ? 'active' : ''}`}
+                        onClick={() => setSelectedTimeframe('daily')}
                     >
-                        All Time
+                        Today
+                    </button>
+                    <button 
+                        className={`timeframe-btn ${selectedTimeframe === 'weekly' ? 'active' : ''}`}
+                        onClick={() => setSelectedTimeframe('weekly')}
+                    >
+                        This Week
                     </button>
                     <button 
                         className={`timeframe-btn ${selectedTimeframe === 'monthly' ? 'active' : ''}`}
@@ -227,10 +254,10 @@ const Leaderboard = () => {
                         This Month
                     </button>
                     <button 
-                        className={`timeframe-btn ${selectedTimeframe === 'weekly' ? 'active' : ''}`}
-                        onClick={() => setSelectedTimeframe('weekly')}
+                        className={`timeframe-btn ${selectedTimeframe === 'all-time' ? 'active' : ''}`}
+                        onClick={() => setSelectedTimeframe('all-time')}
                     >
-                        This Week
+                        All Time
                     </button>
                 </div>
             </div>

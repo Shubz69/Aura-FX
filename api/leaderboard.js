@@ -21,9 +21,9 @@ module.exports = async (req, res) => {
   try {
     const timeframe = req.query.timeframe || 'all-time';
     
-    // Check cache first (5 minute cache for leaderboard)
+    // Check cache first (2 minute cache for leaderboard - shorter for more real-time updates)
     const cacheKey = `leaderboard_${timeframe}`;
-    const cached = getCached(cacheKey, 300000); // 5 minutes
+    const cached = getCached(cacheKey, 120000); // 2 minutes
     if (cached) {
       return res.status(200).json({ success: true, leaderboard: cached });
     }
@@ -35,6 +35,25 @@ module.exports = async (req, res) => {
     }
 
     try {
+      // Ensure xp_logs table exists
+      try {
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS xp_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            xp_amount DECIMAL(10, 2) NOT NULL,
+            action_type VARCHAR(50) NOT NULL,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_id (user_id),
+            INDEX idx_created_at (created_at),
+            INDEX idx_action_type (action_type)
+          )
+        `);
+      } catch (tableError) {
+        console.warn('xp_logs table already exists or error creating:', tableError.message);
+      }
+
       // Check if users table has XP/level columns
       let hasXp = false;
       let hasLevel = false;
@@ -55,26 +74,60 @@ module.exports = async (req, res) => {
         } catch (e2) {}
       }
 
-      // Build query based on available columns
-      let query = 'SELECT id, email, username, name';
-      if (hasXp) query += ', xp';
-      if (hasLevel) query += ', level';
-      query += ' FROM users WHERE 1=1';
-
-      // Add timeframe filter if needed (for now, just return all users)
-      // You can add date filtering here if you have a created_at or last_active column
+      // Calculate date range based on timeframe
+      let dateFilter = '';
+      let dateParams = [];
       
-      if (hasXp) {
-        query += ' ORDER BY xp DESC';
-      } else if (hasLevel) {
-        query += ' ORDER BY level DESC';
-      } else {
-        query += ' ORDER BY id DESC';
+      if (timeframe === 'daily') {
+        dateFilter = 'AND xl.created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)';
+      } else if (timeframe === 'weekly') {
+        dateFilter = 'AND xl.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+      } else if (timeframe === 'monthly') {
+        dateFilter = 'AND xl.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
       }
-      
-      query += ' LIMIT 100'; // Limit to top 100
+      // 'all-time' doesn't need a date filter
 
-      const [users] = await db.execute(query);
+      // Query to get users with their XP gains for the selected timeframe
+      let query = `
+        SELECT 
+          u.id,
+          u.email,
+          u.username,
+          u.name,
+          ${hasXp ? 'u.xp,' : '0 as xp,'}
+          ${hasLevel ? 'u.level,' : '1 as level,'}
+          u.role,
+          u.avatar,
+          COALESCE(SUM(xl.xp_amount), 0) as xp_gain
+        FROM users u
+        LEFT JOIN xp_logs xl ON u.id = xl.user_id ${dateFilter}
+        GROUP BY u.id, u.email, u.username, u.name, u.xp, u.level, u.role, u.avatar
+        HAVING xp_gain > 0 OR ? = 'all-time'
+        ORDER BY xp_gain DESC, u.xp DESC
+        LIMIT 100
+      `;
+      
+      // For all-time, show total XP instead of gains
+      if (timeframe === 'all-time') {
+        query = `
+          SELECT 
+            id,
+            email,
+            username,
+            name,
+            ${hasXp ? 'xp,' : '0 as xp,'}
+            ${hasLevel ? 'level,' : '1 as level,'}
+            role,
+            avatar,
+            ${hasXp ? 'xp' : '0'} as xp_gain
+          FROM users
+          WHERE ${hasXp ? 'xp > 0' : '1=1'}
+          ORDER BY ${hasXp ? 'xp' : 'id'} DESC
+          LIMIT 100
+        `;
+      }
+
+      const [users] = await db.execute(query, timeframe === 'all-time' ? [] : [timeframe]);
       db.release(); // Release connection back to pool
 
       // Create real user accounts if we have less than 20 users to populate leaderboard
@@ -193,9 +246,13 @@ module.exports = async (req, res) => {
         userId: user.id,
         username: user.username || user.name || user.email?.split('@')[0] || 'User',
         email: user.email,
-        xp: hasXp ? (parseFloat(user.xp) || 0) : 0,
+        xp: timeframe === 'all-time' 
+          ? (hasXp ? (parseFloat(user.xp) || 0) : 0)
+          : (parseFloat(user.xp_gain) || 0), // Show XP gain for time-based leaderboards
+        xpGain: timeframe !== 'all-time' ? (parseFloat(user.xp_gain) || 0) : null, // Explicit XP gain field
+        totalXP: hasXp ? (parseFloat(user.xp) || 0) : 0, // Always include total XP for reference
         level: hasLevel ? (parseInt(user.level) || 1) : 1,
-        avatar: 'avatar_ai.png',
+        avatar: user.avatar || 'avatar_ai.png',
         role: user.role || 'free',
         strikes: 0
       }));
