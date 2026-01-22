@@ -4430,43 +4430,58 @@ Let's build generational wealth together! 💰🚀`,
                         gap: '12px'
                     }}>
                         {/* Avatar with image or initials */}
-                        {storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' ? (
-                            <img 
-                                src={storedUser.avatar.startsWith('data:image') 
-                                    ? storedUser.avatar 
-                                    : `/avatars/${storedUser.avatar}`}
-                                alt="Avatar"
+                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
+                            {storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' && !storedUser.avatar.includes('avatar_ai') ? (
+                                <img 
+                                    src={storedUser.avatar.startsWith('data:image') 
+                                        ? storedUser.avatar 
+                                        : storedUser.avatar.startsWith('/')
+                                        ? storedUser.avatar
+                                        : `/avatars/${storedUser.avatar}`}
+                                    alt="Avatar"
+                                    style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover',
+                                        border: '2px solid rgba(139, 92, 246, 0.5)',
+                                        boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)',
+                                        display: 'block'
+                                    }}
+                                    onError={(e) => {
+                                        // If image fails to load, show initials instead
+                                        e.target.style.display = 'none';
+                                        const initialsDiv = e.target.parentElement.querySelector('.avatar-initials');
+                                        if (initialsDiv) {
+                                            initialsDiv.style.display = 'flex';
+                                        }
+                                    }}
+                                />
+                            ) : null}
+                            <div 
+                                className="avatar-initials"
                                 style={{
                                     width: '40px',
                                     height: '40px',
                                     borderRadius: '50%',
-                                    objectFit: 'cover',
-                                    border: '2px solid rgba(139, 92, 246, 0.5)',
-                                    flexShrink: 0,
-                                    boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)'
+                                    background: (storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' && !storedUser.avatar.includes('avatar_ai')) 
+                                        ? 'transparent' 
+                                        : 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                    display: (storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' && !storedUser.avatar.includes('avatar_ai')) 
+                                        ? 'none' 
+                                        : 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '1rem',
+                                    fontWeight: 700,
+                                    color: 'white',
+                                    position: storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' ? 'absolute' : 'relative',
+                                    top: 0,
+                                    left: 0
                                 }}
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                }}
-                            />
-                        ) : null}
-                        <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            background: storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' 
-                                ? 'transparent' 
-                                : 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
-                            display: storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' ? 'none' : 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1rem',
-                            fontWeight: 700,
-                            color: 'white',
-                            flexShrink: 0
-                        }}>
-                            {(storedUser?.username || storedUser?.name || 'U').substring(0, 2).toUpperCase()}
+                            >
+                                {(storedUser?.username || storedUser?.name || 'U').substring(0, 2).toUpperCase()}
+                            </div>
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ 

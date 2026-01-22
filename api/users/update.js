@@ -430,9 +430,18 @@ module.exports = async (req, res) => {
         
         // Build select fields dynamically based on what columns exist
         const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
-        const selectFields = hasBanner 
-          ? `${baseFields}, banner`
-          : baseFields;
+        // Check if last_seen column exists
+        let hasLastSeen = false;
+        try {
+          await db.execute('SELECT last_seen FROM users LIMIT 1');
+          hasLastSeen = true;
+        } catch (e) {
+          // last_seen column doesn't exist
+        }
+        
+        const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
+        const fieldsWithBanner = hasBanner ? `${baseFields}, banner` : baseFields;
+        const selectFields = hasLastSeen ? `${fieldsWithBanner}, last_seen` : fieldsWithBanner;
         
         let rows;
         try {

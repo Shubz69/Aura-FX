@@ -13,9 +13,12 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
     const [profile, setProfile] = useState(userData || null);
     const [loading, setLoading] = useState(!userData);
     const [activeTab, setActiveTab] = useState('overview');
+    const [isOnline, setIsOnline] = useState(false);
+    const [lastSeen, setLastSeen] = useState(null);
 
+    // Fetch profile and online status
     useEffect(() => {
-        if (isOpen && userId && !userData) {
+        if (isOpen && userId) {
             const fetchProfile = async () => {
                 try {
                     setLoading(true);
@@ -25,6 +28,17 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
                     if (response.ok) {
                         const data = await response.json();
                         setProfile(data);
+                        
+                        // Check online status
+                        if (data.last_seen) {
+                            const lastSeenDate = new Date(data.last_seen);
+                            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                            setIsOnline(lastSeenDate >= fiveMinutesAgo);
+                            setLastSeen(lastSeenDate);
+                        } else {
+                            setIsOnline(false);
+                            setLastSeen(null);
+                        }
                     }
                     setLoading(false);
                 } catch (err) {
@@ -34,9 +48,28 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
             };
 
             fetchProfile();
+            
+            // Update online status every 10 seconds
+            const statusInterval = setInterval(() => {
+                if (profile?.last_seen) {
+                    const lastSeenDate = new Date(profile.last_seen);
+                    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                    setIsOnline(lastSeenDate >= fiveMinutesAgo);
+                }
+            }, 10000);
+            
+            return () => clearInterval(statusInterval);
         } else if (userData) {
             setProfile(userData);
             setLoading(false);
+            
+            // Check online status from userData
+            if (userData.last_seen) {
+                const lastSeenDate = new Date(userData.last_seen);
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                setIsOnline(lastSeenDate >= fiveMinutesAgo);
+                setLastSeen(lastSeenDate);
+            }
         }
     }, [isOpen, userId, userData]);
 
@@ -83,6 +116,22 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
     };
 
     const achievements = getAchievements(profile.level || 1);
+
+    // Format last seen time
+    const formatLastSeen = (date) => {
+        if (!date) return 'Never';
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    };
 
     return (
         <div 
@@ -191,38 +240,109 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
                         left: '40px',
                         zIndex: 5
                     }}>
-                        <img 
-                            src={getAvatarPath(profile.avatar)} 
-                            alt="Avatar" 
-                            style={{
-                                width: '120px',
-                                height: '120px',
+                        <div style={{ position: 'relative', width: '120px', height: '120px' }}>
+                            {profile.avatar && profile.avatar !== 'avatar_ai.png' && !profile.avatar.includes('avatar_ai') ? (
+                                <img 
+                                    src={getAvatarPath(profile.avatar)} 
+                                    alt="Avatar" 
+                                    style={{
+                                        width: '120px',
+                                        height: '120px',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover',
+                                        border: '5px solid rgba(30, 30, 46, 0.95)',
+                                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.6)',
+                                        background: 'rgba(20, 20, 35, 0.8)',
+                                        display: 'block'
+                                    }}
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        const initialsDiv = e.target.parentElement.querySelector('.modal-avatar-initials');
+                                        if (initialsDiv) {
+                                            initialsDiv.style.display = 'flex';
+                                        }
+                                    }}
+                                />
+                            ) : null}
+                            <div 
+                                className="modal-avatar-initials"
+                                style={{
+                                    width: '120px',
+                                    height: '120px',
+                                    borderRadius: '50%',
+                                    background: (profile.avatar && profile.avatar !== 'avatar_ai.png' && !profile.avatar.includes('avatar_ai'))
+                                        ? 'transparent'
+                                        : 'linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(167, 139, 250, 0.6))',
+                                    display: (profile.avatar && profile.avatar !== 'avatar_ai.png' && !profile.avatar.includes('avatar_ai'))
+                                        ? 'none'
+                                        : 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '2.5rem',
+                                    fontWeight: 700,
+                                    color: 'white',
+                                    border: '5px solid rgba(30, 30, 46, 0.95)',
+                                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.6)',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0
+                                }}
+                            >
+                                {(profile.username || profile.name || 'U').substring(0, 2).toUpperCase()}
+                            </div>
+                            {/* Online/Offline Status Indicator */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '5px',
+                                right: '5px',
+                                width: '24px',
+                                height: '24px',
                                 borderRadius: '50%',
-                                objectFit: 'cover',
-                                border: '5px solid rgba(30, 30, 46, 0.95)',
-                                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.6)',
-                                background: 'rgba(20, 20, 35, 0.8)'
-                            }}
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/avatars/avatar_ai.png';
-                            }}
-                        />
+                                background: isOnline ? '#23A55A' : '#72767D',
+                                border: '3px solid rgba(30, 30, 46, 0.95)',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                                zIndex: 6
+                            }} title={isOnline ? 'Online' : lastSeen ? `Last seen: ${lastSeen.toLocaleString()}` : 'Offline'}></div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Profile Header Info */}
                 <div style={{ padding: '0 40px 20px', marginTop: '20px' }}>
-                    <h1 style={{
-                        fontSize: '2rem',
-                        fontWeight: 700,
-                        color: 'white',
-                        margin: '0 0 10px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '2px'
-                    }}>
-                        {profile.username || profile.name || 'User'}
-                    </h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                        <h1 style={{
+                            fontSize: '2rem',
+                            fontWeight: 700,
+                            color: 'white',
+                            margin: 0,
+                            textTransform: 'uppercase',
+                            letterSpacing: '2px',
+                            flex: 1
+                        }}>
+                            {profile.username || profile.name || 'User'}
+                        </h1>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            background: isOnline ? 'rgba(35, 165, 90, 0.2)' : 'rgba(114, 118, 125, 0.2)',
+                            border: `1px solid ${isOnline ? '#23A55A' : '#72767D'}`,
+                            borderRadius: '20px',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            color: isOnline ? '#23A55A' : '#72767D'
+                        }}>
+                            <div style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: isOnline ? '#23A55A' : '#72767D',
+                                animation: isOnline ? 'pulse 2s infinite' : 'none'
+                            }}></div>
+                            {isOnline ? 'Online' : lastSeen ? `Last seen ${formatLastSeen(lastSeen)}` : 'Offline'}
+                        </div>
+                    </div>
                     <div style={{ fontSize: '1.2rem', fontWeight: 600, color: tierColor, marginBottom: '5px' }}>
                         {rankTitle}
                     </div>
@@ -328,6 +448,21 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                                     <span style={{ color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600, minWidth: '150px' }}>Login Streak:</span>
                                     <span style={{ color: 'white', fontWeight: 700, fontSize: '1.2rem' }}>{loginStreak}+ days</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                                    <span style={{ color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600, minWidth: '150px' }}>Status:</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{
+                                            width: '10px',
+                                            height: '10px',
+                                            borderRadius: '50%',
+                                            background: isOnline ? '#23A55A' : '#72767D',
+                                            animation: isOnline ? 'pulse 2s infinite' : 'none'
+                                        }}></div>
+                                        <span style={{ color: 'white', fontWeight: 600, fontSize: '1rem' }}>
+                                            {isOnline ? 'Online' : lastSeen ? `Last seen ${formatLastSeen(lastSeen)}` : 'Offline'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
