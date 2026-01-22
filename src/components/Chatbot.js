@@ -32,8 +32,8 @@ const Chatbot = () => {
     useEffect(() => {
         if (isOpen) {
             const welcomeMessage = isAuthenticated 
-                ? `Welcome back, ${user?.username || user?.name || 'there'}! I'm your AURA FX assistant. I can help with general questions about our platform, courses, and subscriptions.\n\n💡 <strong>Upgrade to Premium</strong> to unlock <a href="/premium-ai" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Aura AI</a> - our advanced AI assistant that provides professional trading analysis, market insights, and personalized trading strategies.\n\nChoose a question below or ask me anything!`
-                : "Welcome to <strong>AURA FX</strong>! I'm your free assistant. I can help with questions about our platform, courses, and subscriptions.\n\n💡 <strong>Upgrade to Premium</strong> to unlock <a href=\"/premium-ai\" style=\"color: #ffffff; text-decoration: underline; font-weight: 500;\">Aura AI</a> - our advanced AI assistant for professional trading analysis and strategies.\n\n<a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a> to get started!\n\nChoose a question below or ask me anything!";
+                ? `<p>Welcome back, ${user?.username || user?.name || 'there'}! I'm your AURA FX assistant. I can help with general questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href="/premium-ai" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Aura AI</a> - our advanced AI assistant that provides professional trading analysis, market insights, and personalized trading strategies.</p><p>Choose a question below or ask me anything!</p>`
+                : "<p>Welcome to <strong>AURA FX</strong>! I'm your free assistant. I can help with questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href=\"/premium-ai\" style=\"color: #ffffff; text-decoration: underline; font-weight: 500;\">Aura AI</a> - our advanced AI assistant for professional trading analysis and strategies.</p><p><a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a> to get started!</p><p>Choose a question below or ask me anything!</p>";
             
             setMessages([
                 {
@@ -372,21 +372,21 @@ const Chatbot = () => {
                         ))}
 
                         {showOptions && (
-                            <div className="message bot">
+                            <div className="message bot chatbot-options-container">
                                 {Object.entries(groupedOptions).map(([group, questions]) => (
-                                    <div key={group} style={{ marginBottom: "10px" }}>
-                                        <strong>{group}</strong>
-                                        <ul style={{ paddingLeft: "20px" }}>
+                                    <div key={group} className="chatbot-option-group">
+                                        <strong className="chatbot-group-title">{group}</strong>
+                                        <div className="chatbot-questions-list">
                                             {questions.map((q, i) => (
-                                                <li
+                                                <div
                                                     key={i}
                                                     className="chatbot-option"
                                                     onClick={() => handleOption(q)}
                                                 >
                                                     {q}
-                                                </li>
+                                                </div>
                                             ))}
-                                        </ul>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
