@@ -40,7 +40,88 @@
     z-index: 1;
 }
 
+/* Section Title */
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 3rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Trading Markets Section */
+.trading-markets-section {
+    width: 100%;
+    margin: 2rem 0;
+    padding: 0;
+}
+
+.markets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.market-item {
+    padding: 2.5rem 2rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.market-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.market-icon {
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+.market-item:hover .market-icon {
+    transform: scale(1.1);
+}
+
+.market-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.market-description {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    font-weight: 300;
+}
+
 /* Responsive Design */
+@media (max-width: 1024px) {
+    .markets-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
 @media (max-width: 768px) {
     .explore-header {
         padding: 80px 1rem 2rem;
@@ -52,6 +133,32 @@
     
     .explore-content {
         padding: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .markets-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .market-item {
+        padding: 2rem 1.5rem;
+    }
+    
+    .market-icon {
+        font-size: 2rem;
+    }
+    
+    .market-title {
+        font-size: 1.1rem;
+    }
+    
+    .market-description {
+        font-size: 0.9rem;
     }
 }
 
@@ -67,5 +174,32 @@
     
     .explore-content {
         padding: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .markets-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .market-item {
+        padding: 1.5rem 1.25rem;
+    }
+    
+    .market-icon {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+    
+    .market-title {
+        font-size: 1rem;
+    }
+    
+    .market-description {
+        font-size: 0.85rem;
     }
 }
