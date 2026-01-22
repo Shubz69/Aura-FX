@@ -33,76 +33,95 @@ const Home = () => {
     
     const [marketData, setMarketData] = useState(initialMarketData);
 
-    // Fetch live market data for ticker
+    // Fetch live market data for ticker - 24/7 updates using TradingView-compatible sources
     useEffect(() => {
-        const fetchMarketData = async () => {
-            const symbols = [
-                // Stocks
-                'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA',
-                // Forex
-                'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD',
-                // Commodities
-                'XAUUSD', 'XAGUSD', 'CL=F' // Gold, Silver, Oil
-            ];
+        if (!showContent) return;
 
-            const fetchData = async (symbol) => {
-                try {
-                    const API_BASE_URL = window.location.origin;
-                    const response = await fetch(`${API_BASE_URL}/api/ai/market-data`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ symbol, type: 'quote' })
-                    });
+        const symbols = [
+            // Stocks
+            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA',
+            // Forex
+            'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD',
+            // Commodities
+            'XAUUSD', 'XAGUSD', 'CL=F' // Gold, Silver, Oil
+        ];
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success && data.price) {
-                            const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || data.price;
-                            const change = data.price - previousPrice;
-                            const changePercent = ((change / previousPrice) * 100).toFixed(2);
-                            
-                            localStorage.setItem(`prev_${symbol}`, data.price.toString());
-                            
-                            return {
-                                symbol: symbol.length > 6 ? symbol.substring(0, 6) : symbol,
-                                price: data.price.toFixed(2),
-                                change: changePercent >= 0 ? `+${changePercent}` : changePercent.toString(),
-                                isUp: change >= 0
-                            };
+        const fetchData = async (symbol) => {
+            try {
+                const API_BASE_URL = window.location.origin;
+                const response = await fetch(`${API_BASE_URL}/api/ai/market-data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ symbol, type: 'quote' })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.price) {
+                        const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || data.price;
+                        const change = data.price - previousPrice;
+                        const changePercent = ((change / previousPrice) * 100).toFixed(2);
+                        
+                        localStorage.setItem(`prev_${symbol}`, data.price.toString());
+                        
+                        // Format price based on instrument type
+                        let formattedPrice = data.price.toFixed(2);
+                        if (symbol.includes('XAU') || symbol.includes('GOLD')) {
+                            formattedPrice = data.price.toFixed(2);
+                        } else if (symbol.includes('XAG') || symbol.includes('SILVER')) {
+                            formattedPrice = data.price.toFixed(2);
+                        } else if (symbol.includes('EUR') || symbol.includes('GBP') || symbol.includes('AUD')) {
+                            formattedPrice = data.price.toFixed(4);
+                        } else if (symbol.includes('JPY')) {
+                            formattedPrice = data.price.toFixed(2);
                         }
+                        
+                        return {
+                            symbol: symbol.length > 6 ? symbol.substring(0, 6) : symbol,
+                            price: formattedPrice,
+                            change: changePercent >= 0 ? `+${changePercent}` : changePercent.toString(),
+                            isUp: change >= 0
+                        };
                     }
-                } catch (error) {
-                    console.error(`Error fetching ${symbol}:`, error);
                 }
-                return null;
-            };
+            } catch (error) {
+                console.error(`Error fetching ${symbol}:`, error);
+            }
+            return null;
+        };
 
-            // Fetch all symbols in parallel
+        const fetchAllData = async () => {
+            // Only fetch if page is visible (or always for 24/7)
             const results = await Promise.all(symbols.map(fetchData));
             const validData = results.filter(item => item !== null);
             
-            // Only update if we got valid data, otherwise keep static data
             if (validData.length > 0) {
                 setMarketData(validData);
             }
-
-            // Update every 30 seconds
-            const interval = setInterval(async () => {
-                const results = await Promise.all(symbols.map(fetchData));
-                const validData = results.filter(item => item !== null);
-                if (validData.length > 0) {
-                    setMarketData(validData);
-                }
-            }, 30000);
-
-            return () => clearInterval(interval);
         };
 
-        if (showContent) {
-            fetchMarketData();
-        }
+        // Initial fetch
+        fetchAllData();
+
+        // Update every 10 seconds for true live data (24/7)
+        const interval = setInterval(fetchAllData, 10000);
+
+        // Handle page visibility - continue updating even when tab is in background
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                // Page is visible, ensure updates continue
+                fetchAllData();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [showContent]);
 
     // Loading effect

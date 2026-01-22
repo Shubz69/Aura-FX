@@ -18,8 +18,8 @@ const WhyInfinity = () => {
         additionalFeatures: null,
     });
 
-    // Stock data for ticker
-    const stockData = [
+    // Live stock data for ticker - 24/7 updates using TradingView-compatible sources
+    const [stockData, setStockData] = useState([
         { symbol: 'AAPL', price: '192.53', change: '+2.38', isUp: true },
         { symbol: 'MSFT', price: '426.74', change: '-1.28', isUp: false },
         { symbol: 'GOOGL', price: '183.42', change: '+3.71', isUp: true },
@@ -34,7 +34,90 @@ const WhyInfinity = () => {
         { symbol: 'COIN', price: '216.84', change: '+12.37', isUp: true },
         { symbol: 'ETH', price: '3472.16', change: '+105.21', isUp: true },
         { symbol: 'BTC', price: '64238.75', change: '-342.59', isUp: false }
-    ];
+    ]);
+
+    // Fetch live market data for ticker - 24/7 updates
+    useEffect(() => {
+        const symbols = [
+            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA',
+            'JPM', 'V', 'NFLX', 'AMD', 'COIN', 'ETH', 'BTC'
+        ];
+
+        const fetchData = async (symbol) => {
+            try {
+                const API_BASE_URL = window.location.origin;
+                const response = await fetch(`${API_BASE_URL}/api/ai/market-data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ symbol, type: 'quote' })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.price) {
+                        const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || data.price;
+                        const change = data.price - previousPrice;
+                        const changePercent = ((change / previousPrice) * 100).toFixed(2);
+                        
+                        localStorage.setItem(`prev_${symbol}`, data.price.toString());
+                        
+                        // Format price based on instrument type
+                        let formattedPrice = data.price.toFixed(2);
+                        if (symbol === 'BTC' || symbol === 'ETH') {
+                            formattedPrice = data.price.toFixed(2);
+                        } else if (data.price > 1000) {
+                            formattedPrice = data.price.toFixed(2);
+                        } else if (data.price > 100) {
+                            formattedPrice = data.price.toFixed(2);
+                        } else {
+                            formattedPrice = data.price.toFixed(2);
+                        }
+                        
+                        return {
+                            symbol: symbol,
+                            price: formattedPrice,
+                            change: changePercent >= 0 ? `+${changePercent}` : changePercent.toString(),
+                            isUp: change >= 0
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error(`Error fetching ${symbol}:`, error);
+            }
+            return null;
+        };
+
+        const fetchAllData = async () => {
+            const results = await Promise.all(symbols.map(fetchData));
+            const validData = results.filter(item => item !== null);
+            
+            if (validData.length > 0) {
+                setStockData(validData);
+            }
+        };
+
+        // Initial fetch
+        fetchAllData();
+
+        // Update every 10 seconds for true live data (24/7)
+        const interval = setInterval(fetchAllData, 10000);
+
+        // Handle page visibility - continue updating even when tab is in background
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                fetchAllData();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
     
     // Scroll animations
     useEffect(() => {
