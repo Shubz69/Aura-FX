@@ -5393,7 +5393,12 @@ Let's build generational wealth together! 💰🚀`,
                                     connectionStatus === 'server-issue' || connectionStatus === 'wifi-issue' ? 'error' : 
                                     'connecting'
                                 }`}></span>
-                                <span>
+                                <span style={{ 
+                                    color: connectionStatus === 'connected' ? 'var(--accent-green)' : 
+                                           connectionStatus === 'server-issue' || connectionStatus === 'wifi-issue' ? '#EF4444' : 
+                                           '#F59E0B',
+                                    fontWeight: 600
+                                }}>
                                     {connectionStatus === 'connected' ? 'Connected' : 
                                      connectionStatus === 'server-issue' ? 'Connection Issues' :
                                      connectionStatus === 'wifi-issue' ? 'Cannot Connect' :

@@ -1163,9 +1163,9 @@ html.community-page-active {
 .connection-status {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0;
-    color: transparent;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
     margin-bottom: 8px;
     padding-left: 16px;
     font-weight: 600;
@@ -1173,7 +1173,10 @@ html.community-page-active {
 }
 
 .connection-status span:last-child {
-    display: none; /* Hide the text, only show the circle */
+    display: inline-block; /* Show the text next to the circle */
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .status-dot.connected {
@@ -1193,6 +1196,7 @@ html.community-page-active {
     display: inline-block;
     flex-shrink: 0;
     animation: statusPulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
 }
 
 .status-dot.error {
@@ -1202,7 +1206,8 @@ html.community-page-active {
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
-    animation: statusPulse 2s ease-in-out infinite;
+    animation: errorPulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
 }
 
 .status-dot {
@@ -1212,15 +1217,24 @@ html.community-page-active {
     background: var(--accent-green);
     display: inline-block;
     flex-shrink: 0;
-    animation: statusPulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.7);
 }
 
 @keyframes statusPulse {
     0%, 100% { 
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
     }
     50% { 
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+    }
+}
+
+@keyframes errorPulse {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    50% { 
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
     }
 }
 
