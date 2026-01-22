@@ -11,7 +11,8 @@ import {
   FaHome,
   FaBook,
   FaQuestionCircle,
-  FaEnvelope
+  FaEnvelope,
+  FaRocket
 } from 'react-icons/fa';
 
 const Explore = () => {
