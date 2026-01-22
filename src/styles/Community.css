@@ -1158,6 +1158,9 @@ html.community-page-active {
     background: var(--bg-tertiary);
     border-top: none;
     flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    max-width: 100%;
 }
 
 .connection-status {
@@ -1170,6 +1173,9 @@ html.community-page-active {
     padding-left: 16px;
     font-weight: 600;
     position: relative;
+    overflow: visible;
+    max-width: 100%;
+    width: auto;
 }
 
 .connection-status span:last-child {
@@ -2137,32 +2143,7 @@ html.community-page-active {
     font-weight: 700;
 }
 
-/* Mobile Channel Selector Dropdown */
-.mobile-channel-selector {
-    display: none;
-    position: fixed;
-    top: 80px;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    padding: 12px 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-@media (max-width: 1024px) {
-    .mobile-channel-selector {
-        top: 80px;
-    }
-    
-    .mobile-user-stats {
-        top: 80px;
-    }
-}
-
-.mobile-channel-selector select {
-    width: 100%;
+/* Mobile Channel Selector - Removed (using slideable sidebar instead) */
     background: var(--bg-primary);
     color: #F2F3F5;
     border: 1px solid var(--border-color);

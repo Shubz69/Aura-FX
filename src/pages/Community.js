@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import '../styles/Community.css';
 import { useWebSocket } from '../utils/useWebSocket';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -461,7 +461,6 @@ const Community = () => {
     
     // Welcome message and channel visibility
     const [hasReadWelcome, setHasReadWelcome] = useState(false);
-    // Courses state removed - no longer needed
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
     const [paymentFailed, setPaymentFailed] = useState(false);
     const [showChannelManager, setShowChannelManager] = useState(false);
@@ -742,7 +741,6 @@ const Community = () => {
         } else if (channelListRef.current.length > 0) {
             preparedChannels = channelListRef.current;
         }
-        // Course channels removed - no longer needed
 
         if (preparedChannels.length === 0) {
             return channelListRef.current;
@@ -1948,7 +1946,6 @@ const Community = () => {
         setHasReadWelcome(readStatus);
     }, []);
 
-    // Courses fetching removed - no longer needed
 
     // Check subscription status from localStorage (fallback)
     const checkSubscriptionLocal = useCallback(() => {
@@ -3675,7 +3672,7 @@ Let's build generational wealth together! 💰🚀`,
             {(showSubscribeBanner || showPaymentFailedBanner) && (
                 <>
                     <div style={{
-                        position: 'absolute',
+                        position: 'fixed',
                         top: 0,
                         left: 0,
                         right: 0,
@@ -3683,8 +3680,9 @@ Let's build generational wealth together! 💰🚀`,
                         backdropFilter: 'blur(8px)',
                         WebkitBackdropFilter: 'blur(8px)',
                         backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        zIndex: 999,
-                        pointerEvents: 'none'
+                        zIndex: 998,
+                        pointerEvents: 'none',
+                        overflow: 'hidden'
                     }} />
                     
                     {/* SUBSCRIPTION MODAL OVERLAY */}
@@ -3848,7 +3846,9 @@ Let's build generational wealth together! 💰🚀`,
                 style={{
                     filter: (showSubscribeBanner || showPaymentFailedBanner) ? 'blur(8px)' : 'none',
                     pointerEvents: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
-                    userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto'
+                    userSelect: (showSubscribeBanner || showPaymentFailedBanner) ? 'none' : 'auto',
+                    overflow: 'hidden',
+                    position: 'relative'
                 }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
@@ -4677,9 +4677,7 @@ Let's build generational wealth together! 💰🚀`,
                 </div>
             </div>
             
-            {/* MOBILE/TABLET CHANNEL SELECTOR - Visible on mobile and tablets */}
-            {/* OLD MOBILE CHANNEL SELECTOR - Hidden, replaced by slideable sidebar */}
-            <div className="mobile-channel-selector" style={{ display: 'none' }}>
+            {/* Mobile channel selector removed - using slideable sidebar instead */}
                 <select
                     value={selectedChannel?.id || ''}
                     onChange={(e) => {
