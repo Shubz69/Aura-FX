@@ -97,6 +97,7 @@ module.exports = async (req, res) => {
 
       user = users[0];
       todayStr = user.today;
+      const currentStreak = user.login_streak || 0;
       
       // Handle last_login_date - can be DATE or DATETIME
       let lastLoginDate = null;
