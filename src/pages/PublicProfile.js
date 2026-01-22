@@ -47,6 +47,11 @@ const PublicProfile = () => {
         };
 
         fetchProfile();
+        
+        // Refresh profile data every 3 seconds for real-time XP updates
+        const refreshInterval = setInterval(fetchProfile, 3000);
+        
+        return () => clearInterval(refreshInterval);
     }, [userId]);
 
     const getLevelBadge = (level) => {

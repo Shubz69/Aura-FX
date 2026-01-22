@@ -1,4 +1,4 @@
-const { getDbConnection } = require('../utils/db');
+const { getDbConnection } = require('../db');
 
 module.exports = async (req, res) => {
     if (req.method !== 'POST') {

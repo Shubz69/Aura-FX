@@ -92,16 +92,19 @@ const Profile = () => {
         const loadProfile = async () => {
             if (!user?.id) return;
 
-            // First, set data from auth context
+            // First, check localStorage for latest XP data (updated in real-time from Community)
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            // First, set data from auth context, but prioritize localStorage for XP/level
             const authData = {
-                username: user.username || "",
-                email: user.email || "",
-                phone: user.phone || "",
-                address: user.address || "",
-                avatar: user.avatar || "avatar_ai.png",
-                name: user.name || "",
-                level: user.level || 1,
-                xp: user.xp || 0
+                username: user.username || storedUser.username || "",
+                email: user.email || storedUser.email || "",
+                phone: user.phone || storedUser.phone || "",
+                address: user.address || storedUser.address || "",
+                avatar: user.avatar || storedUser.avatar || "avatar_ai.png",
+                name: user.name || storedUser.name || "",
+                level: storedUser.level || user.level || 1, // Prioritize localStorage for real-time XP
+                xp: storedUser.xp || user.xp || 0 // Prioritize localStorage for real-time XP
             };
 
             setFormData(prev => ({
@@ -132,6 +135,7 @@ const Profile = () => {
 
                     if (response.status === 200) {
                         const userData = response.data;
+                        // Prioritize localStorage XP/level over backend (for real-time updates)
                         const backendData = {
                             username: userData.username || authData.username,
                             email: userData.email || authData.email,
@@ -140,8 +144,8 @@ const Profile = () => {
                             avatar: userData.avatar || authData.avatar,
                             name: userData.name || authData.name,
                             bio: userData.bio || "",
-                            level: userData.level || authData.level,
-                            xp: userData.xp || authData.xp
+                            level: storedUser.level || userData.level || authData.level, // Real-time from localStorage
+                            xp: storedUser.xp || userData.xp || authData.xp // Real-time from localStorage
                         };
                         
                         // Store last username change date if available
@@ -174,6 +178,20 @@ const Profile = () => {
         };
 
         loadProfile();
+        
+        // Set up interval to refresh XP from localStorage every 2 seconds (for real-time updates)
+        const xpRefreshInterval = setInterval(() => {
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            if (storedUser.xp !== undefined && storedUser.level !== undefined) {
+                setFormData(prev => ({
+                    ...prev,
+                    xp: storedUser.xp || prev.xp,
+                    level: storedUser.level || prev.level
+                }));
+            }
+        }, 2000);
+        
+        return () => clearInterval(xpRefreshInterval);
     }, [user]);
 
     const handleChange = (e) => {

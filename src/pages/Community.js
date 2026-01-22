@@ -810,9 +810,9 @@ const Community = () => {
     // ***** XP SYSTEM FUNCTIONS *****
     
     // XP and Level calculation rules - HARD LEVELING SYSTEM
-    const XP_PER_MESSAGE = 1; // Base XP for sending a message (reduced from easy system)
-    const XP_PER_FILE = 5; // Extra XP for including a file/image (reduced)
-    const XP_PER_EMOJI = 0.1; // Extra XP per emoji in message (reduced)
+    const XP_PER_MESSAGE = 10; // Base XP for sending a message in community
+    const XP_PER_FILE = 5; // Extra XP for including a file/image
+    const XP_PER_EMOJI = 0.1; // Extra XP per emoji in message
     
     // Level thresholds - MUCH HARDER exponential growth
     // Formula: Level = floor(sqrt(XP / 5000)) + 1
@@ -858,7 +858,8 @@ const Community = () => {
             // Save to database in background (don't block UI)
             if (currentUser.id) {
                 try {
-                    const response = await fetch('/api/users/update-xp', {
+                    const API_BASE_URL = window.location.origin;
+                    const response = await fetch(`${API_BASE_URL}/api/users/update-xp`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -870,13 +871,42 @@ const Community = () => {
                             level: newLevel
                         })
                     });
-                    if (!response.ok) {
-                        console.warn('Failed to sync XP to database, but saved locally');
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log(`✅ XP updated: +${earnedXP} XP (Total: ${newXP} XP, Level: ${newLevel})`, result);
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('❌ Failed to sync XP to database:', response.status, errorData);
+                        // Retry once after 1 second
+                        setTimeout(async () => {
+                            try {
+                                const retryResponse = await fetch(`${API_BASE_URL}/api/users/update-xp`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                    },
+                                    body: JSON.stringify({
+                                        userId: currentUser.id,
+                                        xp: newXP,
+                                        level: newLevel
+                                    })
+                                });
+                                if (retryResponse.ok) {
+                                    console.log('✅ XP synced to database on retry');
+                                }
+                            } catch (retryError) {
+                                console.error('❌ XP retry failed:', retryError);
+                            }
+                        }, 1000);
                     }
                 } catch (dbError) {
-                    console.warn('Error syncing XP to database:', dbError);
+                    console.error('❌ Error syncing XP to database:', dbError);
                     // Continue anyway - XP is saved locally
                 }
+            } else {
+                console.warn('⚠️ Cannot sync XP: User ID not found');
             }
             
             return {
@@ -893,9 +923,9 @@ const Community = () => {
         }
     };
     
-    // Calculate XP for a message - REDUCED REWARDS for harder leveling
+    // Calculate XP for a message
     const calculateMessageXP = (messageContent, hasFile) => {
-        let totalXP = XP_PER_MESSAGE; // Base: 1 XP per message
+        let totalXP = XP_PER_MESSAGE; // Base: 10 XP per message
         
         // Bonus for file attachments (reduced)
         if (hasFile) {
@@ -1258,9 +1288,15 @@ const Community = () => {
             
             // Award XP for sending message
             const earnedXP = calculateMessageXP(messageContent, false);
+            console.log(`🎯 Awarding ${earnedXP} XP for GIF message`);
             const xpResult = await awardXP(earnedXP);
-            if (xpResult?.leveledUp) {
-                // Placeholder: trigger level-up UI feedback if desired
+            if (xpResult) {
+                console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
+                if (xpResult.leveledUp) {
+                    console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
+                }
+            } else {
+                console.error('❌ Failed to award XP for GIF');
             }
         } catch (error) {
             console.error('Error sending GIF message:', error);
@@ -2930,9 +2966,17 @@ Let's build generational wealth together! 💰🚀`,
             
             // ***** AWARD XP FOR SENDING MESSAGE *****
             const earnedXP = calculateMessageXP(messageContent, !!selectedFile);
+            console.log(`🎯 Awarding ${earnedXP} XP for message`);
             const xpResult = await awardXP(earnedXP);
-            if (xpResult?.leveledUp) {
-                // Placeholder: trigger level-up UI feedback if desired
+            if (xpResult) {
+                console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
+                if (xpResult.leveledUp) {
+                    // Show level-up notification
+                    console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
+                    // You can add a toast notification here if desired
+                }
+            } else {
+                console.error('❌ Failed to award XP');
             }
         } catch (error) {
             console.error('Error sending message:', error);
