@@ -1,205 +1,429 @@
-/* Explore Page - Clean Fresh Start */
-.explore-page {
-    position: relative;
-    min-height: 100vh;
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    font-family: 'Space Grotesk', sans-serif;
-    box-sizing: border-box;
-    overflow-x: hidden;
+/* Explore Page - Inspired by Why AURA FX but Unique */
+.explore-container {
+  position: relative;
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #ffffff;
+  padding: 140px 20px 80px;
+  overflow: hidden;
+  z-index: 1;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
-/* Header Section with EXPLORE Title */
+.explore-content-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+/* Header Section */
 .explore-header {
-    width: 100%;
-    padding: 100px 2rem 3rem;
-    text-align: center;
-    position: relative;
-    z-index: 1;
+  text-align: center;
+  margin-bottom: 5rem;
 }
 
-.explore-title {
-    font-size: 4rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-    padding: 0;
-    letter-spacing: 0.2em;
-    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
-    text-transform: uppercase;
+.explore-main-title {
+  font-size: 2.8rem;
+  font-weight: 200;
+  color: #ffffff;
+  margin-bottom: 2rem;
+  letter-spacing: 0.15em;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
-/* Content Container */
-.explore-content {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    position: relative;
-    z-index: 1;
+/* Main Content - Split Layout */
+.explore-main-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  margin-bottom: 6rem;
+  align-items: start;
 }
 
-/* Section Title */
-.section-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #ffffff;
-    text-align: center;
-    margin-bottom: 3rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+.explore-text-section {
+  padding-right: 2rem;
+}
+
+.explore-subtitle {
+  font-size: 2.5rem;
+  font-weight: 200;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.1em;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.explore-divider {
+  width: 80px;
+  height: 2px;
+  background: #ffffff;
+  margin-bottom: 2rem;
+}
+
+.explore-text {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  font-weight: 300;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.explore-cta-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 300;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: all 0.3s ease;
+  margin-top: 2rem;
+}
+
+.explore-cta-button:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Features Section */
+.explore-features-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.explore-feature-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.explore-feature-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.explore-feature-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  font-size: 1.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.explore-feature-title {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-weight: 300;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #ffffff;
+  letter-spacing: 0.1em;
+}
+
+.explore-feature-text {
+  color: #ffffff;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 300;
+}
+
+/* Site Pages Section */
+.explore-pages-section {
+  width: 100%;
+  padding: 4rem 0;
+  margin-bottom: 4rem;
+}
+
+.explore-section-heading {
+  font-size: 2.5rem;
+  font-weight: 200;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 1rem;
+  letter-spacing: 0.1em;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.explore-section-description {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  margin-bottom: 3rem;
+  font-weight: 300;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.explore-pages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.explore-page-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+}
+
+.explore-page-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.explore-page-icon {
+  font-size: 2.5rem;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.explore-page-title {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.explore-page-description {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  font-weight: 300;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.explore-page-link {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.explore-page-card:hover .explore-page-link {
+  transform: translateX(5px);
 }
 
 /* Trading Markets Section */
-.trading-markets-section {
-    width: 100%;
-    margin: 2rem 0;
-    padding: 0;
+.explore-markets-section {
+  width: 100%;
+  padding: 4rem 0;
+  margin-bottom: 4rem;
 }
 
-.markets-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    margin-top: 3rem;
+.explore-markets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 3rem;
 }
 
-.market-item {
-    padding: 2.5rem 2rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+.explore-market-item {
+  padding: 2.5rem 2rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-.market-item:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+.explore-market-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
-.market-icon {
-    font-size: 2.5rem;
-    color: #ffffff;
-    margin-bottom: 1.5rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: transform 0.3s ease;
+.explore-market-icon {
+  font-size: 2.5rem;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease;
 }
 
-.market-item:hover .market-icon {
-    transform: scale(1.1);
+.explore-market-item:hover .explore-market-icon {
+  transform: scale(1.1);
 }
 
-.market-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 1rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+.explore-market-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.market-description {
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.6;
-    font-weight: 300;
+.explore-market-description {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* Footer Section */
+.explore-footer {
+  width: 100%;
+  padding: 3rem 0;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 4rem;
+}
+
+.explore-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 300;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.explore-footer-text {
+  color: #ffffff;
+}
+
+.explore-footer-separator {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.explore-footer-powered {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.explore-footer-powered strong {
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.1em;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .markets-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-    }
+  .explore-main-content {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .explore-text-section {
+    padding-right: 0;
+  }
+
+  .explore-markets-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .explore-pages-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-    .explore-header {
-        padding: 80px 1rem 2rem;
-    }
-    
-    .explore-title {
-        font-size: 2.5rem;
-    }
-    
-    .explore-content {
-        padding: 1.5rem;
-    }
-    
-    .section-title {
-        font-size: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .markets-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-    }
-    
-    .market-item {
-        padding: 2rem 1.5rem;
-    }
-    
-    .market-icon {
-        font-size: 2rem;
-    }
-    
-    .market-title {
-        font-size: 1.1rem;
-    }
-    
-    .market-description {
-        font-size: 0.9rem;
-    }
+  .explore-container {
+    padding: 120px 15px 60px;
+  }
+
+  .explore-content-wrapper {
+    padding: 0 1.5rem;
+  }
+
+  .explore-main-title {
+    font-size: 2.2rem;
+  }
+
+  .explore-subtitle {
+    font-size: 2rem;
+  }
+
+  .explore-section-heading {
+    font-size: 2rem;
+  }
+
+  .explore-markets-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .explore-pages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .explore-footer-content {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .explore-footer-separator {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
-    .explore-header {
-        padding: 80px 1rem 1.5rem;
-    }
-    
-    .explore-title {
-        font-size: 2rem;
-        letter-spacing: 0.15em;
-    }
-    
-    .explore-content {
-        padding: 1rem;
-    }
-    
-    .section-title {
-        font-size: 1.8rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .markets-grid {
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-    }
-    
-    .market-item {
-        padding: 1.5rem 1.25rem;
-    }
-    
-    .market-icon {
-        font-size: 1.8rem;
-        margin-bottom: 1rem;
-    }
-    
-    .market-title {
-        font-size: 1rem;
-    }
-    
-    .market-description {
-        font-size: 0.85rem;
-    }
+  .explore-container {
+    padding: 100px 10px 40px;
+  }
+
+  .explore-content-wrapper {
+    padding: 0 1rem;
+  }
+
+  .explore-main-title {
+    font-size: 1.8rem;
+  }
+
+  .explore-subtitle {
+    font-size: 1.6rem;
+  }
+
+  .explore-section-heading {
+    font-size: 1.6rem;
+  }
+
+  .explore-text {
+    font-size: 1rem;
+  }
+
+  .explore-feature-card,
+  .explore-page-card,
+  .explore-market-item {
+    padding: 1.5rem;
+  }
 }
