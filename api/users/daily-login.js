@@ -126,22 +126,32 @@ module.exports = async (req, res) => {
 
       const user = users[0];
       const currentStreak = user.login_streak || 0;
+      
+      // Use MySQL CURDATE() for server-side date (timezone-independent)
+      // Get today's date from database to ensure consistency
+      const [dateRows] = await db.execute('SELECT CURDATE() as today');
+      const todayStr = dateRows[0].today;
+      
       // Handle last_login_date - can be DATE or DATETIME
       let lastLoginDate = null;
       if (user.last_login_date) {
-        // If it's a DATE string (YYYY-MM-DD), add time component for proper parsing
+        // If it's a DATE string (YYYY-MM-DD), use it directly
         const dateStr = user.last_login_date.toString();
-        lastLoginDate = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + 'T00:00:00');
+        lastLoginDate = dateStr.split('T')[0]; // Get just the date part (YYYY-MM-DD)
       }
-      const currentDate = new Date();
-      // Get today's date at midnight for accurate comparison
-      const today = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+      
+      // Compare dates as strings (YYYY-MM-DD format) for accurate day comparison
+      // This avoids timezone issues
+      let daysDiff = null;
+      if (lastLoginDate) {
+        // Parse dates and calculate difference
+        const lastLogin = new Date(lastLoginDate + 'T00:00:00Z'); // UTC midnight
+        const today = new Date(todayStr + 'T00:00:00Z'); // UTC midnight
+        daysDiff = Math.floor((today - lastLogin) / (1000 * 60 * 60 * 24));
+      }
       
       // Check if user already logged in today
-      if (lastLoginDate) {
-        // Normalize last login date to midnight for accurate day comparison
-        const lastLogin = new Date(lastLoginDate.getFullYear(), lastLoginDate.getMonth(), lastLoginDate.getDate());
-        const daysDiff = Math.floor((today - lastLogin) / (1000 * 60 * 60 * 24));
+      if (lastLoginDate && daysDiff !== null) {
         
         if (daysDiff === 0) {
           // Already logged in today, return current streak without awarding XP
@@ -153,7 +163,14 @@ module.exports = async (req, res) => {
             message: 'Already logged in today'
           });
         } else if (daysDiff > 1) {
-          // Missed a day (or more), reset streak to 1
+          // Missed a day (or more), reset streak to 0 first, then start new streak at 1
+          // First, reset streak to 0 to reflect the missed days
+          await db.execute(
+            'UPDATE users SET login_streak = 0 WHERE id = ?',
+            [userId]
+          );
+          
+          // Now start a new streak at 1 for today's login
           const newStreak = 1;
           const xpReward = calculateLoginXP(newStreak); // Base 25 XP for new streak
           const newXP = (parseFloat(user.xp) || 0) + xpReward;
@@ -167,7 +184,7 @@ module.exports = async (req, res) => {
           // Log XP gain
           await db.execute(
             'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
-            [userId, xpReward, 'daily_login', `Daily login - Streak reset, new streak started (1 day)`]
+            [userId, xpReward, 'daily_login', `Daily login - Streak reset to 0, new streak started (1 day)`]
           );
           
           await db.end();
@@ -177,14 +194,17 @@ module.exports = async (req, res) => {
             xpAwarded: xpReward,
             newXP: newXP,
             newLevel: newLevel,
-            message: 'Login streak reset. New streak started!'
+            streakReset: true,
+            message: 'Login streak reset to 0. New streak started!'
           });
         }
         // daysDiff === 1 means user logged in yesterday, continue to increment streak
       }
 
-      // User logged in yesterday (or first time), increment streak
-      const newStreak = lastLoginDate ? currentStreak + 1 : 1;
+      // User logged in yesterday (daysDiff === 1) or first time (no lastLoginDate), increment streak
+      // If daysDiff === 1, they logged in yesterday, so continue streak
+      // If no lastLoginDate, this is their first login, start at 1
+      const newStreak = (lastLoginDate && daysDiff === 1) ? currentStreak + 1 : 1;
       const xpReward = calculateLoginXP(newStreak);
       const currentXP = parseFloat(user.xp) || 0;
       const newXP = currentXP + xpReward;

@@ -175,12 +175,13 @@ export const AuthProvider = ({ children }) => {
           }
           
           // Check daily login streak (non-blocking, runs in background)
+          // This runs every time the app loads to check if user logged in today
           if (userId) {
             setTimeout(async () => {
               try {
                 const loginResponse = await Api.checkDailyLogin(userId);
-                if (loginResponse.data && loginResponse.data.success && !loginResponse.data.alreadyLoggedIn) {
-                  // Update user data with new XP and streak
+                if (loginResponse.data && loginResponse.data.success) {
+                  // Update user data with new XP and streak (even if already logged in, update streak display)
                   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
                   const updatedUser = {
                     ...currentUser,
@@ -189,6 +190,11 @@ export const AuthProvider = ({ children }) => {
                     login_streak: loginResponse.data.streak || 0
                   };
                   persistUser(updatedUser);
+                  
+                  // Show notification if XP was awarded (not already logged in today)
+                  if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn) {
+                    console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
+                  }
                 }
               } catch (error) {
                 // Silently fail - don't block app loading
