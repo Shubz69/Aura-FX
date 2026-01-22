@@ -33,7 +33,14 @@ const Explore = () => {
         } else if (response.data && response.data.success === false && Array.isArray(response.data.courses)) {
           coursesData = response.data.courses;
         }
-        coursesData = coursesData.filter(course => course && course.id && course.title);
+        coursesData = coursesData.filter(course => 
+          course && 
+          course.id && 
+          course.title &&
+          !course.title.toLowerCase().includes('1 to 1') &&
+          !course.title.toLowerCase().includes('1-on-1') &&
+          !course.title.toLowerCase().includes('1 on 1')
+        );
         setCourses(coursesData);
       } catch (error) {
         console.error('Error fetching courses:', error);
