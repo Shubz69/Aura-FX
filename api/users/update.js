@@ -412,8 +412,21 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP');
         }
         
+        // Check if banner column exists
+        let hasBanner = false;
+        try {
+          await db.execute('SELECT banner FROM users LIMIT 1');
+          hasBanner = true;
+        } catch (e) {
+          // Banner column doesn't exist, will be null
+        }
+        
+        const selectFields = hasBanner 
+          ? 'id, username, email, name, phone, address, bio, avatar, banner, role, level, xp, login_streak, last_username_change, created_at'
+          : 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
+        
         const [rows] = await db.execute(
-          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change, created_at FROM users WHERE id = ?',
+          `SELECT ${selectFields} FROM users WHERE id = ?`,
           [userId]
         );
         await db.end();
@@ -434,7 +447,7 @@ module.exports = async (req, res) => {
           name: user.name,
           bio: user.bio || '',
           avatar: user.avatar || 'avatar_ai.png',
-          banner: user.banner || '',
+          banner: (hasBanner && user.banner) ? user.banner : '',
           role: user.role || 'free',
           level: parseInt(user.level || 1),
           xp: parseFloat(user.xp || 0),

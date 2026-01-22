@@ -7,6 +7,7 @@ import {
     getNextRankMilestone
 } from '../utils/xpSystem';
 import { FaTimes } from 'react-icons/fa';
+import '../styles/ProfileModal.css';
 
 const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
     const [profile, setProfile] = useState(userData || null);
