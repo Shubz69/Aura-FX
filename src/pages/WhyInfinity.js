@@ -55,24 +55,28 @@ const WhyInfinity = () => {
                 });
 
                 if (response.ok) {
-                    const data = await response.json();
-                    if (data.success && data.price) {
-                        const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || data.price;
-                        const change = data.price - previousPrice;
-                        const changePercent = ((change / previousPrice) * 100).toFixed(2);
+                    const responseData = await response.json();
+                    // API returns { success: true, data: { price: ... } }
+                    const marketData = responseData.data || responseData;
+                    const price = marketData.price;
+                    
+                    if (responseData.success && price && price > 0) {
+                        const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || price;
+                        const change = price - previousPrice;
+                        const changePercent = previousPrice > 0 ? ((change / previousPrice) * 100).toFixed(2) : '0.00';
                         
-                        localStorage.setItem(`prev_${symbol}`, data.price.toString());
+                        localStorage.setItem(`prev_${symbol}`, price.toString());
                         
                         // Format price based on instrument type
-                        let formattedPrice = data.price.toFixed(2);
+                        let formattedPrice = price.toFixed(2);
                         if (symbol === 'BTC' || symbol === 'ETH') {
-                            formattedPrice = data.price.toFixed(2);
-                        } else if (data.price > 1000) {
-                            formattedPrice = data.price.toFixed(2);
-                        } else if (data.price > 100) {
-                            formattedPrice = data.price.toFixed(2);
+                            formattedPrice = price.toFixed(2);
+                        } else if (price > 1000) {
+                            formattedPrice = price.toFixed(2);
+                        } else if (price > 100) {
+                            formattedPrice = price.toFixed(2);
                         } else {
-                            formattedPrice = data.price.toFixed(2);
+                            formattedPrice = price.toFixed(2);
                         }
                         
                         return {
@@ -81,7 +85,11 @@ const WhyInfinity = () => {
                             change: changePercent >= 0 ? `+${changePercent}` : changePercent.toString(),
                             isUp: change >= 0
                         };
+                    } else {
+                        console.warn(`No valid price data for ${symbol}:`, responseData);
                     }
+                } else {
+                    console.warn(`API error for ${symbol}:`, response.status, response.statusText);
                 }
             } catch (error) {
                 console.error(`Error fetching ${symbol}:`, error);
