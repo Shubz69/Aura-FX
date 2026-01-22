@@ -2376,28 +2376,37 @@ const Community = () => {
 
         // Check connectivity
         const updateConnectionStatus = async () => {
-            // If WebSocket is connected, prioritize that - show connected even if API has minor issues
-            if (isConnected) {
-                setConnectionStatus('connected');
-                return;
-            }
-            
-            const apiWorking = await checkApiConnectivity();
-            
-            // If browser is offline, it's a WiFi issue
-            if (!navigator.onLine) {
-                setConnectionStatus('wifi-issue');
-            } 
-            // If API not working but browser is online and WebSocket also not connected, it's a server issue
-            else if (!apiWorking && navigator.onLine && !isConnected) {
-                setConnectionStatus('server-issue');
-            } 
-            // If API works but WebSocket not connected yet, still connecting
-            else if (apiWorking && !isConnected) {
-                setConnectionStatus('connecting');
-            } 
-            // Default to connecting
-            else {
+            try {
+                // If WebSocket is connected, prioritize that - show connected even if API has minor issues
+                if (isConnected) {
+                    setConnectionStatus('connected');
+                    return;
+                }
+                
+                // Check if browser is offline first
+                if (!navigator.onLine) {
+                    setConnectionStatus('wifi-issue');
+                    return;
+                }
+                
+                // Check API connectivity
+                const apiWorking = await checkApiConnectivity();
+                
+                // If API not working but browser is online and WebSocket also not connected, it's a server issue
+                if (!apiWorking && navigator.onLine && !isConnected) {
+                    setConnectionStatus('server-issue');
+                } 
+                // If API works but WebSocket not connected yet, still connecting
+                else if (apiWorking && !isConnected) {
+                    setConnectionStatus('connecting');
+                } 
+                // Default to connecting
+                else {
+                    setConnectionStatus('connecting');
+                }
+            } catch (error) {
+                console.error('Error updating connection status:', error);
+                // On error, default to connecting
                 setConnectionStatus('connecting');
             }
         };
