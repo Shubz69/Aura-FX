@@ -185,8 +185,8 @@ module.exports = async (req, res) => {
         const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN';
         const isPremium = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
         
-        // Admins always have access
-        if (isAdmin) { {
+        // Admins always have access - no subscription required
+        if (isAdmin) {
           return res.status(200).json({
             success: true,
             hasActiveSubscription: true,
@@ -196,7 +196,17 @@ module.exports = async (req, res) => {
           });
         }
 
-        // Premium role alone does NOT grant access - must have active subscription status
+        // Premium role users (premium, a7fx, elite) always have access - grant access based on role
+        if (isPremium) {
+          return res.status(200).json({
+            success: true,
+            hasActiveSubscription: true,
+            isAdmin: false,
+            isPremium: true,
+            paymentFailed: false,
+            expiry: user.subscription_expiry || null
+          });
+        }
 
         if (user.payment_failed === 1 || user.payment_failed === true) {
           return res.status(200).json({
