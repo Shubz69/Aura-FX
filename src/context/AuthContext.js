@@ -131,10 +131,17 @@ export const AuthProvider = ({ children }) => {
                   signal: AbortSignal.timeout(5000) // 5 second timeout
                 });
                 
-                if (!verifyResponse.ok || verifyResponse.status === 404) {
+                // Only logout on 404 (user not found), not on 500 (server error)
+                if (verifyResponse.status === 404) {
                   // User doesn't exist - account was deleted
                   console.warn('User account not found - logging out');
                   logout();
+                } else if (verifyResponse.status === 500) {
+                  // Server error - don't logout, just log warning
+                  console.warn('Server error verifying user - keeping session active');
+                } else if (!verifyResponse.ok) {
+                  // Other errors - log but don't logout
+                  console.warn('Error verifying user:', verifyResponse.status);
                 }
               } catch (verifyError) {
                 // If verification fails, don't block - just log warning

@@ -412,6 +412,13 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP');
         }
         
+        // Ensure login_streak column exists
+        try {
+          await db.execute('SELECT login_streak FROM users LIMIT 1');
+        } catch (e) {
+          await db.execute('ALTER TABLE users ADD COLUMN login_streak INT DEFAULT 0');
+        }
+        
         // Check if banner column exists
         let hasBanner = false;
         try {
@@ -421,15 +428,36 @@ module.exports = async (req, res) => {
           // Banner column doesn't exist, will be null
         }
         
+        // Build select fields dynamically based on what columns exist
+        const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
         const selectFields = hasBanner 
-          ? 'id, username, email, name, phone, address, bio, avatar, banner, role, level, xp, login_streak, last_username_change, created_at'
-          : 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
+          ? `${baseFields}, banner`
+          : baseFields;
         
-        const [rows] = await db.execute(
-          `SELECT ${selectFields} FROM users WHERE id = ?`,
-          [userId]
-        );
-        await db.end();
+        let rows;
+        try {
+          [rows] = await db.execute(
+            `SELECT ${selectFields} FROM users WHERE id = ?`,
+            [userId]
+          );
+        } catch (selectError) {
+          // If SELECT fails (e.g., column doesn't exist), try with minimal fields
+          console.warn('Select with all fields failed, trying minimal fields:', selectError.message);
+          try {
+            [rows] = await db.execute(
+              'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, created_at FROM users WHERE id = ?',
+              [userId]
+            );
+          } catch (minimalError) {
+            console.error('Minimal select also failed:', minimalError);
+            throw minimalError;
+          }
+        }
+        
+        // Close connection (using createConnection, not pool)
+        if (db && typeof db.end === 'function' && !db.ended) {
+          await db.end();
+        }
 
         if (rows.length === 0) {
           return res.status(404).json({ success: false, message: 'User not found' });
@@ -453,7 +481,7 @@ module.exports = async (req, res) => {
           xp: parseFloat(user.xp || 0),
           joinDate: user.created_at,
           createdAt: user.created_at,
-          login_streak: user.login_streak || 0,
+          login_streak: (user.login_streak !== undefined && user.login_streak !== null) ? user.login_streak : 0,
           stats: {
             reputation: Math.floor((user.xp || 0) / 100), // Calculate reputation from XP
             totalTrades: 0,
@@ -475,10 +503,26 @@ module.exports = async (req, res) => {
         return res.status(200).json(responseData);
       } catch (dbError) {
         console.error('Database error fetching user:', dbError);
-        if (db && !db.ended) await db.end();
+        console.error('Error details:', {
+          message: dbError.message,
+          code: dbError.code,
+          sqlState: dbError.sqlState,
+          sqlMessage: dbError.sqlMessage
+        });
+        
+        // Close connection (using createConnection, not pool)
+        if (db && typeof db.end === 'function' && !db.ended) {
+          try {
+            await db.end();
+          } catch (endError) {
+            console.error('Error closing DB connection:', endError);
+          }
+        }
+        
         return res.status(500).json({
           success: false,
-          message: 'Failed to fetch user data'
+          message: 'Failed to fetch user data',
+          error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
         });
       }
     } catch (error) {
