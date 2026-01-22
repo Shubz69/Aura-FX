@@ -1294,10 +1294,32 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
           });
         }
         
-        // Generic OpenAI error
+        // Generic OpenAI error - provide more helpful message
+        const errorMsg = openaiError.error?.message || openaiError.message || 'Unknown error';
+        console.error('OpenAI generic error:', errorMsg);
+        
+        // Check if it's a content filter or policy error
+        if (errorMsg.includes('content_filter') || errorMsg.includes('policy')) {
+          return res.status(500).json({ 
+            success: false, 
+            message: 'I apologize, but I cannot respond to that request due to content policy restrictions. Please try rephrasing your question.',
+            errorType: 'content_filter'
+          });
+        }
+        
+        // Check if it's a model error
+        if (errorMsg.includes('model') || errorMsg.includes('invalid')) {
+          return res.status(500).json({ 
+            success: false, 
+            message: 'I apologize, but there was an issue processing your request. Please try again in a moment.',
+            errorType: 'model_error'
+          });
+        }
+        
+        // Generic error with retry suggestion
         return res.status(500).json({ 
           success: false, 
-          message: 'I\'m having trouble processing your request right now. Please try again in a moment. If this continues, please contact support.',
+          message: 'I apologize, but I encountered an issue processing your request. Please try again in a moment. If the problem persists, please contact support.',
           errorType: 'openai_error'
         });
       }
