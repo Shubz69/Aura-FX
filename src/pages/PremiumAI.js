@@ -315,7 +315,7 @@ const PremiumAI = () => {
           images: imagesToSend,
           conversationHistory: conversationHistory.slice(-10) // Last 10 messages for context
         }),
-        signal: AbortSignal.timeout(55000) // 55 second timeout
+        signal: AbortSignal.timeout(60000) // 60 second timeout to match API
       });
 
       // Check if response is JSON before parsing
