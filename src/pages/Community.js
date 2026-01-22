@@ -814,19 +814,22 @@ const Community = () => {
     const XP_PER_FILE = 5; // Extra XP for including a file/image
     const XP_PER_EMOJI = 0.1; // Extra XP per emoji in message
     
-    // Level thresholds - MUCH HARDER exponential growth
-    // Formula: Level = floor(sqrt(XP / 5000)) + 1
-    // Level 1 = 0 XP, Level 2 = 5,000 XP, Level 3 = 20,000 XP, Level 4 = 45,000 XP, Level 5 = 80,000 XP, Level 10 = 405,000 XP
+    // Level thresholds - Balanced growth
+    // Formula: Level = floor(sqrt(XP / 100)) + 1
+    // Level 1 = 0 XP, Level 2 = 100 XP, Level 3 = 400 XP, Level 4 = 900 XP, Level 5 = 1,600 XP, Level 10 = 8,100 XP
+    // This makes leveling achievable: 10 messages = 100 XP = Level 2
     const getLevelFromXP = (xp) => {
         if (xp <= 0) return 1;
-        // Much harder exponential growth - requires significantly more XP per level
-        return Math.floor(Math.sqrt(xp / 5000)) + 1;
+        // Balanced exponential growth - achievable but requires activity
+        return Math.floor(Math.sqrt(xp / 100)) + 1;
     };
     
     // Get XP required for next level
     const getXPForNextLevel = (currentLevel) => {
-        // Reverse the formula: XP = (level - 1)^2 * 5000
-        const nextLevelXP = Math.pow(currentLevel, 2) * 5000;
+        // Reverse the formula: XP = (level - 1)^2 * 100
+        // For level 1: need 100 XP for level 2
+        // For level 2: need 400 XP for level 3
+        const nextLevelXP = Math.pow(currentLevel, 2) * 100;
         return nextLevelXP;
     };
     
