@@ -225,8 +225,9 @@ module.exports = async (req, res) => {
       const leveledUp = newLevel > (parseInt(user.level) || 1);
 
       // Update user streak, last login date, XP, and level (single query - optimized)
-      // Use a transaction-like approach: check and update atomically
-      await withTimeout(
+      // Use atomic UPDATE with WHERE clause to prevent duplicate awards
+      // Only update if last_login_date is NULL or before today
+      const [updateResult] = await withTimeout(
         executeQuery(
           'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ? AND (last_login_date IS NULL OR last_login_date < CURDATE())',
           [newStreak, newXP, newLevel, userId]
@@ -234,26 +235,34 @@ module.exports = async (req, res) => {
         2000
       );
       
-      // Verify the update actually happened (if no rows affected, user already logged in today)
-      const [verifyUpdate] = await withTimeout(
-        executeQuery(
-          'SELECT ROW_COUNT() as affected_rows'
-        ),
-        1000
-      ).catch(() => [{ affected_rows: 1 }]); // Assume success if check fails
+      // Check if update actually affected any rows
+      // executeQuery returns [rows, fields], and for UPDATE, rows[0] is an OkPacket with affectedRows
+      // If affectedRows is 0, it means the WHERE condition failed (user already logged in today)
+      const affectedRows = updateResult && updateResult[0] && updateResult[0].affectedRows !== undefined 
+        ? updateResult[0].affectedRows 
+        : (updateResult && updateResult.affectedRows !== undefined ? updateResult.affectedRows : 1); // Default to 1 if can't determine
       
-      // If no rows were affected, it means the WHERE condition failed (user already logged in)
-      // This is an additional safety check
-      if (verifyUpdate && verifyUpdate.length > 0 && verifyUpdate[0].affected_rows === 0) {
+      if (affectedRows === 0) {
         // Update didn't happen - user must have logged in between our check and update
+        // Re-fetch user data to get current values
+        const [currentUserRows] = await withTimeout(
+          executeQuery(
+            'SELECT login_streak, xp, level FROM users WHERE id = ?',
+            [userId]
+          ),
+          1000
+        ).catch(() => [[user]]);
+        
+        const currentUser = currentUserRows && currentUserRows.length > 0 ? currentUserRows[0] : user;
+        
         // Return already logged in response
         return res.status(200).json({
           success: true,
           alreadyLoggedIn: true,
-          streak: currentStreak,
+          streak: currentUser.login_streak || currentStreak,
           xpAwarded: 0,
-          newXP: parseFloat(user.xp) || 0,
-          newLevel: parseInt(user.level) || 1,
+          newXP: parseFloat(currentUser.xp) || parseFloat(user.xp) || 0,
+          newLevel: parseInt(currentUser.level) || parseInt(user.level) || 1,
           message: 'Already logged in today'
         });
       }
