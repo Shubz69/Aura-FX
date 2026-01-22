@@ -1,4 +1,4 @@
-/* Explore Page - Complete Redesign */
+/* Explore Page - Complete Redesign - Matching Home/Courses Style */
 .explore-page {
     position: relative;
     background: #0a0a0a;
@@ -15,7 +15,7 @@
 /* Hero Section */
 .explore-hero {
     max-width: 1200px;
-    margin: 0 auto 2.5rem;
+    margin: 0 auto 2rem;
     text-align: center;
     padding-top: 0;
 }
@@ -35,10 +35,6 @@
     text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
 }
 
-.hero-title strong {
-    font-weight: 300;
-}
-
 .hero-description {
     font-size: 1.2rem;
     color: #ffffff;
@@ -47,10 +43,6 @@
     margin: 0 auto 2rem;
     font-weight: 400;
     text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
-}
-
-.hero-description strong {
-    font-weight: 400;
 }
 
 .hero-cta {
@@ -98,21 +90,6 @@
     transform: translateY(-2px);
 }
 
-/* Powered by THE GLITCH */
-.powered-by {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.7);
-    text-align: center;
-    margin-bottom: 2rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-}
-
-.powered-by strong {
-    color: #8B5CF6;
-    font-weight: 600;
-}
-
 /* Section Titles */
 .section-title {
     font-size: 2.5rem;
@@ -135,19 +112,28 @@
 
 .section-subtitle.powered-by {
     margin-bottom: 1.5rem;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.1em;
+}
+
+.section-subtitle.powered-by strong {
+    color: #8B5CF6;
+    font-weight: 600;
 }
 
 /* About Section */
 .about-section {
     max-width: 1000px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2rem;
 }
 
 .about-container {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
-    padding: 3rem;
+    padding: 2.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .about-content {
@@ -170,7 +156,7 @@
 /* Features Section */
 .features-section {
     max-width: 1200px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2rem;
 }
 
 .features-container {
@@ -189,7 +175,7 @@
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 16px;
-    padding: 2.5rem 2rem;
+    padding: 2rem;
     text-align: center;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -200,7 +186,7 @@
 .feature-card:hover {
     transform: translateY(-5px);
     border-color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
@@ -241,7 +227,7 @@
 /* Markets Section */
 .markets-section {
     max-width: 1200px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2rem;
 }
 
 .markets-container {
@@ -260,7 +246,7 @@
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 16px;
-    padding: 2.5rem 2rem;
+    padding: 2rem;
     text-align: center;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -271,7 +257,7 @@
 .market-card:hover {
     transform: translateY(-5px);
     border-color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
@@ -299,7 +285,7 @@
 /* Courses Section */
 .courses-section {
     max-width: 1200px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2rem;
 }
 
 .courses-container {
@@ -330,7 +316,7 @@
 .course-card:hover {
     transform: translateY(-5px);
     border-color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
@@ -357,20 +343,26 @@
 }
 
 .course-link {
-    color: #ffffff;
+    color: #8B5CF6;
     font-size: 0.9rem;
-    font-weight: 300;
+    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.course-card:hover .course-link {
+    color: #A78BFA;
+    transform: translateX(5px);
 }
 
 /* Offerings Section */
 .offerings-section {
     max-width: 1200px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2rem;
 }
 
 .offerings-container {
@@ -389,7 +381,7 @@
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 16px;
-    padding: 2.5rem 2rem;
+    padding: 2rem;
     text-align: center;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -400,7 +392,7 @@
 .offering-card:hover {
     transform: translateY(-5px);
     border-color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
@@ -428,69 +420,75 @@
 /* Benefits Section */
 .benefits-section {
     max-width: 1000px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2rem;
 }
 
 .benefits-container {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
-    padding: 3rem;
+    padding: 2.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .benefits-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
 }
 
 .benefit-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     color: #ffffff;
 }
 
 .benefit-icon {
     font-size: 1.2rem;
-    color: #ffffff;
+    color: #8B5CF6;
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .benefit-text {
     font-size: 1rem;
     font-weight: 300;
     line-height: 1.6;
+    color: #ffffff;
 }
 
 /* Actual Courses Section */
 .actual-courses-section {
     max-width: 1200px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2rem;
 }
 
 .actual-courses-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
+    gap: 1.5rem;
     padding: 0 1rem;
+    box-sizing: border-box;
 }
 
 .actual-course-card {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 16px;
     overflow: hidden;
     transition: all 0.3s ease;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .actual-course-card:hover {
     transform: translateY(-5px);
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
 .course-image-wrapper {
@@ -565,15 +563,16 @@
 .explore-cta-section {
     max-width: 1000px;
     margin: 0 auto;
-    padding: 4rem 2rem;
+    padding: 3rem 2rem;
 }
 
 .cta-container {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
-    padding: 4rem 3rem;
+    padding: 3rem;
     text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .cta-title {
@@ -602,19 +601,19 @@
 @media (max-width: 1200px) {
     .courses-grid,
     .offerings-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     }
 }
 
 @media (max-width: 1024px) {
     .features-grid,
     .markets-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
     
     .courses-grid,
     .offerings-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     }
 }
 
@@ -624,7 +623,7 @@
     }
     
     .explore-hero {
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
     
     .about-section,
@@ -634,7 +633,7 @@
     .offerings-section,
     .benefits-section,
     .actual-courses-section {
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
     
     .hero-title {
@@ -643,6 +642,7 @@
     }
     
     .hero-description {
+        font-size: 1.1rem;
         margin-bottom: 1.5rem;
     }
     
@@ -653,6 +653,7 @@
     
     .section-subtitle {
         margin-bottom: 1.5rem;
+        font-size: 1rem;
     }
     
     .features-grid,
@@ -677,6 +678,13 @@
     .benefits-container,
     .cta-container {
         padding: 2rem 1.5rem;
+    }
+    
+    .feature-card,
+    .market-card,
+    .course-card,
+    .offering-card {
+        padding: 1.5rem;
     }
 }
 
@@ -703,13 +711,6 @@
     
     .cta-description {
         font-size: 1rem;
-    }
-    
-    .feature-card,
-    .market-card,
-    .course-card,
-    .offering-card {
-        padding: 2rem 1.5rem;
     }
     
     .hero-cta,
