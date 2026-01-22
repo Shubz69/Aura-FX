@@ -157,14 +157,47 @@ module.exports = async (req, res) => {
           const newXP = (parseFloat(user.xp) || 0) + xpReward;
           const newLevel = getLevelFromXP(newXP);
           
-          // Single UPDATE query (optimized)
-          await withTimeout(
+          // ATOMIC UPDATE: Use WHERE clause to prevent duplicate awards
+          const [updateResult] = await withTimeout(
             executeQuery(
-              'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ?',
+              'UPDATE users SET login_streak = ?, last_login_date = CURDATE(), xp = ?, level = ? WHERE id = ? AND (last_login_date IS NULL OR last_login_date < CURDATE())',
               [newStreak, newXP, newLevel, userId]
             ),
             2000
           );
+          
+          // Check if update actually affected any rows
+          let affectedRows = 0;
+          if (updateResult && Array.isArray(updateResult) && updateResult.length > 0) {
+            if (updateResult[0] && typeof updateResult[0] === 'object' && 'affectedRows' in updateResult[0]) {
+              affectedRows = updateResult[0].affectedRows || 0;
+            } else if (updateResult[0] && typeof updateResult[0] === 'number') {
+              affectedRows = updateResult[0];
+            }
+          }
+          
+          // If no rows were affected, user already logged in today
+          if (affectedRows === 0) {
+            const [currentUserRows] = await withTimeout(
+              executeQuery(
+                'SELECT login_streak, xp, level FROM users WHERE id = ?',
+                [userId]
+              ),
+              1000
+            ).catch(() => [[user]]);
+            
+            const currentUser = currentUserRows && currentUserRows.length > 0 ? currentUserRows[0] : user;
+            
+            return res.status(200).json({
+              success: true,
+              alreadyLoggedIn: true,
+              streak: currentUser.login_streak || currentStreak,
+              xpAwarded: 0,
+              newXP: parseFloat(currentUser.xp) || parseFloat(user.xp) || 0,
+              newLevel: parseInt(currentUser.level) || parseInt(user.level) || 1,
+              message: 'Already logged in today'
+            });
+          }
           
           // Log XP gain (fire and forget - don't wait)
           executeQuery(
