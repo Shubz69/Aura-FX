@@ -181,9 +181,12 @@ module.exports = async (req, res) => {
         }
 
         const user = rows[0];
-        const isAdmin = user.role === 'ADMIN' || user.role === 'admin' || user.role === 'super_admin';
+        const userRole = (user.role || '').toLowerCase();
+        const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN';
+        const isPremium = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
         
-        if (isAdmin) {
+        // Admins always have access
+        if (isAdmin) { {
           return res.status(200).json({
             success: true,
             hasActiveSubscription: true,

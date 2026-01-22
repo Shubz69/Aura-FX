@@ -3389,10 +3389,32 @@ Let's build generational wealth together! 💰🚀`,
     const hasActiveSubscription = subscriptionStatus 
         ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
         : checkSubscription();
+    
+    // Get user data from multiple sources for comprehensive check
     const storedUserDataForBanner = JSON.parse(localStorage.getItem('user') || '{}');
-    const isAdminForBanner = storedUserDataForBanner.role === 'ADMIN' || storedUserDataForBanner.role === 'admin' || storedUserDataForBanner.role === 'super_admin';
-    const showSubscribeBanner = !isAdminForBanner && !hasActiveSubscription;
-    const showPaymentFailedBanner = !isAdminForBanner && paymentFailed;
+    const userRoleForBanner = (storedUser?.role || storedUserDataForBanner.role || 'free').toLowerCase();
+    const subscriptionStatusForBanner = storedUser?.subscription_status || storedUserDataForBanner.subscription_status;
+    const subscriptionPlanForBanner = storedUser?.subscription_plan || storedUserDataForBanner.subscription_plan;
+    
+    // Check if user is admin (use state variables which are more reliable)
+    const isAdminForBanner = isAdminUser || isSuperAdminUser || 
+        userRoleForBanner === 'admin' || 
+        userRoleForBanner === 'super_admin' || 
+        userRoleForBanner === 'ADMIN';
+    
+    // Check if user has premium access (role-based OR subscription-based)
+    const hasPremiumRole = userRoleForBanner === 'premium' || 
+        userRoleForBanner === 'a7fx' || 
+        userRoleForBanner === 'elite';
+    
+    const hasActiveSubscriptionStatus = subscriptionStatusForBanner === 'active' || hasActiveSubscription;
+    
+    // User has access if: admin, premium role, OR active subscription
+    const userHasAccess = isAdminForBanner || hasPremiumRole || hasActiveSubscriptionStatus;
+    
+    // Only show subscribe banner if user doesn't have access
+    const showSubscribeBanner = !userHasAccess && !paymentFailed;
+    const showPaymentFailedBanner = !isAdminForBanner && paymentFailed && !hasActiveSubscriptionStatus;
 
     // Handle subscribe button click - show subscription selection modal
     const handleSubscribe = (requiredType = null) => {
