@@ -448,6 +448,7 @@ module.exports = async (req, res) => {
                   category: row.category || (isGeneral ? 'general' : 'trading'),
                   description: row.description,
                   accessLevel: accessLevel,
+                  permissionType: row.permission_type || 'read-write',
                   locked: locked
                 };
               });
@@ -592,7 +593,7 @@ module.exports = async (req, res) => {
         }
       }
       
-      const { id, name, displayName, category, description, accessLevel } = body || {};
+      const { id, name, displayName, category, description, accessLevel, permissionType } = body || {};
       const sourceName = displayName || name;
 
       if (!sourceName || !sourceName.trim()) {
@@ -651,6 +652,7 @@ module.exports = async (req, res) => {
         const channelCategory = normalizeCategory(category);
         const channelDescription = description || '';
         const channelAccess = normalizeAccessLevel(accessLevel);
+        const channelPermission = (permissionType || 'read-write').toLowerCase();
         const locked = channelAccess === 'admin-only';
 
         const [existingByName] = await db.execute('SELECT id FROM channels WHERE name = ?', [channelName]);
@@ -669,8 +671,8 @@ module.exports = async (req, res) => {
           const hidden = 0; // bit(1) NOT NULL - default to not hidden
           
           await db.execute(
-            'INSERT INTO channels (id, name, category, description, access_level, is_system_channel, hidden) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [channelId, channelName, channelCategory, channelDescription || null, channelAccess || 'open', isSystemChannel, hidden]
+            'INSERT INTO channels (id, name, category, description, access_level, permission_type, is_system_channel, hidden) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [channelId, channelName, channelCategory, channelDescription || null, channelAccess || 'open', channelPermission, isSystemChannel, hidden]
           );
         } catch (insertError) {
           // If description column doesn't exist, insert without it
@@ -678,8 +680,8 @@ module.exports = async (req, res) => {
             const isSystemChannel = PROTECTED_CHANNEL_IDS.has(channelId) ? 1 : 0;
             const hidden = 0;
         await db.execute(
-              'INSERT INTO channels (id, name, category, access_level, is_system_channel, hidden) VALUES (?, ?, ?, ?, ?, ?)',
-              [channelId, channelName, channelCategory, channelAccess || 'open', isSystemChannel, hidden]
+              'INSERT INTO channels (id, name, category, access_level, permission_type, is_system_channel, hidden) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [channelId, channelName, channelCategory, channelAccess || 'open', channelPermission, isSystemChannel, hidden]
         );
           } else {
             throw insertError;
@@ -695,6 +697,7 @@ module.exports = async (req, res) => {
             category: channelCategory,
             description: channelDescription,
             accessLevel: channelAccess,
+            permissionType: channelPermission,
             locked
           }
         });
@@ -805,7 +808,7 @@ module.exports = async (req, res) => {
         }
       }
       
-      const { id, name, displayName, category, description, accessLevel } = body || {};
+      const { id, name, displayName, category, description, accessLevel, permissionType } = body || {};
       const channelId = id || req.query.id;
 
       if (!channelId) {
@@ -897,6 +900,7 @@ module.exports = async (req, res) => {
             id: updatedChannel.id,
             name: updatedChannel.name,
             displayName: displayNameFinal,
+            permissionType: updatedChannel.permission_type || 'read-write',
             category: updatedChannel.category || 'general',
             description: updatedChannel.description,
             accessLevel: updatedChannel.access_level || 'open',
