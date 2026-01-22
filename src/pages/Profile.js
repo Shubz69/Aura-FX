@@ -690,8 +690,9 @@ const Profile = () => {
                             
                             {/* Bio */}
                             <div className="form-group">
-                                <label>Custom Bio</label>
+                                <label htmlFor="profile-bio">Custom Bio</label>
                                 <textarea
+                                    id="profile-bio"
                                     name="bio"
                                     value={formData.bio || ''}
                                     onChange={handleChange}
@@ -703,8 +704,9 @@ const Profile = () => {
 
                             {/* Username */}
                             <div className="form-group">
-                                <label>Username</label>
+                                <label htmlFor="profile-username">Username</label>
                                 <input
+                                    id="profile-username"
                                     type="text"
                                     name="username"
                                     value={formData.username || ''}
@@ -718,8 +720,9 @@ const Profile = () => {
 
                             {/* Email */}
                             <div className="form-group">
-                                <label>Email</label>
+                                <label htmlFor="profile-email">Email</label>
                                 <input
+                                    id="profile-email"
                                     type="email"
                                     name="email"
                                     value={formData.email || ''}
@@ -731,8 +734,9 @@ const Profile = () => {
 
                             {/* Name */}
                             <div className="form-group">
-                                <label>Full Name</label>
+                                <label htmlFor="profile-name">Full Name</label>
                                 <input
+                                    id="profile-name"
                                     type="text"
                                     name="name"
                                     value={formData.name || ''}

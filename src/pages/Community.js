@@ -5536,6 +5536,8 @@ Let's build generational wealth together! 💰🚀`,
                                 )}
                                 <div className="chat-input-wrapper" style={{ position: 'relative' }}>
                                     <textarea
+                                        id="community-message-input"
+                                        name="message"
                                         ref={messageInputRef}
                                         className="chat-input"
                                         value={newMessage}

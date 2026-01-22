@@ -709,6 +709,8 @@ const PremiumAI = () => {
           />
           <div className="input-wrapper" style={{ flex: 1, position: 'relative', minWidth: 0, width: '100%' }}>
             <textarea
+              id="premium-ai-message-input"
+              name="ai-message"
               ref={inputRef}
               className="message-input"
               value={input + (voiceTranscript ? ' ' + voiceTranscript : '')}
