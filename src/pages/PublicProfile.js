@@ -5,8 +5,15 @@ import '../styles/PublicProfile.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { isAdmin, isSuperAdmin } from '../utils/roles';
+import {
+    getRankTitle,
+    getTierName,
+    getTierColor,
+    getXPProgress,
+    getNextRankMilestone
+} from '../utils/xpSystem';
 
-import { FaArrowLeft, FaMedal, FaCalendarAlt, FaUserCircle, FaEnvelope } from 'react-icons/fa';
+import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 
 const PublicProfile = () => {
     const { userId } = useParams();
@@ -14,6 +21,7 @@ const PublicProfile = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('overview');
     const navigate = useNavigate();
     
     const isAdminUser = isAdmin(currentUser) || isSuperAdmin(currentUser);
@@ -54,48 +62,38 @@ const PublicProfile = () => {
         return () => clearInterval(refreshInterval);
     }, [userId]);
 
-    const getLevelBadge = (level) => {
-        if (level >= 75) return { label: "Legend", color: "#ffc107", icon: "👑" };
-        if (level >= 50) return { label: "Elite", color: "#fd7e14", icon: "🔥" };
-        if (level >= 25) return { label: "Pro", color: "#6f42c1", icon: "🟣" };
-        if (level >= 10) return { label: "Member", color: "#0d6efd", icon: "🔵" };
-        return { label: "Rookie", color: "#6c757d", icon: "🟢" };
+    const getAvatarPath = (avatarName) => {
+        if (avatarName && avatarName.startsWith('data:image')) {
+            return avatarName;
+        }
+        if (avatarName && avatarName.startsWith('/')) {
+            return avatarName;
+        }
+        return avatarName ? `/avatars/${avatarName}` : '/avatars/avatar_ai.png';
     };
-
-    const getAchievements = (level) => {
-        const list = [];
-        if (level >= 5) list.push("🔰 Getting Started");
-        if (level >= 10) list.push("🎯 Active Communicator");
-        if (level >= 25) list.push("🔥 Level 25 Club");
-        if (level >= 50) list.push("🏆 Top Contributor");
-        if (level >= 75) list.push("👑 Veteran Status");
-        if (level >= 100) list.push("⭐ Infinity Legend");
-        return list;
-    };
-
-
 
     const goBack = () => {
-        navigate(-1); // Go back to previous page
+        navigate(-1);
     };
 
     if (loading) {
         return (
             <div className="public-profile-container">
                 <CosmicBackground />
-                <div className="profile-card loading">
-                    <div className="loader">Loading profile...</div>
+                <div className="profile-modal loading">
+                    <div className="loading-spinner"></div>
+                    <div className="loading-text">Loading profile...</div>
                 </div>
             </div>
         );
     }
 
-    if (error) {
+    if (error || !profile) {
         return (
             <div className="public-profile-container">
                 <CosmicBackground />
-                <div className="profile-card error">
-                    <div className="error-message">{error}</div>
+                <div className="profile-modal error">
+                    <div className="error-message">{error || "Profile not found"}</div>
                     <button className="back-button" onClick={goBack}>
                         <FaArrowLeft /> Go Back
                     </button>
@@ -104,127 +102,282 @@ const PublicProfile = () => {
         );
     }
 
-    if (!profile) {
-        return (
-            <div className="public-profile-container">
-                <CosmicBackground />
-                <div className="profile-card error">
-                    <div className="error-message">Profile not found</div>
-                    <button className="back-button" onClick={goBack}>
-                        <FaArrowLeft /> Go Back
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // Calculate XP progress using the XP system
+    const xpProgress = getXPProgress(profile.xp || 0, profile.level || 1);
+    const rankTitle = getRankTitle(profile.level || 1);
+    const tierName = getTierName(profile.level || 1);
+    const tierColor = getTierColor(profile.level || 1);
+    const nextMilestone = getNextRankMilestone(profile.level || 1);
+    const joinDate = new Date(profile.joinDate || profile.createdAt || Date.now()).toLocaleDateString();
+    const loginStreak = profile.login_streak || 0;
 
-    const percent = Math.min((profile.xp / (profile.level * 100)) * 100, 100);
-    const badge = getLevelBadge(profile.level);
-    const joinDate = new Date(profile.joinDate || Date.now()).toLocaleDateString();
-    const achievements = getAchievements(profile.level);
+    // Get achievements based on level
+    const getAchievements = (level) => {
+        const list = [];
+        if (level >= 5) list.push({ name: "Getting Started", icon: "🔰" });
+        if (level >= 10) list.push({ name: "Active Communicator", icon: "🎯" });
+        if (level >= 25) list.push({ name: "Level 25 Club", icon: "🔥" });
+        if (level >= 50) list.push({ name: "Top Contributor", icon: "🏆" });
+        if (level >= 75) list.push({ name: "Veteran Status", icon: "👑" });
+        if (level >= 100) list.push({ name: "Infinity Legend", icon: "⭐" });
+        if (level >= 200) list.push({ name: "Advanced Trader", icon: "💎" });
+        if (level >= 500) list.push({ name: "Trading Master", icon: "🌟" });
+        return list;
+    };
+
+    const achievements = getAchievements(profile.level || 1);
 
     return (
         <div className="public-profile-container">
             <CosmicBackground />
-            <div className="profile-card">
+            <div className="profile-modal">
+                {/* Back Button */}
                 <button className="back-button" onClick={goBack}>
                     <FaArrowLeft /> Back
                 </button>
-                
-                <div className="profile-header">
-                    {profile.avatar ? (
-                        <img
-                            src={`/styles/images/${profile.avatar}`}
-                            alt="Profile Avatar"
-                            className="profile-avatar"
+
+                {/* Profile Banner */}
+                <div className="profile-banner-section">
+                    {profile.banner ? (
+                        <img 
+                            src={profile.banner.startsWith('data:image') ? profile.banner : profile.banner} 
+                            alt="Banner" 
+                            className="profile-banner"
                         />
                     ) : (
-                        <div className="profile-avatar-placeholder">
-                            {profile.username.charAt(0).toUpperCase()}
+                        <div className="profile-banner-placeholder">
+                            <div className="banner-text">Welcome to AURA FX</div>
                         </div>
                     )}
                     
-                    <div className="profile-title">
-                        <h1 className="profile-username">{profile.username.toUpperCase()}</h1>
-                        <div className="badge" style={{ backgroundColor: badge.color }}>
-                            {badge.icon} {badge.label}
+                    {/* Avatar overlapping banner */}
+                    <div className="profile-avatar-overlay">
+                        <img 
+                            src={getAvatarPath(profile.avatar)} 
+                            alt="Avatar" 
+                            className="profile-avatar-large"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/avatars/avatar_ai.png';
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Profile Header Info */}
+                <div className="profile-header-info">
+                    <h1 className="profile-username">{profile.username || profile.name || 'User'}</h1>
+                    <div className="profile-rank" style={{ color: tierColor }}>
+                        {rankTitle}
+                    </div>
+                    <div className="profile-tier">{tierName}</div>
+                </div>
+
+                {/* Progress Bar */}
+                {nextMilestone && (
+                    <div className="profile-progress-section">
+                        <div className="progress-text">
+                            <span>{nextMilestone.title} in {nextMilestone.level - (profile.level || 1)} levels</span>
                         </div>
-                        {isAdminUser && userId && parseInt(userId) !== currentUser?.id && (
-                            <button 
-                                className="message-user-btn"
-                                onClick={async () => {
-                                    try {
-                                        // Ensure DM thread exists
-                                        const response = await Api.ensureUserThread(userId);
-                                        const threadId = response.data?.thread?.id;
-                                        if (threadId) {
-                                            navigate(`/messages?thread=${threadId}`);
-                                        }
-                                    } catch (error) {
-                                        console.error('Error creating DM thread:', error);
-                                        alert('Failed to create message thread. Please try again.');
-                                    }
+                        <div className="progress-bar-container">
+                            <div 
+                                className="progress-bar-fill"
+                                style={{ 
+                                    width: `${xpProgress.percentage}%`,
+                                    background: `linear-gradient(90deg, ${tierColor} 0%, ${tierColor}dd 100%)`
                                 }}
-                            >
-                                <FaEnvelope /> Message User
-                            </button>
-                        )}
-                    </div>
-                </div>
-                
-                <div className="profile-stats-container">
-                    <div className="stat-card">
-                        <div className="stat-icon"><FaUserCircle /></div>
-                        <div className="stat-value">{profile.level}</div>
-                        <div className="stat-label">Level</div>
-                    </div>
-                    
-                    <div className="stat-card">
-                        <div className="stat-icon"><FaMedal /></div>
-                        <div className="stat-value">{profile.stats?.reputation || 0}</div>
-                        <div className="stat-label">Reputation</div>
-                    </div>
-                    
-                    <div className="stat-card">
-                        <div className="stat-icon"><FaCalendarAlt /></div>
-                        <div className="stat-value">{joinDate}</div>
-                        <div className="stat-label">Joined</div>
-                    </div>
-                </div>
-                
-                <div className="xp-container">
-                    <div className="xp-header">
-                        <span>Experience</span>
-                        <span>{Math.floor(profile.xp || 0).toLocaleString()} / {(profile.level || 1) * 100} XP</span>
-                    </div>
-                    <div className="xp-bar-container">
-                        <div className="xp-bar" style={{ width: `${percent}%` }}></div>
-                    </div>
-                </div>
-                
-                {profile.bio && (
-                    <div className="bio-section">
-                        <h3 className="section-title">ABOUT</h3>
-                        <p>{profile.bio}</p>
+                            ></div>
+                        </div>
                     </div>
                 )}
-                
-                <div className="achievements-section">
-                    <h3 className="section-title">ACHIEVEMENTS</h3>
-                    {achievements.length > 0 ? (
-                        <div className="achievements-grid">
-                            {achievements.map((achievement, i) => (
-                                <div key={i} className="achievement-badge">
-                                    {achievement}
+
+                {/* Bio */}
+                {profile.bio && (
+                    <div className="profile-bio">
+                        {profile.bio}
+                    </div>
+                )}
+
+                {/* Tabs */}
+                <div className="profile-tabs">
+                    <button 
+                        className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('overview')}
+                    >
+                        Information
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeTab === 'journey' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('journey')}
+                    >
+                        Hero's Journey
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeTab === 'statistics' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('statistics')}
+                    >
+                        Statistics
+                    </button>
+                    <button 
+                        className={`tab-btn ${activeTab === 'achievements' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('achievements')}
+                    >
+                        Achievements
+                    </button>
+                </div>
+
+                {/* Tab Content */}
+                <div className="profile-tab-content">
+                    {activeTab === 'overview' && (
+                        <div className="tab-panel">
+                            <div className="info-section">
+                                <div className="info-row">
+                                    <span className="info-label">Power Level:</span>
+                                    <span className="info-value large">{profile.level || 1}</span>
+                                    <span className="info-badge" style={{ color: tierColor }}>+{Math.round((profile.level || 1) * 10)}%</span>
                                 </div>
-                            ))}
+                                <div className="info-row">
+                                    <span className="info-label">Power Points:</span>
+                                    <span className="info-value">{(profile.xp || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="info-row">
+                                    <span className="info-label">Login Streak:</span>
+                                    <span className="info-value">{loginStreak}+ days</span>
+                                </div>
+                            </div>
+
+                            {/* Roles Section */}
+                            <div className="roles-section">
+                                <label className="section-label">Roles</label>
+                                <select className="roles-dropdown" disabled>
+                                    <option>{profile.role || 'Member'}</option>
+                                </select>
+                            </div>
+
+                            {/* Tags/Badges */}
+                            <div className="tags-section">
+                                {achievements.length > 0 && achievements.map((achievement, index) => (
+                                    <div key={index} className="tag-badge">
+                                        <span className="tag-dot" style={{ backgroundColor: tierColor }}></span>
+                                        {achievement.name}
+                                    </div>
+                                ))}
+                                {profile.role && profile.role !== 'free' && (
+                                    <div className="tag-badge">
+                                        <span className="tag-dot" style={{ backgroundColor: '#10b981' }}></span>
+                                        {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)} Member
+                                    </div>
+                                )}
+                            </div>
+
+                            {isAdminUser && userId && parseInt(userId) !== currentUser?.id && (
+                                <button 
+                                    className="message-user-btn"
+                                    onClick={async () => {
+                                        try {
+                                            const response = await Api.ensureUserThread(userId);
+                                            const threadId = response.data?.thread?.id;
+                                            if (threadId) {
+                                                navigate(`/messages?thread=${threadId}`);
+                                            }
+                                        } catch (error) {
+                                            console.error('Error creating DM thread:', error);
+                                            alert('Failed to create message thread. Please try again.');
+                                        }
+                                    }}
+                                >
+                                    <FaEnvelope /> Message User
+                                </button>
+                            )}
                         </div>
-                    ) : (
-                        <p className="no-achievements">No achievements yet</p>
+                    )}
+
+                    {activeTab === 'journey' && (
+                        <div className="tab-panel">
+                            <div className="journey-content">
+                                <div className="journey-stat">
+                                    <div className="journey-icon">📈</div>
+                                    <div className="journey-info">
+                                        <div className="journey-label">Current Level</div>
+                                        <div className="journey-value">{profile.level || 1}</div>
+                                    </div>
+                                </div>
+                                <div className="journey-stat">
+                                    <div className="journey-icon">🎯</div>
+                                    <div className="journey-info">
+                                        <div className="journey-label">Total XP</div>
+                                        <div className="journey-value">{(profile.xp || 0).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div className="journey-stat">
+                                    <div className="journey-icon">🏆</div>
+                                    <div className="journey-info">
+                                        <div className="journey-label">Rank</div>
+                                        <div className="journey-value">{rankTitle}</div>
+                                    </div>
+                                </div>
+                                {nextMilestone && (
+                                    <div className="milestone-card">
+                                        <div className="milestone-title">Next Milestone</div>
+                                        <div className="milestone-name">{nextMilestone.title}</div>
+                                        <div className="milestone-level">Level {nextMilestone.level}</div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'statistics' && (
+                        <div className="tab-panel">
+                            <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-icon">📊</div>
+                                    <div className="stat-value">{profile.stats?.totalTrades || 0}</div>
+                                    <div className="stat-label">Total Trades</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">✅</div>
+                                    <div className="stat-value">{profile.stats?.winRate || 0}%</div>
+                                    <div className="stat-label">Win Rate</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">💰</div>
+                                    <div className="stat-value">${(profile.stats?.totalProfit || 0).toLocaleString()}</div>
+                                    <div className="stat-label">Total Profit</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon">📅</div>
+                                    <div className="stat-value">{joinDate}</div>
+                                    <div className="stat-label">Joined</div>
+                                </div>
+                            </div>
+                            <div className="stats-note">
+                                Trading statistics will be available when you connect your trading account.
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'achievements' && (
+                        <div className="tab-panel">
+                            {achievements.length > 0 ? (
+                                <div className="achievements-grid">
+                                    {achievements.map((achievement, index) => (
+                                        <div key={index} className="achievement-badge-large">
+                                            <div className="achievement-icon">{achievement.icon}</div>
+                                            <div className="achievement-name">{achievement.name}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="no-achievements">
+                                    <div className="no-achievements-icon">🏅</div>
+                                    <div className="no-achievements-text">No achievements yet</div>
+                                    <div className="no-achievements-hint">Keep trading and engaging to unlock achievements!</div>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
-                
-
             </div>
         </div>
     );
