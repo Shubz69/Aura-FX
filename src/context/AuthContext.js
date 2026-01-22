@@ -375,11 +375,18 @@ export const AuthProvider = ({ children }) => {
                 localStorage.removeItem(inProgressKey);
                 
                 if (loginResponse.data && loginResponse.data.success) {
-                  // CRITICAL: Only update XP/level if XP was actually awarded
-                  // Triple-check: xpAwarded > 0 AND alreadyLoggedIn is false
-                  if (loginResponse.data.xpAwarded && 
+                  // CRITICAL: Check alreadyLoggedIn FIRST - if true, NEVER update XP/level
+                  if (loginResponse.data.alreadyLoggedIn === true) {
+                    // Already logged in today - DO NOT update XP/level, only update streak
+                    const updatedUser = {
+                      ...data,
+                      login_streak: loginResponse.data.streak || data.login_streak || 0
+                      // DO NOT update xp or level
+                    };
+                    persistUser(updatedUser);
+                  } else if (loginResponse.data.xpAwarded && 
                       loginResponse.data.xpAwarded > 0 && 
-                      !loginResponse.data.alreadyLoggedIn) {
+                      loginResponse.data.alreadyLoggedIn !== true) {
                     // XP was awarded - update user data
                     const updatedUser = {
                       ...data,
@@ -389,14 +396,6 @@ export const AuthProvider = ({ children }) => {
                     };
                     persistUser(updatedUser);
                     console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
-                  } else if (loginResponse.data.alreadyLoggedIn) {
-                    // Already logged in today - only update streak, NOT XP/level
-                    const updatedUser = {
-                      ...data,
-                      login_streak: loginResponse.data.streak || data.login_streak || 0
-                      // DO NOT update xp or level
-                    };
-                    persistUser(updatedUser);
                   } else {
                     // No XP awarded - just update streak
                     const updatedUser = {
