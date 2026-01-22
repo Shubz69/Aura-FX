@@ -210,6 +210,64 @@ const Community = () => {
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [profileModalData, setProfileModalData] = useState(null);
     
+    // Function to fetch latest user data from API (including XP and level)
+    const fetchLatestUserData = useCallback(async (userId) => {
+        if (!userId) return null;
+        
+        try {
+            const API_BASE_URL = window.location.origin;
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const userData = await response.json();
+                
+                // Update localStorage with latest data
+                const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const updatedUser = {
+                    ...currentUser,
+                    ...userData,
+                    xp: parseFloat(userData.xp || 0),
+                    level: parseInt(userData.level || 1)
+                };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                
+                // Update state only if values actually changed
+                setStoredUser(prev => {
+                    if (!prev) return updatedUser;
+                    
+                    const xpChanged = Math.abs(parseFloat(prev.xp || 0) - parseFloat(userData.xp || 0)) > 0.01;
+                    const levelChanged = parseInt(prev.level || 1) !== parseInt(userData.level || 1);
+                    
+                    if (xpChanged || levelChanged) {
+                        return updatedUser;
+                    }
+                    return prev; // Return same reference if no change
+                });
+                
+                const newLevel = parseInt(userData.level || 1);
+                setUserLevel(prevLevel => {
+                    return prevLevel !== newLevel ? newLevel : prevLevel;
+                });
+                
+                return updatedUser;
+            } else {
+                console.warn('Failed to fetch latest user data:', response.status);
+            }
+        } catch (error) {
+            console.error('Error fetching latest user data:', error);
+        }
+        
+        return null;
+    }, []);
+
     // Listen for XP update events to update profile card in real-time
     useEffect(() => {
         const handleXPUpdate = (event) => {
@@ -229,41 +287,55 @@ const Community = () => {
         
         window.addEventListener('xpUpdated', handleXPUpdate);
         
-        // Also check localStorage periodically for XP updates (less frequent to avoid restarts)
-        const xpCheckInterval = setInterval(() => {
-            const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
-            if (storedUserData.xp !== undefined && storedUserData.level !== undefined) {
-                const currentXP = parseFloat(storedUserData.xp || 0);
-                const currentLevel = parseInt(storedUserData.level || 1);
-                
-                setStoredUser(prev => {
-                    if (!prev) return prev;
-                    
-                    const xpChanged = Math.abs(parseFloat(prev.xp || 0) - currentXP) > 0.01;
-                    const levelChanged = parseInt(prev.level || 1) !== currentLevel;
-                    
-                    if (xpChanged || levelChanged) {
-                        return {
-                            ...prev,
-                            xp: currentXP,
-                            level: currentLevel
-                        };
-                    }
-                    return prev; // Return same reference if no change
-                });
-                
-                setUserLevel(prevLevel => {
+        // Fetch latest user data from API periodically (every 5 seconds for live updates)
+        let xpCheckInterval;
+        if (userId) {
+            // Initial fetch on mount
+            fetchLatestUserData(userId);
+            
+            // Then check periodically
+            xpCheckInterval = setInterval(() => {
+                fetchLatestUserData(userId);
+            }, 5000); // Check every 5 seconds for live updates
+        } else {
+            // Fallback to localStorage check if userId not available yet
+            xpCheckInterval = setInterval(() => {
+                const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+                if (storedUserData.xp !== undefined && storedUserData.level !== undefined) {
+                    const currentXP = parseFloat(storedUserData.xp || 0);
                     const currentLevel = parseInt(storedUserData.level || 1);
-                    return prevLevel !== currentLevel ? currentLevel : prevLevel;
-                });
-            }
-        }, 2000); // Check every 2 seconds instead of 1 to reduce restarts
+                    
+                    setStoredUser(prev => {
+                        if (!prev) return prev;
+                        
+                        const xpChanged = Math.abs(parseFloat(prev.xp || 0) - currentXP) > 0.01;
+                        const levelChanged = parseInt(prev.level || 1) !== currentLevel;
+                        
+                        if (xpChanged || levelChanged) {
+                            return {
+                                ...prev,
+                                xp: currentXP,
+                                level: currentLevel
+                            };
+                        }
+                        return prev; // Return same reference if no change
+                    });
+                    
+                    setUserLevel(prevLevel => {
+                        const currentLevel = parseInt(storedUserData.level || 1);
+                        return prevLevel !== currentLevel ? currentLevel : prevLevel;
+                    });
+                }
+            }, 2000);
+        }
         
         return () => {
             window.removeEventListener('xpUpdated', handleXPUpdate);
-            clearInterval(xpCheckInterval);
+            if (xpCheckInterval) {
+                clearInterval(xpCheckInterval);
+            }
         };
-    }, []); // Empty dependency array - only run once on mount
+    }, [userId, fetchLatestUserData]); // Include userId and fetchLatestUserData in dependencies
     const [collapsedCategories, setCollapsedCategories] = useState(() => {
         // Load collapsed state from localStorage
         const saved = localStorage.getItem('collapsedCategories');
@@ -2168,6 +2240,14 @@ const Community = () => {
             // Set user level
             setUserLevel(calculatedLevel);
             
+            // Fetch latest user data from API to ensure XP/level are up-to-date
+            if (storedUserData.id) {
+                // Small delay to ensure component is ready
+                setTimeout(() => {
+                    fetchLatestUserData(storedUserData.id);
+                }, 500);
+            }
+            
             // If coming from payment success, immediately check subscription status from DB
             if ((paymentSuccess || sessionId) && storedUserData.id) {
                 // Small delay to ensure backend has processed the payment
@@ -2176,7 +2256,7 @@ const Community = () => {
                 }, 500);
             }
         }
-    }, [navigate, authUser, checkSubscriptionFromDB]);
+    }, [navigate, authUser, checkSubscriptionFromDB, fetchLatestUserData]);
 
     // Prevent page scrolling - Discord-like behavior
     useEffect(() => {
