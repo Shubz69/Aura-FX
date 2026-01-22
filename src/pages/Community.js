@@ -5365,6 +5365,13 @@ Let's build generational wealth together! 💰🚀`,
                                                     })()
                                         }
                                         disabled={!canUserPostInChannel(selectedChannel)}
+                                        placeholder={
+                                            !canUserPostInChannel(selectedChannel)
+                                                ? (selectedChannel?.permissionType === 'read-only' 
+                                                    ? "This channel is read-only. Only admins can post messages."
+                                                    : `You don't have permission to send messages in #${selectedChannel?.name || 'this channel'}`)
+                                                : `Message #${selectedChannel?.name || ''}`
+                                        }
                                         rows="3"
                                         style={{ 
                                             paddingRight: '120px',
