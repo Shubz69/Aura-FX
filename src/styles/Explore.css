@@ -14,13 +14,13 @@
 /* Hero Section */
 .explore-hero {
     max-width: 1200px;
-    margin: 0 auto 5rem;
+    margin: 0 auto 3rem;
     text-align: center;
 }
 
 .hero-content {
-    margin-top: 5rem;
-    padding-top: 2rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
 }
 
 .hero-title {
@@ -95,68 +95,19 @@
     transform: translateY(-2px);
 }
 
-/* Stock Ticker */
-.stock-ticker {
-    position: relative;
-    overflow: hidden;
-    height: 48px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    margin-bottom: 3rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.ticker-wrap {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-.ticker {
-    display: flex;
-    white-space: nowrap;
-    animation: ticker 30s linear infinite;
-}
-
-.ticker-item {
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-    color: #ffffff;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.stock-symbol {
+/* Powered by THE GLITCH */
+.powered-by {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-bottom: 2rem;
     font-weight: 300;
-    color: #ffffff;
-    margin-right: 10px;
+    letter-spacing: 0.1em;
 }
 
-.stock-price {
-    margin-right: 10px;
-    color: #ffffff;
-    font-weight: 300;
-}
-
-.stock-change {
-    font-weight: 300;
-    padding: 3px 8px;
-    border-radius: 4px;
-}
-
-.stock-change.positive {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.stock-change.negative {
-    color: #ff4563;
-    background: rgba(255, 69, 99, 0.15);
-}
-
-@keyframes ticker {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
+.powered-by strong {
+    color: #8B5CF6;
+    font-weight: 600;
 }
 
 /* Section Titles */
@@ -225,12 +176,13 @@
 }
 
 .feature-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 2.5rem 2rem;
     text-align: center;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .feature-card:hover {
@@ -290,12 +242,13 @@
 }
 
 .market-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 2.5rem 2rem;
     text-align: center;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .market-card:hover {
@@ -342,13 +295,14 @@
 }
 
 .course-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 2rem 1.5rem;
     text-align: center;
     transition: all 0.3s ease;
     cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .course-card:hover {
@@ -407,12 +361,13 @@
 }
 
 .offering-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 2.5rem 2rem;
     text-align: center;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .offering-card:hover {
@@ -478,6 +433,103 @@
     font-size: 1rem;
     font-weight: 300;
     line-height: 1.6;
+}
+
+/* Actual Courses Section */
+.actual-courses-section {
+    max-width: 1200px;
+    margin: 0 auto 5rem;
+}
+
+.actual-courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 0 1rem;
+}
+
+.actual-course-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.actual-course-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.course-image-wrapper {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.course-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.course-image-placeholder {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.placeholder-icon {
+    font-size: 4rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.actual-course-content {
+    padding: 1.5rem;
+}
+
+.actual-course-title {
+    font-size: 1.3rem;
+    color: #ffffff;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.actual-course-description {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    font-weight: 300;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.actual-course-link {
+    color: #8B5CF6;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.actual-course-card:hover .actual-course-link {
+    color: #A78BFA;
+    transform: translateX(5px);
 }
 
 /* CTA Section */
@@ -554,6 +606,10 @@
     .markets-grid,
     .courses-grid,
     .offerings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actual-courses-grid {
         grid-template-columns: 1fr;
     }
     

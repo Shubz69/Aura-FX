@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Explore.css';
 import CosmicBackground from '../components/CosmicBackground';
+import Api from '../services/Api';
 import { 
   FaChartLine, 
   FaUsers, 
@@ -25,20 +26,34 @@ import { useNavigate } from 'react-router-dom';
 
 const Explore = () => {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
 
-  // Stock ticker data
-  const stockData = [
-    { symbol: 'BTC', price: '41,225.78', change: '+3.6%', positive: true },
-    { symbol: 'ETH', price: '2,482.15', change: '+5.2%', positive: true },
-    { symbol: 'AAPL', price: '188.95', change: '-1.2%', positive: false },
-    { symbol: 'MSFT', price: '399.25', change: '+2.1%', positive: true },
-    { symbol: 'TSLA', price: '242.55', change: '+4.8%', positive: true },
-    { symbol: 'NVDA', price: '624.78', change: '+2.7%', positive: true },
-    { symbol: 'AMZN', price: '182.95', change: '-0.7%', positive: false },
-    { symbol: 'GOOG', price: '165.30', change: '+1.3%', positive: true },
-    { symbol: 'SPY', price: '490.15', change: '-0.4%', positive: false },
-    { symbol: 'QQQ', price: '420.85', change: '+0.8%', positive: true }
-  ];
+  // Fetch courses from API
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await Api.getCourses();
+        let coursesData = [];
+        if (Array.isArray(response.data)) {
+          coursesData = response.data;
+        } else if (response.data && Array.isArray(response.data.courses)) {
+          coursesData = response.data.courses;
+        } else if (response.data && response.data.success === false && Array.isArray(response.data.courses)) {
+          coursesData = response.data.courses;
+        }
+        coursesData = coursesData.filter(course => course && course.id && course.title);
+        setCourses(coursesData);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        setCourses([]);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   // Trading Markets
   const tradingMarkets = [
@@ -96,33 +111,8 @@ const Explore = () => {
     <div className="explore-page">
       <CosmicBackground />
       
-      {/* Hero Section with Stock Ticker */}
+      {/* Hero Section */}
       <section className="explore-hero">
-        <div className="stock-ticker">
-          <div className="ticker-wrap">
-            <div className="ticker">
-              {stockData.map((stock, index) => (
-                <div key={index} className="ticker-item">
-                  <span className="stock-symbol">{stock.symbol}</span>
-                  <span className="stock-price">{stock.price}</span>
-                  <span className={`stock-change ${stock.positive ? 'positive' : 'negative'}`}>
-                    {stock.change}
-                  </span>
-                </div>
-              ))}
-              {stockData.map((stock, index) => (
-                <div key={`dup-${index}`} className="ticker-item">
-                  <span className="stock-symbol">{stock.symbol}</span>
-                  <span className="stock-price">{stock.price}</span>
-                  <span className={`stock-change ${stock.positive ? 'positive' : 'negative'}`}>
-                    {stock.change}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <div className="hero-content">
           <h1 className="hero-title">WELCOME TO AURA FX</h1>
           <p className="hero-description">
@@ -193,7 +183,7 @@ const Explore = () => {
       <section className="courses-section">
         <div className="courses-container">
           <h2 className="section-title">COURSE CATEGORIES</h2>
-          <p className="section-subtitle">Explore our comprehensive range of educational courses</p>
+          <p className="section-subtitle powered-by">Powered by <strong>THE GLITCH</strong></p>
           <div className="courses-grid">
             {courseCategories.map((course, index) => (
               <div key={index} className="course-card" onClick={() => navigate('/courses')}>
@@ -208,6 +198,37 @@ const Explore = () => {
           </div>
         </div>
       </section>
+
+      {/* Actual Courses from API */}
+      {courses.length > 0 && (
+        <section className="actual-courses-section">
+          <div className="courses-container">
+            <h2 className="section-title">AVAILABLE COURSES</h2>
+            <div className="actual-courses-grid">
+              {courses.map((course) => (
+                <div key={course.id} className="actual-course-card" onClick={() => navigate('/courses')}>
+                  {course.imageUrl ? (
+                    <div className="course-image-wrapper">
+                      <img src={course.imageUrl} alt={course.title} className="course-image" />
+                    </div>
+                  ) : (
+                    <div className="course-image-placeholder">
+                      <FaGraduationCap className="placeholder-icon" />
+                    </div>
+                  )}
+                  <div className="actual-course-content">
+                    <h3 className="actual-course-title">{course.title}</h3>
+                    <p className="actual-course-description">{course.description || 'No description available'}</p>
+                    <div className="actual-course-link">
+                      View Course <FaArrowRight />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* What We Offer */}
       <section className="offerings-section">
