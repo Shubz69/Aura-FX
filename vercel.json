@@ -159,6 +159,10 @@
       "destination": "/api/users/update-xp.js"
     },
     {
+      "source": "/api/users/level-up-notification",
+      "destination": "/api/users/level-up-notification.js"
+    },
+    {
       "source": "/api/users/:userId/update",
       "destination": "/api/users/update.js?userId=:userId"
     },

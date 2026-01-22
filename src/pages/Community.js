@@ -842,6 +842,9 @@ const Community = () => {
             setStoredUser(updatedUser);
             setUserLevel(newLevel);
             
+            // Check if user leveled up
+            const leveledUp = newLevel > oldLevel;
+            
             // Save to database in background (don't block UI)
             if (currentUser.id) {
                 try {
@@ -862,6 +865,33 @@ const Community = () => {
                     if (response.ok) {
                         const result = await response.json();
                         console.log(`✅ XP updated: +${earnedXP} XP (Total: ${newXP} XP, Level: ${newLevel})`, result);
+                        
+                        // If user leveled up, send notification to announcements channel
+                        if (leveledUp) {
+                            try {
+                                const notificationResponse = await fetch(`${API_BASE_URL}/api/users/level-up-notification`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                    },
+                                    body: JSON.stringify({
+                                        userId: currentUser.id,
+                                        oldLevel: oldLevel,
+                                        newLevel: newLevel,
+                                        username: currentUser.username || currentUser.name || 'User'
+                                    })
+                                });
+                                
+                                if (notificationResponse.ok) {
+                                    console.log(`🎉 Level-up notification sent for Level ${newLevel}!`);
+                                } else {
+                                    console.warn('⚠️ Failed to send level-up notification');
+                                }
+                            } catch (notifError) {
+                                console.error('❌ Error sending level-up notification:', notifError);
+                            }
+                        }
                     } else {
                         const errorData = await response.json().catch(() => ({}));
                         console.error('❌ Failed to sync XP to database:', response.status, errorData);
@@ -882,6 +912,24 @@ const Community = () => {
                                 });
                                 if (retryResponse.ok) {
                                     console.log('✅ XP synced to database on retry');
+                                    // Send level-up notification on retry if leveled up
+                                    if (leveledUp) {
+                                        try {
+                                            await fetch(`${API_BASE_URL}/api/users/level-up-notification`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                                },
+                                                body: JSON.stringify({
+                                                    userId: currentUser.id,
+                                                    oldLevel: oldLevel,
+                                                    newLevel: newLevel,
+                                                    username: currentUser.username || currentUser.name || 'User'
+                                                })
+                                            });
+                                        } catch (e) {}
+                                    }
                                 }
                             } catch (retryError) {
                                 console.error('❌ XP retry failed:', retryError);
@@ -900,7 +948,7 @@ const Community = () => {
                 earnedXP,
                 newXP,
                 newLevel,
-                leveledUp: newLevel > oldLevel,
+                leveledUp: leveledUp,
                 xpForNextLevel: getXPForNextLevel(newLevel),
                 xpProgress: newXP - getXPForNextLevel(oldLevel)
             };

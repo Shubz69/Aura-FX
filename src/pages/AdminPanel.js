@@ -356,16 +356,16 @@ const AdminPanel = () => {
         navigate(`/profile/${userId}`);
     };
 
-    const handleGiveXP = async (userId, userEmail, currentXP = 0) => {
-        const xpAmount = window.prompt(`Give XP points to ${userEmail}\n\nCurrent XP: ${currentXP}\n\nEnter amount of XP to give:`, '100');
+    const handleGiveXP = async (userId, userEmail, currentXP = 0, currentLevel = 1) => {
+        const xpAmount = window.prompt(`Give XP points to ${userEmail}\n\nCurrent Level: ${currentLevel}\nCurrent XP: ${currentXP}\n\nEnter amount of XP to give (negative to remove):`, '100');
         
         if (xpAmount === null || xpAmount === '') {
             return; // User cancelled
         }
 
         const xp = parseFloat(xpAmount);
-        if (isNaN(xp) || xp <= 0) {
-            alert('Please enter a valid positive number for XP amount.');
+        if (isNaN(xp) || xp === 0) {
+            alert('Please enter a valid number for XP amount (non-zero).');
             return;
         }
 
@@ -377,13 +377,37 @@ const AdminPanel = () => {
             if (result.success) {
                 fetchUsers();
                 setError(null);
-                alert(`✅ Successfully awarded ${xp} XP to ${userEmail}!\n\nNew XP: ${result.newXP}\nNew Level: ${result.newLevel}`);
+                const action = xp > 0 ? 'awarded' : 'removed';
+                alert(`✅ Successfully ${action} ${Math.abs(xp)} XP to ${userEmail}!\n\nNew XP: ${result.newXP}\nNew Level: ${result.newLevel}`);
             } else {
                 throw new Error(result.message || 'Failed to give XP');
             }
         } catch (err) {
             console.error('Error giving XP:', err);
             setError(err.message || 'Failed to give XP points. Please try again.');
+        }
+    };
+
+    const handleResetXP = async (userId, userEmail) => {
+        if (!window.confirm(`⚠️ WARNING: This will reset ALL XP and level for ${userEmail} to 0/1.\n\nThis action cannot be undone. Are you sure?`)) {
+            return;
+        }
+
+        try {
+            const response = await Api.giveXp(userId, -999999); // Large negative to reset
+
+            const result = response.data || response;
+            
+            if (result.success) {
+                fetchUsers();
+                setError(null);
+                alert(`✅ Successfully reset XP for ${userEmail}!\n\nNew XP: ${result.newXP}\nNew Level: ${result.newLevel}`);
+            } else {
+                throw new Error(result.message || 'Failed to reset XP');
+            }
+        } catch (err) {
+            console.error('Error resetting XP:', err);
+            setError(err.message || 'Failed to reset XP. Please try again.');
         }
     };
 
@@ -632,7 +656,7 @@ const AdminPanel = () => {
                                 <div className="user-actions">
                                     <button 
                                         className="give-xp-btn"
-                                        onClick={() => handleGiveXP(userItem.id, userItem.email, userItem.xp || 0)}
+                                        onClick={() => handleGiveXP(userItem.id, userItem.email, userItem.xp || 0, userItem.level || 1)}
                                         style={{
                                             background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                                             color: 'white',
@@ -650,6 +674,27 @@ const AdminPanel = () => {
                                         }}
                                     >
                                         ⭐ Give XP
+                                    </button>
+                                    <button 
+                                        className="reset-xp-btn"
+                                        onClick={() => handleResetXP(userItem.id, userItem.email)}
+                                        style={{
+                                            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            marginRight: '8px',
+                                            transition: 'all 0.3s ease',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}
+                                    >
+                                        🔄 Reset XP
                                     </button>
                                     <button 
                                         className="grant-access-btn"

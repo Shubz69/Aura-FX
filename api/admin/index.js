@@ -1103,12 +1103,72 @@ module.exports = async (req, res) => {
         }
 
         const currentXP = parseFloat(userRows[0].xp || 0);
-        const newXP = currentXP + parseFloat(xpAmount);
+        const currentLevel = parseInt(userRows[0].level || 1);
+        const newXP = Math.max(0, currentXP + parseFloat(xpAmount)); // Prevent negative XP
 
-        // Calculate level from XP: Level = floor(sqrt(XP / 5000)) + 1 (HARD LEVELING)
-        const newLevel = Math.floor(Math.sqrt(newXP / 5000)) + 1;
+        // Use the new XP system level calculation
+        // Import the function (we'll need to require it properly)
+        const getLevelFromXP = (xp) => {
+            if (xp <= 0) return 1;
+            if (xp >= 1000000) return 1000;
+            
+            if (xp < 500) {
+                return Math.floor(Math.sqrt(xp / 50)) + 1;
+            } else if (xp < 5000) {
+                const baseLevel = 10;
+                const remainingXP = xp - 500;
+                return baseLevel + Math.floor(Math.sqrt(remainingXP / 100)) + 1;
+            } else if (xp < 20000) {
+                const baseLevel = 50;
+                const remainingXP = xp - 5000;
+                return baseLevel + Math.floor(Math.sqrt(remainingXP / 200)) + 1;
+            } else if (xp < 100000) {
+                const baseLevel = 100;
+                const remainingXP = xp - 20000;
+                return baseLevel + Math.floor(Math.sqrt(remainingXP / 500)) + 1;
+            } else if (xp < 500000) {
+                const baseLevel = 200;
+                const remainingXP = xp - 100000;
+                return baseLevel + Math.floor(Math.sqrt(remainingXP / 1000)) + 1;
+            } else {
+                const baseLevel = 500;
+                const remainingXP = xp - 500000;
+                return Math.min(1000, baseLevel + Math.floor(Math.sqrt(remainingXP / 2000)) + 1);
+            }
+        };
+        
+        const newLevel = getLevelFromXP(newXP);
+        const leveledUp = newLevel > currentLevel;
 
         // Update user XP and level
+        await db.execute(
+            'UPDATE users SET xp = ?, level = ? WHERE id = ?',
+            [newXP, newLevel, userId]
+        );
+
+        // If user leveled up, send notification
+        if (leveledUp) {
+            try {
+                // Get username
+                const [userInfo] = await db.execute('SELECT username, name FROM users WHERE id = ?', [userId]);
+                const username = userInfo[0]?.username || userInfo[0]?.name || 'User';
+                
+                // Send level-up notification (async, don't wait)
+                fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/users/level-up-notification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        oldLevel: currentLevel,
+                        newLevel: newLevel,
+                        username: username
+                    })
+                }).catch(err => console.error('Failed to send level-up notification:', err));
+            } catch (notifError) {
+                console.error('Error sending level-up notification:', notifError);
+            }
+        }
+
         await db.execute(
           'UPDATE users SET xp = ?, level = ? WHERE id = ?',
           [newXP, newLevel, userId]
