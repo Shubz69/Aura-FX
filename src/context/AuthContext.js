@@ -162,8 +162,9 @@ export const AuthProvider = ({ children }) => {
           
           // Token is valid, get minimal user info from token
           // No API call for now to avoid errors
+          const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
           const userData = persistUser({
-            id: decodedToken.id || decodedToken.userId || decodedToken.sub,
+            id: userId,
             email: decodedToken.email || '',
             role: decodedToken.role || 'USER'
           });
@@ -171,6 +172,29 @@ export const AuthProvider = ({ children }) => {
           if (userData.role === 'ADMIN') {
             localStorage.setItem('mfaVerified', 'true');
             setMfaVerified(true);
+          }
+          
+          // Check daily login streak (non-blocking, runs in background)
+          if (userId) {
+            setTimeout(async () => {
+              try {
+                const loginResponse = await Api.checkDailyLogin(userId);
+                if (loginResponse.data && loginResponse.data.success && !loginResponse.data.alreadyLoggedIn) {
+                  // Update user data with new XP and streak
+                  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                  const updatedUser = {
+                    ...currentUser,
+                    xp: loginResponse.data.newXP || currentUser.xp,
+                    level: loginResponse.data.newLevel || currentUser.level,
+                    login_streak: loginResponse.data.streak || 0
+                  };
+                  persistUser(updatedUser);
+                }
+              } catch (error) {
+                // Silently fail - don't block app loading
+                console.error('Daily login check failed:', error);
+              }
+            }, 500); // Small delay to let app load first
           }
           
           setLoading(false);
@@ -256,6 +280,32 @@ export const AuthProvider = ({ children }) => {
         if (data.role === 'ADMIN') {
           localStorage.setItem('mfaVerified', 'true');
           setMfaVerified(true);
+        }
+        
+        // Check and award daily login streak XP (non-blocking)
+        if (data.id || data.userId) {
+          Api.checkDailyLogin(data.id || data.userId)
+            .then((loginResponse) => {
+              if (loginResponse.data && loginResponse.data.success) {
+                // Update user data with new XP and streak
+                const updatedUser = {
+                  ...data,
+                  xp: loginResponse.data.newXP || data.xp,
+                  level: loginResponse.data.newLevel || data.level,
+                  login_streak: loginResponse.data.streak || 0
+                };
+                persistUser(updatedUser);
+                
+                // Show notification if XP was awarded
+                if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn) {
+                  console.log(`🔥 Daily login: ${loginResponse.data.streak} day streak! +${loginResponse.data.xpAwarded} XP`);
+                }
+              }
+            })
+            .catch((error) => {
+              console.error('Error checking daily login:', error);
+              // Don't block login if daily login check fails
+            });
         }
         
         // Check subscription status from database after login (not just localStorage)

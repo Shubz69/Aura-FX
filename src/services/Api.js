@@ -441,6 +441,16 @@ const Api = {
         });
     },
 
+    // Daily login streak check and XP award
+    checkDailyLogin: async (userId) => {
+        try {
+            return await axios.post(`${API_BASE_URL}/api/users/daily-login`, { userId });
+        } catch (error) {
+            console.error('Error checking daily login:', error);
+            throw error;
+        }
+    },
+    
     getLeaderboard: (timeframe = 'all-time') => {
         return axios.get(`${API_BASE_URL}/api/leaderboard`, {
             params: { timeframe }

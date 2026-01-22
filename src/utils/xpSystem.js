@@ -8,11 +8,24 @@ export const XP_REWARDS = {
     MESSAGE: 10,
     FILE_ATTACHMENT: 5,
     EMOJI_BONUS: 0.1,
-    DAILY_LOGIN: 25,
+    DAILY_LOGIN: 25, // Base XP, scales with streak (see calculateLoginXP function)
     COURSE_COMPLETION: 50,
     HELPING_USER: 100,
     JOURNAL_ENTRY: 15,
     RULE_VIOLATION: -200
+};
+
+/**
+ * Calculate XP reward based on login streak
+ * Base: 25 XP, scales with streak length
+ * +5 XP bonus per 7 days (capped at 100 bonus XP = 20 weeks)
+ */
+export const calculateLoginXP = (streak) => {
+    const baseXP = 25;
+    // Bonus XP increases with streak: +5 XP per 7 days (capped at 100 bonus)
+    const bonusMultiplier = Math.min(Math.floor(streak / 7), 20); // Max 20 bonuses = 100 bonus XP
+    const bonusXP = bonusMultiplier * 5;
+    return baseXP + bonusXP;
 };
 
 // Cooldowns (in milliseconds) - Anti-spam protection

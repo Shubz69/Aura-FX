@@ -171,6 +171,10 @@
       "destination": "/api/users/update.js?userId=:userId"
     },
     {
+      "source": "/api/users/daily-login",
+      "destination": "/api/users/daily-login.js"
+    },
+    {
       "source": "/api/users/public-profile/:userId",
       "destination": "/api/users/update.js?userId=:userId"
     },

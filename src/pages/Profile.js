@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import Api from "../services/Api";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
 import CosmicBackground from '../components/CosmicBackground';
@@ -188,7 +189,31 @@ const Profile = () => {
                         }
 
                         // Load login streak and achievements
-                        setLoginStreak(userData.login_streak || 0);
+                        // Fetch latest streak from API (includes daily login check)
+                        const currentUserId = user?.id || userData.id;
+                        if (currentUserId) {
+                            try {
+                                const loginResponse = await Api.checkDailyLogin(currentUserId);
+                                if (loginResponse.data && loginResponse.data.success) {
+                                    setLoginStreak(loginResponse.data.streak || userData.login_streak || 0);
+                                    // Update XP/level if they changed
+                                    if (loginResponse.data.newXP) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            xp: loginResponse.data.newXP,
+                                            level: loginResponse.data.newLevel || prev.level
+                                        }));
+                                    }
+                                } else {
+                                    setLoginStreak(userData.login_streak || 0);
+                                }
+                            } catch (error) {
+                                // Fallback to stored value if API fails
+                                setLoginStreak(userData.login_streak || 0);
+                            }
+                        } else {
+                            setLoginStreak(userData.login_streak || 0);
+                        }
                         setAchievements(userData.achievements || []);
 
                         // Save to local storage
