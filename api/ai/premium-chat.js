@@ -1334,8 +1334,8 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
         
         // Check if it's a content filter or policy error
         if (errorMsg.includes('content_filter') || errorMsg.includes('policy')) {
-          return res.status(500).json({ 
-            success: false, 
+        return res.status(500).json({ 
+          success: false, 
             message: 'I apologize, but I cannot respond to that request due to content policy restrictions. Please try rephrasing your question.',
             errorType: 'content_filter'
           });
