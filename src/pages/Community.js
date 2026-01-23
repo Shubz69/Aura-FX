@@ -897,14 +897,56 @@ const Community = () => {
 
     // ***** LOCALSTORAGE FUNCTIONS FOR MESSAGE PERSISTENCE *****
     
-    // Save messages to localStorage
+    // Save messages to localStorage (with quota management)
     const saveMessagesToStorage = (channelId, messages) => {
         if (!channelId) return;
         try {
             const key = `community_messages_${channelId}`;
-            localStorage.setItem(key, JSON.stringify(messages));
+            
+            // Limit messages to last 200 to prevent quota exceeded errors
+            // Keep most recent messages for better UX
+            const maxMessages = 200;
+            const messagesToSave = messages.length > maxMessages 
+                ? messages.slice(-maxMessages) 
+                : messages;
+            
+            const dataString = JSON.stringify(messagesToSave);
+            
+            // Check estimated size (rough estimate: 1 char ≈ 1 byte)
+            // localStorage typically has 5-10MB limit
+            if (dataString.length > 4 * 1024 * 1024) { // 4MB threshold
+                // If too large, keep only last 100 messages
+                const limitedMessages = messages.slice(-100);
+                localStorage.setItem(key, JSON.stringify(limitedMessages));
+            } else {
+                localStorage.setItem(key, dataString);
+            }
         } catch (error) {
-            console.error('Error saving messages to localStorage:', error);
+            if (error.name === 'QuotaExceededError' || error.code === 22) {
+                // Quota exceeded - try to save only last 50 messages
+                try {
+                    const key = `community_messages_${channelId}`;
+                    const limitedMessages = messages.slice(-50);
+                    localStorage.setItem(key, JSON.stringify(limitedMessages));
+                    console.warn('localStorage quota exceeded, saved only last 50 messages');
+                } catch (retryError) {
+                    // If still fails, clear all messages for this channel and save last 20
+                    try {
+                        const key = `community_messages_${channelId}`;
+                        localStorage.removeItem(key);
+                        const minimalMessages = messages.slice(-20);
+                        localStorage.setItem(key, JSON.stringify(minimalMessages));
+                        console.warn('localStorage still full, cleared and saved only last 20 messages');
+                    } catch (finalError) {
+                        // Last resort: remove item and don't save
+                        const key = `community_messages_${channelId}`;
+                        localStorage.removeItem(key);
+                        console.error('Could not save messages to localStorage, quota exceeded');
+                    }
+                }
+            } else {
+                console.error('Error saving messages to localStorage:', error);
+            }
         }
     };
 
