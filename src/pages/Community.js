@@ -5080,9 +5080,26 @@ Let's build generational wealth together! 💰🚀`,
                                             {!isGrouped && (
                                                 <div 
                                                     className="message-avatar" 
-                                                    onClick={() => {
-                                                        if (message.sender?.id || message.userId) {
-                                                            navigate(`/public-profile/${message.sender?.id || message.userId}`);
+                                                    onClick={async () => {
+                                                        const userId = message.sender?.id || message.userId;
+                                                        if (userId) {
+                                                            try {
+                                                                const baseUrl = window.location.origin;
+                                                                const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
+                                                                if (response.ok) {
+                                                                    const data = await response.json();
+                                                                    setProfileModalData(data);
+                                                                    setShowProfileModal(true);
+                                                                } else {
+                                                                    // Fallback to sender data
+                                                                    setProfileModalData(message.sender || { id: userId });
+                                                                    setShowProfileModal(true);
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error fetching profile:', error);
+                                                                setProfileModalData(message.sender || { id: userId });
+                                                                setShowProfileModal(true);
+                                                            }
                                                         }
                                                     }}
                                                     style={{
@@ -5140,9 +5157,25 @@ Let's build generational wealth together! 💰🚀`,
                                                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
                                                             <span 
                                                                 className="message-author"
-                                                                onClick={() => {
-                                                                    if (message.sender?.id || message.userId) {
-                                                                        navigate(`/public-profile/${message.sender?.id || message.userId}`);
+                                                                onClick={async () => {
+                                                                    const userId = message.sender?.id || message.userId;
+                                                                    if (userId) {
+                                                                        try {
+                                                                            const baseUrl = window.location.origin;
+                                                                            const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
+                                                                            if (response.ok) {
+                                                                                const data = await response.json();
+                                                                                setProfileModalData(data);
+                                                                                setShowProfileModal(true);
+                                                                            } else {
+                                                                                setProfileModalData(message.sender || { id: userId });
+                                                                                setShowProfileModal(true);
+                                                                            }
+                                                                        } catch (error) {
+                                                                            console.error('Error fetching profile:', error);
+                                                                            setProfileModalData(message.sender || { id: userId });
+                                                                            setShowProfileModal(true);
+                                                                        }
                                                                     }
                                                                 }}
                                                                 style={{
@@ -7511,6 +7544,18 @@ Let's build generational wealth together! 💰🚀`,
                     </div>
                 </div>
             )}
+            
+            {/* Profile Modal */}
+            <ProfileModal 
+                isOpen={showProfileModal} 
+                onClose={() => setShowProfileModal(false)}
+                userId={profileModalData?.id || storedUser?.id}
+                userData={profileModalData}
+                onViewProfile={() => {
+                    setShowProfileModal(false);
+                    navigate('/profile');
+                }}
+            />
         </div>
     );
 };

@@ -6,10 +6,10 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaCog, FaUserPlus, FaUser, FaCrown, FaCheckCircle, FaFire, FaGem, FaStar, FaTrophy } from 'react-icons/fa';
 import '../styles/ProfileModal.css';
 
-const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
+const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile }) => {
     const [profile, setProfile] = useState(userData || null);
     const [loading, setLoading] = useState(!userData);
     const [activeTab, setActiveTab] = useState('overview');
@@ -170,38 +170,108 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <button
-                    onClick={onClose}
-                    style={{
-                        position: 'absolute',
-                        top: '20px',
-                        right: '20px',
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        color: 'white',
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.5rem',
-                        zIndex: 10,
-                        transition: 'all 0.3s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.target.style.background = 'rgba(255, 0, 0, 0.6)';
-                        e.target.style.transform = 'scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.background = 'rgba(0, 0, 0, 0.6)';
-                        e.target.style.transform = 'scale(1)';
-                    }}
-                >
-                    <FaTimes />
-                </button>
+                {/* Action Buttons - Top Right */}
+                <div style={{
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px',
+                    display: 'flex',
+                    gap: '10px',
+                    zIndex: 10
+                }}>
+                    {/* Settings/Gear Button */}
+                    <button
+                        onClick={() => {}}
+                        style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            color: 'white',
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1rem',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(139, 92, 246, 0.6)';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                        title="Settings"
+                    >
+                        <FaCog />
+                    </button>
+                    
+                    {/* Add Friend Button */}
+                    <button
+                        onClick={() => {}}
+                        style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            color: 'white',
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1rem',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(35, 165, 90, 0.6)';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                        title="Add Friend"
+                    >
+                        <FaUserPlus />
+                    </button>
+                    
+                    {/* Close Button */}
+                    <button
+                        onClick={onClose}
+                        style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            color: 'white',
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.2rem',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 0, 0, 0.6)';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                        title="Close"
+                    >
+                        <FaTimes />
+                    </button>
+                </div>
 
                 {/* Profile Banner */}
                 <div className="profile-banner-section" style={{
@@ -303,51 +373,165 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
                                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
                                 zIndex: 6
                             }} title={isOnline ? 'Online' : lastSeen ? `Last seen: ${lastSeen.toLocaleString()}` : 'Offline'}></div>
+                            
+                            {/* Avatar Badges - Below Avatar */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '-20px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                display: 'flex',
+                                gap: '4px',
+                                zIndex: 7
+                            }}>
+                                {/* Level Badge */}
+                                <div style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '50%',
+                                    background: tierColor,
+                                    border: '2px solid rgba(30, 30, 46, 0.95)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
+                                }} title={`Level ${profile.level || 1}`}>
+                                    <FaStar style={{ fontSize: '12px', color: 'white' }} />
+                                </div>
+                                
+                                {/* Fire Streak Badge (if has streak) */}
+                                {loginStreak >= 3 && (
+                                    <div style={{
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '50%',
+                                        background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
+                                        border: '2px solid rgba(30, 30, 46, 0.95)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
+                                    }} title={`${loginStreak} day streak`}>
+                                        <FaFire style={{ fontSize: '12px', color: 'white' }} />
+                                    </div>
+                                )}
+                                
+                                {/* Verified Badge (for admins/premium) */}
+                                {(profile.role === 'admin' || profile.role === 'super_admin' || profile.subscription_status === 'active') && (
+                                    <div style={{
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '50%',
+                                        background: 'linear-gradient(135deg, #5865F2, #4752C4)',
+                                        border: '2px solid rgba(30, 30, 46, 0.95)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
+                                    }} title={profile.role === 'admin' || profile.role === 'super_admin' ? 'Administrator' : 'Premium Member'}>
+                                        <FaCheckCircle style={{ fontSize: '12px', color: 'white' }} />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Profile Header Info */}
-                <div style={{ padding: '0 40px 20px', marginTop: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                <div style={{ padding: '0 40px 20px', marginTop: '30px' }}>
+                    {/* Username with icons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
                         <h1 style={{
-                            fontSize: '2rem',
+                            fontSize: '1.8rem',
                             fontWeight: 700,
                             color: 'white',
                             margin: 0,
-                            textTransform: 'uppercase',
-                            letterSpacing: '2px',
-                            flex: 1
-                        }}>
-                            {profile.username || profile.name || 'User'}
-                        </h1>
-                        <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 12px',
-                            background: isOnline ? 'rgba(35, 165, 90, 0.2)' : 'rgba(114, 118, 125, 0.2)',
-                            border: `1px solid ${isOnline ? '#23A55A' : '#72767D'}`,
-                            borderRadius: '20px',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                            color: isOnline ? '#23A55A' : '#72767D'
+                            gap: '10px'
                         }}>
-                            <div style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: isOnline ? '#23A55A' : '#72767D',
-                                animation: isOnline ? 'pulse 2s infinite' : 'none'
-                            }}></div>
-                            {isOnline ? 'Online' : lastSeen ? `Last seen ${formatLastSeen(lastSeen)}` : 'Offline'}
+                            {profile.username || profile.name || 'User'}
+                            
+                            {/* Role Badge Icon */}
+                            {(profile.role === 'admin' || profile.role === 'super_admin') && (
+                                <FaCrown style={{ color: '#FFD700', fontSize: '1.2rem' }} title="Administrator" />
+                            )}
+                            
+                            {/* Lightning Bolt for Active Users */}
+                            {(profile.xp || 0) >= 1000 && (
+                                <span style={{ fontSize: '1.2rem' }} title="Active Trader">⚡</span>
+                            )}
+                            
+                            {/* Verified Checkmark */}
+                            {(profile.subscription_status === 'active' || profile.role === 'admin' || profile.role === 'super_admin') && (
+                                <FaCheckCircle style={{ color: '#5865F2', fontSize: '1rem' }} title="Verified" />
+                            )}
+                        </h1>
+                    </div>
+                    
+                    {/* Rank Banner - Like "Diamond King" in reference */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '12px 20px',
+                        background: `linear-gradient(135deg, ${tierColor}30, ${tierColor}10)`,
+                        border: `2px solid ${tierColor}60`,
+                        borderRadius: '12px',
+                        marginBottom: '15px',
+                        maxWidth: 'fit-content'
+                    }}>
+                        {/* Rank Icon */}
+                        <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            background: tierColor,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: `0 4px 12px ${tierColor}50`
+                        }}>
+                            {(profile.level || 1) >= 75 ? <FaCrown style={{ color: 'white', fontSize: '16px' }} /> :
+                             (profile.level || 1) >= 50 ? <FaGem style={{ color: 'white', fontSize: '16px' }} /> :
+                             (profile.level || 1) >= 25 ? <FaTrophy style={{ color: 'white', fontSize: '16px' }} /> :
+                             <FaStar style={{ color: 'white', fontSize: '16px' }} />}
+                        </div>
+                        
+                        {/* Rank Title */}
+                        <div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: tierColor, letterSpacing: '1px' }}>
+                                {rankTitle}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                {tierName}
+                            </div>
                         </div>
                     </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 600, color: tierColor, marginBottom: '5px' }}>
-                        {rankTitle}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase' }}>
-                        {tierName}
+                    
+                    {/* Online Status */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 14px',
+                        background: isOnline ? 'rgba(35, 165, 90, 0.15)' : 'rgba(114, 118, 125, 0.15)',
+                        border: `1px solid ${isOnline ? 'rgba(35, 165, 90, 0.4)' : 'rgba(114, 118, 125, 0.4)'}`,
+                        borderRadius: '20px',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        color: isOnline ? '#23A55A' : '#72767D',
+                        maxWidth: 'fit-content'
+                    }}>
+                        <div style={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            background: isOnline ? '#23A55A' : '#72767D',
+                            animation: isOnline ? 'pulse 2s infinite' : 'none',
+                            boxShadow: isOnline ? '0 0 8px rgba(35, 165, 90, 0.6)' : 'none'
+                        }}></div>
+                        {isOnline ? 'Online Now' : lastSeen ? `Last seen ${formatLastSeen(lastSeen)}` : 'Offline'}
                     </div>
                 </div>
 
@@ -607,6 +791,49 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
                         </div>
                     )}
                 </div>
+                
+                {/* View Full Profile Button */}
+                {onViewProfile && (
+                    <div style={{ 
+                        padding: '20px 40px 40px',
+                        borderTop: '1px solid rgba(139, 92, 246, 0.2)',
+                        marginTop: '20px',
+                        display: 'flex',
+                        justifyContent: 'center'
+                    }}>
+                        <button
+                            onClick={onViewProfile}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                padding: '14px 32px',
+                                background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                border: 'none',
+                                borderRadius: '12px',
+                                color: 'white',
+                                fontSize: '1rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 4px 20px rgba(139, 92, 246, 0.4)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                                e.currentTarget.style.boxShadow = '0 8px 30px rgba(139, 92, 246, 0.6)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                e.currentTarget.style.boxShadow = '0 4px 20px rgba(139, 92, 246, 0.4)';
+                            }}
+                        >
+                            <FaUser />
+                            View Full Profile
+                        </button>
+                    </div>
+                )}
             </div>
             
             <style>{`
@@ -617,6 +844,16 @@ const ProfileModal = ({ isOpen, onClose, userId, userData }) => {
                 @keyframes slideUp {
                     from { transform: translateY(50px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }
+                }
+                @keyframes pulse {
+                    0%, 100% {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                    50% {
+                        opacity: 0.7;
+                        transform: scale(1.1);
+                    }
                 }
             `}</style>
         </div>

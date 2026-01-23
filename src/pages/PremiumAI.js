@@ -340,17 +340,34 @@ const PremiumAI = () => {
       }
 
       if (data.success) {
+        // Validate response content
+        const responseContent = data.response?.trim();
+        
+        if (!responseContent) {
+          console.warn('AI returned empty response', { requestId: data.requestId });
+          throw new Error('I received an empty response. Please try again.');
+        }
+        
         const aiMessage = {
           role: 'assistant',
-          content: data.response,
+          content: responseContent,
           chartData: data.chartData || null, // Chart data if provided
           symbol: data.symbol || null, // Symbol for chart
-          citations: data.citations || [] // Knowledge base citations if any
+          citations: data.citations || [], // Knowledge base citations if any
+          requestId: data.requestId || null, // For debugging
+          timing: data.timing || null // Response time
         };
 
         setMessages(prev => [...prev, aiMessage]);
         setConversationHistory(prev => [...prev, aiMessage]);
+        
+        // Log successful response for debugging
+        if (data.timing) {
+          console.log(`AI response received in ${data.timing}ms`, { requestId: data.requestId });
+        }
       } else {
+        // Log the error for debugging
+        console.error('AI service error:', data.message, { requestId: data.requestId });
         throw new Error(data.message || 'AI service error');
       }
 
@@ -360,8 +377,16 @@ const PremiumAI = () => {
       // Extract a clean error message
       let errorMessage = 'Failed to send message. Please try again.';
       let isRateLimit = false;
+      let isNetworkError = false;
       
-      if (error.message) {
+      // Check for specific error types
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+        isRateLimit = true;
+        errorMessage = 'The request timed out. The AI may be experiencing high demand. Please try again.';
+      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        isNetworkError = true;
+        errorMessage = 'Network connection issue. Please check your internet connection and try again.';
+      } else if (error.message) {
         // Check if it's a quota error (more specific - requires admin action)
         if (error.message.toLowerCase().includes('quota') || 
             error.message.toLowerCase().includes('exceeded your current quota') ||
@@ -375,9 +400,11 @@ const PremiumAI = () => {
                  error.message.toLowerCase().includes('try again in a few moments')) {
           isRateLimit = true;
           errorMessage = 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.';
-        } else if (error.message.toLowerCase().includes('timeout')) {
+        } else if (error.message.toLowerCase().includes('timeout') || error.message.toLowerCase().includes('aborted')) {
           isRateLimit = true;
           errorMessage = 'The AI is taking longer than expected to respond. This can happen during high demand. Please try again in a moment.';
+        } else if (error.message.toLowerCase().includes('empty response')) {
+          errorMessage = 'I received an incomplete response. Please try asking your question again.';
         } else if (error.message.length > 150 || error.message.includes('<') || error.message.includes('Error:') || error.message.includes('timeout')) {
           errorMessage = 'I\'m having trouble processing your request right now. Please try again in a moment.';
         } else {
@@ -406,7 +433,7 @@ const PremiumAI = () => {
       const isQuotaError = errorMessage.toLowerCase().includes('quota');
       toast.error(errorMessage, {
         position: 'bottom-right',
-        autoClose: isQuotaError ? 8000 : (isRateLimit ? 5000 : 3000),
+        autoClose: isQuotaError ? 8000 : (isRateLimit || isNetworkError ? 5000 : 3000),
       });
 
       // Add user-friendly error message to chat (never show technical details)
@@ -414,9 +441,11 @@ const PremiumAI = () => {
         role: 'assistant',
         content: isQuotaError
           ? 'I apologize, but the AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.'
-          : isRateLimit 
-            ? 'I apologize, but the AI service is currently experiencing high demand. Please try again in a few moments. If this issue continues, please contact support for assistance.'
-            : errorMessage // Already cleaned up above
+          : isNetworkError
+            ? 'I apologize, but there seems to be a network connectivity issue. Please check your internet connection and try again.'
+            : isRateLimit 
+              ? 'I apologize, but the AI service is currently experiencing high demand. Please try again in a few moments. If this issue continues, please contact support for assistance.'
+              : errorMessage // Already cleaned up above
       };
       setMessages(prev => [...prev, chatErrorMessage]);
     } finally {

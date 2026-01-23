@@ -122,10 +122,15 @@ module.exports = async (req, res) => {
 
 // Function to get recent alerts for AI to use
 async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
-  const db = await getDbConnection();
-  if (!db) return [];
-
+  let db = null;
+  
   try {
+    db = await getDbConnection();
+    if (!db) {
+      console.log('getRecentAlerts: No database connection available');
+      return [];
+    }
+
     // Create tradingview_alerts table if it doesn't exist (graceful handling)
     try {
       await db.execute(`
@@ -151,6 +156,11 @@ async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
       console.log('Note: tradingview_alerts table creation check:', createError.message);
     }
 
+    // Ensure limit is a valid integer (MUST be interpolated directly - MySQL doesn't allow LIMIT ?)
+    const limitValue = parseInt(limit, 10);
+    const safeLimit = (Number.isInteger(limitValue) && limitValue > 0 && limitValue <= 100) ? limitValue : 10;
+    
+    // Build query with safe parameters
     let query = 'SELECT * FROM tradingview_alerts WHERE 1=1';
     const params = [];
 
@@ -164,12 +174,10 @@ async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
       params.push(timeframe.trim());
     }
 
-    // Ensure limit is a valid integer
-    const limitValue = parseInt(limit);
-    const safeLimit = (limitValue && limitValue > 0 && limitValue <= 100) ? limitValue : 10;
-    
-    query += ' ORDER BY timestamp DESC LIMIT ?';
-    params.push(safeLimit);
+    // IMPORTANT: LIMIT must be directly interpolated as an integer - MySQL prepared statements
+    // don't support placeholders (?) for LIMIT values. This is safe because safeLimit is
+    // guaranteed to be an integer between 1 and 100.
+    query += ` ORDER BY timestamp DESC LIMIT ${safeLimit}`;
 
     const [rows] = await db.execute(query, params);
     
@@ -177,13 +185,17 @@ async function getRecentAlerts(symbol = null, timeframe = null, limit = 10) {
       db.release();
     }
 
-    return rows;
+    return rows || [];
   } catch (error) {
     // Gracefully handle table not found or other database errors
     // Don't break the entire AI request if alerts can't be fetched
     console.error('Error fetching TradingView alerts (non-critical):', error.message);
     if (db && typeof db.release === 'function') {
-      db.release();
+      try {
+        db.release();
+      } catch (releaseError) {
+        // Ignore release errors
+      }
     }
     // Return empty array so AI can continue without alerts
     return [];

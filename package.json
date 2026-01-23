@@ -43,6 +43,8 @@
     "start": "react-scripts start",
     "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
+    "test:ai": "jest tests/ai-chat.test.js --verbose",
+    "test:ai:ci": "jest tests/ai-chat.test.js --ci --coverage",
     "eject": "react-scripts eject",
     "test-server": "node test-server.js"
   },
