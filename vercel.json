@@ -221,6 +221,42 @@
     {
       "source": "/api/admin/ai-debug",
       "destination": "/api/admin/ai-debug.js"
+    },
+    {
+      "source": "/api/users/friends",
+      "destination": "/api/users/friends.js"
+    },
+    {
+      "source": "/api/users/friends/requests",
+      "destination": "/api/users/friends.js"
+    },
+    {
+      "source": "/api/users/friends/request",
+      "destination": "/api/users/friends.js"
+    },
+    {
+      "source": "/api/users/friends/accept",
+      "destination": "/api/users/friends.js"
+    },
+    {
+      "source": "/api/users/friends/reject",
+      "destination": "/api/users/friends.js"
+    },
+    {
+      "source": "/api/users/friends/status/:userId",
+      "destination": "/api/users/friends.js"
+    },
+    {
+      "source": "/api/users/friends/:friendId",
+      "destination": "/api/users/friends.js"
+    },
+    {
+      "source": "/api/users/settings",
+      "destination": "/api/users/settings.js"
+    },
+    {
+      "source": "/api/ai/health",
+      "destination": "/api/ai/health.js"
     }
   ]
 }
