@@ -202,6 +202,30 @@ const getChannelIcon = (channel) => {
     return <FaHashtag />;
 };
 
+/**
+ * Generate a weighted random online count between 20-100
+ * Biased toward mid-range (35-70) for realistic appearance:
+ * - 15% chance: Low range (20-34)
+ * - 70% chance: Mid range (35-70)
+ * - 15% chance: High range (71-100)
+ * 
+ * Called fresh on every page refresh (no caching/storage)
+ */
+const generateWeightedOnlineCount = () => {
+    const roll = Math.random();
+    
+    if (roll < 0.15) {
+        // Low range: 20-34 (15% chance)
+        return Math.floor(Math.random() * 15) + 20;
+    } else if (roll < 0.85) {
+        // Mid range: 35-70 (70% chance)
+        return Math.floor(Math.random() * 36) + 35;
+    } else {
+        // High range: 71-100 (15% chance)
+        return Math.floor(Math.random() * 30) + 71;
+    }
+};
+
 // Main Community Component
 const Community = () => {
     const [userLevel, setUserLevel] = useState(1);
@@ -374,13 +398,10 @@ const Community = () => {
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editingMessageContent, setEditingMessageContent] = useState('');
     const [onlineCount, setOnlineCount] = useState(() => {
-        // Generate initial online count (20-100) on first render
-        // Use sessionStorage to maintain consistency within session
-        const stored = sessionStorage.getItem('aura_fx_online_count');
-        if (stored) return parseInt(stored, 10);
-        const initial = Math.floor(Math.random() * 81) + 20; // 20-100
-        sessionStorage.setItem('aura_fx_online_count', initial.toString());
-        return initial;
+        // Generate weighted random online count (20-100) on component mount
+        // Biased toward mid-range (35-70) for realistic appearance
+        // No storage - changes on every full page refresh
+        return generateWeightedOnlineCount();
     });
     const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'connecting', 'server-issue', 'wifi-issue'
     const messagesEndRef = useRef(null);
@@ -2418,20 +2439,15 @@ const Community = () => {
         return () => clearInterval(intervalId);
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
 
-    // Generate smoothed online user count (20-100 range with gradual changes)
-    // This is purely cosmetic for early-stage UX polish
+    // Generate smoothed online count variation (gradual changes over time)
+    // This is purely cosmetic for early-stage UX polish - no storage used
     const generateSmoothedOnlineCount = useCallback((currentCount) => {
         // Small random variation: -3 to +3
         const variation = Math.floor(Math.random() * 7) - 3;
         let newCount = currentCount + variation;
         
         // Keep within 20-100 bounds
-        newCount = Math.max(20, Math.min(100, newCount));
-        
-        // Store in sessionStorage for consistency within session
-        sessionStorage.setItem('aura_fx_online_count', newCount.toString());
-        
-        return newCount;
+        return Math.max(20, Math.min(100, newCount));
     }, []);
 
     // Update online count with smooth variations (purely cosmetic for UX polish)
