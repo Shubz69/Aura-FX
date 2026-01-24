@@ -13,17 +13,22 @@
  * - FRIEND_ACCEPTED: Friend request was accepted
  * - FRIEND_DECLINED: Friend request was declined
  * - SYSTEM: System notification
+ * 
+ * HARDENED:
+ * - Rate limiting
+ * - Request coalescing for unread count
+ * - Proper error handling
+ * - Structured logging
  */
 
-const { executeQuery } = require('../db');
+const { executeQuery, executeQueryWithTimeout } = require('../db');
+const { getCached, setCached, invalidatePattern, DEFAULT_TTLS } = require('../cache');
+const { generateRequestId, createLogger } = require('../utils/logger');
+const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
+const { safeLimit, safeCursor, isValidUUID } = require('../utils/validators');
 
 // Track schema creation
 let schemaCreated = false;
-
-// Generate unique request ID
-function generateRequestId() {
-  return `notif_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
-}
 
 // Generate UUID v4
 function generateUUID() {
@@ -158,7 +163,11 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const requestId = generateRequestId();
+  const requestId = generateRequestId('notif');
+  const logger = createLogger(requestId);
+  const startTime = Date.now();
+  
+  res.setHeader('X-Request-ID', requestId);
   
   // Auth check
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -174,6 +183,20 @@ module.exports = async (req, res) => {
   }
 
   const userId = decoded.id;
+  
+  // Rate limiting
+  const rateLimitKey = `notifications_${userId}`;
+  if (!checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.MEDIUM.requests, RATE_LIMIT_CONFIGS.MEDIUM.windowMs)) {
+    logger.warn('Rate limited', { userId });
+    return res.status(429).json({
+      success: false,
+      errorCode: 'RATE_LIMITED',
+      message: 'Too many requests. Please try again later.',
+      requestId
+    });
+  }
+
+  logger.info('Request started', { method: req.method, url: req.url });
 
   await ensureSchema();
 
@@ -193,8 +216,8 @@ module.exports = async (req, res) => {
   try {
     // GET /api/notifications - List with cursor pagination
     if (req.method === 'GET' && pathParts[pathParts.length - 1] === 'notifications') {
-      const cursor = query.cursor || null;
-      const limit = Math.min(parseInt(query.limit) || 20, 50);
+      const cursor = safeCursor(query.cursor);
+      const limit = safeLimit(query.limit, 20, 50);
       
       let whereClause = 'WHERE user_id = ?';
       const params = [userId];
@@ -226,12 +249,20 @@ module.exports = async (req, res) => {
         ? items[items.length - 1].created_at 
         : null;
       
-      // Get unread count
-      const countResult = await executeQuery(
-        'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
-        [userId, 'UNREAD']
+      // Get unread count with coalescing (prevent N concurrent queries)
+      const unreadCount = await coalesceRequest(
+        `notif_unread_${userId}`,
+        async () => {
+          const countResult = await executeQueryWithTimeout(
+            'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
+            [userId, 'UNREAD'],
+            5000,
+            requestId
+          );
+          return getRows(countResult)[0]?.count || 0;
+        },
+        100 // 100ms coalescing window
       );
-      const unreadCount = getRows(countResult)[0]?.count || 0;
       
       return res.status(200).json({
         success: true,
@@ -317,7 +348,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`[${requestId}] Notifications error:`, error);
+    logger.error('Notifications error', { error, ms: Date.now() - startTime });
     return res.status(500).json({
       success: false,
       errorCode: 'SERVER_ERROR',

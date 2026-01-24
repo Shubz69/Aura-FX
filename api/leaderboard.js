@@ -6,15 +6,21 @@
  * - weekly: XP earned this ISO week (Monday to Sunday)
  * - monthly: XP earned this calendar month
  * - all-time: Highest level/total XP
+ * 
+ * HARDENED:
+ * - Rate limiting
+ * - Request coalescing (prevents stampedes)
+ * - Proper error responses
+ * - Input validation
+ * - Timeout protection
  */
 
-const { executeQuery } = require('./db');
-const { getCached, setCached } = require('./cache');
-
-// Generate unique request ID for logging
-function generateRequestId() {
-  return `lb_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
-}
+const { executeQuery, executeQueryWithTimeout } = require('./db');
+const { getCached, setCached, getOrFetch, DEFAULT_TTLS } = require('./cache');
+const { generateRequestId, createLogger } = require('./utils/logger');
+const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('./utils/rate-limiter');
+const { safeLimit, safeTimeframe } = require('./utils/validators');
+const { withTimeout } = require('./utils/circuit-breaker');
 
 // Trading-style usernames for demo users with activity profiles
 const DEMO_USERS = [
@@ -317,116 +323,98 @@ async function seedDemoUsers() {
 }
 
 module.exports = async (req, res) => {
-  const requestId = generateRequestId();
+  const requestId = generateRequestId('lb');
+  const logger = createLogger(requestId);
   const startTime = Date.now();
   
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('X-Request-ID', requestId);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed', requestId });
+  if (req.method !== 'GET') {
+    return res.status(405).json({ 
+      success: false, 
+      errorCode: 'METHOD_NOT_ALLOWED',
+      message: 'Method not allowed', 
+      requestId 
+    });
+  }
 
   try {
-    const timeframe = req.query.timeframe || 'all-time';
+    // Rate limiting
+    const clientId = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+    const rateLimitKey = `leaderboard_${clientId}`;
     
-    // Sanitize and clamp limit to integer between 1-100
-    let limit = parseInt(req.query.limit, 10);
-    if (isNaN(limit) || limit < 1) limit = 10;
-    if (limit > 100) limit = 100;
+    if (!checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.HIGH.requests, RATE_LIMIT_CONFIGS.HIGH.windowMs)) {
+      logger.warn('Rate limited', { clientId });
+      return res.status(429).json({
+        success: false,
+        errorCode: 'RATE_LIMITED',
+        message: 'Too many requests. Please try again later.',
+        requestId,
+        retryAfter: 60
+      });
+    }
+
+    // Validate and sanitize inputs
+    const timeframe = safeTimeframe(req.query.timeframe);
+    const limit = safeLimit(req.query.limit, 10, 100);
     
-    console.log(`[${requestId}] Leaderboard request: timeframe=${timeframe}, limit=${limit}`);
+    logger.info('Leaderboard request', { timeframe, limit, clientId });
     
-    // Check cache
-    const cacheTTL = timeframe === 'all-time' ? 300000 : 60000;
-    const cacheKey = `leaderboard_v4_${timeframe}_${limit}`;
+    // Check cache with request coalescing (prevents stampede)
+    const cacheTTL = timeframe === 'all-time' ? DEFAULT_TTLS.LEADERBOARD_ALLTIME : DEFAULT_TTLS.LEADERBOARD;
+    const cacheKey = `leaderboard_v5_${timeframe}_${limit}`;
+    
+    // Use coalesceRequest to prevent multiple concurrent queries for the same data
+    const coalesceKey = `lb_query_${timeframe}_${limit}`;
+    
     const cached = getCached(cacheKey, cacheTTL);
     if (cached) {
-      console.log(`[${requestId}] Cache HIT (${Date.now() - startTime}ms)`);
-      return res.status(200).json({ success: true, leaderboard: cached, cached: true, timeframe, requestId });
+      logger.info('Cache HIT', { ms: Date.now() - startTime });
+      return res.status(200).json({ 
+        success: true, 
+        leaderboard: cached, 
+        cached: true, 
+        timeframe, 
+        requestId,
+        queryTimeMs: Date.now() - startTime
+      });
     }
     
-    console.log(`[${requestId}] Cache MISS, querying database...`);
+    logger.info('Cache MISS, querying database');
 
-    // Ensure tables exist (non-blocking)
-    await ensureXpEventsTable();
-    await ensureDemoColumn();
+    // Use request coalescing to prevent stampede
+    const fetchLeaderboard = async () => {
+      logger.startTimer('db_setup');
+      
+      // Ensure tables exist (non-blocking, with timeout)
+      await Promise.race([
+        Promise.all([
+          ensureXpEventsTable(),
+          ensureDemoColumn()
+        ]),
+        new Promise(resolve => setTimeout(resolve, 2000)) // 2s timeout
+      ]);
+      
+      // Seed demo users if needed (with timeout)
+      await Promise.race([
+        seedDemoUsers(),
+        new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
+      ]);
+      
+      logger.endTimer('db_setup');
+      
+      return await queryLeaderboard(timeframe, limit, logger);
+    };
     
-    // Seed demo users if needed
-    await seedDemoUsers();
+    // Coalesce concurrent requests for same data
+    const leaderboard = await coalesceRequest(coalesceKey, fetchLeaderboard, 200);
 
     const boundaries = getDateBoundaries(timeframe);
-    let leaderboard = [];
-
-    if (timeframe === 'all-time') {
-      // All-time: Sort by level DESC, then total XP DESC
-      // Use inline LIMIT to avoid mysql2 parameter issues
-      const result = await executeQuery(`
-        SELECT 
-          u.id, u.username, u.name, u.email, 
-          COALESCE(u.xp, 0) as xp, 
-          COALESCE(u.level, 1) as level, 
-          u.avatar, u.role, 
-          COALESCE(u.is_demo, FALSE) as is_demo,
-          COALESCE(u.xp, 0) as period_xp
-        FROM users u
-        WHERE COALESCE(u.xp, 0) > 0
-        ORDER BY COALESCE(u.level, 1) DESC, COALESCE(u.xp, 0) DESC
-        LIMIT ${limit}
-      `);
-      
-      leaderboard = getRows(result);
-    } else {
-      // Time-based: Aggregate XP from xp_events
-      const startDate = toMySQLDatetime(boundaries.start);
-      
-      console.log(`[${requestId}] Querying xp_events since: ${startDate}`);
-      
-      // Use inline LIMIT to avoid mysql2 prepared statement issues
-      const result = await executeQuery(`
-        SELECT 
-          u.id, u.username, u.name, u.email, 
-          COALESCE(u.xp, 0) as xp, 
-          COALESCE(u.level, 1) as level, 
-          u.avatar, u.role, 
-          COALESCE(u.is_demo, FALSE) as is_demo,
-          COALESCE(SUM(e.amount), 0) as period_xp,
-          MAX(e.created_at) as last_xp_time
-        FROM users u
-        INNER JOIN xp_events e ON u.id = e.user_id AND e.created_at >= ?
-        GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo
-        HAVING period_xp > 0
-        ORDER BY period_xp DESC, last_xp_time ASC
-        LIMIT ${limit}
-      `, [startDate]);
-      
-      leaderboard = getRows(result);
-      
-      console.log(`[${requestId}] Time-based query returned ${leaderboard.length} users`);
-      
-      // Fallback: If insufficient time-based results, use all-time
-      if (leaderboard.length < 3) {
-        console.log(`[${requestId}] Insufficient time-based data (${leaderboard.length}), falling back to all-time`);
-        
-        const fallbackResult = await executeQuery(`
-          SELECT 
-            u.id, u.username, u.name, u.email, 
-            COALESCE(u.xp, 0) as xp, 
-            COALESCE(u.level, 1) as level, 
-            u.avatar, u.role, 
-            COALESCE(u.is_demo, FALSE) as is_demo,
-            COALESCE(u.xp, 0) as period_xp
-          FROM users u
-          WHERE COALESCE(u.xp, 0) > 0
-          ORDER BY COALESCE(u.level, 1) DESC, COALESCE(u.xp, 0) DESC
-          LIMIT ${limit}
-        `);
-        
-        leaderboard = getRows(fallbackResult);
-        console.log(`[${requestId}] Fallback returned ${leaderboard.length} users`);
-      }
-    }
 
     // Format response
     const formattedLeaderboard = leaderboard.map((user, index) => ({
@@ -445,10 +433,14 @@ module.exports = async (req, res) => {
     }));
 
     // Cache result
-    setCached(cacheKey, formattedLeaderboard);
+    setCached(cacheKey, formattedLeaderboard, cacheTTL);
 
     const queryTime = Date.now() - startTime;
-    console.log(`[${requestId}] Query completed in ${queryTime}ms, returning ${formattedLeaderboard.length} users`);
+    logger.info('Query completed', { 
+      queryTimeMs: queryTime, 
+      resultCount: formattedLeaderboard.length,
+      latency: logger.getLatencyBreakdown()
+    });
     
     return res.status(200).json({ 
       success: true, 
@@ -461,7 +453,97 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`[${requestId}] Leaderboard error:`, error);
-    return res.status(200).json({ success: true, leaderboard: [], error: error.message, requestId });
+    const queryTime = Date.now() - startTime;
+    logger.error('Leaderboard error', { error, queryTimeMs: queryTime });
+    
+    // Return proper error response (not success: true)
+    return res.status(500).json({ 
+      success: false, 
+      errorCode: 'SERVER_ERROR',
+      message: 'Failed to load leaderboard. Please try again.',
+      leaderboard: [], // Empty fallback for UI
+      requestId,
+      queryTimeMs: queryTime
+    });
   }
 };
+
+// Extracted query logic for coalescing
+async function queryLeaderboard(timeframe, limit, logger) {
+  const boundaries = getDateBoundaries(timeframe);
+  let leaderboard = [];
+
+  logger.startTimer('db_query');
+  
+  if (timeframe === 'all-time') {
+    // All-time: Sort by level DESC, then total XP DESC
+    // Use inline LIMIT to avoid mysql2 parameter issues
+    const result = await executeQueryWithTimeout(`
+      SELECT 
+        u.id, u.username, u.name, u.email, 
+        COALESCE(u.xp, 0) as xp, 
+        COALESCE(u.level, 1) as level, 
+        u.avatar, u.role, 
+        COALESCE(u.is_demo, FALSE) as is_demo,
+        COALESCE(u.xp, 0) as period_xp
+      FROM users u
+      WHERE COALESCE(u.xp, 0) > 0
+      ORDER BY COALESCE(u.level, 1) DESC, COALESCE(u.xp, 0) DESC
+      LIMIT ${limit}
+    `, [], 10000, logger.requestId);
+    
+    leaderboard = getRows(result);
+  } else {
+    // Time-based: Aggregate XP from xp_events
+    const startDate = toMySQLDatetime(boundaries.start);
+    
+    logger.debug('Querying xp_events', { since: startDate });
+    
+    // Use inline LIMIT to avoid mysql2 prepared statement issues
+    const result = await executeQueryWithTimeout(`
+      SELECT 
+        u.id, u.username, u.name, u.email, 
+        COALESCE(u.xp, 0) as xp, 
+        COALESCE(u.level, 1) as level, 
+        u.avatar, u.role, 
+        COALESCE(u.is_demo, FALSE) as is_demo,
+        COALESCE(SUM(e.amount), 0) as period_xp,
+        MAX(e.created_at) as last_xp_time
+      FROM users u
+      INNER JOIN xp_events e ON u.id = e.user_id AND e.created_at >= ?
+      GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo
+      HAVING period_xp > 0
+      ORDER BY period_xp DESC, last_xp_time ASC
+      LIMIT ${limit}
+    `, [startDate], 10000, logger.requestId);
+    
+    leaderboard = getRows(result);
+    
+    logger.debug('Time-based query result', { count: leaderboard.length });
+    
+    // Fallback: If insufficient time-based results, use all-time
+    if (leaderboard.length < 3) {
+      logger.debug('Insufficient data, falling back to all-time', { count: leaderboard.length });
+      
+      const fallbackResult = await executeQueryWithTimeout(`
+        SELECT 
+          u.id, u.username, u.name, u.email, 
+          COALESCE(u.xp, 0) as xp, 
+          COALESCE(u.level, 1) as level, 
+          u.avatar, u.role, 
+          COALESCE(u.is_demo, FALSE) as is_demo,
+          COALESCE(u.xp, 0) as period_xp
+        FROM users u
+        WHERE COALESCE(u.xp, 0) > 0
+        ORDER BY COALESCE(u.level, 1) DESC, COALESCE(u.xp, 0) DESC
+        LIMIT ${limit}
+      `, [], 10000, logger.requestId);
+      
+      leaderboard = getRows(fallbackResult);
+      logger.debug('Fallback result', { count: leaderboard.length });
+    }
+  }
+  
+  logger.endTimer('db_query');
+  return leaderboard;
+}

@@ -16,9 +16,19 @@
  * - Reject duplicates
  * - Reject if already friends
  * - Idempotent operations (accepting twice is safe)
+ * 
+ * HARDENED:
+ * - Rate limiting
+ * - Caching for friends list
+ * - Proper error handling
+ * - Structured logging
  */
 
-const { executeQuery } = require('../db');
+const { executeQuery, executeQueryWithTimeout } = require('../db');
+const { getCached, setCached, deleteCached, invalidatePattern, DEFAULT_TTLS } = require('../cache');
+const { generateRequestId, createLogger } = require('../utils/logger');
+const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
+const { positiveInt, isValidUUID } = require('../utils/validators');
 
 // Import notification creator if available
 let createNotification;
@@ -30,11 +40,6 @@ try {
 
 // Track schema creation
 let schemaCreated = false;
-
-// Generate unique request ID
-function generateRequestId() {
-  return `friend_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
-}
 
 // Generate UUID v4
 function generateUUID() {
@@ -151,7 +156,11 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const requestId = generateRequestId();
+  const requestId = generateRequestId('friend');
+  const logger = createLogger(requestId);
+  const startTime = Date.now();
+  
+  res.setHeader('X-Request-ID', requestId);
   
   // Auth check
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -167,6 +176,18 @@ module.exports = async (req, res) => {
   }
 
   const userId = decoded.id;
+  
+  // Rate limiting
+  const rateLimitKey = `friends_${userId}`;
+  if (!checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.MEDIUM.requests, RATE_LIMIT_CONFIGS.MEDIUM.windowMs)) {
+    logger.warn('Rate limited', { userId });
+    return res.status(429).json({
+      success: false,
+      errorCode: 'RATE_LIMITED',
+      message: 'Too many requests. Please try again later.',
+      requestId
+    });
+  }
 
   await ensureSchema();
 
@@ -181,12 +202,27 @@ module.exports = async (req, res) => {
     ? pathParts.slice(friendsIndex + 1).join('/') 
     : 'list';
 
-  console.log(`[${requestId}] Friends API: ${req.method} /${action}`);
+  logger.info('Request started', { action, method: req.method });
 
   try {
-    // GET /api/friends/list - Get friends list
+    // GET /api/friends/list - Get friends list (with caching)
     if (req.method === 'GET' && (action === 'list' || action === '')) {
-      const result = await executeQuery(`
+      // Check cache
+      const cacheKey = `friends_list_${userId}`;
+      const cached = getCached(cacheKey, DEFAULT_TTLS.FRIENDS_LIST);
+      if (cached) {
+        logger.info('Cache HIT', { ms: Date.now() - startTime });
+        return res.status(200).json({
+          success: true,
+          friends: cached,
+          count: cached.length,
+          cached: true,
+          requestId
+        });
+      }
+      
+      logger.startTimer('db_query');
+      const result = await executeQueryWithTimeout(`
         SELECT 
           u.id, u.username, u.avatar, u.level, u.xp, u.role,
           u.last_seen, f.created_at as friends_since
@@ -194,7 +230,8 @@ module.exports = async (req, res) => {
         JOIN users u ON f.friend_id = u.id
         WHERE f.user_id = ?
         ORDER BY u.last_seen DESC
-      `, [userId]);
+      `, [userId], 10000, requestId);
+      logger.endTimer('db_query');
       
       const friends = getRows(result).map(f => ({
         id: f.id,
@@ -207,6 +244,11 @@ module.exports = async (req, res) => {
         lastSeen: f.last_seen,
         friendsSince: f.friends_since
       }));
+      
+      // Cache the result
+      setCached(cacheKey, friends, DEFAULT_TTLS.FRIENDS_LIST);
+      
+      logger.info('Request completed', { count: friends.length, ms: Date.now() - startTime });
       
       return res.status(200).json({
         success: true,
@@ -461,6 +503,10 @@ module.exports = async (req, res) => {
         [userId, requesterId, requesterId, userId]
       );
       
+      // Invalidate friends list cache for both users
+      deleteCached(`friends_list_${userId}`);
+      deleteCached(`friends_list_${requesterId}`);
+      
       // Update notification action_status
       await executeQuery(
         'UPDATE notifications SET action_status = ? WHERE friend_request_id = ?',
@@ -670,7 +716,11 @@ module.exports = async (req, res) => {
         });
       }
       
-      console.log(`[${requestId}] Friendship removed: ${userId} <-> ${friendId}`);
+      // Invalidate friends list cache for both users
+      deleteCached(`friends_list_${userId}`);
+      deleteCached(`friends_list_${friendId}`);
+      
+      logger.info('Friendship removed', { userId, friendId });
       
       return res.status(200).json({
         success: true,
@@ -753,7 +803,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`[${requestId}] Friends API error:`, error);
+    logger.error('Friends API error', { error, action, ms: Date.now() - startTime });
     return res.status(500).json({
       success: false,
       errorCode: 'SERVER_ERROR',

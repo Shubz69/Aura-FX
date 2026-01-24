@@ -1,3 +1,15 @@
+/**
+ * WebSocket Server - Real-time messaging
+ * 
+ * HARDENED:
+ * - Connection limits per user (prevent memory leaks)
+ * - Total connection limit
+ * - Rate limiting on message sends
+ * - Dead connection cleanup
+ * - Structured logging
+ * - Graceful shutdown
+ */
+
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -11,11 +23,40 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
+// ============================================================================
+// CONFIGURATION - Production hardening limits
+// ============================================================================
+
+const CONFIG = {
+  MAX_TOTAL_CONNECTIONS: 10000,
+  MAX_CONNECTIONS_PER_USER: 5,
+  MAX_MESSAGES_PER_MINUTE_PER_USER: 60,
+  DEAD_CONNECTION_CHECK_INTERVAL: 60000, // 1 minute
+  PING_INTERVAL: 30000, // 30 seconds
+  CONNECTION_TIMEOUT: 120000, // 2 minutes without activity
+  MAX_MESSAGE_SIZE: 32768 // 32KB
+};
+
+// ============================================================================
+// STATISTICS
+// ============================================================================
+
+const stats = {
+  totalConnections: 0,
+  totalMessages: 0,
+  errors: 0,
+  startTime: Date.now()
+};
+
+// ============================================================================
 // WebSocket Server
+// ============================================================================
+
 const wss = new WebSocket.Server({ 
     server,
     path: '/ws',
-    perMessageDeflate: false
+    perMessageDeflate: false,
+    maxPayload: CONFIG.MAX_MESSAGE_SIZE
 });
 
 // Database connection pool
@@ -62,10 +103,80 @@ const clients = new Map();
 // Store user connections: userId -> Set of WebSocket connections
 const userConnections = new Map();
 
-// Health check endpoint
+// Rate limiting: userId -> { count, windowStart }
+const messageRateLimits = new Map();
+
+// ============================================================================
+// Health check endpoint (enhanced)
+// ============================================================================
+
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', service: 'websocket-server' });
+    res.status(200).json({ 
+      status: 'ok', 
+      service: 'websocket-server',
+      connections: {
+        total: clients.size,
+        subscriptions: subscriptions.size,
+        users: userConnections.size
+      },
+      stats: {
+        totalConnections: stats.totalConnections,
+        totalMessages: stats.totalMessages,
+        errors: stats.errors,
+        uptimeSeconds: Math.floor((Date.now() - stats.startTime) / 1000)
+      },
+      limits: {
+        maxConnections: CONFIG.MAX_TOTAL_CONNECTIONS,
+        currentLoad: ((clients.size / CONFIG.MAX_TOTAL_CONNECTIONS) * 100).toFixed(1) + '%'
+      }
+    });
 });
+
+// ============================================================================
+// Rate Limiting Helper
+// ============================================================================
+
+function checkMessageRateLimit(userId) {
+  if (!userId) return true; // Allow anonymous
+  
+  const now = Date.now();
+  const key = userId.toString();
+  const limit = messageRateLimits.get(key);
+  
+  if (!limit || now - limit.windowStart > 60000) {
+    // New window
+    messageRateLimits.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+  
+  if (limit.count >= CONFIG.MAX_MESSAGES_PER_MINUTE_PER_USER) {
+    return false;
+  }
+  
+  limit.count++;
+  return true;
+}
+
+// ============================================================================
+// Connection limit check
+// ============================================================================
+
+function canAcceptConnection(userId) {
+  // Check total limit
+  if (clients.size >= CONFIG.MAX_TOTAL_CONNECTIONS) {
+    return { allowed: false, reason: 'Server at capacity' };
+  }
+  
+  // Check per-user limit
+  if (userId) {
+    const userConns = userConnections.get(userId.toString());
+    if (userConns && userConns.size >= CONFIG.MAX_CONNECTIONS_PER_USER) {
+      return { allowed: false, reason: 'Too many connections for this user' };
+    }
+  }
+  
+  return { allowed: true };
+}
 
 // Endpoint to notify user of account deletion (called by admin API)
 app.post('/api/notify-user-deleted', async (req, res) => {
@@ -162,12 +273,33 @@ function createStompFrame(command, headers = {}, body = '') {
     return frame;
 }
 
+// ============================================================================
 // WebSocket connection handling
+// ============================================================================
+
 wss.on('connection', (ws, req) => {
-    console.log('New WebSocket connection');
-    const clientId = Date.now().toString();
+    // Check connection limit before accepting
+    const preCheck = canAcceptConnection(null);
+    if (!preCheck.allowed) {
+      console.warn('Connection rejected:', preCheck.reason);
+      ws.close(1013, preCheck.reason); // 1013 = Try Again Later
+      return;
+    }
+    
+    stats.totalConnections++;
+    const clientId = Date.now().toString() + Math.random().toString(36).substr(2, 6);
     let userId = null;
-    clients.set(ws, { id: clientId, subscriptions: new Set(), userId: null });
+    
+    // Initialize client info with activity tracking
+    clients.set(ws, { 
+      id: clientId, 
+      subscriptions: new Set(), 
+      userId: null,
+      connectedAt: Date.now(),
+      lastActivity: Date.now()
+    });
+    
+    console.log(`[${clientId}] New WebSocket connection (total: ${clients.size})`);
     
     // Send CONNECTED frame
     const connectedFrame = createStompFrame('CONNECTED', {
@@ -178,6 +310,12 @@ wss.on('connection', (ws, req) => {
     
     ws.on('message', async (data) => {
         try {
+            // Update activity timestamp
+            const clientInfo = clients.get(ws);
+            if (clientInfo) {
+              clientInfo.lastActivity = Date.now();
+            }
+            
             const frame = parseStompFrame(data.toString());
             
             if (frame.command === 'CONNECT' || frame.command === 'STOMP') {
@@ -203,19 +341,28 @@ wss.on('connection', (ws, req) => {
                                 clientInfo.userId = userId;
                             }
                             
+                            // Check per-user connection limit
+                            const connCheck = canAcceptConnection(userId);
+                            if (!connCheck.allowed) {
+                              console.warn(`[${clientId}] Connection rejected:`, connCheck.reason);
+                              ws.close(1013, connCheck.reason);
+                              return;
+                            }
+                            
                             // Add to userConnections map
                             if (userId) {
-                                if (!userConnections.has(userId)) {
-                                    userConnections.set(userId, new Set());
+                                const userIdStr = userId.toString();
+                                if (!userConnections.has(userIdStr)) {
+                                    userConnections.set(userIdStr, new Set());
                                 }
-                                userConnections.get(userId).add(ws);
+                                userConnections.get(userIdStr).add(ws);
                             }
                         }
                     } catch (tokenError) {
-                        console.warn('Could not extract userId from token:', tokenError.message);
+                        console.warn(`[${clientId}] Could not extract userId from token:`, tokenError.message);
                     }
                 }
-                console.log('Client connected:', clientId, userId ? `(User: ${userId})` : '');
+                console.log(`[${clientId}] Client authenticated:`, userId ? `User ${userId}` : 'anonymous');
             } else if (frame.command === 'SUBSCRIBE') {
                 const destination = frame.headers.destination;
                 console.log(`Client ${clientId} subscribed to: ${destination}`);
@@ -271,11 +418,19 @@ wss.on('connection', (ws, req) => {
                 }
                 
                 if (!channelId) {
-                    console.warn('Unknown message destination:', destination);
+                    console.warn(`[${clientId}] Unknown message destination:`, destination);
                     return;
                 }
                 
-                console.log(`Message received for channel: ${channelId}`);
+                // Rate limit check
+                const currentUserId = clients.get(ws)?.userId;
+                if (!checkMessageRateLimit(currentUserId)) {
+                    console.warn(`[${clientId}] Rate limited user ${currentUserId}`);
+                    return; // Silently drop - don't send error frame
+                }
+                
+                stats.totalMessages++;
+                console.log(`[${clientId}] Message for channel ${channelId} (total: ${stats.totalMessages})`);
                 
                 let data;
                 try {
@@ -351,12 +506,13 @@ wss.on('connection', (ws, req) => {
                 ws.close();
             }
         } catch (error) {
-            console.error('Error processing WebSocket message:', error);
+            stats.errors++;
+            console.error(`[${clientId}] Error processing message:`, error.message);
         }
     });
 
     ws.on('close', () => {
-        console.log('WebSocket connection closed:', clientId);
+        console.log(`[${clientId}] Connection closed (remaining: ${clients.size - 1})`);
         const clientInfo = clients.get(ws);
         if (clientInfo) {
             // Remove from userConnections if userId was set
@@ -381,26 +537,104 @@ wss.on('connection', (ws, req) => {
     });
 
     ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        stats.errors++;
+        console.error(`[${clientId}] WebSocket error:`, error.message);
+    });
+    
+    // Ping to keep connection alive
+    ws.isAlive = true;
+    ws.on('pong', () => {
+      ws.isAlive = true;
     });
 });
 
+// ============================================================================
+// Dead connection cleanup (runs every minute)
+// ============================================================================
+
+const deadConnectionCleanup = setInterval(() => {
+  const now = Date.now();
+  let cleaned = 0;
+  
+  wss.clients.forEach((ws) => {
+    const clientInfo = clients.get(ws);
+    
+    // Check if connection is dead (no pong response)
+    if (ws.isAlive === false) {
+      console.log(`Cleaning dead connection: ${clientInfo?.id || 'unknown'}`);
+      cleaned++;
+      return ws.terminate();
+    }
+    
+    // Check for inactive connections
+    if (clientInfo && now - clientInfo.lastActivity > CONFIG.CONNECTION_TIMEOUT) {
+      console.log(`Cleaning inactive connection: ${clientInfo.id}`);
+      cleaned++;
+      return ws.terminate();
+    }
+    
+    ws.isAlive = false;
+    ws.ping();
+  });
+  
+  // Clean up rate limit entries older than 2 minutes
+  const rateLimitCutoff = now - 120000;
+  for (const [key, value] of messageRateLimits.entries()) {
+    if (value.windowStart < rateLimitCutoff) {
+      messageRateLimits.delete(key);
+    }
+  }
+  
+  if (cleaned > 0) {
+    console.log(`Cleaned ${cleaned} dead/inactive connections`);
+  }
+}, CONFIG.DEAD_CONNECTION_CHECK_INTERVAL);
+
+// ============================================================================
 // Start server
+// ============================================================================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`WebSocket server running on port ${PORT}`);
     console.log(`WebSocket endpoint: ws://localhost:${PORT}/ws`);
 });
 
+// ============================================================================
 // Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, closing server...');
+// ============================================================================
+
+function shutdown(signal) {
+    console.log(`${signal} received, closing server gracefully...`);
+    
+    // Stop accepting new connections
+    clearInterval(deadConnectionCleanup);
+    
+    // Close all existing connections with message
+    wss.clients.forEach((ws) => {
+      ws.close(1001, 'Server shutting down');
+    });
+    
     wss.close(() => {
+        console.log('WebSocket server closed');
         server.close(() => {
+            console.log('HTTP server closed');
             if (dbPool) {
-                dbPool.end();
+                dbPool.end().then(() => {
+                  console.log('Database pool closed');
+                  process.exit(0);
+                });
+            } else {
+                process.exit(0);
             }
-            process.exit(0);
         });
     });
-});
+    
+    // Force exit after 10 seconds
+    setTimeout(() => {
+        console.error('Forced shutdown after timeout');
+        process.exit(1);
+    }, 10000);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

@@ -1,35 +1,96 @@
-// Chatbot API endpoint - Provides helpful responses about the website
-// For financial/trading questions, redirects users to Aura AI (premium feature)
+/**
+ * Chatbot API - Provides helpful responses about the website
+ * For financial/trading questions, redirects users to Aura AI (premium feature)
+ * 
+ * HARDENED:
+ * - Rate limiting
+ * - Concurrency protection
+ * - Proper error handling
+ * - Structured logging
+ * - Circuit breaker for DB calls
+ */
 
-// Suppress url.parse() deprecation warnings from dependencies
 require('./utils/suppress-warnings');
 
+const { executeQuery, executeQueryWithTimeout } = require('./db');
+const { getCached, setCached } = require('./cache');
+const { generateRequestId, createLogger } = require('./utils/logger');
+const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('./utils/rate-limiter');
+const { withCircuitBreaker, withTimeout } = require('./utils/circuit-breaker');
+const { safeString, positiveInt } = require('./utils/validators');
+
+// Track concurrent requests for load protection
+let concurrentRequests = 0;
+const MAX_CONCURRENT = 50;
+
 module.exports = async (req, res) => {
-  // Handle CORS
+  const requestId = generateRequestId('chat');
+  const logger = createLogger(requestId);
+  const startTime = Date.now();
+  
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('X-Request-ID', requestId);
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ 
+      success: false, 
+      errorCode: 'METHOD_NOT_ALLOWED',
+      message: 'Method not allowed',
+      requestId 
+    });
   }
 
+  // Concurrency protection
+  if (concurrentRequests >= MAX_CONCURRENT) {
+    logger.warn('Concurrency limit reached');
+    return res.status(503).json({
+      success: false,
+      errorCode: 'SERVICE_BUSY',
+      message: 'Service is busy. Please try again shortly.',
+      requestId
+    });
+  }
+
+  // Rate limiting
+  const clientId = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+  const rateLimitKey = `chatbot_${clientId}`;
+  
+  if (!checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.MEDIUM.requests, RATE_LIMIT_CONFIGS.MEDIUM.windowMs)) {
+    logger.warn('Rate limited', { clientId });
+    return res.status(429).json({
+      success: false,
+      errorCode: 'RATE_LIMITED',
+      message: 'Too many requests. Please wait a moment.',
+      requestId
+    });
+  }
+
+  concurrentRequests++;
+  
   try {
     const { message, authenticated, userId, userEmail } = req.body;
 
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+    // Validate message
+    const sanitizedMessage = safeString(message, 1000, '');
+    if (!sanitizedMessage || sanitizedMessage.trim().length === 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Message is required' 
+        errorCode: 'VALIDATION_ERROR',
+        message: 'Message is required',
+        requestId
       });
     }
 
-    const msg = message.toLowerCase().trim();
+    logger.info('Chat request', { messageLength: sanitizedMessage.length, authenticated });
+
+    const msg = sanitizedMessage.toLowerCase().trim();
 
     // Detect financial/trading analysis questions that require Aura AI
     const financialKeywords = [
@@ -47,24 +108,32 @@ module.exports = async (req, res) => {
     const isFinancialQuestion = financialKeywords.some(keyword => msg.includes(keyword));
 
     if (isFinancialQuestion) {
-      // Check if user has premium access
+      // Check if user has premium access (with circuit breaker)
       let hasPremiumAccess = false;
       
       if (authenticated && userId) {
-        try {
-          const { getDbConnection } = require('./db');
-          const db = await getDbConnection();
-          
-          if (db) {
-            const [users] = await db.execute(
+        hasPremiumAccess = await withCircuitBreaker(
+          'chatbot_db',
+          async () => {
+            const userIdNum = positiveInt(userId);
+            if (!userIdNum) return false;
+            
+            // Check cache first
+            const cacheKey = `user_premium_${userIdNum}`;
+            const cached = getCached(cacheKey, 60000); // 1 minute cache
+            if (cached !== null) return cached;
+            
+            const [users] = await executeQueryWithTimeout(
               `SELECT role, subscription_status, subscription_plan 
                FROM users WHERE id = ?`,
-              [userId]
+              [userIdNum],
+              5000,
+              requestId
             );
             
             if (users && users.length > 0) {
               const user = users[0];
-              hasPremiumAccess = 
+              const isPremium = 
                 user.role === 'premium' || 
                 user.role === 'a7fx' || 
                 user.role === 'elite' ||
@@ -72,90 +141,106 @@ module.exports = async (req, res) => {
                 user.role === 'super_admin' ||
                 (user.subscription_status === 'active' && 
                  (user.subscription_plan === 'aura' || user.subscription_plan === 'a7fx'));
+              
+              setCached(cacheKey, isPremium, 60000);
+              return isPremium;
             }
             
-            // Release database connection
-            if (db && typeof db.release === 'function') {
-              db.release();
-            }
-          }
-        } catch (dbError) {
-          console.error('Error checking user subscription:', dbError);
-          // Continue with default response
-        }
+            return false;
+          },
+          () => false, // Fallback: assume no premium on failure
+          { failureThreshold: 3, timeout: 10000 }
+        );
       }
 
-      if (hasPremiumAccess) {
-        return res.status(200).json({
-          success: true,
-          reply: `For detailed financial analysis and trading strategies, please use <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>. Aura AI provides professional technical analysis, risk assessments, and trading recommendations tailored to your needs.`,
-          redirectTo: '/premium-ai',
-          requiresPremium: false
-        });
-      } else {
-        return res.status(200).json({
-          success: true,
-          reply: `For detailed financial analysis and trading strategies, you'll need access to <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>. Aura AI is available with a Premium subscription. <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Subscribe now</a> to unlock professional trading analysis and insights.`,
-          redirectTo: '/subscription',
-          requiresPremium: true
-        });
-      }
+      const reply = hasPremiumAccess
+        ? `For detailed financial analysis and trading strategies, please use <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>. Aura AI provides professional technical analysis, risk assessments, and trading recommendations tailored to your needs.`
+        : `For detailed financial analysis and trading strategies, you'll need access to <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>. Aura AI is available with a Premium subscription. <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Subscribe now</a> to unlock professional trading analysis and insights.`;
+
+      logger.info('Financial question detected', { 
+        hasPremiumAccess, 
+        ms: Date.now() - startTime 
+      });
+
+      return res.status(200).json({
+        success: true,
+        reply,
+        redirectTo: hasPremiumAccess ? '/premium-ai' : '/subscription',
+        requiresPremium: !hasPremiumAccess,
+        requestId
+      });
     }
 
     // Handle general website questions (offline-capable responses)
-    let reply = '';
+    let reply = getStaticResponse(msg, authenticated);
 
-    // Greetings
-    if (msg.includes('hello') || msg.includes('hi ') || msg.includes('hey') || msg.match(/^hi$/) || msg.match(/^hey$/)) {
-      reply = authenticated 
-        ? `Hello! 👋 I'm here to help with questions about AURA FX. What would you like to know?`
-        : `Hello! Welcome to AURA FX! 👋 I can answer questions about our platform. <a href="/register" style="color: #1E90FF; text-decoration: underline;">Sign up</a> or <a href="/login" style="color: #1E90FF; text-decoration: underline;">log in</a> to access full features!`;
-    }
-    // Platform info
-    else if (msg.includes('what') && (msg.includes('aura') || msg.includes('platform') || msg.includes('website'))) {
-      reply = 'AURA FX is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship.';
-    }
-    // Trading education (general) - recommend premium AI
-    else if (msg.includes('trade') || msg.includes('trading') || msg.includes('forex') || msg.includes('crypto') || msg.includes('stock')) {
-      reply = 'AURA FX specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to learn more.\n\n💡 For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
-    }
-    // Courses
-    else if (msg.includes('course') || msg.includes('learn') || msg.includes('mentorship')) {
-      reply = 'We offer 1-to-1 trading mentorship. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to see details.';
-    }
-    // Pricing
-    else if (msg.includes('price') || msg.includes('cost') || msg.includes('subscription')) {
-      reply = 'We offer Aura FX subscription at £99/month and A7FX Elite at £250/month. Visit our <a href="/subscription" style="color: #1E90FF; text-decoration: underline;">Subscription page</a> for details.';
-    }
-    // Sign up/Login
-    else if (msg.includes('sign up') || msg.includes('register') || msg.includes('create account') || msg.includes('join')) {
-      reply = 'Great! You can <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up here</a> to access our trading courses and mentorship.';
-    }
-    // Contact
-    else if (msg.includes('contact') || msg.includes('support') || msg.includes('help')) {
-      reply = 'You can <a href="/contact" style="color: #1E90FF; text-decoration: underline;">contact our support team</a> for assistance.';
-    }
-    // Community
-    else if (msg.includes('community') || msg.includes('forum') || msg.includes('chat')) {
-      reply = 'Our trading community is where traders connect and share strategies. Access it through the Community section. Subscription required for full access.';
-    }
-    // Default response - always recommend premium AI
-    else {
-      reply = authenticated
-        ? 'I can help with general questions about AURA FX, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a> - our professional AI trading assistant. What would you like to know?'
-        : 'I can help with questions about AURA FX, our courses, and subscriptions. For advanced trading analysis and strategies, <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up</a> and <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
-    }
+    logger.info('Request completed', { ms: Date.now() - startTime });
 
     return res.status(200).json({
       success: true,
-      reply: reply
+      reply,
+      requestId
     });
 
   } catch (error) {
-    console.error('Chatbot API error:', error);
+    logger.error('Chatbot error', { error, ms: Date.now() - startTime });
     return res.status(500).json({
       success: false,
-      message: 'An error occurred processing your request. Please try again.'
+      errorCode: 'SERVER_ERROR',
+      message: 'An error occurred processing your request. Please try again.',
+      requestId
     });
+  } finally {
+    concurrentRequests--;
   }
 };
+
+// Static responses (no external calls)
+function getStaticResponse(msg, authenticated) {
+  // Greetings
+  if (msg.includes('hello') || msg.includes('hi ') || msg.includes('hey') || msg.match(/^hi$/) || msg.match(/^hey$/)) {
+    return authenticated 
+      ? `Hello! 👋 I'm here to help with questions about AURA FX. What would you like to know?`
+      : `Hello! Welcome to AURA FX! 👋 I can answer questions about our platform. <a href="/register" style="color: #1E90FF; text-decoration: underline;">Sign up</a> or <a href="/login" style="color: #1E90FF; text-decoration: underline;">log in</a> to access full features!`;
+  }
+  
+  // Platform info
+  if (msg.includes('what') && (msg.includes('aura') || msg.includes('platform') || msg.includes('website'))) {
+    return 'AURA FX is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship.';
+  }
+  
+  // Trading education (general)
+  if (msg.includes('trade') || msg.includes('trading') || msg.includes('forex') || msg.includes('crypto') || msg.includes('stock')) {
+    return 'AURA FX specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to learn more.\n\n💡 For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
+  }
+  
+  // Courses
+  if (msg.includes('course') || msg.includes('learn') || msg.includes('mentorship')) {
+    return 'We offer 1-to-1 trading mentorship. Visit our <a href="/courses" style="color: #1E90FF; text-decoration: underline;">Courses page</a> to see details.';
+  }
+  
+  // Pricing
+  if (msg.includes('price') || msg.includes('cost') || msg.includes('subscription')) {
+    return 'We offer Aura FX subscription at £99/month and A7FX Elite at £250/month. Visit our <a href="/subscription" style="color: #1E90FF; text-decoration: underline;">Subscription page</a> for details.';
+  }
+  
+  // Sign up/Login
+  if (msg.includes('sign up') || msg.includes('register') || msg.includes('create account') || msg.includes('join')) {
+    return 'Great! You can <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up here</a> to access our trading courses and mentorship.';
+  }
+  
+  // Contact
+  if (msg.includes('contact') || msg.includes('support') || msg.includes('help')) {
+    return 'You can <a href="/contact" style="color: #1E90FF; text-decoration: underline;">contact our support team</a> for assistance.';
+  }
+  
+  // Community
+  if (msg.includes('community') || msg.includes('forum') || msg.includes('chat')) {
+    return 'Our trading community is where traders connect and share strategies. Access it through the Community section. Subscription required for full access.';
+  }
+  
+  // Default response
+  return authenticated
+    ? 'I can help with general questions about AURA FX, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a> - our professional AI trading assistant. What would you like to know?'
+    : 'I can help with questions about AURA FX, our courses, and subscriptions. For advanced trading analysis and strategies, <a href="/register" style="color: #1E90FF; text-decoration: underline;">sign up</a> and <a href="/subscription" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">upgrade to Premium</a> to access <a href="/premium-ai" style="color: #8B5CF6; text-decoration: underline; font-weight: bold;">Aura AI</a>.';
+}
