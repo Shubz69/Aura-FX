@@ -201,6 +201,70 @@ const WhyInfinity = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Why AURA FX Is NOT For You Section */}
+                <div className="why-additional-features">
+                    <h2 className="why-section-heading">Why AURA FX Is NOT For You</h2>
+                    
+                    <div className="why-main-content" style={{ marginTop: '20px' }}>
+                        <div className="why-text-section" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                            <p className="why-text">
+                                AURA FX is not designed for everyone, and that is intentional.
+                            </p>
+                            <p className="why-text">
+                                This platform is not for traders looking for shortcuts, guaranteed profits, or passive income without effort. We do not sell hype, unrealistic promises, or instant results. If you are seeking signals to blindly follow without understanding risk, process, or accountability, AURA FX is not the right environment.
+                            </p>
+                            <p className="why-text">
+                                AURA FX is also not suitable for traders who are unwilling to be disciplined, patient, and consistent. Long-term profitability requires structure, emotional control, and respect for risk. If you are not prepared to review mistakes, follow rules, and improve incrementally, this platform will not deliver value to you.
+                            </p>
+                            <p className="why-text">
+                                We are not a casual Discord group or entertainment-based trading community. Discussions are structured, analysis is professional, and standards are maintained. Traders who prefer unmoderated environments, noise, or speculative gambling will not benefit here.
+                            </p>
+                            <p className="why-text">
+                                AURA FX is built for individuals who take trading seriously as a skill, a business, and a long-term pursuit, not as a quick opportunity.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* AURA FX vs Typical Trading Communities Section */}
+                <div className="why-additional-features">
+                    <h2 className="why-section-heading">AURA FX vs Typical Trading Communities</h2>
+                    
+                    <div className="why-features-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                        <div className="why-platform-feature">
+                            <div className="why-platform-icon">
+                                <FaUsers />
+                            </div>
+                            <h3>Typical Trading Communities</h3>
+                            <p>Focus on signals and entries without explaining reasoning</p>
+                            <p>Emphasise wins while hiding losses or risk</p>
+                            <p>Teach one-dimensional strategies with no adaptability</p>
+                            <p>Rely on recycled YouTube/Twitter content</p>
+                            <p>Little to no real-time execution or transparency</p>
+                            <p>No structured education or progression path</p>
+                            <p>No institutional risk management framework</p>
+                            <p>Fragmented tools spread across multiple platforms</p>
+                            <p>No accountability or verification of results</p>
+                        </div>
+                        
+                        <div className="why-platform-feature">
+                            <div className="why-platform-icon">
+                                <FaChartLine />
+                            </div>
+                            <h3>AURA FX</h3>
+                            <p>Focuses on decision-making, risk, and market understanding</p>
+                            <p>Full transparency with real trades, real accounts, and live execution</p>
+                            <p>Teaches frameworks adaptable across all market conditions</p>
+                            <p>Covers technical, fundamental, macro, and geopolitical drivers</p>
+                            <p>Operates live on Twitch with unfiltered market execution</p>
+                            <p>Provides structured multi-level education across all asset classes</p>
+                            <p>Built around risk-first institutional trading principles</p>
+                            <p>Integrates AI intelligence, analysis, education, and community in one platform</p>
+                            <p>Maintains professional moderation, structure, and accountability</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
