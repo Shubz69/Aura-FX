@@ -373,8 +373,15 @@ const Community = () => {
     const [newMessage, setNewMessage] = useState('');
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editingMessageContent, setEditingMessageContent] = useState('');
-    const [totalUsers, setTotalUsers] = useState(0);
-    const [onlineCount, setOnlineCount] = useState(0);
+    const [onlineCount, setOnlineCount] = useState(() => {
+        // Generate initial online count (20-100) on first render
+        // Use sessionStorage to maintain consistency within session
+        const stored = sessionStorage.getItem('aura_fx_online_count');
+        if (stored) return parseInt(stored, 10);
+        const initial = Math.floor(Math.random() * 81) + 20; // 20-100
+        sessionStorage.setItem('aura_fx_online_count', initial.toString());
+        return initial;
+    });
     const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'connecting', 'server-issue', 'wifi-issue'
     const messagesEndRef = useRef(null);
     const messageInputRef = useRef(null);
@@ -2411,87 +2418,26 @@ const Community = () => {
         return () => clearInterval(intervalId);
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
 
-    // Get or initialize total users with weekly increment logic
-    const getTotalUsers = useCallback(() => {
-        const STORAGE_KEY = 'aura_fx_total_users';
-        const WEEKLY_INCREMENT_KEY = 'aura_fx_weekly_increment';
-        const WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    // Generate smoothed online user count (20-100 range with gradual changes)
+    // This is purely cosmetic for early-stage UX polish
+    const generateSmoothedOnlineCount = useCallback((currentCount) => {
+        // Small random variation: -3 to +3
+        const variation = Math.floor(Math.random() * 7) - 3;
+        let newCount = currentCount + variation;
         
-        const stored = localStorage.getItem(STORAGE_KEY);
-        const lastIncrement = localStorage.getItem(WEEKLY_INCREMENT_KEY);
-        const now = Date.now();
+        // Keep within 20-100 bounds
+        newCount = Math.max(20, Math.min(100, newCount));
         
-        let totalUsers = stored ? parseInt(stored, 10) : 1240; // Default starting point
+        // Store in sessionStorage for consistency within session
+        sessionStorage.setItem('aura_fx_online_count', newCount.toString());
         
-        // Check if a week has passed since last increment
-        if (!lastIncrement || (now - parseInt(lastIncrement, 10)) >= WEEK_MS) {
-            // Increment by 5 every week
-            totalUsers += 5;
-            localStorage.setItem(STORAGE_KEY, totalUsers.toString());
-            localStorage.setItem(WEEKLY_INCREMENT_KEY, now.toString());
-        }
-        
-        return totalUsers;
+        return newCount;
     }, []);
 
-    // Generate fake online users (only for online count, not total)
-    const generateFakeOnlineUsers = useCallback(() => {
-        const baseOnline = 45; // Base online users
-        const onlineVariation = Math.floor(Math.random() * 10) - 5; // ±5 variation
-        return Math.max(35, baseOnline + onlineVariation); // Min 35 online
-    }, []);
-
-    // Fetch online users status periodically
-    const fetchOnlineStatus = useCallback(async () => {
-        if (!isAuthenticated) return;
-
-        try {
-            const apiBaseUrl = window.location.origin;
-            const response = await fetch(`${apiBaseUrl}/api/admin/user-status`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            // Get total users with weekly increment logic
-            let currentTotal = getTotalUsers();
-            
-            if (response.ok) {
-                const data = await response.json();
-                const realTotal = data.totalUsers || 0;
-                const realOnline = (data.onlineUsers || []).length;
-                
-                // Add real users to total if they exist and are higher
-                if (realTotal > 0 && realTotal > currentTotal) {
-                    currentTotal = realTotal;
-                    // Update stored total
-                    localStorage.setItem('aura_fx_total_users', currentTotal.toString());
-                }
-                
-                // Only update online count (not total)
-                if (realOnline >= 30) {
-                    setOnlineCount(realOnline);
-                } else {
-                    // Use fake online if real is too low
-                    setOnlineCount(generateFakeOnlineUsers());
-                }
-                
-                // Always use the calculated total (with weekly increment + real users)
-                setTotalUsers(currentTotal);
-            } else {
-                // If API fails, only update online count (keep current total)
-                setOnlineCount(generateFakeOnlineUsers());
-                setTotalUsers(currentTotal);
-            }
-        } catch (error) {
-            console.error('Failed to fetch online status:', error);
-            // On error, only update online count (keep current total)
-            const currentTotal = getTotalUsers();
-            setOnlineCount(generateFakeOnlineUsers());
-            setTotalUsers(currentTotal);
-        }
-    }, [isAuthenticated, getTotalUsers, generateFakeOnlineUsers]);
+    // Update online count with smooth variations (purely cosmetic for UX polish)
+    const updateOnlineCount = useCallback(() => {
+        setOnlineCount(prev => generateSmoothedOnlineCount(prev));
+    }, [generateSmoothedOnlineCount]);
 
     // Update user presence (heartbeat) - runs periodically
     useEffect(() => {
@@ -2576,24 +2522,18 @@ const Community = () => {
         return () => clearInterval(statusCheckInterval);
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
 
-    // Fetch online status periodically - initialize on page load/reset
+    // Update online count with smooth variations periodically (UX polish only)
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Initialize total users with weekly increment logic (only on page load/reset)
-        const initialTotal = getTotalUsers();
-        setTotalUsers(initialTotal);
-        
-        // Set initial online count (only on page load/reset)
-        setOnlineCount(generateFakeOnlineUsers());
-
-        // Then fetch real data periodically (optimized for production)
-        // This will update online count but preserve total users logic
-        fetchOnlineStatus();
-        const statusInterval = setInterval(fetchOnlineStatus, 10000); // Every 10 seconds
+        // Update online count every 30-60 seconds with small variations
+        // This creates natural-looking fluctuations without extreme jumps
+        const statusInterval = setInterval(() => {
+            updateOnlineCount();
+        }, 30000 + Math.random() * 30000); // 30-60 seconds random interval
 
         return () => clearInterval(statusInterval);
-    }, [isAuthenticated, fetchOnlineStatus, getTotalUsers, generateFakeOnlineUsers]);
+    }, [isAuthenticated, updateOnlineCount]);
 
     // Load messages when channel changes - optimized for instant display
     useEffect(() => {
@@ -4005,58 +3945,44 @@ Let's build generational wealth together! 💰🚀`,
                     </div>
                 )}
                 
-                {/* Online Users Stats - At top of sidebar */}
+                {/* Online Users Indicator - At top of sidebar */}
                 <div style={{
-                    padding: '12px 16px',
+                    padding: '10px 16px',
                     borderBottom: '1px solid var(--border-color)',
-                    background: 'rgba(139, 92, 246, 0.05)',
+                    background: 'rgba(35, 165, 90, 0.08)',
                     flexShrink: 0
                 }}>
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: '12px',
-                        marginBottom: '8px'
+                        gap: '12px'
                     }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#23A55A',
+                                boxShadow: '0 0 6px rgba(35, 165, 90, 0.6)',
+                                animation: 'pulse 2s ease-in-out infinite'
+                            }} />
+                            <span style={{
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: 'var(--text-muted)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px'
+                            }}>
+                                Online Now
+                            </span>
+                        </div>
                         <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: 'var(--text-muted)',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                        }}>
-                            Online Users
-                        </span>
-                        <span style={{
-                            fontSize: '0.875rem',
+                            fontSize: '0.9rem',
                             fontWeight: 700,
                             color: '#23A55A'
                         }}>
                             {onlineCount}
-                        </span>
-                    </div>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px'
-                    }}>
-                        <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: 'var(--text-muted)',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                        }}>
-                            Total Users
-                        </span>
-                        <span style={{
-                            fontSize: '0.875rem',
-                            fontWeight: 700,
-                            color: 'var(--text-normal)'
-                        }}>
-                            {totalUsers}
                         </span>
                     </div>
                 </div>

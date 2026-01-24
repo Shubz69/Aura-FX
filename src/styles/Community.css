@@ -170,6 +170,17 @@
     }
 }
 
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+}
+
 /* Prevent body scroll when sidebar is open on mobile */
 body.sidebar-open-mobile {
     overflow: hidden !important;
