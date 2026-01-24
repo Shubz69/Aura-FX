@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     getRankTitle,
     getTierName,
@@ -16,6 +17,18 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import '../styles/ProfileModal.css';
+
+// Get or create portal root for modals
+const getModalRoot = () => {
+    let modalRoot = document.getElementById('profile-modal-root');
+    if (!modalRoot) {
+        modalRoot = document.createElement('div');
+        modalRoot.id = 'profile-modal-root';
+        modalRoot.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; pointer-events: none;';
+        document.body.appendChild(modalRoot);
+    }
+    return modalRoot;
+};
 
 // All possible achievements with unlock conditions
 const ALL_ACHIEVEMENTS = [
@@ -332,13 +345,36 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     };
 
     if (loading || !profile) {
-        return (
-            <div className="profile-modal-overlay" onClick={onClose}>
-                <div className="profile-modal-content" onClick={(e) => e.stopPropagation()}>
+        return createPortal(
+            <div className="profile-modal-overlay" style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.9)',
+                backdropFilter: 'blur(10px)',
+                zIndex: 99999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px',
+                pointerEvents: 'auto'
+            }} onClick={onClose}>
+                <div className="profile-modal-content" style={{
+                    background: 'linear-gradient(135deg, rgba(30, 30, 46, 0.98) 0%, rgba(20, 20, 35, 0.99) 100%)',
+                    borderRadius: '20px',
+                    padding: '40px',
+                    maxWidth: '400px',
+                    width: '100%',
+                    textAlign: 'center',
+                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.7)'
+                }} onClick={(e) => e.stopPropagation()}>
                     <div className="loading-spinner"></div>
                     <div className="loading-text">Loading profile...</div>
                 </div>
-            </div>
+            </div>,
+            getModalRoot()
         );
     }
 
@@ -474,16 +510,35 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         </div>
     );
 
-    return (
+    // Modal content JSX
+    const modalContent = (
         <div className="profile-modal-overlay" style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.9)', backdropFilter: 'blur(10px)',
-            zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.92)',
+            backdropFilter: 'blur(12px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            pointerEvents: 'auto',
+            overflowY: 'auto'
         }} onClick={onClose}>
             <div className="profile-modal-content" style={{
                 background: 'linear-gradient(135deg, rgba(30, 30, 46, 0.98) 0%, rgba(20, 20, 35, 0.99) 100%)',
-                borderRadius: '24px', boxShadow: `0 25px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px ${tierColor}40`,
-                maxWidth: '900px', width: '100%', maxHeight: '92vh', overflow: 'auto', position: 'relative'
+                borderRadius: '24px',
+                boxShadow: `0 25px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px ${tierColor}40`,
+                maxWidth: '900px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                position: 'relative',
+                margin: 'auto'
             }} onClick={(e) => e.stopPropagation()}>
                 
                 {/* Action Buttons */}
@@ -828,9 +883,36 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     0%, 100% { opacity: 1; transform: scale(1); }
                     50% { opacity: 0.7; transform: scale(1.1); }
                 }
+                
+                /* Responsive styles */
+                @media (max-width: 768px) {
+                    .profile-modal-content {
+                        max-width: 95vw !important;
+                        max-height: 85vh !important;
+                        margin: 10px !important;
+                        border-radius: 16px !important;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .profile-modal-content {
+                        max-width: 100vw !important;
+                        max-height: 90vh !important;
+                        margin: 0 !important;
+                        border-radius: 16px 16px 0 0 !important;
+                    }
+                    
+                    .profile-modal-overlay {
+                        align-items: flex-end !important;
+                        padding: 0 !important;
+                    }
+                }
             `}</style>
         </div>
     );
+    
+    // Render via portal to escape any parent overflow:hidden
+    return createPortal(modalContent, getModalRoot());
 };
 
 export default ProfileModal;
