@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import Chatbot from "../components/Chatbot";
 import CosmicBackground from "../components/CosmicBackground";
 import A7Logo from "../components/A7Logo";
+import MarketTicker from "../components/MarketTicker";
 import { FaChartLine, FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaGlobe, FaCoins, FaChartBar } from 'react-icons/fa';
 
 const Home = () => {
@@ -13,190 +14,7 @@ const Home = () => {
     const [showContent, setShowContent] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     
-    // Initial static market data (fallback)
-    const initialMarketData = [
-        { symbol: 'AAPL', price: '192.53', change: '+2.38', isUp: true },
-        { symbol: 'MSFT', price: '426.74', change: '-1.28', isUp: false },
-        { symbol: 'GOOGL', price: '183.42', change: '+3.71', isUp: true },
-        { symbol: 'AMZN', price: '186.93', change: '+1.26', isUp: true },
-        { symbol: 'TSLA', price: '244.18', change: '-5.32', isUp: false },
-        { symbol: 'META', price: '484.32', change: '+2.95', isUp: true },
-        { symbol: 'NVDA', price: '947.52', change: '+18.67', isUp: true },
-        { symbol: 'EURUSD', price: '1.0850', change: '+0.15', isUp: true },
-        { symbol: 'GBPUSD', price: '1.2650', change: '-0.23', isUp: false },
-        { symbol: 'USDJPY', price: '150.25', change: '+0.45', isUp: true },
-        { symbol: 'AUDUSD', price: '0.6520', change: '+0.12', isUp: true },
-        { symbol: 'XAUUSD', price: '2724.50', change: '+15.30', isUp: true },
-        { symbol: 'XAGUSD', price: '31.25', change: '+0.45', isUp: true },
-        { symbol: 'OIL', price: '78.50', change: '-1.20', isUp: false }
-    ];
-    
-    const [marketData, setMarketData] = useState(initialMarketData);
-
-    // Fetch live market data for ticker - 24/7 updates using TradingView-compatible sources
-    useEffect(() => {
-        if (!showContent) return;
-
-        const symbols = [
-            // Stocks
-            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA',
-            // Forex
-            'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD',
-            // Commodities
-            'XAUUSD', 'XAGUSD', 'CL=F' // Gold, Silver, Oil
-        ];
-
-        const fetchData = async (symbol) => {
-            try {
-                const API_BASE_URL = window.location.origin;
-                const response = await fetch(`${API_BASE_URL}/api/ai/market-data`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ symbol, type: 'quote' })
-                });
-
-                if (response.ok) {
-                    const responseData = await response.json();
-                    // API returns { success: true, data: { price: ... } }
-                    const marketData = responseData.data || responseData;
-                    
-                    // Extract price - handle multiple possible formats
-                    let price = null;
-                    if (marketData?.price !== undefined) {
-                        price = typeof marketData.price === 'string' ? parseFloat(marketData.price) : marketData.price;
-                    } else if (marketData?.regularMarketPrice !== undefined) {
-                        price = typeof marketData.regularMarketPrice === 'string' ? parseFloat(marketData.regularMarketPrice) : marketData.regularMarketPrice;
-                    } else if (marketData?.c !== undefined) {
-                        price = typeof marketData.c === 'string' ? parseFloat(marketData.c) : marketData.c;
-                    }
-                    
-                    // Extract daily percentage change - prioritize API's changePercent
-                    let changePercent = null;
-                    let isUp = true;
-                    
-                    // First, try to use API's changePercent (most accurate - daily change)
-                    if (marketData?.changePercent !== undefined) {
-                        // Remove % sign if present and parse
-                        const percentStr = marketData.changePercent.toString().replace('%', '');
-                        changePercent = parseFloat(percentStr);
-                        if (!isNaN(changePercent)) {
-                            isUp = changePercent >= 0;
-                        }
-                    }
-                    
-                    // If no changePercent, calculate from previousClose (daily change)
-                    if (changePercent === null && marketData?.previousClose !== undefined && price !== null) {
-                        const previousClose = typeof marketData.previousClose === 'string' 
-                            ? parseFloat(marketData.previousClose) 
-                            : marketData.previousClose;
-                        if (previousClose > 0 && !isNaN(previousClose)) {
-                            changePercent = ((price - previousClose) / previousClose) * 100;
-                            isUp = changePercent >= 0;
-                        }
-                    }
-                    
-                    // If still no changePercent, try change field
-                    if (changePercent === null && marketData?.change !== undefined && marketData?.previousClose !== undefined) {
-                        const change = typeof marketData.change === 'string' 
-                            ? parseFloat(marketData.change) 
-                            : marketData.change;
-                        const previousClose = typeof marketData.previousClose === 'string' 
-                            ? parseFloat(marketData.previousClose) 
-                            : marketData.previousClose;
-                        if (previousClose > 0 && !isNaN(change) && !isNaN(previousClose)) {
-                            changePercent = (change / previousClose) * 100;
-                            isUp = change >= 0;
-                        }
-                    }
-                    
-                    // Last resort: use localStorage comparison (but this is less accurate)
-                    if (changePercent === null && price !== null) {
-                        const previousPrice = parseFloat(localStorage.getItem(`prev_${symbol}`)) || price;
-                        const change = price - previousPrice;
-                        if (previousPrice > 0) {
-                            changePercent = (change / previousPrice) * 100;
-                            isUp = change >= 0;
-                        } else {
-                            changePercent = 0;
-                        }
-                        localStorage.setItem(`prev_${symbol}`, price.toString());
-                    }
-                    
-                    // Validate price - allow 0 for some edge cases, but must be a valid number
-                    if (responseData.success && price !== null && !isNaN(price) && typeof price === 'number' && isFinite(price) && price >= 0) {
-                        // Format price based on instrument type
-                        let formattedPrice = price.toFixed(2);
-                        if (symbol.includes('XAU') || symbol.includes('GOLD')) {
-                            formattedPrice = price.toFixed(2);
-                        } else if (symbol.includes('XAG') || symbol.includes('SILVER')) {
-                            formattedPrice = price.toFixed(2);
-                        } else if (symbol.includes('EUR') || symbol.includes('GBP') || symbol.includes('AUD')) {
-                            formattedPrice = price.toFixed(4);
-                        } else if (symbol.includes('JPY')) {
-                            formattedPrice = price.toFixed(2);
-                        } else if (symbol.includes('BTC') || symbol.includes('ETH')) {
-                            formattedPrice = price.toFixed(2);
-                        }
-                        
-                        // Format changePercent - ensure it shows actual daily percentage, not 0% if there's a change
-                        let formattedChange = '0.00';
-                        if (changePercent !== null && !isNaN(changePercent) && isFinite(changePercent)) {
-                            // Round to 2 decimal places and format
-                            formattedChange = Math.abs(changePercent) < 0.01 ? '0.00' : changePercent.toFixed(2);
-                            formattedChange = changePercent >= 0 ? `+${formattedChange}` : formattedChange;
-                        }
-                        
-                        return {
-                            symbol: symbol.length > 6 ? symbol.substring(0, 6) : symbol,
-                            price: formattedPrice,
-                            change: formattedChange,
-                            isUp: isUp
-                        };
-                    } else {
-                        console.warn(`No valid price data for ${symbol}:`, responseData);
-                    }
-                } else {
-                    console.warn(`API error for ${symbol}:`, response.status, response.statusText);
-                }
-            } catch (error) {
-                console.error(`Error fetching ${symbol}:`, error);
-            }
-            return null;
-        };
-
-        const fetchAllData = async () => {
-            // Only fetch if page is visible (or always for 24/7)
-            const results = await Promise.all(symbols.map(fetchData));
-            const validData = results.filter(item => item !== null);
-            
-            if (validData.length > 0) {
-                setMarketData(validData);
-            }
-        };
-
-        // Initial fetch
-        fetchAllData();
-
-        // Update every 10 seconds for true live data (24/7)
-        const interval = setInterval(fetchAllData, 10000);
-
-        // Handle page visibility - continue updating even when tab is in background
-        const handleVisibilityChange = () => {
-            if (!document.hidden) {
-                // Page is visible, ensure updates continue
-                fetchAllData();
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            clearInterval(interval);
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, [showContent]);
+    // Market ticker is now handled by the shared MarketTicker component
 
     // Loading effect
     useEffect(() => {
@@ -275,32 +93,13 @@ const Home = () => {
                                 </p>
                             </div>
 
-                            {/* Stock Ticker Banner */}
-                            <div className="stock-ticker-compact">
-                                <div className="ticker">
-                                    {marketData.concat(marketData).map((item, index) => {
-                                        const priceKey = `${item.symbol}-${item.price}`;
-                                        return (
-                                            <div key={`${item.symbol}-${index}`} className="ticker-item">
-                                                <span className="ticker-symbol">{item.symbol}</span>
-                                                <span 
-                                                    key={priceKey}
-                                                    className={`ticker-price ${item.isUp ? 'price-up' : 'price-down'}`}
-                                                    style={{
-                                                        transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                        display: 'inline-block'
-                                                    }}
-                                                >
-                                                    {item.price}
-                                                </span>
-                                                <span className={`ticker-change ${item.isUp ? 'ticker-up' : 'ticker-down'}`}>
-                                                    {item.isUp ? "▲" : "▼"} {item.change}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                            {/* Live Market Ticker */}
+                            <MarketTicker 
+                                compact={true}
+                                showTabs={false}
+                                showViewAll={true}
+                                autoScroll={true}
+                            />
 
                             {/* Feature Cards */}
                             <div className="feature-cards-grid">

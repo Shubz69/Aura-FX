@@ -91,6 +91,10 @@
       "destination": "/api/admin/index.js"
     },
     {
+      "source": "/api/subscription/status",
+      "destination": "/api/subscription/status.js"
+    },
+    {
       "source": "/api/stripe/subscription-success",
       "destination": "/api/stripe/index.js"
     },
@@ -317,6 +321,14 @@
     {
       "source": "/api/messages/locate",
       "destination": "/api/messages/locate.js"
+    },
+    {
+      "source": "/api/market/watchlist",
+      "destination": "/api/market/watchlist.js"
+    },
+    {
+      "source": "/api/market/prices",
+      "destination": "/api/market/prices.js"
     }
   ],
   "crons": [

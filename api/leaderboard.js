@@ -1,18 +1,21 @@
 /**
  * Leaderboard API - Real XP-based leaderboard with proper time boundaries
  * 
- * Timeframes:
- * - daily: XP earned today (midnight to now, UTC)
- * - weekly: XP earned this ISO week (Monday to Sunday)
- * - monthly: XP earned this calendar month
- * - all-time: Highest level/total XP
+ * Timeframes (all use xp_events ledger):
+ * - daily: XP earned since start of today (midnight UTC)
+ * - weekly: XP earned since start of ISO week (Monday 00:00 UTC)
+ * - monthly: XP earned since start of month (1st 00:00 UTC)
+ * - all-time: Total lifetime XP (SUM of all xp_events)
  * 
- * HARDENED:
- * - Rate limiting
- * - Request coalescing (prevents stampedes)
- * - Proper error responses
- * - Input validation
- * - Timeout protection
+ * INVARIANT: For any user in the same month: month_xp >= week_xp >= day_xp
+ * This is guaranteed because all tabs query the same xp_events table with
+ * different date filters, and the boundaries are nested (day ⊂ week ⊂ month).
+ * 
+ * Bootstrap Mode:
+ * - Seeds demo users with believable xp_events when real traffic is low
+ * - Automatically disabled when real_users >= 50 OR real_xp_events_7d >= threshold
+ * - Demo users NEVER shown with "Demo" labels in UI
+ * - Demo users NEVER eligible for prizes (server-side filter only)
  */
 
 const { executeQuery, executeQueryWithTimeout } = require('./db');
@@ -20,19 +23,31 @@ const { getCached, setCached, getOrFetch, DEFAULT_TTLS } = require('./cache');
 const { generateRequestId, createLogger } = require('./utils/logger');
 const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('./utils/rate-limiter');
 const { safeLimit, safeTimeframe } = require('./utils/validators');
-const { withTimeout } = require('./utils/circuit-breaker');
 
-// Trading-style usernames for demo users with activity profiles
+// ============================================================================
+// Configuration
+// ============================================================================
+
+// Bootstrap mode kill-switch thresholds
+const BOOTSTRAP_CONFIG = {
+  MIN_REAL_USERS: parseInt(process.env.LEADERBOARD_MIN_REAL_USERS) || 50,
+  MIN_REAL_EVENTS_7D: parseInt(process.env.LEADERBOARD_MIN_EVENTS_7D) || 500,
+  FORCE_BOOTSTRAP: process.env.LEADERBOARD_FORCE_BOOTSTRAP === 'true',
+  FORCE_DISABLE_BOOTSTRAP: process.env.LEADERBOARD_DISABLE_BOOTSTRAP === 'true',
+  FAKE_ONLINE_COUNT: parseInt(process.env.LEADERBOARD_FAKE_ONLINE) || 0
+};
+
+// Demo user profiles
 const DEMO_USERS = [
-  { name: 'Zephyr_FX', profile: 'grinder' },      // High daily activity
+  { name: 'Zephyr_FX', profile: 'grinder' },
   { name: 'Kai_Trader', profile: 'grinder' },
-  { name: 'Luna_Charts', profile: 'sprinter' },   // Bursts of activity
+  { name: 'Luna_Charts', profile: 'sprinter' },
   { name: 'Orion_Pips', profile: 'sprinter' },
-  { name: 'Phoenix_Gold', profile: 'weekend' },   // Weekend warrior
+  { name: 'Phoenix_Gold', profile: 'weekend' },
   { name: 'Atlas_Markets', profile: 'weekend' },
-  { name: 'Nova_Scalper', profile: 'steady' },    // Steady daily
+  { name: 'Nova_Scalper', profile: 'steady' },
   { name: 'River_Swing', profile: 'steady' },
-  { name: 'Sage_Technical', profile: 'course' },  // Course binger
+  { name: 'Sage_Technical', profile: 'course' },
   { name: 'Aurora_Signals', profile: 'course' },
   { name: 'Caspian_Forex', profile: 'grinder' },
   { name: 'Indigo_Trends', profile: 'sprinter' },
@@ -43,20 +58,76 @@ const DEMO_USERS = [
   { name: 'Vesper_Algo', profile: 'sprinter' },
   { name: 'Willow_Day', profile: 'weekend' },
   { name: 'Xander_Quant', profile: 'steady' },
-  { name: 'Yuki_SMC', profile: 'course' },
-  { name: 'Blaze_Pips', profile: 'grinder' },
-  { name: 'Crystal_Waves', profile: 'sprinter' },
-  { name: 'Drake_Levels', profile: 'weekend' },
-  { name: 'Echo_Trades', profile: 'steady' },
-  { name: 'Frost_Markets', profile: 'grinder' },
-  { name: 'Glacier_FX', profile: 'sprinter' },
-  { name: 'Haven_Swings', profile: 'weekend' },
-  { name: 'Iron_Setups', profile: 'steady' },
-  { name: 'Jade_Patterns', profile: 'course' },
-  { name: 'Krypton_Edge', profile: 'grinder' }
+  { name: 'Yuki_SMC', profile: 'course' }
 ];
 
-// Helper to get array from query result
+// ============================================================================
+// Centralized Timeframe Boundary Calculator (Single Source of Truth)
+// ============================================================================
+
+/**
+ * Get UTC date boundaries for a timeframe.
+ * All boundaries use the START of the period (00:00:00.000 UTC).
+ * 
+ * @param {string} timeframe - 'daily' | 'weekly' | 'monthly' | 'all-time'
+ * @returns {{ start: Date | null, end: Date, label: string }}
+ */
+function getTimeframeBoundaries(timeframe) {
+  const now = new Date();
+  
+  // Current UTC values
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  const date = now.getUTCDate();
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ...
+  
+  switch (timeframe) {
+    case 'daily': {
+      // Start of today (midnight UTC)
+      const start = new Date(Date.UTC(year, month, date, 0, 0, 0, 0));
+      return { start, end: now, label: 'today' };
+    }
+    
+    case 'weekly': {
+      // Start of ISO week (Monday 00:00 UTC)
+      // ISO week: Monday = 1, Sunday = 7
+      // JS getUTCDay(): Sunday = 0, Monday = 1, ..., Saturday = 6
+      // Days to subtract to get to Monday:
+      // Sunday (0) -> go back 6 days
+      // Monday (1) -> go back 0 days
+      // Tuesday (2) -> go back 1 day
+      // etc.
+      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const start = new Date(Date.UTC(year, month, date - daysFromMonday, 0, 0, 0, 0));
+      return { start, end: now, label: 'this week' };
+    }
+    
+    case 'monthly': {
+      // Start of calendar month (1st 00:00 UTC)
+      const start = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+      return { start, end: now, label: 'this month' };
+    }
+    
+    case 'all-time':
+    default: {
+      // No start boundary - all events ever
+      return { start: null, end: now, label: 'all time' };
+    }
+  }
+}
+
+/**
+ * Format Date to MySQL DATETIME string (UTC)
+ */
+function toMySQLDatetime(date) {
+  if (!date) return null;
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
 function getRows(result) {
   if (!result) return [];
   if (Array.isArray(result)) {
@@ -66,7 +137,6 @@ function getRows(result) {
   return [];
 }
 
-// Calculate level from XP
 function getLevelFromXP(xp) {
   if (xp <= 0) return 1;
   if (xp >= 1000000) return 1000;
@@ -79,39 +149,80 @@ function getLevelFromXP(xp) {
   return Math.min(1000, 500 + Math.floor(Math.sqrt((xp - 500000) / 2000)) + 1);
 }
 
-// Get date boundaries for timeframes (UTC)
-function getDateBoundaries(timeframe) {
-  const now = new Date();
-  
-  if (timeframe === 'daily') {
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-    return { start, end: now };
-  }
-  
-  if (timeframe === 'weekly') {
-    const dayOfWeek = now.getUTCDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + mondayOffset, 0, 0, 0));
-    return { start, end: now };
-  }
-  
-  if (timeframe === 'monthly') {
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
-    return { start, end: now };
-  }
-  
-  return { start: null, end: null };
+function seededRandom(seed) {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
 }
 
-// Format date for MySQL datetime
-function toMySQLDatetime(date) {
-  if (!date) return null;
-  return date.toISOString().slice(0, 19).replace('T', ' ');
-}
+// ============================================================================
+// Bootstrap Mode Detection
+// ============================================================================
 
-// Ensure xp_events table exists
-async function ensureXpEventsTable() {
+let bootstrapStatus = null;
+let bootstrapCheckTime = 0;
+const BOOTSTRAP_CHECK_INTERVAL = 60000; // Re-check every minute
+
+/**
+ * Check if bootstrap mode should be active.
+ * Returns true if we should use demo data, false if we have enough real traffic.
+ */
+async function isBootstrapModeActive() {
+  // Force flags take precedence
+  if (BOOTSTRAP_CONFIG.FORCE_DISABLE_BOOTSTRAP) return false;
+  if (BOOTSTRAP_CONFIG.FORCE_BOOTSTRAP) return true;
+  
+  // Use cached result if recent
+  if (bootstrapStatus !== null && Date.now() - bootstrapCheckTime < BOOTSTRAP_CHECK_INTERVAL) {
+    return bootstrapStatus;
+  }
+  
   try {
+    // Check real user count (non-demo users with activity)
+    const [realUsersResult] = await executeQuery(`
+      SELECT COUNT(DISTINCT u.id) as cnt 
+      FROM users u 
+      WHERE (u.is_demo IS NULL OR u.is_demo = FALSE)
+        AND u.xp > 0
+    `);
+    const realUsers = getRows(realUsersResult)[0]?.cnt || 0;
+    
+    // Check real xp_events in last 7 days (non-demo)
+    const [realEventsResult] = await executeQuery(`
+      SELECT COUNT(*) as cnt 
+      FROM xp_events e
+      JOIN users u ON e.user_id = u.id
+      WHERE e.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        AND (u.is_demo IS NULL OR u.is_demo = FALSE)
+    `);
+    const realEvents7d = getRows(realEventsResult)[0]?.cnt || 0;
+    
+    // Kill-switch: disable bootstrap if thresholds met
+    const shouldDisable = realUsers >= BOOTSTRAP_CONFIG.MIN_REAL_USERS || 
+                          realEvents7d >= BOOTSTRAP_CONFIG.MIN_REAL_EVENTS_7D;
+    
+    bootstrapStatus = !shouldDisable;
+    bootstrapCheckTime = Date.now();
+    
+    console.log(`Bootstrap mode: ${bootstrapStatus ? 'ACTIVE' : 'DISABLED'} (users: ${realUsers}, events7d: ${realEvents7d})`);
+    
+    return bootstrapStatus;
+  } catch (e) {
+    console.error('Bootstrap check error:', e.message);
+    return bootstrapStatus ?? true; // Default to bootstrap on error
+  }
+}
+
+// ============================================================================
+// Database Schema Setup (Idempotent)
+// ============================================================================
+
+let schemaChecked = false;
+
+async function ensureSchema() {
+  if (schemaChecked) return;
+  
+  try {
+    // Ensure xp_events table exists
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS xp_events (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -122,194 +233,141 @@ async function ensureXpEventsTable() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_user_id (user_id),
         INDEX idx_created_at (created_at),
-        INDEX idx_source (source),
         INDEX idx_user_created (user_id, created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    return true;
-  } catch (e) {
-    // Table exists or other non-critical error
-    return true;
-  }
-}
-
-// Idempotent: Check if is_demo column exists before adding
-let demoColumnChecked = false;
-async function ensureDemoColumn() {
-  if (demoColumnChecked) return true;
-  
-  try {
-    // Check information_schema to see if column exists
-    const result = await executeQuery(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = DATABASE() 
-        AND TABLE_NAME = 'users' 
-        AND COLUMN_NAME = 'is_demo'
+    
+    // Check if is_demo column exists
+    const [colResult] = await executeQuery(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'is_demo'
     `);
     
-    const rows = getRows(result);
-    
-    if (rows.length === 0) {
-      // Column doesn't exist, add it
+    if (getRows(colResult).length === 0) {
       await executeQuery(`ALTER TABLE users ADD COLUMN is_demo BOOLEAN DEFAULT FALSE`);
-      console.log('Added is_demo column to users table');
     }
     
-    demoColumnChecked = true;
-    return true;
+    schemaChecked = true;
   } catch (e) {
-    // Don't block request on column check failure
-    console.log('is_demo column check:', e.message);
-    demoColumnChecked = true;
-    return true;
+    console.log('Schema setup:', e.message);
+    schemaChecked = true; // Don't retry
   }
 }
 
-// Seeded random for consistent demo data
-function seededRandom(seed) {
-  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
-  return x - Math.floor(x);
-}
+// ============================================================================
+// Demo User Seeding (Bootstrap Mode Only)
+// ============================================================================
 
-// Generate XP events for a demo user based on their activity profile
-async function generateDemoXpEvents(userId, userIndex, profile) {
-  const sources = ['chat_message', 'daily_login', 'course_complete', 'streak_bonus', 'community_help'];
-  const now = new Date();
-  
-  // Profile-specific XP generation
-  const profiles = {
-    grinder: {
-      // Daily: 900-2800, Weekly: 6k-18k, Monthly: 25k-85k
-      dailyEvents: { count: [8, 15], amount: [50, 200] },
-      weeklyEvents: { count: [15, 30], amount: [100, 400] },
-      monthlyEvents: { count: [30, 60], amount: [150, 600] }
-    },
-    sprinter: {
-      // Burst activity - high some days, low others
-      dailyEvents: { count: [0, 5], amount: [100, 500] },
-      weeklyEvents: { count: [20, 40], amount: [200, 800] },
-      monthlyEvents: { count: [25, 50], amount: [300, 1000] }
-    },
-    weekend: {
-      // Mostly weekend activity
-      dailyEvents: { count: [1, 3], amount: [20, 80] },
-      weeklyEvents: { count: [10, 25], amount: [150, 500] },
-      monthlyEvents: { count: [20, 45], amount: [200, 700] }
-    },
-    steady: {
-      // Consistent daily activity
-      dailyEvents: { count: [3, 6], amount: [30, 120] },
-      weeklyEvents: { count: [12, 25], amount: [80, 300] },
-      monthlyEvents: { count: [25, 50], amount: [100, 400] }
-    },
-    course: {
-      // Course completion spikes
-      dailyEvents: { count: [1, 4], amount: [50, 150] },
-      weeklyEvents: { count: [8, 18], amount: [100, 500] },
-      monthlyEvents: { count: [15, 35], amount: [200, 1000] }
-    }
-  };
-  
-  const cfg = profiles[profile] || profiles.steady;
-  const seed = userId * 1000 + userIndex;
-  
-  try {
-    // Check if user already has events for today
-    const existingResult = await executeQuery(
-      'SELECT COUNT(*) as cnt FROM xp_events WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)',
-      [userId]
-    );
-    const existing = getRows(existingResult);
-    if (existing[0]?.cnt > 0) return; // Already has recent events
-    
-    // Generate daily events (today)
-    const dailyCount = Math.floor(seededRandom(seed + 1) * (cfg.dailyEvents.count[1] - cfg.dailyEvents.count[0])) + cfg.dailyEvents.count[0];
-    for (let i = 0; i < dailyCount; i++) {
-      const amount = Math.floor(seededRandom(seed + i + 10) * (cfg.dailyEvents.amount[1] - cfg.dailyEvents.amount[0])) + cfg.dailyEvents.amount[0];
-      const hoursAgo = Math.floor(seededRandom(seed + i + 20) * 20);
-      const source = sources[Math.floor(seededRandom(seed + i + 30) * sources.length)];
-      
-      await executeQuery(
-        `INSERT INTO xp_events (user_id, amount, source, meta, created_at) VALUES (?, ?, ?, ?, DATE_SUB(NOW(), INTERVAL ? HOUR))`,
-        [userId, amount, source, JSON.stringify({ demo: true }), hoursAgo]
-      ).catch(() => {});
-    }
-    
-    // Generate weekly events (past 7 days, excluding today)
-    const weeklyCount = Math.floor(seededRandom(seed + 2) * (cfg.weeklyEvents.count[1] - cfg.weeklyEvents.count[0])) + cfg.weeklyEvents.count[0];
-    for (let i = 0; i < weeklyCount; i++) {
-      const amount = Math.floor(seededRandom(seed + i + 100) * (cfg.weeklyEvents.amount[1] - cfg.weeklyEvents.amount[0])) + cfg.weeklyEvents.amount[0];
-      const daysAgo = Math.floor(seededRandom(seed + i + 110) * 6) + 1;
-      const source = sources[Math.floor(seededRandom(seed + i + 120) * sources.length)];
-      
-      await executeQuery(
-        `INSERT INTO xp_events (user_id, amount, source, meta, created_at) VALUES (?, ?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY))`,
-        [userId, amount, source, JSON.stringify({ demo: true }), daysAgo]
-      ).catch(() => {});
-    }
-    
-    // Generate monthly events (past 30 days, excluding past week)
-    const monthlyCount = Math.floor(seededRandom(seed + 3) * (cfg.monthlyEvents.count[1] - cfg.monthlyEvents.count[0])) + cfg.monthlyEvents.count[0];
-    for (let i = 0; i < monthlyCount; i++) {
-      const amount = Math.floor(seededRandom(seed + i + 200) * (cfg.monthlyEvents.amount[1] - cfg.monthlyEvents.amount[0])) + cfg.monthlyEvents.amount[0];
-      const daysAgo = Math.floor(seededRandom(seed + i + 210) * 23) + 7;
-      const source = sources[Math.floor(seededRandom(seed + i + 220) * sources.length)];
-      
-      await executeQuery(
-        `INSERT INTO xp_events (user_id, amount, source, meta, created_at) VALUES (?, ?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY))`,
-        [userId, amount, source, JSON.stringify({ demo: true }), daysAgo]
-      ).catch(() => {});
-    }
-    
-  } catch (e) {
-    // Silently continue - don't block on individual user failures
-  }
-}
-
-// Seed demo users with activity profile-based XP
 let demoSeeded = false;
+
+/**
+ * Generate XP events for demo users across the last 30 days.
+ * Events are distributed to ensure daily/weekly/monthly rankings differ.
+ */
 async function seedDemoUsers() {
   if (demoSeeded) return;
   
-  const cacheKey = 'demo_seeded_v6';
-  const cached = getCached(cacheKey, 3600000);
-  if (cached) {
+  const cacheKey = 'demo_seeded_v7';
+  if (getCached(cacheKey, 3600000)) {
     demoSeeded = true;
     return;
   }
   
   try {
-    console.log('Seeding demo users...');
+    console.log('Seeding demo users with XP events...');
+    const sources = ['chat_message', 'daily_login', 'course_complete', 'streak_bonus', 'community_help'];
+    const now = new Date();
+    const boundaries = {
+      daily: getTimeframeBoundaries('daily'),
+      weekly: getTimeframeBoundaries('weekly'),
+      monthly: getTimeframeBoundaries('monthly')
+    };
     
     for (let i = 0; i < DEMO_USERS.length; i++) {
       const { name, profile } = DEMO_USERS[i];
       const email = `demo_${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@aurafx.demo`;
       
-      // Check if user exists
-      const existingResult = await executeQuery('SELECT id FROM users WHERE email = ?', [email]);
-      const existing = getRows(existingResult);
+      // Create or get user
+      let [existingResult] = await executeQuery('SELECT id FROM users WHERE email = ?', [email]);
+      let existing = getRows(existingResult);
       
       let userId;
       if (existing.length === 0) {
-        // Create demo user
-        const totalXP = Math.floor(1000 + seededRandom(i * 100) * 50000);
+        const totalXP = Math.floor(5000 + seededRandom(i * 100) * 45000);
         const level = getLevelFromXP(totalXP);
         
-        const insertResult = await executeQuery(
+        const [insertResult] = await executeQuery(
           `INSERT INTO users (email, username, name, password, role, xp, level, is_demo, created_at) 
            VALUES (?, ?, ?, ?, 'free', ?, ?, TRUE, DATE_SUB(NOW(), INTERVAL ? DAY))`,
-          [email, name, name, `demo_${Date.now()}_${i}`, totalXP, level, Math.floor(30 + seededRandom(i) * 60)]
-        ).catch(() => null);
+          [email, name, name, `demo_${Date.now()}_${i}`, totalXP, level, 30 + Math.floor(seededRandom(i) * 60)]
+        ).catch(() => [null]);
         
         userId = insertResult?.insertId;
       } else {
         userId = existing[0].id;
       }
       
-      // Generate XP events for this user
-      if (userId) {
-        await generateDemoXpEvents(userId, i, profile);
+      if (!userId) continue;
+      
+      // Check if already has events
+      const [eventCheck] = await executeQuery(
+        'SELECT COUNT(*) as cnt FROM xp_events WHERE user_id = ?', [userId]
+      );
+      if (getRows(eventCheck)[0]?.cnt > 10) continue;
+      
+      // Generate events based on profile
+      const seed = userId * 1000 + i;
+      const profileConfigs = {
+        grinder: { daily: [8, 15], weekly: [40, 70], monthly: [120, 200] },
+        sprinter: { daily: [2, 8], weekly: [25, 50], monthly: [80, 150] },
+        weekend: { daily: [1, 4], weekly: [20, 40], monthly: [60, 120] },
+        steady: { daily: [4, 8], weekly: [25, 45], monthly: [90, 160] },
+        course: { daily: [2, 6], weekly: [20, 40], monthly: [70, 140] }
+      };
+      
+      const cfg = profileConfigs[profile] || profileConfigs.steady;
+      
+      // Generate events for each timeframe with proper distribution
+      // Monthly events (days 8-30 ago) - most events, oldest
+      const monthlyCount = Math.floor(seededRandom(seed + 3) * (cfg.monthly[1] - cfg.monthly[0])) + cfg.monthly[0];
+      for (let j = 0; j < monthlyCount * 0.6; j++) {
+        const amount = Math.floor(seededRandom(seed + j + 300) * 150) + 20;
+        const daysAgo = 8 + Math.floor(seededRandom(seed + j + 310) * 22);
+        const source = sources[Math.floor(seededRandom(seed + j + 320) * sources.length)];
+        
+        await executeQuery(
+          `INSERT INTO xp_events (user_id, amount, source, created_at) 
+           VALUES (?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY))`,
+          [userId, amount, source, daysAgo]
+        ).catch(() => {});
+      }
+      
+      // Weekly events (days 1-7 ago, excluding today)
+      const weeklyCount = Math.floor(seededRandom(seed + 2) * (cfg.weekly[1] - cfg.weekly[0])) + cfg.weekly[0];
+      for (let j = 0; j < weeklyCount * 0.4; j++) {
+        const amount = Math.floor(seededRandom(seed + j + 200) * 200) + 30;
+        const daysAgo = 1 + Math.floor(seededRandom(seed + j + 210) * 6);
+        const source = sources[Math.floor(seededRandom(seed + j + 220) * sources.length)];
+        
+        await executeQuery(
+          `INSERT INTO xp_events (user_id, amount, source, created_at) 
+           VALUES (?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY))`,
+          [userId, amount, source, daysAgo]
+        ).catch(() => {});
+      }
+      
+      // Daily events (today only)
+      const dailyCount = Math.floor(seededRandom(seed + 1) * (cfg.daily[1] - cfg.daily[0])) + cfg.daily[0];
+      for (let j = 0; j < dailyCount; j++) {
+        const amount = Math.floor(seededRandom(seed + j + 100) * 180) + 40;
+        const hoursAgo = Math.floor(seededRandom(seed + j + 110) * 18);
+        const source = sources[Math.floor(seededRandom(seed + j + 120) * sources.length)];
+        
+        await executeQuery(
+          `INSERT INTO xp_events (user_id, amount, source, created_at) 
+           VALUES (?, ?, ?, DATE_SUB(NOW(), INTERVAL ? HOUR))`,
+          [userId, amount, source, hoursAgo]
+        ).catch(() => {});
       }
     }
     
@@ -318,9 +376,96 @@ async function seedDemoUsers() {
     console.log('Demo users seeded successfully');
   } catch (e) {
     console.error('Demo seeding error:', e.message);
-    demoSeeded = true; // Don't retry on failure
+    demoSeeded = true;
   }
 }
+
+// ============================================================================
+// Main Leaderboard Query
+// ============================================================================
+
+/**
+ * Query leaderboard for a specific timeframe.
+ * ALL timeframes use the xp_events ledger with different date filters.
+ */
+async function queryLeaderboard(timeframe, limit, logger, includeDemo = true) {
+  const boundaries = getTimeframeBoundaries(timeframe);
+  const startDate = toMySQLDatetime(boundaries.start);
+  
+  logger.startTimer('db_query');
+  
+  let query;
+  let params = [];
+  
+  // Demo filter - only apply when we want to exclude demo users
+  const demoFilter = includeDemo ? '' : 'AND (u.is_demo IS NULL OR u.is_demo = FALSE)';
+  
+  if (timeframe === 'all-time') {
+    // All-time: SUM of ALL xp_events (no date filter)
+    query = `
+      SELECT 
+        u.id, u.username, u.name, u.email, 
+        COALESCE(u.xp, 0) as total_xp,
+        COALESCE(u.level, 1) as level, 
+        u.avatar, u.role,
+        COALESCE(u.is_demo, FALSE) as is_demo,
+        COALESCE(SUM(e.amount), COALESCE(u.xp, 0)) as period_xp,
+        MAX(e.created_at) as last_xp_time
+      FROM users u
+      LEFT JOIN xp_events e ON u.id = e.user_id
+      WHERE COALESCE(u.xp, 0) > 0 ${demoFilter}
+      GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo
+      ORDER BY period_xp DESC, last_xp_time DESC
+      LIMIT ${limit}
+    `;
+  } else {
+    // Time-based: SUM of xp_events within the date boundary
+    query = `
+      SELECT 
+        u.id, u.username, u.name, u.email, 
+        COALESCE(u.xp, 0) as total_xp,
+        COALESCE(u.level, 1) as level, 
+        u.avatar, u.role,
+        COALESCE(u.is_demo, FALSE) as is_demo,
+        COALESCE(SUM(e.amount), 0) as period_xp,
+        MAX(e.created_at) as last_xp_time
+      FROM users u
+      INNER JOIN xp_events e ON u.id = e.user_id AND e.created_at >= ?
+      WHERE 1=1 ${demoFilter}
+      GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo
+      HAVING period_xp > 0
+      ORDER BY period_xp DESC, last_xp_time ASC
+      LIMIT ${limit}
+    `;
+    params = [startDate];
+  }
+  
+  logger.debug('Query', { timeframe, startDate, includeDemo });
+  
+  const result = await executeQueryWithTimeout(query, params, 10000, logger.requestId);
+  const leaderboard = getRows(result);
+  
+  logger.endTimer('db_query');
+  logger.debug('Query result', { count: leaderboard.length });
+  
+  return leaderboard;
+}
+
+// ============================================================================
+// Prize Eligibility (Server-Side Only)
+// ============================================================================
+
+/**
+ * Get prize-eligible leaderboard (excludes demo users).
+ * This is for admin/export purposes only - NEVER expose is_demo to public UI.
+ */
+async function getPrizeEligibleLeaderboard(timeframe, limit, logger) {
+  return queryLeaderboard(timeframe, limit, logger, false); // excludeDemo = true
+}
+
+// ============================================================================
+// Main API Handler
+// ============================================================================
 
 module.exports = async (req, res) => {
   const requestId = generateRequestId('lb');
@@ -359,17 +504,16 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Validate and sanitize inputs
+    // Validate inputs
     const timeframe = safeTimeframe(req.query.timeframe);
     const limit = safeLimit(req.query.limit, 10, 100);
+    const prizeEligibleOnly = req.query.prizeEligible === 'true';
     
-    logger.info('Leaderboard request', { timeframe, limit, clientId });
+    logger.info('Leaderboard request', { timeframe, limit, prizeEligibleOnly });
     
-    // Check cache with request coalescing (prevents stampede)
+    // Check cache
     const cacheTTL = timeframe === 'all-time' ? DEFAULT_TTLS.LEADERBOARD_ALLTIME : DEFAULT_TTLS.LEADERBOARD;
-    const cacheKey = `leaderboard_v5_${timeframe}_${limit}`;
-    
-    // Use coalesceRequest to prevent multiple concurrent queries for the same data
+    const cacheKey = `leaderboard_v8_${timeframe}_${limit}_${prizeEligibleOnly}`;
     const coalesceKey = `lb_query_${timeframe}_${limit}`;
     
     const cached = getCached(cacheKey, cacheTTL);
@@ -377,69 +521,75 @@ module.exports = async (req, res) => {
       logger.info('Cache HIT', { ms: Date.now() - startTime });
       return res.status(200).json({ 
         success: true, 
-        leaderboard: cached, 
-        cached: true, 
-        timeframe, 
+        leaderboard: cached.leaderboard,
+        timeframe,
+        periodStart: cached.periodStart,
+        periodEnd: cached.periodEnd,
+        cached: true,
         requestId,
         queryTimeMs: Date.now() - startTime
       });
     }
     
-    logger.info('Cache MISS, querying database');
+    logger.info('Cache MISS');
 
-    // Use request coalescing to prevent stampede
+    // Fetch with request coalescing
     const fetchLeaderboard = async () => {
       logger.startTimer('db_setup');
       
-      // Ensure tables exist (non-blocking, with timeout)
+      // Ensure schema (with timeout)
       await Promise.race([
-        Promise.all([
-          ensureXpEventsTable(),
-          ensureDemoColumn()
-        ]),
-        new Promise(resolve => setTimeout(resolve, 2000)) // 2s timeout
+        ensureSchema(),
+        new Promise(resolve => setTimeout(resolve, 2000))
       ]);
       
-      // Seed demo users if needed (with timeout)
-      await Promise.race([
-        seedDemoUsers(),
-        new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
-      ]);
+      // Check bootstrap mode and seed if needed
+      const bootstrapActive = await isBootstrapModeActive();
+      if (bootstrapActive) {
+        await Promise.race([
+          seedDemoUsers(),
+          new Promise(resolve => setTimeout(resolve, 3000))
+        ]);
+      }
       
       logger.endTimer('db_setup');
       
-      return await queryLeaderboard(timeframe, limit, logger);
+      // Query (include demo users in public leaderboard unless prize-eligible)
+      const includeDemo = !prizeEligibleOnly;
+      return queryLeaderboard(timeframe, limit, logger, includeDemo);
     };
     
-    // Coalesce concurrent requests for same data
-    const leaderboard = await coalesceRequest(coalesceKey, fetchLeaderboard, 200);
+    const rawLeaderboard = await coalesceRequest(coalesceKey, fetchLeaderboard, 200);
+    const boundaries = getTimeframeBoundaries(timeframe);
 
-    const boundaries = getDateBoundaries(timeframe);
-
-    // Format response
-    const formattedLeaderboard = leaderboard.map((user, index) => ({
+    // Format response - NEVER expose is_demo to public UI
+    const formattedLeaderboard = rawLeaderboard.map((user, index) => ({
       rank: index + 1,
       id: user.id,
       userId: user.id,
       username: user.username || user.name || user.email?.split('@')[0] || 'Trader',
-      xp: timeframe === 'all-time' ? parseFloat(user.xp) || 0 : parseFloat(user.period_xp) || 0,
-      xpGain: timeframe !== 'all-time' ? parseFloat(user.period_xp) || 0 : null,
-      totalXP: parseFloat(user.xp) || 0,
-      level: parseInt(user.level) || getLevelFromXP(parseFloat(user.xp) || 0),
+      xp: parseFloat(user.period_xp) || 0,
+      totalXP: parseFloat(user.total_xp) || 0,
+      level: parseInt(user.level) || getLevelFromXP(parseFloat(user.total_xp) || 0),
       avatar: user.avatar || 'avatar_ai.png',
       role: user.role || 'free',
-      isDemo: user.is_demo === 1 || user.is_demo === true,
+      // NOTE: is_demo is intentionally NOT included in public response
       strikes: 0
     }));
 
     // Cache result
-    setCached(cacheKey, formattedLeaderboard, cacheTTL);
+    const cacheData = {
+      leaderboard: formattedLeaderboard,
+      periodStart: boundaries.start?.toISOString() || null,
+      periodEnd: boundaries.end?.toISOString() || null
+    };
+    setCached(cacheKey, cacheData, cacheTTL);
 
     const queryTime = Date.now() - startTime;
     logger.info('Query completed', { 
       queryTimeMs: queryTime, 
       resultCount: formattedLeaderboard.length,
-      latency: logger.getLatencyBreakdown()
+      bootstrapActive: bootstrapStatus
     });
     
     return res.status(200).json({ 
@@ -454,96 +604,20 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     const queryTime = Date.now() - startTime;
-    logger.error('Leaderboard error', { error, queryTimeMs: queryTime });
+    logger.error('Leaderboard error', { error: error.message, queryTimeMs: queryTime });
     
-    // Return proper error response (not success: true)
     return res.status(500).json({ 
       success: false, 
       errorCode: 'SERVER_ERROR',
       message: 'Failed to load leaderboard. Please try again.',
-      leaderboard: [], // Empty fallback for UI
+      leaderboard: [],
       requestId,
       queryTimeMs: queryTime
     });
   }
 };
 
-// Extracted query logic for coalescing
-async function queryLeaderboard(timeframe, limit, logger) {
-  const boundaries = getDateBoundaries(timeframe);
-  let leaderboard = [];
-
-  logger.startTimer('db_query');
-  
-  if (timeframe === 'all-time') {
-    // All-time: Sort by level DESC, then total XP DESC
-    // Use inline LIMIT to avoid mysql2 parameter issues
-    const result = await executeQueryWithTimeout(`
-      SELECT 
-        u.id, u.username, u.name, u.email, 
-        COALESCE(u.xp, 0) as xp, 
-        COALESCE(u.level, 1) as level, 
-        u.avatar, u.role, 
-        COALESCE(u.is_demo, FALSE) as is_demo,
-        COALESCE(u.xp, 0) as period_xp
-      FROM users u
-      WHERE COALESCE(u.xp, 0) > 0
-      ORDER BY COALESCE(u.level, 1) DESC, COALESCE(u.xp, 0) DESC
-      LIMIT ${limit}
-    `, [], 10000, logger.requestId);
-    
-    leaderboard = getRows(result);
-  } else {
-    // Time-based: Aggregate XP from xp_events
-    const startDate = toMySQLDatetime(boundaries.start);
-    
-    logger.debug('Querying xp_events', { since: startDate });
-    
-    // Use inline LIMIT to avoid mysql2 prepared statement issues
-    const result = await executeQueryWithTimeout(`
-      SELECT 
-        u.id, u.username, u.name, u.email, 
-        COALESCE(u.xp, 0) as xp, 
-        COALESCE(u.level, 1) as level, 
-        u.avatar, u.role, 
-        COALESCE(u.is_demo, FALSE) as is_demo,
-        COALESCE(SUM(e.amount), 0) as period_xp,
-        MAX(e.created_at) as last_xp_time
-      FROM users u
-      INNER JOIN xp_events e ON u.id = e.user_id AND e.created_at >= ?
-      GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo
-      HAVING period_xp > 0
-      ORDER BY period_xp DESC, last_xp_time ASC
-      LIMIT ${limit}
-    `, [startDate], 10000, logger.requestId);
-    
-    leaderboard = getRows(result);
-    
-    logger.debug('Time-based query result', { count: leaderboard.length });
-    
-    // Fallback: If insufficient time-based results, use all-time
-    if (leaderboard.length < 3) {
-      logger.debug('Insufficient data, falling back to all-time', { count: leaderboard.length });
-      
-      const fallbackResult = await executeQueryWithTimeout(`
-        SELECT 
-          u.id, u.username, u.name, u.email, 
-          COALESCE(u.xp, 0) as xp, 
-          COALESCE(u.level, 1) as level, 
-          u.avatar, u.role, 
-          COALESCE(u.is_demo, FALSE) as is_demo,
-          COALESCE(u.xp, 0) as period_xp
-        FROM users u
-        WHERE COALESCE(u.xp, 0) > 0
-        ORDER BY COALESCE(u.level, 1) DESC, COALESCE(u.xp, 0) DESC
-        LIMIT ${limit}
-      `, [], 10000, logger.requestId);
-      
-      leaderboard = getRows(fallbackResult);
-      logger.debug('Fallback result', { count: leaderboard.length });
-    }
-  }
-  
-  logger.endTimer('db_query');
-  return leaderboard;
-}
+// Export for testing
+module.exports.getTimeframeBoundaries = getTimeframeBoundaries;
+module.exports.isBootstrapModeActive = isBootstrapModeActive;
+module.exports.getPrizeEligibleLeaderboard = getPrizeEligibleLeaderboard;

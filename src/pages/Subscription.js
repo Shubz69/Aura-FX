@@ -9,10 +9,53 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://www.aurafx.com';
 const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
 const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
 
+// Plan configurations
+const PLANS = {
+    aura: {
+        id: 'aura',
+        name: 'Aura FX',
+        badge: 'Standard',
+        price: 99,
+        currency: '£',
+        period: '/month',
+        features: [
+            'Unlimited access to all premium community channels',
+            'Network with 1,200+ successful traders',
+            'Share and receive exclusive trading strategies',
+            'Priority access to premium course content',
+            'Exclusive market insights and expert commentary',
+            'Weekly Briefs',
+            'Premium AURA AI'
+        ],
+        paymentLink: STRIPE_PAYMENT_LINK_AURA,
+        isElite: false
+    },
+    a7fx: {
+        id: 'a7fx',
+        name: 'A7FX',
+        badge: 'ELITE',
+        price: 250,
+        currency: '£',
+        period: '/month',
+        features: [
+            'Everything included in Aura FX Standard',
+            'Access to exclusive elite trader community',
+            'Advanced proprietary trading strategies',
+            'Direct communication channel with founders',
+            'First access to cutting-edge features and tools',
+            'Daily Briefs',
+            'Weekly Briefs',
+            'Premium AURA AI'
+        ],
+        paymentLink: STRIPE_PAYMENT_LINK_A7FX,
+        isElite: true
+    }
+};
+
 const Subscription = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated } = useAuth();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [countdown, setCountdown] = useState(10);
     const [subscriptionActivated, setSubscriptionActivated] = useState(false);
@@ -22,6 +65,37 @@ const Subscription = () => {
     const [contactSubmitting, setContactSubmitting] = useState(false);
     const [contactStatus, setContactStatus] = useState(null);
     const [selectedPlan, setSelectedPlan] = useState(null);
+    const [processingPlan, setProcessingPlan] = useState(null);
+    
+    // Subscription status from server
+    const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+
+    // Fetch subscription status from server
+    const fetchSubscriptionStatus = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
+            const response = await axios.get(`${API_BASE_URL}/api/subscription/status`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.data && response.data.success) {
+                setSubscriptionStatus(response.data.subscription);
+            }
+        } catch (err) {
+            console.error('Error fetching subscription status:', err);
+            // Don't show error - fall back to free state
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // Check if user is authenticated
@@ -30,67 +104,180 @@ const Subscription = () => {
             return;
         }
         
-        // Check user's role and subscription status
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const userRole = (user?.role || storedUser?.role || 'free').toLowerCase();
-        const subscriptionStatus = user?.subscription_status || storedUser?.subscription_status || 'inactive';
-        const subscriptionPlan = user?.subscription_plan || storedUser?.subscription_plan;
-        
-        // Check localStorage subscription status as fallback
-        const hasActiveSubscriptionLocal = localStorage.getItem('hasActiveSubscription') === 'true';
-        const subscriptionExpiry = localStorage.getItem('subscriptionExpiry');
-        
-        // If user has premium or A7FX role, redirect to community
-        if (userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite' || userRole === 'admin' || userRole === 'super_admin') {
-            navigate('/community');
-            return;
+        // Fetch subscription status from server (single source of truth)
+        fetchSubscriptionStatus();
+    }, [isAuthenticated, navigate]);
+
+    // Determine button state for a plan
+    const getButtonState = (planId) => {
+        if (!subscriptionStatus) {
+            return { type: 'select', disabled: false };
         }
-        
-        // If user has active subscription status, redirect to community
-        if (subscriptionStatus === 'active') {
-            navigate('/community');
-            return;
+
+        const currentPlanId = subscriptionStatus.planId;
+        const status = subscriptionStatus.status;
+        const isActive = subscriptionStatus.isActive;
+
+        // Payment failed - show update payment
+        if (subscriptionStatus.paymentFailed) {
+            return { type: 'update_payment', disabled: false };
         }
-        
-        // If localStorage indicates active subscription and not expired, redirect
-        if (hasActiveSubscriptionLocal) {
-            const expiryDate = subscriptionExpiry ? new Date(subscriptionExpiry) : null;
-            if (!expiryDate || expiryDate > new Date()) {
-                // Has active subscription - redirect to community
-                navigate('/community');
-                return;
+
+        // User has this exact plan active
+        if (currentPlanId === planId && isActive) {
+            if (status === 'canceled') {
+                return { type: 'active_until', disabled: true };
+            }
+            return { type: 'current', disabled: true };
+        }
+
+        // User has a different plan active
+        if (currentPlanId && currentPlanId !== planId && isActive) {
+            // Determine if upgrade or downgrade
+            const currentPrice = PLANS[currentPlanId]?.price || 0;
+            const targetPrice = PLANS[planId]?.price || 0;
+            
+            if (targetPrice > currentPrice) {
+                return { type: 'upgrade', disabled: false };
+            } else {
+                return { type: 'downgrade', disabled: false };
             }
         }
-    }, [isAuthenticated, navigate, user]);
+
+        // No active subscription - show select
+        return { type: 'select', disabled: false };
+    };
+
+    // Get button text based on state
+    const getButtonText = (planId, buttonState) => {
+        if (processingPlan === planId) {
+            return 'PROCESSING...';
+        }
+
+        switch (buttonState.type) {
+            case 'current':
+                return 'CURRENT PLAN';
+            case 'active_until':
+                return 'ACTIVE UNTIL END';
+            case 'update_payment':
+                return 'UPDATE PAYMENT';
+            case 'upgrade':
+                return 'UPGRADE TO THIS PLAN';
+            case 'downgrade':
+                return 'SWITCH TO THIS PLAN';
+            case 'select':
+            default:
+                return planId === 'a7fx' ? 'SELECT ELITE PLAN' : 'SELECT PLAN';
+        }
+    };
+
+    // Get status badge for the plan card
+    const getStatusBadge = (planId) => {
+        if (!subscriptionStatus) return null;
+
+        const currentPlanId = subscriptionStatus.planId;
+        const isActive = subscriptionStatus.isActive;
+
+        if (currentPlanId === planId && isActive) {
+            if (subscriptionStatus.status === 'canceled') {
+                return <div className="plan-status-badge canceled">Canceling</div>;
+            }
+            if (subscriptionStatus.paymentFailed) {
+                return <div className="plan-status-badge past-due">Payment Due</div>;
+            }
+            return <div className="plan-status-badge active">Your Plan</div>;
+        }
+
+        return null;
+    };
+
+    // Get renewal/expiry info
+    const getRenewalInfo = (planId) => {
+        if (!subscriptionStatus) return null;
+
+        const currentPlanId = subscriptionStatus.planId;
+        const isActive = subscriptionStatus.isActive;
+
+        if (currentPlanId !== planId || !isActive) return null;
+
+        if (subscriptionStatus.paymentFailed) {
+            return (
+                <div className="plan-renewal-info past-due">
+                    ⚠️ Payment failed. Please update your payment method.
+                </div>
+            );
+        }
+
+        if (subscriptionStatus.status === 'canceled' && subscriptionStatus.expiresAt) {
+            const expiryDate = new Date(subscriptionStatus.expiresAt);
+            return (
+                <div className="plan-renewal-info canceled">
+                    Active until {expiryDate.toLocaleDateString('en-GB', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric' 
+                    })}
+                </div>
+            );
+        }
+
+        if (subscriptionStatus.renewsAt) {
+            const renewDate = new Date(subscriptionStatus.renewsAt);
+            return (
+                <div className="plan-renewal-info active">
+                    Renews on {renewDate.toLocaleDateString('en-GB', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric' 
+                    })}
+                    {subscriptionStatus.daysRemaining && (
+                        <span className="days-remaining">
+                            ({subscriptionStatus.daysRemaining} days remaining)
+                        </span>
+                    )}
+                </div>
+            );
+        }
+
+        return null;
+    };
 
     const handleSubscribe = (planType = 'aura') => {
+        const buttonState = getButtonState(planType);
+        
+        // Prevent action on disabled buttons
+        if (buttonState.disabled) {
+            return;
+        }
+
+        // Handle update payment
+        if (buttonState.type === 'update_payment') {
+            // Redirect to Stripe billing portal or contact
+            window.open('https://billing.stripe.com/p/login/test', '_blank');
+            return;
+        }
+
+        setProcessingPlan(planType);
         setSelectedPlan(planType);
+        
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email || storedUser?.email;
         
-        // Note: Stripe payment links don't support success_url or cancel_url as query parameters
-        // These must be configured in the Stripe Dashboard under "After payment" settings
-        // Success URL should be: https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription=true
-        
-        // Use appropriate Stripe payment link based on plan type
-        const selectedPaymentLink = planType === 'a7fx' ? STRIPE_PAYMENT_LINK_A7FX : STRIPE_PAYMENT_LINK_AURA;
+        const plan = PLANS[planType];
         const paymentLink = userEmail
-            ? `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
-            : `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
+            ? `${plan.paymentLink}${plan.paymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
+            : `${plan.paymentLink}${plan.paymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
 
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);
     };
 
     const handleSkipForNow = () => {
-        // Allow them to browse but block community access
-        // Don't remove pendingSubscription flag so they're reminded on next login
         localStorage.setItem('subscriptionSkipped', 'true');
         navigate('/courses');
     };
 
     const handleManualRedirect = () => {
-        // Force hard redirect to community page immediately
         const baseUrl = window.location.origin;
         window.location.replace(`${baseUrl}/community`);
     };
@@ -157,7 +344,6 @@ const Subscription = () => {
                 try {
                     setLoading(true);
                     
-                    // Update subscription status in database
                     const sessionId = params.get('session_id');
                     const response = await axios.post(
                         `${API_BASE_URL}/api/stripe/subscription-success`,
@@ -171,15 +357,12 @@ const Subscription = () => {
                     );
 
                     if (response.data && response.data.success) {
-                        // Wait a moment for database to fully update
                         await new Promise(resolve => setTimeout(resolve, 500));
                         
-                        // Verify subscription status from API (all checks must pass)
                         try {
                             const verifyResponse = await axios.get(
-                                `${API_BASE_URL}/api/subscription/check`,
+                                `${API_BASE_URL}/api/subscription/status`,
                                 {
-                                    params: { userId: activeUserId },
                                     headers: {
                                         'Authorization': `Bearer ${localStorage.getItem('token')}`,
                                         'Content-Type': 'application/json'
@@ -187,30 +370,26 @@ const Subscription = () => {
                                 }
                             );
                             
-                            if (verifyResponse.data && verifyResponse.data.hasActiveSubscription && !verifyResponse.data.paymentFailed) {
-                                // All checks passed - update localStorage
+                            if (verifyResponse.data?.success && verifyResponse.data?.subscription?.isActive) {
                                 localStorage.setItem('hasActiveSubscription', 'true');
                                 localStorage.removeItem('pendingSubscription');
                                 localStorage.removeItem('subscriptionSkipped');
                                 
-                                // Set subscription expiry from verified response
-                                const expiryDate = verifyResponse.data.expiry 
-                                    ? new Date(verifyResponse.data.expiry)
+                                const expiryDate = verifyResponse.data.subscription.expiresAt 
+                                    ? new Date(verifyResponse.data.subscription.expiresAt)
                                     : (() => {
                                         const date = new Date();
-                                        date.setDate(date.getDate() + 90); // 3 months
+                                        date.setDate(date.getDate() + 90);
                                         return date;
                                     })();
                                 
                                 localStorage.setItem('subscriptionExpiry', expiryDate.toISOString());
                                 
-                                // Show success message
                                 setError('');
                                 setSubscriptionActivated(true);
                                 window.history.replaceState({}, document.title, window.location.pathname);
                                 setLoading(false);
                                 
-                                // Start countdown timer
                                 const baseUrl = window.location.origin;
                                 setCountdown(5);
                                 
@@ -224,12 +403,10 @@ const Subscription = () => {
                                             clearInterval(countdownIntervalRef.current);
                                             countdownIntervalRef.current = null;
                                         }
-                                        // Force hard redirect to community page
                                         window.location.replace(`${baseUrl}/community`);
                                     }
                                 }, 1000);
                                 
-                                // Fallback redirect after 5 seconds
                                 setTimeout(() => {
                                     if (countdownIntervalRef.current) {
                                         clearInterval(countdownIntervalRef.current);
@@ -238,7 +415,7 @@ const Subscription = () => {
                                     window.location.replace(`${baseUrl}/community`);
                                 }, 5000);
                             } else {
-                                throw new Error('Subscription verification failed - checks did not pass');
+                                throw new Error('Subscription verification failed');
                             }
                         } catch (verifyError) {
                             console.error('Subscription verification error:', verifyError);
@@ -256,11 +433,8 @@ const Subscription = () => {
             };
 
             activateSubscription();
-        } else if (paymentSuccess && !activeUserId) {
-            console.log('Payment success detected but user context not ready. Waiting for authentication...');
         }
         
-        // Cleanup function
         return () => {
             if (countdownIntervalRef.current) {
                 clearInterval(countdownIntervalRef.current);
@@ -270,8 +444,47 @@ const Subscription = () => {
     }, [user, subscriptionActivated]);
 
     if (!isAuthenticated) {
-        return null; // Will redirect
+        return null;
     }
+
+    // Render plan card
+    const renderPlanCard = (plan) => {
+        const buttonState = getButtonState(plan.id);
+        const buttonText = getButtonText(plan.id, buttonState);
+        const statusBadge = getStatusBadge(plan.id);
+        const renewalInfo = getRenewalInfo(plan.id);
+
+        return (
+            <div className={`subscription-plan-card ${plan.isElite ? 'elite-plan' : ''} ${buttonState.type === 'current' ? 'current-plan' : ''}`}>
+                <div className="plan-header">
+                    <h2>{plan.name}</h2>
+                    <div className={`plan-badge ${plan.isElite ? 'elite-badge' : ''}`}>
+                        {plan.badge}
+                    </div>
+                    {statusBadge}
+                </div>
+                <div className="plan-pricing">
+                    <span className="plan-price">{plan.currency}{plan.price}</span>
+                    <span className="plan-period">{plan.period}</span>
+                </div>
+                {renewalInfo}
+                <div className="plan-benefits">
+                    <ul>
+                        {plan.features.map((feature, index) => (
+                            <li key={index}>✅ {feature}</li>
+                        ))}
+                    </ul>
+                </div>
+                <button 
+                    className={`plan-select-button ${plan.isElite ? 'elite-button' : ''} ${buttonState.disabled ? 'disabled' : ''} ${buttonState.type}`}
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={buttonState.disabled || processingPlan === plan.id}
+                >
+                    {buttonText}
+                </button>
+            </div>
+        );
+    };
 
     return (
         <div className="subscription-container">
@@ -283,74 +496,22 @@ const Subscription = () => {
                 </div>
 
                 <div className="subscription-content">
-                    <div className="subscription-plans">
-                        {/* Aura FX Plan */}
-                        <div className="subscription-plan-card">
-                            <div className="plan-header">
-                                <h2>Aura FX</h2>
-                                <div className="plan-badge">Standard</div>
-                            </div>
-                            <div className="plan-pricing">
-                                <span className="plan-price">£99</span>
-                                <span className="plan-period">/month</span>
-                            </div>
-                            <div className="plan-benefits">
-                                <ul>
-                                    <li>✅ Unlimited access to all premium community channels</li>
-                                    <li>✅ Network with 1,200+ successful traders</li>
-                                    <li>✅ Share and receive exclusive trading strategies</li>
-                                    <li>✅ Priority access to premium course content</li>
-                                    <li>✅ Exclusive market insights and expert commentary</li>
-                                    <li>✅ Weekly Briefs</li>
-                                    <li>✅ Premium AURA AI</li>
-                                </ul>
-                            </div>
-                            <button 
-                                className="plan-select-button"
-                                onClick={() => handleSubscribe('aura')}
-                                disabled={loading}
-                            >
-                                {loading && selectedPlan === 'aura' ? 'PROCESSING...' : 'SELECT PLAN'}
-                            </button>
+                    {loading ? (
+                        <div className="subscription-loading">
+                            <div className="loading-spinner"></div>
+                            <p>Loading subscription details...</p>
                         </div>
-
-                        {/* A7FX Plan - Elite Only */}
-                        <div className="subscription-plan-card elite-plan">
-                            <div className="plan-header">
-                                <h2>A7FX</h2>
-                                <div className="plan-badge elite-badge">ELITE</div>
-                            </div>
-                            <div className="plan-pricing">
-                                <span className="plan-price">£250</span>
-                                <span className="plan-period">/month</span>
-                            </div>
-                            <div className="plan-benefits">
-                                <ul>
-                                    <li>✅ Everything included in Aura FX Standard</li>
-                                    <li>✅ Access to exclusive elite trader community</li>
-                                    <li>✅ Advanced proprietary trading strategies</li>
-                                    <li>✅ Direct communication channel with founders</li>
-                                    <li>✅ First access to cutting-edge features and tools</li>
-                                    <li>✅ Daily Briefs</li>
-                                    <li>✅ Weekly Briefs</li>
-                                    <li>✅ Premium AURA AI</li>
-                                </ul>
-                            </div>
-                            <button 
-                                className="plan-select-button elite-button"
-                                onClick={() => handleSubscribe('a7fx')}
-                                disabled={loading}
-                            >
-                                {loading && selectedPlan === 'a7fx' ? 'PROCESSING...' : 'SELECT ELITE PLAN'}
-                            </button>
+                    ) : (
+                        <div className="subscription-plans">
+                            {renderPlanCard(PLANS.aura)}
+                            {renderPlanCard(PLANS.a7fx)}
                         </div>
-                    </div>
+                    )}
                     <p className="pricing-note" style={{ textAlign: 'center', marginTop: '20px' }}>Cancel anytime • No hidden fees</p>
                 </div>
 
                 {error && <div className="subscription-error">{error}</div>}
                 
-                {/* Show success message when payment is confirmed */}
                 {subscriptionActivated && !error && (
                     <div className="subscription-success">
                         <h2>✅ Payment Confirmed!</h2>
@@ -370,14 +531,16 @@ const Subscription = () => {
                     </div>
                 )}
 
-                <div className="subscription-actions">
-                    <button 
-                        className="skip-button"
-                        onClick={handleSkipForNow}
-                    >
-                        Skip for Now
-                    </button>
-                </div>
+                {!subscriptionStatus?.isActive && (
+                    <div className="subscription-actions">
+                        <button 
+                            className="skip-button"
+                            onClick={handleSkipForNow}
+                        >
+                            Skip for Now
+                        </button>
+                    </div>
+                )}
 
                 {/* Support/Contact Section */}
                 <div className="subscription-support">

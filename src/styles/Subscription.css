@@ -522,6 +522,145 @@
     box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
 }
 
+/* Subscription Status Styles */
+.subscription-plan-card.current-plan {
+    border: 2px solid #22c55e;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+}
+
+.plan-status-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.plan-status-badge.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.plan-status-badge.canceled {
+    background: rgba(245, 158, 11, 0.2);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.plan-status-badge.past-due {
+    background: rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.plan-renewal-info {
+    text-align: center;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.plan-renewal-info.active {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.plan-renewal-info.canceled {
+    background: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.plan-renewal-info.past-due {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.plan-renewal-info .days-remaining {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+/* Button State Styles */
+.plan-select-button.disabled,
+.plan-select-button.current {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+.plan-select-button.upgrade {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+.plan-select-button.upgrade:hover:not(:disabled) {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.plan-select-button.downgrade {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+.plan-select-button.downgrade:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+}
+
+.plan-select-button.update_payment {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.plan-select-button.update_payment:hover:not(:disabled) {
+    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Loading State */
+.subscription-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.subscription-loading p {
+    font-size: 0.95rem;
+    opacity: 0.8;
+}
+
 @media (max-width: 768px) {
     .subscription-card {
         padding: 32px 24px;
