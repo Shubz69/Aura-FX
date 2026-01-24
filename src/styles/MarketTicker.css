@@ -414,17 +414,17 @@
 }
 
 .market-modal-content {
-  padding: 16px 20px;
+  padding: 12px 16px;
   overflow-y: auto;
   flex: 1;
 }
 
 /* ============================================================================
-   Market Groups in Modal - Compact Grid
+   Market Groups in Modal - Ultra Compact Grid
    ============================================================================ */
 
 .market-group {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .market-group:last-child {
@@ -434,28 +434,28 @@
 .market-group-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .market-group-icon {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
 .market-group-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 4px;
 }
 
 /* ============================================================================
-   Market Item in Modal - SLIM TILES
+   Market Item in Modal - ULTRA COMPACT (just symbol + price)
    ============================================================================ */
 
 .market-item {
@@ -463,70 +463,66 @@
   justify-content: space-between;
   align-items: center;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  /* Compact padding */
-  padding: 8px 12px;
-  transition: all 0.2s ease;
-  /* Slim height */
-  min-height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  padding: 4px 8px;
+  transition: all 0.15s ease;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
 }
 
 .market-item:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .market-item.delayed {
-  border-style: dashed;
-  border-color: rgba(245, 158, 11, 0.2);
+  opacity: 0.7;
 }
 
 .market-item.flash-green {
-  animation: flashGreen 0.5s ease;
+  animation: flashGreen 0.4s ease;
 }
 
 .market-item.flash-red {
-  animation: flashRed 0.5s ease;
+  animation: flashRed 0.4s ease;
 }
 
 .market-item-info {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  gap: 0;
 }
 
 .market-item-symbol {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
-  font-size: 0.82rem;
-  color: white;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .market-item-delayed {
-  font-size: 0.6rem;
-  color: #F59E0B;
-  opacity: 0.7;
+  display: none;
 }
 
 .market-item-price {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
+  align-items: center;
+  gap: 4px;
 }
 
 .market-item-value {
   font-family: 'Space Grotesk', 'SF Mono', monospace;
-  font-weight: 600;
-  font-size: 0.88rem;
-  color: white;
+  font-weight: 500;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .market-item-change {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 500;
+  display: none;
 }
 
 .market-item-change.up {
@@ -538,9 +534,8 @@
 }
 
 .market-item-change.loading {
-  color: rgba(255, 255, 255, 0.35);
-  font-style: italic;
-  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.55rem;
 }
 
 /* ============================================================================
@@ -617,21 +612,22 @@
   }
   
   .market-group-items {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 3px;
   }
   
   .market-item {
-    padding: 6px 10px;
-    min-height: 38px;
+    padding: 3px 6px;
+    height: 24px;
+    min-height: 24px;
   }
   
   .market-item-symbol {
-    font-size: 0.78rem;
+    font-size: 0.65rem;
   }
   
   .market-item-value {
-    font-size: 0.82rem;
+    font-size: 0.6rem;
   }
 }
 
@@ -676,23 +672,24 @@
   }
   
   .market-group-items {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
   
   .market-item {
-    padding: 5px 8px;
-    min-height: 34px;
+    padding: 2px 5px;
+    height: 22px;
+    min-height: 22px;
   }
   
   .market-item-symbol {
-    font-size: 0.72rem;
+    font-size: 0.6rem;
   }
   
   .market-item-value {
-    font-size: 0.78rem;
+    font-size: 0.55rem;
   }
   
   .market-item-change {
-    font-size: 0.65rem;
+    display: none;
   }
 }

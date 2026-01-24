@@ -67,7 +67,7 @@ const TickerItem = memo(({
   );
 });
 
-// Market item for modal (memoized)
+// Market item for modal - ultra compact (just symbol + price)
 const MarketItem = memo(({ 
   symbol, 
   displayName, 
@@ -84,25 +84,14 @@ const MarketItem = memo(({
   const hasPrice = price && parseFloat(price) > 0;
   
   return (
-    <div className={`market-item ${isUp ? 'up' : 'down'} ${flashClass} ${delayed ? 'delayed' : ''}`}>
+    <div className={`market-item ${flashClass} ${delayed ? 'delayed' : ''}`}>
       <div className="market-item-info">
         <span className="market-item-symbol">{displayName || symbol}</span>
-        {delayed && <span className="market-item-delayed">Delayed</span>}
       </div>
       <div className="market-item-price">
-        {hasPrice ? (
-          <>
-            <span className="market-item-value">{price}</span>
-            <span className={`market-item-change ${isUp ? 'up' : 'down'}`}>
-              {changeSign || (isUp ? '+' : '-')}{change} ({changePercent}%)
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="market-item-value"><PriceLoading /></span>
-            <span className="market-item-change loading">Loading...</span>
-          </>
-        )}
+        <span className="market-item-value">
+          {hasPrice ? price : '---'}
+        </span>
       </div>
     </div>
   );
@@ -188,6 +177,7 @@ function MarketTicker({
   const [activeCategory, setActiveCategory] = useState(null);
   const [showModal, setShowModal] = useState(false);
   
+  // When modal is open, fetch ALL symbols (not just beginner set)
   const {
     loading,
     connected,
@@ -196,7 +186,7 @@ function MarketTicker({
     getPricesArray,
     getPricesGrouped,
     getHealth
-  } = useLivePrices({ beginnerMode: !activeCategory, category: activeCategory });
+  } = useLivePrices({ beginnerMode: !showModal && !activeCategory, category: activeCategory });
 
   const pricesArray = getPricesArray();
   const groupedPrices = getPricesGrouped();
