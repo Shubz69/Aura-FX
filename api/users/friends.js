@@ -9,8 +9,13 @@ function generateRequestId() {
   return `fr_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// Track if table has been created this session
+let friendsTableCreated = false;
+
 // Ensure friends table exists
 async function ensureFriendsTable() {
+  if (friendsTableCreated) return true;
+  
   try {
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS friends (
@@ -26,14 +31,26 @@ async function ensureFriendsTable() {
         INDEX idx_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    friendsTableCreated = true;
+    console.log('Friends table ready');
+    return true;
   } catch (error) {
-    // Table might already exist or foreign keys might fail - that's ok
-    console.log('Friends table check:', error.code || 'OK');
+    console.log('Friends table check:', error.code || error.message);
+    // Even if CREATE fails, table might exist
+    friendsTableCreated = true;
+    return true;
   }
 }
 
-// Initialize table
-ensureFriendsTable();
+// Helper to get rows from query result
+function getRows(result) {
+  if (!result) return [];
+  if (Array.isArray(result)) {
+    if (result.length > 0 && Array.isArray(result[0])) return result[0];
+    return result;
+  }
+  return [];
+}
 
 // Decode JWT token
 function decodeToken(token) {
@@ -59,6 +76,9 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Ensure friends table exists
+  await ensureFriendsTable();
 
   // Auth check
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -176,10 +196,18 @@ module.exports = async (req, res) => {
 
     // POST /api/users/friends/request - Send friend request
     if (req.method === 'POST' && action === 'request') {
-      const { friendId } = req.body || {};
+      // Parse body if needed
+      let body = req.body;
+      if (typeof body === 'string') {
+        try { body = JSON.parse(body); } catch (e) { body = {}; }
+      }
+      
+      const friendId = body?.friendId;
+      
+      console.log('Friend request body:', { body, friendId, currentUserId });
       
       if (!friendId) {
-        return res.status(400).json({ success: false, message: 'Friend ID required' });
+        return res.status(400).json({ success: false, message: 'Friend ID required', received: body });
       }
 
       const friendIdNum = parseInt(friendId);

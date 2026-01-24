@@ -599,19 +599,28 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     {/* Avatar */}
                     <div style={{ position: 'absolute', bottom: '-60px', left: '40px', zIndex: 5 }}>
                         <div style={{ position: 'relative', width: '130px', height: '130px' }}>
-                            {profile.avatar && !profile.avatar.includes('avatar_ai') ? (
-                                <img src={getAvatarPath(profile.avatar)} alt="Avatar" style={{
-                                    width: '130px', height: '130px', borderRadius: '50%', objectFit: 'cover',
-                                    border: `5px solid ${tierColor}`, boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px ${tierColor}60`
-                                }} onError={(e) => e.target.style.display = 'none'} />
-                            ) : (
-                                <div style={{
-                                    width: '130px', height: '130px', borderRadius: '50%',
-                                    background: `linear-gradient(135deg, ${tierColor}, ${tierColor}80)`,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '2.8rem', fontWeight: 700, color: 'white',
-                                    border: `5px solid ${tierColor}`, boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5)`
-                                }}>{(profile.username || 'U')[0].toUpperCase()}</div>
+                            {/* Always show initial as fallback behind image */}
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0,
+                                width: '130px', height: '130px', borderRadius: '50%',
+                                background: `linear-gradient(135deg, ${tierColor}, ${tierColor}80)`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '2.8rem', fontWeight: 700, color: 'white',
+                                border: `5px solid ${tierColor}`, boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5)`
+                            }}>{(profile.username || profile.name || 'U')[0].toUpperCase()}</div>
+                            
+                            {/* Avatar image on top if available */}
+                            {profile.avatar && (
+                                <img 
+                                    src={getAvatarPath(profile.avatar)} 
+                                    alt="Avatar" 
+                                    style={{
+                                        position: 'absolute', top: 0, left: 0,
+                                        width: '130px', height: '130px', borderRadius: '50%', objectFit: 'cover',
+                                        border: `5px solid ${tierColor}`, boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px ${tierColor}60`
+                                    }} 
+                                    onError={(e) => { e.target.style.display = 'none'; }} 
+                                />
                             )}
                             
                             {/* Online indicator */}

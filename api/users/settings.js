@@ -4,6 +4,49 @@
 
 const { executeQuery } = require('../db');
 
+// Track if table has been created this session
+let settingsTableCreated = false;
+
+// Ensure user_settings table exists
+async function ensureSettingsTable() {
+  if (settingsTableCreated) return true;
+  
+  try {
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS user_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL UNIQUE,
+        preferred_markets JSON,
+        trading_sessions JSON,
+        risk_profile VARCHAR(50) DEFAULT 'moderate',
+        trading_style VARCHAR(50) DEFAULT 'day_trader',
+        experience_level VARCHAR(50) DEFAULT 'beginner',
+        theme VARCHAR(20) DEFAULT 'dark',
+        notifications_enabled BOOLEAN DEFAULT TRUE,
+        email_notifications BOOLEAN DEFAULT TRUE,
+        sound_enabled BOOLEAN DEFAULT TRUE,
+        compact_mode BOOLEAN DEFAULT FALSE,
+        show_online_status BOOLEAN DEFAULT TRUE,
+        profile_visibility VARCHAR(20) DEFAULT 'public',
+        show_trading_stats BOOLEAN DEFAULT TRUE,
+        show_achievements BOOLEAN DEFAULT TRUE,
+        ai_personality VARCHAR(50) DEFAULT 'professional',
+        ai_chart_preference VARCHAR(50) DEFAULT 'candlestick',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    settingsTableCreated = true;
+    console.log('User settings table ready');
+    return true;
+  } catch (error) {
+    console.log('Settings table check:', error.code || error.message);
+    settingsTableCreated = true;
+    return true;
+  }
+}
+
 // Decode JWT token
 function decodeToken(token) {
   if (!token) return null;
@@ -60,6 +103,9 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Ensure settings table exists
+  await ensureSettingsTable();
 
   // Auth check
   const token = req.headers.authorization?.replace('Bearer ', '');
