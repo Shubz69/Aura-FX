@@ -4,6 +4,11 @@
 
 const { executeQuery } = require('../db');
 
+// Generate unique request ID for logging
+function generateRequestId() {
+  return `fr_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 // Ensure friends table exists
 async function ensureFriendsTable() {
   try {

@@ -11,6 +11,11 @@
 const { executeQuery } = require('./db');
 const { getCached, setCached } = require('./cache');
 
+// Generate unique request ID for logging
+function generateRequestId() {
+  return `lb_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 // Trading-style usernames for demo users
 const DEMO_USERNAMES = [
   'Zephyr_FX', 'Kai_Trader', 'Luna_Charts', 'Orion_Pips', 'Phoenix_Gold',
@@ -163,25 +168,33 @@ async function seedDemoUsers() {
 }
 
 module.exports = async (req, res) => {
+  const requestId = generateRequestId();
+  const startTime = Date.now();
+  
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
+  if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed', requestId });
 
   try {
     const timeframe = req.query.timeframe || 'all-time';
     const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+    
+    console.log(`[${requestId}] Leaderboard request: timeframe=${timeframe}, limit=${limit}`);
     
     // Check cache (1 minute for time-based, 5 minutes for all-time)
     const cacheTTL = timeframe === 'all-time' ? 300000 : 60000;
     const cacheKey = `leaderboard_v3_${timeframe}_${limit}`;
     const cached = getCached(cacheKey, cacheTTL);
     if (cached) {
-      return res.status(200).json({ success: true, leaderboard: cached, cached: true, timeframe });
+      console.log(`[${requestId}] Cache HIT (${Date.now() - startTime}ms)`);
+      return res.status(200).json({ success: true, leaderboard: cached, cached: true, timeframe, requestId });
     }
+    
+    console.log(`[${requestId}] Cache MISS, querying database...`);
 
     // Ensure tables exist
     await ensureXpEventsTable();
@@ -245,16 +258,21 @@ module.exports = async (req, res) => {
     // Cache result
     setCached(cacheKey, formattedLeaderboard);
 
+    const queryTime = Date.now() - startTime;
+    console.log(`[${requestId}] Query completed in ${queryTime}ms, returning ${formattedLeaderboard.length} users`);
+    
     return res.status(200).json({ 
       success: true, 
       leaderboard: formattedLeaderboard,
       timeframe,
       periodStart: boundaries.start?.toISOString() || null,
-      periodEnd: boundaries.end?.toISOString() || null
+      periodEnd: boundaries.end?.toISOString() || null,
+      requestId,
+      queryTimeMs: queryTime
     });
 
   } catch (error) {
-    console.error('Leaderboard error:', error);
-    return res.status(200).json({ success: true, leaderboard: [], error: error.message });
+    console.error(`[${requestId}] Leaderboard error:`, error);
+    return res.status(200).json({ success: true, leaderboard: [], error: error.message, requestId });
   }
 };

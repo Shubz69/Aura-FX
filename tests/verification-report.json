@@ -1,0 +1,225 @@
+{
+  "passed": 41,
+  "failed": 0,
+  "warnings": 0,
+  "sections": {
+    "leaderboard": {
+      "passed": [
+        {
+          "item": "Daily leaderboard uses UTC boundaries",
+          "details": ""
+        },
+        {
+          "item": "Weekly uses ISO week (Mon-Sun)",
+          "details": ""
+        },
+        {
+          "item": "Monthly uses calendar month",
+          "details": ""
+        },
+        {
+          "item": "All-time ranks by level DESC",
+          "details": ""
+        },
+        {
+          "item": "Each tab uses different query/dataset",
+          "details": ""
+        },
+        {
+          "item": "Tie-breakers are deterministic",
+          "details": ""
+        },
+        {
+          "item": "Uses SUM(xp_events.amount) for periods",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "prize_safety": {
+      "passed": [
+        {
+          "item": "Demo users are flagged (is_demo=true)",
+          "details": ""
+        },
+        {
+          "item": "Demo users excluded from prize eligibility",
+          "details": ""
+        },
+        {
+          "item": "Audit log exists via xp_events table",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "xp_ledger": {
+      "passed": [
+        {
+          "item": "xp_events table schema defined",
+          "details": ""
+        },
+        {
+          "item": "update-xp API logs to xp_events",
+          "details": ""
+        },
+        {
+          "item": "xp_events has proper indexes",
+          "details": ""
+        },
+        {
+          "item": "XP amounts validated (positive)",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "performance": {
+      "passed": [
+        {
+          "item": "Composite index on (user_id, created_at)",
+          "details": ""
+        },
+        {
+          "item": "Leaderboard results are cached",
+          "details": ""
+        },
+        {
+          "item": "DB connection pool configured",
+          "details": "Check api/db.js"
+        },
+        {
+          "item": "Queries use LIMIT for pagination",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "profile": {
+      "passed": [
+        {
+          "item": "Settings button opens modal",
+          "details": ""
+        },
+        {
+          "item": "Settings GET/PUT API implemented",
+          "details": ""
+        },
+        {
+          "item": "Friend request/accept/reject flow",
+          "details": ""
+        },
+        {
+          "item": "Friend button state changes",
+          "details": ""
+        },
+        {
+          "item": "Loading states for buttons",
+          "details": ""
+        },
+        {
+          "item": "Toast feedback for actions",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "chat_ui": {
+      "passed": [
+        {
+          "item": "Message grouping implemented",
+          "details": ""
+        },
+        {
+          "item": "Gap/margin controls in CSS",
+          "details": ""
+        },
+        {
+          "item": "Scroll behavior implemented",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "observability": {
+      "passed": [
+        {
+          "item": "RequestId logging",
+          "details": ""
+        },
+        {
+          "item": "Timing/performance logging",
+          "details": ""
+        },
+        {
+          "item": "Health endpoint exists",
+          "details": ""
+        },
+        {
+          "item": "Cache hit/miss in response",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "unit_tests": {
+      "passed": [
+        {
+          "item": "Daily UTC boundary calculation",
+          "details": ""
+        },
+        {
+          "item": "Weekly ISO week (Monday) calculation",
+          "details": ""
+        },
+        {
+          "item": "Monthly calendar boundary calculation",
+          "details": ""
+        },
+        {
+          "item": "Demo user exclusion filter",
+          "details": ""
+        },
+        {
+          "item": "Level from XP calculation",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "integration": {
+      "passed": [
+        {
+          "item": "Leaderboard API route configured",
+          "details": ""
+        },
+        {
+          "item": "Friends API route configured",
+          "details": ""
+        },
+        {
+          "item": "Settings API route configured",
+          "details": ""
+        },
+        {
+          "item": "Cron job route configured",
+          "details": ""
+        },
+        {
+          "item": "Demo seed route configured",
+          "details": ""
+        }
+      ],
+      "failed": [],
+      "warnings": []
+    }
+  }
+}
