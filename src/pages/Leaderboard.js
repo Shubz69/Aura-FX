@@ -31,20 +31,44 @@ const Leaderboard = () => {
         }
 
         const fetchLeaderboard = async () => {
+            setLoading(true);
+            setError(null);
+            
             try {
                 const response = await Api.getLeaderboard(selectedTimeframe);
                 
+                // Debug logging with requestId
+                const requestId = response?.data?.requestId || 'unknown';
+                console.log(`[${requestId}] Leaderboard response for ${selectedTimeframe}:`, {
+                    success: response?.data?.success,
+                    count: response?.data?.leaderboard?.length || 0,
+                    cached: response?.data?.cached,
+                    error: response?.data?.error
+                });
+                
+                if (response?.data?.success === false) {
+                    console.error(`[${requestId}] API error:`, response.data.error);
+                }
+                
                 if (response && response.data) {
-                    const data = Array.isArray(response.data) ? response.data : response.data.leaderboard || [];
+                    const data = Array.isArray(response.data) 
+                        ? response.data 
+                        : (response.data.leaderboard || []);
                     setLeaderboardData(data);
                 } else {
+                    console.warn('Empty response from leaderboard API');
                     setLeaderboardData([]);
                 }
-                setLoading(false);
             } catch (err) {
                 console.error('Error fetching leaderboard:', err);
+                // Log more details for debugging
+                if (err.response) {
+                    console.error('Response status:', err.response.status);
+                    console.error('Response data:', err.response.data);
+                }
                 setError('Failed to load leaderboard. Please try again.');
                 setLeaderboardData([]);
+            } finally {
                 setLoading(false);
             }
         };
@@ -97,124 +121,146 @@ const Leaderboard = () => {
         return `+${(user?.xpGain || user?.xp || 0).toLocaleString()} XP`;
     };
 
-    const Top3Podium = ({ top3 }) => (
-        <div className="top3-podium">
-            <div className="podium-container">
-                {/* 2nd Place */}
-                <div className="podium-place second-place">
-                    <div className="podium-avatar">
-                        <img src={`/avatars/${top3[1]?.avatar || 'avatar_ai.png'}`} alt={top3[1]?.username} />
-                        {top3[1]?.isDemo && <span className="demo-badge" title="Demo User">🤖</span>}
-                    </div>
-                    <div className="podium-info">
-                        <div className="podium-rank">🥈</div>
-                        <div className="podium-username">{top3[1]?.username || 'Loading...'}</div>
-                        <div className="podium-xp">{formatXp(top3[1])}</div>
-                        <div className="podium-xp-label">{getXpLabel()}</div>
-                        <div className="podium-level">Level {top3[1]?.level || 0}</div>
+    const Top3Podium = ({ top3 }) => {
+        // Check if we have enough data for podium
+        const hasData = top3 && top3.length > 0 && top3[0]?.username;
+        
+        if (!hasData) {
+            return (
+                <div className="top3-podium">
+                    <div className="podium-empty">
+                        <div className="empty-icon">🏆</div>
+                        <div className="empty-text">No participants yet</div>
+                        <div className="empty-subtext">Be the first to earn XP and claim the top spot!</div>
                     </div>
                 </div>
-
-                {/* 1st Place */}
-                <div className="podium-place first-place">
+            );
+        }
+        
+        const renderPodiumPlace = (user, place, emoji) => {
+            if (!user) {
+                return (
+                    <div className={`podium-place ${place}-place empty-slot`}>
+                        <div className="podium-avatar empty">
+                            <div className="empty-avatar-placeholder">?</div>
+                        </div>
+                        <div className="podium-info">
+                            <div className="podium-rank">{emoji}</div>
+                            <div className="podium-username empty">Available</div>
+                            <div className="podium-xp empty">— XP</div>
+                        </div>
+                    </div>
+                );
+            }
+            
+            return (
+                <div className={`podium-place ${place}-place`}>
                     <div className="podium-avatar">
-                        <img src={`/avatars/${top3[0]?.avatar || 'avatar_ai.png'}`} alt={top3[0]?.username} />
-                        <div className="crown">👑</div>
-                        {top3[0]?.isDemo && <span className="demo-badge" title="Demo User">🤖</span>}
+                        <img src={`/avatars/${user.avatar || 'avatar_ai.png'}`} alt={user.username} />
+                        {place === 'first' && <div className="crown">👑</div>}
+                        {user.isDemo && <span className="demo-badge" title="Demo User">🤖</span>}
                     </div>
                     <div className="podium-info">
-                        <div className="podium-rank">🥇</div>
-                        <div className="podium-username">{top3[0]?.username || 'Loading...'}</div>
-                        <div className="podium-xp">{formatXp(top3[0])}</div>
+                        <div className="podium-rank">{emoji}</div>
+                        <div className="podium-username">{user.username}</div>
+                        <div className="podium-xp">{formatXp(user)}</div>
                         <div className="podium-xp-label">{getXpLabel()}</div>
-                        <div className="podium-level">Level {top3[0]?.level || 0}</div>
+                        <div className="podium-level">Level {user.level || 1}</div>
                     </div>
                 </div>
-
-                {/* 3rd Place */}
-                <div className="podium-place third-place">
-                    <div className="podium-avatar">
-                        <img src={`/avatars/${top3[2]?.avatar || 'avatar_ai.png'}`} alt={top3[2]?.username} />
-                        {top3[2]?.isDemo && <span className="demo-badge" title="Demo User">🤖</span>}
-                    </div>
-                    <div className="podium-info">
-                        <div className="podium-rank">🥉</div>
-                        <div className="podium-username">{top3[2]?.username || 'Loading...'}</div>
-                        <div className="podium-xp">{formatXp(top3[2])}</div>
-                        <div className="podium-xp-label">{getXpLabel()}</div>
-                        <div className="podium-level">Level {top3[2]?.level || 0}</div>
-                    </div>
+            );
+        };
+        
+        return (
+            <div className="top3-podium">
+                <div className="podium-container">
+                    {renderPodiumPlace(top3[1], 'second', '🥈')}
+                    {renderPodiumPlace(top3[0], 'first', '🥇')}
+                    {renderPodiumPlace(top3[2], 'third', '🥉')}
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
-    const Top10List = ({ data }) => (
-        <div className="top10-list">
-            <h3 className="section-title">
-                🏆 TOP 10 LEADERBOARD 
-                <span className="timeframe-label">
-                    {selectedTimeframe === 'all-time' ? ' - All Time' : ` - ${getXpLabel()}`}
-                </span>
-            </h3>
-            <div className="leaderboard-table">
-                <div className="table-header">
-                    <div className="header-rank">RANK</div>
-                    <div className="header-user">USER</div>
-                    <div className="header-level">LEVEL</div>
-                    <div className="header-xp">
-                        {selectedTimeframe === 'all-time' ? 'TOTAL XP' : `XP ${getXpLabel().toUpperCase()}`}
-                    </div>
-                    <div className="header-status">STATUS</div>
-                </div>
-                {data.map((user, index) => (
-                    <div key={user.id || index} className={`leaderboard-row ${index < 3 ? 'top3-row' : ''} ${user.isDemo ? 'demo-row' : ''}`}>
-                        <div className="rank-cell">
-                            <span className="rank-number">{getRankEmoji(user.rank)}</span>
+    const Top10List = ({ data }) => {
+        const hasData = data && data.length > 0;
+        
+        return (
+            <div className="top10-list">
+                <h3 className="section-title">
+                    🏆 TOP 10 LEADERBOARD 
+                    <span className="timeframe-label">
+                        {selectedTimeframe === 'all-time' ? ' - All Time' : ` - ${getXpLabel()}`}
+                    </span>
+                </h3>
+                <div className="leaderboard-table">
+                    <div className="table-header">
+                        <div className="header-rank">RANK</div>
+                        <div className="header-user">USER</div>
+                        <div className="header-level">LEVEL</div>
+                        <div className="header-xp">
+                            {selectedTimeframe === 'all-time' ? 'TOTAL XP' : `XP ${getXpLabel().toUpperCase()}`}
                         </div>
-                        <div className="user-cell">
-                            <div className="user-avatar">
-                                <img src={`/avatars/${user.avatar || 'avatar_ai.png'}`} alt={user.username} />
-                                {user.isDemo && <span className="demo-indicator" title="Demo User">🤖</span>}
+                        <div className="header-status">STATUS</div>
+                    </div>
+                    {!hasData ? (
+                        <div className="leaderboard-row empty-row">
+                            <div className="empty-table-message">
+                                <span className="empty-icon">📊</span>
+                                <span>No participants yet for this timeframe. Start earning XP to appear here!</span>
                             </div>
-                            <div className="user-info">
-                                <div className="username">
-                                    {user.username}
-                                    {user.isDemo && <span className="demo-tag">Demo</span>}
+                        </div>
+                    ) : (
+                        data.map((user, index) => (
+                            <div key={user.id || index} className={`leaderboard-row ${index < 3 ? 'top3-row' : ''} ${user.isDemo ? 'demo-row' : ''}`}>
+                                <div className="rank-cell">
+                                    <span className="rank-number">{getRankEmoji(user.rank)}</span>
                                 </div>
-                                <div className="user-role">{user.role}</div>
+                                <div className="user-cell">
+                                    <div className="user-avatar">
+                                        <img src={`/avatars/${user.avatar || 'avatar_ai.png'}`} alt={user.username} />
+                                        {user.isDemo && <span className="demo-indicator" title="Demo User">🤖</span>}
+                                    </div>
+                                    <div className="user-info">
+                                        <div className="username">
+                                            {user.username}
+                                            {user.isDemo && <span className="demo-tag">Demo</span>}
+                                        </div>
+                                        <div className="user-role">{user.role}</div>
+                                    </div>
+                                </div>
+                                <div className="level-cell">
+                                    <div className={`level-badge ${getLevelBadge(user.level).class}`}>
+                                        {getLevelBadge(user.level).text}
+                                    </div>
+                                </div>
+                                <div className="xp-cell">
+                                    <div className="xp-value">{formatXp(user)}</div>
+                                    <div className="xp-bar">
+                                        <div 
+                                            className="xp-fill" 
+                                            style={{ 
+                                                width: `${selectedTimeframe === 'all-time' 
+                                                    ? Math.min(((user.xp || 0) / 50000) * 100, 100)
+                                                    : Math.min(((user.xpGain || user.xp || 0) / 500) * 100, 100)
+                                                }%` 
+                                            }}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div className="status-cell">
+                                    {user.isDemo 
+                                        ? <span className="demo-status">🤖 Demo</span>
+                                        : getStrikeDisplay(user.strikes)
+                                    }
+                                </div>
                             </div>
-                        </div>
-                        <div className="level-cell">
-                            <div className={`level-badge ${getLevelBadge(user.level).class}`}>
-                                {getLevelBadge(user.level).text}
-                            </div>
-                        </div>
-                        <div className="xp-cell">
-                            <div className="xp-value">{formatXp(user)}</div>
-                            <div className="xp-bar">
-                                <div 
-                                    className="xp-fill" 
-                                    style={{ 
-                                        width: `${selectedTimeframe === 'all-time' 
-                                            ? Math.min(((user.xp || 0) / 50000) * 100, 100)
-                                            : Math.min(((user.xpGain || user.xp || 0) / 500) * 100, 100)
-                                        }%` 
-                                    }}
-                                ></div>
-                            </div>
-                        </div>
-                        <div className="status-cell">
-                            {user.isDemo 
-                                ? <span className="demo-status">🤖 Demo</span>
-                                : getStrikeDisplay(user.strikes)
-                            }
-                        </div>
-                    </div>
-                ))}
+                        ))
+                    )}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     if (loading) {
         return (

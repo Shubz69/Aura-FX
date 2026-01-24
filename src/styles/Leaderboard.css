@@ -564,6 +564,78 @@
     box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
 }
 
+/* Empty States */
+.podium-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    text-align: center;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 20px;
+    border: 2px dashed rgba(139, 92, 246, 0.3);
+    margin: 20px auto;
+    max-width: 500px;
+}
+
+.podium-empty .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.podium-empty .empty-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-normal, #fff);
+    margin-bottom: 10px;
+}
+
+.podium-empty .empty-subtext {
+    font-size: 1rem;
+    color: var(--text-muted, #888);
+}
+
+.podium-place.empty-slot {
+    opacity: 0.5;
+}
+
+.podium-avatar.empty {
+    background: rgba(139, 92, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-avatar-placeholder {
+    font-size: 2rem;
+    color: var(--text-muted, #888);
+}
+
+.podium-username.empty,
+.podium-xp.empty {
+    color: var(--text-muted, #888);
+}
+
+.empty-row {
+    padding: 30px !important;
+}
+
+.empty-table-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    color: var(--text-muted, #888);
+    font-size: 1rem;
+}
+
+.empty-table-message .empty-icon {
+    font-size: 1.5rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .leaderboard-main-title {
