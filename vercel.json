@@ -261,6 +261,10 @@
     {
       "source": "/api/cron/refresh-leaderboard",
       "destination": "/api/cron/refresh-leaderboard.js"
+    },
+    {
+      "source": "/api/seed/demo-leaderboard",
+      "destination": "/api/seed/demo-leaderboard.js"
     }
   ],
   "crons": [

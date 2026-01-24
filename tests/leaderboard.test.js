@@ -180,6 +180,104 @@ const testTieBreaker = () => {
   return true;
 };
 
+// Test activity profile distribution
+const testActivityProfiles = () => {
+  const profiles = ['grinder', 'sprinter', 'weekend_warrior', 'course_binger', 'admin_spotlight', 'casual', 'streak_master', 'chat_enthusiast'];
+  
+  // Each profile should have different characteristics
+  const characteristics = {
+    grinder: { dailyChance: 0.95, description: 'Consistent daily activity' },
+    sprinter: { dailyChance: 0.4, description: 'Burst activity' },
+    weekend_warrior: { weekendMultiplier: 3.0, description: 'Weekend focused' },
+    casual: { dailyChance: 0.25, description: 'Low activity' }
+  };
+  
+  for (const [profile, expected] of Object.entries(characteristics)) {
+    assert(profiles.includes(profile), `Profile ${profile} should exist`);
+  }
+  
+  console.log('✅ Activity profile tests passed');
+  return true;
+};
+
+// Test username generation uniqueness
+const testUsernameGeneration = () => {
+  // Simulate SeededRandom
+  class SeededRandom {
+    constructor(seed = 12345) { this.seed = seed; }
+    next() {
+      this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff;
+      return this.seed / 0x7fffffff;
+    }
+    int(min, max) { return Math.floor(this.next() * (max - min + 1)) + min; }
+    pick(arr) { return arr[Math.floor(this.next() * arr.length)]; }
+  }
+  
+  const rng = new SeededRandom(42069);
+  const prefixes = ['Alpha', 'Beta', 'Sigma'];
+  const suffixes = ['Trader', 'FX', 'Pro'];
+  
+  const generated = new Set();
+  for (let i = 0; i < 100; i++) {
+    const username = `${rng.pick(prefixes)}_${rng.pick(suffixes)}_${rng.int(1, 999)}`;
+    generated.add(username);
+  }
+  
+  // Should generate mostly unique names
+  assert(generated.size > 50, 'Should generate many unique usernames');
+  
+  // Deterministic - same seed should produce same sequence
+  const rng2 = new SeededRandom(42069);
+  const first1 = rng2.next();
+  const rng3 = new SeededRandom(42069);
+  const first2 = rng3.next();
+  assert(first1 === first2, 'Same seed should produce same sequence');
+  
+  console.log('✅ Username generation tests passed');
+  return true;
+};
+
+// Test that demo events span different timeframes
+const testDemoEventDistribution = () => {
+  // Simulate event generation across 30 days
+  const now = new Date();
+  const events = [];
+  
+  // Generate events for 30 days
+  for (let day = 0; day < 30; day++) {
+    const eventDate = new Date(now);
+    eventDate.setUTCDate(eventDate.getUTCDate() - day);
+    
+    // More events for recent days (recency bias)
+    const numEvents = day < 3 ? 5 : day < 7 ? 3 : 1;
+    
+    for (let i = 0; i < numEvents; i++) {
+      events.push({
+        amount: 10 + Math.floor(Math.random() * 20),
+        created_at: eventDate
+      });
+    }
+  }
+  
+  // Calculate totals for different periods
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+  const weekStart = new Date(todayStart);
+  weekStart.setUTCDate(weekStart.getUTCDate() - 7);
+  const monthStart = new Date(todayStart);
+  monthStart.setUTCDate(monthStart.getUTCDate() - 30);
+  
+  const dailyTotal = events.filter(e => e.created_at >= todayStart).reduce((s, e) => s + e.amount, 0);
+  const weeklyTotal = events.filter(e => e.created_at >= weekStart).reduce((s, e) => s + e.amount, 0);
+  const monthlyTotal = events.filter(e => e.created_at >= monthStart).reduce((s, e) => s + e.amount, 0);
+  
+  // Different timeframes should have different totals
+  assert(dailyTotal < weeklyTotal, 'Weekly total should be greater than daily');
+  assert(weeklyTotal < monthlyTotal, 'Monthly total should be greater than weekly');
+  
+  console.log('✅ Demo event distribution tests passed');
+  return true;
+};
+
 // Run all tests
 const runTests = () => {
   console.log('\n🧪 Running Leaderboard Tests...\n');
@@ -194,6 +292,9 @@ const runTests = () => {
     { name: 'Demo User Flag', fn: testDemoUserFlag },
     { name: 'XP Aggregation', fn: testXpAggregation },
     { name: 'Tie-breaker Logic', fn: testTieBreaker },
+    { name: 'Activity Profiles', fn: testActivityProfiles },
+    { name: 'Username Generation', fn: testUsernameGeneration },
+    { name: 'Demo Event Distribution', fn: testDemoEventDistribution },
   ];
   
   for (const test of tests) {

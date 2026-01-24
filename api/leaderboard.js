@@ -101,100 +101,57 @@ async function ensureDemoColumn() {
   }
 }
 
+// Import demo seeder
+let seedDemoLeaderboard;
+try {
+  seedDemoLeaderboard = require('./seed/demo-leaderboard').seedDemoLeaderboard;
+} catch (e) {
+  seedDemoLeaderboard = null;
+}
+
 // Seed demo users with realistic XP distributions
 async function seedDemoUsers() {
-  const seededKey = 'leaderboard_seeded_v3';
+  const seededKey = 'leaderboard_seeded_v4';
   const cached = getCached(seededKey, 86400000); // 24h
   if (cached) return;
 
   try {
     // Check if we have enough real users
     const realUsersResult = await executeQuery(
-      'SELECT COUNT(*) as count FROM users WHERE is_demo = FALSE OR is_demo IS NULL'
+      'SELECT COUNT(*) as count FROM users WHERE (is_demo = FALSE OR is_demo IS NULL) AND email NOT LIKE ?',
+      ['%@aurafx.demo']
     );
     const realCount = getRows(realUsersResult)[0]?.count || 0;
     
-    // Only seed if we have very few real users
-    if (realCount >= 10) {
+    // Skip if we have enough real users
+    if (realCount >= 15) {
       setCached(seededKey, true);
       return;
     }
 
-    // Create demo users
+    // Use advanced seeder if available
+    if (seedDemoLeaderboard) {
+      await seedDemoLeaderboard({ minUsers: 30, maxUsers: 50 });
+      setCached(seededKey, true);
+      return;
+    }
+
+    // Fallback: Create basic demo users
     for (let i = 0; i < DEMO_USERNAMES.length; i++) {
       const username = DEMO_USERNAMES[i];
-      const email = `demo_${username.toLowerCase()}@aurafx.demo`;
+      const email = `demo_${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@aurafx.demo`;
       
-      // Check if exists
       const existingResult = await executeQuery('SELECT id FROM users WHERE email = ?', [email]);
       const existing = getRows(existingResult);
       
-      let userId;
       if (existing.length === 0) {
-        // Create user with is_demo = true
-        const totalXP = Math.floor(1000 + Math.random() * 49000); // 1k-50k XP
+        const totalXP = Math.floor(500 + Math.random() * 10000);
         const level = getLevelFromXP(totalXP);
         
-        const insertResult = await executeQuery(
+        await executeQuery(
           `INSERT INTO users (email, username, name, password, role, xp, level, is_demo, created_at) 
            VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, DATE_SUB(NOW(), INTERVAL ? DAY))`,
-          [email, username, username, 'demo_user_' + Date.now(), 'free', totalXP, level, Math.floor(Math.random() * 60)]
-        );
-        const insertRows = getRows(insertResult);
-        userId = insertRows.insertId || insertResult.insertId;
-      } else {
-        userId = existing[0].id;
-        // Mark as demo if not already
-        await executeQuery('UPDATE users SET is_demo = TRUE WHERE id = ?', [userId]);
-      }
-      
-      if (!userId) continue;
-      
-      // Generate XP events for different timeframes with varied distributions
-      const now = new Date();
-      
-      // Today's XP: 10-150 XP (beatable)
-      const todayXP = Math.floor(10 + (20 - i) * 7 + Math.random() * 30);
-      const todayEvents = Math.floor(1 + Math.random() * 5);
-      for (let j = 0; j < todayEvents; j++) {
-        const eventTime = new Date(now);
-        eventTime.setUTCHours(Math.floor(Math.random() * now.getUTCHours()), Math.floor(Math.random() * 60));
-        
-        await executeQuery(
-          `INSERT INTO xp_events (user_id, amount, source, created_at) 
-           VALUES (?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE amount = amount`,
-          [userId, Math.floor(todayXP / todayEvents), 'message', eventTime]
-        ).catch(() => {});
-      }
-      
-      // This week's XP: 50-500 XP (beatable)
-      const weekXP = Math.floor(50 + (20 - i) * 22 + Math.random() * 100);
-      const weekEvents = Math.floor(3 + Math.random() * 10);
-      for (let j = 0; j < weekEvents; j++) {
-        const daysAgo = Math.floor(Math.random() * 7);
-        const eventTime = new Date(now);
-        eventTime.setUTCDate(eventTime.getUTCDate() - daysAgo);
-        eventTime.setUTCHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
-        
-        await executeQuery(
-          `INSERT INTO xp_events (user_id, amount, source, created_at) VALUES (?, ?, ?, ?)`,
-          [userId, Math.floor(weekXP / weekEvents), 'activity', eventTime]
-        ).catch(() => {});
-      }
-      
-      // This month's XP: 200-2000 XP (beatable)
-      const monthXP = Math.floor(200 + (20 - i) * 90 + Math.random() * 500);
-      const monthEvents = Math.floor(10 + Math.random() * 30);
-      for (let j = 0; j < monthEvents; j++) {
-        const daysAgo = Math.floor(Math.random() * 28);
-        const eventTime = new Date(now);
-        eventTime.setUTCDate(eventTime.getUTCDate() - daysAgo);
-        eventTime.setUTCHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
-        
-        await executeQuery(
-          `INSERT INTO xp_events (user_id, amount, source, created_at) VALUES (?, ?, ?, ?)`,
-          [userId, Math.floor(monthXP / monthEvents), 'login', eventTime]
+          [email, username, username, 'demo_' + Date.now(), 'free', totalXP, level, Math.floor(Math.random() * 60)]
         ).catch(() => {});
       }
     }
