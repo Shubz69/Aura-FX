@@ -79,19 +79,19 @@ const WhyInfinity = () => {
                 {/* Main Content - Split Layout */}
                 <div className="why-main-content">
                     <div className="why-text-section">
-                        <h2 className="why-subtitle">Why Choose AURA FX</h2>
+                        <h2 className="why-subtitle">Built by Traders. For Traders.</h2>
                         <div className="why-divider"></div>
                         <p className="why-text">
-                            AURA FX is a professional trading education platform designed to transform aspiring traders into consistently profitable professionals. We focus exclusively on trading—Forex, Stocks, Crypto, and Futures—with realistic, disciplined approaches that emphasize proper risk management and systematic analysis.
+                            AURA FX is not another retail trading group. We are a professional trading ecosystem built by a team with over 35 years of combined real market experience. Our education is derived from actual execution, live market examples, and institutional-level analysis—not recycled theory or signal selling. We teach you why price moves, who is driving it, and how professional participants operate.
                         </p>
                         <p className="why-text">
-                            Trading requires discipline, education, and patience. We don't promise get-rich-quick schemes. Instead, we teach proven strategies, proper risk management, and the psychological discipline needed for long-term trading success. Our community of 1,200+ traders learns together, shares insights, and builds consistent profitability through systematic approaches.
+                            We offer structured courses across Forex, Stocks, Crypto, Indices, Futures, and Commodities—each designed to develop the skills required for consistent capital growth. Our proprietary AURA AI is a production-grade financial intelligence system that understands market structure, risk management, position sizing, macro drivers, and technical execution across all asset classes. Elite members receive daily market briefs; Premium members receive weekly intelligence reports.
                         </p>
                         <p className="why-text">
-                            Success in trading comes from education, practice, and discipline. Our expert mentors have years of real trading experience and teach strategies that work in real market conditions. Join traders who understand that consistent profitability requires time, dedication, and the right education.
+                            AURA FX runs on secure infrastructure with protected data and controlled access. This is a complete trading ecosystem—not a signals service. We emphasise discipline, process, and consistency over shortcuts. If you are a serious trader seeking professional-grade education, institutional thinking, and a community built for long-term profitability, AURA FX is where you belong.
                         </p>
                         <button className="why-cta-button" onClick={() => navigate('/register')}>
-                            Initialize Trading <FaArrowRight />
+                            Apply for Access <FaArrowRight />
                         </button>
                     </div>
 
@@ -102,9 +102,9 @@ const WhyInfinity = () => {
                             <div className="why-feature-icon">
                                 <FaChartLine />
                             </div>
-                            <h3 className="why-feature-title">Professional Trading Education</h3>
+                            <h3 className="why-feature-title">Institutional-Grade Education</h3>
                             <p className="why-feature-text">
-                                Master institutional-grade trading strategies across Forex, Stocks, Crypto, and Futures. Learn from experts with proven track records in real market conditions.
+                                Learn how institutions think, manage risk, and execute. Our curriculum covers market structure, order flow, liquidity dynamics, and multi-timeframe analysis used by professional trading desks.
                             </p>
                         </div>
                         <div className={`why-feature-card ${visibleSections['feature-1'] ? 'fade-in-up' : ''}`}
@@ -113,9 +113,9 @@ const WhyInfinity = () => {
                             <div className="why-feature-icon">
                                 <FaGraduationCap />
                             </div>
-                            <h3 className="why-feature-title">Risk Management & Discipline</h3>
+                            <h3 className="why-feature-title">Risk-First Methodology</h3>
                             <p className="why-feature-text">
-                                Learn proper risk management, position sizing, and the psychological discipline required for consistent trading success. Avoid common trading mistakes that lead to losses.
+                                Position sizing, R-multiples, drawdown management, and capital preservation. We teach the mathematics of risk before strategy—because survival is the foundation of profitability.
                             </p>
                         </div>
                         <div className={`why-feature-card ${visibleSections['feature-2'] ? 'fade-in-up' : ''}`}
@@ -124,9 +124,9 @@ const WhyInfinity = () => {
                             <div className="why-feature-icon">
                                 <FaUsers />
                             </div>
-                            <h3 className="why-feature-title">Multiple Trading Markets</h3>
+                            <h3 className="why-feature-title">Multi-Asset Coverage</h3>
                             <p className="why-feature-text">
-                                Trade across Forex, Stocks, Crypto, and Futures markets. Diversify your trading strategies and learn to profit in different market conditions.
+                                Forex, Equities, Indices, Crypto, Futures, and Commodities. One platform, complete market access. Develop edge across asset classes and adapt to any market environment.
                             </p>
                         </div>
                     </div>
@@ -137,16 +137,16 @@ const WhyInfinity = () => {
                     className={`why-additional-features ${visibleSections['additional-features'] ? 'fade-in-up' : ''}`}
                     ref={el => sectionRefs.current.additionalFeatures = el}
                 >
-                    <h2 className="why-section-heading">Exclusive Platform Features</h2>
+                    <h2 className="why-section-heading">The AURA FX Advantage</h2>
                     
                     <div className="why-features-grid">
                         <div className="why-platform-feature">
                             <div className="why-platform-icon">
                                 <RiStockLine />
                             </div>
-                            <h3>Systematic Trading Strategies</h3>
+                            <h3>AURA AI Intelligence System</h3>
                             <p>
-                                Master proven trading methodologies that work in real market conditions. Learn technical analysis, fundamental analysis, and systematic approaches to identify high-probability trading opportunities across all markets.
+                                Our proprietary AI understands market structure, macro drivers, technical execution, psychology, and position sizing. It responds contextually across all asset classes with institutional-level reasoning—not generic chatbot replies. Fast, accurate, and built for serious traders.
                             </p>
                         </div>
                         
@@ -154,9 +154,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaLock />
                             </div>
-                            <h3>Avoid Trading Mistakes</h3>
+                            <h3>Secure Infrastructure</h3>
                             <p>
-                                Learn from common trading errors that cause losses: overtrading, poor risk management, emotional decisions, and lack of discipline. Develop the mindset and habits of successful professional traders.
+                                Your data is protected. AURA FX runs on enterprise-grade infrastructure with controlled access, encrypted communications, and secure authentication. We treat your information with the same discipline we apply to trading.
                             </p>
                         </div>
                         
@@ -164,9 +164,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <BiCodeAlt />
                             </div>
-                            <h3>Expert Mentorship</h3>
+                            <h3>35+ Years Combined Experience</h3>
                             <p>
-                                Learn from professional traders with years of real market experience. Get personalized guidance, strategy reviews, and insights from mentors who have achieved consistent profitability in trading.
+                                Our team has traded through multiple market cycles, volatility regimes, and economic environments. This depth of experience informs every course, every market brief, and every piece of content we produce. No theory—only verified execution.
                             </p>
                         </div>
                         
@@ -174,9 +174,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaRocket />
                             </div>
-                            <h3>Realistic Trading Approach</h3>
+                            <h3>Daily & Weekly Market Briefs</h3>
                             <p>
-                                We focus on realistic, achievable trading goals. Trading requires time, education, and discipline. We teach strategies that generate consistent returns through proper risk management and systematic analysis—not unrealistic promises.
+                                Elite members receive daily institutional-grade market intelligence. Premium members receive comprehensive weekly reports. Stay informed on macro drivers, key levels, sentiment shifts, and actionable opportunities across global markets.
                             </p>
                         </div>
                         
@@ -184,9 +184,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaChartPie />
                             </div>
-                            <h3>Comprehensive Trading Education</h3>
+                            <h3>Complete Trading Ecosystem</h3>
                             <p>
-                                Access in-depth courses covering technical analysis, fundamental analysis, risk management, trading psychology, and market-specific strategies for Forex, Stocks, Crypto, and Futures. Everything you need to become a professional trader.
+                                Structured courses, real-time AI analysis, community discussion, and curated market intelligence—all in one platform. AURA FX is not a signals service. We build traders who can operate independently and consistently.
                             </p>
                         </div>
                         
@@ -194,9 +194,9 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaUsers />
                             </div>
-                            <h3>Thriving Trading Community</h3>
+                            <h3>Professional Trader Community</h3>
                             <p>
-                                Join 1,200+ active traders sharing strategies, market analysis, and insights. Learn from experienced traders, discuss market conditions, and build your trading skills alongside a supportive community of professionals.
+                                A serious environment for serious traders. Share analysis, discuss market structure, review trades, and engage with professionals who prioritise discipline over hype. Every member is committed to long-term capital growth.
                             </p>
                         </div>
                     </div>
