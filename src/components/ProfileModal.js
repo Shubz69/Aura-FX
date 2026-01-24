@@ -80,18 +80,53 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     // Fetch settings and stats (for own profile)
     const fetchSettings = useCallback(async () => {
-        if (!isOwnProfile || !token) return;
+        if (!isOwnProfile) return;
+        
+        // Default settings
+        const defaultSettings = {
+            preferred_markets: ['forex', 'gold'],
+            trading_sessions: ['london', 'newyork'],
+            risk_profile: 'moderate',
+            show_online_status: true,
+            show_trading_stats: true,
+            show_achievements: true
+        };
+        
+        // Load from localStorage first
+        try {
+            const stored = JSON.parse(localStorage.getItem('user_settings') || '{}');
+            if (Object.keys(stored).length > 0) {
+                setSettings({ ...defaultSettings, ...stored });
+            } else {
+                setSettings(defaultSettings);
+            }
+        } catch (e) {
+            setSettings(defaultSettings);
+        }
+        
+        // Then try to fetch from API
+        if (!token) return;
+        
         try {
             const response = await fetch(`${window.location.origin}/api/users/settings`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
-                setSettings(data.settings);
-                setStats(data.stats);
+                if (data.settings) {
+                    setSettings(prev => ({ ...prev, ...data.settings }));
+                    // Save to localStorage
+                    try {
+                        localStorage.setItem('user_settings', JSON.stringify(data.settings));
+                    } catch (e) {}
+                }
+                if (data.stats) {
+                    setStats(data.stats);
+                }
             }
         } catch (err) {
             console.error("Error fetching settings:", err);
+            // Keep localStorage settings
         }
     }, [isOwnProfile, token]);
 
@@ -201,7 +236,20 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     // Settings update handler
     const handleSettingsUpdate = async (updates) => {
-        if (!token) return;
+        // Optimistic update - update UI immediately
+        setSettings(prev => ({ ...prev, ...updates }));
+        
+        // Save to localStorage as fallback
+        try {
+            const stored = JSON.parse(localStorage.getItem('user_settings') || '{}');
+            localStorage.setItem('user_settings', JSON.stringify({ ...stored, ...updates }));
+        } catch (e) {}
+        
+        if (!token) {
+            toast.success('Settings saved locally');
+            return;
+        }
+        
         setSettingsLoading(true);
         try {
             const response = await fetch(`${window.location.origin}/api/users/settings`, {
@@ -212,15 +260,19 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 },
                 body: JSON.stringify(updates)
             });
-            const data = await response.json();
-            if (data.success) {
-                setSettings(prev => ({ ...prev, ...updates }));
-                toast.success('Settings updated');
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    toast.success('Settings saved');
+                }
             } else {
-                toast.error(data.message || 'Update failed');
+                // Still show success since we saved locally
+                toast.success('Settings saved locally');
             }
         } catch (err) {
-            toast.error('Failed to update settings');
+            // Still show success since we saved locally
+            toast.success('Settings saved locally');
         } finally {
             setSettingsLoading(false);
         }
