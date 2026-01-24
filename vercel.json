@@ -187,6 +187,10 @@
       "destination": "/api/ai/premium-chat.js"
     },
     {
+      "source": "/api/ai/premium-chat-stream",
+      "destination": "/api/ai/premium-chat-stream.js"
+    },
+    {
       "source": "/api/chatbot",
       "destination": "/api/chatbot.js"
     },

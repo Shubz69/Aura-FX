@@ -1,183 +1,256 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ReactMarkdown from 'react-markdown';
-import MarketChart from '../components/MarketChart';
-import VoiceInput, { VoiceOutput } from '../components/VoiceInput';
 import '../styles/PremiumAI.css';
 
+// Icons as inline SVG components for better performance
+const SendIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13"></line>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+  </svg>
+);
+
+const MicIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+    <line x1="12" y1="19" x2="12" y2="23"></line>
+    <line x1="8" y1="23" x2="16" y2="23"></line>
+  </svg>
+);
+
+const ImageIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+    <polyline points="21 15 16 10 5 21"></polyline>
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+
+const SpeakerIcon = ({ muted }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+    {!muted && <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>}
+    {muted && <line x1="23" y1="9" x2="17" y2="15"></line>}
+    {muted && <line x1="17" y1="9" x2="23" y2="15"></line>}
+  </svg>
+);
+
+const ChevronIcon = ({ up }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: up ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+);
+
+const StopIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+  </svg>
+);
+
+// Quick action chips
+const QUICK_ACTIONS = [
+  { label: '📈 Gold drivers today', prompt: 'What are the main drivers for gold (XAUUSD) today? Include key levels and market sentiment.' },
+  { label: '📊 Analyse chart', prompt: 'Please analyse this chart and provide key observations, support/resistance levels, and potential trade setups.' },
+  { label: '💰 Position sizing', prompt: 'Help me calculate proper position size for a trade. I need to know the risk/reward.' },
+  { label: '📰 News impact', prompt: 'What major news or economic events are affecting markets today? How should I position?' },
+  { label: '🎯 Entry/Exit levels', prompt: 'What are the key entry and exit levels I should watch for?' },
+  { label: '⚡ Quick analysis', prompt: 'Give me a quick market overview with actionable insights.' }
+];
+
+// Main Component
 const PremiumAI = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  
+  // State
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [sources, setSources] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
-  const [isVoiceListening, setIsVoiceListening] = useState(false);
-  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [showSources, setShowSources] = useState(false);
+  
+  // Voice state
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const [speakingMessageId, setSpeakingMessageId] = useState(null);
+  
+  // Refs
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const isSubmittingRef = useRef(false); // Prevent double submissions
-  const sendTimeoutRef = useRef(null); // For debouncing
-
-  // Load conversation history from localStorage FIRST on mount (before anything else)
+  const textareaRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  
+  // Load conversation from localStorage
   useEffect(() => {
     try {
-      const savedHistory = localStorage.getItem('aura_ai_conversation');
-      if (savedHistory) {
-        const parsed = JSON.parse(savedHistory);
+      const saved = localStorage.getItem('aura_ai_conversation_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // We have saved history - use it immediately
           setMessages(parsed);
-          setConversationHistory(parsed);
         }
       }
-    } catch (error) {
-      console.error('Error loading conversation history:', error);
+    } catch (e) {
+      console.error('Error loading conversation:', e);
     }
-  }, []); // Only run once on mount
-
-  // Check if user has premium access
+  }, []);
+  
+  // Check premium access
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-
+    
     const userRole = user?.role || 'free';
     const subscriptionStatus = user?.subscription_status || 'inactive';
     const subscriptionPlan = user?.subscription_plan;
     const userEmail = user?.email || '';
-    
-    // Check if user is super admin by email
     const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
-    const isSuperAdminByEmail = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-
-    const hasAccess = 
-      isSuperAdminByEmail ||
-      userRole === 'premium' || 
-      userRole === 'a7fx' || 
-      userRole === 'elite' || 
-      userRole === 'admin' || 
-      userRole === 'super_admin' ||
-      userRole === 'SUPER_ADMIN' ||
-      (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
-
+    const isSuperAdmin = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    
+    const hasAccess = isSuperAdmin ||
+      ['premium', 'a7fx', 'elite', 'admin', 'super_admin', 'SUPER_ADMIN'].includes(userRole) ||
+      (subscriptionStatus === 'active' && ['aura', 'a7fx'].includes(subscriptionPlan));
+    
     if (!hasAccess) {
-      toast.error('Premium subscription required to access AI Assistant', {
-        position: 'top-center',
-        autoClose: 3000,
-      });
+      toast.error('Premium subscription required');
       navigate('/subscription');
-      return;
     }
-
-    // Only set welcome message if messages is still empty (no saved history was loaded)
-    // Use a small delay to ensure localStorage load completes first
-    const checkAndSetWelcome = setTimeout(() => {
-      setMessages(current => {
-        // Only set welcome if messages is still empty
-        if (current.length === 0) {
-          const welcomeMessage = {
-            role: 'assistant',
-            content: `Hi I'm AURA AI, how can I help?`
-          };
-          setConversationHistory([welcomeMessage]);
-          return [welcomeMessage];
-        }
-        return current; // Keep existing messages
-      });
-    }, 100);
-
-    return () => clearTimeout(checkAndSetWelcome);
   }, [isAuthenticated, user, navigate]);
-
-  // Save conversation history to localStorage whenever it changes
+  
+  // Save conversation
   useEffect(() => {
     if (messages.length > 0) {
       try {
-        localStorage.setItem('aura_ai_conversation', JSON.stringify(messages));
-      } catch (error) {
-        console.error('Error saving conversation history:', error);
-        // If localStorage is full, try to clear old data
-        try {
-          localStorage.removeItem('aura_ai_conversation');
-          localStorage.setItem('aura_ai_conversation', JSON.stringify(messages));
-        } catch (e) {
-          console.error('Error clearing and re-saving conversation history:', e);
-        }
+        localStorage.setItem('aura_ai_conversation_v2', JSON.stringify(messages.slice(-50))); // Keep last 50
+      } catch (e) {
+        console.error('Error saving conversation:', e);
       }
     }
   }, [messages]);
-
-  // Auto-scroll to bottom
+  
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
+  }, [messages, streamingContent]);
+  
+  // Auto-resize textarea
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    }
   }, []);
-
-  // Convert file to base64
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  };
-
-  // Handle image file selection
+  
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input, adjustTextareaHeight]);
+  
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+      
+      recognitionRef.current.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setInput(transcript);
+        
+        // Auto-send on final result
+        if (event.results[event.results.length - 1].isFinal) {
+          setTimeout(() => {
+            setIsRecording(false);
+            if (transcript.trim()) {
+              handleSendMessage(null, transcript.trim());
+            }
+          }, 500);
+        }
+      };
+      
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          toast.error('Voice input error. Please try again.');
+        }
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+    };
+  }, []);
+  
+  // Image handling
   const handleImageSelect = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-
-    // Validate files
+    
     const validFiles = files.filter(file => {
       if (!file.type.startsWith('image/')) {
-        toast.error(`${file.name} is not an image file`);
+        toast.error(`${file.name} is not an image`);
         return false;
       }
-      if (file.size > 20 * 1024 * 1024) { // 20MB limit
+      if (file.size > 20 * 1024 * 1024) {
         toast.error(`${file.name} is too large (max 20MB)`);
         return false;
       }
       return true;
     });
-
-    if (validFiles.length === 0) return;
-
-    // Limit to 4 images max
-    const remainingSlots = 4 - selectedImages.length;
-    const filesToAdd = validFiles.slice(0, remainingSlots);
     
-    if (validFiles.length > remainingSlots) {
-      toast.warning(`Only ${remainingSlots} image(s) can be added (max 4 total)`);
-    }
-
+    const remaining = 4 - selectedImages.length;
+    const toAdd = validFiles.slice(0, remaining);
+    
     try {
-      const base64Images = await Promise.all(filesToAdd.map(convertToBase64));
+      const base64Images = await Promise.all(toAdd.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }));
+      
       setSelectedImages(prev => [...prev, ...base64Images]);
-      setImagePreviews(prev => [...prev, ...filesToAdd.map(f => URL.createObjectURL(f))]);
+      setImagePreviews(prev => [...prev, ...toAdd.map(f => URL.createObjectURL(f))]);
     } catch (error) {
-      console.error('Error converting images:', error);
       toast.error('Failed to process images');
     }
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
-
-  // Remove image
+  
   const removeImage = (index) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => {
@@ -185,623 +258,540 @@ const PremiumAI = () => {
       return prev.filter((_, i) => i !== index);
     });
   };
-
-  // Handle paste event for images and text
-  const handlePaste = async (e) => {
-    const clipboardData = e.clipboardData || window.clipboardData;
-    if (!clipboardData) return;
-
-    const items = clipboardData.items;
-    if (!items || items.length === 0) return;
-
-    // Check for images first (highest priority)
-    let hasImage = false;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      
-      // Handle image paste
-      if (item.type.indexOf('image') !== -1) {
-        e.preventDefault(); // Prevent default paste behavior for images
-        
-        const blob = item.getAsFile();
-        if (blob) {
-          hasImage = true;
-          
-          // Validate image size
-          if (blob.size > 20 * 1024 * 1024) {
-            toast.error('Pasted image is too large (max 20MB)');
-            return;
-          }
-
-          // Check if we can add more images
-          if (selectedImages.length >= 4) {
-            toast.warning('Maximum 4 images allowed. Please remove an image first.');
-            return;
-          }
-
-          try {
-            // Convert blob to File object for consistency
-            const file = new File([blob], `pasted-image-${Date.now()}.png`, {
-              type: blob.type || 'image/png'
-            });
-
-            // Convert to base64 and add to selected images
-            const base64Image = await convertToBase64(file);
-            setSelectedImages(prev => [...prev, base64Image]);
-            setImagePreviews(prev => [...prev, URL.createObjectURL(file)]);
-            
-            toast.success('Image pasted! You can add text or send the image.');
-          } catch (error) {
-            console.error('Error processing pasted image:', error);
-            toast.error('Failed to process pasted image');
-          }
-        }
-        break; // Only process first image
+  
+  // Voice controls
+  const toggleRecording = () => {
+    if (!recognitionRef.current) {
+      toast.error('Voice input not supported in this browser');
+      return;
+    }
+    
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (error) {
+        toast.error('Could not start voice input');
       }
     }
-
-    // If no image was found, allow normal text paste (default behavior)
-    // Text pasting will work naturally without preventDefault
   };
-
-  // Handle voice transcript
-  const handleVoiceTranscript = (transcript, isInterim) => {
-    if (!isInterim && transcript.trim()) {
-      setInput(prev => prev + (prev ? ' ' : '') + transcript.trim());
-      setVoiceTranscript('');
-    } else {
-      setVoiceTranscript(transcript);
+  
+  const speakMessage = (messageId, text) => {
+    if (!text) return;
+    
+    // Cancel any ongoing speech
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      if (speakingMessageId === messageId) {
+        setSpeakingMessageId(null);
+        return;
+      }
     }
+    
+    const utterance = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, '')); // Remove markdown
+    utterance.rate = speechRate;
+    utterance.lang = 'en-US';
+    utterance.onend = () => setSpeakingMessageId(null);
+    utterance.onerror = () => setSpeakingMessageId(null);
+    
+    setSpeakingMessageId(messageId);
+    window.speechSynthesis.speak(utterance);
   };
-
-  const sendMessage = async (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    // Prevent double-click or rapid submissions
-    if (isSubmittingRef.current || isLoading) {
-      return;
-    }
-
-    // Clear any pending debounce timeout
-    if (sendTimeoutRef.current) {
-      clearTimeout(sendTimeoutRef.current);
-      sendTimeoutRef.current = null;
-    }
-
-    const messageToSend = (input.trim() || voiceTranscript.trim());
-    if ((!messageToSend && selectedImages.length === 0)) {
-      return;
-    }
-
-    // Set submitting flag immediately
-    isSubmittingRef.current = true;
-
+  
+  // Send message with streaming
+  const handleSendMessage = async (e, overrideMessage = null) => {
+    if (e) e.preventDefault();
+    
+    const messageText = overrideMessage || input.trim();
+    if (!messageText && selectedImages.length === 0) return;
+    if (isLoading || isStreaming) return;
+    
+    // Optimistic UI update - add user message immediately
     const userMessage = {
+      id: Date.now(),
       role: 'user',
-      content: messageToSend || '',
-      images: selectedImages.length > 0 ? selectedImages : undefined
+      content: messageText,
+      images: selectedImages.length > 0 ? [...selectedImages] : undefined,
+      timestamp: new Date().toISOString()
     };
-
-    // Add user message to UI immediately
+    
     setMessages(prev => [...prev, userMessage]);
-    setConversationHistory(prev => [...prev, userMessage]);
-    
-    const imagesToSend = selectedImages;
-    
     setInput('');
-    setVoiceTranscript('');
     setSelectedImages([]);
     setImagePreviews(prev => {
       prev.forEach(url => URL.revokeObjectURL(url));
       return [];
     });
     setIsLoading(true);
-
+    setSources([]);
+    
+    // Small delay for UI feedback
+    await new Promise(r => setTimeout(r, 50));
+    
     try {
       const token = localStorage.getItem('token');
       const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
-
-      const response = await fetch(`${API_BASE_URL}/api/ai/premium-chat`, {
+      
+      // Create abort controller for cancellation
+      abortControllerRef.current = new AbortController();
+      
+      const response = await fetch(`${API_BASE_URL}/api/ai/premium-chat-stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          message: messageToSend,
-          images: imagesToSend,
-          conversationHistory: conversationHistory.slice(-10) // Last 10 messages for context
+          message: messageText,
+          images: userMessage.images,
+          conversationHistory: messages.slice(-6).map(m => ({ role: m.role, content: m.content }))
         }),
-        signal: AbortSignal.timeout(60000) // 60 second timeout to match API
+        signal: abortControllerRef.current.signal
       });
-
-      // Check if response is JSON before parsing
-      const contentType = response.headers.get('content-type');
-      let data;
       
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        // If not JSON, read as text to get error message
-        const text = await response.text();
-        throw new Error(text || `Server error (${response.status})`);
-      }
-
       if (!response.ok) {
-        // Handle rate limit errors specifically
-        if (response.status === 429 || (data && data.errorType === 'rate_limit')) {
-          const rateLimitMessage = data?.message || 'AI service is currently at capacity. Please try again in a few moments.';
-          throw new Error(rateLimitMessage);
-        }
-        throw new Error(data.message || data.error || `Server error (${response.status})`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Error: ${response.status}`);
       }
-
-      if (data.success) {
-        // Validate response content
-        const responseContent = data.response?.trim();
-        
-        if (!responseContent) {
-          console.warn('AI returned empty response', { requestId: data.requestId });
-          throw new Error('I received an empty response. Please try again.');
-        }
-        
-        const aiMessage = {
-          role: 'assistant',
-          content: responseContent,
-          chartData: data.chartData || null, // Chart data if provided
-          symbol: data.symbol || null, // Symbol for chart
-          citations: data.citations || [], // Knowledge base citations if any
-          requestId: data.requestId || null, // For debugging
-          timing: data.timing || null // Response time
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        setConversationHistory(prev => [...prev, aiMessage]);
-        
-        // Log successful response for debugging
-        if (data.timing) {
-          console.log(`AI response received in ${data.timing}ms`, { requestId: data.requestId });
-        }
-      } else {
-        // Log the error for debugging
-        console.error('AI service error:', data.message, { requestId: data.requestId });
-        throw new Error(data.message || 'AI service error');
-      }
-
-    } catch (error) {
-      console.error('Error sending message:', error);
       
-      // Extract a clean error message
-      let errorMessage = 'Failed to send message. Please try again.';
-      let isRateLimit = false;
-      let isNetworkError = false;
+      // Start streaming
+      setIsLoading(false);
+      setIsStreaming(true);
+      setStreamingContent('');
       
-      // Check for specific error types
-      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
-        isRateLimit = true;
-        errorMessage = 'The request timed out. The AI may be experiencing high demand. Please try again.';
-      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        isNetworkError = true;
-        errorMessage = 'Network connection issue. Please check your internet connection and try again.';
-      } else if (error.message) {
-        // Check if it's a quota error (more specific - requires admin action)
-        if (error.message.toLowerCase().includes('quota') || 
-            error.message.toLowerCase().includes('exceeded your current quota') ||
-            error.message.toLowerCase().includes('insufficient_quota')) {
-          isRateLimit = true;
-          errorMessage = 'AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.';
-        }
-        // Check if it's a rate limit error (temporary)
-        else if (error.message.toLowerCase().includes('capacity') || 
-                 error.message.toLowerCase().includes('rate limit') ||
-                 error.message.toLowerCase().includes('try again in a few moments')) {
-          isRateLimit = true;
-          errorMessage = 'AI service is currently at capacity. Please try again in a few moments. If this issue persists, please contact support.';
-        } else if (error.message.toLowerCase().includes('timeout') || error.message.toLowerCase().includes('aborted')) {
-          isRateLimit = true;
-          errorMessage = 'The AI is taking longer than expected to respond. This can happen during high demand. Please try again in a moment.';
-        } else if (error.message.toLowerCase().includes('empty response')) {
-          errorMessage = 'I received an incomplete response. Please try asking your question again.';
-        } else if (error.message.length > 150 || error.message.includes('<') || error.message.includes('Error:') || error.message.includes('timeout')) {
-          errorMessage = 'I\'m having trouble processing your request right now. Please try again in a moment.';
-        } else {
-          // Clean up technical error messages
-          errorMessage = error.message
-            .replace(/Error:/g, '')
-            .replace(/timeout/gi, 'taking longer than expected')
-            .replace(/ECONNREFUSED/gi, 'connection issue')
-            .replace(/ENOTFOUND/gi, 'service unavailable')
-            .trim();
-          
-          // If it still looks technical, use a generic message
-          if (errorMessage.includes('at ') || errorMessage.includes('http://') || errorMessage.includes('https://')) {
-            errorMessage = 'I\'m having trouble processing your request right now. Please try again in a moment.';
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      let streamSources = [];
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(line => line.startsWith('data: '));
+        
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            
+            switch (data.type) {
+              case 'token':
+                fullContent += data.content;
+                setStreamingContent(fullContent);
+                break;
+              case 'sources':
+                streamSources = data.sources || [];
+                setSources(streamSources);
+                break;
+              case 'done':
+                // Final message
+                const aiMessage = {
+                  id: Date.now(),
+                  role: 'assistant',
+                  content: data.content || fullContent,
+                  sources: streamSources,
+                  timing: data.timing,
+                  timestamp: new Date().toISOString()
+                };
+                setMessages(prev => [...prev, aiMessage]);
+                setStreamingContent('');
+                setIsStreaming(false);
+                break;
+              case 'error':
+                throw new Error(data.message);
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
           }
         }
       }
       
-      // Also check error response data for quota errors
-      if (error.response?.data?.errorType === 'quota_exceeded') {
-        isRateLimit = true;
-        errorMessage = 'AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.';
-      }
-      
-      // Show toast notification (longer for quota errors)
-      const isQuotaError = errorMessage.toLowerCase().includes('quota');
-      toast.error(errorMessage, {
-        position: 'bottom-right',
-        autoClose: isQuotaError ? 8000 : (isRateLimit || isNetworkError ? 5000 : 3000),
-      });
-
-      // Add user-friendly error message to chat (never show technical details)
-      const chatErrorMessage = {
-        role: 'assistant',
-        content: isQuotaError
-          ? 'I apologize, but the AI service quota has been exceeded. The administrator needs to add credits to the OpenAI account. Please contact support for assistance.'
-          : isNetworkError
-            ? 'I apologize, but there seems to be a network connectivity issue. Please check your internet connection and try again.'
-            : isRateLimit 
-              ? 'I apologize, but the AI service is currently experiencing high demand. Please try again in a few moments. If this issue continues, please contact support for assistance.'
-              : errorMessage // Already cleaned up above
-      };
-      setMessages(prev => [...prev, chatErrorMessage]);
-    } finally {
+    } catch (error) {
+      console.error('Send error:', error);
       setIsLoading(false);
-      isSubmittingRef.current = false; // Reset submitting flag
-      inputRef.current?.focus();
+      setIsStreaming(false);
+      setStreamingContent('');
+      
+      if (error.name !== 'AbortError') {
+        const errorMessage = {
+          id: Date.now(),
+          role: 'assistant',
+          content: error.message?.includes('timeout') || error.message?.includes('AbortError')
+            ? 'The request timed out. Please try again.'
+            : error.message || 'An error occurred. Please try again.',
+          isError: true,
+          timestamp: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        toast.error(errorMessage.content);
+      }
+    }
+    
+    textareaRef.current?.focus();
+  };
+  
+  // Stop streaming
+  const handleStopStreaming = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsStreaming(false);
+    
+    if (streamingContent) {
+      const aiMessage = {
+        id: Date.now(),
+        role: 'assistant',
+        content: streamingContent + '\n\n*[Response stopped]*',
+        sources,
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setStreamingContent('');
     }
   };
-
-  const handleKeyPress = (e) => {
+  
+  // Clear conversation
+  const clearConversation = () => {
+    if (window.confirm('Clear all messages?')) {
+      localStorage.removeItem('aura_ai_conversation_v2');
+      setMessages([]);
+      setSources([]);
+    }
+  };
+  
+  // Handle quick action
+  const handleQuickAction = (prompt) => {
+    if (isLoading || isStreaming) return;
+    setInput(prompt);
+    textareaRef.current?.focus();
+  };
+  
+  // Keyboard handling
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      e.stopPropagation();
-      // Debounce to prevent rapid submissions
-      if (sendTimeoutRef.current) {
-        clearTimeout(sendTimeoutRef.current);
-      }
-      sendTimeoutRef.current = setTimeout(() => {
-        sendMessage(e);
-      }, 100);
+      handleSendMessage();
     }
   };
-
-  // Prevent clicks outside input from affecting chat
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      // Only prevent if clicking on the chat container but not on interactive elements
-      const chatContainer = document.querySelector('.premium-ai-container');
-      const isClickOnInput = inputRef.current?.contains(e.target);
-      const isClickOnButton = e.target.closest('button');
-      const isClickOnImage = e.target.closest('.image-upload-btn, .message-image');
+  
+  // Render empty state
+  const renderEmptyState = () => (
+    <div className="ai-empty-state">
+      <div className="ai-empty-icon">✨</div>
+      <h2>Welcome to AURA AI</h2>
+      <p>Your premium trading intelligence assistant</p>
       
-      if (chatContainer && !isClickOnInput && !isClickOnButton && !isClickOnImage) {
-        // Don't prevent default, just ensure we're not interfering
-        // Focus input if clicking in chat area
-        if (chatContainer.contains(e.target) && !isLoading) {
-          inputRef.current?.focus();
-        }
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside, true);
-    return () => {
-      document.removeEventListener('click', handleClickOutside, true);
-    };
-  }, [isLoading]);
-
-  const clearConversation = () => {
-    if (window.confirm('Are you sure you want to clear this conversation?')) {
-      // Clear localStorage
-      try {
-        localStorage.removeItem('aura_ai_conversation');
-      } catch (error) {
-        console.error('Error clearing conversation from localStorage:', error);
-      }
-      
-      // Reset to welcome message
-      const welcomeMessage = {
-        role: 'assistant',
-        content: `Hi I'm AURA AI, how can I help?`
-      };
-      setMessages([welcomeMessage]);
-      setConversationHistory([welcomeMessage]);
-    }
-  };
-
-  // Add paste handler to container for better coverage (when clicking on container)
-  useEffect(() => {
-    const handleContainerPaste = async (e) => {
-      // Only handle if focus is not on textarea (textarea has its own handler)
-      if (document.activeElement !== inputRef.current && document.activeElement !== fileInputRef.current) {
-        const clipboardData = e.clipboardData || window.clipboardData;
-        if (!clipboardData) return;
-
-        const items = clipboardData.items;
-        if (!items || items.length === 0) return;
-
-        // Check for images
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          if (item.type.indexOf('image') !== -1) {
-            e.preventDefault();
-            const blob = item.getAsFile();
-            if (blob) {
-              if (blob.size > 20 * 1024 * 1024) {
-                toast.error('Pasted image is too large (max 20MB)');
-                return;
-              }
-              if (selectedImages.length >= 4) {
-                toast.warning('Maximum 4 images allowed. Please remove an image first.');
-                return;
-              }
-              try {
-                const file = new File([blob], `pasted-image-${Date.now()}.png`, {
-                  type: blob.type || 'image/png'
-                });
-                const base64Image = await convertToBase64(file);
-                setSelectedImages(prev => [...prev, base64Image]);
-                setImagePreviews(prev => [...prev, URL.createObjectURL(file)]);
-                toast.success('Image pasted! You can add text or send the image.');
-              } catch (error) {
-                console.error('Error processing pasted image:', error);
-                toast.error('Failed to process pasted image');
-              }
-            }
-            break;
-          }
-        }
-      }
-    };
-
-    const container = document.querySelector('.premium-ai-container');
-    if (container) {
-      container.addEventListener('paste', handleContainerPaste);
-      return () => {
-        container.removeEventListener('paste', handleContainerPaste);
-      };
-    }
-  }, [selectedImages.length]);
-
-  return (
-    <div className="premium-ai-container">
-      <div className="premium-ai-header">
-        <div className="premium-ai-title">
-          <h1>📊 AURA AI Financial Analyst</h1>
-          <p>Professional Trading Intelligence & Market Analysis</p>
+      <div className="ai-capabilities">
+        <div className="capability-item">
+          <span className="capability-icon">📊</span>
+          <div>
+            <strong>Market Analysis</strong>
+            <p>Real-time insights on any instrument</p>
+          </div>
         </div>
-        <button 
-          className="clear-conversation-btn"
-          onClick={clearConversation}
-          title="Clear conversation"
-        >
-          🗑️ Clear
-        </button>
+        <div className="capability-item">
+          <span className="capability-icon">🎯</span>
+          <div>
+            <strong>Trade Setups</strong>
+            <p>Entry, exit, and risk levels</p>
+          </div>
+        </div>
+        <div className="capability-item">
+          <span className="capability-icon">📈</span>
+          <div>
+            <strong>Chart Analysis</strong>
+            <p>Upload charts for instant review</p>
+          </div>
+        </div>
+        <div className="capability-item">
+          <span className="capability-icon">💰</span>
+          <div>
+            <strong>Risk Management</strong>
+            <p>Position sizing and R:R calculations</p>
+          </div>
+        </div>
       </div>
-
-      <div className="premium-ai-chat">
-        <div className="messages-container">
-          {messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`message ${msg.role === 'user' ? 'user-message' : 'ai-message'}`}
-            >
-              <div className="message-avatar">
-                {msg.role === 'user' ? '👤' : '🤖'}
-              </div>
-              <div className="message-content">
-                {msg.images && msg.images.length > 0 && (
-                  <div className="message-images">
-                    {msg.images.map((img, imgIndex) => (
-                      <img 
-                        key={imgIndex} 
-                        src={img} 
-                        alt={`Uploaded ${imgIndex + 1}`}
-                        className="message-image"
-                        onClick={() => window.open(img, '_blank')}
-                        loading="lazy"
-                        style={{ 
-                          maxWidth: 'min(400px, 100%)',
-                          height: 'auto'
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-                {msg.content && (
-                  <div className="message-text">
-                    {msg.role === 'user' ? (
-                      // User messages - plain text, no markdown processing to prevent formatting issues
-                      <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-                        {msg.content}
-                      </div>
-                    ) : (
-                      // AI messages - use markdown for formatting with voice output
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
-                        <div style={{ flex: 1 }}>
-                          <ReactMarkdown
-                            components={{
-                              p: ({node, ...props}) => <p className="markdown-paragraph" {...props} />,
-                              strong: ({node, ...props}) => <strong className="markdown-bold" {...props} />,
-                              em: ({node, ...props}) => <em className="markdown-italic" {...props} />,
-                              ul: ({node, ...props}) => <ul className="markdown-list" {...props} />,
-                              ol: ({node, ...props}) => <ol className="markdown-list" {...props} />,
-                              li: ({node, ...props}) => <li className="markdown-list-item" {...props} />,
-                              h1: ({node, ...props}) => <h1 className="markdown-heading markdown-h1" {...props} />,
-                              h2: ({node, ...props}) => <h2 className="markdown-heading markdown-h2" {...props} />,
-                              h3: ({node, ...props}) => <h3 className="markdown-heading markdown-h3" {...props} />,
-                              code: ({node, inline, ...props}) => 
-                                inline ? <code className="markdown-inline-code" {...props} /> : <code className="markdown-code-block" {...props} />,
-                              blockquote: ({node, ...props}) => <blockquote className="markdown-blockquote" {...props} />,
-                            }}
-                          >
-                            {msg.content}
-                          </ReactMarkdown>
-                        </div>
-                        <VoiceOutput text={msg.content} disabled={isLoading} />
-                      </div>
-                    )}
-                  </div>
-                )}
-                {msg.citations && msg.citations.length > 0 && (
-                  <div className="message-citations" style={{
-                    marginTop: '8px',
-                    padding: '8px 12px',
-                    background: 'rgba(102, 126, 234, 0.1)',
-                    borderLeft: '3px solid rgba(102, 126, 234, 0.5)',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    color: 'rgba(255, 255, 255, 0.7)'
-                  }}>
-                    <strong>Sources:</strong>
-                    <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
-                      {msg.citations.map((citation, idx) => (
-                        <li key={idx}>{citation.title || citation.source || 'Knowledge base'}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {msg.chartData && msg.symbol && (
-                  <MarketChart data={msg.chartData} symbol={msg.symbol} type="line" />
-                )}
-              </div>
-            </div>
-          ))}
-          
-          {isLoading && (
-            <div className="message ai-message">
-              <div className="message-avatar">🤖</div>
-              <div className="message-content">
-                <div className="typing-indicator">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </div>
+      
+      <p className="ai-empty-hint">Try one of the quick actions below or type your question</p>
+    </div>
+  );
+  
+  // Render message
+  const renderMessage = (msg, index) => {
+    const isUser = msg.role === 'user';
+    
+    return (
+      <div key={msg.id || index} className={`ai-message ${isUser ? 'user' : 'assistant'} ${msg.isError ? 'error' : ''}`}>
+        <div className="ai-message-avatar">
+          {isUser ? (
+            <div className="avatar-user">👤</div>
+          ) : (
+            <div className="avatar-ai">✨</div>
+          )}
+        </div>
+        
+        <div className="ai-message-content">
+          {msg.images?.length > 0 && (
+            <div className="message-images">
+              {msg.images.map((img, i) => (
+                <img key={i} src={img} alt="" className="message-image" onClick={() => window.open(img, '_blank')} />
+              ))}
             </div>
           )}
           
+          {msg.content && (
+            <div className="message-text">
+              {isUser ? (
+                <p>{msg.content}</p>
+              ) : (
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="md-p">{children}</p>,
+                    strong: ({ children }) => <strong className="md-bold">{children}</strong>,
+                    ul: ({ children }) => <ul className="md-list">{children}</ul>,
+                    ol: ({ children }) => <ol className="md-list md-ol">{children}</ol>,
+                    li: ({ children }) => <li className="md-li">{children}</li>,
+                    h1: ({ children }) => <h3 className="md-heading">{children}</h3>,
+                    h2: ({ children }) => <h4 className="md-heading">{children}</h4>,
+                    h3: ({ children }) => <h5 className="md-heading">{children}</h5>,
+                    code: ({ inline, children }) => 
+                      inline ? <code className="md-code">{children}</code> : <pre className="md-pre"><code>{children}</code></pre>,
+                    blockquote: ({ children }) => <blockquote className="md-quote">{children}</blockquote>
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              )}
+            </div>
+          )}
+          
+          {/* Voice output for AI messages */}
+          {!isUser && msg.content && (
+            <div className="message-actions">
+              <button
+                className={`action-btn ${speakingMessageId === msg.id ? 'active' : ''}`}
+                onClick={() => speakMessage(msg.id, msg.content)}
+                title={speakingMessageId === msg.id ? 'Stop' : 'Read aloud'}
+              >
+                <SpeakerIcon muted={speakingMessageId === msg.id} />
+              </button>
+              {speakingMessageId === msg.id && (
+                <select
+                  className="speed-select"
+                  value={speechRate}
+                  onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                  title="Playback speed"
+                >
+                  <option value="0.75">0.75x</option>
+                  <option value="1">1x</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="2">2x</option>
+                </select>
+              )}
+            </div>
+          )}
+          
+          {/* Sources collapsible */}
+          {!isUser && msg.sources?.length > 0 && (
+            <div className="message-sources">
+              <button className="sources-toggle" onClick={() => setShowSources(!showSources)}>
+                <span>📊 Sources ({msg.sources.length})</span>
+                <ChevronIcon up={showSources} />
+              </button>
+              {showSources && (
+                <div className="sources-list">
+                  {msg.sources.map((src, i) => (
+                    <div key={i} className="source-item">
+                      {src.type === 'market' && `📈 ${src.symbol} market data`}
+                      {src.type === 'news' && '📰 Market news'}
+                      {src.cached && <span className="cached-badge">cached</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
+  return (
+    <div className="premium-ai-page">
+      {/* Header */}
+      <header className="ai-header">
+        <div className="ai-header-content">
+          <h1>
+            <span className="ai-logo">✨</span>
+            AURA AI
+          </h1>
+          <span className="ai-badge">
+            {user?.role === 'a7fx' || user?.role === 'elite' ? 'Elite' : 'Premium'}
+          </span>
+        </div>
+        <button className="clear-btn" onClick={clearConversation} title="Clear conversation">
+          <TrashIcon />
+        </button>
+      </header>
+      
+      {/* Chat area */}
+      <main className="ai-chat-area">
+        <div className="ai-messages-container">
+          {messages.length === 0 && !isLoading && !isStreaming ? (
+            renderEmptyState()
+          ) : (
+            <>
+              {messages.map(renderMessage)}
+              
+              {/* Streaming message */}
+              {isStreaming && streamingContent && (
+                <div className="ai-message assistant streaming">
+                  <div className="ai-message-avatar">
+                    <div className="avatar-ai">✨</div>
+                  </div>
+                  <div className="ai-message-content">
+                    <div className="message-text">
+                      <ReactMarkdown>{streamingContent}</ReactMarkdown>
+                    </div>
+                    <div className="streaming-indicator">
+                      <span className="pulse"></span>
+                      Generating...
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Loading indicator */}
+              {isLoading && !isStreaming && (
+                <div className="ai-message assistant loading">
+                  <div className="ai-message-avatar">
+                    <div className="avatar-ai">✨</div>
+                  </div>
+                  <div className="ai-message-content">
+                    <div className="typing-dots">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           <div ref={messagesEndRef} />
         </div>
-
+      </main>
+      
+      {/* Sources panel */}
+      {sources.length > 0 && !isStreaming && (
+        <div className="sources-panel">
+          <button className="sources-panel-toggle" onClick={() => setShowSources(!showSources)}>
+            <span>📊 Data sources used ({sources.length})</span>
+            <ChevronIcon up={showSources} />
+          </button>
+        </div>
+      )}
+      
+      {/* Quick actions */}
+      {messages.length === 0 && (
+        <div className="quick-actions-container">
+          <div className="quick-actions">
+            {QUICK_ACTIONS.map((action, i) => (
+              <button
+                key={i}
+                className="quick-action-chip"
+                onClick={() => handleQuickAction(action.prompt)}
+                disabled={isLoading || isStreaming}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Composer */}
+      <footer className="ai-composer">
+        {/* Image previews */}
         {imagePreviews.length > 0 && (
-          <div className="image-previews">
-            {imagePreviews.map((preview, index) => (
-              <div key={index} className="image-preview-item">
-                <img src={preview} alt={`Preview ${index + 1}`} />
-                <button 
-                  type="button"
-                  className="remove-image-btn"
-                  onClick={() => removeImage(index)}
-                  title="Remove image"
-                >
-                  ×
-                </button>
+          <div className="image-preview-strip">
+            {imagePreviews.map((preview, i) => (
+              <div key={i} className="preview-thumb">
+                <img src={preview} alt="" />
+                <button className="remove-preview" onClick={() => removeImage(i)}>×</button>
               </div>
             ))}
           </div>
         )}
         
-        <form className="input-container" onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!isSubmittingRef.current && !isLoading) {
-            sendMessage(e);
-          }
-        }}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageSelect}
-            style={{ display: 'none' }}
-            disabled={isLoading}
-          />
-          <button
-            type="button"
-            className="image-upload-btn"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading || selectedImages.length >= 4}
-            title="Upload image (max 4)"
-          >
-            📷
-          </button>
-          <VoiceInput
-            onTranscript={handleVoiceTranscript}
-            onStart={() => setIsVoiceListening(true)}
-            onStop={() => setIsVoiceListening(false)}
-            disabled={isLoading}
-          />
-          <div className="input-wrapper" style={{ flex: 1, position: 'relative', minWidth: 0, width: '100%' }}>
-            <textarea
-              id="premium-ai-message-input"
-              name="ai-message"
-              ref={inputRef}
-              className="message-input"
-              value={input + (voiceTranscript ? ' ' + voiceTranscript : '')}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              onPaste={handlePaste}
-              placeholder="Request market analysis, trading strategies, risk assessment, or technical analysis... (or paste/upload a chart/image)"
-              rows="1"
-              disabled={isLoading}
-              style={{ width: '100%' }}
+        <div className="composer-inner">
+          <div className="composer-actions-left">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              style={{ display: 'none' }}
             />
-            {isVoiceListening && (
-              <div className="voice-indicator" style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#ff4d4d',
-                fontSize: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <span style={{ animation: 'pulse 1.5s infinite' }}>🎤</span>
-                Listening...
-              </div>
+            <button
+              className="composer-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || isStreaming || selectedImages.length >= 4}
+              title="Upload image"
+            >
+              <ImageIcon />
+            </button>
+            <button
+              className={`composer-btn ${isRecording ? 'recording' : ''}`}
+              onClick={toggleRecording}
+              disabled={isLoading || isStreaming}
+              title={isRecording ? 'Stop recording' : 'Voice input'}
+            >
+              <MicIcon />
+            </button>
+          </div>
+          
+          <div className="composer-input-wrapper">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isRecording ? 'Listening...' : 'Ask AURA anything about trading...'}
+              disabled={isLoading}
+              rows={1}
+              className={isRecording ? 'recording' : ''}
+            />
+          </div>
+          
+          <div className="composer-actions-right">
+            {isStreaming ? (
+              <button className="composer-btn stop-btn" onClick={handleStopStreaming} title="Stop generating">
+                <StopIcon />
+              </button>
+            ) : (
+              <button
+                className="send-btn"
+                onClick={handleSendMessage}
+                disabled={isLoading || (!input.trim() && selectedImages.length === 0)}
+                title="Send message"
+              >
+                <SendIcon />
+              </button>
             )}
           </div>
-          <button 
-            type="button" 
-            className="send-button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!isSubmittingRef.current && !isLoading) {
-                // Clear any pending debounce timeout
-                if (sendTimeoutRef.current) {
-                  clearTimeout(sendTimeoutRef.current);
-                }
-                // Call sendMessage directly
-                sendMessage(e);
-              }
-            }}
-            disabled={isLoading || isSubmittingRef.current || (!input.trim() && !voiceTranscript.trim() && selectedImages.length === 0)}
-            style={{ 
-              cursor: (isLoading || isSubmittingRef.current) ? 'not-allowed' : 'pointer',
-              opacity: (isLoading || isSubmittingRef.current) ? 0.6 : 1
-            }}
-          >
-            {isLoading ? '⏳' : '📤'}
-          </button>
-        </form>
-      </div>
-
-      <div className="premium-ai-footer">
-        <p>
-          💡 <strong>Note:</strong> Request technical analysis, trading strategies, risk assessments, or market insights for professional trading decisions.
+        </div>
+        
+        <p className="composer-hint">
+          Press Enter to send, Shift+Enter for new line
         </p>
-        <p className="subscription-info">
-          {user?.role === 'a7fx' || user?.role === 'elite' ? '✨ A7FX Elite Member' : '⭐ Premium Member'}
-        </p>
-      </div>
+      </footer>
     </div>
   );
 };
