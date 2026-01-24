@@ -813,6 +813,34 @@ const Community = () => {
     } = useWebSocket(
         selectedChannel?.id,
         (message) => {
+            // Handle MESSAGE_DELETED events
+            if (message.type === 'MESSAGE_DELETED') {
+                const { messageId, channelId: deletedChannelId } = message;
+                
+                // Update messages if it's for current channel
+                if (selectedChannel?.id && 
+                    (String(deletedChannelId) === String(selectedChannel.id))) {
+                    setMessages(prev => 
+                        prev.map(msg => 
+                            String(msg.id) === String(messageId) 
+                                ? { ...msg, content: '[deleted]', isDeleted: true }
+                                : msg
+                        )
+                    );
+                    
+                    // Update localStorage
+                    const storageKey = `community_messages_${selectedChannel.id}`;
+                    const storedMessages = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                    const updatedStored = storedMessages.map(msg => 
+                        String(msg.id) === String(messageId)
+                            ? { ...msg, content: '[deleted]', isDeleted: true }
+                            : msg
+                    );
+                    localStorage.setItem(storageKey, JSON.stringify(updatedStored));
+                }
+                return; // Don't process as a new message
+            }
+            
             // Check if message is for current channel
             const isCurrentChannel = selectedChannel?.id && 
                 (String(message.channelId) === String(selectedChannel.id) || 
@@ -3285,11 +3313,25 @@ Let's build generational wealth together! 💰🚀`,
         setHasReadWelcome(true);
     };
 
-    const handleDeleteMessage = (messageId) => {
-        if (!isAdminUser) {
-            return;
-        }
+    // Check if user can delete a message (own message OR admin/moderator)
+    const canDeleteMessage = useCallback((message) => {
+        if (!message || !userId) return false;
+        
+        // Message owner can delete their own message
+        const isOwnMessage = String(message.userId || message.sender?.id) === String(userId);
+        if (isOwnMessage) return true;
+        
+        // Admin or moderator can delete any message
+        if (isAdminUser || isSuperAdminUser) return true;
+        
+        // Check user role from stored user
+        const role = (storedUser?.role || '').toLowerCase();
+        if (role === 'moderator' || role === 'admin' || role === 'super_admin') return true;
+        
+        return false;
+    }, [userId, isAdminUser, isSuperAdminUser, storedUser]);
 
+    const handleDeleteMessage = (messageId) => {
         if (!selectedChannel) {
             return;
         }
@@ -3300,11 +3342,18 @@ Let's build generational wealth together! 💰🚀`,
             return;
         }
 
+        // Check permission
+        if (!canDeleteMessage(messageToDelete)) {
+            console.warn('User does not have permission to delete this message');
+            return;
+        }
+
         // Show custom delete confirmation modal
         setDeleteMessageModal({
             messageId,
             messageContent: messageToDelete.content,
-            author: messageToDelete.sender?.username || 'Unknown'
+            author: messageToDelete.sender?.username || 'Unknown',
+            isOwnMessage: String(messageToDelete.userId || messageToDelete.sender?.id) === String(userId)
         });
     };
 
@@ -3320,28 +3369,71 @@ Let's build generational wealth together! 💰🚀`,
             // Check if this is a temporary message (optimistic update that hasn't been saved to DB yet)
             const isTemporaryMessage = typeof messageId === 'string' && messageId.startsWith('temp_');
             
-            if (isTemporaryMessage) {
-                // Temporary messages don't exist in the database, just remove from local state
-            } else {
-                // Real message - delete from database via API
-                try {
-                    await Api.deleteMessage(selectedChannel.id, messageId);
-                } catch (apiError) {
-                    // If API delete fails but message exists locally, still remove it locally
-                    console.warn('API delete failed, removing from local state only:', apiError.message);
+            // Optimistically update UI first
+            setMessages(prevMessages => 
+                prevMessages.map(msg => 
+                    msg.id === messageId 
+                        ? { ...msg, content: '[deleted]', isDeleted: true } 
+                        : msg
+                )
+            );
+            
+            if (!isTemporaryMessage) {
+                // Real message - delete from database via new API endpoint
+                const token = localStorage.getItem('token');
+                const API_BASE_URL = window.location.origin;
+                
+                const response = await fetch(`${API_BASE_URL}/api/messages/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        messageId,
+                        channelId: selectedChannel.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    // Revert optimistic update on failure
+                    const originalMessage = messages.find(msg => msg.id === messageId);
+                    if (originalMessage) {
+                        setMessages(prevMessages => 
+                            prevMessages.map(msg => 
+                                msg.id === messageId ? originalMessage : msg
+                            )
+                        );
+                    }
+                    throw new Error(data.message || 'Failed to delete message');
+                }
+                
+                // Broadcast deletion via WebSocket if available
+                if (window.wsConnection && window.wsConnection.readyState === WebSocket.OPEN) {
+                    try {
+                        window.wsConnection.send(JSON.stringify({
+                            type: 'MESSAGE_DELETED',
+                            channelId: selectedChannel.id,
+                            messageId: messageId,
+                            deletedAt: data.deletedAt
+                        }));
+                    } catch (wsError) {
+                        console.warn('WebSocket broadcast failed:', wsError);
+                    }
                 }
             }
             
-            // Remove message from state (works for both temp and real messages)
-            const updatedMessages = messages.filter(msg => msg.id !== messageId);
-            setMessages(updatedMessages);
-            persistMessagesList(selectedChannel.id, updatedMessages);
-            
-            // Also remove from localStorage
+            // Update localStorage
             const storageKey = `community_messages_${selectedChannel.id}`;
             const storedMessages = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            const filteredStored = storedMessages.filter(msg => msg.id !== messageId);
-            localStorage.setItem(storageKey, JSON.stringify(filteredStored));
+            const updatedStored = storedMessages.map(msg => 
+                msg.id === messageId 
+                    ? { ...msg, content: '[deleted]', isDeleted: true }
+                    : msg
+            );
+            localStorage.setItem(storageKey, JSON.stringify(updatedStored));
             
             // Close modal
             setDeleteMessageModal(null);
@@ -3349,7 +3441,7 @@ Let's build generational wealth together! 💰🚀`,
             console.error('Failed to delete message:', error);
             // Only show error if it's not a temporary message
             if (!(typeof messageId === 'string' && messageId.startsWith('temp_'))) {
-                alert('Failed to delete message: ' + (error.response?.data?.message || error.message));
+                alert('Failed to delete message: ' + (error.message || 'Unknown error'));
             }
         } finally {
             setIsDeletingMessage(false);
@@ -5148,9 +5240,11 @@ Let's build generational wealth together! 💰🚀`,
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        {(isAdminUser || isSuperAdminUser) && (
+                                                        {/* Delete button - shown for message owner, admin, or moderator (not for deleted messages) */}
+                                                        {!message.isDeleted && message.content !== '[deleted]' && canDeleteMessage(message) && (
                                                             <button
                                                                 onClick={() => handleDeleteMessage(message.id)}
+                                                                className="message-delete-btn"
                                                                 style={{
                                                                     background: 'transparent',
                                                                     border: 'none',
@@ -5180,8 +5274,9 @@ Let's build generational wealth together! 💰🚀`,
                                                         )}
                                                     </div>
                                                 )}
-                                                {isGrouped && (isAdminUser || isSuperAdminUser) && (
-                                                    <div style={{ 
+                                                {/* Delete button for grouped messages */}
+                                                {isGrouped && !message.isDeleted && message.content !== '[deleted]' && canDeleteMessage(message) && (
+                                                    <div className="message-delete-grouped" style={{ 
                                                         position: 'absolute', 
                                                         right: '16px', 
                                                         top: '2px',
@@ -5190,6 +5285,7 @@ Let's build generational wealth together! 💰🚀`,
                                                     }}>
                                                         <button
                                                             onClick={() => handleDeleteMessage(message.id)}
+                                                            className="message-delete-btn"
                                                             style={{
                                                                 background: 'transparent',
                                                                 border: 'none',
@@ -5212,8 +5308,17 @@ Let's build generational wealth together! 💰🚀`,
                                                         </button>
                                                     </div>
                                                 )}
-                                            <div className="message-text">
-                                                {message.isWelcomeMessage ? (
+                                            <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
+                                                {/* Deleted message */}
+                                                {message.isDeleted || message.content === '[deleted]' ? (
+                                                    <span style={{ 
+                                                        color: '#72767D', 
+                                                        fontStyle: 'italic',
+                                                        opacity: 0.7
+                                                    }}>
+                                                        [message deleted]
+                                                    </span>
+                                                ) : message.isWelcomeMessage ? (
                                                     message.content.split('\n').map((line, idx) => {
                                                         const trimmedLine = line.trim();
                                                         // Format markdown-style headers
@@ -7177,6 +7282,25 @@ Let's build generational wealth together! 💰🚀`,
                     >
                         <FaFlag size={14} /> Report message
                     </button>
+                    {/* Delete message - show for message owner, admin, or moderator */}
+                    {(() => {
+                        const message = messages.find(m => m.id === contextMenu.messageId);
+                        if (message && canDeleteMessage(message)) {
+                            return (
+                                <button
+                                    className="context-menu-item"
+                                    onClick={() => {
+                                        handleDeleteMessage(contextMenu.messageId);
+                                        setContextMenu(null);
+                                    }}
+                                    style={{ color: '#ef4444' }}
+                                >
+                                    <FaTrash size={14} /> Delete message
+                                </button>
+                            );
+                        }
+                        return null;
+                    })()}
                 </div>
             )}
 

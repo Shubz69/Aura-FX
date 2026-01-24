@@ -1101,6 +1101,22 @@ html.community-page-active {
     margin-bottom: 0 !important;
 }
 
+/* Deleted message styling */
+.message-text.message-deleted {
+    color: #72767D !important;
+    font-style: italic !important;
+    opacity: 0.7 !important;
+}
+
+/* Delete button visibility on message hover */
+.message-item:hover .message-delete-btn {
+    opacity: 1 !important;
+}
+
+.message-item:hover .message-delete-grouped {
+    opacity: 1 !important;
+}
+
 .message-text img {
     max-width: 100%;
     height: auto;

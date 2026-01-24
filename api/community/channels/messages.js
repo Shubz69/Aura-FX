@@ -302,6 +302,9 @@ module.exports = async (req, res) => {
             }
           }
           
+          // Check if message is deleted (soft-delete)
+          const isDeleted = !!row.deleted_at || row.content === '[deleted]';
+          
           return {
             id: row.id,
             channelId: row.channel_id,
@@ -311,6 +314,8 @@ module.exports = async (req, res) => {
             createdAt: row.timestamp,
             timestamp: row.timestamp,
             file: fileData, // Include file data if present
+            isDeleted: isDeleted, // Include deleted state
+            deletedAt: row.deleted_at || null,
             sender: {
               id: row.sender_id,
               username: username,

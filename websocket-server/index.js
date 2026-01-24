@@ -178,6 +178,61 @@ function canAcceptConnection(userId) {
   return { allowed: true };
 }
 
+// Endpoint to broadcast message deleted (called by delete API)
+app.post('/api/broadcast-message-deleted', async (req, res) => {
+    try {
+        const { messageId, channelId, deletedAt, deletedBy } = req.body;
+        
+        if (!messageId || !channelId) {
+            return res.status(400).json({ success: false, message: 'messageId and channelId required' });
+        }
+        
+        // Create the deletion notification
+        const deletionMessage = JSON.stringify({
+            type: 'MESSAGE_DELETED',
+            messageId: messageId,
+            channelId: channelId,
+            deletedAt: deletedAt || new Date().toISOString(),
+            deletedBy: deletedBy
+        });
+        
+        // Create STOMP message frame
+        const messageFrame = createStompFrame('MESSAGE', {
+            'destination': `/topic/chat/${channelId}`,
+            'content-type': 'application/json',
+            'message-id': `delete-${Date.now()}`
+        }, deletionMessage);
+        
+        // Broadcast to all subscribers of this channel
+        let notifiedCount = 0;
+        const channelSubs = subscriptions.get(channelId) || subscriptions.get(String(channelId));
+        
+        if (channelSubs) {
+            channelSubs.forEach((ws) => {
+                try {
+                    if (ws.readyState === 1) { // WebSocket.OPEN
+                        ws.send(messageFrame);
+                        notifiedCount++;
+                    }
+                } catch (error) {
+                    console.error('Error sending delete notification:', error);
+                }
+            });
+        }
+        
+        console.log(`Broadcast MESSAGE_DELETED for message ${messageId} in channel ${channelId} to ${notifiedCount} client(s)`);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'Deletion broadcasted',
+            clientsNotified: notifiedCount
+        });
+    } catch (error) {
+        console.error('Error broadcasting message deletion:', error);
+        res.status(500).json({ success: false, message: 'Failed to broadcast' });
+    }
+});
+
 // Endpoint to notify user of account deletion (called by admin API)
 app.post('/api/notify-user-deleted', async (req, res) => {
     try {

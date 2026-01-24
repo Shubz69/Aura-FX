@@ -323,6 +323,14 @@
       "destination": "/api/messages/locate.js"
     },
     {
+      "source": "/api/messages/delete",
+      "destination": "/api/messages/delete.js"
+    },
+    {
+      "source": "/api/messages/:messageId/delete",
+      "destination": "/api/messages/delete.js?messageId=:messageId"
+    },
+    {
       "source": "/api/market/watchlist",
       "destination": "/api/market/watchlist.js"
     },
