@@ -1,26 +1,53 @@
 /**
  * MarketTicker CSS - Shared styles for live market ticker
+ * 
+ * Visual requirements:
+ * - Proper height with no clipping
+ * - Correct vertical alignment
+ * - TradingView-style green/red flashing
+ * - Smooth auto-scrolling
+ * - Responsive design
  */
 
-/* Wrapper */
+/* ============================================================================
+   Wrapper
+   ============================================================================ */
+
 .market-ticker-wrapper {
   position: relative;
   width: 100%;
+  margin: 20px 0;
 }
 
 .market-ticker-wrapper.stale {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-/* Status indicator */
+.market-ticker-wrapper.disconnected::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  border-radius: 12px;
+}
+
+/* ============================================================================
+   Status Indicator
+   ============================================================================ */
+
 .ticker-status {
   position: absolute;
-  top: -24px;
+  top: -28px;
   right: 0;
   font-size: 0.75rem;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 4px;
   z-index: 10;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .ticker-status.stale {
@@ -29,22 +56,30 @@
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-/* Category tabs */
+/* ============================================================================
+   Category Tabs
+   ============================================================================ */
+
 .ticker-categories {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.ticker-categories::-webkit-scrollbar {
+  display: none;
 }
 
 .ticker-category {
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.7);
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 20px;
   font-size: 0.85rem;
   font-family: 'Space Grotesk', sans-serif;
@@ -54,35 +89,45 @@
 }
 
 .ticker-category:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .ticker-category.active {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.4);
   color: white;
 }
 
-/* Ticker tape */
+/* ============================================================================
+   Ticker Tape Container - FIXED HEIGHT AND PADDING
+   ============================================================================ */
+
 .stock-ticker-compact {
   width: 100%;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(26, 15, 46, 0.6), rgba(37, 26, 58, 0.6));
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 12px 0;
+  background: linear-gradient(135deg, rgba(26, 15, 46, 0.7), rgba(37, 26, 58, 0.7));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  /* CRITICAL: Proper min-height to prevent clipping */
+  min-height: 72px;
+  /* Proper vertical padding */
+  padding: 16px 0;
+  display: flex;
+  align-items: center;
 }
 
 .ticker {
   display: flex;
-  gap: 24px;
-  padding: 0 24px;
+  gap: 20px;
+  padding: 0 20px;
   width: max-content;
+  /* Ensure proper vertical alignment */
+  align-items: center;
 }
 
 .ticker.auto-scroll {
-  animation: tickerScroll 60s linear infinite;
+  animation: tickerScroll 50s linear infinite;
 }
 
 @keyframes tickerScroll {
@@ -99,31 +144,46 @@
   animation-play-state: paused;
 }
 
-/* Individual ticker item */
+/* ============================================================================
+   Individual Ticker Item - PROPER HEIGHT AND ALIGNMENT
+   ============================================================================ */
+
 .ticker-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  gap: 12px;
+  /* CRITICAL: Proper padding for full rendering */
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
   transition: all 0.3s ease;
   white-space: nowrap;
+  /* Ensure nothing is clipped */
+  min-height: 40px;
+  /* Proper vertical centering */
+  line-height: 1.4;
 }
 
 .ticker-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .ticker-item.loading {
-  opacity: 0.6;
-}
-
-.ticker-item.stale {
   opacity: 0.7;
 }
 
-/* Flash animations */
+.ticker-item.stale {
+  opacity: 0.8;
+}
+
+.ticker-item.delayed {
+  border: 1px dashed rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================================================
+   Flash Animations - TradingView Style
+   ============================================================================ */
+
 .ticker-item.flash-green {
   animation: flashGreen 0.6s ease;
 }
@@ -134,41 +194,57 @@
 
 @keyframes flashGreen {
   0%, 100% {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
     box-shadow: none;
+  }
+  25% {
+    background: rgba(34, 197, 94, 0.35);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
   }
   50% {
     background: rgba(34, 197, 94, 0.25);
-    box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
   }
 }
 
 @keyframes flashRed {
   0%, 100% {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
     box-shadow: none;
+  }
+  25% {
+    background: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
   }
   50% {
     background: rgba(239, 68, 68, 0.25);
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
   }
 }
 
-/* Symbol */
+/* ============================================================================
+   Symbol Name
+   ============================================================================ */
+
 .ticker-symbol {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.9);
-  min-width: 60px;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.95);
+  min-width: 65px;
 }
 
-/* Price */
+/* ============================================================================
+   Price Display
+   ============================================================================ */
+
 .ticker-price {
-  font-family: 'Space Grotesk', monospace;
+  font-family: 'Space Grotesk', 'SF Mono', monospace;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   transition: all 0.3s ease;
+  min-width: 70px;
+  text-align: right;
 }
 
 .ticker-price.price-up {
@@ -179,57 +255,110 @@
   color: #ef4444;
 }
 
-/* Change percentage */
+.ticker-price.loading-price {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Loading animation for prices */
+.price-loading {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.loading-dot {
+  animation: pulseDot 1.2s ease-in-out infinite;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ============================================================================
+   Change Percentage Badge
+   ============================================================================ */
+
 .ticker-change {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  padding: 3px 8px;
-  border-radius: 4px;
-  min-width: 65px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  min-width: 72px;
   text-align: center;
+  /* Ensure proper line height for full rendering */
+  line-height: 1.3;
 }
 
 .ticker-change.ticker-up {
-  background: rgba(34, 197, 94, 0.15);
+  background: rgba(34, 197, 94, 0.18);
   color: #22c55e;
 }
 
 .ticker-change.ticker-down {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.18);
   color: #ef4444;
 }
 
-/* View All Markets button */
+.ticker-change.ticker-loading {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Delayed badge */
+.ticker-delayed-badge {
+  font-size: 0.7rem;
+  margin-left: 4px;
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   View All Markets Button
+   ============================================================================ */
+
 .view-all-markets-btn {
   display: block;
-  margin: 12px auto 0;
+  margin: 16px auto 0;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
-  padding: 8px 20px;
-  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 10px 24px;
+  border-radius: 24px;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .view-all-markets-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.4);
   color: white;
+  transform: translateY(-1px);
 }
 
-/* Modal overlay */
+/* ============================================================================
+   Modal Overlay
+   ============================================================================ */
+
 .market-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -243,24 +372,28 @@
   to { opacity: 1; }
 }
 
-/* Modal */
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+
 .market-modal {
-  background: linear-gradient(135deg, rgba(26, 15, 46, 0.98), rgba(37, 26, 58, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(145deg, rgba(26, 15, 46, 0.98), rgba(37, 26, 58, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 20px;
   width: 100%;
-  max-width: 900px;
+  max-width: 920px;
   max-height: 85vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -272,25 +405,36 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 22px 28px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .market-modal-header h2 {
   margin: 0;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 600;
   color: white;
 }
 
+.modal-stale-badge {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  border-radius: 12px;
+  margin-left: 12px;
+}
+
 .market-modal-close {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border: none;
   color: white;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -299,17 +443,22 @@
 }
 
 .market-modal-close:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  transform: rotate(90deg);
 }
 
 .market-modal-content {
-  padding: 20px 24px;
+  padding: 24px 28px;
   overflow-y: auto;
+  flex: 1;
 }
 
-/* Market groups */
+/* ============================================================================
+   Market Groups in Modal
+   ============================================================================ */
+
 .market-group {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .market-group:last-child {
@@ -319,41 +468,50 @@
 .market-group-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .market-group-icon {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
 }
 
 .market-group-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
 }
 
-/* Market item in modal */
+/* ============================================================================
+   Market Item in Modal
+   ============================================================================ */
+
 .market-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 12px 16px;
-  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 18px;
+  transition: all 0.25s ease;
 }
 
 .market-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.market-item.delayed {
+  border-style: dashed;
+  border-color: rgba(245, 158, 11, 0.25);
 }
 
 .market-item.flash-green {
@@ -367,33 +525,40 @@
 .market-item-info {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .market-item-symbol {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   color: white;
+}
+
+.market-item-delayed {
+  font-size: 0.7rem;
+  color: #F59E0B;
+  opacity: 0.8;
 }
 
 .market-item-price {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 3px;
 }
 
 .market-item-value {
-  font-family: 'Space Grotesk', monospace;
+  font-family: 'Space Grotesk', 'SF Mono', monospace;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: white;
 }
 
 .market-item-change {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  margin-top: 2px;
 }
 
 .market-item-change.up {
@@ -404,15 +569,33 @@
   color: #ef4444;
 }
 
-/* Responsive */
+.market-item-change.loading {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+
+/* ============================================================================
+   Responsive Styles
+   ============================================================================ */
+
 @media (max-width: 768px) {
+  .market-ticker-wrapper {
+    margin: 16px 0;
+  }
+  
   .ticker-categories {
     padding: 0 16px 8px;
   }
   
   .ticker-category {
-    padding: 5px 12px;
-    font-size: 0.8rem;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+  }
+  
+  .stock-ticker-compact {
+    min-height: 64px;
+    padding: 14px 0;
+    border-radius: 12px;
   }
   
   .ticker {
@@ -421,23 +604,30 @@
   }
   
   .ticker-item {
-    gap: 8px;
-    padding: 6px 12px;
+    gap: 10px;
+    padding: 8px 14px;
+    min-height: 36px;
   }
   
   .ticker-symbol {
-    font-size: 0.85rem;
-    min-width: 50px;
+    font-size: 0.88rem;
+    min-width: 55px;
   }
   
   .ticker-price {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    min-width: 60px;
   }
   
   .ticker-change {
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    min-width: 55px;
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    min-width: 62px;
+  }
+  
+  .view-all-markets-btn {
+    padding: 8px 20px;
+    font-size: 0.85rem;
   }
   
   .market-modal {
@@ -446,31 +636,65 @@
   }
   
   .market-modal-header {
-    padding: 16px 20px;
+    padding: 18px 22px;
+  }
+  
+  .market-modal-header h2 {
+    font-size: 1.35rem;
   }
   
   .market-modal-content {
-    padding: 16px 20px;
+    padding: 18px 22px;
   }
   
   .market-group-items {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .market-item {
+    padding: 12px 16px;
   }
 }
 
 /* Very small screens */
 @media (max-width: 480px) {
   .ticker.auto-scroll {
-    animation-duration: 40s;
+    animation-duration: 35s;
+  }
+  
+  .stock-ticker-compact {
+    min-height: 56px;
+    padding: 12px 0;
   }
   
   .ticker-item {
-    flex-direction: column;
-    gap: 4px;
-    text-align: center;
+    gap: 8px;
+    padding: 6px 12px;
+    min-height: 32px;
+  }
+  
+  .ticker-symbol {
+    font-size: 0.82rem;
+    min-width: 48px;
+  }
+  
+  .ticker-price {
+    font-size: 0.88rem;
+    min-width: 50px;
   }
   
   .ticker-change {
-    min-width: auto;
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    min-width: 52px;
+  }
+  
+  .market-modal-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .modal-stale-badge {
+    display: none;
   }
 }

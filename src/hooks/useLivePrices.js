@@ -2,18 +2,24 @@
  * useLivePrices - Shared hook for live market prices
  * 
  * Features:
- * - Single connection per browser session (shared across pages)
+ * - Single connection per browser session (shared across all components)
+ * - Only ONE upstream connection per symbol (singleton pattern)
  * - Automatic reconnection with exponential backoff
- * - Stale data detection
+ * - Never shows 0.00 - uses cached prices with "delayed" indicator
  * - Green/red flash on price updates
  * - Correct decimals per instrument type
+ * - Health monitoring
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE_URL = window.location.origin;
 
-// Singleton connection manager
+// ============================================================================
+// Singleton Connection Manager
+// Ensures only ONE upstream connection exists across entire app
+// ============================================================================
+
 let globalPriceData = {};
 let globalListeners = new Set();
 let fetchInterval = null;
@@ -21,13 +27,16 @@ let isConnected = false;
 let lastFetchTime = 0;
 let reconnectAttempts = 0;
 let watchlistConfig = null;
+let activeSymbols = new Set();
 
 // Health monitoring
 const healthStats = {
   totalUpdates: 0,
   lastUpdateTime: 0,
   avgLatency: 0,
-  errors: 0
+  errors: 0,
+  liveSymbols: 0,
+  delayedSymbols: 0
 };
 
 // Decimals configuration
@@ -40,21 +49,39 @@ const DECIMALS = {
   'AAPL': 2, 'MSFT': 2, 'NVDA': 2, 'AMZN': 2, 'GOOGL': 2, 'META': 2, 'TSLA': 2
 };
 
+// Display names for symbols
+const DISPLAY_NAMES = {
+  'BTCUSD': 'BTC/USD', 'ETHUSD': 'ETH/USD', 'SOLUSD': 'SOL/USD',
+  'XRPUSD': 'XRP/USD', 'BNBUSD': 'BNB/USD', 'ADAUSD': 'ADA/USD',
+  'DOGEUSD': 'DOGE/USD', 'EURUSD': 'EUR/USD', 'GBPUSD': 'GBP/USD',
+  'USDJPY': 'USD/JPY', 'USDCHF': 'USD/CHF', 'AUDUSD': 'AUD/USD',
+  'USDCAD': 'USD/CAD', 'NZDUSD': 'NZD/USD', 'XAUUSD': 'Gold',
+  'XAGUSD': 'Silver', 'WTI': 'WTI Oil', 'BRENT': 'Brent',
+  'SPX': 'S&P 500', 'NDX': 'Nasdaq', 'DJI': 'Dow Jones',
+  'DAX': 'DAX 40', 'FTSE': 'FTSE 100', 'NIKKEI': 'Nikkei',
+  'DXY': 'DXY', 'US10Y': '10Y Yield', 'VIX': 'VIX'
+};
+
 function getDecimals(symbol) {
   return DECIMALS[symbol] || 2;
 }
 
 function formatPrice(price, symbol) {
-  if (!price || isNaN(price)) return '0.00';
+  if (!price || isNaN(price)) return null;
   const dec = getDecimals(symbol);
   return parseFloat(price).toFixed(dec);
 }
 
+function getDisplayName(symbol) {
+  return DISPLAY_NAMES[symbol] || symbol;
+}
+
 // Notify all listeners of price updates
 function notifyListeners() {
+  const data = { ...globalPriceData };
   globalListeners.forEach(listener => {
     try {
-      listener({ ...globalPriceData });
+      listener(data);
     } catch (e) {
       console.error('Price listener error:', e);
     }
@@ -68,14 +95,19 @@ async function fetchPrices(symbols) {
   const startTime = Date.now();
   
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    
     const response = await fetch(
       `${API_BASE_URL}/api/market/prices?symbols=${symbols.join(',')}`,
       { 
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(10000)
+        signal: controller.signal
       }
     );
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
@@ -86,6 +118,8 @@ async function fetchPrices(symbols) {
       healthStats.avgLatency = (healthStats.avgLatency * healthStats.totalUpdates + latency) / (healthStats.totalUpdates + 1);
       healthStats.totalUpdates++;
       healthStats.lastUpdateTime = Date.now();
+      healthStats.liveSymbols = data.meta?.liveCount || 0;
+      healthStats.delayedSymbols = data.meta?.delayedCount || 0;
       
       // Update global price data with flash detection
       Object.entries(data.prices).forEach(([symbol, priceData]) => {
@@ -93,14 +127,18 @@ async function fetchPrices(symbols) {
         const newPrice = parseFloat(priceData.rawPrice || priceData.price);
         const oldPrice = prev ? parseFloat(prev.rawPrice || prev.price) : newPrice;
         
-        // Detect price direction for flash
+        // Skip if price is 0 or invalid
+        if (!newPrice || newPrice === 0) return;
+        
+        // Detect price direction for flash animation
         let flash = null;
-        if (prev && newPrice !== oldPrice) {
+        if (prev && prev.rawPrice && newPrice !== oldPrice) {
           flash = newPrice > oldPrice ? 'up' : 'down';
         }
         
         globalPriceData[symbol] = {
           ...priceData,
+          displayName: priceData.displayName || getDisplayName(symbol),
           flash,
           flashTime: flash ? Date.now() : (prev?.flashTime || 0),
           lastUpdate: Date.now()
@@ -116,13 +154,16 @@ async function fetchPrices(symbols) {
     console.error('Price fetch error:', error.message);
     healthStats.errors++;
     
+    // Mark connection as potentially stale but keep existing data
+    // NEVER clear prices - they should persist
+    
     // Exponential backoff on errors
     reconnectAttempts++;
     const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
     
     if (fetchInterval) {
       clearInterval(fetchInterval);
-      fetchInterval = setTimeout(() => startPolling(symbols), backoffTime);
+      fetchInterval = setTimeout(() => startPolling(Array.from(activeSymbols)), backoffTime);
     }
   }
 }
@@ -133,11 +174,14 @@ function startPolling(symbols) {
     clearInterval(fetchInterval);
   }
   
+  // Track active symbols
+  symbols.forEach(s => activeSymbols.add(s));
+  
   // Initial fetch
   fetchPrices(symbols);
   
-  // Set up interval (5 seconds for live-ish updates)
-  fetchInterval = setInterval(() => fetchPrices(symbols), 5000);
+  // Set up interval (5 seconds for live updates)
+  fetchInterval = setInterval(() => fetchPrices(Array.from(activeSymbols)), 5000);
 }
 
 // Stop polling
@@ -167,7 +211,32 @@ async function fetchWatchlist() {
   // Fallback watchlist
   return {
     beginnerSet: ['BTCUSD', 'ETHUSD', 'AAPL', 'NVDA', 'TSLA', 'EURUSD', 'GBPUSD', 'XAUUSD', 'SPX', 'NDX', 'DXY', 'VIX'],
-    groups: {}
+    groups: {
+      crypto: { name: 'Crypto', icon: '₿', order: 1, symbols: [
+        { symbol: 'BTCUSD', displayName: 'BTC/USD' },
+        { symbol: 'ETHUSD', displayName: 'ETH/USD' }
+      ]},
+      stocks: { name: 'Stocks', icon: '📈', order: 2, symbols: [
+        { symbol: 'AAPL', displayName: 'AAPL' },
+        { symbol: 'NVDA', displayName: 'NVDA' },
+        { symbol: 'TSLA', displayName: 'TSLA' }
+      ]},
+      forex: { name: 'Forex', icon: '💱', order: 3, symbols: [
+        { symbol: 'EURUSD', displayName: 'EUR/USD' },
+        { symbol: 'GBPUSD', displayName: 'GBP/USD' }
+      ]},
+      commodities: { name: 'Commodities', icon: '🥇', order: 4, symbols: [
+        { symbol: 'XAUUSD', displayName: 'Gold' }
+      ]},
+      indices: { name: 'Indices', icon: '📊', order: 5, symbols: [
+        { symbol: 'SPX', displayName: 'S&P 500' },
+        { symbol: 'NDX', displayName: 'Nasdaq' }
+      ]},
+      macro: { name: 'Macro', icon: '🌐', order: 6, symbols: [
+        { symbol: 'DXY', displayName: 'DXY' },
+        { symbol: 'VIX', displayName: 'VIX' }
+      ]}
+    }
   };
 }
 
@@ -175,9 +244,9 @@ async function fetchWatchlist() {
  * useLivePrices Hook
  * 
  * @param {Object} options
- * @param {string[]} options.symbols - Symbols to track (optional, uses beginner set if not provided)
+ * @param {string[]} options.symbols - Symbols to track (optional)
  * @param {boolean} options.beginnerMode - Use beginner-friendly subset
- * @param {string} options.category - Filter by category (crypto, stocks, forex, etc.)
+ * @param {string} options.category - Filter by category
  */
 export function useLivePrices(options = {}) {
   const { symbols: customSymbols, beginnerMode = true, category = null } = options;
@@ -248,11 +317,13 @@ export function useLivePrices(options = {}) {
       // Register listener
       globalListeners.add(handleUpdate);
       
-      // Start polling if not already running
+      // Start polling if not already running, or merge symbols
       if (!fetchInterval && symbolsToTrack.length > 0) {
         startPolling(symbolsToTrack);
       } else if (fetchInterval) {
-        // Already running, just get current data
+        // Add new symbols to tracking
+        symbolsToTrack.forEach(s => activeSymbols.add(s));
+        // Get current data immediately
         handleUpdate({ ...globalPriceData });
       }
     }
@@ -266,6 +337,7 @@ export function useLivePrices(options = {}) {
       // Stop polling if no more listeners
       if (globalListeners.size === 0) {
         stopPolling();
+        activeSymbols.clear();
       }
     };
   }, [customSymbols, beginnerMode, category, handleUpdate]);
@@ -281,17 +353,32 @@ export function useLivePrices(options = {}) {
   }, []);
 
   // Get all prices as array (for rendering)
+  // NEVER returns 0.00 - shows loading state instead
   const getPricesArray = useCallback(() => {
-    return symbolsRef.current.map(symbol => ({
-      symbol,
-      ...(prices[symbol] || {
-        price: '0.00',
-        change: '0.00',
-        changePercent: '0.00',
+    return symbolsRef.current.map(symbol => {
+      const priceData = prices[symbol];
+      const displayName = getDisplayName(symbol);
+      
+      if (priceData && priceData.price && parseFloat(priceData.price) > 0) {
+        return {
+          symbol,
+          displayName,
+          ...priceData
+        };
+      }
+      
+      // No valid price - show loading state (NOT 0.00)
+      return {
+        symbol,
+        displayName,
+        price: null,
+        change: null,
+        changePercent: null,
         isUp: true,
-        loading: true
-      })
-    }));
+        loading: true,
+        delayed: priceData?.delayed || false
+      };
+    });
   }, [prices]);
 
   // Get prices grouped by category
@@ -302,16 +389,27 @@ export function useLivePrices(options = {}) {
     Object.entries(watchlist.groups).forEach(([key, group]) => {
       grouped[key] = {
         ...group,
-        prices: group.symbols.map(s => ({
-          ...s,
-          ...(prices[s.symbol] || {
-            price: '0.00',
-            change: '0.00',
-            changePercent: '0.00',
+        prices: group.symbols.map(s => {
+          const priceData = prices[s.symbol];
+          
+          if (priceData && priceData.price && parseFloat(priceData.price) > 0) {
+            return {
+              ...s,
+              ...priceData
+            };
+          }
+          
+          // No valid price - loading state
+          return {
+            ...s,
+            price: null,
+            change: null,
+            changePercent: null,
             isUp: true,
-            loading: true
-          })
-        }))
+            loading: true,
+            delayed: priceData?.delayed || false
+          };
+        })
       };
     });
     return grouped;
@@ -323,6 +421,7 @@ export function useLivePrices(options = {}) {
     connected: isConnected,
     stale,
     listenerCount: globalListeners.size,
+    activeSymbolCount: activeSymbols.size,
     lastFetchTime
   }), [stale]);
 
@@ -346,8 +445,18 @@ export function getTickerHealth() {
     ...healthStats,
     connected: isConnected,
     listenerCount: globalListeners.size,
+    activeSymbolCount: activeSymbols.size,
     lastFetchTime,
     reconnectAttempts
+  };
+}
+
+// Export for testing
+export function _getActiveConnections() {
+  return {
+    listeners: globalListeners.size,
+    activeSymbols: activeSymbols.size,
+    hasInterval: !!fetchInterval
   };
 }
 

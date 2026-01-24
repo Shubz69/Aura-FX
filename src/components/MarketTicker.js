@@ -3,40 +3,118 @@
  * 
  * Features:
  * - Live price updates with green/red flash
- * - Auto-scrolling ticker tape
+ * - Auto-scrolling ticker tape (TradingView style)
  * - Category tabs for filtering
- * - "View All Markets" modal
+ * - "View All Markets" modal with live prices
+ * - Never shows 0.00 - shows loading or delayed indicator
  * - Stale data indicator
- * - Responsive design
+ * - Responsive design with proper height/padding
  */
 
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { useLivePrices } from '../hooks/useLivePrices';
 import '../styles/MarketTicker.css';
 
+// Loading placeholder for prices
+const PriceLoading = () => (
+  <span className="price-loading">
+    <span className="loading-dot">•</span>
+    <span className="loading-dot">•</span>
+    <span className="loading-dot">•</span>
+  </span>
+);
+
 // Individual ticker item (memoized for performance)
-const TickerItem = memo(({ symbol, displayName, price, change, changePercent, isUp, flash, loading, stale }) => {
+const TickerItem = memo(({ 
+  symbol, 
+  displayName, 
+  price, 
+  change, 
+  changeSign,
+  changePercent, 
+  isUp, 
+  flash, 
+  loading, 
+  stale,
+  delayed 
+}) => {
   const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
+  const hasPrice = price && parseFloat(price) > 0;
   
   return (
-    <div className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''}`}>
+    <div className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''} ${delayed ? 'delayed' : ''}`}>
       <span className="ticker-symbol">{displayName || symbol}</span>
-      <span className={`ticker-price ${isUp ? 'price-up' : 'price-down'}`}>
-        {loading ? '...' : price}
-      </span>
-      <span className={`ticker-change ${isUp ? 'ticker-up' : 'ticker-down'}`}>
-        {loading ? '' : (
-          <>
+      
+      {hasPrice ? (
+        <>
+          <span className={`ticker-price ${isUp ? 'price-up' : 'price-down'}`}>
+            {price}
+          </span>
+          <span className={`ticker-change ${isUp ? 'ticker-up' : 'ticker-down'}`}>
             {isUp ? '▲' : '▼'} {changePercent}%
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="ticker-price loading-price">
+            <PriceLoading />
+          </span>
+          <span className="ticker-change ticker-loading">
+            {delayed ? '⏳' : '...'}
+          </span>
+        </>
+      )}
+      
+      {delayed && hasPrice && (
+        <span className="ticker-delayed-badge" title="Price may be delayed">⏳</span>
+      )}
+    </div>
+  );
+});
+
+// Market item for modal (memoized)
+const MarketItem = memo(({ 
+  symbol, 
+  displayName, 
+  price, 
+  change,
+  changeSign,
+  changePercent, 
+  isUp, 
+  flash, 
+  loading,
+  delayed 
+}) => {
+  const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
+  const hasPrice = price && parseFloat(price) > 0;
+  
+  return (
+    <div className={`market-item ${isUp ? 'up' : 'down'} ${flashClass} ${delayed ? 'delayed' : ''}`}>
+      <div className="market-item-info">
+        <span className="market-item-symbol">{displayName || symbol}</span>
+        {delayed && <span className="market-item-delayed">Delayed</span>}
+      </div>
+      <div className="market-item-price">
+        {hasPrice ? (
+          <>
+            <span className="market-item-value">{price}</span>
+            <span className={`market-item-change ${isUp ? 'up' : 'down'}`}>
+              {changeSign || (isUp ? '+' : '-')}{change} ({changePercent}%)
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="market-item-value"><PriceLoading /></span>
+            <span className="market-item-change loading">Loading...</span>
           </>
         )}
-      </span>
+      </div>
     </div>
   );
 });
 
 // View All Markets Modal
-const ViewAllModal = memo(({ isOpen, onClose, groupedPrices }) => {
+const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
   if (!isOpen) return null;
 
   return (
@@ -44,35 +122,28 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices }) => {
       <div className="market-modal" onClick={e => e.stopPropagation()}>
         <div className="market-modal-header">
           <h2>All Markets</h2>
+          {stale && <span className="modal-stale-badge">⚠️ Data may be delayed</span>}
           <button className="market-modal-close" onClick={onClose}>×</button>
         </div>
         <div className="market-modal-content">
-          {Object.entries(groupedPrices).sort((a, b) => a[1].order - b[1].order).map(([key, group]) => (
-            <div key={key} className="market-group">
-              <h3 className="market-group-title">
-                <span className="market-group-icon">{group.icon}</span>
-                {group.name}
-              </h3>
-              <div className="market-group-items">
-                {group.prices.map(item => (
-                  <div 
-                    key={item.symbol} 
-                    className={`market-item ${item.isUp ? 'up' : 'down'} ${item.flash ? `flash-${item.flash === 'up' ? 'green' : 'red'}` : ''}`}
-                  >
-                    <div className="market-item-info">
-                      <span className="market-item-symbol">{item.displayName || item.symbol}</span>
-                    </div>
-                    <div className="market-item-price">
-                      <span className="market-item-value">{item.price || '...'}</span>
-                      <span className={`market-item-change ${item.isUp ? 'up' : 'down'}`}>
-                        {item.isUp ? '▲' : '▼'} {item.changePercent || '0.00'}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
+          {Object.entries(groupedPrices)
+            .sort((a, b) => a[1].order - b[1].order)
+            .map(([key, group]) => (
+              <div key={key} className="market-group">
+                <h3 className="market-group-title">
+                  <span className="market-group-icon">{group.icon}</span>
+                  {group.name}
+                </h3>
+                <div className="market-group-items">
+                  {group.prices.map(item => (
+                    <MarketItem
+                      key={item.symbol}
+                      {...item}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
@@ -128,11 +199,13 @@ function MarketTicker({
     stale,
     watchlist,
     getPricesArray,
-    getPricesGrouped
+    getPricesGrouped,
+    getHealth
   } = useLivePrices({ beginnerMode: !activeCategory, category: activeCategory });
 
   const pricesArray = getPricesArray();
   const groupedPrices = getPricesGrouped();
+  const health = getHealth();
 
   // Get categories for tabs
   const categories = watchlist?.groups 
@@ -149,8 +222,11 @@ function MarketTicker({
   // Duplicate items for seamless scrolling
   const tickerItems = autoScroll ? [...pricesArray, ...pricesArray] : pricesArray;
 
+  // Check if any prices have data
+  const hasAnyData = pricesArray.some(p => p.price && parseFloat(p.price) > 0);
+
   return (
-    <div className={`market-ticker-wrapper ${className} ${stale ? 'stale' : ''}`}>
+    <div className={`market-ticker-wrapper ${className} ${stale ? 'stale' : ''} ${!connected && !loading ? 'disconnected' : ''}`}>
       {/* Connection/Stale indicator */}
       {stale && (
         <div className="ticker-status stale">
@@ -169,13 +245,12 @@ function MarketTicker({
       
       {/* Ticker tape */}
       <div className={`stock-ticker-compact ${compact ? 'compact' : ''}`}>
-        <div className={`ticker ${autoScroll ? 'auto-scroll' : ''}`}>
+        <div className={`ticker ${autoScroll && hasAnyData ? 'auto-scroll' : ''}`}>
           {tickerItems.map((item, index) => (
             <TickerItem
               key={`${item.symbol}-${index}`}
               {...item}
               stale={stale}
-              loading={loading && !item.price}
             />
           ))}
         </div>
@@ -196,6 +271,7 @@ function MarketTicker({
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         groupedPrices={groupedPrices}
+        stale={stale}
       />
     </div>
   );
