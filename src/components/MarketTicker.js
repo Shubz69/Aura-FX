@@ -40,6 +40,7 @@ const TickerItem = memo(({
 }) => {
   const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
   const hasPrice = price && parseFloat(price) > 0;
+  const sign = isUp ? '+' : '';
   
   return (
     <div className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''} ${delayed ? 'delayed' : ''}`}>
@@ -51,7 +52,7 @@ const TickerItem = memo(({
             {price}
           </span>
           <span className={`ticker-change ${isUp ? 'ticker-up' : 'ticker-down'}`}>
-            {isUp ? '▲' : '▼'} {changePercent}%
+            {sign}{changePercent}%
           </span>
         </>
       ) : (
@@ -59,14 +60,8 @@ const TickerItem = memo(({
           <span className="ticker-price loading-price">
             <PriceLoading />
           </span>
-          <span className="ticker-change ticker-loading">
-            {delayed ? '⏳' : '...'}
-          </span>
+          <span className="ticker-change ticker-loading">—</span>
         </>
-      )}
-      
-      {delayed && hasPrice && (
-        <span className="ticker-delayed-badge" title="Price may be delayed">⏳</span>
       )}
     </div>
   );
