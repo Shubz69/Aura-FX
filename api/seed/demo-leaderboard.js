@@ -338,12 +338,26 @@ async function seedDemoLeaderboard(options = {}) {
       };
     }
     
-    // Ensure is_demo column exists
+    // Ensure is_demo column exists (idempotent check via information_schema)
     try {
-      await executeQuery('ALTER TABLE users ADD COLUMN is_demo BOOLEAN DEFAULT FALSE');
-    } catch (e) { /* Column exists */ }
+      const colCheckResult = await executeQuery(
+        `SELECT COUNT(*) as col_exists 
+         FROM information_schema.columns 
+         WHERE table_schema = DATABASE() 
+           AND table_name = 'users' 
+           AND column_name = 'is_demo'`
+      );
+      const colExists = getRows(colCheckResult)[0]?.col_exists > 0;
+      
+      if (!colExists) {
+        await executeQuery('ALTER TABLE users ADD COLUMN is_demo BOOLEAN DEFAULT FALSE');
+        console.log('Added is_demo column to users table');
+      }
+    } catch (e) {
+      console.log('is_demo column check:', e.code || e.message || 'handled');
+    }
     
-    // Ensure xp_events table exists
+    // Ensure xp_events table exists (CREATE TABLE IF NOT EXISTS is already idempotent)
     try {
       await executeQuery(`
         CREATE TABLE IF NOT EXISTS xp_events (
@@ -356,9 +370,14 @@ async function seedDemoLeaderboard(options = {}) {
           INDEX idx_user_id (user_id),
           INDEX idx_created_at (created_at),
           INDEX idx_user_created (user_id, created_at)
-        )
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
       `);
-    } catch (e) { /* Table exists */ }
+    } catch (e) {
+      // Table exists or other non-fatal error
+      if (e.code !== 'ER_TABLE_EXISTS_ERROR') {
+        console.log('xp_events table check:', e.code || e.message);
+      }
+    }
     
     // Clean up old demo data if reseeding
     if (forceReseed) {

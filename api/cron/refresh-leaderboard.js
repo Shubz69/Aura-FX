@@ -1,18 +1,13 @@
 /**
  * Cron Job: Refresh Leaderboard Rollups
  * 
- * This endpoint should be called by Vercel Cron or external scheduler
+ * This endpoint is called by Vercel Cron (configured in vercel.json)
  * to refresh cached leaderboard data and clean up old XP events.
  * 
- * Recommended schedule: Every 5 minutes
+ * Schedule: Every 5 minutes (configured in vercel.json crons array)
  * 
- * Add to vercel.json:
- * {
- *   "crons": [{
- *     "path": "/api/cron/refresh-leaderboard",
- *     "schedule": "*/5 * * * *"
- *   }]
- * }
+ * NOTE: Do NOT add cron schedule parsing in this JS file.
+ * Cron scheduling is handled by Vercel's cron system, not Node.js.
  */
 
 const { executeQuery } = require('../db');

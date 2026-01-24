@@ -1,5 +1,14 @@
 /**
  * Friends API - Complete friend system with request/accept flow
+ * 
+ * Endpoints:
+ * - GET  /api/users/friends           - Get friends list
+ * - GET  /api/users/friends/requests  - Get pending requests
+ * - GET  /api/users/friends/status/:userId - Check friendship status
+ * - POST /api/users/friends/request   - Send friend request (body: { friendId } or { receiverUserId } or { userId })
+ * - POST /api/users/friends/accept    - Accept friend request
+ * - POST /api/users/friends/reject    - Reject friend request
+ * - DELETE /api/users/friends/:friendId - Remove friend
  */
 
 const { executeQuery } = require('../db');
@@ -7,6 +16,59 @@ const { executeQuery } = require('../db');
 // Generate unique request ID for logging
 function generateRequestId() {
   return `fr_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Parse and validate request body
+ * Handles both JSON and string bodies, and accepts multiple field names
+ */
+function parseBody(req) {
+  let body = req.body;
+  
+  // Handle string body (needs JSON parsing)
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
+      return { error: 'Invalid JSON body', parsed: null };
+    }
+  }
+  
+  // Handle empty/null body
+  if (!body || typeof body !== 'object') {
+    return { error: null, parsed: {} };
+  }
+  
+  return { error: null, parsed: body };
+}
+
+/**
+ * Extract target user ID from body, accepting multiple field names
+ * Returns { targetId: number | null, fieldUsed: string | null, error: string | null }
+ */
+function extractTargetUserId(body, acceptedFields = ['friendId', 'receiverUserId', 'userId', 'targetUserId']) {
+  if (!body || typeof body !== 'object') {
+    return { targetId: null, fieldUsed: null, error: 'Missing request body' };
+  }
+  
+  // Try each accepted field name
+  for (const field of acceptedFields) {
+    const value = body[field];
+    if (value !== undefined && value !== null && value !== '') {
+      const parsed = parseInt(value, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return { targetId: parsed, fieldUsed: field, error: null };
+      }
+    }
+  }
+  
+  // Build helpful error message
+  const receivedFields = Object.keys(body).join(', ') || 'none';
+  return { 
+    targetId: null, 
+    fieldUsed: null, 
+    error: `Missing required field. Expected one of: ${acceptedFields.join(', ')}. Received fields: ${receivedFields}`
+  };
 }
 
 // Track if table has been created this session
@@ -196,110 +258,208 @@ module.exports = async (req, res) => {
 
     // POST /api/users/friends/request - Send friend request
     if (req.method === 'POST' && action === 'request') {
-      // Parse body if needed
-      let body = req.body;
-      if (typeof body === 'string') {
-        try { body = JSON.parse(body); } catch (e) { body = {}; }
+      const requestId = generateRequestId();
+      
+      // Parse body with robust handling
+      const { error: parseError, parsed: body } = parseBody(req);
+      
+      if (parseError) {
+        console.log(`[${requestId}] Friend request parse error:`, parseError);
+        return res.status(400).json({ 
+          success: false, 
+          message: parseError,
+          requestId
+        });
       }
       
-      const friendId = body?.friendId;
+      // Extract target user ID (accepts friendId, receiverUserId, userId, targetUserId)
+      const { targetId, fieldUsed, error: extractError } = extractTargetUserId(body);
       
-      console.log('Friend request body:', { body, friendId, currentUserId });
+      // Structured logging for debugging
+      console.log(`[${requestId}] Friend request:`, {
+        from: currentUserId,
+        body: body,
+        extractedTarget: targetId,
+        fieldUsed: fieldUsed,
+        contentType: req.headers['content-type']
+      });
       
-      if (!friendId) {
-        return res.status(400).json({ success: false, message: 'Friend ID required', received: body });
+      if (extractError || !targetId) {
+        console.log(`[${requestId}] Validation error:`, extractError);
+        return res.status(400).json({ 
+          success: false, 
+          message: extractError || 'Target user ID is required',
+          hint: 'Send JSON body with { "friendId": <userId> } or { "receiverUserId": <userId> }',
+          received: body,
+          requestId
+        });
       }
 
-      const friendIdNum = parseInt(friendId);
-      
-      if (friendIdNum === currentUserId) {
-        return res.status(400).json({ success: false, message: 'Cannot add yourself as friend' });
+      if (targetId === currentUserId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Cannot add yourself as friend',
+          requestId 
+        });
       }
 
-      // Check if user exists
-      const userResult = await executeQuery('SELECT id FROM users WHERE id = ?', [friendIdNum]);
-      const userExists = Array.isArray(userResult) ? (Array.isArray(userResult[0]) ? userResult[0] : userResult) : [];
+      // Check if target user exists
+      const userResult = await executeQuery('SELECT id, username FROM users WHERE id = ?', [targetId]);
+      const userRows = getRows(userResult);
       
-      if (!userExists || userExists.length === 0) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+      if (!userRows || userRows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'User not found',
+          requestId 
+        });
       }
 
       // Check existing friendship
       const existingResult = await executeQuery(`
         SELECT * FROM friends 
         WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
-      `, [currentUserId, friendIdNum, friendIdNum, currentUserId]);
+      `, [currentUserId, targetId, targetId, currentUserId]);
 
-      const existing = Array.isArray(existingResult) ? (Array.isArray(existingResult[0]) ? existingResult[0] : existingResult) : [];
+      const existing = getRows(existingResult);
 
       if (existing && existing.length > 0) {
-        const status = existing[0].status;
+        const friendship = existing[0];
+        const status = friendship.status;
+        
         if (status === 'accepted') {
-          return res.status(400).json({ success: false, message: 'Already friends' });
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Already friends',
+            status: 'accepted',
+            requestId 
+          });
         }
         if (status === 'pending') {
-          return res.status(400).json({ success: false, message: 'Friend request already pending' });
+          // Check if we sent it or received it
+          const direction = friendship.user_id === currentUserId ? 'pending_sent' : 'pending_received';
+          return res.status(400).json({ 
+            success: false, 
+            message: direction === 'pending_sent' ? 'Friend request already sent' : 'You have a pending request from this user',
+            status: direction,
+            requestId 
+          });
         }
         if (status === 'blocked') {
-          return res.status(400).json({ success: false, message: 'Cannot send request' });
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Cannot send request to this user',
+            requestId 
+          });
+        }
+        if (status === 'rejected') {
+          // Update existing rejected record to pending
+          await executeQuery(
+            'UPDATE friends SET status = ?, updated_at = NOW() WHERE id = ?',
+            ['pending', friendship.id]
+          );
+          
+          console.log(`[${requestId}] Friend request re-sent (was rejected)`);
+          return res.status(200).json({ 
+            success: true, 
+            message: 'Friend request sent',
+            status: 'pending_sent',
+            requestId
+          });
         }
       }
 
       // Create friend request
       await executeQuery(
         'INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)',
-        [currentUserId, friendIdNum, 'pending']
+        [currentUserId, targetId, 'pending']
       );
+
+      console.log(`[${requestId}] Friend request created: ${currentUserId} -> ${targetId}`);
 
       return res.status(200).json({ 
         success: true, 
         message: 'Friend request sent',
-        status: 'pending_sent'
+        status: 'pending_sent',
+        requestId
       });
     }
 
     // POST /api/users/friends/accept - Accept friend request
     if (req.method === 'POST' && action === 'accept') {
-      const { friendId } = req.body || {};
+      const requestId = generateRequestId();
+      const { error: parseError, parsed: body } = parseBody(req);
       
-      if (!friendId) {
-        return res.status(400).json({ success: false, message: 'Friend ID required' });
+      if (parseError) {
+        return res.status(400).json({ success: false, message: parseError, requestId });
+      }
+      
+      const { targetId, error: extractError } = extractTargetUserId(body);
+      
+      if (extractError || !targetId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: extractError || 'Friend ID required',
+          requestId 
+        });
       }
 
       const result = await executeQuery(`
         UPDATE friends SET status = 'accepted', updated_at = NOW()
         WHERE user_id = ? AND friend_id = ? AND status = 'pending'
-      `, [parseInt(friendId), currentUserId]);
+      `, [targetId, currentUserId]);
 
       const updateResult = Array.isArray(result) ? result[0] : result;
       
       if (!updateResult || updateResult.affectedRows === 0) {
-        return res.status(404).json({ success: false, message: 'No pending request found' });
+        return res.status(404).json({ 
+          success: false, 
+          message: 'No pending request found',
+          requestId 
+        });
       }
+
+      console.log(`[${requestId}] Friend request accepted: ${targetId} -> ${currentUserId}`);
 
       return res.status(200).json({ 
         success: true, 
         message: 'Friend request accepted',
-        status: 'accepted'
+        status: 'accepted',
+        requestId
       });
     }
 
     // POST /api/users/friends/reject - Reject friend request
     if (req.method === 'POST' && action === 'reject') {
-      const { friendId } = req.body || {};
+      const requestId = generateRequestId();
+      const { error: parseError, parsed: body } = parseBody(req);
       
-      if (!friendId) {
-        return res.status(400).json({ success: false, message: 'Friend ID required' });
+      if (parseError) {
+        return res.status(400).json({ success: false, message: parseError, requestId });
+      }
+      
+      const { targetId, error: extractError } = extractTargetUserId(body);
+      
+      if (extractError || !targetId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: extractError || 'Friend ID required',
+          requestId 
+        });
       }
 
       await executeQuery(`
         DELETE FROM friends 
         WHERE user_id = ? AND friend_id = ? AND status = 'pending'
-      `, [parseInt(friendId), currentUserId]);
+      `, [targetId, currentUserId]);
+
+      console.log(`[${requestId}] Friend request rejected: ${targetId} -> ${currentUserId}`);
 
       return res.status(200).json({ 
         success: true, 
-        message: 'Friend request rejected'
+        message: 'Friend request rejected',
+        status: 'none',
+        requestId
       });
     }
 

@@ -30,6 +30,104 @@ const getModalRoot = () => {
     return modalRoot;
 };
 
+/**
+ * Avatar component with robust fallback handling
+ * Shows initials if image fails to load or is missing
+ */
+const AvatarWithFallback = ({ src, name, size = 130, tierColor, isOnline }) => {
+    const [imageError, setImageError] = React.useState(false);
+    const [imageLoaded, setImageLoaded] = React.useState(false);
+    
+    // Reset error state when src changes
+    React.useEffect(() => {
+        setImageError(false);
+        setImageLoaded(false);
+    }, [src]);
+    
+    // Get initials from name (up to 2 characters)
+    const getInitials = (name) => {
+        if (!name) return 'U';
+        const parts = name.trim().split(/[\s_-]+/);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
+    
+    const initials = getInitials(name);
+    const showImage = src && !imageError;
+    
+    return (
+        <div style={{
+            position: 'relative',
+            width: `${size}px`,
+            height: `${size}px`,
+            flexShrink: 0
+        }}>
+            {/* Fallback: Initials background - always rendered behind */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${tierColor}, ${tierColor}80)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: `${size * 0.35}px`,
+                fontWeight: 700,
+                color: 'white',
+                border: `5px solid ${tierColor}`,
+                boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
+                boxSizing: 'border-box'
+            }}>
+                {initials}
+            </div>
+            
+            {/* Avatar image - layered on top if available and loads successfully */}
+            {showImage && (
+                <img 
+                    src={src} 
+                    alt={name}
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageError(true)}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        objectPosition: 'center',
+                        border: `5px solid ${tierColor}`,
+                        boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px ${tierColor}60`,
+                        boxSizing: 'border-box',
+                        opacity: imageLoaded ? 1 : 0,
+                        transition: 'opacity 0.3s ease'
+                    }} 
+                />
+            )}
+            
+            {/* Online indicator */}
+            <div style={{
+                position: 'absolute',
+                bottom: `${size * 0.06}px`,
+                right: `${size * 0.06}px`,
+                width: `${size * 0.22}px`,
+                height: `${size * 0.22}px`,
+                borderRadius: '50%',
+                background: isOnline ? '#23A55A' : '#72767D',
+                border: '4px solid rgba(30, 30, 46, 0.95)',
+                boxShadow: isOnline ? '0 0 12px #23A55A' : 'none',
+                zIndex: 5
+            }} />
+        </div>
+    );
+};
+
 // All possible achievements with unlock conditions
 const ALL_ACHIEVEMENTS = [
     { id: 'first_steps', name: 'First Steps', icon: '🔰', description: 'Reach Level 5', unlockLevel: 5 },
@@ -571,65 +669,60 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     }}><FaTimes /></button>
                 </div>
 
-                {/* Level-Based Banner */}
+                {/* Profile Header Section - Banner + Avatar */}
                 <div style={{
-                    position: 'relative', width: '100%', height: '180px', overflow: 'hidden',
-                    background: getBannerGradient(level), marginBottom: '70px'
+                    position: 'relative', 
+                    width: '100%', 
+                    paddingBottom: '70px', /* Space for avatar overhang */
+                    marginBottom: '0'
                 }}>
-                    {/* Animated particles effect for high levels */}
-                    {level >= 50 && (
-                        <div style={{
-                            position: 'absolute', inset: 0, background: 'url("data:image/svg+xml,...")',
-                            animation: 'shimmer 3s infinite linear', opacity: 0.3
-                        }} />
-                    )}
-                    
-                    {/* Level indicator on banner */}
+                    {/* Level-Based Banner - NO overflow:hidden to allow avatar to extend */}
                     <div style={{
-                        position: 'absolute', top: '15px', left: '15px', padding: '8px 16px',
-                        background: 'rgba(0,0,0,0.5)', borderRadius: '20px', backdropFilter: 'blur(10px)',
-                        display: 'flex', alignItems: 'center', gap: '8px'
+                        position: 'relative', 
+                        width: '100%', 
+                        height: '180px',
+                        background: getBannerGradient(level),
+                        borderRadius: '24px 24px 0 0' /* Match modal corners */
                     }}>
-                        <span style={{ fontSize: '1.5rem' }}>
-                            {level >= 75 ? '👑' : level >= 50 ? '💎' : level >= 25 ? '🔥' : '⭐'}
-                        </span>
-                        <span style={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>Level {level}</span>
+                        {/* Animated particles effect for high levels */}
+                        {level >= 50 && (
+                            <div style={{
+                                position: 'absolute', inset: 0, 
+                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                                animation: 'shimmer 3s infinite linear', opacity: 0.5,
+                                borderRadius: '24px 24px 0 0'
+                            }} />
+                        )}
+                        
+                        {/* Level indicator on banner */}
+                        <div style={{
+                            position: 'absolute', top: '15px', left: '15px', padding: '8px 16px',
+                            background: 'rgba(0,0,0,0.5)', borderRadius: '20px', backdropFilter: 'blur(10px)',
+                            display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>
+                                {level >= 75 ? '👑' : level >= 50 ? '💎' : level >= 25 ? '🔥' : '⭐'}
+                            </span>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>Level {level}</span>
+                        </div>
                     </div>
 
-                    {/* Avatar */}
-                    <div style={{ position: 'absolute', bottom: '-60px', left: '40px', zIndex: 5 }}>
-                        <div style={{ position: 'relative', width: '130px', height: '130px' }}>
-                            {/* Always show initial as fallback behind image */}
-                            <div style={{
-                                position: 'absolute', top: 0, left: 0,
-                                width: '130px', height: '130px', borderRadius: '50%',
-                                background: `linear-gradient(135deg, ${tierColor}, ${tierColor}80)`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '2.8rem', fontWeight: 700, color: 'white',
-                                border: `5px solid ${tierColor}`, boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5)`
-                            }}>{(profile.username || profile.name || 'U')[0].toUpperCase()}</div>
-                            
-                            {/* Avatar image on top if available */}
-                            {profile.avatar && (
-                                <img 
-                                    src={getAvatarPath(profile.avatar)} 
-                                    alt="Avatar" 
-                                    style={{
-                                        position: 'absolute', top: 0, left: 0,
-                                        width: '130px', height: '130px', borderRadius: '50%', objectFit: 'cover',
-                                        border: `5px solid ${tierColor}`, boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px ${tierColor}60`
-                                    }} 
-                                    onError={(e) => { e.target.style.display = 'none'; }} 
-                                />
-                            )}
-                            
-                            {/* Online indicator */}
-                            <div style={{
-                                position: 'absolute', bottom: '8px', right: '8px', width: '28px', height: '28px',
-                                borderRadius: '50%', background: isOnline ? '#23A55A' : '#72767D',
-                                border: '4px solid rgba(30, 30, 46, 0.95)', boxShadow: isOnline ? '0 0 12px #23A55A' : 'none'
-                            }} />
-                        </div>
+                    {/* Avatar - Positioned outside banner to avoid clipping */}
+                    <div style={{ 
+                        position: 'absolute', 
+                        bottom: '0', 
+                        left: '40px', 
+                        zIndex: 10,
+                        width: '130px',
+                        height: '130px'
+                    }}>
+                        <AvatarWithFallback 
+                            src={profile.avatar ? getAvatarPath(profile.avatar) : null}
+                            name={profile.username || profile.name || 'User'}
+                            size={130}
+                            tierColor={tierColor}
+                            isOnline={isOnline}
+                        />
                     </div>
                 </div>
 

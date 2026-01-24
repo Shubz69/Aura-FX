@@ -265,6 +265,58 @@
     {
       "source": "/api/seed/demo-leaderboard",
       "destination": "/api/seed/demo-leaderboard.js"
+    },
+    {
+      "source": "/api/notifications",
+      "destination": "/api/notifications/index.js"
+    },
+    {
+      "source": "/api/notifications/:id/read",
+      "destination": "/api/notifications/index.js"
+    },
+    {
+      "source": "/api/notifications/read-all",
+      "destination": "/api/notifications/index.js"
+    },
+    {
+      "source": "/api/friends/list",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/requests/incoming",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/requests/outgoing",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/request",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/accept",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/decline",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/cancel",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/remove",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/friends/status/:userId",
+      "destination": "/api/friends/index.js"
+    },
+    {
+      "source": "/api/messages/locate",
+      "destination": "/api/messages/locate.js"
     }
   ],
   "crons": [
