@@ -257,6 +257,16 @@
     {
       "source": "/api/ai/health",
       "destination": "/api/ai/health.js"
+    },
+    {
+      "source": "/api/cron/refresh-leaderboard",
+      "destination": "/api/cron/refresh-leaderboard.js"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/refresh-leaderboard",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

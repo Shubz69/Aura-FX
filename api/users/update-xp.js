@@ -80,15 +80,39 @@ module.exports = async (req, res) => {
             
             // Log XP transaction if there was a gain
             if (xpGain > 0) {
+                const logActionType = actionType || 'system_update';
+                const logDescription = description || `XP updated from ${previousXP} to ${xp}`;
+                
+                // Log to xp_logs (legacy)
                 try {
-                    const logActionType = actionType || 'system_update';
-                    const logDescription = description || `XP updated from ${previousXP} to ${xp}`;
                     await db.execute(
                         'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
                         [userId, xpGain, logActionType, logDescription]
                     );
                 } catch (logError) {
-                    console.warn('Failed to log XP transaction:', logError.message);
+                    console.warn('Failed to log XP to xp_logs:', logError.message);
+                }
+                
+                // Log to xp_events (new leaderboard system)
+                try {
+                    await db.execute(`
+                        CREATE TABLE IF NOT EXISTS xp_events (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            user_id INT NOT NULL,
+                            amount DECIMAL(10, 2) NOT NULL,
+                            source VARCHAR(50) NOT NULL,
+                            meta JSON,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            INDEX idx_user_id (user_id),
+                            INDEX idx_created_at (created_at)
+                        )
+                    `);
+                    await db.execute(
+                        'INSERT INTO xp_events (user_id, amount, source, meta) VALUES (?, ?, ?, ?)',
+                        [userId, xpGain, logActionType, JSON.stringify({ description: logDescription })]
+                    );
+                } catch (evtError) {
+                    console.warn('Failed to log XP to xp_events:', evtError.message);
                 }
             }
             
