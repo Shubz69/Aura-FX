@@ -104,10 +104,14 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             });
             if (response.ok) {
                 const data = await response.json();
-                setFriendStatus(data.status);
+                setFriendStatus(data.status || 'none');
+            } else {
+                // Graceful fallback - don't break the UI
+                setFriendStatus('none');
             }
         } catch (err) {
             console.error("Error checking friend status:", err);
+            setFriendStatus('none');
         }
     }, [isOwnProfile, token, userId]);
 
@@ -551,7 +555,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 Level {level} → Level {level + 1}
                             </span>
                             <span style={{ color: tierColor, fontSize: '0.9rem', fontWeight: 700 }}>
-                                {xpProgress.current.toLocaleString()} / {xpProgress.required.toLocaleString()} XP
+                                {(xpProgress.current || 0).toLocaleString()} / {(xpProgress.needed || 0).toLocaleString()} XP
                             </span>
                         </div>
                         <div style={{
@@ -573,7 +577,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             </div>
                         </div>
                         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', marginTop: '6px', textAlign: 'right' }}>
-                            {(xpProgress.required - xpProgress.current).toLocaleString()} XP to next level
+                            {((xpProgress.needed || 0) - (xpProgress.current || 0)).toLocaleString()} XP to next level
                         </div>
                     </div>
                 </div>

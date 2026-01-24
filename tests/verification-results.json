@@ -1,0 +1,252 @@
+{
+  "passed": 49,
+  "failed": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "name": "DB errors return success: true with fallback response",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "General errors return success: true with fallback",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Catch blocks return valid responses",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Multi-stage fallback (GPT-4o → GPT-4o-mini → static)",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Outer catch returns valid response",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "User query uses parameterized SQL",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "No SQL string concatenation",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "TradingView webhook LIMIT uses safe integer",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Uses connection pooling",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "High connection limit (100) for scale",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "executeQuery auto-releases connections",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "premium-chat.js releases DB connections",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Circuit breaker implementation",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Adapter timeouts configured",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Caching integration",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Market data parallel fetching",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Market data fallback response",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Symbol normalization",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Background prefetch for popular symbols",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Data service health check",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Image MIME type validation",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Image size limit (10MB)",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "OpenAI multimodal format",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Invalid image graceful handling",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Request ID generation",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Structured logging (JSON format)",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Timing breakdown tracking",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Health checks OpenAI",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Health checks database",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Health checks cache",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Health checks data layer adapters",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Memory usage reporting",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "System prompt included",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Conversation history limiting",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Structured trading response format",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Long history summarization",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Response schema definition",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Response has success field",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Response has response field",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Response has requestId field",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Response has timing field",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Input validation tests",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Image validation tests",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Access control tests",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Integration tests",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Performance tests",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Concurrent request tests",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Uses only OpenAI (no other AI services)",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Models used: gpt-4o",
+      "status": "PASS",
+      "details": ""
+    }
+  ]
+}

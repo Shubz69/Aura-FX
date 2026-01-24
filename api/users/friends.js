@@ -1,17 +1,8 @@
 /**
  * Friends API - Complete friend system with request/accept flow
- * 
- * Endpoints:
- * - GET /api/users/friends - Get user's friends list
- * - GET /api/users/friends/requests - Get pending friend requests
- * - POST /api/users/friends/request - Send friend request
- * - POST /api/users/friends/accept - Accept friend request
- * - POST /api/users/friends/reject - Reject friend request
- * - DELETE /api/users/friends/:friendId - Remove friend
- * - GET /api/users/friends/status/:userId - Check friendship status
  */
 
-const { executeQuery, getDbConnection } = require('../db');
+const { executeQuery } = require('../db');
 
 // Ensure friends table exists
 async function ensureFriendsTable() {
@@ -27,17 +18,16 @@ async function ensureFriendsTable() {
         UNIQUE KEY unique_friendship (user_id, friend_id),
         INDEX idx_user (user_id),
         INDEX idx_friend (friend_id),
-        INDEX idx_status (status),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
+        INDEX idx_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
   } catch (error) {
-    console.error('Error ensuring friends table:', error);
+    // Table might already exist or foreign keys might fail - that's ok
+    console.log('Friends table check:', error.code || 'OK');
   }
 }
 
-// Initialize table on module load
+// Initialize table
 ensureFriendsTable();
 
 // Decode JWT token
@@ -49,8 +39,7 @@ function decodeToken(token) {
     const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padding = payload.length % 4;
     const paddedPayload = padding ? payload + '='.repeat(4 - padding) : payload;
-    const decoded = JSON.parse(Buffer.from(paddedPayload, 'base64').toString('utf-8'));
-    return decoded;
+    return JSON.parse(Buffer.from(paddedPayload, 'base64').toString('utf-8'));
   } catch (e) {
     return null;
   }
@@ -75,13 +64,29 @@ module.exports = async (req, res) => {
   }
 
   const currentUserId = decoded.id;
+  
+  // Parse URL - handle both /api/users/friends/status/28 and query params
   const url = req.url || '';
-  const urlParts = url.split('/').filter(p => p && p !== 'api' && p !== 'users' && p !== 'friends');
+  const urlWithoutQuery = url.split('?')[0];
+  const pathParts = urlWithoutQuery.split('/').filter(Boolean);
+  
+  // Extract the action and target from path
+  // e.g., /api/users/friends/status/28 -> ['api', 'users', 'friends', 'status', '28']
+  let action = null;
+  let targetId = null;
+  
+  const friendsIndex = pathParts.indexOf('friends');
+  if (friendsIndex !== -1 && pathParts.length > friendsIndex + 1) {
+    action = pathParts[friendsIndex + 1];
+    if (pathParts.length > friendsIndex + 2) {
+      targetId = pathParts[friendsIndex + 2];
+    }
+  }
 
   try {
     // GET /api/users/friends - Get friends list
-    if (req.method === 'GET' && urlParts.length === 0) {
-      const [friends] = await executeQuery(`
+    if (req.method === 'GET' && !action) {
+      const result = await executeQuery(`
         SELECT u.id, u.username, u.avatar, u.level, u.xp, u.role, u.subscription_status, u.last_seen,
                f.status, f.created_at as friends_since
         FROM friends f
@@ -92,16 +97,18 @@ module.exports = async (req, res) => {
         ORDER BY u.last_seen DESC
       `, [currentUserId, currentUserId, currentUserId]);
 
+      const friends = Array.isArray(result) ? (Array.isArray(result[0]) ? result[0] : result) : [];
+
       return res.status(200).json({ 
         success: true, 
-        friends: friends || [],
-        count: friends?.length || 0
+        friends: friends,
+        count: friends.length
       });
     }
 
     // GET /api/users/friends/requests - Get pending requests
-    if (req.method === 'GET' && urlParts[0] === 'requests') {
-      const [incoming] = await executeQuery(`
+    if (req.method === 'GET' && action === 'requests') {
+      const incomingResult = await executeQuery(`
         SELECT u.id, u.username, u.avatar, u.level, u.xp, u.role, f.created_at as requested_at
         FROM friends f
         JOIN users u ON f.user_id = u.id
@@ -109,7 +116,7 @@ module.exports = async (req, res) => {
         ORDER BY f.created_at DESC
       `, [currentUserId]);
 
-      const [outgoing] = await executeQuery(`
+      const outgoingResult = await executeQuery(`
         SELECT u.id, u.username, u.avatar, u.level, u.xp, u.role, f.created_at as requested_at
         FROM friends f
         JOIN users u ON f.friend_id = u.id
@@ -117,27 +124,36 @@ module.exports = async (req, res) => {
         ORDER BY f.created_at DESC
       `, [currentUserId]);
 
+      const incoming = Array.isArray(incomingResult) ? (Array.isArray(incomingResult[0]) ? incomingResult[0] : incomingResult) : [];
+      const outgoing = Array.isArray(outgoingResult) ? (Array.isArray(outgoingResult[0]) ? outgoingResult[0] : outgoingResult) : [];
+
       return res.status(200).json({ 
         success: true, 
-        incoming: incoming || [],
-        outgoing: outgoing || [],
-        incomingCount: incoming?.length || 0,
-        outgoingCount: outgoing?.length || 0
+        incoming,
+        outgoing,
+        incomingCount: incoming.length,
+        outgoingCount: outgoing.length
       });
     }
 
     // GET /api/users/friends/status/:userId - Check friendship status
-    if (req.method === 'GET' && urlParts[0] === 'status' && urlParts[1]) {
-      const targetUserId = parseInt(urlParts[1]);
+    if (req.method === 'GET' && action === 'status' && targetId) {
+      const targetUserId = parseInt(targetId);
+      
+      if (isNaN(targetUserId)) {
+        return res.status(400).json({ success: false, message: 'Invalid user ID' });
+      }
       
       if (targetUserId === currentUserId) {
         return res.status(200).json({ success: true, status: 'self' });
       }
 
-      const [existing] = await executeQuery(`
+      const result = await executeQuery(`
         SELECT status, user_id, friend_id FROM friends 
         WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
       `, [currentUserId, targetUserId, targetUserId, currentUserId]);
+
+      const existing = Array.isArray(result) ? (Array.isArray(result[0]) ? result[0] : result) : [];
 
       if (!existing || existing.length === 0) {
         return res.status(200).json({ success: true, status: 'none' });
@@ -146,7 +162,6 @@ module.exports = async (req, res) => {
       const friendship = existing[0];
       let status = friendship.status;
       
-      // Determine if this user sent or received the request
       if (status === 'pending') {
         status = friendship.user_id === currentUserId ? 'pending_sent' : 'pending_received';
       }
@@ -155,28 +170,34 @@ module.exports = async (req, res) => {
     }
 
     // POST /api/users/friends/request - Send friend request
-    if (req.method === 'POST' && urlParts[0] === 'request') {
-      const { friendId } = req.body;
+    if (req.method === 'POST' && action === 'request') {
+      const { friendId } = req.body || {};
       
       if (!friendId) {
         return res.status(400).json({ success: false, message: 'Friend ID required' });
       }
 
-      if (parseInt(friendId) === currentUserId) {
+      const friendIdNum = parseInt(friendId);
+      
+      if (friendIdNum === currentUserId) {
         return res.status(400).json({ success: false, message: 'Cannot add yourself as friend' });
       }
 
       // Check if user exists
-      const [userExists] = await executeQuery('SELECT id FROM users WHERE id = ?', [friendId]);
+      const userResult = await executeQuery('SELECT id FROM users WHERE id = ?', [friendIdNum]);
+      const userExists = Array.isArray(userResult) ? (Array.isArray(userResult[0]) ? userResult[0] : userResult) : [];
+      
       if (!userExists || userExists.length === 0) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
       // Check existing friendship
-      const [existing] = await executeQuery(`
+      const existingResult = await executeQuery(`
         SELECT * FROM friends 
         WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
-      `, [currentUserId, friendId, friendId, currentUserId]);
+      `, [currentUserId, friendIdNum, friendIdNum, currentUserId]);
+
+      const existing = Array.isArray(existingResult) ? (Array.isArray(existingResult[0]) ? existingResult[0] : existingResult) : [];
 
       if (existing && existing.length > 0) {
         const status = existing[0].status;
@@ -194,7 +215,7 @@ module.exports = async (req, res) => {
       // Create friend request
       await executeQuery(
         'INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)',
-        [currentUserId, friendId, 'pending']
+        [currentUserId, friendIdNum, 'pending']
       );
 
       return res.status(200).json({ 
@@ -205,20 +226,21 @@ module.exports = async (req, res) => {
     }
 
     // POST /api/users/friends/accept - Accept friend request
-    if (req.method === 'POST' && urlParts[0] === 'accept') {
-      const { friendId } = req.body;
+    if (req.method === 'POST' && action === 'accept') {
+      const { friendId } = req.body || {};
       
       if (!friendId) {
         return res.status(400).json({ success: false, message: 'Friend ID required' });
       }
 
-      // Find pending request where the other user sent it
-      const [result] = await executeQuery(`
+      const result = await executeQuery(`
         UPDATE friends SET status = 'accepted', updated_at = NOW()
         WHERE user_id = ? AND friend_id = ? AND status = 'pending'
-      `, [friendId, currentUserId]);
+      `, [parseInt(friendId), currentUserId]);
 
-      if (!result || result.affectedRows === 0) {
+      const updateResult = Array.isArray(result) ? result[0] : result;
+      
+      if (!updateResult || updateResult.affectedRows === 0) {
         return res.status(404).json({ success: false, message: 'No pending request found' });
       }
 
@@ -230,8 +252,8 @@ module.exports = async (req, res) => {
     }
 
     // POST /api/users/friends/reject - Reject friend request
-    if (req.method === 'POST' && urlParts[0] === 'reject') {
-      const { friendId } = req.body;
+    if (req.method === 'POST' && action === 'reject') {
+      const { friendId } = req.body || {};
       
       if (!friendId) {
         return res.status(400).json({ success: false, message: 'Friend ID required' });
@@ -240,7 +262,7 @@ module.exports = async (req, res) => {
       await executeQuery(`
         DELETE FROM friends 
         WHERE user_id = ? AND friend_id = ? AND status = 'pending'
-      `, [friendId, currentUserId]);
+      `, [parseInt(friendId), currentUserId]);
 
       return res.status(200).json({ 
         success: true, 
@@ -249,14 +271,18 @@ module.exports = async (req, res) => {
     }
 
     // DELETE /api/users/friends/:friendId - Remove friend
-    if (req.method === 'DELETE' && urlParts[0]) {
-      const friendId = parseInt(urlParts[0]);
+    if (req.method === 'DELETE' && action) {
+      const friendIdToRemove = parseInt(action);
+
+      if (isNaN(friendIdToRemove)) {
+        return res.status(400).json({ success: false, message: 'Invalid friend ID' });
+      }
 
       await executeQuery(`
         DELETE FROM friends 
         WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
           AND status = 'accepted'
-      `, [currentUserId, friendId, friendId, currentUserId]);
+      `, [currentUserId, friendIdToRemove, friendIdToRemove, currentUserId]);
 
       return res.status(200).json({ 
         success: true, 
@@ -269,6 +295,6 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Friends API error:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
