@@ -60,26 +60,79 @@ export const SubscriptionProvider = ({ children }) => {
       
       const data = await response.json();
       
+      console.log('[SubscriptionContext] Server response:', {
+        success: data.success,
+        hasCommunityAccess: data.subscription?.hasCommunityAccess,
+        accessType: data.subscription?.accessType,
+        status: data.subscription?.status,
+        planId: data.subscription?.planId
+      });
+      
       if (data.success && data.subscription) {
         setSubscription(data.subscription);
       } else {
-        setSubscription({
-          hasCommunityAccess: false,
-          accessType: 'NONE',
-          isActive: false,
-          status: 'inactive'
-        });
+        console.warn('[SubscriptionContext] No subscription data in response, checking role fallback');
+        
+        // Check role fallback
+        const userRole = (user?.role || '').toLowerCase();
+        const isAdmin = ['admin', 'super_admin'].includes(userRole);
+        const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
+        
+        if (isAdmin || isPremiumRole) {
+          console.log('[SubscriptionContext] Role-based access granted:', userRole);
+          setSubscription({
+            hasCommunityAccess: true,
+            accessType: isAdmin ? 'ADMIN' : (userRole === 'elite' || userRole === 'a7fx' ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE'),
+            isActive: true,
+            status: 'active',
+            _roleBasedAccess: true
+          });
+        } else {
+          setSubscription({
+            hasCommunityAccess: false,
+            accessType: 'NONE',
+            isActive: false,
+            status: 'inactive'
+          });
+        }
       }
     } catch (err) {
       console.error('Subscription fetch error:', err);
       setError(err.message);
-      // On error, default to no access for security
-      setSubscription({
-        hasCommunityAccess: false,
-        accessType: 'NONE',
-        isActive: false,
-        status: 'error'
-      });
+      
+      // FALLBACK: Check if user has admin role - admins should always have access
+      // This prevents admins from being locked out if the subscription API fails
+      const userRole = (user?.role || '').toLowerCase();
+      const isAdmin = ['admin', 'super_admin'].includes(userRole);
+      const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
+      
+      if (isAdmin) {
+        console.log('[SubscriptionContext] API failed but user is admin - granting access');
+        setSubscription({
+          hasCommunityAccess: true,
+          accessType: 'ADMIN',
+          isActive: true,
+          status: 'active',
+          _fallback: true
+        });
+      } else if (isPremiumRole) {
+        console.log('[SubscriptionContext] API failed but user has premium role - granting access');
+        setSubscription({
+          hasCommunityAccess: true,
+          accessType: userRole === 'elite' || userRole === 'a7fx' ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE',
+          isActive: true,
+          status: 'active',
+          _fallback: true
+        });
+      } else {
+        // On error for non-privileged users, default to no access for security
+        setSubscription({
+          hasCommunityAccess: false,
+          accessType: 'NONE',
+          isActive: false,
+          status: 'error'
+        });
+      }
     } finally {
       setLoading(false);
     }

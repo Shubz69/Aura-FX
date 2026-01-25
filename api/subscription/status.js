@@ -146,6 +146,20 @@ module.exports = async (req, res) => {
     const user = rows[0];
     const now = new Date();
     
+    // NORMALIZE ROLE TO LOWERCASE for case-insensitive comparison
+    const userRole = (user.role || '').toLowerCase();
+    const userPlan = (user.subscription_plan || '').toLowerCase();
+    
+    logger.info('User data retrieved', { 
+      userId, 
+      role: user.role, 
+      normalizedRole: userRole,
+      subscriptionStatus: user.subscription_status,
+      subscriptionPlan: user.subscription_plan,
+      subscriptionExpiry: user.subscription_expiry,
+      paymentFailed: user.payment_failed
+    });
+    
     // Determine subscription details
     let planId = user.subscription_plan || null;
     let status = user.subscription_status || 'inactive';
@@ -166,8 +180,19 @@ module.exports = async (req, res) => {
       }
     }
     
-    // Check payment failed state
-    if (user.payment_failed) {
+    // ============= ADMIN CHECK FIRST - ADMINS ALWAYS HAVE ACCESS =============
+    // This check happens BEFORE any subscription logic
+    const isAdminRole = ['admin', 'super_admin'].includes(userRole);
+    
+    if (isAdminRole) {
+      // Admins ALWAYS have access, regardless of payment status
+      isActive = true;
+      status = 'active';
+      planId = planId || 'a7fx';
+      logger.info('Admin user detected - granting full access', { userId, role: userRole });
+    }
+    // Check payment failed state (but NOT for admins)
+    else if (user.payment_failed) {
       status = 'past_due';
       isActive = false;
     }
@@ -175,14 +200,13 @@ module.exports = async (req, res) => {
     else if (status === 'active' && expiryDate && expiryDate > now) {
       isActive = true;
       
-      // Check if still in trial period (within first 90 days and using free trial)
+      // Check if still in trial period
       if (user.subscription_started) {
         const startDate = new Date(user.subscription_started);
         const daysSinceStart = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
         
-        // If first subscription and within 90 days, they're trialing
         if (daysSinceStart <= 90 && !user.has_used_free_trial_before) {
-          // Note: This is simplified - in practice you'd track trial vs paid periods separately
+          // User is in trial period
         }
       }
     }
@@ -190,23 +214,17 @@ module.exports = async (req, res) => {
     else if (status === 'cancelled' || status === 'canceled') {
       if (expiryDate && expiryDate > now) {
         isActive = true;
-        canceledAt = user.subscription_started; // Approximation
+        canceledAt = user.subscription_started;
       } else {
         isActive = false;
         status = 'canceled';
       }
     }
-    // Check role-based access (admins always have access)
-    else if (['admin', 'super_admin'].includes(user.role)) {
+    // Check premium/elite role fallback
+    else if (['premium', 'elite', 'a7fx'].includes(userRole)) {
       isActive = true;
       status = 'active';
-      planId = planId || 'a7fx'; // Admins get elite-level access
-    }
-    // Check premium role fallback
-    else if (['premium', 'elite', 'a7fx'].includes(user.role)) {
-      isActive = true;
-      status = 'active';
-      planId = planId || (user.role === 'elite' || user.role === 'a7fx' ? 'a7fx' : 'aura');
+      planId = planId || (userRole === 'elite' || userRole === 'a7fx' ? 'a7fx' : 'aura');
     }
     // Expired
     else if (expiryDate && expiryDate <= now) {
@@ -214,30 +232,42 @@ module.exports = async (req, res) => {
       isActive = false;
     }
 
-    // STRICT COMMUNITY ACCESS DETERMINATION
-    // Community access requires: active paid subscription OR admin role
+    // ============= COMMUNITY ACCESS DETERMINATION =============
+    // PRIORITY ORDER: Admin > Elite Role/Sub > Aura Role/Sub
     let hasCommunityAccess = false;
     let accessType = 'NONE';
     
-    // Check admin access first (always has access)
-    if (['admin', 'super_admin'].includes(user.role)) {
+    // 1. ADMIN CHECK - Case insensitive, ALWAYS grants access
+    if (isAdminRole) {
       hasCommunityAccess = true;
       accessType = 'ADMIN';
+      logger.info('Access granted: ADMIN', { userId, role: userRole });
     }
-    // Check A7FX Elite subscription (£250)
-    else if (isActive && (planId === 'a7fx' || planId === 'elite' || planId === 'A7FX' || user.role === 'elite' || user.role === 'a7fx')) {
+    // 2. A7FX Elite role or subscription (£250)
+    else if (['elite', 'a7fx'].includes(userRole) || 
+             (isActive && ['a7fx', 'elite'].includes(userPlan))) {
       hasCommunityAccess = true;
       accessType = 'A7FX_ELITE_ACTIVE';
+      logger.info('Access granted: A7FX_ELITE_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // Check Aura FX subscription (£99)
-    else if (isActive && (planId === 'aura' || planId === 'premium' || user.role === 'premium')) {
+    // 3. Aura FX role or subscription (£99)
+    else if (userRole === 'premium' || 
+             (isActive && ['aura', 'premium'].includes(userPlan))) {
       hasCommunityAccess = true;
       accessType = 'AURA_FX_ACTIVE';
+      logger.info('Access granted: AURA_FX_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // No active paid subscription = no community access
+    // 4. No access
     else {
       hasCommunityAccess = false;
       accessType = 'NONE';
+      logger.info('Access denied: No valid subscription or role', { 
+        userId, 
+        role: userRole, 
+        plan: userPlan, 
+        isActive,
+        status
+      });
     }
 
     // Build response
