@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
+import { CommunityGuard, SubscriptionPageGuard, AdminGuard } from './components/RouteGuards';
 import { isPremium } from './utils/roles';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -106,26 +108,49 @@ function AppRoutes() {
                     <Route path="/public-profile/:userId" element={<PublicProfile />} />
                     <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/verify-mfa" element={<VerifyMFA />} />
-                    <Route path="/subscription" element={<Subscription />} />
+                    {/* Subscription page - redirects paid users to /community */}
+                    <Route path="/subscription" element={
+                        <SubscriptionPageGuard>
+                            <Subscription />
+                        </SubscriptionPageGuard>
+                    } />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/privacy" element={<Privacy />} />
 
+                    {/* COMMUNITY ROUTES - STRICT ACCESS CONTROL */}
+                    {/* Requires active paid subscription (Aura FX £99 or A7FX Elite £250) */}
+                    <Route path="/community" element={
+                        <CommunityGuard>
+                            <Community />
+                        </CommunityGuard>
+                    } />
+                    <Route path="/community/:channelId" element={
+                        <CommunityGuard>
+                            <Community />
+                        </CommunityGuard>
+                    } />
+                    
+                    {/* Premium features - also require subscription */}
+                    <Route path="/premium-ai" element={
+                        <CommunityGuard>
+                            <PremiumAI />
+                        </CommunityGuard>
+                    } />
+                    
+                    {/* Authenticated routes (no subscription required) */}
                     {user && (
                         <>
-                            <Route path="/community" element={<Community />} />
-                            <Route path="/community/:channelId" element={<Community />} />
                             <Route path="/leaderboard" element={<Leaderboard />} />
                             <Route path="/messages" element={<Messages />} />
-                            <Route path="/premium-ai" element={<PremiumAI />} />
                         </>
                     )}
 
                     {/* Admin-only Routes */}
-                    <Route path="/admin/messages" element={(user?.role === "ADMIN" || user?.role === "admin" || user?.role === "super_admin" || user?.email?.toLowerCase() === 'shubzfx@gmail.com') ? <AdminMessages /> : <Navigate to="/" />} />
-                    <Route path="/admin" element={(user?.role === "ADMIN" || user?.role === "admin" || user?.role === "super_admin" || user?.email?.toLowerCase() === 'shubzfx@gmail.com') ? <AdminPanel /> : <Navigate to="/" />} />
-                    <Route path="/admin/users" element={(user?.role === "ADMIN" || user?.role === "admin" || user?.role === "super_admin" || user?.email?.toLowerCase() === 'shubzfx@gmail.com') ? <AdminUserList /> : <Navigate to="/" />} />
-                    <Route path="/admin/tools" element={(user?.role === "ADMIN" || user?.role === "admin" || user?.role === "super_admin" || user?.email?.toLowerCase() === 'shubzfx@gmail.com') ? <AdminPanel /> : <Navigate to="/" />} />
-                    <Route path="/settings" element={(user?.role === "ADMIN" || user?.role === "admin" || user?.role === "SUPER_ADMIN" || user?.role === "super_admin" || user?.email?.toLowerCase() === 'shubzfx@gmail.com') ? <Settings /> : <Navigate to="/" />} />
+                    <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
+                    <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
+                    <Route path="/admin/users" element={<AdminGuard><AdminUserList /></AdminGuard>} />
+                    <Route path="/admin/tools" element={<AdminGuard><AdminPanel /></AdminGuard>} />
+                    <Route path="/settings" element={<AdminGuard><Settings /></AdminGuard>} />
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>
@@ -141,10 +166,11 @@ function App() {
     return (
         <Router>
             <AuthProvider>
-                <AppRoutes />
+                <SubscriptionProvider>
+                    <AppRoutes />
+                </SubscriptionProvider>
             </AuthProvider>
         </Router>
-
     );
 }
 

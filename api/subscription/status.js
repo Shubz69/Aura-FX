@@ -4,6 +4,11 @@
  * GET /api/subscription/status
  * Returns the authenticated user's current subscription status
  * 
+ * STRICT ACCESS CONTROL:
+ * - hasCommunityAccess: true ONLY when user has active paid subscription
+ * - Paid plans: AURA_FX (£99) or A7FX_ELITE (£250)
+ * - Admins always have access
+ * 
  * Response:
  * {
  *   success: true,
@@ -11,6 +16,8 @@
  *     planId: 'aura' | 'a7fx' | 'free' | null,
  *     planName: 'Aura FX Standard' | 'A7FX Elite' | 'Free' | null,
  *     status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'inactive',
+ *     hasCommunityAccess: boolean,  // THE AUTHORITATIVE FLAG FOR COMMUNITY ACCESS
+ *     accessType: 'AURA_FX_ACTIVE' | 'A7FX_ELITE_ACTIVE' | 'ADMIN' | 'NONE',
  *     renewsAt: ISO date string | null,
  *     trialEndsAt: ISO date string | null,
  *     canceledAt: ISO date string | null,
@@ -207,12 +214,41 @@ module.exports = async (req, res) => {
       isActive = false;
     }
 
+    // STRICT COMMUNITY ACCESS DETERMINATION
+    // Community access requires: active paid subscription OR admin role
+    let hasCommunityAccess = false;
+    let accessType = 'NONE';
+    
+    // Check admin access first (always has access)
+    if (['admin', 'super_admin'].includes(user.role)) {
+      hasCommunityAccess = true;
+      accessType = 'ADMIN';
+    }
+    // Check A7FX Elite subscription (£250)
+    else if (isActive && (planId === 'a7fx' || planId === 'elite' || planId === 'A7FX' || user.role === 'elite' || user.role === 'a7fx')) {
+      hasCommunityAccess = true;
+      accessType = 'A7FX_ELITE_ACTIVE';
+    }
+    // Check Aura FX subscription (£99)
+    else if (isActive && (planId === 'aura' || planId === 'premium' || user.role === 'premium')) {
+      hasCommunityAccess = true;
+      accessType = 'AURA_FX_ACTIVE';
+    }
+    // No active paid subscription = no community access
+    else {
+      hasCommunityAccess = false;
+      accessType = 'NONE';
+    }
+
     // Build response
     const subscription = {
       planId,
       planName: PLAN_NAMES[planId] || null,
       status,
       isActive,
+      // THE AUTHORITATIVE FLAGS FOR COMMUNITY ACCESS
+      hasCommunityAccess,
+      accessType,
       renewsAt,
       trialEndsAt,
       canceledAt,

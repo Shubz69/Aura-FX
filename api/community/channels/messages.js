@@ -1,4 +1,5 @@
 const { getDbConnection } = require('../../db');
+const { checkCommunityAccess } = require('../../middleware/subscription-guard');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
@@ -144,6 +145,20 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // STRICT ACCESS CONTROL: Require active paid subscription for community access
+  const accessResult = await checkCommunityAccess(req.headers.authorization);
+  if (!accessResult.hasAccess) {
+    const statusCode = accessResult.error === 'UNAUTHORIZED' ? 401 : 403;
+    return res.status(statusCode).json({
+      success: false,
+      errorCode: accessResult.error,
+      message: accessResult.error === 'NO_SUBSCRIPTION' 
+        ? 'An active Aura FX or A7FX Elite subscription is required to access the Community.'
+        : 'Access denied.',
+      requiresSubscription: accessResult.error === 'NO_SUBSCRIPTION'
+    });
   }
 
   // Extract channel ID from query, URL path, or request body

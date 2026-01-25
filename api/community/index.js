@@ -15,6 +15,7 @@ const { getCached, setCached, DEFAULT_TTLS } = require('../cache');
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { safeLimit, positiveInt, safeSearchQuery } = require('../utils/validators');
+const { checkCommunityAccess } = require('../middleware/subscription-guard');
 
 // Schema migration flag
 let schemaMigrated = false;
@@ -65,6 +66,22 @@ module.exports = async (req, res) => {
       success: false,
       errorCode: 'RATE_LIMITED',
       message: 'Too many requests. Please try again later.',
+      requestId
+    });
+  }
+
+  // STRICT ACCESS CONTROL: Require active paid subscription for community access
+  const accessResult = await checkCommunityAccess(req.headers.authorization);
+  if (!accessResult.hasAccess) {
+    const statusCode = accessResult.error === 'UNAUTHORIZED' ? 401 : 403;
+    logger.warn('Access denied', { userId: accessResult.userId, error: accessResult.error });
+    return res.status(statusCode).json({
+      success: false,
+      errorCode: accessResult.error,
+      message: accessResult.error === 'NO_SUBSCRIPTION' 
+        ? 'An active Aura FX or A7FX Elite subscription is required to access the Community.'
+        : 'Access denied.',
+      requiresSubscription: accessResult.error === 'NO_SUBSCRIPTION',
       requestId
     });
   }
