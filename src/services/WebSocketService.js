@@ -15,7 +15,7 @@ class WebSocketService {
     connect(endpoint = null, callback = () => {}) {
         const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
             ? window.location.origin
-            : (process.env.REACT_APP_API_URL || 'https://aurafx.com');
+            : (process.env.REACT_APP_API_URL || '');
         const wsEndpoint = endpoint || `${API_BASE_URL}/ws`;
         if (this.isConnected) {
             console.log('WebSocket already connected');

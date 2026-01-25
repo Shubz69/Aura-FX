@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
         return process.env.REACT_APP_API_URL;
     }
     
-    return 'https://aurafx.com';
+    return '';
 };
 
 const API_BASE_URL = getApiBaseUrl();

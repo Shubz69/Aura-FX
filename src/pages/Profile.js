@@ -20,7 +20,7 @@ const resolveApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location?.origin) {
         return window.location.origin;
     }
-    return process.env.REACT_APP_API_URL || 'https://aurafx.com';
+    return process.env.REACT_APP_API_URL || '';
 };
 
 // Helper function to ensure avatar path is valid

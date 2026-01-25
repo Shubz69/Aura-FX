@@ -60,7 +60,7 @@ const Chatbot = () => {
             // Try to use the live API first
             const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
                 ? window.location.origin
-                : (process.env.REACT_APP_API_URL || 'https://www.aurafx.com');
+                : (process.env.REACT_APP_API_URL || '');
             const token = localStorage.getItem('token');
             
             // Prepare headers - include auth token if user is logged in

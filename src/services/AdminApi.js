@@ -6,9 +6,9 @@ const getApiBaseUrl = () => {
         return process.env.REACT_APP_API_URL;
     }
     if (typeof window !== 'undefined') {
-        return window.location.origin; // This will be https://www.aurafx.com or https://aurafx.com
+        return window.location.origin;
     }
-    return 'https://www.aurafx.com'; // Default to www version
+    return ''; // Use relative URLs
 };
 
 const API_BASE_URL = getApiBaseUrl();

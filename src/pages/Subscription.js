@@ -5,7 +5,8 @@ import CosmicBackground from '../components/CosmicBackground';
 import axios from 'axios';
 import '../styles/Subscription.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://www.aurafx.com';
+// Use same origin for API calls to avoid CORS issues
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
 const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
 
