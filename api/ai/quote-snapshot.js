@@ -594,9 +594,123 @@ function detectInstrumentType(message, symbol) {
   };
 }
 
+// ============= SINGLE ENTRY POINT: getLiveQuote =============
+
+/**
+ * getLiveQuote - THE PRIMARY FUNCTION for getting live market prices
+ * 
+ * This is the single entry point that the AI and all price-checking code should use.
+ * It handles provider selection, fallback, caching, and returns a consistent format.
+ * 
+ * @param {string} symbol - The instrument symbol (e.g., 'XAUUSD', 'EURUSD', 'BTCUSD')
+ * @returns {Object} Quote object with bid, ask, mid, last, timestamp, sessionOpen, prevClose
+ *                   OR { available: false, reason: '...' } if quote unavailable
+ */
+async function getLiveQuote(symbol) {
+  if (!symbol) {
+    return {
+      available: false,
+      reason: 'No symbol provided'
+    };
+  }
+  
+  try {
+    const quote = await fetchQuoteSnapshot(symbol);
+    
+    if (!quote) {
+      return {
+        available: false,
+        symbol: symbol.toUpperCase(),
+        reason: 'Quote fetch failed - provider unavailable'
+      };
+    }
+    
+    if (isQuoteStale(quote)) {
+      return {
+        available: false,
+        symbol: quote.symbol,
+        reason: 'Quote is stale (older than 15 seconds)',
+        lastKnown: quote.last,
+        lastTimestamp: quote.timestampISO
+      };
+    }
+    
+    // Calculate mid price if bid/ask available
+    const mid = (quote.bid && quote.ask) 
+      ? formatPrice((quote.bid + quote.ask) / 2, quote.decimals)
+      : quote.last;
+    
+    return {
+      available: true,
+      symbol: quote.symbol,
+      displayName: quote.displayName,
+      type: quote.type,
+      
+      // Core prices
+      bid: quote.bid,
+      ask: quote.ask,
+      mid: mid,
+      last: quote.last,
+      spread: quote.spread,
+      
+      // Session data
+      sessionOpen: quote.open,
+      prevClose: quote.previousClose,
+      high: quote.high,
+      low: quote.low,
+      
+      // Change
+      change: quote.change,
+      changePercent: quote.changePercent,
+      direction: quote.direction,
+      
+      // Metadata
+      decimals: quote.decimals,
+      timestamp: quote.timestamp,
+      timestampISO: quote.timestampISO,
+      source: quote.source,
+      
+      // For validation
+      _raw: quote._raw
+    };
+    
+  } catch (error) {
+    console.error(`getLiveQuote error for ${symbol}:`, error.message);
+    return {
+      available: false,
+      symbol: symbol.toUpperCase(),
+      reason: `Error fetching quote: ${error.message}`
+    };
+  }
+}
+
+/**
+ * getLiveQuotes - Get multiple quotes at once (parallel fetch)
+ * 
+ * @param {string[]} symbols - Array of symbols
+ * @returns {Object} Map of symbol -> quote result
+ */
+async function getLiveQuotes(symbols) {
+  if (!symbols || symbols.length === 0) return {};
+  
+  const results = {};
+  const promises = symbols.map(async (symbol) => {
+    const quote = await getLiveQuote(symbol);
+    results[quote.symbol || symbol.toUpperCase()] = quote;
+  });
+  
+  await Promise.all(promises);
+  return results;
+}
+
 // ============= EXPORTS =============
 
 module.exports = {
+  // Primary entry point - use this!
+  getLiveQuote,
+  getLiveQuotes,
+  
+  // Lower-level functions
   fetchQuoteSnapshot,
   fetchMultipleQuotes,
   isQuoteStale,
@@ -604,6 +718,9 @@ module.exports = {
   detectInstruments,
   detectInstrumentType,
   resolveSymbol,
+  formatPrice,
+  
+  // Configuration
   SYMBOL_MAPPINGS,
   CONFIG
 };

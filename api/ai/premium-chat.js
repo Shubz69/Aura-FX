@@ -190,7 +190,9 @@ module.exports = async (req, res) => {
       } = require('./quote-snapshot');
       const { 
         validateAndSanitize, 
-        generatePricingInstructions 
+        generatePricingInstructions,
+        assertPricesMatchLiveQuotes,
+        logPriceAssertion
       } = require('./price-validator');
       
       // Track citations from knowledge base searches
@@ -2330,6 +2332,28 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
               invalidPrices: validation.validation.invalidPrices.map(p => ({ value: p.value, raw: p.raw }))
             });
           }
+          
+          // ============= AUTOMATED PRICE ASSERTION CHECK =============
+          // This verifies that "Current Price" mentions match live quotes
+          const assertion = assertPricesMatchLiveQuotes(validatedResponse, quoteContext);
+          logPriceAssertion(requestId, assertion);
+          
+          if (!assertion.passed) {
+            structuredLog(requestId, 'error', 'PRICE ASSERTION FAILED - AI output does not match live quotes', {
+              totalAssertions: assertion.totalAssertions,
+              failed: assertion.failedAssertions,
+              details: assertion.details.filter(d => !d.passed)
+            });
+            
+            // If assertion fails, add a warning to the response
+            validatedResponse += '\n\n*⚠️ Price verification note: Some prices may not reflect the latest market data. Please verify with your trading platform.*';
+          } else if (assertion.totalAssertions > 0) {
+            structuredLog(requestId, 'info', 'Price assertion PASSED', {
+              totalAssertions: assertion.totalAssertions,
+              allPassed: assertion.passedAssertions
+            });
+          }
+          
         } catch (validationError) {
           structuredLog(requestId, 'error', 'Price validation error', { error: validationError.message });
           // Continue with original response if validation fails

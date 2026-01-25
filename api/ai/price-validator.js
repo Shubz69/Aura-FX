@@ -452,6 +452,145 @@ YOU ARE FORBIDDEN FROM:
 `;
 }
 
+// ============= AUTOMATED PRICE ASSERTION =============
+
+/**
+ * Assert that all "Current Price" mentions in AI output match live quotes
+ * This is the automated check the user requested to ensure price accuracy
+ * 
+ * @param {string} response - The AI's response
+ * @param {Object} quoteContext - The quote context with live prices
+ * @returns {Object} Assertion result with pass/fail status and details
+ */
+function assertPricesMatchLiveQuotes(response, quoteContext) {
+  const result = {
+    passed: true,
+    totalAssertions: 0,
+    passedAssertions: 0,
+    failedAssertions: 0,
+    details: [],
+    timestamp: new Date().toISOString()
+  };
+  
+  if (!response || !quoteContext?.available) {
+    result.details.push({
+      check: 'context_available',
+      passed: !response, // Pass if no response, fail if response without context
+      reason: quoteContext?.available ? 'Quote context available' : 'No quote context available'
+    });
+    return result;
+  }
+  
+  // Pattern to find "Current Price" mentions with the actual price value
+  const currentPricePatterns = [
+    /current(?:ly)?(?:\s+trading)?(?:\s+at)?(?:\s+is)?(?:\s*:)?\s*\$?([\d,]+\.?\d*)/gi,
+    /(?:price|trading)\s+(?:at|is|of)\s*\$?([\d,]+\.?\d*)/gi,
+    /\$?([\d,]+\.?\d*)\s+(?:is the )?current/gi,
+  ];
+  
+  for (const pattern of currentPricePatterns) {
+    let match;
+    const regex = new RegExp(pattern.source, pattern.flags);
+    
+    while ((match = regex.exec(response)) !== null) {
+      const extractedPrice = parseFloat(match[1].replace(/,/g, ''));
+      if (isNaN(extractedPrice) || extractedPrice <= 0) continue;
+      
+      result.totalAssertions++;
+      
+      // Check against all live quotes
+      let foundMatch = false;
+      let closestSymbol = null;
+      let closestDiff = Infinity;
+      
+      for (const [symbol, quote] of Object.entries(quoteContext.instruments || {})) {
+        if (!quote?.available || !quote.last) continue;
+        
+        const livePrice = quote.last;
+        const decimals = quote.decimals || 2;
+        
+        // Calculate tolerance based on decimals (allow for rounding)
+        const tolerance = Math.pow(10, -decimals) * 5; // Half a tick tolerance
+        const percentTolerance = livePrice * 0.005; // 0.5% tolerance for larger prices
+        const actualTolerance = Math.max(tolerance, percentTolerance);
+        
+        const diff = Math.abs(extractedPrice - livePrice);
+        
+        if (diff < closestDiff) {
+          closestDiff = diff;
+          closestSymbol = symbol;
+        }
+        
+        if (diff <= actualTolerance) {
+          foundMatch = true;
+          result.passedAssertions++;
+          result.details.push({
+            check: 'current_price_match',
+            passed: true,
+            extractedPrice,
+            livePrice,
+            symbol,
+            decimals,
+            tolerance: actualTolerance,
+            diff,
+            context: match[0].substring(0, 50)
+          });
+          break;
+        }
+      }
+      
+      if (!foundMatch) {
+        result.passed = false;
+        result.failedAssertions++;
+        
+        // Get the closest quote for reporting
+        const closestQuote = quoteContext.instruments?.[closestSymbol];
+        
+        result.details.push({
+          check: 'current_price_match',
+          passed: false,
+          extractedPrice,
+          expectedPrice: closestQuote?.last,
+          symbol: closestSymbol,
+          decimals: closestQuote?.decimals,
+          diff: closestDiff,
+          context: match[0].substring(0, 50),
+          error: `Price ${extractedPrice} does not match any live quote (closest: ${closestSymbol} at ${closestQuote?.last}, diff: ${closestDiff.toFixed(4)})`
+        });
+      }
+    }
+  }
+  
+  // If no current price mentions found, that's okay (pass by default)
+  if (result.totalAssertions === 0) {
+    result.details.push({
+      check: 'no_current_price_mentions',
+      passed: true,
+      reason: 'No current price mentions found in response'
+    });
+  }
+  
+  return result;
+}
+
+/**
+ * Log assertion results for monitoring/debugging
+ */
+function logPriceAssertion(requestId, assertion) {
+  const status = assertion.passed ? 'PASS' : 'FAIL';
+  console.log(`[PriceAssertion][${requestId}] ${status}: ${assertion.passedAssertions}/${assertion.totalAssertions} assertions passed`);
+  
+  if (!assertion.passed) {
+    assertion.details
+      .filter(d => !d.passed)
+      .forEach(d => {
+        console.warn(`[PriceAssertion][${requestId}] FAILED: ${d.error || d.reason}`);
+      });
+  }
+  
+  return assertion;
+}
+
 // ============= EXPORTS =============
 
 module.exports = {
@@ -463,5 +602,7 @@ module.exports = {
   addDisclaimer,
   validateAndSanitize,
   generatePricingInstructions,
+  assertPricesMatchLiveQuotes,
+  logPriceAssertion,
   CONFIG
 };

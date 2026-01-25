@@ -10,6 +10,11 @@
   background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
   color: #e4e4e7;
   padding-top: 70px;
+  /* Mobile scrolling - ensure page can scroll naturally */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 /* Header */
@@ -93,6 +98,11 @@
   width: 100%;
   margin: 0 auto;
   padding: 80px 16px 200px;
+  /* Mobile scrolling fix */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 .ai-messages-container {
@@ -100,6 +110,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  /* Ensure messages can scroll on mobile */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 /* Empty State */
