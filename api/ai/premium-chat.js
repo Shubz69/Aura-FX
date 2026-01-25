@@ -181,6 +181,18 @@ module.exports = async (req, res) => {
       const { validateTradeSafety } = require('./safety-system');
       const { analyzeMarketStructure, identifySupportResistance, generateScenarios } = require('./price-action');
       
+      // NEW: Import quote snapshot and price validation modules
+      const { 
+        fetchMultipleQuotes, 
+        buildQuoteContext, 
+        detectInstruments,
+        isQuoteStale 
+      } = require('./quote-snapshot');
+      const { 
+        validateAndSanitize, 
+        generatePricingInstructions 
+      } = require('./price-validator');
+      
       // Track citations from knowledge base searches
       let responseCitations = [];
       
@@ -195,8 +207,40 @@ module.exports = async (req, res) => {
       const requiredTools = determineRequiredTools(intents, images && images.length > 0);
       const detectedInstrument = extractInstrument(message, conversationHistory);
       
+      // ============= NEW: FETCH LIVE QUOTE SNAPSHOTS =============
+      // Detect ALL instruments mentioned in the message and fetch fresh quotes
+      const allDetectedInstruments = detectInstruments(message);
+      structuredLog(requestId, 'info', 'Detected instruments for quote fetch', { 
+        instruments: allDetectedInstruments 
+      });
+      
+      let quoteContext = null;
+      if (allDetectedInstruments.length > 0) {
+        try {
+          const quotes = await fetchMultipleQuotes(allDetectedInstruments);
+          quoteContext = buildQuoteContext(quotes);
+          structuredLog(requestId, 'info', 'Quote context built', { 
+            available: quoteContext.available,
+            instruments: Object.keys(quoteContext.instruments)
+          });
+        } catch (quoteError) {
+          structuredLog(requestId, 'warn', 'Quote fetch failed', { error: quoteError.message });
+          quoteContext = {
+            available: false,
+            timestamp: new Date().toISOString(),
+            instruments: {},
+            message: 'Quote fetch failed'
+          };
+        }
+      }
+      
+      // Generate strict pricing instructions from quote context
+      const pricingInstructions = generatePricingInstructions(quoteContext);
+      
       // Build conversation context with system prompt - Ultimate Multi-Market Trading AI
       const systemPrompt = `You are AURA AI, a professional trading assistant powered by GPT-4. You're knowledgeable, conversational, helpful, and engaging - just like ChatGPT. Your goal is to help traders succeed by providing clear analysis, actionable insights, and natural conversations.
+
+${pricingInstructions}
 
 **YOUR PRIMARY DIRECTIVE**: Be helpful, conversational, and answer questions naturally. You're like ChatGPT - you can discuss anything, provide insights, teach concepts, and have real conversations. Don't refuse to answer questions - be helpful and engaging.
 
@@ -2257,7 +2301,46 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
 
       // Calculate total timing
       timings.total = Date.now() - requestStartTime;
-      structuredLog(requestId, 'info', 'Request completed successfully', { timings, responseLength: aiResponse.length });
+      
+      // ============= NEW: VALIDATE AI RESPONSE PRICES =============
+      // Check that any prices mentioned match the injected quote context
+      let validatedResponse = aiResponse;
+      let priceValidationResult = null;
+      
+      if (quoteContext) {
+        try {
+          const validation = validateAndSanitize(aiResponse, quoteContext, {
+            strict: false,  // Don't block, just add disclaimers
+            rewrite: false, // Don't rewrite prices
+            addDisclaimer: true // Add disclaimer if prices couldn't be verified
+          });
+          
+          priceValidationResult = validation.validation.summary;
+          
+          if (validation.modified) {
+            structuredLog(requestId, 'warn', 'Response modified by price validator', {
+              invalidPrices: validation.validation.invalidPrices.length,
+              blocked: validation.blocked
+            });
+            validatedResponse = validation.sanitizedResponse;
+          }
+          
+          if (validation.validation.invalidPrices.length > 0) {
+            structuredLog(requestId, 'warn', 'Invalid prices detected in AI response', {
+              invalidPrices: validation.validation.invalidPrices.map(p => ({ value: p.value, raw: p.raw }))
+            });
+          }
+        } catch (validationError) {
+          structuredLog(requestId, 'error', 'Price validation error', { error: validationError.message });
+          // Continue with original response if validation fails
+        }
+      }
+      
+      structuredLog(requestId, 'info', 'Request completed successfully', { 
+        timings, 
+        responseLength: validatedResponse.length,
+        priceValidation: priceValidationResult
+      });
 
       // Release database connection back to pool
       if (db && typeof db.release === 'function') {
@@ -2267,10 +2350,16 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       // Return successful response with metadata
       return res.status(200).json({
         success: true,
-        response: aiResponse,
+        response: validatedResponse,
         model: completion?.model || 'gpt-4o',
         usage: completion?.usage || null,
         citations: (responseCitations && responseCitations.length > 0) ? responseCitations : undefined,
+        quoteContext: quoteContext ? {
+          available: quoteContext.available,
+          instruments: Object.keys(quoteContext.instruments || {}),
+          timestamp: quoteContext.timestamp
+        } : null,
+        priceValidation: priceValidationResult,
         requestId,
         timing: timings.total
       });

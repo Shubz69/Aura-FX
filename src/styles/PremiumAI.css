@@ -232,18 +232,42 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Text selection highlight for AI messages */
+.ai-message.assistant .message-text ::selection {
+  background: rgba(168, 85, 247, 0.3);
+  color: #fff;
+}
+
+.ai-message.assistant .message-text ::-moz-selection {
+  background: rgba(168, 85, 247, 0.3);
+  color: #fff;
 }
 
 .ai-message.user .ai-message-content {
   align-items: flex-end;
 }
 
-/* Message text */
+/* Message text - Ensure text is selectable */
 .message-text {
   padding: 14px 18px;
   border-radius: 18px;
   line-height: 1.6;
   font-size: 0.95rem;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  cursor: text;
+}
+
+/* Ensure all child elements are also selectable */
+.message-text * {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .ai-message.user .message-text {
@@ -378,6 +402,19 @@
   background: rgba(168, 85, 247, 0.2);
   border-color: rgba(168, 85, 247, 0.4);
   color: #a855f7;
+}
+
+/* Copy button states */
+.action-btn.copy-btn:hover {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.action-btn.copy-btn.copied {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #22c55e;
 }
 
 .speed-select {

@@ -14,6 +14,18 @@ const dataService = require('./data-layer/data-service');
 const { executeQuery } = require('../db');
 const { getCached, setCached } = require('../cache');
 
+// Live quote snapshot and price validation modules
+const { 
+  fetchMultipleQuotes, 
+  buildQuoteContext, 
+  detectInstruments,
+  isQuoteStale 
+} = require('./quote-snapshot');
+const { 
+  validateAndSanitize, 
+  generatePricingInstructions 
+} = require('./price-validator');
+
 // ============= CONFIGURATION =============
 const CONFIG = {
   MAX_CONVERSATION_TURNS: 20,  // Keep last 20 turns
@@ -252,12 +264,21 @@ async function fetchMarketContext(symbol, requestId) {
 
 // ============= SYSTEM PROMPT =============
 /**
- * Build the system prompt with market context
+ * Build the system prompt with market context and STRICT pricing rules
+ * 
+ * @param {Object} user - User info
+ * @param {Object} marketContext - Legacy market context (deprecated)
+ * @param {Object} quoteContext - New structured quote context from quote-snapshot.js
  */
-function buildSystemPrompt(user, marketContext = null) {
+function buildSystemPrompt(user, marketContext = null, quoteContext = null) {
   let contextSection = '';
   
-  if (marketContext?.marketData?.price > 0) {
+  // PRIORITY: Use the new quote context if available (strict pricing)
+  if (quoteContext) {
+    // Generate strict pricing instructions from quote context
+    contextSection = generatePricingInstructions(quoteContext);
+  } else if (marketContext?.marketData?.price > 0) {
+    // Fallback to legacy market context (deprecated path)
     const md = marketContext.marketData;
     contextSection = `
 **LIVE MARKET DATA (fetched just now):**
@@ -268,7 +289,18 @@ function buildSystemPrompt(user, marketContext = null) {
 - Source: ${md.source}
 - Timestamp: ${new Date(md.timestamp).toISOString()}
 
-When discussing prices, reference this LIVE data. Do not make up prices.
+**STRICT RULE:** You MUST ONLY use the price shown above. Do NOT guess or make up prices.
+If the user asks about a different instrument, say "I don't have live data for that instrument."
+`;
+  } else {
+    // No live data available
+    contextSection = `
+**CRITICAL PRICING RULES:**
+Live market quotes are currently UNAVAILABLE. You MUST:
+1. Say "Live quote unavailable right now" when asked about specific prices
+2. Do NOT guess, estimate, or make up any price numbers
+3. You may discuss general market analysis without specific prices
+4. Direct users to check their trading platform for live prices
 `;
   }
 
@@ -286,30 +318,42 @@ ${marketContext.calendar.events.slice(0, 5).map(e =>
 **CORE PRINCIPLES:**
 1. Be conversational and natural - talk like a helpful expert, not a robot
 2. Answer questions directly and concisely
-3. When discussing prices or data, ONLY use the live data provided below - never guess
-4. If you don't have live data, say so and provide general analysis
+3. When discussing prices or data, ONLY use the live data provided below - NEVER GUESS
+4. If you don't have live data for an instrument, clearly say "Live quote unavailable right now"
 5. Always prioritize risk management in trading advice
 6. Be honest about uncertainty - say "I'm not sure" when appropriate
 
 ${contextSection}
 
-**IMPORTANT:**
-- If live market data is shown above, USE IT when discussing prices
-- If no live data is available, clearly state that and provide general analysis
+**CRITICAL - NEVER VIOLATE THESE RULES:**
+- ONLY reference prices that exist in the LIVE MARKET DATA above
+- If no live data is shown, say "Live quote unavailable" - do NOT guess
 - Never make up specific price numbers
-- Always mention data source when citing prices
+- Always mention the data source when citing prices
+- For targets/levels, express as offsets from live price (e.g., "+$20" or "+0.5%")
+
+**SYMBOL CONSISTENCY:**
+- XAUUSD = Gold SPOT price (use for "gold", "XAU/USD", "XAUUSD")
+- GC = Gold FUTURES (only use if user explicitly asks for futures)
+- Never mix spot and futures prices
 
 **USER CONTEXT:**
 - Subscription: ${user?.subscription_plan || 'Premium'}
 - Role: ${user?.role || 'Member'}
 
-Respond naturally and helpfully. Be concise but thorough.`;
+Respond naturally and helpfully. Be concise but thorough. NEVER guess prices.`;
 }
 
 // ============= MAIN CHAT FUNCTION =============
 /**
  * Generate AI response with market context
  * This is the main entry point for chat requests
+ * 
+ * STRICT PRICING: This function now enforces strict pricing rules:
+ * 1. Detects ALL instruments mentioned in the message
+ * 2. Fetches fresh quote snapshots for each
+ * 3. Injects structured quote context into the prompt
+ * 4. Validates AI output and blocks/rewrites invalid prices
  */
 async function generateResponse({
   message,
@@ -330,10 +374,39 @@ async function generateResponse({
     logger.log('warn', 'Image validation errors', { errors: imageErrors });
   }
 
-  // Check if we need market data
-  const marketAnalysis = needsMarketData(message);
+  // ============= NEW: DETECT ALL INSTRUMENTS =============
+  // Detect ALL instruments mentioned in the message (not just one)
+  const detectedInstruments = detectInstruments(message);
+  logger.log('info', 'Detected instruments', { instruments: detectedInstruments });
+
+  // ============= NEW: FETCH FRESH QUOTE SNAPSHOTS =============
+  // Fetch fresh quotes for ALL detected instruments in parallel
+  let quoteContext = null;
+  let quotes = {};
   
-  // Fetch market context in parallel with message preparation
+  if (detectedInstruments.length > 0) {
+    const endQuoteFetch = logger.time('quoteFetch');
+    try {
+      quotes = await fetchMultipleQuotes(detectedInstruments);
+      quoteContext = buildQuoteContext(quotes);
+      logger.log('info', 'Quote context built', { 
+        available: quoteContext.available,
+        instruments: Object.keys(quoteContext.instruments)
+      });
+    } catch (e) {
+      logger.log('warn', 'Quote fetch failed', { error: e.message });
+      quoteContext = {
+        available: false,
+        timestamp: new Date().toISOString(),
+        instruments: {},
+        message: 'Quote fetch failed: ' + e.message
+      };
+    }
+    endQuoteFetch();
+  }
+
+  // Legacy market context (for economic calendar, news, etc.)
+  const marketAnalysis = needsMarketData(message);
   const marketContextPromise = marketAnalysis.needs && marketAnalysis.detectedSymbol
     ? fetchMarketContext(marketAnalysis.detectedSymbol, requestId)
     : Promise.resolve(null);
@@ -341,7 +414,7 @@ async function generateResponse({
   // Initialize OpenAI
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  // Wait for market context (with timeout)
+  // Wait for legacy market context (for calendar/news)
   let marketContext = null;
   try {
     marketContext = await marketContextPromise;
@@ -349,8 +422,9 @@ async function generateResponse({
     logger.log('warn', 'Market context unavailable', { error: e.message });
   }
 
-  // Build system prompt with context
-  const systemPrompt = buildSystemPrompt(user, marketContext);
+  // ============= BUILD SYSTEM PROMPT WITH STRICT PRICING =============
+  // Pass the quote context to enforce strict pricing rules
+  const systemPrompt = buildSystemPrompt(user, marketContext, quoteContext);
 
   // Build messages
   const messages = buildMessages(systemPrompt, conversationHistory, message, validImages);
@@ -361,7 +435,8 @@ async function generateResponse({
   logger.log('info', 'Calling OpenAI', { 
     model, 
     messageCount: messages.length,
-    hasMarketContext: !!marketContext
+    hasMarketContext: !!marketContext,
+    hasQuoteContext: !!quoteContext?.available
   });
 
   const endOpenAI = logger.time('openai');
@@ -372,7 +447,7 @@ async function generateResponse({
       openai.chat.completions.create({
         model,
         messages,
-        temperature: 0.8,
+        temperature: 0.7, // Lower temperature for more consistent pricing
         max_tokens: 1500
       }),
       new Promise((_, reject) => 
@@ -382,10 +457,34 @@ async function generateResponse({
 
     endOpenAI();
 
-    const response = completion.choices[0]?.message?.content;
+    let response = completion.choices[0]?.message?.content;
 
     if (!response) {
       throw new Error('Empty response from OpenAI');
+    }
+
+    // ============= NEW: VALIDATE AND SANITIZE AI OUTPUT =============
+    // Check that all prices in the response match the injected context
+    const endValidation = logger.time('priceValidation');
+    const validation = validateAndSanitize(response, quoteContext, {
+      strict: false, // Don't block, just add disclaimers
+      rewrite: false, // Don't rewrite, just warn
+      addDisclaimer: true
+    });
+    endValidation();
+
+    if (validation.modified) {
+      logger.log('warn', 'Response modified by price validator', {
+        invalidPrices: validation.validation.invalidPrices.length,
+        blocked: validation.blocked
+      });
+      response = validation.sanitizedResponse;
+    }
+
+    if (validation.validation.invalidPrices.length > 0) {
+      logger.log('warn', 'Invalid prices detected in AI response', {
+        invalidPrices: validation.validation.invalidPrices.map(p => p.value)
+      });
     }
 
     logger.log('info', 'Request completed', logger.summary());
@@ -400,6 +499,12 @@ async function generateResponse({
         price: marketContext.marketData?.price,
         source: marketContext.marketData?.source
       } : null,
+      quoteContext: quoteContext ? {
+        available: quoteContext.available,
+        instruments: Object.keys(quoteContext.instruments),
+        timestamp: quoteContext.timestamp
+      } : null,
+      priceValidation: validation.validation.summary,
       requestId,
       timing: logger.summary().totalTime
     };
@@ -410,13 +515,18 @@ async function generateResponse({
 
     // Try to generate a fallback response
     try {
+      // Even in fallback, include pricing warning if we have no quotes
+      const fallbackSystemPrompt = quoteContext?.available 
+        ? `You are a helpful assistant. Be brief. Current prices: ${Object.entries(quoteContext.instruments).filter(([_,q]) => q.available).map(([s,q]) => `${s}: ${q.last}`).join(', ')}`
+        : 'You are a helpful assistant. Be brief. Say "Live quote unavailable" if asked about prices.';
+      
       const fallbackCompletion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a helpful assistant. Be brief and helpful.' },
+          { role: 'system', content: fallbackSystemPrompt },
           { role: 'user', content: message || 'Hello' }
         ],
-        temperature: 0.8,
+        temperature: 0.7,
         max_tokens: 500
       });
 

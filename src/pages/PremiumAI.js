@@ -58,6 +58,19 @@ const StopIcon = () => (
   </svg>
 );
 
+const CopyIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
+
 // Quick action chips
 const QUICK_ACTIONS = [
   { label: '📈 Gold drivers today', prompt: 'What are the main drivers for gold (XAUUSD) today? Include key levels and market sentiment.' },
@@ -88,6 +101,9 @@ const PremiumAI = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.0);
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
+  
+  // Copy state
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -299,6 +315,39 @@ const PremiumAI = () => {
     
     setSpeakingMessageId(messageId);
     window.speechSynthesis.speak(utterance);
+  };
+  
+  // Copy message to clipboard
+  const copyMessage = async (messageId, text) => {
+    if (!text) return;
+    
+    try {
+      // Use the Clipboard API for modern browsers
+      await navigator.clipboard.writeText(text);
+      setCopiedMessageId(messageId);
+      
+      // Reset after 2 seconds
+      setTimeout(() => {
+        setCopiedMessageId(null);
+      }, 2000);
+    } catch (error) {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedMessageId(messageId);
+        setTimeout(() => setCopiedMessageId(null), 2000);
+      } catch (e) {
+        console.error('Failed to copy:', e);
+        toast.error('Failed to copy message');
+      }
+      document.body.removeChild(textarea);
+    }
   };
   
   // Send message with streaming
@@ -569,9 +618,19 @@ const PremiumAI = () => {
             </div>
           )}
           
-          {/* Voice output for AI messages */}
+          {/* Actions for AI messages: Copy and Voice */}
           {!isUser && msg.content && (
             <div className="message-actions">
+              {/* Copy button */}
+              <button
+                className={`action-btn copy-btn ${copiedMessageId === msg.id ? 'copied' : ''}`}
+                onClick={() => copyMessage(msg.id, msg.content)}
+                title={copiedMessageId === msg.id ? 'Copied!' : 'Copy message'}
+              >
+                {copiedMessageId === msg.id ? <CheckIcon /> : <CopyIcon />}
+              </button>
+              
+              {/* Voice output button */}
               <button
                 className={`action-btn ${speakingMessageId === msg.id ? 'active' : ''}`}
                 onClick={() => speakMessage(msg.id, msg.content)}

@@ -114,6 +114,8 @@
   padding: 8px 0;
   display: flex;
   align-items: center;
+  /* Allow horizontal scroll on ticker but don't block vertical page scroll */
+  touch-action: pan-x pan-y;
 }
 
 .ticker {
@@ -122,6 +124,8 @@
   padding: 0 12px;
   width: max-content;
   align-items: center;
+  /* Allow horizontal panning but don't block vertical scroll */
+  touch-action: pan-x pan-y;
 }
 
 .ticker.auto-scroll {
@@ -338,6 +342,8 @@
   z-index: 9999;
   padding: 16px;
   animation: fadeIn 0.15s ease;
+  /* Allow scrolling inside modal, contain overscroll */
+  overscroll-behavior: contain;
 }
 
 @keyframes fadeIn {
@@ -361,6 +367,10 @@
   flex-direction: column;
   animation: slideUp 0.2s ease;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  /* Enable touch scrolling inside modal */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 @keyframes slideUp {

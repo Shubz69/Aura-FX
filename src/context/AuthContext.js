@@ -428,38 +428,67 @@ export const AuthProvider = ({ children }) => {
           }
         }
         
-        // Check subscription status from database after login (not just localStorage)
+        // ============= SERVER-AUTHORITATIVE SUBSCRIPTION CHECK =============
+        // CRITICAL: Always fetch subscription status from server after login
+        // This is the SINGLE SOURCE OF TRUTH for determining redirect
+        // DO NOT use localStorage for access decisions - only server response
+        
+        let hasCommunityAccess = false;
+        let accessType = 'NONE';
+        
         try {
-            const subscriptionCheck = await Api.checkSubscription(data.id || data.userId);
-            if (subscriptionCheck && subscriptionCheck.hasActiveSubscription && !subscriptionCheck.paymentFailed) {
-                localStorage.setItem('hasActiveSubscription', 'true');
-                if (subscriptionCheck.expiry) {
-                    localStorage.setItem('subscriptionExpiry', subscriptionCheck.expiry);
-                }
-            } else {
-                localStorage.removeItem('hasActiveSubscription');
-                localStorage.removeItem('subscriptionExpiry');
+          const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
+          const subscriptionResponse = await fetch(`${API_BASE_URL}/api/subscription/status`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${data.token}`,
+              'Content-Type': 'application/json'
             }
-        } catch (error) {
-            console.error('Error checking subscription on login:', error);
-            // Fallback to localStorage check
+          });
+          
+          if (subscriptionResponse.ok) {
+            const subscriptionData = await subscriptionResponse.json();
+            if (subscriptionData.success && subscriptionData.subscription) {
+              // Use the server-authoritative hasCommunityAccess flag
+              hasCommunityAccess = subscriptionData.subscription.hasCommunityAccess === true;
+              accessType = subscriptionData.subscription.accessType || 'NONE';
+              
+              // Store for reference (NOT for access decisions - only server is authoritative)
+              if (hasCommunityAccess) {
+                localStorage.setItem('hasActiveSubscription', 'true');
+                localStorage.setItem('accessType', accessType);
+              } else {
+                localStorage.removeItem('hasActiveSubscription');
+                localStorage.removeItem('accessType');
+              }
+            }
+          } else {
+            console.error('Subscription status fetch failed:', subscriptionResponse.status);
+            // On fetch failure, check role as fallback (but this should be rare)
+            const userRole = (data.role || '').toLowerCase();
+            hasCommunityAccess = ['admin', 'super_admin', 'premium', 'a7fx', 'elite'].includes(userRole);
+          }
+        } catch (subscriptionError) {
+          console.error('Error fetching subscription status on login:', subscriptionError);
+          // On error, check role as fallback
+          const userRole = (data.role || '').toLowerCase();
+          hasCommunityAccess = ['admin', 'super_admin', 'premium', 'a7fx', 'elite'].includes(userRole);
         }
         
-        const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
-        const pendingSubscription = localStorage.getItem('pendingSubscription') === 'true';
-        const userRole = (data.role || '').toLowerCase();
-        const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN';
-        const isPremium = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
-        const hasActiveSubscriptionStatus = data.subscription_status === 'active';
+        // ============= DETERMINISTIC ROUTING =============
+        // STRICT RULES:
+        // - hasCommunityAccess === true → ALWAYS go to /community (NEVER /subscription)
+        // - hasCommunityAccess === false → ALWAYS go to /subscription
+        // This is NON-NEGOTIABLE - paid users must NEVER see subscription page after login
         
-        // CRITICAL: Admins and premium role users ALWAYS go to community
-        // Premium role grants access regardless of subscription_status
-        if (isAdmin || isPremium || hasActiveSubscription || hasActiveSubscriptionStatus || pendingSubscription) {
-            // Redirect to community after successful login
-            navigate('/community');
+        if (hasCommunityAccess) {
+          // Paid user or admin → Community
+          console.log(`✅ Community access granted (${accessType}) - redirecting to /community`);
+          navigate('/community');
         } else {
-            // Only redirect to subscription if user is truly free (no role, no subscription)
-            navigate('/subscription');
+          // Unpaid user → Subscription page
+          console.log('❌ No community access - redirecting to /subscription');
+          navigate('/subscription');
         }
         
         return data;

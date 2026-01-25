@@ -2243,7 +2243,8 @@ const Community = () => {
         
         if (sidebarOpen) {
             document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('touchstart', handleClickOutside);
+            // Use passive: true to not block touch scroll
+            document.addEventListener('touchstart', handleClickOutside, { passive: true });
         }
         
         return () => {
@@ -5099,8 +5100,8 @@ Let's build generational wealth together! 💰🚀`,
                                                     }
                                                 };
                                                 
-                                                document.addEventListener('touchend', handleTouchEnd, { once: true });
-                                                document.addEventListener('touchmove', handleTouchMove, { once: true });
+                                                document.addEventListener('touchend', handleTouchEnd, { once: true, passive: true });
+                                                document.addEventListener('touchmove', handleTouchMove, { once: true, passive: true });
                                             }}
                                             onTouchEnd={(e) => {
                                                 // Clean up any pending long press timer

@@ -182,9 +182,10 @@
 }
 
 /* Prevent body scroll when sidebar is open on mobile */
+/* Use overflow: hidden but NOT position: fixed - keeps touch scroll working */
 body.sidebar-open-mobile {
-    overflow: hidden !important;
-    position: fixed;
+    overflow: hidden;
+    /* NO position: fixed - it breaks mobile scroll */
     width: 100%;
     height: 100%;
 }
@@ -555,19 +556,19 @@ body.sidebar-open-mobile {
     box-sizing: border-box;
 }
 
-/* Prevent page scrolling when on community page - Discord-like behavior */
+/* Community page layout - Discord-like with internal scroll */
+/* IMPORTANT: Do NOT use position: fixed on body/html - it breaks mobile touch scrolling */
 body.community-page-active {
-    overflow: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    position: fixed !important;
-    width: 100% !important;
+    overflow: hidden;
+    height: 100vh;
+    max-height: 100vh;
+    /* NO position: fixed - it breaks mobile scroll */
 }
 
 html.community-page-active {
-    overflow: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    overflow: hidden;
+    height: 100vh;
+    max-height: 100vh;
 }
 
 /* Mobile and Tablet Responsive Styles */
@@ -582,7 +583,9 @@ html.community-page-active {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         overflow: hidden !important;
-        position: fixed !important;
+        /* Use absolute positioning within the page wrapper, NOT position: fixed */
+        /* This allows proper mobile touch scroll handling */
+        position: absolute !important;
         top: 60px !important;
         left: 0 !important;
         right: 0 !important;
@@ -614,6 +617,10 @@ html.community-page-active {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         background: var(--bg-tertiary) !important;
+        /* Enable smooth touch scrolling on mobile */
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior: contain !important;
     }
     
     .no-channel-selected {
@@ -637,7 +644,8 @@ html.community-page-active {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         overflow: hidden !important;
-        position: fixed !important;
+        /* Use absolute instead of fixed - allows mobile touch scroll */
+        position: absolute !important;
         top: 60px !important;
         left: 0 !important;
         right: 0 !important;
@@ -669,6 +677,10 @@ html.community-page-active {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         background: var(--bg-tertiary) !important;
+        /* Enable smooth touch scrolling */
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior: contain !important;
     }
     
     .no-channel-selected {
@@ -692,7 +704,8 @@ html.community-page-active {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         overflow: hidden !important;
-        position: fixed !important;
+        /* Use absolute instead of fixed - allows mobile touch scroll */
+        position: absolute !important;
         top: 60px !important;
         left: 0 !important;
         right: 0 !important;
@@ -2756,6 +2769,7 @@ html.community-page-active {
         min-height: 100vh !important;
         height: 100vh !important;
         overflow-x: hidden !important;
+        /* Allow internal scroll, don't block completely */
         overflow-y: hidden !important;
     }
     
@@ -2771,7 +2785,8 @@ html.community-page-active {
         width: 100vw !important;
         max-width: 100vw !important;
         overflow: hidden !important;
-        position: fixed !important;
+        /* Use absolute instead of fixed - allows mobile touch scroll in internal containers */
+        position: absolute !important;
         top: 0 !important;
         left: 0 !important;
         right: 0 !important;
@@ -2801,6 +2816,10 @@ html.community-page-active {
         flex-direction: column !important;
         min-height: 0 !important;
         width: 100% !important;
+        /* Enable smooth touch scrolling on iOS */
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior: contain !important;
     }
     
     .no-channel-selected {

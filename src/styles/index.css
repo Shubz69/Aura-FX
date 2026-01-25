@@ -28,6 +28,60 @@
     --glow-strong: 0 0 1.5px;
 }
 
+/* ========== GLOBAL MOBILE TOUCH SCROLL FIX ========== */
+/* Ensures smooth touch scrolling across all pages */
+/* DO NOT add touch-action: none or overflow: hidden to body/html globally */
+
+html, body {
+  /* Enable smooth touch scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Allow vertical swipes for page scroll by default */
+  touch-action: pan-y pan-x;
+  /* Prevent overscroll bounce issues */
+  overscroll-behavior: contain;
+}
+
+/* Main scrollable containers should allow touch scroll */
+main, 
+article, 
+.page-wrapper,
+.main-content,
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+/* Horizontally scrolling elements (tickers, carousels) - allow pan-x but don't block vertical scroll */
+.ticker, 
+.carousel, 
+.horizontal-scroll,
+.markets-ticker,
+.market-ticker {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Modal/overlay containers that need their own scroll */
+.modal-content,
+.modal-body,
+.overlay-scroll,
+.chat-messages,
+.messages-container {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+/* Ensure interactive elements don't block page scroll */
+button, 
+a, 
+input, 
+textarea, 
+select {
+  touch-action: manipulation;
+}
+
 html {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
@@ -166,24 +220,29 @@ footer {
   padding-bottom: 0; /* No bottom padding needed since footer is relative */
   overflow-y: auto;
   overflow-x: hidden;
+  /* Enable smooth touch scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
+  /* Allow vertical swipes to scroll */
+  touch-action: pan-y;
 }
 
-/* Prevent page scrolling on community page - Discord-like behavior */
+/* Community page layout - Discord-like with internal scroll */
+/* IMPORTANT: Do NOT use position: fixed on body/html - it breaks mobile touch scrolling */
 body.community-page-active,
 html.community-page-active {
-  overflow: hidden !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  position: fixed !important;
-  width: 100% !important;
+  /* Use overflow hidden but NOT position: fixed - this allows flexbox to handle layout */
+  overflow: hidden;
+  height: 100vh;
+  /* NO position: fixed here - it breaks mobile scroll */
 }
 
 body.community-page-active .page-wrapper,
 html.community-page-active .page-wrapper {
-  overflow: hidden !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
+  overflow: hidden;
+  height: 100vh;
+  max-height: 100vh;
   padding-top: 0 !important;
+  /* Internal containers will handle their own scrolling */
 }
   display: flex;
   flex-direction: column;
