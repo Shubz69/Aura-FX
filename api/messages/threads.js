@@ -1,31 +1,18 @@
-const mysql = require('mysql2/promise');
+const { getDbConnection } = require('../db');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    return null;
-  }
-
+// Parse body for Vercel (sometimes passed as string)
+function parseBody(req) {
+  if (!req.body) return {};
+  if (typeof req.body === 'object') return req.body;
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 5000,
-      ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false
-    });
-    await connection.ping();
-    return connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return null;
+    return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : {};
+  } catch (e) {
+    return {};
   }
-};
+}
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -66,8 +53,9 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, message: 'Authentication required' });
   }
 
+  let db = null;
   try {
-    const db = await getDbConnection();
+    db = await getDbConnection();
     if (!db) {
       return res.status(500).json({ success: false, message: 'Database connection error' });
     }
@@ -104,11 +92,11 @@ module.exports = async (req, res) => {
 
     // Handle /api/messages/threads/ensure-admin - Create or get user's admin thread
     if (pathname.includes('/ensure-admin') && req.method === 'POST') {
-      // Extract userId from request body (should be sent from frontend)
-      const userId = req.body.userId || null;
+      const body = parseBody(req);
+      const userId = body.userId || null;
       
       if (!userId) {
-        await db.end();
+        db.release && db.release();
         return res.status(400).json({ success: false, message: 'User ID required in request body' });
       }
 
@@ -119,60 +107,61 @@ module.exports = async (req, res) => {
       );
 
       if (existing.length > 0) {
-        await db.end();
+        db.release && db.release();
         return res.status(200).json({ success: true, thread: existing[0] });
       }
 
       // Create new thread (auto-create DM for every user)
-      const [result] = await db.execute(
+      const [insertResult] = await db.execute(
         'INSERT INTO threads (userId, adminId) VALUES (?, NULL)',
         [userId]
       );
+      const insertId = insertResult.insertId;
 
-      const [newThread] = await db.execute('SELECT * FROM threads WHERE id = ?', [result.insertId]);
-      await db.end();
-      return res.status(200).json({ success: true, thread: newThread[0] });
+      const [newThreadRows] = await db.execute('SELECT * FROM threads WHERE id = ?', [insertId]);
+      db.release && db.release();
+      return res.status(200).json({ success: true, thread: newThreadRows[0] });
     }
     
     // Handle /api/messages/threads/ensure-user/:userId - Create or get DM thread with specific user (for admins)
     const ensureUserMatch = pathname.match(/\/ensure-user\/(\d+)/);
     if (ensureUserMatch && req.method === 'POST') {
       const targetUserId = parseInt(ensureUserMatch[1]);
-      const adminUserId = req.body.userId || null; // Admin's user ID
+      const body = parseBody(req);
+      const adminUserId = body.userId || null;
       
       if (!adminUserId || !targetUserId) {
-        await db.end();
+        db.release && db.release();
         return res.status(400).json({ success: false, message: 'User IDs required' });
       }
 
-      // Check if thread exists between admin and user
       const [existing] = await db.execute(
         'SELECT * FROM threads WHERE (userId = ? AND adminId = ?) OR (userId = ? AND adminId = ?) LIMIT 1',
         [targetUserId, adminUserId, adminUserId, targetUserId]
       );
 
       if (existing.length > 0) {
-        await db.end();
+        db.release && db.release();
         return res.status(200).json({ success: true, thread: existing[0] });
       }
 
-      // Create new DM thread
-      const [result] = await db.execute(
+      const [insertResult] = await db.execute(
         'INSERT INTO threads (userId, adminId) VALUES (?, ?)',
         [targetUserId, adminUserId]
       );
+      const insertId = insertResult.insertId;
 
-      const [newThread] = await db.execute('SELECT * FROM threads WHERE id = ?', [result.insertId]);
-      await db.end();
-      return res.status(200).json({ success: true, thread: newThread[0] });
+      const [newThreadRows] = await db.execute('SELECT * FROM threads WHERE id = ?', [insertId]);
+      db.release && db.release();
+      return res.status(200).json({ success: true, thread: newThreadRows[0] });
     }
 
     // Handle /api/messages/threads - List all threads (admin only)
-    if (pathname.endsWith('/threads') && req.method === 'GET') {
+    if (pathname.endsWith('/threads') && !pathname.includes('/threads/') && req.method === 'GET') {
       const [threads] = await db.execute(
         'SELECT * FROM threads ORDER BY lastMessageAt DESC LIMIT 100'
       );
-      await db.end();
+      db.release && db.release();
       return res.status(200).json({ success: true, threads });
     }
 
@@ -180,49 +169,46 @@ module.exports = async (req, res) => {
     const threadMessagesMatch = pathname.match(/\/threads\/(\d+)\/messages/);
     if (threadMessagesMatch && req.method === 'GET') {
       const threadId = parseInt(threadMessagesMatch[1]);
-      const limit = parseInt(req.query.limit) || 50;
+      const limit = Math.min(parseInt(req.query?.limit) || 50, 100);
 
       const [messages] = await db.execute(
         'SELECT * FROM thread_messages WHERE threadId = ? ORDER BY createdAt DESC LIMIT ?',
         [threadId, limit]
       );
 
-      // Update thread's lastMessageAt
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
 
-      await db.end();
-      return res.status(200).json({ success: true, messages: messages.reverse() });
+      db.release && db.release();
+      return res.status(200).json({ success: true, messages: (messages || []).reverse() });
     }
 
     // Handle /api/messages/threads/:threadId/messages - Send message to thread
     if (threadMessagesMatch && req.method === 'POST') {
       const threadId = parseInt(threadMessagesMatch[1]);
-      const { body, userId } = req.body;
+      const body = parseBody(req);
+      const { body: messageBody, userId } = body;
 
-      if (!body || !userId) {
-        await db.end();
+      if (!messageBody || !userId) {
+        db.release && db.release();
         return res.status(400).json({ success: false, message: 'Message body and user ID required' });
       }
 
-      // Determine recipient (if user sends, recipient is ADMIN, if admin sends, recipient is thread userId)
-      const [thread] = await db.execute('SELECT * FROM threads WHERE id = ?', [threadId]);
-      if (thread.length === 0) {
-        await db.end();
+      const [threadRows] = await db.execute('SELECT * FROM threads WHERE id = ?', [threadId]);
+      if (!threadRows || threadRows.length === 0) {
+        db.release && db.release();
         return res.status(404).json({ success: false, message: 'Thread not found' });
       }
 
-      const recipientId = thread[0].userId === userId ? 'ADMIN' : String(thread[0].userId);
+      const recipientId = String(threadRows[0].userId) === String(userId) ? 'ADMIN' : String(threadRows[0].userId);
 
-      // Insert message
       await db.execute(
         'INSERT INTO thread_messages (threadId, senderId, recipientId, body) VALUES (?, ?, ?, ?)',
-        [threadId, userId, recipientId, body]
+        [threadId, userId, recipientId, messageBody]
       );
 
-      // Update thread's lastMessageAt
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
 
-      await db.end();
+      db.release && db.release();
       return res.status(200).json({ success: true, message: 'Message sent' });
     }
 
@@ -230,22 +216,25 @@ module.exports = async (req, res) => {
     const threadReadMatch = pathname.match(/\/threads\/(\d+)\/read/);
     if (threadReadMatch && req.method === 'POST') {
       const threadId = parseInt(threadReadMatch[1]);
-      const userId = req.body.userId || null;
+      const body = parseBody(req);
+      const userId = body.userId ?? null;
 
-      // Mark all messages in thread as read for this user
       await db.execute(
         'UPDATE thread_messages SET readAt = NOW() WHERE threadId = ? AND recipientId = ? AND readAt IS NULL',
         [threadId, userId === null ? 'ADMIN' : String(userId)]
       );
 
-      await db.end();
+      db.release && db.release();
       return res.status(200).json({ success: true, message: 'Thread marked as read' });
     }
 
-    await db.end();
+    db.release && db.release();
     return res.status(404).json({ success: false, message: 'Endpoint not found' });
   } catch (error) {
-    console.error('Error in messages API:', error);
+    console.error('Error in messages/threads API:', error);
+    try {
+      if (db && typeof db.release === 'function') db.release();
+    } catch (e) { /* ignore */ }
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

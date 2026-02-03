@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { FaEnvelope, FaMapMarkerAlt, FaGlobe } from 'react-icons/fa';
 import { IoSend } from 'react-icons/io5';
 import '../styles/ContactUs.css';
-import Chatbot from "../components/Chatbot";
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
@@ -195,8 +194,6 @@ const ContactUs = () => {
                     </div>
                 </div>
             </div>
-
-            <Chatbot />
         </div>
     );
 };

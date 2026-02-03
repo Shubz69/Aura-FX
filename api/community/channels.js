@@ -546,7 +546,7 @@ module.exports = async (req, res) => {
               const userId = decoded.id != null ? String(decoded.id) : null;
               if (userId) {
                 [userRows] = await db.execute(
-                  'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+                  'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
                   [userId]
                 );
               }
@@ -568,6 +568,7 @@ module.exports = async (req, res) => {
                 entitlements = { role: jwtRole, tier: 'ELITE', effectiveTier: 'ELITE', allowedChannelSlugs: allChannels.map((c) => c.id || c.name).filter(Boolean) };
               }
             }
+            const allowedSet = new Set((entitlements.allowedChannelSlugs || []).map((s) => String(s).toLowerCase()));
             const channelsWithFlags = allChannels.map((ch) => {
               const perm = getChannelPermissions(entitlements, {
                 id: ch.id,
@@ -575,7 +576,10 @@ module.exports = async (req, res) => {
                 access_level: ch.accessLevel,
                 permission_type: ch.permissionType
               });
-              return { ...ch, canSee: perm.canSee, canRead: perm.canRead, canWrite: perm.canWrite, locked: perm.locked };
+              const chId = (ch.id || ch.name || '').toString().toLowerCase();
+              const inAllowed = allowedSet.has(chId);
+              const canSee = perm.canSee && inAllowed;
+              return { ...ch, canSee, canRead: canSee && perm.canRead, canWrite: canSee && perm.canWrite, locked: perm.locked };
             });
             return res.status(200).json(channelsWithFlags);
           }

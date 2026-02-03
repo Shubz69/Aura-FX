@@ -1,5 +1,6 @@
 const { getDbConnection } = require('../../db');
 const { getEntitlements, getChannelPermissions, canAccessChannel } = require('../../utils/entitlements');
+const { triggerNewMessage } = require('../../utils/pusher');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
@@ -219,7 +220,7 @@ module.exports = async (req, res) => {
 
     // Single source of truth: enforce channel access via entitlements
     const [userRows] = await db.execute(
-      'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+      'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
       [decoded.id]
     );
     if (!userRows || userRows.length === 0) {
@@ -651,6 +652,9 @@ module.exports = async (req, res) => {
             role: senderRole
           }
         };
+
+        // Broadcast to all connected clients via Pusher (production realtime)
+        triggerNewMessage(channelId, message).catch(() => {});
 
         return res.status(201).json(message);
       } catch (dbError) {

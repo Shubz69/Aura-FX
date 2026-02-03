@@ -1106,12 +1106,12 @@ html.community-page-active {
     line-height: 1.375 !important;
 }
 
-/* Discord-like tight spacing - new messages have minimal gap, grouped have none */
+/* Gap between different users' messages - prevents visual merge */
 .message-item:not(.grouped) {
-    padding-top: 0.0625rem !important; /* Ultra-minimal gap between different senders */
-    padding-bottom: 0.0625rem !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
 }
 
 /* Deleted message styling */
@@ -1131,10 +1131,13 @@ html.community-page-active {
 }
 
 .message-text img {
-    max-width: 100%;
+    max-width: 180px;
+    max-height: 180px;
+    width: auto;
     height: auto;
-    border-radius: 4px;
-    margin-top: 4px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-top: 6px;
     display: block;
     cursor: pointer;
 }
@@ -1858,9 +1861,9 @@ html.community-page-active {
         border-radius: 4px !important;
     }
     
-    /* Discord-like messages - fill all available space */
+    /* Discord-like messages - fill all available space, extra padding for readability */
     .chat-messages {
-        padding: 16px 0 8px 0 !important;
+        padding: 16px 12px 12px 12px !important;
         background: #36393f !important;
         flex: 1 1 0 !important; /* Fill available space */
         overflow-y: auto !important;
@@ -1921,11 +1924,12 @@ html.community-page-active {
         height: auto !important;
     }
     
+    /* Gap between different users' messages - clearer separation on mobile */
     .message-item:not(.grouped) {
-        padding-top: 0.0625rem !important; /* Ultra-minimal gap */
-        padding-bottom: 0.0625rem !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
     }
     
     .message-avatar,
@@ -1933,7 +1937,7 @@ html.community-page-active {
         width: 40px !important;
         height: 40px !important;
         left: 16px !important;
-        top: 0.125rem !important;
+        top: 0.25rem !important;
         border-radius: 50% !important;
         z-index: 1 !important;
         position: absolute !important;
@@ -1961,9 +1965,9 @@ html.community-page-active {
     .message-header-info {
         display: flex !important;
         align-items: baseline !important;
-        gap: 4px !important;
-        margin-bottom: 0 !important;
-        line-height: 1.375 !important;
+        gap: 6px !important;
+        margin-bottom: 2px !important;
+        line-height: 1.4 !important;
     }
     
     .message-author,
@@ -1991,17 +1995,37 @@ html.community-page-active {
     }
     
     .message-text {
-        font-size: 0.9375rem !important;
-        line-height: 1.2 !important; /* Tighter line height */
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
         margin-top: 0 !important;
         margin-bottom: 0 !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         margin-bottom: 0 !important;
-        color: #DCDDDE !important;
+        padding: 0 0 2px 0 !important;
+        color: #f0f0f0 !important;
         word-wrap: break-word !important;
         word-break: break-word !important;
-        padding: 0 !important;
+        -webkit-text-size-adjust: 100%;
+    }
+    
+    /* Smaller, cleaner images on mobile - no long filenames (handled by getDisplayFileName) */
+    .message-text img {
+        max-width: 140px !important;
+        max-height: 140px !important;
+        border-radius: 8px !important;
+        margin-top: 8px !important;
+    }
+    .message-attachment img {
+        max-width: 140px !important;
+        max-height: 140px !important;
+    }
+    .message-attachment .message-file,
+    .message-attachment [class*="file"] {
+        font-size: 0.85rem !important;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     /* Discord-like input bar */
@@ -2760,10 +2784,48 @@ html.community-page-active {
     .empty-state {
         background: transparent !important;
     }
+    
+    /* Tablet message spacing and readability */
+    .message-item:not(.grouped) {
+        padding-top: 5px !important;
+        padding-bottom: 5px !important;
+        margin-top: 3px !important;
+        margin-bottom: 3px !important;
+    }
+    .message-text {
+        line-height: 1.55 !important;
+    }
+    .message-text img {
+        max-width: 160px !important;
+        max-height: 160px !important;
+    }
+    .message-attachment img {
+        max-width: 160px !important;
+        max-height: 160px !important;
+    }
 }
 
-/* iPhone Specific Fixes (max-width: 480px) */
+/* iPhone Specific Fixes (max-width: 480px) - extra message spacing, smaller images */
 @media (max-width: 480px) {
+    .message-item:not(.grouped) {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
+    }
+    .message-text {
+        line-height: 1.6 !important;
+        padding: 0 0 4px 0 !important;
+    }
+    .message-text img,
+    .message-attachment img {
+        max-width: 120px !important;
+        max-height: 120px !important;
+    }
+    .chat-messages {
+        padding: 12px 0 12px 0 !important;
+    }
+    
     html, body, #root {
         background: #36393f !important;
         min-height: 100vh !important;

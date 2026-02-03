@@ -56,7 +56,8 @@ module.exports = async (req, res) => {
     const [userRows] = await executeQuery(
       `SELECT id, email, username, name, avatar, role,
               subscription_status, subscription_plan, subscription_expiry,
-              subscription_started, payment_failed, has_used_free_trial
+              subscription_started, payment_failed, has_used_free_trial,
+              onboarding_accepted, onboarding_subscription_snapshot
        FROM users WHERE id = ?`,
       [userId]
     );
@@ -115,7 +116,9 @@ module.exports = async (req, res) => {
         effectiveTier: entitlements.effectiveTier ?? entitlements.tier,
         canAccessCommunity: entitlements.canAccessCommunity,
         canAccessAI: entitlements.canAccessAI,
-        allowedChannelSlugs: entitlements.allowedChannelSlugs
+        allowedChannelSlugs: entitlements.allowedChannelSlugs,
+        onboardingAccepted: entitlements.onboardingAccepted,
+        needsOnboardingReaccept: entitlements.needsOnboardingReaccept
       }
     });
   } catch (error) {

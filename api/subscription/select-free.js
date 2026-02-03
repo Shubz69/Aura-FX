@@ -57,7 +57,8 @@ module.exports = async (req, res) => {
         subscription_expiry = NULL,
         subscription_started = COALESCE(subscription_started, NOW()),
         role = 'user',
-        payment_failed = FALSE
+        payment_failed = FALSE,
+        onboarding_accepted = FALSE
        WHERE id = ?`,
       [userId]
     );

@@ -629,23 +629,8 @@ wss.on('connection', (ws, req) => {
                         }
                     });
                 }
-                
-                // Save to database asynchronously (fire-and-forget, non-blocking)
-                // Don't wait for DB - message already broadcasted instantly
-                if (dbPool && data.content) {
-                    dbPool.execute(
-                        'INSERT INTO messages (channel_id, sender_id, content, timestamp, file_data) VALUES (?, ?, ?, NOW(), ?)',
-                        [
-                            channelId, 
-                            data.userId || data.senderId || null, 
-                            data.content,
-                            data.file ? JSON.stringify(data.file) : null
-                        ]
-                    ).catch(dbError => {
-                        // Log error but don't block - message already delivered
-                        console.error('Error saving message to database (non-critical):', dbError.message);
-                    });
-                }
+                // Do NOT save to DB here - API is the single source of persistence.
+                // Client sends to API first (saves), then to WebSocket (broadcast only).
             } else if (frame.command === 'DISCONNECT') {
                 console.log(`Client ${clientId} disconnecting`);
                 ws.close();

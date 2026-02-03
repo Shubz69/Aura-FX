@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 import { useAuth } from "../context/AuthContext";
-import Chatbot from "../components/Chatbot";
 import CosmicBackground from "../components/CosmicBackground";
 import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
@@ -58,10 +57,7 @@ const Home = () => {
                     <CosmicBackground />
                     {/* Main Loading Content - matches brand on top left */}
                     <div className="loading-content">
-                        <div className="loading-brand-wrapper">
-                            <A7Logo />
-                            <span className="loading-brand-text">AURA FX</span>
-                        </div>
+                        <span className="loading-brand-text">AURA FX</span>
                         <div className="loading-subtitle">INITIALIZING SYSTEM...</div>
                         
                         <div className="loading-dots-container">
@@ -273,7 +269,6 @@ const Home = () => {
                         </div>
                     </div>
                 )}
-                <Chatbot />
             </div>
         </>
     );

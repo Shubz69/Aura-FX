@@ -767,10 +767,15 @@ module.exports = async (req, res) => {
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const userEmail = userRows[0].email;
-        if (userEmail === 'shubzfx@gmail.com' && role !== 'super_admin') {
+        const userEmail = (userRows[0].email || '').toString().trim().toLowerCase();
+        const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+        if (userEmail === SUPER_ADMIN_EMAIL && role !== 'super_admin') {
           await db.end();
           return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
+        }
+        if (role === 'super_admin' && userEmail !== SUPER_ADMIN_EMAIL) {
+          await db.end();
+          return res.status(403).json({ success: false, message: 'Super Admin is restricted to one user only' });
         }
 
         // Update user role
@@ -1173,7 +1178,7 @@ module.exports = async (req, res) => {
                 const username = userInfo[0]?.username || userInfo[0]?.name || 'User';
                 
                 // Send level-up notification (async, don't wait)
-                fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/users/level-up-notification`, {
+                fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : (process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:3000')}/api/users/level-up-notification`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

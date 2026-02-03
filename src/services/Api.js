@@ -388,6 +388,21 @@ const Api = {
         });
     },
 
+    acceptOnboarding: async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `${API_BASE_URL}/api/community/accept-onboarding`,
+                {},
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            return response;
+        } catch (error) {
+            console.error('Accept onboarding error:', error);
+            throw error;
+        }
+    },
+
     getChannelMessages: async (channelId, customHeaders = {}) => {
         console.log(`Attempting to fetch messages for channel ${channelId}`);
         try {

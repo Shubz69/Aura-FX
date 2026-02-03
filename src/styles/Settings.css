@@ -1,3 +1,12 @@
+.settings-page {
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  background: #0a0a0a;
+  overflow-x: hidden;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
 .settings-container {
   --bg-primary: #111217;
   --bg-elevated: #181920;

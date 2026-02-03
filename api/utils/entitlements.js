@@ -89,6 +89,20 @@ function hasPlanSelected(userRow) {
   return plan.length > 0;
 }
 
+function needsOnboardingReaccept(userRow) {
+  if (!userRow) return true;
+  if (isSuperAdminEmail(userRow)) return false;
+  const accepted = userRow.onboarding_accepted === true || userRow.onboarding_accepted === 1;
+  if (!accepted) return true;
+  const snapshot = (userRow.onboarding_subscription_snapshot || '').toString().toLowerCase();
+  const tier = getTier(userRow);
+  if (tier === 'ELITE' && !['elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
+  if (tier === 'PREMIUM' && !['premium', 'aura', 'elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
+  if (tier === 'FREE' && !['free', 'open', ''].includes(snapshot)) return true;
+  const current = (userRow.subscription_plan || userRow.role || 'free').toString().toLowerCase();
+  return snapshot !== current;
+}
+
 /**
  * Entitlements from a single user row (no DB in this function).
  * canAccessCommunity: true only when plan is selected (FREE/PREMIUM/ELITE) or admin—blocks until /choose-plan.
@@ -105,7 +119,9 @@ function getEntitlements(userRow) {
       status: 'none',
       canAccessCommunity: false,
       canAccessAI: false,
-      allowedChannelSlugs: []
+      allowedChannelSlugs: [],
+      onboardingAccepted: false,
+      needsOnboardingReaccept: true
     };
   }
   const role = isSuperAdminEmail(userRow) ? 'SUPER_ADMIN' : normalizeRole(userRow.role);
@@ -115,6 +131,8 @@ function getEntitlements(userRow) {
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
   const planSelected = hasPlanSelected(userRow);
   const periodEnd = userRow.subscription_expiry ? new Date(userRow.subscription_expiry).toISOString() : null;
+  const onboardingAccepted = isAdmin || (userRow.onboarding_accepted === true || userRow.onboarding_accepted === 1);
+  const needsReaccept = !isAdmin && needsOnboardingReaccept(userRow);
 
   return {
     role,
@@ -125,7 +143,9 @@ function getEntitlements(userRow) {
     status,
     canAccessCommunity: isAdmin || planSelected,
     canAccessAI: isAdmin || tier === 'PREMIUM' || tier === 'ELITE',
-    allowedChannelSlugs: []
+    allowedChannelSlugs: [],
+    onboardingAccepted: isAdmin || onboardingAccepted,
+    needsOnboardingReaccept: needsReaccept
   };
 }
 
@@ -140,15 +160,22 @@ function freeChannelNameKey(name) {
 /**
  * Given entitlements and full channel list, return array of channel ids the user may see.
  * Uses effectiveTier only (never stale cached tier).
+ * If !onboardingAccepted or needsOnboardingReaccept, only 'welcome' is allowed.
  */
 function getAllowedChannelSlugs(entitlements, channels) {
   if (!entitlements || !Array.isArray(channels)) return [];
-  const { role, effectiveTier } = entitlements;
-  const tier = effectiveTier != null ? effectiveTier : entitlements.tier;
+  const { role, effectiveTier, onboardingAccepted, needsOnboardingReaccept } = entitlements;
   const toId = (c) => (c.id != null ? String(c.id) : (c.name != null ? String(c.name) : ''));
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return channels.map(toId).filter(Boolean);
   }
+  if (!onboardingAccepted || needsOnboardingReaccept) {
+    return channels.filter((c) => {
+      const id = toId(c);
+      return id.toLowerCase() === 'welcome';
+    }).map(toId).filter(Boolean);
+  }
+  const tier = effectiveTier != null ? effectiveTier : entitlements.tier;
   if (tier === 'FREE') {
     return channels
       .filter((c) => {

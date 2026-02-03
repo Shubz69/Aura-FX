@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
 
     try {
       const [userRows] = await db.execute(
-        'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+        'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
         [decoded.id]
       );
       if (!userRows || userRows.length === 0) {
@@ -111,7 +111,9 @@ module.exports = async (req, res) => {
           status: entitlements.status,
           canAccessCommunity: entitlements.canAccessCommunity,
           canAccessAI: entitlements.canAccessAI,
-          allowedChannelSlugs: entitlements.allowedChannelSlugs
+          allowedChannelSlugs: entitlements.allowedChannelSlugs,
+          onboardingAccepted: entitlements.onboardingAccepted,
+          needsOnboardingReaccept: entitlements.needsOnboardingReaccept
         },
         channels,
         messages

@@ -5,7 +5,6 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard } from './components/RouteGuards';
-import { isPremium } from './utils/roles';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import GDPRModal from './components/GDPRModal';
@@ -88,8 +87,8 @@ function PageLoadFallback() {
 
 function AppRoutes() {
     const { user, loading } = useAuth();
-    // Only show chatbot for free users - premium users should use Aura AI
-    const showChatbot = !isPremium(user);
+    // Only show chatbot to logged-out users; hide everywhere when logged in (including Community)
+    const showChatbot = !user;
     const location = useLocation();
     const isHomePage = location.pathname === '/';
 

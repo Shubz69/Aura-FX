@@ -252,7 +252,8 @@ module.exports = async (req, res) => {
                payment_failed = FALSE,
                role = ?,
                subscription_plan = ?,
-               has_used_free_trial = ?
+               has_used_free_trial = ?,
+               onboarding_accepted = FALSE
            WHERE id = ?`,
           [expiryDate, sessionId || null, userRole, planType, markFreeTrialUsed, userId]
         );
@@ -344,7 +345,7 @@ module.exports = async (req, res) => {
             
             // Immediate downgrade: set FREE tier so effectiveTier is FREE (no carry-over)
             await db.execute(
-              'UPDATE users SET payment_failed = TRUE, subscription_status = \'inactive\', role = \'user\', subscription_plan = \'free\', subscription_expiry = NULL WHERE id = ?',
+              'UPDATE users SET payment_failed = TRUE, subscription_status = \'inactive\', role = \'user\', subscription_plan = \'free\', subscription_expiry = NULL, onboarding_accepted = FALSE WHERE id = ?',
               [userId]
             );
             console.log('Immediate downgrade to FREE for user:', userId);

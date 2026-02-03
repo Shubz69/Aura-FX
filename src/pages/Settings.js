@@ -354,7 +354,11 @@ const Settings = () => {
   };
 
   if (loading) {
-    return <div className="settings-loading">Loading...</div>;
+    return (
+      <div className="settings-page">
+        <div className="settings-loading">Loading...</div>
+      </div>
+    );
   }
 
   if (!superAdmin && !admin) {
@@ -362,6 +366,7 @@ const Settings = () => {
   }
 
   return (
+    <div className="settings-page">
     <div className="settings-container">
       <div className="settings-header">
         <h1>Admin Panel</h1>
@@ -817,6 +822,7 @@ const Settings = () => {
         cancelText="Cancel"
         type="warning"
       />
+    </div>
     </div>
   );
 };

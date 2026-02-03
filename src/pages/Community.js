@@ -8,6 +8,7 @@ import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import {
@@ -392,7 +393,7 @@ const Community = () => {
     const { id: channelIdParam } = useParams();
     const location = useLocation();
     const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
-    const { refresh: refreshEntitlements } = useEntitlements();
+    const { entitlements, refresh: refreshEntitlements } = useEntitlements();
     const { hasCommunityAccess: hasCommunityAccessFromSubscription, refreshSubscription } = useSubscription();
     
     const [channelList, setChannelList] = useState([]);
@@ -999,9 +1000,18 @@ const Community = () => {
     // Extract just the filename from a path (remove directory path)
     const getFileName = (filePath) => {
         if (!filePath) return 'Unknown file';
-        // Handle both forward and backslash paths
         const fileName = filePath.split(/[/\\]/).pop();
         return fileName || filePath;
+    };
+    // Clean display name: hide raw hashes, show friendly label for images
+    const getDisplayFileName = (filePath, fileType) => {
+        const name = getFileName(filePath);
+        if (!name) return 'File';
+        const ext = name.split('.').pop()?.toLowerCase() || '';
+        const isImage = fileType?.startsWith?.('image/') || ['jpg','jpeg','png','gif','webp'].includes(ext);
+        if (isImage) return 'Image' + (ext ? ` (.${ext})` : '');
+        if (/^[a-f0-9-]{20,}$/i.test(name.replace(/\.[^.]+$/, ''))) return 'File' + (ext ? ` (.${ext})` : '');
+        return name.length > 40 ? name.slice(0, 37) + '...' : name;
     };
     
     // ***** XP SYSTEM FUNCTIONS *****
@@ -2672,6 +2682,38 @@ const Community = () => {
 
         return () => clearInterval(pollTimer);
     }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel, storedUser, userId, messages.length, updateChannelBadge]);
+
+    // Pusher realtime subscription (production - when configured)
+    useEffect(() => {
+        const key = process.env.REACT_APP_PUSHER_KEY;
+        const cluster = process.env.REACT_APP_PUSHER_CLUSTER || 'us2';
+        if (!key || !selectedChannel?.id) return;
+        let pusher = null;
+        let channel = null;
+        try {
+            const Pusher = require('pusher-js');
+            pusher = new Pusher(key, { cluster });
+            channel = pusher.subscribe(`channel-${selectedChannel.id}`);
+            channel.bind('new-message', (data) => {
+                if (!data || String(data.channelId || data.channel_id) !== String(selectedChannel.id)) return;
+                setMessages(prev => {
+                    const existingIds = new Set(prev.map(m => String(m.id || '')));
+                    if (data.id && existingIds.has(String(data.id))) return prev;
+                    const merged = [...prev, data].sort((a, b) =>
+                        new Date(a.timestamp || a.createdAt || 0) - new Date(b.timestamp || b.createdAt || 0)
+                    );
+                    saveMessagesToStorage(selectedChannel.id, merged);
+                    return merged;
+                });
+            });
+        } catch (e) {
+            if (process.env.NODE_ENV === 'development') console.warn('Pusher subscribe failed:', e.message);
+        }
+        return () => {
+            if (channel) channel.unbind_all();
+            if (pusher) pusher.unsubscribe(`channel-${selectedChannel.id}`);
+        };
+    }, [selectedChannel?.id]);
     
     // Add welcome message when welcome channel is selected for first time
     useEffect(() => {
@@ -3037,23 +3079,18 @@ Let's build generational wealth together! 💰🚀`,
         scrollToBottomInstant();
 
         try {
-            // Send via WebSocket FIRST for instant delivery to all clients
-            if (sendWebSocketMessage && isConnected) {
-                const wsMessage = {
+            // Broadcast via WebSocket for instant delivery to other clients (no DB save in WS server)
+            if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
+                const wsMsg = {
                     ...messageToSend,
                     id: optimisticMessage.id,
                     timestamp: optimisticMessage.timestamp,
                     sender: optimisticMessage.sender,
                     channelId: selectedChannel.id
                 };
-                const wsSent = sendWebSocketMessage(wsMessage);
-                if (!wsSent && process.env.NODE_ENV === 'development') {
-                    console.warn('WebSocket send failed, message will be delivered via API');
-                }
+                sendWebSocketMessage(wsMsg);
             }
-            
-            // Also save to backend API for permanent persistence (non-blocking)
-            // This ensures messages are saved even if WebSocket fails
+            // Send via API (DB persistence + Pusher broadcast for production)
             Api.sendMessage(selectedChannel.id, messageToSend)
                 .then(response => {
                     if (response && response.data) {
@@ -3085,7 +3122,7 @@ Let's build generational wealth together! 💰🚀`,
                 })
                 .catch(error => {
                     console.error('Error saving message to API:', error);
-                    // Message already shown via WebSocket, so this is just for persistence
+                    toast.error('Failed to send. Please try again.');
                 });
             
             // Check for @mentions and send notifications (don't wait for API response)
@@ -3279,10 +3316,19 @@ Let's build generational wealth together! 💰🚀`,
         }
     };
 
-    // Handle welcome message acknowledgment
-    const handleWelcomeAcknowledgment = () => {
-        localStorage.setItem('welcomeMessageRead', 'true');
-        setHasReadWelcome(true);
+    // Handle welcome message acknowledgment (emoji reaction - unlocks channels)
+    const handleWelcomeAcknowledgment = async () => {
+        try {
+            await Api.acceptOnboarding();
+            localStorage.setItem('welcomeMessageRead', 'true');
+            setHasReadWelcome(true);
+            localStorage.removeItem('community_channels_cache');
+            await refreshEntitlements();
+            await refreshChannelList();
+        } catch (err) {
+            console.error('Accept onboarding error:', err);
+            toast.error(err?.response?.data?.message || 'Failed to accept. Please try again.');
+        }
     };
 
     // Check if user can delete a message (own message OR admin/moderator)
@@ -5348,12 +5394,13 @@ Let's build generational wealth together! 💰🚀`,
                                                                     src={imageUrl}
                                                                     alt={imageAlt}
                                                                     style={{
-                                                                        maxWidth: '300px',
-                                                                        maxHeight: '300px',
-                                                                        borderRadius: '4px',
-                                                                        marginTop: '4px',
+                                                                        maxWidth: '180px',
+                                                                        maxHeight: '180px',
+                                                                        borderRadius: '8px',
+                                                                        marginTop: '6px',
                                                                         display: 'block',
-                                                                        cursor: 'pointer'
+                                                                        cursor: 'pointer',
+                                                                        objectFit: 'contain'
                                                                     }}
                                                                     onClick={() => {
                                                                         if (imageUrl) {
@@ -5375,7 +5422,7 @@ Let's build generational wealth together! 💰🚀`,
                                                 )}
                                             </div>
                                             
-                                            {message.isWelcomeMessage && !hasReadWelcome && (
+                                            {message.isWelcomeMessage && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
                                                 <div style={{
                                                     marginTop: '20px',
                                                     padding: '16px',
@@ -5424,11 +5471,11 @@ Let's build generational wealth together! 💰🚀`,
                                                 >
                                                     <img 
                                                         src={message.file.preview} 
-                                                        alt={getFileName(message.file.name)}
+                                                        alt={getDisplayFileName(message.file.name, message.file.type)}
                                                         style={{
-                                                            width: '100%',
-                                                            maxWidth: '500px',
-                                                            maxHeight: '350px',
+                                                            width: 'auto',
+                                                            maxWidth: '180px',
+                                                            maxHeight: '180px',
                                                             objectFit: 'contain',
                                                             display: 'block',
                                                             pointerEvents: 'none',
@@ -5436,7 +5483,7 @@ Let's build generational wealth together! 💰🚀`,
                                                         }}
                                                     />
                                                     <div style={{
-                                                        padding: '10px 12px',
+                                                        padding: '8px 12px',
                                                         background: 'var(--bg-elevated)',
                                                         display: 'flex',
                                                         alignItems: 'center',
@@ -5453,7 +5500,7 @@ Let's build generational wealth together! 💰🚀`,
                                                             textOverflow: 'ellipsis',
                                                             whiteSpace: 'nowrap'
                                                         }}>
-                                                            {getFileName(message.file.name)}
+                                                            {getDisplayFileName(message.file.name, message.file.type)}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -5510,7 +5557,7 @@ Let's build generational wealth together! 💰🚀`,
                                                         textOverflow: 'ellipsis',
                                                         whiteSpace: 'nowrap'
                                                     }}>
-                                                        {getFileName(message.file.name)}
+                                                        {getDisplayFileName(message.file.name, message.file.type)}
                                                     </span>
                                                 </div>
                                             )}

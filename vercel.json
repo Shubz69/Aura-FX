@@ -34,6 +34,10 @@
       "destination": "/api/community/bootstrap.js"
     },
     {
+      "source": "/api/community/accept-onboarding",
+      "destination": "/api/community/accept-onboarding.js"
+    },
+    {
       "source": "/api/community/channels/:channelId/messages",
       "destination": "/api/community/channels/messages.js?channelId=:channelId"
     },

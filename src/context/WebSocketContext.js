@@ -27,11 +27,13 @@ function resolveWsBaseUrl() {
   if (typeof window !== 'undefined') {
     const { origin, hostname } = window.location ?? {};
     if (hostname === 'localhost' || hostname === '127.0.0.1') return origin;
+    const wsHost = process.env.REACT_APP_WS_HOST || 'https://aura-fx-production.up.railway.app';
     if (hostname && (hostname.includes('vercel.app') || hostname.includes('aurafx.com'))) {
-      return 'https://aura-fx-production.up.railway.app';
+      return wsHost;
     }
+    return wsHost;
   }
-  return 'https://aura-fx-production.up.railway.app';
+  return process.env.REACT_APP_WS_HOST || 'https://aura-fx-production.up.railway.app';
 }
 
 function getWsUrl() {
