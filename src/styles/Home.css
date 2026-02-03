@@ -639,19 +639,30 @@ body.loading-active {
 
 .markets-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.5rem;
     margin-top: 3rem;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    align-items: stretch;
 }
 
 .market-item {
-    padding: 2.5rem 2rem;
+    padding: 2.25rem 2rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border-radius: 10px;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    min-height: 190px;
+    box-sizing: border-box;
 }
 
 .market-item:hover {
