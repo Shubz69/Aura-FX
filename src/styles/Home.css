@@ -629,11 +629,12 @@ body.loading-active {
     font-weight: 300;
 }
 
-/* Trading Markets Section - robust grid/flex, no overlap */
+/* Trading Markets Section - card style matching Why / What Sets Us Apart */
 .trading-markets-section {
     width: 100%;
     max-width: 1200px;
-    margin: 4rem 0;
+    margin: 4rem auto;
+    padding: 0 1.5rem;
     text-align: center;
 }
 
@@ -641,11 +642,15 @@ body.loading-active {
 .markets-bottom-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    gap: 1.5rem;
     align-items: stretch;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.markets-top-grid {
+    margin-top: 2rem;
 }
 
 .markets-grid {
@@ -676,13 +681,14 @@ body.loading-active {
     justify-content: flex-start;
     text-align: center;
     gap: 1rem;
-    padding: 2rem;
+    padding: 2rem 1.5rem;
     min-width: 0;
     width: 100%;
     min-height: 200px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     box-sizing: border-box;
@@ -690,9 +696,10 @@ body.loading-active {
 }
 
 .market-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: #ffffff;
-    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+    transform: translateY(-4px);
 }
 
 .market-icon {
@@ -721,18 +728,24 @@ body.loading-active {
 
 .market-title {
     margin: 0;
+    padding: 0;
     font-size: 1.25rem;
-    font-weight: 400;
+    font-weight: 500;
     color: #ffffff;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     line-height: 1.2;
+    text-decoration: none;
+    border: none;
+    background: none;
+    box-shadow: none;
 }
 
 .market-description {
     margin: 0;
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.9);
+    padding: 0;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.5;
     font-weight: 300;
     max-width: 100%;
