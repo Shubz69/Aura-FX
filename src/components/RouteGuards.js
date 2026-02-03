@@ -1,28 +1,13 @@
 /**
- * RouteGuards - Centralized route protection components
- * 
- * STRICT SERVER-AUTHORITATIVE ACCESS CONTROL:
- * 
- * Access Rules:
- * - Community access is unlocked ONLY when user has:
- *   1. Active paid Aura FX subscription (£99/month), OR
- *   2. Active paid A7FX Elite subscription (£250/month), OR
- *   3. Admin role
- * 
- * Routing Rules:
- * - PAID USERS: Always redirect to /community, NEVER show /subscription during sign-in
- * - UNPAID USERS: Always redirect to /subscription, hard-block /community entirely
- * - Paid users can ONLY access /subscription via explicit "?manage=true" query param
- * 
- * Enforcement:
- * - All guards WAIT for subscription status from server before rendering (no flicker)
- * - Guards use hasCommunityAccess from SubscriptionContext (server-authoritative)
- * - Client-side guards are defense-in-depth; server enforces via API middleware
+ * RouteGuards - Single source of truth from /api/me entitlements.
+ * No duplicate gating: guards read existing entitlements only.
+ * FREE users can enter Community (see only allowlist channels); upgrade prompts only when accessing locked feature.
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
 
 // Loading spinner component - shown while waiting for subscription status
@@ -61,96 +46,62 @@ const LoadingSpinner = () => (
 );
 
 /**
- * CommunityGuard - Protects /community/* routes
- * 
- * STRICT RULES:
- * 1. Requires authentication (valid token)
- * 2. Requires hasCommunityAccess === true (server-authoritative)
- * 3. WAITS for subscription status before rendering (prevents flicker/exposure)
- * 4. Hard-blocks unpaid users - includes direct URLs, refreshes, deep links
+ * CommunityGuard - Protects /community/* routes.
+ * All authenticated users can enter Community (FREE see only allowlist channels; server enforces).
+ * No global "need Premium" block; upgrade prompts only when accessing locked channel/feature.
  */
 export const CommunityGuard = ({ children }) => {
   const { user, token, loading: authLoading } = useAuth();
-  const { hasCommunityAccess, loading: subLoading, accessType } = useSubscription();
+  const { entitlements, loading: entLoading } = useEntitlements();
   const location = useLocation();
-  
-  // Log access attempts for debugging
-  useEffect(() => {
-    if (!authLoading && !subLoading) {
-      console.log(`[CommunityGuard] Path: ${location.pathname}, Access: ${hasCommunityAccess}, Type: ${accessType}`);
-    }
-  }, [location.pathname, hasCommunityAccess, accessType, authLoading, subLoading]);
-  
-  // Not authenticated -> redirect to login (preserve intended destination)
+
   if (!user || !token) {
-    console.log('[CommunityGuard] No auth - redirecting to /login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
-  // CRITICAL: Wait for BOTH auth AND subscription status before rendering
-  // This prevents any flicker or accidental exposure of protected content
-  if (authLoading || subLoading) {
+  if (authLoading || entLoading) {
     return <LoadingSpinner />;
   }
-  
-  // STRICT ACCESS CHECK: No community access = hard block
-  // This catches: direct URLs, refreshes, deep links, browser history navigation
-  if (!hasCommunityAccess) {
-    console.log('[CommunityGuard] No access - hard redirect to /subscription');
+  if (entitlements && entitlements.canAccessCommunity === false) {
     return <Navigate to="/subscription" replace />;
   }
-  
-  // Access granted - render protected content
   return children;
 };
 
 /**
- * SubscriptionPageGuard - Protects /subscription route
- * 
- * STRICT RULES:
- * 1. PAID USERS: Auto-redirect to /community (NON-NEGOTIABLE)
- *    - This ensures paid users NEVER see subscription page during sign-in or navigation
- * 2. EXCEPTION: Allow access with ?manage=true query param (explicit "Manage Subscription" action)
- * 3. UNPAID USERS: Show subscription page normally
- * 4. UNAUTHENTICATED: Show subscription page (they can view pricing)
+ * SubscriptionPageGuard - Protects /subscription route.
+ * Premium/Elite (or trialing) redirect to /community unless ?manage=true.
  */
 export const SubscriptionPageGuard = ({ children }) => {
   const { user, token, loading: authLoading } = useAuth();
-  const { hasCommunityAccess, loading: subLoading, accessType } = useSubscription();
+  const { entitlements, loading: entLoading } = useEntitlements();
   const location = useLocation();
-  
-  // Check if user explicitly wants to manage subscription
-  const searchParams = new URLSearchParams(location.search);
-  const isManageMode = searchParams.get('manage') === 'true';
-  
-  // Log access attempts for debugging
-  useEffect(() => {
-    if (!authLoading && !subLoading && user) {
-      console.log(`[SubscriptionPageGuard] Access: ${hasCommunityAccess}, ManageMode: ${isManageMode}`);
-    }
-  }, [hasCommunityAccess, isManageMode, authLoading, subLoading, user]);
-  
-  // Not authenticated -> allow access (they can view pricing/plans)
+  const isManageMode = new URLSearchParams(location.search).get('manage') === 'true';
+
+  if (!user || !token) return children;
+  if (authLoading || entLoading) return <LoadingSpinner />;
+  const paidTier = entitlements?.tier === 'PREMIUM' || entitlements?.tier === 'ELITE';
+  if (paidTier && !isManageMode) return <Navigate to="/community" replace />;
+  return children;
+};
+
+/**
+ * PremiumAIGuard - Requires canAccessAI from entitlements (PREMIUM/ELITE/ADMIN).
+ * FREE users redirect to /subscription when trying to access /premium-ai.
+ */
+export const PremiumAIGuard = ({ children }) => {
+  const { user, token, loading: authLoading } = useAuth();
+  const { entitlements, loading: entLoading } = useEntitlements();
+  const location = useLocation();
+
   if (!user || !token) {
-    return children;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
-  // Wait for subscription status before making routing decisions
-  if (authLoading || subLoading) {
+  if (authLoading || entLoading) {
     return <LoadingSpinner />;
   }
-  
-  // CRITICAL: Paid users should NEVER see subscription page during normal flow
-  // This is NON-NEGOTIABLE - it's annoying UX to show subscription to paying users
-  // ONLY exception: explicit "Manage Subscription" action via ?manage=true
-  if (hasCommunityAccess && !isManageMode) {
-    console.log(`[SubscriptionPageGuard] Paid user (${accessType}) - auto-redirect to /community`);
-    return <Navigate to="/community" replace />;
+  if (entitlements && entitlements.canAccessAI === false) {
+    return <Navigate to="/subscription" replace />;
   }
-  
-  // Show subscription page for:
-  // - Unpaid users (hasCommunityAccess === false)
-  // - Paid users in manage mode (hasCommunityAccess === true && isManageMode === true)
   return children;
 };
 

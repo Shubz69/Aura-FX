@@ -1,8 +1,23 @@
 const { getDbConnection } = require('../../db');
-const { checkCommunityAccess } = require('../../middleware/subscription-guard');
+const { getEntitlements, getChannelPermissions, canAccessChannel } = require('../../utils/entitlements');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
+
+function decodeToken(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  try {
+    const token = authHeader.replace('Bearer ', '');
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padding = payload.length % 4;
+    const padded = padding ? payload + '='.repeat(4 - padding) : payload;
+    return JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
+  } catch {
+    return null;
+  }
+}
 
 // Ensure messages table exists with correct schema
 const ensureMessagesTable = async (db) => {
@@ -147,17 +162,12 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // STRICT ACCESS CONTROL: Require active paid subscription for community access
-  const accessResult = await checkCommunityAccess(req.headers.authorization);
-  if (!accessResult.hasAccess) {
-    const statusCode = accessResult.error === 'UNAUTHORIZED' ? 401 : 403;
-    return res.status(statusCode).json({
+  const decoded = decodeToken(req.headers.authorization);
+  if (!decoded || !decoded.id) {
+    return res.status(401).json({
       success: false,
-      errorCode: accessResult.error,
-      message: accessResult.error === 'NO_SUBSCRIPTION' 
-        ? 'An active Aura FX or A7FX Elite subscription is required to access the Community.'
-        : 'Access denied.',
-      requiresSubscription: accessResult.error === 'NO_SUBSCRIPTION'
+      errorCode: 'UNAUTHORIZED',
+      message: 'Authentication required.'
     });
   }
 
@@ -203,6 +213,42 @@ module.exports = async (req, res) => {
 
   try {
     const db = await getDbConnection();
+    if (!db) {
+      return res.status(500).json({ success: false, message: 'Database unavailable' });
+    }
+
+    // Single source of truth: enforce channel access via entitlements
+    const [userRows] = await db.execute(
+      'SELECT id, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+      [decoded.id]
+    );
+    if (!userRows || userRows.length === 0) {
+      return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Access denied.' });
+    }
+    const entitlements = getEntitlements(userRows[0]);
+    let [channelRows] = await db.execute(
+      'SELECT id, name, access_level, permission_type FROM channels WHERE id = ?',
+      [channelId]
+    );
+    if (!channelRows || channelRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Channel not found.' });
+    }
+    const channelRow = channelRows[0];
+    const perm = getChannelPermissions(entitlements, {
+      id: channelRow.id,
+      name: channelRow.name,
+      access_level: channelRow.access_level,
+      permission_type: channelRow.permission_type
+    });
+    if (!perm.canSee) {
+      return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You do not have access to this channel.' });
+    }
+    if (req.method === 'GET' && !perm.canRead) {
+      return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot read this channel.' });
+    }
+    if ((req.method === 'POST' || req.method === 'PUT') && !perm.canWrite) {
+      return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot post in this channel.' });
+    }
     
     if (req.method === 'GET') {
       // Get messages for a channel

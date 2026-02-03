@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { EntitlementsProvider } from './context/EntitlementsContext';
 import { WebSocketProvider } from './context/WebSocketContext';
-import { CommunityGuard, SubscriptionPageGuard, AdminGuard } from './components/RouteGuards';
+import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard } from './components/RouteGuards';
 import { isPremium } from './utils/roles';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -131,11 +132,11 @@ function AppRoutes() {
                         </CommunityGuard>
                     } />
                     
-                    {/* Premium features - also require subscription */}
+                    {/* Premium AI - requires canAccessAI (PREMIUM/ELITE/ADMIN) */}
                     <Route path="/premium-ai" element={
-                        <CommunityGuard>
+                        <PremiumAIGuard>
                             <PremiumAI />
-                        </CommunityGuard>
+                        </PremiumAIGuard>
                     } />
                     
                     {/* Authenticated routes (no subscription required) */}
@@ -168,9 +169,11 @@ function App() {
         <Router>
             <AuthProvider>
                 <SubscriptionProvider>
-                    <WebSocketProvider>
-                        <AppRoutes />
-                    </WebSocketProvider>
+                    <EntitlementsProvider>
+                        <WebSocketProvider>
+                            <AppRoutes />
+                        </WebSocketProvider>
+                    </EntitlementsProvider>
                 </SubscriptionProvider>
             </AuthProvider>
         </Router>

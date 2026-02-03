@@ -117,9 +117,8 @@ module.exports = async (req, res) => {
 
       const userId = decoded.id || decoded.userId;
 
-      // Get user with subscription info
       const [userRows] = await db.execute(
-        `SELECT id, email, role, subscription_status, subscription_plan 
+        `SELECT id, email, role, subscription_status, subscription_plan, subscription_expiry, payment_failed 
          FROM users WHERE id = ?`,
         [userId]
       );
@@ -131,31 +130,19 @@ module.exports = async (req, res) => {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
-      const user = userRows[0];
-      
-      // Check if user is super admin by email (shubzfx@gmail.com)
-      const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
-      const isSuperAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-      
-      // Check if user has premium or a7fx subscription
-      const hasAccess = 
-        isSuperAdmin ||
-        user.role === 'premium' || 
-        user.role === 'a7fx' || 
-        user.role === 'elite' || 
-        user.role === 'admin' || 
-        user.role === 'super_admin' ||
-        (user.subscription_status === 'active' && (user.subscription_plan === 'aura' || user.subscription_plan === 'a7fx'));
-
-      if (!hasAccess) {
+      const { getEntitlements } = require('../utils/entitlements');
+      const entitlements = getEntitlements(userRows[0]);
+      if (!entitlements.canAccessAI) {
         if (db && typeof db.release === 'function') {
           db.release();
         }
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Premium subscription required. Please upgrade to access the AI assistant.' 
+        return res.status(403).json({
+          success: false,
+          message: 'Premium subscription required. Please upgrade to access the AI assistant.'
         });
       }
+
+      const user = userRows[0];
 
       // Get message, images, and conversation history
       const { message, images = [], conversationHistory = [] } = req.body;

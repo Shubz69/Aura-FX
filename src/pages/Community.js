@@ -763,9 +763,14 @@ const Community = () => {
                     category: channel.category || 'general',
                     description: channel.description || '',
                     accessLevel: accessLevelValue,
-                    locked: channel.locked ?? accessLevelValue === 'admin-only'
+                    locked: channel.locked ?? accessLevelValue === 'admin-only',
+                    canSee: channel.canSee !== false,
+                    canRead: channel.canRead !== false,
+                    canWrite: channel.canWrite !== false
                 };
             });
+            // Single source of truth: only show channels where canSee === true (from API)
+            preparedChannels = preparedChannels.filter((ch) => ch.canSee !== false);
         } else if (channelListRef.current.length > 0) {
             preparedChannels = channelListRef.current;
         }
@@ -1422,7 +1427,7 @@ const Community = () => {
         setShowGifPicker(false);
 
         // Check if user can send messages in this channel
-        if (!selectedChannel || !canUserPostInChannel(selectedChannel)) {
+        if (!selectedChannel || selectedChannel.canWrite === false) {
             alert("You don't have permission to send messages in this channel.");
             isSendingGifRef.current = false;
             return;
@@ -2963,10 +2968,7 @@ Let's build generational wealth together! 💰🚀`,
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
-
-        // Check if user can send messages in this channel
-        if (!canUserPostInChannel(selectedChannel)) {
-            alert("You don't have permission to send messages in this channel.");
+        if (selectedChannel.canWrite === false) {
             return;
         }
 
@@ -4236,18 +4238,15 @@ Let's build generational wealth together! 💰🚀`,
                                     {channels.map((channel, channelIndex) => {
                                         // Only hide admin-only channels from non-admins
                                         // All other channels are visible to everyone
-                                        const canAccess = canUserAccessChannel(channel);
+                                        const canAccess = channel.canSee !== false;
                                         const accessLevel = (channel.accessLevel || 'open').toLowerCase();
                                         const isAdminOnly = accessLevel === 'admin-only';
-                                        
-                                        // Hide admin-only channels from non-admins, but show locked premium/a7fx channels
-                                        if (isAdminOnly && !canAccess) return null;
-                                        
+                                        if (!canAccess) return null;
                                         const isActive = selectedChannel?.id === channel.id;
                                         const badge = channelBadges[channel.id] || { unread: 0, mentions: 0 };
                                         const hasUnread = badge.unread > 0;
                                         const hasMentions = badge.mentions > 0;
-                                        const isLocked = !canAccess && !isAdminOnly;
+                                        const isLocked = channel.locked === true || channel.canWrite === false;
                                         const isDragging = draggedChannel === channel.id;
                                         
                                         // Determine subscription requirement message
@@ -4768,7 +4767,7 @@ Let's build generational wealth together! 💰🚀`,
                 {selectedChannel ? (
                     <>
                         {/* Check if user can access this channel */}
-                        {!canUserAccessChannel(selectedChannel) ? (
+                        {selectedChannel?.canSee === false ? (
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -5691,6 +5690,19 @@ Let's build generational wealth together! 💰🚀`,
                                 </div>
                             )}
                             
+                            {selectedChannel && selectedChannel.canWrite === false && (
+                                <div className="chat-input-locked" style={{
+                                    padding: '12px 16px',
+                                    marginBottom: '12px',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    borderRadius: '8px',
+                                    color: 'var(--text-muted)',
+                                    fontSize: '0.875rem'
+                                }}>
+                                    This channel is read-only. Upgrade to post here.
+                                </div>
+                            )}
                             <form className="chat-form" onSubmit={handleSendMessage}>
                                 {editingMessageId && (
                                     <div style={{
@@ -5827,30 +5839,11 @@ Let's build generational wealth together! 💰🚀`,
                                         placeholder={
                                             editingMessageId
                                                 ? 'Edit your message...'
-                                                : canUserPostInChannel(selectedChannel)
-                                                    ? `Message #${selectedChannel.name}`
-                                                    : (() => {
-                                                        const permissionType = (selectedChannel.permissionType || 'read-write').toLowerCase();
-                                                        const accessLevel = (selectedChannel.accessLevel || 'open').toLowerCase();
-                                                        
-                                                        // Check permission type first
-                                                        if (permissionType === 'read-only') {
-                                                            return `🔒 This channel is read-only. Only admins can post messages.`;
-                                                        }
-                                                        
-                                                        // Then check access level
-                                                        if (accessLevel === 'admin-only') {
-                                                            return `🔒 Only admins can post in #${selectedChannel.name}`;
-                                                        } else if (accessLevel === 'premium') {
-                                                            return `🔒 Premium subscription required to post in #${selectedChannel.name}. Subscribe to unlock!`;
-                                                        } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-                                                            return `🔒 A7FX Elite subscription required to post in #${selectedChannel.name}. Upgrade to unlock!`;
-                                                        } else {
-                                                            return `You don't have permission to send messages in #${selectedChannel.name}`;
-                                                        }
-                                                    })()
+                                                : selectedChannel?.canWrite !== false
+                                                    ? `Message #${selectedChannel?.name || ''}`
+                                                    : 'Read-only channel. Upgrade to post here.'
                                         }
-                                        disabled={!canUserPostInChannel(selectedChannel)}
+                                        disabled={selectedChannel?.canWrite === false}
                                         rows="3"
                                         style={{ 
                                             paddingRight: '120px',
@@ -6037,7 +6030,7 @@ Let's build generational wealth together! 💰🚀`,
                                             type="button"
                                             className="chat-input-btn"
                                             onClick={() => fileInputRef.current?.click()}
-                                            disabled={!canUserPostInChannel(selectedChannel)}
+                                            disabled={selectedChannel?.canWrite === false}
                                         >
                                             <FaPaperclip />
                                         </button>
@@ -6057,7 +6050,7 @@ Let's build generational wealth together! 💰🚀`,
                                                 setShowEmojiPicker(!showEmojiPicker);
                                                 setShowGifPicker(false);
                                             }}
-                                            disabled={!canUserPostInChannel(selectedChannel)}
+                                            disabled={selectedChannel?.canWrite === false}
                                         >
                                             <FaSmile />
                                         </button>
@@ -6070,7 +6063,7 @@ Let's build generational wealth together! 💰🚀`,
                                                 setShowGifPicker(!showGifPicker);
                                                 setShowEmojiPicker(false);
                                             }}
-                                            disabled={!canUserPostInChannel(selectedChannel)}
+                                            disabled={selectedChannel?.canWrite === false}
                                         >
                                             <FaImage />
                                         </button>
@@ -6080,7 +6073,7 @@ Let's build generational wealth together! 💰🚀`,
                                 <button 
                                     type="submit" 
                                     className="send-btn"
-                                    disabled={(!newMessage.trim() && !selectedFile) || !canUserPostInChannel(selectedChannel)}
+                                    disabled={(!newMessage.trim() && !selectedFile) || selectedChannel?.canWrite === false}
                                 >
                                     <FaPaperPlane />
                                     <span>{editingMessageId ? 'Save' : 'Send'}</span>

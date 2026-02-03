@@ -30,6 +30,10 @@
       "destination": "/api/community/channels.js"
     },
     {
+      "source": "/api/community/bootstrap",
+      "destination": "/api/community/bootstrap.js"
+    },
+    {
       "source": "/api/community/channels/:channelId/messages",
       "destination": "/api/community/channels/messages.js?channelId=:channelId"
     },
@@ -104,6 +108,10 @@
     {
       "source": "/api/subscription/status",
       "destination": "/api/subscription/status.js"
+    },
+    {
+      "source": "/api/me",
+      "destination": "/api/me.js"
     },
     {
       "source": "/api/stripe/subscription-success",
