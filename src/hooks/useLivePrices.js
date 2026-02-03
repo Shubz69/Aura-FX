@@ -86,6 +86,7 @@ function notifyListeners() {
 }
 
 // Fetch snapshot once (single source of truth, 60s server cache)
+// Cache-bust query param so browser doesn't serve stale response on refresh
 async function fetchSnapshot() {
   if (fetchInFlight) return;
   fetchInFlight = true;
@@ -94,11 +95,13 @@ async function fetchSnapshot() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const url = `${API_BASE_URL}/api/markets/snapshot?_=${Date.now()}`;
 
-    const response = await fetch(`${API_BASE_URL}/api/markets/snapshot`, {
+    const response = await fetch(url, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+      signal: controller.signal,
+      cache: 'no-store'
     });
 
     clearTimeout(timeoutId);
@@ -148,10 +151,10 @@ async function fetchSnapshot() {
   }
 }
 
-// Start global snapshot polling (once every 60s only)
+// Start global snapshot polling (once every 60s only); always fetch immediately on start
 function startSnapshotPolling() {
+  fetchSnapshot(); // immediate fetch on mount/refresh and when modal opens
   if (snapshotInterval) return;
-  fetchSnapshot();
   snapshotInterval = setInterval(fetchSnapshot, SNAPSHOT_POLL_MS);
 }
 
@@ -253,6 +256,15 @@ export function useLivePrices(options = {}) {
       setStale(isStale);
     }, SNAPSHOT_POLL_MS);
     return () => clearInterval(staleCheck);
+  }, []);
+
+  // Refresh when user returns to tab (keeps data live without waiting for next 60s poll)
+  useEffect(() => {
+    const onFocus = () => {
+      if (lastFetchTime > 0 && Date.now() - lastFetchTime > 20000) fetchSnapshot(); // throttle: only if last fetch > 20s ago
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, []);
 
   // Initialize: watchlist + single snapshot poll (no refetch on modal/focus/tab)
@@ -384,6 +396,11 @@ export function useLivePrices(options = {}) {
     lastFetchTime
   }), [stale]);
 
+  // Trigger an immediate refresh (e.g. when opening All Markets modal or on page focus)
+  const refresh = useCallback(() => {
+    fetchSnapshot();
+  }, []);
+
   return {
     prices,
     loading,
@@ -394,7 +411,8 @@ export function useLivePrices(options = {}) {
     formatPrice: formatPriceValue,
     getPricesArray,
     getPricesGrouped,
-    getHealth
+    getHealth,
+    refresh
   };
 }
 

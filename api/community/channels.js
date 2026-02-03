@@ -542,17 +542,31 @@ module.exports = async (req, res) => {
             // Single source of truth: add per-channel permission flags from entitlements (effectiveTier)
             let entitlements = { role: 'USER', tier: 'FREE', effectiveTier: 'FREE', allowedChannelSlugs: [] };
             try {
-              const [userRows] = await db.execute(
-                'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
-                [decoded.id]
-              );
+              let userRows = [];
+              const userId = decoded.id != null ? String(decoded.id) : null;
+              if (userId) {
+                [userRows] = await db.execute(
+                  'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+                  [userId]
+                );
+              }
               if (userRows && userRows.length > 0) {
                 entitlements = getEntitlements(userRows[0]);
                 const { getAllowedChannelSlugs } = require('../utils/entitlements');
                 entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, allChannels);
               }
+              // JWT fallback: if token has ADMIN or SUPER_ADMIN role, grant full channel access (e.g. when DB lookup fails or role not synced)
+              const jwtRole = (decoded.role || '').toString().toUpperCase();
+              if (jwtRole === 'ADMIN' || jwtRole === 'SUPER_ADMIN') {
+                entitlements.role = jwtRole;
+                entitlements.allowedChannelSlugs = allChannels.map((c) => c.id || c.name).filter(Boolean);
+              }
             } catch (e) {
-              // keep default FREE entitlements
+              // JWT fallback: even on error, grant full access if token says admin/super_admin
+              const jwtRole = (decoded.role || '').toString().toUpperCase();
+              if (jwtRole === 'ADMIN' || jwtRole === 'SUPER_ADMIN') {
+                entitlements = { role: jwtRole, tier: 'ELITE', effectiveTier: 'ELITE', allowedChannelSlugs: allChannels.map((c) => c.id || c.name).filter(Boolean) };
+              }
             }
             const channelsWithFlags = allChannels.map((ch) => {
               const perm = getChannelPermissions(entitlements, {
@@ -909,6 +923,36 @@ module.exports = async (req, res) => {
 
   if (req.method === 'PUT' || req.method === 'PATCH') {
     try {
+      const decoded = decodeToken(req.headers.authorization);
+      if (!decoded || !decoded.id) {
+        return res.status(401).json({ success: false, errorCode: 'UNAUTHORIZED', message: 'Authentication required' });
+      }
+      const { isSuperAdminEmail, normalizeRole } = require('../utils/entitlements');
+      const dbForAuth = await getDbConnection();
+      if (!dbForAuth) {
+        return res.status(500).json({ success: false, message: 'Database connection error' });
+      }
+      let isSuperAdmin = false;
+      try {
+        const [userRows] = await dbForAuth.execute(
+          'SELECT id, email, role FROM users WHERE id = ?',
+          [String(decoded.id)]
+        );
+        await dbForAuth.end();
+        if (userRows && userRows.length > 0) {
+          const user = userRows[0];
+          isSuperAdmin = isSuperAdminEmail(user) || normalizeRole(user.role) === 'SUPER_ADMIN';
+        } else {
+          isSuperAdmin = (decoded.role || '').toString().toUpperCase() === 'SUPER_ADMIN';
+        }
+      } catch (authErr) {
+        if (dbForAuth && !dbForAuth.ended) try { await dbForAuth.end(); } catch (e) { /* ignore */ }
+        isSuperAdmin = (decoded.role || '').toString().toUpperCase() === 'SUPER_ADMIN';
+      }
+      if (!isSuperAdmin) {
+        return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Only Super Admin can edit channels or categories.' });
+      }
+
       // Parse request body if needed (Vercel sometimes passes it as a string)
       let body = req.body;
       if (typeof body === 'string') {

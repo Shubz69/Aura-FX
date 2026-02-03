@@ -133,10 +133,22 @@ const Login = () => {
 
             let errorMessage = '';
             const status = err.response?.status;
-            const serverMessage = err.response?.data?.message || err.response?.data?.error;
+            const data = err.response?.data;
+            const isJsonResponse = data != null && typeof data === 'object';
+            const serverMessage = isJsonResponse ? (data.message || data.error) : '';
 
-            if (err.response && (serverMessage || status)) {
-                errorMessage = serverMessage || (status === 404 ? 'No account with this email exists.' : status === 401 ? 'Incorrect password.' : status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : `Login failed (${status}). Please try again.`);
+            if (status === 401) {
+                errorMessage = serverMessage || 'Incorrect password. Please try again or use Forgot Password.';
+            } else if (status === 404) {
+                if (isJsonResponse && serverMessage) {
+                    errorMessage = serverMessage;
+                } else if (!isJsonResponse) {
+                    errorMessage = 'Login service is unavailable. Please try again later.';
+                } else {
+                    errorMessage = 'No account with this email exists. Sign up for an account.';
+                }
+            } else if (err.response) {
+                errorMessage = serverMessage || (status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : `Login failed. Please try again.`);
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || (err.message && err.message.includes('Network Error'))) {
                 errorMessage = 'Cannot connect to server. Please try again.';
             } else if (err.code === 'ETIMEDOUT' || (err.message && err.message.includes('timeout'))) {

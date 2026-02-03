@@ -185,7 +185,8 @@ function MarketTicker({
     watchlist,
     getPricesArray,
     getPricesGrouped,
-    getHealth
+    getHealth,
+    refresh
   } = useLivePrices({ beginnerMode: !showModal && !activeCategory, category: activeCategory });
 
   const pricesArray = getPricesArray();
@@ -245,7 +246,10 @@ function MarketTicker({
       {showViewAll && (
         <button 
           className="view-all-markets-btn"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setShowModal(true);
+            refresh(); // fetch latest prices when opening modal
+          }}
         >
           View All Markets →
         </button>

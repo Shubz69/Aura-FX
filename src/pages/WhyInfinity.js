@@ -203,27 +203,30 @@ const WhyInfinity = () => {
                 </div>
 
                 {/* Why AURA FX Is NOT For You Section */}
-                <div className="why-additional-features fade-in-up">
+                <div className="why-not-for-you-box fade-in-up">
                     <h2 className="why-section-heading">Why AURA FX Is NOT For You</h2>
-                    
-                    <div className="why-main-content" style={{ marginTop: '20px' }}>
-                        <div className="why-text-section" style={{ maxWidth: '900px', margin: '0 auto' }}>
-                            <p className="why-text">
-                                AURA FX is not designed for everyone, and that is intentional.
-                            </p>
-                            <p className="why-text">
-                                This platform is not for traders looking for shortcuts, guaranteed profits, or passive income without effort. We do not sell hype, unrealistic promises, or instant results. If you are seeking signals to blindly follow without understanding risk, process, or accountability, AURA FX is not the right environment.
-                            </p>
-                            <p className="why-text">
-                                AURA FX is also not suitable for traders who are unwilling to be disciplined, patient, and consistent. Long-term profitability requires structure, emotional control, and respect for risk. If you are not prepared to review mistakes, follow rules, and improve incrementally, this platform will not deliver value to you.
-                            </p>
-                            <p className="why-text">
-                                We are not a casual Discord group or entertainment-based trading community. Discussions are structured, analysis is professional, and standards are maintained. Traders who prefer unmoderated environments, noise, or speculative gambling will not benefit here.
-                            </p>
-                            <p className="why-text">
-                                AURA FX is built for individuals who take trading seriously as a skill, a business, and a long-term pursuit, not as a quick opportunity.
-                            </p>
-                        </div>
+                    <div className="why-not-for-you-inner">
+                        <p className="why-text">
+                            AURA FX is not designed for everyone, and that is intentional.
+                        </p>
+                        <p className="why-text">
+                            This platform is not for traders looking for shortcuts, guaranteed profits, or passive income without effort. We do not sell hype, unrealistic promises, or instant results. If you are seeking signals to blindly follow without understanding risk, process, or accountability, AURA FX is not the right environment.
+                        </p>
+                        <p className="why-text">
+                            AURA FX is also not suitable for traders who are unwilling to be disciplined, patient, and consistent. Long-term profitability requires structure, emotional control, and respect for risk. If you are not prepared to review mistakes, follow rules, and improve incrementally, this platform will not deliver value to you.
+                        </p>
+                        <p className="why-text">
+                            We are not a casual Discord group or entertainment-based trading community. Discussions are structured, analysis is professional, and standards are maintained. Traders who prefer unmoderated environments, noise, or speculative gambling will not benefit here.
+                        </p>
+                        <p className="why-text">
+                            AURA FX is built for individuals who take trading seriously as a skill, a business, and a long-term pursuit, not as a quick opportunity.
+                        </p>
+                        <p className="why-not-for-you-close">
+                            If that describes you, we welcome you to apply.
+                        </p>
+                        <button className="why-cta-button" onClick={() => navigate('/signup')}>
+                            Apply for Access <FaArrowRight />
+                        </button>
                     </div>
                 </div>
 

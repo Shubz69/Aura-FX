@@ -529,14 +529,16 @@ export const AuthProvider = ({ children }) => {
       // Preserve the original error response so Login.js can access status codes
       const wrappedError = new Error(friendlyMessage);
       if (error.response) {
-        wrappedError.response = error.response;
-        // Ensure the response data includes the message
-        if (!wrappedError.response.data) {
-          wrappedError.response.data = {};
-        }
-        // Preserve original server message if it exists, otherwise use friendly message
-        if (!wrappedError.response.data.message) {
-          wrappedError.response.data.message = error.response.data?.message || friendlyMessage;
+        wrappedError.response = { ...error.response };
+        const data = error.response.data;
+        // If response body is HTML (e.g. 404 page), don't mutate it; use a plain object
+        if (data != null && typeof data === 'object' && !Array.isArray(data)) {
+          wrappedError.response.data = {
+            ...data,
+            message: data.message || friendlyMessage
+          };
+        } else {
+          wrappedError.response.data = { message: friendlyMessage };
         }
       }
       throw wrappedError;

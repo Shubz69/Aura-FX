@@ -112,6 +112,7 @@ const PremiumAI = () => {
   const textareaRef = useRef(null);
   const recognitionRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const handleSendMessageRef = useRef(null);
   
   // Load conversation from localStorage
   useEffect(() => {
@@ -201,8 +202,8 @@ const PremiumAI = () => {
         if (event.results[event.results.length - 1].isFinal) {
           setTimeout(() => {
             setIsRecording(false);
-            if (transcript.trim()) {
-              handleSendMessage(null, transcript.trim());
+            if (transcript.trim() && handleSendMessageRef.current) {
+              handleSendMessageRef.current(null, transcript.trim());
             }
           }, 500);
         }
@@ -226,7 +227,7 @@ const PremiumAI = () => {
         try { recognitionRef.current.stop(); } catch {}
       }
     };
-  }, [handleSendMessage]);
+  }, []);
   
   // Image handling
   const handleImageSelect = async (e) => {
@@ -484,6 +485,7 @@ const PremiumAI = () => {
     
     textareaRef.current?.focus();
   };
+  handleSendMessageRef.current = handleSendMessage;
   
   // Stop streaming
   const handleStopStreaming = () => {

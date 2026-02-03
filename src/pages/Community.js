@@ -703,6 +703,10 @@ const Community = () => {
             if (cached) {
                 cachedChannels = JSON.parse(cached);
                 if (cachedChannels.length > 0) {
+                    const u = JSON.parse(localStorage.getItem('user') || '{}');
+                    const r = (u.role || '').toString().toLowerCase();
+                    const em = (u.email || '').toString().toLowerCase();
+                    const adminOrSuper = r === 'admin' || r === 'super_admin' || em === SUPER_ADMIN_EMAIL.toLowerCase();
                     const preparedCached = cachedChannels.map((channel) => {
                         const baseId = channel.id ?? channel.name ?? `channel-${Date.now()}`;
                         const idString = String(baseId);
@@ -712,7 +716,7 @@ const Community = () => {
                             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                             .join(' ');
                         const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
-                        const canSee = channel.canSee === true;
+                        const canSee = adminOrSuper || channel.canSee === true;
                         return {
                             ...channel,
                             id: idString,
@@ -721,10 +725,10 @@ const Community = () => {
                             category: channel.category || 'general',
                             description: channel.description || '',
                             accessLevel: accessLevelValue,
-                            locked: channel.locked ?? accessLevelValue === 'admin-only',
+                            locked: adminOrSuper ? false : (channel.locked ?? accessLevelValue === 'admin-only'),
                             canSee,
-                            canRead: canSee && (channel.canRead !== false),
-                            canWrite: canSee && (channel.canWrite !== false)
+                            canRead: adminOrSuper ? true : (canSee && (channel.canRead !== false)),
+                            canWrite: adminOrSuper ? true : (canSee && (channel.canWrite !== false))
                         };
                     }).filter((ch) => ch.canSee === true);
                     setChannelList(sortChannels(preparedCached));
@@ -761,6 +765,10 @@ const Community = () => {
         }
 
         let preparedChannels = [];
+        const storedUserForChannels = JSON.parse(localStorage.getItem('user') || '{}');
+        const userRoleForChannels = (storedUserForChannels.role || '').toString().toLowerCase();
+        const userEmailForChannels = (storedUserForChannels.email || '').toString().toLowerCase();
+        const isAdminOrSuperForChannels = userRoleForChannels === 'admin' || userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
 
         if (Array.isArray(channelsFromServer) && channelsFromServer.length > 0) {
             preparedChannels = channelsFromServer.map((channel) => {
@@ -772,8 +780,12 @@ const Community = () => {
                     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(' ');
                 const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
+                const readOnly = (channel.permissionType || channel.permission_type || 'read-write').toString().toLowerCase() === 'read-only';
 
-                const canSee = channel.canSee === true;
+                const canSee = isAdminOrSuperForChannels || channel.canSee === true;
+                const canRead = isAdminOrSuperForChannels ? true : (canSee && (channel.canRead !== false));
+                const canWrite = isAdminOrSuperForChannels ? !readOnly : (canSee && (channel.canWrite !== false));
+                const locked = isAdminOrSuperForChannels ? false : (channel.locked ?? accessLevelValue === 'admin-only');
                 return {
                     ...channel,
                     id: idString,
@@ -782,10 +794,10 @@ const Community = () => {
                     category: channel.category || 'general',
                     description: channel.description || '',
                     accessLevel: accessLevelValue,
-                    locked: channel.locked ?? accessLevelValue === 'admin-only',
+                    locked,
                     canSee,
-                    canRead: canSee && (channel.canRead !== false),
-                    canWrite: canSee && (channel.canWrite !== false)
+                    canRead,
+                    canWrite
                 };
             });
             preparedChannels = preparedChannels.filter((ch) => ch.canSee === true);
@@ -4072,7 +4084,7 @@ Let's build generational wealth together! 💰🚀`,
                         if (!channels || channels.length === 0) return null;
                         
                         const isCollapsed = collapsedCategories[categoryName];
-                        const isAdminUser = getCurrentUserRole() === 'ADMIN' || getCurrentUserRole() === 'SUPER_ADMIN';
+                        const isAdminUser = getCurrentUserRole() === 'admin' || getCurrentUserRole() === 'super_admin';
                         
                         return (
                             <div 

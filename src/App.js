@@ -9,6 +9,7 @@ import { isPremium } from './utils/roles';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import GDPRModal from './components/GDPRModal';
+import Footer from './components/Footer';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -28,7 +29,6 @@ const WhyInfinity = lazy(() => import('./pages/WhyInfinity'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Chatbot = lazy(() => import('./components/Chatbot'));
-import Footer from './components/Footer';
 const Profile = lazy(() => import('./pages/Profile'));
 const EditName = lazy(() => import('./pages/EditName'));
 const EditEmail = lazy(() => import('./pages/EditEmail'));
