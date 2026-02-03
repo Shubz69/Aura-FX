@@ -3,10 +3,14 @@
  * Used by: /api/me, /api/community/channels, /api/community/channels/messages,
  * /api/community/bootstrap, AI endpoints, and WebSocket server.
  *
- * Roles: USER | ADMIN | SUPER_ADMIN (from DB role or super-admin email override)
- * Tiers: FREE | PREMIUM | ELITE (from role + subscription_plan + subscription_status)
- * Super admin by email: Shubzfx@gmail.com always gets SUPER_ADMIN role and full access (all channels, AI, pages).
- * FREE users: allowlist by channel name only (existing channels); allowedChannelSlugs = channel ids.
+ * STRICT ACCESS RULES (non-negotiable):
+ * - FREE: Only General (general) and Announcements (welcome, announcements). Hard allowlist below.
+ *   FREE must NEVER see Trading or A7FX/Elite channels, regardless of category or access_level.
+ * - Trading channels (forex, crypto, stocks, etc.): access_level 'open', visible only to Premium and Elite.
+ * - Elite/A7FX-only channels (access_level 'a7fx' or 'elite'): visible only to Elite.
+ * - Admins/Super Admins bypass all checks.
+ *
+ * Roles: USER | ADMIN | SUPER_ADMIN. Tiers: FREE | PREMIUM | ELITE.
  */
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements']);
 
@@ -192,7 +196,8 @@ function getChannelPermissions(entitlements, channel) {
     canSee = FREE_CHANNEL_ALLOWLIST.has(id) || (nameKey && FREE_CHANNEL_ALLOWLIST.has(nameKey)) || FREE_CHANNEL_ALLOWLIST.has(nameLower);
     canRead = canSee;
     canWrite = canSee && !readOnly;
-    return { canSee, canRead, canWrite, locked: locked && canSee };
+    locked = locked && canSee;
+    return { canSee, canRead, canWrite, locked };
   }
 
   if (tier === 'ELITE') {

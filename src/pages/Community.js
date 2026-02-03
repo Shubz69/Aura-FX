@@ -691,7 +691,6 @@ const Community = () => {
             if (cached) {
                 cachedChannels = JSON.parse(cached);
                 if (cachedChannels.length > 0) {
-                    // Show cached channels immediately
                     const preparedCached = cachedChannels.map((channel) => {
                         const baseId = channel.id ?? channel.name ?? `channel-${Date.now()}`;
                         const idString = String(baseId);
@@ -701,6 +700,7 @@ const Community = () => {
                             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                             .join(' ');
                         const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
+                        const canSee = channel.canSee === true;
                         return {
                             ...channel,
                             id: idString,
@@ -709,9 +709,12 @@ const Community = () => {
                             category: channel.category || 'general',
                             description: channel.description || '',
                             accessLevel: accessLevelValue,
-                            locked: channel.locked ?? accessLevelValue === 'admin-only'
+                            locked: channel.locked ?? accessLevelValue === 'admin-only',
+                            canSee,
+                            canRead: canSee && (channel.canRead !== false),
+                            canWrite: canSee && (channel.canWrite !== false)
                         };
-                    });
+                    }).filter((ch) => ch.canSee === true);
                     setChannelList(sortChannels(preparedCached));
                 }
             }
@@ -732,9 +735,10 @@ const Community = () => {
             // Show ALL channels - no filtering (API returns all channels from database)
             // Admin can control access via access_level in database
             
-            // Cache channels for next time
             if (channelsFromServer.length > 0) {
-                localStorage.setItem(cachedChannelsKey, JSON.stringify(channelsFromServer));
+                try {
+                    localStorage.setItem(cachedChannelsKey, JSON.stringify(channelsFromServer));
+                } catch (e) { /* ignore */ }
             }
         } catch (error) {
             console.warn('Failed to fetch channels from API:', error?.message || error);
@@ -757,6 +761,7 @@ const Community = () => {
                     .join(' ');
                 const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
 
+                const canSee = channel.canSee === true;
                 return {
                     ...channel,
                     id: idString,
@@ -766,19 +771,19 @@ const Community = () => {
                     description: channel.description || '',
                     accessLevel: accessLevelValue,
                     locked: channel.locked ?? accessLevelValue === 'admin-only',
-                    canSee: channel.canSee !== false,
-                    canRead: channel.canRead !== false,
-                    canWrite: channel.canWrite !== false
+                    canSee,
+                    canRead: canSee && (channel.canRead !== false),
+                    canWrite: canSee && (channel.canWrite !== false)
                 };
             });
-            // Single source of truth: only show channels where canSee === true (from API)
-            preparedChannels = preparedChannels.filter((ch) => ch.canSee !== false);
+            preparedChannels = preparedChannels.filter((ch) => ch.canSee === true);
         } else if (channelListRef.current.length > 0) {
             preparedChannels = channelListRef.current;
         }
 
         if (preparedChannels.length === 0) {
-            return channelListRef.current;
+            setChannelList([]);
+            return [];
         }
 
         const sortedChannels = sortChannels(preparedChannels);
@@ -3395,19 +3400,14 @@ Let's build generational wealth together! 💰🚀`,
         setDeleteMessageModal(null);
     };
 
-    // Group channels by category - Show ALL channels to ALL users (except courses)
-    // Admin can control access via access_level in database
-    // Sort channels within each category by their order
+    // Group channels by category. Only include channels with canSee === true (FREE: General + Announcements only).
+    // Do not render empty categories (e.g. no Trading or A7FX for FREE).
     const groupedChannels = useMemo(() => {
         const grouped = channelList.reduce((acc, channel) => {
-            // Filter out courses category
+            if (channel.canSee !== true) return acc;
             const category = channel.category || 'general';
-            if (category.toLowerCase() === 'courses') {
-                return acc; // Skip courses category
-            }
-            if (!acc[category]) {
-                acc[category] = [];
-            }
+            if (category.toLowerCase() === 'courses') return acc;
+            if (!acc[category]) acc[category] = [];
             acc[category].push(channel);
             return acc;
         }, {});
@@ -3512,6 +3512,7 @@ Let's build generational wealth together! 💰🚀`,
                 if (data && data.success) {
                     if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
                     await refreshEntitlements();
+                    await refreshChannelList();
                     setShowSubscriptionModal(false);
                     navigate('/community');
                     return;
