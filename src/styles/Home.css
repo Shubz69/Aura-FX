@@ -641,8 +641,8 @@ body.loading-active {
 .markets-bottom-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
-    align-items: start;
+    gap: 1.75rem;
+    align-items: stretch;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
@@ -672,11 +672,12 @@ body.loading-active {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 10px;
-    padding: 1.5rem 1.25rem;
+    gap: 1rem;
+    padding: 2rem 1.75rem;
+    min-height: 180px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 12px;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     box-sizing: border-box;
@@ -689,14 +690,14 @@ body.loading-active {
 }
 
 .market-icon {
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     color: #ffffff;
-    font-size: 1.75rem;
+    font-size: 2.25rem;
     filter: grayscale(0.3);
     transition: filter 0.3s ease;
 }
@@ -707,8 +708,8 @@ body.loading-active {
 
 .market-title {
     margin: 0;
-    margin-top: 6px;
-    font-size: 1.2rem;
+    margin-top: 4px;
+    font-size: 1.35rem;
     font-weight: 400;
     color: #ffffff;
     letter-spacing: 0.05em;
@@ -718,7 +719,7 @@ body.loading-active {
 
 .market-description {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.05rem;
     color: rgba(255, 255, 255, 0.9);
     line-height: 1.5;
     font-weight: 300;
@@ -1095,21 +1096,22 @@ body.loading-active {
     }
     
     .market-item {
-        padding: 1.5rem 1.25rem;
+        padding: 1.75rem 1.5rem;
+        min-height: 160px;
     }
     
     .market-icon {
-        width: 44px;
-        height: 44px;
-        font-size: 1.5rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.75rem;
     }
     
     .market-title {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
     }
     
     .market-description {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         -webkit-line-clamp: 3;
         line-clamp: 3;
     }
