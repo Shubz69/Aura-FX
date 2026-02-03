@@ -37,28 +37,28 @@ const BOOTSTRAP_CONFIG = {
   FAKE_ONLINE_COUNT: parseInt(process.env.LEADERBOARD_FAKE_ONLINE) || 0
 };
 
-// Demo user profiles
+// Demo user profiles – realistic online usernames, no underscores, all get avatars via dicebear (seed = id)
 const DEMO_USERS = [
-  { name: 'Zephyr_FX', profile: 'grinder' },
-  { name: 'Kai_Trader', profile: 'grinder' },
-  { name: 'Luna_Charts', profile: 'sprinter' },
-  { name: 'Orion_Pips', profile: 'sprinter' },
-  { name: 'Phoenix_Gold', profile: 'weekend' },
-  { name: 'Atlas_Markets', profile: 'weekend' },
-  { name: 'Nova_Scalper', profile: 'steady' },
-  { name: 'River_Swing', profile: 'steady' },
-  { name: 'Sage_Technical', profile: 'course' },
-  { name: 'Aurora_Signals', profile: 'course' },
-  { name: 'Caspian_Forex', profile: 'grinder' },
-  { name: 'Indigo_Trends', profile: 'sprinter' },
-  { name: 'Lyra_Analyst', profile: 'weekend' },
-  { name: 'Maverick_Risk', profile: 'steady' },
-  { name: 'Seraphina_AI', profile: 'course' },
-  { name: 'Titan_Macro', profile: 'grinder' },
-  { name: 'Vesper_Algo', profile: 'sprinter' },
-  { name: 'Willow_Day', profile: 'weekend' },
-  { name: 'Xander_Quant', profile: 'steady' },
-  { name: 'Yuki_SMC', profile: 'course' }
+  { name: 'ZephyrFX', profile: 'grinder' },
+  { name: 'KaiTrader', profile: 'grinder' },
+  { name: 'LunaCharts', profile: 'sprinter' },
+  { name: 'OrionPips', profile: 'sprinter' },
+  { name: 'PhoenixGold', profile: 'weekend' },
+  { name: 'AtlasMarkets', profile: 'weekend' },
+  { name: 'NovaScalper', profile: 'steady' },
+  { name: 'RiverSwing', profile: 'steady' },
+  { name: 'SageTech', profile: 'course' },
+  { name: 'AuroraSignals', profile: 'course' },
+  { name: 'CaspianForex', profile: 'grinder' },
+  { name: 'IndigoTrends', profile: 'sprinter' },
+  { name: 'LyraAnalyst', profile: 'weekend' },
+  { name: 'MaverickRisk', profile: 'steady' },
+  { name: 'SeraphinaAI', profile: 'course' },
+  { name: 'TitanMacro', profile: 'grinder' },
+  { name: 'VesperAlgo', profile: 'sprinter' },
+  { name: 'WillowDay', profile: 'weekend' },
+  { name: 'XanderQuant', profile: 'steady' },
+  { name: 'YukiSMC', profile: 'course' }
 ];
 
 // ============================================================================

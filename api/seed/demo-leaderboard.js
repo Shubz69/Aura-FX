@@ -72,7 +72,7 @@ const USERNAME_PARTS = {
     'Caspian', 'Indigo', 'Lyra', 'Maverick', 'Seraphina', 'Titan', 'Vesper', 'Willow', 'Xander', 'Yuki',
     'Axel', 'Briar', 'Cora', 'Drake', 'Echo', 'Finn', 'Gemma', 'Hunter', 'Iris', 'Jett'
   ],
-  numbers: ['_', '1', '2', '3', '7', '8', '9', '99', '00', '21', '23', '88', '777']
+  numbers: ['1', '2', '3', '7', '8', '9', '99', '00', '21', '23', '88', '777']
 };
 
 // Activity profiles with XP generation parameters
@@ -161,7 +161,7 @@ const ACTIVITY_PROFILES = {
 
 const XP_SOURCES = ['message', 'login', 'course', 'bonus', 'achievement', 'reaction', 'help', 'journal'];
 
-// Generate a unique trader username
+// Generate a unique trader username – realistic online style, no underscores
 function generateUsername(rng, usedNames) {
   let attempts = 0;
   let username;
@@ -170,26 +170,26 @@ function generateUsername(rng, usedNames) {
     const style = rng.int(1, 6);
     
     switch (style) {
-      case 1: // Prefix_Instrument_Suffix
-        username = `${rng.pick(USERNAME_PARTS.prefixes)}_${rng.pick(USERNAME_PARTS.instruments)}`;
+      case 1: // Prefix + Instrument (e.g. AlphaGold, CyberBTC)
+        username = `${rng.pick(USERNAME_PARTS.prefixes)}${rng.pick(USERNAME_PARTS.instruments)}`;
         break;
-      case 2: // Session_Style
-        username = `${rng.pick(USERNAME_PARTS.sessions)}_${rng.pick(USERNAME_PARTS.styles)}`;
+      case 2: // Session + Style (e.g. LondonScalper, NYCDay)
+        username = `${rng.pick(USERNAME_PARTS.sessions)}${rng.pick(USERNAME_PARTS.styles)}`;
         break;
-      case 3: // Name_Suffix
-        username = `${rng.pick(USERNAME_PARTS.names)}_${rng.pick(USERNAME_PARTS.suffixes)}`;
+      case 3: // Name + Suffix (e.g. LunaTrader, KaiPro)
+        username = `${rng.pick(USERNAME_PARTS.names)}${rng.pick(USERNAME_PARTS.suffixes)}`;
         break;
-      case 4: // Prefix_Name_Number
+      case 4: // Prefix + Name + Number (e.g. AlphaZephyr99, NeoKai21)
         username = `${rng.pick(USERNAME_PARTS.prefixes)}${rng.pick(USERNAME_PARTS.names)}${rng.pick(USERNAME_PARTS.numbers)}`;
         break;
-      case 5: // Instrument_Suffix_Number
+      case 5: // Instrument + Suffix + Number (e.g. GoldTrader7, BTCPro23)
         username = `${rng.pick(USERNAME_PARTS.instruments)}${rng.pick(USERNAME_PARTS.suffixes)}${rng.pick(USERNAME_PARTS.numbers)}`;
         break;
-      default: // Full combo
+      default: // Prefix + Style + Number (e.g. AlphaScalper42, CyberTrend99)
         username = `${rng.pick(USERNAME_PARTS.prefixes)}${rng.pick(USERNAME_PARTS.styles)}${rng.int(1, 999)}`;
     }
     
-    username = username.replace(/\s+/g, '_').substring(0, 20);
+    username = username.replace(/\s+/g, '').replace(/_/g, '').substring(0, 20);
     
     if (!usedNames.has(username.toLowerCase())) {
       usedNames.add(username.toLowerCase());
@@ -198,8 +198,8 @@ function generateUsername(rng, usedNames) {
     attempts++;
   }
   
-  // Fallback with random suffix
-  return `Trader_${rng.int(10000, 99999)}`;
+  // Fallback: Trader + number, no underscore
+  return `Trader${rng.int(10000, 99999)}`;
 }
 
 // Generate XP events for a user based on their profile
