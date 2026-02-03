@@ -45,14 +45,10 @@ export const AuthProvider = ({ children }) => {
 
   const resolveUserInfo = (data = {}) => {
     const email = (data.email || '').toLowerCase();
-    const role = data.role || 'free';
-    
-    // Check if user is super admin by email
-    let finalRole = role;
+    let finalRole = data.role || 'free';
     if (email === 'shubzfx@gmail.com') {
       finalRole = 'super_admin';
     }
-    
     return {
       id: data.id || data.userId || data.sub || null,
       username: data.username || data.name || '',
@@ -68,10 +64,30 @@ export const AuthProvider = ({ children }) => {
   };
 
   const persistUser = useCallback((userInfo) => {
-    const safeUser = resolveUserInfo(userInfo);
-    localStorage.setItem('user', JSON.stringify(safeUser));
-    setUser(safeUser);
-    return safeUser;
+    const fullUser = resolveUserInfo(userInfo);
+    const safeUser = {
+      id: fullUser.id,
+      username: fullUser.username,
+      email: fullUser.email,
+      name: fullUser.name,
+      avatar: fullUser.avatar,
+      role: fullUser.role,
+      mfaVerified: fullUser.mfaVerified
+    };
+    try {
+      localStorage.setItem('user', JSON.stringify(safeUser));
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        try {
+          localStorage.removeItem('user');
+          localStorage.setItem('user', JSON.stringify({ id: fullUser.id, email: fullUser.email, role: fullUser.role }));
+        } catch (_) {
+          // Minimal fallback failed; still set in-memory user so login succeeds
+        }
+      }
+    }
+    setUser(fullUser);
+    return fullUser;
   }, []);
 
   // Check if user has a verified session in localStorage

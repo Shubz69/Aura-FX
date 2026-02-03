@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import "../styles/Login.css";
 import { useAuth } from "../context/AuthContext";
 import { RiTerminalBoxFill } from 'react-icons/ri';
@@ -75,8 +74,26 @@ const Login = () => {
         setError('');
         setIsLoading(true);
 
+        const emailTrimmed = (email || '').trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailTrimmed) {
+            setError('Please enter a valid email address.');
+            setIsLoading(false);
+            return;
+        }
+        if (!emailRegex.test(emailTrimmed)) {
+            setError('Please enter a valid email address.');
+            setIsLoading(false);
+            return;
+        }
+        if (!(password || '').trim()) {
+            setError('Password is required.');
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            const result = await loginWithAuth(email, password);
+            const result = await loginWithAuth(emailTrimmed, password);
 
             if (result && result.status === "MFA_REQUIRED") {
                 return;
@@ -92,46 +109,22 @@ const Login = () => {
 
             let errorMessage = '';
             const status = err.response?.status;
+            const serverMessage = err.response?.data?.message || err.response?.data?.error;
 
-            if (err.response) {
-                const serverMessage = err.response.data?.message || err.response.data?.error;
-
-                if (status === 404) {
-                    errorMessage = serverMessage
-                        || 'No account with this email exists. Please check your email or sign up for a new account.';
-                } else if (status === 401 || status === 400) {
-                    // 401 = wrong password, 400 = validation — clear inline + toast, no redirect
-                    errorMessage = serverMessage || 'Incorrect email or password.';
-                    toast.error('Incorrect email or password.');
-                } else if (status === 500) {
-                    errorMessage = serverMessage || 'The server encountered an error. Please try again in a few moments or contact support.';
-                } else if (status === 503) {
-                    errorMessage = 'The login service is temporarily down. Please try again later.';
-                } else if (status === 429) {
-                    errorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
-                } else if (serverMessage) {
-                    errorMessage = serverMessage;
-                } else {
-                    errorMessage = `Login failed (${status}). Please try again or contact support.`;
-                }
-            } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
-                errorMessage = 'Cannot connect to the server. Check your internet connection and try again.';
-            } else if (err.code === 'ETIMEDOUT' || err.message?.includes('timeout')) {
+            if (err.response && (serverMessage || status)) {
+                errorMessage = serverMessage || (status === 404 ? 'No account with this email exists.' : status === 401 ? 'Incorrect password.' : status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : `Login failed (${status}). Please try again.`);
+            } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || (err.message && err.message.includes('Network Error'))) {
+                errorMessage = 'Cannot connect to server. Please try again.';
+            } else if (err.code === 'ETIMEDOUT' || (err.message && err.message.includes('timeout'))) {
                 errorMessage = 'The server took too long to respond. Check your connection and try again.';
             } else if (err.message) {
                 errorMessage = err.message;
             } else {
-                errorMessage = 'An unexpected error occurred. Please try again or contact support.';
+                errorMessage = 'Login failed. Please try again.';
             }
 
             errorRef.current = errorMessage;
             setError(errorMessage);
-
-            if (status === 401 || status === 400) {
-                setTimeout(() => {
-                    if (errorRef.current) setError(errorRef.current);
-                }, 100);
-            }
         } finally {
             setIsLoading(false);
         }
@@ -288,55 +281,6 @@ const Login = () => {
                     <p className="login-subtitle">Access your trading account</p>
                 </div>
                 
-                {error && error.trim() && (
-                    <div 
-                        className="error-message" 
-                        role="alert" 
-                        aria-live="assertive"
-                        style={{ 
-                            display: 'block !important',
-                            visibility: 'visible !important',
-                            opacity: '1 !important',
-                            marginBottom: '24px',
-                            marginTop: '16px',
-                            padding: '20px 24px',
-                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
-                            border: '2px solid #EF4444',
-                            borderRadius: '12px',
-                            color: '#FFFFFF',
-                            fontSize: '16px',
-                            fontWeight: '700',
-                            textAlign: 'center',
-                            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.1)',
-                            animation: 'errorPulse 0.5s ease-in-out',
-                            zIndex: 1000,
-                            position: 'relative',
-                            textTransform: 'none',
-                            letterSpacing: '0.3px',
-                            lineHeight: '1.6'
-                        }}
-                    >
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            gap: '12px',
-                            fontSize: '20px',
-                            marginBottom: '8px'
-                        }}>
-                            <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>Login Error</strong>
-                        </div>
-                        <div style={{ 
-                            fontSize: '16px', 
-                            color: '#FFFFFF', 
-                            fontWeight: '600',
-                            marginTop: '8px'
-                        }}>
-                            {error}
-                        </div>
-                    </div>
-                )}
-                
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label htmlFor="email" className="form-label">Email Address</label>
@@ -366,15 +310,6 @@ const Login = () => {
                         />
                     </div>
                     
-                    <button 
-                        type="submit" 
-                        className="login-button"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? 'AUTHENTICATING...' : 'LOGIN'}
-                    </button>
-                    
-                    {/* Error message displayed prominently right under login button */}
                     {error && error.trim() && (
                         <div 
                             className="error-message-under-button" 
@@ -384,48 +319,36 @@ const Login = () => {
                                 display: 'block !important',
                                 visibility: 'visible !important',
                                 opacity: '1 !important',
-                                marginTop: '20px',
                                 marginBottom: '16px',
-                                padding: '20px 24px',
+                                marginTop: '0',
+                                padding: '16px 20px',
                                 background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
                                 border: '2px solid #EF4444',
                                 borderRadius: '12px',
                                 color: '#FFFFFF',
                                 fontSize: '15px',
-                                fontWeight: '700',
+                                fontWeight: '600',
                                 textAlign: 'center',
-                                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.1)',
-                                animation: 'errorPulse 0.5s ease-in-out',
+                                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
                                 zIndex: 1000,
                                 position: 'relative',
                                 textTransform: 'none',
-                                letterSpacing: '0.3px',
-                                lineHeight: '1.6',
+                                lineHeight: '1.5',
                                 wordWrap: 'break-word',
                                 maxWidth: '100%'
                             }}
                         >
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
-                                gap: '12px',
-                                fontSize: '20px',
-                                marginBottom: '10px'
-                            }}>
-                                <strong style={{ fontSize: '18px', color: '#FFFFFF' }}>Login Failed</strong>
-                            </div>
-                            <div style={{ 
-                                fontSize: '15px', 
-                                color: '#FFFFFF', 
-                                fontWeight: '600',
-                                marginTop: '8px',
-                                whiteSpace: 'pre-wrap'
-                            }}>
-                                {error}
-                            </div>
+                            {error}
                         </div>
                     )}
+                    
+                    <button 
+                        type="submit" 
+                        className="login-button"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'AUTHENTICATING...' : 'LOGIN'}
+                    </button>
                     
                     <Link to="/forgot-password" className="forgot-password">
                         Forgot Password?

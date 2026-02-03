@@ -46,20 +46,37 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ success: false, error: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' });
   }
 
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email || typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        error: 'INVALID_EMAIL',
+        message: 'Please enter a valid email address.'
       });
     }
 
-    const emailLower = email.toLowerCase();
+    const emailLower = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailLower)) {
+      return res.status(400).json({
+        success: false,
+        error: 'INVALID_EMAIL',
+        message: 'Please enter a valid email address.'
+      });
+    }
+
+    if (!password || typeof password !== 'string' || !String(password).trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'VALIDATION',
+        message: 'Password is required.'
+      });
+    }
 
     // Connect to database
     let db = null;
@@ -69,14 +86,16 @@ module.exports = async (req, res) => {
         console.error('Failed to establish database connection - missing environment variables or connection failed');
         return res.status(500).json({
           success: false,
-          message: 'Database connection error. Please try again later.'
+          error: 'SERVER_ERROR',
+          message: 'Something went wrong. Please try again.'
         });
       }
     } catch (connError) {
       console.error('Database connection error:', connError);
       return res.status(500).json({
         success: false,
-        message: 'Database connection error. Please try again later.'
+        error: 'SERVER_ERROR',
+        message: 'Something went wrong. Please try again.'
       });
     }
 
@@ -97,7 +116,8 @@ module.exports = async (req, res) => {
         }
         return res.status(404).json({
           success: false,
-          message: 'No account with this email exists. Please check your email or sign up for a new account.'
+          error: 'NO_ACCOUNT',
+          message: 'No account with this email exists.'
         });
       }
 
@@ -115,7 +135,8 @@ module.exports = async (req, res) => {
         }
         return res.status(401).json({
           success: false,
-          message: 'Incorrect password. Please try again or reset your password.'
+          error: 'INVALID_PASSWORD',
+          message: 'Incorrect password.'
         });
       }
 
@@ -206,15 +227,16 @@ module.exports = async (req, res) => {
       }
       return res.status(500).json({
         success: false,
-        message: 'Database error. Please try again later.',
-        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        error: 'SERVER_ERROR',
+        message: 'Something went wrong. Please try again.'
       });
     }
   } catch (error) {
     console.error('Error during login:', error);
     return res.status(500).json({
       success: false,
-      message: 'Login failed. Please try again later.'
+      error: 'SERVER_ERROR',
+      message: 'Something went wrong. Please try again.'
     });
   }
 };
