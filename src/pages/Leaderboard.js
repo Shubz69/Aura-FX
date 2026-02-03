@@ -3,17 +3,25 @@ import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
-// Generated avatar when user has no profile picture – consistent per user, looks like a real avatar
+// Avatar URL: prefer user avatar, else DiceBear, else initials data URI
 const getLeaderboardAvatarUrl = (user) => {
-    if (!user) return 'https://api.dicebear.com/7.x/lorelei/svg?seed=default';
+    if (!user) return getInitialsAvatarDataUri('?');
     const avatar = user.avatar || '';
     const isDefault = !avatar || avatar === 'avatar_ai.png' || avatar.startsWith('avatar_') || avatar === 'default.png';
     if (isDefault) {
         const seed = encodeURIComponent(String(user.id || user.username || 'user'));
-        return `https://api.dicebear.com/7.x/lorelei/svg?seed=${seed}`;
+        return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
     }
-    return avatar.startsWith('http') ? avatar : `/avatars/${avatar}`;
+    return avatar.startsWith('http') ? avatar : `${window.location.origin}/avatars/${avatar}`;
 };
+
+// Fallback when image fails: initials in a circle (no external request)
+function getInitialsAvatarDataUri(user) {
+    const name = user ? (user.username || user.name || user.email || '?').toString().trim() : '?';
+    const initial = (name.charAt(0) || '?').toUpperCase();
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="rgba(255,255,255,0.2)"/><text x="24" y="24" dominant-baseline="central" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-family="system-ui,sans-serif" font-size="20" font-weight="600">${initial}</text></svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
 
 const Leaderboard = () => {
     const containerRef = useRef(null);
@@ -168,7 +176,21 @@ const Leaderboard = () => {
             return (
                 <div className={`podium-place ${place}-place`}>
                     <div className="podium-avatar">
-                        <img src={getLeaderboardAvatarUrl(user)} alt={user.username} />
+                        <img
+                            src={getLeaderboardAvatarUrl(user)}
+                            alt={user.username}
+                            onError={(e) => {
+                                const img = e.target;
+                                if (img.dataset.fallback === '1') {
+                                    img.src = getInitialsAvatarDataUri(user);
+                                    img.onerror = null;
+                                } else {
+                                    img.dataset.fallback = '1';
+                                    img.onerror = null;
+                                    img.src = getLeaderboardAvatarUrl({ ...user, avatar: null });
+                                }
+                            }}
+                        />
                         {place === 'first' && <div className="crown">👑</div>}
                         {user.isDemo && <span className="demo-badge" title="Demo User">🤖</span>}
                     </div>
@@ -231,7 +253,21 @@ const Leaderboard = () => {
                                 </div>
                                 <div className="user-cell">
                                     <div className="user-avatar">
-                                        <img src={getLeaderboardAvatarUrl(user)} alt={user.username} />
+                                        <img
+                                            src={getLeaderboardAvatarUrl(user)}
+                                            alt={user.username}
+                                            onError={(e) => {
+                                                const img = e.target;
+                                                if (img.dataset.fallback === '1') {
+                                                    img.src = getInitialsAvatarDataUri(user);
+                                                    img.onerror = null;
+                                                } else {
+                                                    img.dataset.fallback = '1';
+                                                    img.onerror = null;
+                                                    img.src = getLeaderboardAvatarUrl({ ...user, avatar: null });
+                                                }
+                                            }}
+                                        />
                                         {user.isDemo && <span className="demo-indicator" title="Demo User">🤖</span>}
                                     </div>
                                     <div className="user-info">
@@ -240,7 +276,6 @@ const Leaderboard = () => {
                                             {user.username}
                                             {user.isDemo && <span className="demo-tag">Demo</span>}
                                         </div>
-                                        <div className="user-role">{user.role}</div>
                                     </div>
                                 </div>
                                 <div className="level-cell">

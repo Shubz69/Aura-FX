@@ -629,43 +629,36 @@ body.loading-active {
     font-weight: 300;
 }
 
-/* Trading Markets Section - card style matching Why / What Sets Us Apart */
+/* Trading Markets Section - robust grid/flex, no overlap */
 .trading-markets-section {
     width: 100%;
     max-width: 1200px;
-    margin: 4rem auto;
-    padding: 0 1.5rem;
+    margin: 4rem 0;
     text-align: center;
 }
 
-.trading-markets-section .markets-top-grid,
-.trading-markets-section .markets-bottom-grid {
+.markets-top-grid,
+.markets-bottom-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.5rem;
+    gap: 1.75rem;
     align-items: stretch;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
 }
 
-.trading-markets-section .markets-top-grid {
-    margin-top: 2rem;
+.markets-top-grid {
+    margin-top: 4rem;
 }
 
-.markets-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.75rem;
-    align-items: start;
-    max-width: 1200px;
-    margin: 2.5rem auto 0;
+.markets-bottom-grid {
+    margin-top: 0.05;
 }
-
 
 /* Decorative divider - never overlaps content */
-.trading-markets-section .markets-divider {
-    margin: 24px auto;
+.markets-divider {
+    margin: 2rem auto;
     height: 6px;
     max-width: 260px;
     opacity: 0.25;
@@ -674,88 +667,62 @@ body.loading-active {
     flex-shrink: 0;
 }
 
-/* Scoped so MarketTicker.css .market-item (28px row) doesn't override these cards */
-.trading-markets-section .market-item {
+.market-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
     text-align: center;
     gap: 1rem;
-    padding: 2rem 1.5rem;
-    min-width: 0;
-    width: 100%;
-    min-height: 200px;
-    height: auto;
-    max-height: none;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    padding: 2rem 1.75rem;
+    min-height: 180px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     box-sizing: border-box;
-    word-break: break-word;
-    overflow: visible;
 }
 
-.trading-markets-section .market-item:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
-    transform: translateY(-4px);
+.market-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #ffffff;
+    transform: translateY(-5px);
 }
 
-.trading-markets-section .market-icon {
-    width: 52px;
-    height: 52px;
+.market-icon {
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    overflow: visible;
     color: #ffffff;
-    font-size: 2rem;
+    font-size: 2.25rem;
     filter: grayscale(0.3);
     transition: filter 0.3s ease;
 }
 
-.trading-markets-section .market-icon svg {
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-}
-
-.trading-markets-section .market-item:hover .market-icon {
+.market-item:hover .market-icon {
     filter: grayscale(0);
 }
 
-.trading-markets-section .market-title {
+.market-title {
     margin: 0;
-    padding: 0;
-    font-size: 1.25rem;
-    font-weight: 500;
+    margin-top: 4px;
+    font-size: 1.35rem;
+    font-weight: 400;
     color: #ffffff;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    line-height: 1.3;
-    text-decoration: none;
-    border: none;
-    background: none;
-    box-shadow: none;
-    flex-shrink: 0;
+    line-height: 1.2;
 }
 
-.trading-markets-section .market-description {
+.market-description {
     margin: 0;
-    padding: 0;
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.9);
     line-height: 1.5;
     font-weight: 300;
-    max-width: 100%;
-    flex: 1;
-    min-height: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     line-clamp: 3;
@@ -856,19 +823,19 @@ body.loading-active {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
+        gap: 1.5rem;
     }
 }
 
-/* Mobile: 1 column (768px and below) */
+/* Mobile: collapse markets to 1 column (768px and below) */
 @media (max-width: 768px) {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 1.5rem;
     }
     .markets-divider {
-        margin: 24px auto;
+        margin: 1.5rem auto;
     }
 }
 
@@ -980,7 +947,7 @@ body.loading-active {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
+        gap: 1.5rem;
         width: 100%;
     }
     
@@ -1121,33 +1088,29 @@ body.loading-active {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 1.5rem;
     }
     
-    .trading-markets-section .markets-divider {
-        margin: 24px auto;
+    .markets-divider {
+        margin: 1.5rem auto;
     }
     
-    .trading-markets-section .market-item {
-        padding: 24px;
+    .market-item {
+        padding: 1.75rem 1.5rem;
+        min-height: 160px;
     }
     
-    .trading-markets-section .market-icon {
-        width: 44px;
-        height: 44px;
+    .market-icon {
+        width: 50px;
+        height: 50px;
         font-size: 1.75rem;
     }
     
-    .trading-markets-section .market-icon svg {
-        width: 44px;
-        height: 44px;
-    }
-    
-    .trading-markets-section .market-title {
+    .market-title {
         font-size: 1.15rem;
     }
     
-    .trading-markets-section .market-description {
+    .market-description {
         font-size: 0.95rem;
         -webkit-line-clamp: 3;
         line-clamp: 3;
@@ -1251,12 +1214,9 @@ body.loading-active {
     .feature-card,
     .stat-item,
     .why-item,
+    .market-item,
     .feature-item {
         padding: 1.25rem 1rem;
-    }
-    
-    .trading-markets-section .market-item {
-        padding: 24px;
     }
     
     .section-title {
@@ -1299,12 +1259,9 @@ body.loading-active {
     .feature-card,
     .stat-item,
     .why-item,
+    .market-item,
     .feature-item {
         padding: 1rem 0.75rem;
-    }
-    
-    .trading-markets-section .market-item {
-        padding: 20px 16px;
     }
     
     .feature-icon {
@@ -1312,20 +1269,14 @@ body.loading-active {
     }
     
     .feature-title,
+    .market-title,
     .feature-item-title {
         font-size: 0.95rem;
     }
     
-    .trading-markets-section .market-title {
-        font-size: 0.95rem;
-    }
-    
     .feature-description,
+    .market-description,
     .feature-item-text {
-        font-size: 0.85rem;
-    }
-    
-    .trading-markets-section .market-description {
         font-size: 0.85rem;
     }
     
