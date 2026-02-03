@@ -47,8 +47,8 @@ const LoadingSpinner = () => (
 
 /**
  * CommunityGuard - Protects /community/* routes.
- * All authenticated users can enter Community (FREE see only allowlist channels; server enforces).
- * No global "need Premium" block; upgrade prompts only when accessing locked channel/feature.
+ * Unauthenticated → redirect to /signup (not login). No plan selected → /choose-plan.
+ * FREE users with plan selected see only allowlist channels; server enforces.
  */
 export const CommunityGuard = ({ children }) => {
   const { user, token, loading: authLoading } = useAuth();
@@ -56,20 +56,20 @@ export const CommunityGuard = ({ children }) => {
   const location = useLocation();
 
   if (!user || !token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/signup" state={{ from: location, redirectAfter: '/choose-plan' }} replace />;
   }
   if (authLoading || entLoading) {
     return <LoadingSpinner />;
   }
   if (entitlements && entitlements.canAccessCommunity === false) {
-    return <Navigate to="/subscription" replace />;
+    return <Navigate to="/choose-plan" replace />;
   }
   return children;
 };
 
 /**
  * SubscriptionPageGuard - Protects /subscription route.
- * Premium/Elite (or trialing) redirect to /community unless ?manage=true.
+ * No plan selected → redirect to /choose-plan. Premium/Elite (or trialing) → /community unless ?manage=true.
  */
 export const SubscriptionPageGuard = ({ children }) => {
   const { user, token, loading: authLoading } = useAuth();
@@ -79,6 +79,9 @@ export const SubscriptionPageGuard = ({ children }) => {
 
   if (!user || !token) return children;
   if (authLoading || entLoading) return <LoadingSpinner />;
+  if (entitlements && entitlements.canAccessCommunity === false) {
+    return <Navigate to="/choose-plan" replace />;
+  }
   const paidTier = entitlements?.tier === 'PREMIUM' || entitlements?.tier === 'ELITE';
   if (paidTier && !isManageMode) return <Navigate to="/community" replace />;
   return children;

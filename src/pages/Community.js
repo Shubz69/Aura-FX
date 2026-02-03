@@ -3510,6 +3510,7 @@ Let's build generational wealth together! 💰🚀`,
             try {
                 const data = await Api.selectFreePlan();
                 if (data && data.success) {
+                    if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
                     await refreshEntitlements();
                     setShowSubscriptionModal(false);
                     navigate('/community');

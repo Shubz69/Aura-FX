@@ -274,6 +274,10 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'GET') {
+    const decoded = decodeToken(req.headers.authorization);
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({ success: false, errorCode: 'UNAUTHORIZED', message: 'Authentication required' });
+    }
     try {
       // Default channels (fallback)
       const defaultChannels = [
@@ -469,23 +473,20 @@ module.exports = async (req, res) => {
                   locked: locked
                 };
               });
-            // Single source of truth: add per-channel permission flags from entitlements (no filtering)
-            const decoded = decodeToken(req.headers.authorization);
-            let entitlements = { role: 'USER', tier: 'FREE', allowedChannelSlugs: [] };
-            if (decoded?.id) {
-              try {
-                const [userRows] = await db.execute(
-                  'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
-                  [decoded.id]
-                );
-                if (userRows && userRows.length > 0) {
-                  entitlements = getEntitlements(userRows[0]);
-                  const { getAllowedChannelSlugs } = require('../utils/entitlements');
-                  entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, allChannels);
-                }
-              } catch (e) {
-                // keep default FREE entitlements
+            // Single source of truth: add per-channel permission flags from entitlements (effectiveTier)
+            let entitlements = { role: 'USER', tier: 'FREE', effectiveTier: 'FREE', allowedChannelSlugs: [] };
+            try {
+              const [userRows] = await db.execute(
+                'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+                [decoded.id]
+              );
+              if (userRows && userRows.length > 0) {
+                entitlements = getEntitlements(userRows[0]);
+                const { getAllowedChannelSlugs } = require('../utils/entitlements');
+                entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, allChannels);
               }
+            } catch (e) {
+              // keep default FREE entitlements
             }
             const channelsWithFlags = allChannels.map((ch) => {
               const perm = getChannelPermissions(entitlements, {

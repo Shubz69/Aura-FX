@@ -641,8 +641,8 @@ body.loading-active {
 .markets-bottom-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.75rem;
-    align-items: stretch;
+    gap: 24px;
+    align-items: start;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
@@ -660,7 +660,7 @@ body.loading-active {
 
 /* Decorative divider - never overlaps content */
 .markets-divider {
-    margin: 2rem auto;
+    margin: 24px auto;
     height: 6px;
     max-width: 260px;
     opacity: 0.25;
@@ -674,16 +674,14 @@ body.loading-active {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 1rem;
-    padding: 2rem 1.75rem;
-    min-height: unset;
+    gap: 10px;
+    padding: 24px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     box-sizing: border-box;
-    overflow: hidden;   
     word-break: break-word;
 }
 
@@ -694,16 +692,23 @@ body.loading-active {
 }
 
 .market-icon {
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    overflow: hidden;
     color: #ffffff;
-    font-size: 2.25rem;
+    font-size: 1.75rem;
     filter: grayscale(0.3);
     transition: filter 0.3s ease;
+}
+
+.market-icon svg {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
 }
 
 .market-item:hover .market-icon {
@@ -712,8 +717,7 @@ body.loading-active {
 
 .market-title {
     margin: 0;
-    margin-top: 4px;
-    font-size: 1.35rem;
+    font-size: 1.2rem;
     font-weight: 400;
     color: #ffffff;
     letter-spacing: 0.05em;
@@ -723,10 +727,11 @@ body.loading-active {
 
 .market-description {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1rem;
     color: rgba(255, 255, 255, 0.9);
     line-height: 1.5;
     font-weight: 300;
+    max-width: 100%;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     line-clamp: 3;
@@ -827,19 +832,19 @@ body.loading-active {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
+        gap: 24px;
     }
 }
 
-/* Mobile: collapse markets to 1 column (768px and below) */
+/* Mobile: 1 column (768px and below) */
 @media (max-width: 768px) {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 24px;
     }
     .markets-divider {
-        margin: 1.5rem auto;
+        margin: 24px auto;
     }
 }
 
@@ -951,7 +956,7 @@ body.loading-active {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
+        gap: 24px;
         width: 100%;
     }
     
@@ -1092,22 +1097,26 @@ body.loading-active {
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 24px;
     }
     
     .markets-divider {
-        margin: 1.5rem auto;
+        margin: 24px auto;
     }
     
     .market-item {
-        padding: 1.75rem 1.5rem;
-        min-height: 160px;
+        padding: 24px;
     }
     
     .market-icon {
-        width: 50px;
-        height: 50px;
+        width: 44px;
+        height: 44px;
         font-size: 1.75rem;
+    }
+    
+    .market-icon svg {
+        width: 44px;
+        height: 44px;
     }
     
     .market-title {
@@ -1223,6 +1232,10 @@ body.loading-active {
         padding: 1.25rem 1rem;
     }
     
+    .market-item {
+        padding: 24px;
+    }
+    
     .section-title {
         font-size: 1.6rem;
         padding: 0 0.75rem;
@@ -1263,9 +1276,12 @@ body.loading-active {
     .feature-card,
     .stat-item,
     .why-item,
-    .market-item,
     .feature-item {
         padding: 1rem 0.75rem;
+    }
+    
+    .market-item {
+        padding: 20px 16px;
     }
     
     .feature-icon {

@@ -98,7 +98,13 @@ async function checkCommunityAccess(authHeader) {
       }
     }
     
-    // No active subscription
+    // Plan selected (including Free): grant community access (FREE = allowlist only; server enforces channels)
+    const plan = (user.subscription_plan || '').toString().trim().toLowerCase();
+    if (plan.length > 0) {
+      return { hasAccess: true, accessType: plan === 'free' ? 'FREE' : 'NONE', userId, error: null };
+    }
+    
+    // No plan selected yet
     return { hasAccess: false, accessType: 'NONE', userId, error: 'NO_SUBSCRIPTION' };
     
   } catch (err) {

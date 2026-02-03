@@ -38,6 +38,7 @@ import AdminPanel from './pages/AdminPanel';
 import PaymentSuccess from './pages/PaymentSuccess';
 import VerifyMFA from './pages/VerifyMFA';
 import Subscription from './pages/Subscription';
+import ChoosePlan from './pages/ChoosePlan';
 import Settings from './pages/Settings';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -110,6 +111,8 @@ function AppRoutes() {
                     <Route path="/public-profile/:userId" element={<PublicProfile />} />
                     <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/verify-mfa" element={<VerifyMFA />} />
+                    {/* Choose plan - required after signup/login until plan selected; redirects to /community if already has access */}
+                    <Route path="/choose-plan" element={<ChoosePlan />} />
                     {/* Subscription page - redirects paid users to /community */}
                     <Route path="/subscription" element={
                         <SubscriptionPageGuard>

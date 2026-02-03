@@ -41,7 +41,8 @@ export const EntitlementsProvider = ({ children }) => {
     setError(null);
     try {
       const res = await fetch('/api/me', {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        cache: 'no-store'
       });
       if (!res.ok) {
         if (res.status === 401) {

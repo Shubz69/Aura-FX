@@ -498,13 +498,13 @@ export const AuthProvider = ({ children }) => {
         // This is NON-NEGOTIABLE - paid users must NEVER see subscription page after login
         
         if (hasCommunityAccess) {
-          // Paid user or admin → Community
+          // Has plan (Free/Premium/Elite) or admin → Community
           console.log(`✅ Community access granted (${accessType}) - redirecting to /community`);
           navigate('/community');
         } else {
-          // Unpaid user → Subscription page
-          console.log('❌ No community access - redirecting to /subscription');
-          navigate('/subscription');
+          // No plan selected yet → Choose plan page (then Free/Premium/Elite)
+          console.log('❌ No plan selected - redirecting to /choose-plan');
+          navigate('/choose-plan');
         }
         
         return data;
@@ -586,7 +586,7 @@ export const AuthProvider = ({ children }) => {
       if (localStorage.getItem('newSignup') === 'true') {
         localStorage.setItem('pendingSubscription', 'true');
         localStorage.removeItem('newSignup');
-        navigate('/subscription');
+        navigate('/choose-plan');
         return data;
       }
       

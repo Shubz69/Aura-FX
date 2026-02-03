@@ -231,15 +231,14 @@ module.exports = async (req, res) => {
         
         expiryDate.setDate(expiryDate.getDate() + subscriptionDays);
 
-        // Determine role based on plan type
-        // CRITICAL: Set role correctly to ensure premium users always have access
-        let userRole = 'premium'; // Default to premium for Aura FX
+        // Determine role based on plan type. Free = allowlist only (use /api/subscription/select-free for Free).
+        let userRole = 'premium';
         if (planType === 'a7fx' || planType === 'A7FX' || planType === 'elite') {
-          userRole = 'elite'; // A7FX Elite subscription - assign Elite role (also grants access)
+          userRole = 'elite';
         } else if (planType === 'free') {
-          userRole = 'premium'; // Free monthly also gets premium access
+          userRole = 'user'; // Free tier: allowlist only (General, Welcome, Announcements)
         } else if (planType === 'aura' || planType === 'Aura FX') {
-          userRole = 'premium'; // Aura FX subscription gets premium role
+          userRole = 'premium';
         }
 
         // CRITICAL: Update subscription status AND role based on plan
@@ -343,12 +342,12 @@ module.exports = async (req, res) => {
             const userEmail = userRows[0]?.email;
             const userName = userRows[0]?.name || userRows[0]?.username || 'Valued Member';
             
-            // Update subscription status
+            // Immediate downgrade: set FREE tier so effectiveTier is FREE (no carry-over)
             await db.execute(
-              'UPDATE users SET payment_failed = TRUE, subscription_status = ?, role = ? WHERE id = ?',
-              ['inactive', 'free', userId]
+              'UPDATE users SET payment_failed = TRUE, subscription_status = \'inactive\', role = \'user\', subscription_plan = \'free\', subscription_expiry = NULL WHERE id = ?',
+              [userId]
             );
-            console.log('Marked payment as failed for user:', userId);
+            console.log('Immediate downgrade to FREE for user:', userId);
             
             // Send email notification
             if (userEmail) {

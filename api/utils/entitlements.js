@@ -31,6 +31,7 @@ function normalizeRole(dbRole) {
 /**
  * Compute tier from user row: FREE | PREMIUM | ELITE.
  * Super admin by email gets ELITE. ADMIN/SUPER_ADMIN get full access via role override.
+ * Downgrades: effective tier is current DB state (immediate downgrade when plan/role updated).
  */
 function getTier(userRow) {
   if (!userRow) return 'FREE';
@@ -41,10 +42,15 @@ function getTier(userRow) {
   const expiry = userRow.subscription_expiry ? new Date(userRow.subscription_expiry) : null;
   const active = status === 'active' && expiry && expiry > new Date() && !userRow.payment_failed;
 
-  if (['admin', 'super_admin'].includes(role)) return 'ELITE'; // admins get full channel access
+  if (['admin', 'super_admin'].includes(role)) return 'ELITE';
   if (['elite', 'a7fx'].includes(role) || (active && ['a7fx', 'elite'].includes(plan))) return 'ELITE';
   if (role === 'premium' || (active && ['aura', 'premium'].includes(plan))) return 'PREMIUM';
   return 'FREE';
+}
+
+/** Effective tier for gating: same as tier (immediate downgrade model). Use this for channel/message access. */
+function getEffectiveTier(userRow) {
+  return getTier(userRow);
 }
 
 function isSuperAdminEmail(userRow) {
@@ -67,35 +73,51 @@ function getStatus(userRow) {
 }
 
 /**
+ * Whether user has explicitly selected a plan (subscription_plan set). Blocks community until plan selected.
+ */
+function hasPlanSelected(userRow) {
+  if (!userRow) return false;
+  const plan = (userRow.subscription_plan || '').toString().trim().toLowerCase();
+  return plan.length > 0;
+}
+
+/**
  * Entitlements from a single user row (no DB in this function).
- * Super admin by email (Shubzfx@gmail.com) always gets SUPER_ADMIN role and full access.
- * canAccessCommunity: true for all authenticated users (FREE can enter, see only allowlist).
- * canAccessAI: true for PREMIUM, ELITE, ADMIN, SUPER_ADMIN.
+ * canAccessCommunity: true only when plan is selected (FREE/PREMIUM/ELITE) or admin—blocks until /choose-plan.
+ * Channel gating uses effectiveTier only (no stale cached tier).
  */
 function getEntitlements(userRow) {
   if (!userRow) {
     return {
       role: 'USER',
       tier: 'FREE',
+      effectiveTier: 'FREE',
+      pendingTier: null,
+      periodEnd: null,
       status: 'none',
       canAccessCommunity: false,
       canAccessAI: false,
       allowedChannelSlugs: []
     };
   }
-  // Super admin by email: full access regardless of DB role
   const role = isSuperAdminEmail(userRow) ? 'SUPER_ADMIN' : normalizeRole(userRow.role);
   const tier = getTier(userRow);
+  const effectiveTier = getEffectiveTier(userRow);
   const status = getStatus(userRow);
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const planSelected = hasPlanSelected(userRow);
+  const periodEnd = userRow.subscription_expiry ? new Date(userRow.subscription_expiry).toISOString() : null;
 
   return {
     role,
     tier,
+    effectiveTier,
+    pendingTier: null,
+    periodEnd,
     status,
-    canAccessCommunity: true,
+    canAccessCommunity: isAdmin || planSelected,
     canAccessAI: isAdmin || tier === 'PREMIUM' || tier === 'ELITE',
-    allowedChannelSlugs: [] // filled by getAllowedChannelSlugs(entitlements, channels)
+    allowedChannelSlugs: []
   };
 }
 
@@ -109,11 +131,12 @@ function freeChannelNameKey(name) {
 
 /**
  * Given entitlements and full channel list, return array of channel ids the user may see.
- * Uses channel.id only (same as channels API). FREE: only existing channels whose name is in allowlist.
+ * Uses effectiveTier only (never stale cached tier).
  */
 function getAllowedChannelSlugs(entitlements, channels) {
   if (!entitlements || !Array.isArray(channels)) return [];
-  const { role, tier } = entitlements;
+  const { role, effectiveTier } = entitlements;
+  const tier = effectiveTier != null ? effectiveTier : entitlements.tier;
   const toId = (c) => (c.id != null ? String(c.id) : (c.name != null ? String(c.name) : ''));
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return channels.map(toId).filter(Boolean);
@@ -139,7 +162,7 @@ function getAllowedChannelSlugs(entitlements, channels) {
 }
 
 /**
- * Per-channel permission flags. accessLevel is the single source of truth; category is NOT used for access.
+ * Per-channel permission flags. Uses effectiveTier only for gating (no stale cache).
  */
 function getChannelPermissions(entitlements, channel) {
   const id = (channel?.id || channel?.name || '').toString().toLowerCase();
@@ -147,7 +170,8 @@ function getChannelPermissions(entitlements, channel) {
   const permissionType = (channel?.permission_type ?? channel?.permissionType ?? 'read-write').toString().toLowerCase();
   const readOnly = permissionType === 'read-only';
 
-  const { role, tier } = entitlements;
+  const { role } = entitlements;
+  const tier = entitlements.effectiveTier != null ? entitlements.effectiveTier : entitlements.tier;
 
   let canSee = false;
   let canRead = false;
@@ -190,7 +214,7 @@ function getChannelPermissions(entitlements, channel) {
 }
 
 /**
- * Check if user (by entitlements) is allowed to access a channel by id.
+ * Check if user (by entitlements) is allowed to access a channel by id. Uses effectiveTier.
  */
 function canAccessChannel(entitlements, channelId, channels) {
   if (!entitlements || !channelId) return false;
@@ -199,7 +223,8 @@ function canAccessChannel(entitlements, channelId, channels) {
   if (entitlements.allowedChannelSlugs && entitlements.allowedChannelSlugs.length > 0) {
     return entitlements.allowedChannelSlugs.some((s) => s.toLowerCase() === slug);
   }
-  if (entitlements.tier === 'FREE') return FREE_CHANNEL_ALLOWLIST.has(slug);
+  const tier = entitlements.effectiveTier != null ? entitlements.effectiveTier : entitlements.tier;
+  if (tier === 'FREE') return FREE_CHANNEL_ALLOWLIST.has(slug);
   const channel = Array.isArray(channels) ? channels.find((c) => (c.id || c.name || '').toString().toLowerCase() === slug) : null;
   if (!channel) return false;
   const perm = getChannelPermissions(entitlements, channel);
@@ -212,7 +237,9 @@ module.exports = {
   isSuperAdminEmail,
   normalizeRole,
   getTier,
+  getEffectiveTier,
   getStatus,
+  hasPlanSelected,
   getEntitlements,
   getAllowedChannelSlugs,
   getChannelPermissions,

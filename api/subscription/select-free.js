@@ -49,19 +49,17 @@ module.exports = async (req, res) => {
 
   try {
     const now = new Date();
-    const expiry = new Date(now);
-    expiry.setDate(expiry.getDate() + 30);
-
+    // Free tier: no Stripe, no expiry. Immediate downgrade (clear any Stripe refs).
     await executeQuery(
       `UPDATE users SET
         subscription_plan = 'free',
         subscription_status = 'active',
-        subscription_expiry = ?,
+        subscription_expiry = NULL,
         subscription_started = COALESCE(subscription_started, NOW()),
-        role = 'free',
+        role = 'user',
         payment_failed = FALSE
        WHERE id = ?`,
-      [expiry, userId]
+      [userId]
     );
 
     const [rows] = await executeQuery(
@@ -74,9 +72,6 @@ module.exports = async (req, res) => {
     }
 
     const user = rows[0];
-    const expiryDate = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
-    const daysRemaining = expiryDate ? Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)) : null;
-
     const subscription = {
       tier: 'FREE',
       status: 'active',
@@ -85,12 +80,12 @@ module.exports = async (req, res) => {
       planName: PLAN_NAMES.free,
       isActive: true,
       accessType: 'NONE',
-      renewsAt: expiryDate ? expiryDate.toISOString() : null,
+      renewsAt: null,
       trialEndsAt: null,
       canceledAt: null,
       startedAt: user.subscription_started ? new Date(user.subscription_started).toISOString() : null,
-      expiresAt: expiryDate ? expiryDate.toISOString() : null,
-      daysRemaining: daysRemaining > 0 ? daysRemaining : null,
+      expiresAt: null,
+      daysRemaining: null,
       price: PLAN_PRICES.free,
       paymentFailed: false,
       hasUsedFreeTrial: false

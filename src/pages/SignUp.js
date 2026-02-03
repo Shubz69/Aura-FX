@@ -133,10 +133,9 @@ function SignUp() {
             // If MFA is required, the register function will redirect to verify-mfa
             // Otherwise, redirect to subscription page (first month free, then £99/month)
             if (response && response.status !== "MFA_REQUIRED") {
-                // Mark as new signup to show subscription page
                 localStorage.setItem('pendingSubscription', 'true');
                 localStorage.setItem('newSignup', 'true');
-                navigate("/subscription");
+                navigate("/choose-plan");
             }
         } catch (error) {
             console.error("Registration error:", error);

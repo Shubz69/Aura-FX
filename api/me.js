@@ -113,6 +113,9 @@ module.exports = async (req, res) => {
       entitlements: {
         tier: entitlements.tier,
         status: entitlements.status,
+        periodEnd: entitlements.periodEnd ?? null,
+        pendingTier: entitlements.pendingTier ?? null,
+        effectiveTier: entitlements.effectiveTier ?? entitlements.tier,
         canAccessCommunity: entitlements.canAccessCommunity,
         canAccessAI: entitlements.canAccessAI,
         allowedChannelSlugs: entitlements.allowedChannelSlugs
