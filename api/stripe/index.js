@@ -1,8 +1,23 @@
 const mysql = require('mysql2/promise');
 const nodemailer = require('nodemailer');
+const Stripe = require('stripe');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+
+// Validate Stripe secret key (backend only – never expose sk_ in frontend)
+function getStripeClient() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey || typeof secretKey !== 'string' || !secretKey.startsWith('sk_')) {
+    console.warn('STRIPE_SECRET_KEY missing or invalid (must start with sk_test_ or sk_live_)');
+    return null;
+  }
+  const isTest = secretKey.startsWith('sk_test_');
+  if (process.env.NODE_ENV !== 'test') {
+    console.log(`Stripe backend mode: ${isTest ? 'TEST' : 'LIVE'}`);
+  }
+  return new Stripe(secretKey);
+}
 
 const getDbConnection = async () => {
   if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
@@ -403,6 +418,49 @@ module.exports = async (req, res) => {
     } catch (error) {
       console.error('Error processing webhook:', error);
       return res.status(500).json({ success: false, message: 'Error processing webhook' });
+    }
+  }
+
+  // Handle /api/stripe/create-payment-intent (PaymentIntent flow – frontend uses Stripe.js confirmCardPayment only)
+  if (pathname.includes('/create-payment-intent') || pathname.endsWith('/create-payment-intent')) {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+    try {
+      const stripe = getStripeClient();
+      if (!stripe) {
+        return res.status(500).json({
+          success: false,
+          error: 'SERVER_ERROR',
+          message: 'Payment is not configured. Please try again later.'
+        });
+      }
+      const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+      const amount = Math.round(Number(body.amount) || 0); // cents
+      const currency = (body.currency || 'gbp').toLowerCase().slice(0, 3);
+      if (amount <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION',
+          message: 'Invalid amount.'
+        });
+      }
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency,
+        automatic_payment_methods: { enabled: true }
+      });
+      return res.status(200).json({
+        success: true,
+        clientSecret: paymentIntent.client_secret
+      });
+    } catch (err) {
+      console.error('Create payment intent error:', err);
+      return res.status(500).json({
+        success: false,
+        error: 'SERVER_ERROR',
+        message: err.message || 'Something went wrong. Please try again.'
+      });
     }
   }
 

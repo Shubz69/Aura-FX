@@ -166,6 +166,17 @@ const Api = {
     getDirectStripeCheckoutUrl: (courseId) => {
         return `${API_BASE_URL}/api/stripe/direct-checkout?courseId=${courseId}&timestamp=${Date.now()}`;
     },
+
+    // Create PaymentIntent (backend only) – frontend uses Stripe.js confirmCardPayment with clientSecret
+    createPaymentIntent: async (amountCents, currency = 'gbp') => {
+        const token = localStorage.getItem('token');
+        const res = await axios.post(
+            `${API_BASE_URL}/api/stripe/create-payment-intent`,
+            { amount: amountCents, currency: (currency || 'gbp').toLowerCase().slice(0, 3) },
+            { headers: token ? { Authorization: `Bearer ${token}` } : {}, timeout: 15000 }
+        );
+        return res.data;
+    },
     
     // Payment Processing
     initiatePayment: (courseId) => {
@@ -485,7 +496,16 @@ const Api = {
             throw error;
         }
     },
-    
+
+    selectFreePlan: async () => {
+        const token = localStorage.getItem('token');
+        const response = await axios.post(
+            `${API_BASE_URL}/api/subscription/select-free`,
+            {},
+            { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 15000 }
+        );
+        return response.data;
+    },
 
     
     // Password reset methods

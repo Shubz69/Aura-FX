@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Courses.css';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
+import { useEntitlements } from '../context/EntitlementsContext';
 
 // Fallback API URL
 const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
@@ -9,9 +11,13 @@ const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
     : (process.env.REACT_APP_API_URL || '');
 
 const Courses = () => {
+    const navigate = useNavigate();
+    const { refresh: refreshEntitlements } = useEntitlements();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectingFreePlan, setSelectingFreePlan] = useState(false);
+    const [freePlanError, setFreePlanError] = useState('');
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -126,7 +132,47 @@ const Courses = () => {
                 </p>
                 
                 <div className="subscriptions-grid">
-                    {/* Premium Plan */}
+                    {/* FREE plan – first in DOM order (mobile: stacks top-to-bottom) */}
+                    <div className="subscription-plan-card free">
+                        <h3 className="subscription-plan-title">Free</h3>
+                        <div className="subscription-plan-price">£0</div>
+                        <div className="subscription-plan-period">per month</div>
+                        <ul className="subscription-plan-features">
+                            <li>✅ Access to general community channels only</li>
+                            <li>✅ Welcome &amp; announcements channels</li>
+                            <li>❌ No Premium AI</li>
+                            <li>❌ No Premium or Elite channels</li>
+                        </ul>
+                        {freePlanError && (
+                            <p style={{ color: 'rgba(239, 68, 68, 0.9)', fontSize: '14px', marginBottom: '12px' }}>{freePlanError}</p>
+                        )}
+                        <button
+                            className="subscription-plan-button free"
+                            onClick={async () => {
+                                setFreePlanError('');
+                                setSelectingFreePlan(true);
+                                try {
+                                    const data = await Api.selectFreePlan();
+                                    if (data && data.success) {
+                                        await refreshEntitlements();
+                                        navigate('/community');
+                                        return;
+                                    }
+                                    setFreePlanError('Could not activate Free plan. Please try again.');
+                                } catch (err) {
+                                    console.error('Select Free plan error:', err);
+                                    setFreePlanError(err.response?.data?.message || 'Could not activate Free plan. Please try again.');
+                                } finally {
+                                    setSelectingFreePlan(false);
+                                }
+                            }}
+                            disabled={selectingFreePlan}
+                        >
+                            {selectingFreePlan ? 'Activating...' : 'Select Free Plan'}
+                        </button>
+                    </div>
+
+                    {/* Aura FX (Premium) – second */}
                     <div className="subscription-plan-card premium">
                         <h3 className="subscription-plan-title">Aura FX</h3>
                         <div className="subscription-pricing-container">
@@ -162,7 +208,7 @@ const Courses = () => {
                         </button>
                     </div>
 
-                    {/* A7FX Elite Plan */}
+                    {/* A7FX Elite – third */}
                     <div className="subscription-plan-card elite">
                         <div className="elite-badge">ELITE</div>
                         <h3 className="subscription-plan-title">A7FX Elite</h3>

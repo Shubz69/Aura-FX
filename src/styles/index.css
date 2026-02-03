@@ -29,16 +29,16 @@
 }
 
 /* ========== GLOBAL MOBILE TOUCH SCROLL FIX ========== */
-/* Ensures smooth touch scrolling across all pages */
+/* Ensures document can scroll on touch devices; no global overflow: hidden on html/body */
 /* DO NOT add touch-action: none or overflow: hidden to body/html globally */
 
 html, body {
-  /* Enable smooth touch scrolling on iOS */
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Allow vertical swipes for page scroll by default */
-  touch-action: pan-y pan-x;
-  /* Prevent overscroll bounce issues */
-  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 /* Main scrollable containers should allow touch scroll */
@@ -87,6 +87,9 @@ html {
     -ms-text-size-adjust: 100%;
     text-size-adjust: 100%;
     overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
 }
 
 html, body, #root {
@@ -97,6 +100,7 @@ html, body, #root {
     color: var(--primary);
     font-family: 'Space Grotesk', sans-serif;
     overflow-x: hidden;
+    overflow-y: auto;
     line-height: 1.6;
     display: flex;
     flex-direction: column;
@@ -112,11 +116,15 @@ body {
   background-color: #0a0a0a !important;
   color: var(--primary);
   min-height: 100vh;
+  height: auto;
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   position: relative;
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
@@ -127,10 +135,12 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  height: auto;
   flex: 1;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  overflow: visible;
   position: relative;
   background: #0a0a0a !important;
 }
@@ -139,10 +149,12 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  height: auto;
   flex: 1;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  overflow: visible;
   position: relative;
 }
 
@@ -242,8 +254,6 @@ html.community-page-active .page-wrapper {
   height: 100vh;
   max-height: 100vh;
   padding-top: 0 !important;
-  /* Internal containers will handle their own scrolling */
-}
   display: flex;
   flex-direction: column;
   background: var(--bg-dark);
@@ -251,6 +261,7 @@ html.community-page-active .page-wrapper {
   width: 100%;
   max-width: 100vw;
   box-sizing: border-box;
+  /* Internal containers will handle their own scrolling */
 }
 
 /* Ensure all pages have proper footer spacing */
@@ -479,47 +490,56 @@ img, video, canvas {
     }
 }
 
-/* iPhone and iPad specific fixes */
+/* iPhone and iPad: allow document scroll; avoid height: 100vh lock on #root */
 @media (max-width: 1024px) {
     html {
         background: #0a0a0a !important;
         -webkit-text-size-adjust: 100% !important;
         -ms-text-size-adjust: 100% !important;
         text-size-adjust: 100% !important;
-        height: 100% !important;
+        height: auto !important;
+        min-height: 100% !important;
         width: 100% !important;
         overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     
     body {
         background: #0a0a0a !important;
         -webkit-font-smoothing: antialiased !important;
         -moz-osx-font-smoothing: grayscale !important;
-        height: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
         width: 100% !important;
         overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
         position: relative !important;
     }
     
     #root {
         background: #0a0a0a !important;
         min-height: 100vh !important;
-        height: 100vh !important;
+        height: auto !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
+        overflow: visible !important;
         position: relative !important;
     }
     
     .app-container {
         background: #0a0a0a !important;
         min-height: 100vh !important;
-        height: 100vh !important;
+        height: auto !important;
         width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
+        overflow: visible !important;
     }
     
     /* Ensure all containers have dark background */

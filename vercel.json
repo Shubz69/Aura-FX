@@ -110,6 +110,10 @@
       "destination": "/api/subscription/status.js"
     },
     {
+      "source": "/api/subscription/select-free",
+      "destination": "/api/subscription/select-free.js"
+    },
+    {
       "source": "/api/me",
       "destination": "/api/me.js"
     },
@@ -127,6 +131,10 @@
     },
     {
       "source": "/api/stripe/direct-checkout",
+      "destination": "/api/stripe/index.js"
+    },
+    {
+      "source": "/api/stripe/create-payment-intent",
       "destination": "/api/stripe/index.js"
     },
     {

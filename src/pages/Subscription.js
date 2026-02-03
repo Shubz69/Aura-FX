@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import CosmicBackground from '../components/CosmicBackground';
+import StripePaymentForm from '../components/StripePaymentForm';
 import axios from 'axios';
 import '../styles/Subscription.css';
 
@@ -85,7 +86,10 @@ const Subscription = () => {
     const [contactStatus, setContactStatus] = useState(null);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [processingPlan, setProcessingPlan] = useState(null);
-    
+    const [showCardForm, setShowCardForm] = useState(false);
+    const [planForCard, setPlanForCard] = useState(null);
+    const [cardPaymentError, setCardPaymentError] = useState('');
+
     // Subscription status from server
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
@@ -293,6 +297,56 @@ const Subscription = () => {
 
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);
+    };
+
+    const handlePayWithCard = (planType) => {
+        if (planType === 'free') return;
+        setCardPaymentError('');
+        setPlanForCard(planType);
+        setShowCardForm(true);
+    };
+
+    const handleCardPaymentSuccess = async (paymentIntent) => {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = user?.id || storedUser?.id;
+        if (!userId) {
+            setCardPaymentError('Session expired. Please log in again.');
+            return;
+        }
+        try {
+            setLoading(true);
+            const sessionId = paymentIntent?.id ? `pi_${paymentIntent.id}` : `pi_${Date.now()}`;
+            const response = await axios.post(
+                `${API_BASE_URL}/api/stripe/subscription-success`,
+                { userId, session_id: sessionId, plan: planForCard },
+                { headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' } }
+            );
+            if (response.data?.success) {
+                await refreshEntitlements();
+                if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
+                localStorage.setItem('hasActiveSubscription', 'true');
+                setShowCardForm(false);
+                setPlanForCard(null);
+                setSubscriptionActivated(true);
+                setCountdown(5);
+                let currentCount = 5;
+                countdownIntervalRef.current = setInterval(() => {
+                    currentCount--;
+                    setCountdown(currentCount);
+                    if (currentCount <= 0) {
+                        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+                        window.location.replace(`${window.location.origin}/community`);
+                    }
+                }, 1000);
+            } else {
+                setCardPaymentError('Payment succeeded but subscription activation failed. Please contact support.');
+            }
+        } catch (err) {
+            console.error('Subscription activation after card payment:', err);
+            setCardPaymentError(err.response?.data?.message || 'Subscription activation failed. Please contact support.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSkipForNow = () => {
@@ -509,6 +563,16 @@ const Subscription = () => {
                 >
                     {buttonText}
                 </button>
+                {plan.id !== 'free' && !buttonState.disabled && (
+                    <button
+                        type="button"
+                        className="plan-select-button pay-with-card-button"
+                        onClick={() => handlePayWithCard(plan.id)}
+                        style={{ marginTop: 8, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)' }}
+                    >
+                        Pay with card (same page)
+                    </button>
+                )}
             </div>
         );
     };
@@ -537,6 +601,32 @@ const Subscription = () => {
                     )}
                     <p className="pricing-note" style={{ textAlign: 'center', marginTop: '20px' }}>Cancel anytime • No hidden fees</p>
                 </div>
+
+                {showCardForm && planForCard && PLANS[planForCard] && (
+                    <div className="subscription-card-form" style={{ marginTop: 24, padding: 24, background: 'rgba(0,0,0,0.2)', borderRadius: 12 }}>
+                        <h3 style={{ marginTop: 0, marginBottom: 8 }}>Pay with card – {PLANS[planForCard].name}</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
+                            {PLANS[planForCard].currency}{PLANS[planForCard].price}{PLANS[planForCard].period}
+                        </p>
+                        {cardPaymentError && (
+                            <div role="alert" style={{ color: '#fa755a', marginBottom: 12 }}>{cardPaymentError}</div>
+                        )}
+                        <StripePaymentForm
+                            amountCents={PLANS[planForCard].price * 100}
+                            currency="gbp"
+                            onSuccess={handleCardPaymentSuccess}
+                            onError={() => setCardPaymentError('')}
+                            submitLabel={`Pay ${PLANS[planForCard].currency}${PLANS[planForCard].price}`}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => { setShowCardForm(false); setPlanForCard(null); setCardPaymentError(''); }}
+                            style={{ marginTop: 12, padding: '8px 16px', cursor: 'pointer' }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
 
                 {error && <div className="subscription-error">{error}</div>}
                 

@@ -2158,15 +2158,13 @@ const Community = () => {
         }
         
         if (sidebarOpen) {
-            // Prevent body scroll when sidebar is open
             document.body.classList.add('sidebar-open-mobile');
             document.body.style.overflow = 'hidden';
         } else {
-            // Restore body scroll when sidebar is closed
             document.body.classList.remove('sidebar-open-mobile');
             document.body.style.overflow = '';
         }
-        
+
         const handleClickOutside = (e) => {
             if (!sidebarOpen) return;
             const sidebar = document.querySelector('.community-sidebar');
@@ -2175,13 +2173,12 @@ const Community = () => {
                 setSidebarOpen(false);
             }
         };
-        
+
         if (sidebarOpen) {
             document.addEventListener('mousedown', handleClickOutside);
-            // Use passive: true to not block touch scroll
             document.addEventListener('touchstart', handleClickOutside, { passive: true });
         }
-        
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('touchstart', handleClickOutside);
@@ -2329,18 +2326,28 @@ const Community = () => {
         }
     }, [navigate, authUser, checkSubscriptionFromDB, fetchLatestUserData, refreshEntitlements, refreshChannelList]);
 
-    // Prevent page scrolling - Discord-like behavior
+    // Prevent page scrolling on Community only - Discord-like behavior; always restore on unmount/route
     useEffect(() => {
-        // Add class to body and html to prevent scrolling
         document.body.classList.add('community-page-active');
         document.documentElement.classList.add('community-page-active');
-        
+
         return () => {
-            // Remove class when component unmounts
             document.body.classList.remove('community-page-active');
             document.documentElement.classList.remove('community-page-active');
+            document.body.classList.remove('sidebar-open-mobile');
+            document.body.style.overflow = '';
         };
     }, []);
+
+    // When route leaves Community, ensure scroll lock is removed (e.g. if unmount is delayed)
+    useEffect(() => {
+        const isCommunity = location.pathname.startsWith('/community');
+        if (!isCommunity) {
+            document.body.classList.remove('community-page-active', 'sidebar-open-mobile');
+            document.documentElement.classList.remove('community-page-active');
+            document.body.style.overflow = '';
+        }
+    }, [location.pathname]);
 
     // Check API connectivity - defined before useEffects that use it
     const checkApiConnectivity = useCallback(async () => {
@@ -3492,32 +3499,40 @@ Let's build generational wealth together! 💰🚀`,
         setShowSubscriptionModal(true);
     };
 
-    // Handle subscription plan selection and redirect to Stripe
-    const handleSelectSubscription = (planType) => {
+    // FREE plan: no Stripe – call API, refresh entitlements, go to /community
+    const [selectingFreePlan, setSelectingFreePlan] = useState(false);
+    const [subscriptionModalError, setSubscriptionModalError] = useState('');
+
+    const handleSelectSubscription = async (planType) => {
+        if (planType === 'free') {
+            setSubscriptionModalError('');
+            setSelectingFreePlan(true);
+            try {
+                const data = await Api.selectFreePlan();
+                if (data && data.success) {
+                    await refreshEntitlements();
+                    setShowSubscriptionModal(false);
+                    navigate('/community');
+                    return;
+                }
+                setSubscriptionModalError('Could not activate Free plan. Please try again.');
+            } catch (err) {
+                console.error('Select FREE plan error:', err);
+                setSubscriptionModalError(err.response?.data?.message || 'Could not activate Free plan. Please try again.');
+            } finally {
+                setSelectingFreePlan(false);
+            }
+            return;
+        }
+
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = storedUser?.email;
-        
-        // Stripe payment links
-        // TODO: Create a $0/month subscription in Stripe and replace this link
-        // Go to Stripe Dashboard > Products > Create Product > Set price to £0/month > Copy Payment Link
-        const STRIPE_PAYMENT_LINK_FREE = 'https://buy.stripe.com/free-monthly'; // REPLACE WITH YOUR FREE MONTHLY STRIPE LINK
         const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
         const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
-        
-        // Select payment link based on plan type
-        let selectedPaymentLink;
-        if (planType === 'free') {
-            selectedPaymentLink = STRIPE_PAYMENT_LINK_FREE;
-        } else if (planType === 'a7fx') {
-            selectedPaymentLink = STRIPE_PAYMENT_LINK_A7FX;
-        } else {
-            selectedPaymentLink = STRIPE_PAYMENT_LINK_AURA;
-        }
-        
+        const selectedPaymentLink = planType === 'a7fx' ? STRIPE_PAYMENT_LINK_A7FX : STRIPE_PAYMENT_LINK_AURA;
         const paymentLink = userEmail
             ? `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
             : `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
-        
         setShowSubscriptionModal(false);
         window.location.href = paymentLink;
     };
@@ -6898,36 +6913,44 @@ Let's build generational wealth together! 💰🚀`,
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>✅ Access to community channels</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Basic community features</li>
-                                    <li style={{ marginBottom: '8px' }}>✅ Monthly subscription via Stripe</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ General, welcome & announcements</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ No payment required</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Instant access to community</li>
                                 </ul>
+                                {subscriptionModalError && (
+                                    <div role="alert" style={{ color: '#fa755a', fontSize: '13px', marginBottom: '12px' }}>{subscriptionModalError}</div>
+                                )}
                                 <button
                                     onClick={() => handleSelectSubscription('free')}
+                                    disabled={selectingFreePlan}
                                     style={{
                                         width: '100%',
-                                        background: 'rgba(139, 92, 246, 0.3)',
+                                        background: selectingFreePlan ? 'rgba(139, 92, 246, 0.5)' : 'rgba(139, 92, 246, 0.3)',
                                         color: 'white',
                                         border: 'none',
                                         padding: '12px 24px',
                                         borderRadius: '8px',
                                         fontSize: '14px',
                                         fontWeight: 'bold',
-                                        cursor: 'pointer',
+                                        cursor: selectingFreePlan ? 'not-allowed' : 'pointer',
                                         transition: 'all 0.3s ease'
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
-                                        e.target.style.transform = 'translateY(-2px)';
-                                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                        if (!selectingFreePlan) {
+                                            e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
+                                            e.target.style.transform = 'translateY(-2px)';
+                                            e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                        }
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.target.style.background = 'rgba(139, 92, 246, 0.3)';
-                                        e.target.style.transform = 'translateY(0)';
-                                        e.target.style.boxShadow = 'none';
+                                        if (!selectingFreePlan) {
+                                            e.target.style.background = 'rgba(139, 92, 246, 0.3)';
+                                            e.target.style.transform = 'translateY(0)';
+                                            e.target.style.boxShadow = 'none';
+                                        }
                                     }}
                                 >
-                                    Get Free Monthly
+                                    {selectingFreePlan ? 'Activating...' : 'Get Free Monthly'}
                                 </button>
                             </div>
 
