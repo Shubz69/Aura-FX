@@ -107,6 +107,18 @@
     transform: translateY(-1px);
 }
 
+.form-input.input-error {
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.form-input.input-error:focus {
+    border-color: rgba(239, 68, 68, 0.85);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.6);
+    background: rgba(239, 68, 68, 0.18);
+}
+
 .form-input::placeholder {
     color: rgba(255, 255, 255, 0.6);
     font-family: var(--font-secondary);

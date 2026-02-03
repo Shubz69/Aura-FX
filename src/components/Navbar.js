@@ -69,8 +69,8 @@ const Navbar = () => {
             <div className="nav-buttons">
                 {!user ? (
                     <>
-                        <button className="sign-in" onClick={() => window.location.href='/login'}>Sign In</button>
-                        <button className="start-trading" onClick={() => window.location.href='/register'}>Sign Up</button>
+                        <button className="sign-in" onClick={() => navigate('/login')}>Sign In</button>
+                        <button className="start-trading" onClick={() => navigate('/register')}>Sign Up</button>
                     </>
                 ) : (
                     <>
@@ -142,8 +142,8 @@ const Navbar = () => {
                 <div className="mobile-buttons">
                     {!user ? (
                         <>
-                            <button className="mobile-sign-in" onClick={() => window.location.href='/login'}>Sign In</button>
-                            <button className="mobile-start-trading" onClick={() => window.location.href='/register'}>Sign Up</button>
+                            <button className="mobile-sign-in" onClick={() => { navigate('/login'); toggleMobileMenu(); }}>Sign In</button>
+                            <button className="mobile-start-trading" onClick={() => { navigate('/register'); toggleMobileMenu(); }}>Sign Up</button>
                         </>
                     ) : (
                         <>

@@ -41,6 +41,31 @@ html, body {
   touch-action: pan-y;
 }
 
+@supports (-webkit-touch-callout: none) {
+  html,
+  body {
+    min-height: -webkit-fill-available;
+    height: auto;
+  }
+
+  #root,
+  .app-container,
+  .page-wrapper {
+    min-height: -webkit-fill-available;
+  }
+
+  body.community-page-active,
+  html.community-page-active {
+    min-height: -webkit-fill-available;
+  }
+
+  body.community-page-active .page-wrapper,
+  html.community-page-active .page-wrapper {
+    min-height: -webkit-fill-available;
+    max-height: -webkit-fill-available;
+  }
+}
+
 /* Main scrollable containers should allow touch scroll */
 main, 
 article, 
@@ -292,7 +317,7 @@ html.community-page-active .page-wrapper {
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-darker);
+    background: var(--bg-darker, #0a0a0a);
 }
 
 ::-webkit-scrollbar-thumb {

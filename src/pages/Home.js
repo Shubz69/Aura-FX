@@ -23,20 +23,21 @@ const Home = () => {
             document.body.style.overflow = 'hidden';
             document.body.classList.add('loading-active');
         } else {
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = 'auto';
             document.body.classList.remove('loading-active');
         }
 
         const loadingTimer = setTimeout(() => {
             setIsLoading(false);
             setTimeout(() => {
+                document.body.style.overflow = 'auto';
                 setShowContent(true);
             }, 500); // Small delay for smooth transition
         }, 3000); // 3 second loading screen
 
         return () => {
             clearTimeout(loadingTimer);
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = 'auto';
             document.body.classList.remove('loading-active');
         };
     }, [isLoading]);
@@ -55,9 +56,12 @@ const Home = () => {
             {isLoading && (
                 <div className="loading-screen">
                     <CosmicBackground />
-                    {/* Main Loading Content */}
+                    {/* Main Loading Content - matches brand on top left */}
                     <div className="loading-content">
-                        <div className="loading-title">AURA FX</div>
+                        <div className="loading-brand-wrapper">
+                            <A7Logo />
+                            <span className="loading-brand-text">AURA FX</span>
+                        </div>
                         <div className="loading-subtitle">INITIALIZING SYSTEM...</div>
                         
                         <div className="loading-dots-container">

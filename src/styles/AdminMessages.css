@@ -5,6 +5,10 @@
     padding: 40px 20px;
     color: white;
     font-family: 'Space Grotesk', sans-serif;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
 }
 
 .admin-messages-content {
@@ -12,6 +16,8 @@
     margin: 0 auto;
     position: relative;
     z-index: 1;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 /* Header Section */

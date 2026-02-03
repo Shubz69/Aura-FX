@@ -101,6 +101,32 @@ body.loading-active {
     position: relative;
 }
 
+/* Loading brand - matches navbar logo + AURA FX lettering */
+.loading-brand-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 1.5rem;
+}
+
+.loading-brand-wrapper .a7-logo-image {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+}
+
+.loading-brand-text {
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: #ffffff;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
 .loading-title {
     font-size: 2.5rem;
     font-weight: 200;
@@ -667,7 +693,7 @@ body.loading-active {
     flex-shrink: 0;
 }
 
-.market-item {
+.trading-markets-section .market-item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -683,13 +709,13 @@ body.loading-active {
     box-sizing: border-box;
 }
 
-.market-item:hover {
+.trading-markets-section .market-item:hover {
     background: rgba(255, 255, 255, 0.05);
     border-color: #ffffff;
     transform: translateY(-5px);
 }
 
-.market-icon {
+.trading-markets-section .market-icon {
     width: 56px;
     height: 56px;
     display: flex;
@@ -702,11 +728,11 @@ body.loading-active {
     transition: filter 0.3s ease;
 }
 
-.market-item:hover .market-icon {
+.trading-markets-section .market-item:hover .market-icon {
     filter: grayscale(0);
 }
 
-.market-title {
+.trading-markets-section .market-title {
     margin: 0;
     margin-top: 4px;
     font-size: 1.35rem;
@@ -717,7 +743,7 @@ body.loading-active {
     line-height: 1.2;
 }
 
-.market-description {
+.trading-markets-section .market-description {
     margin: 0;
     font-size: 1.05rem;
     color: rgba(255, 255, 255, 0.9);
@@ -1095,22 +1121,22 @@ body.loading-active {
         margin: 1.5rem auto;
     }
     
-    .market-item {
+    .trading-markets-section .market-item {
         padding: 1.75rem 1.5rem;
         min-height: 160px;
     }
     
-    .market-icon {
+    .trading-markets-section .market-icon {
         width: 50px;
         height: 50px;
         font-size: 1.75rem;
     }
     
-    .market-title {
+    .trading-markets-section .market-title {
         font-size: 1.15rem;
     }
     
-    .market-description {
+    .trading-markets-section .market-description {
         font-size: 0.95rem;
         -webkit-line-clamp: 3;
         line-clamp: 3;
@@ -1214,7 +1240,7 @@ body.loading-active {
     .feature-card,
     .stat-item,
     .why-item,
-    .market-item,
+    .trading-markets-section .market-item,
     .feature-item {
         padding: 1.25rem 1rem;
     }
@@ -1259,7 +1285,7 @@ body.loading-active {
     .feature-card,
     .stat-item,
     .why-item,
-    .market-item,
+    .trading-markets-section .market-item,
     .feature-item {
         padding: 1rem 0.75rem;
     }
@@ -1269,13 +1295,13 @@ body.loading-active {
     }
     
     .feature-title,
-    .market-title,
+    .trading-markets-section .market-title,
     .feature-item-title {
         font-size: 0.95rem;
     }
     
     .feature-description,
-    .market-description,
+    .trading-markets-section .market-description,
     .feature-item-text {
         font-size: 0.85rem;
     }

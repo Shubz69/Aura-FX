@@ -146,6 +146,17 @@
     padding: 0 20px;
 }
 
+/* Contact title - matches brand styling */
+.contact-title {
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: #ffffff;
+    font-family: var(--font-main);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 0 0 16px 0;
+}
+
 .glitch {
     position: relative;
     font-size: 42px;
@@ -200,6 +211,12 @@
     padding: 30px;
     box-shadow: none;
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.contact-form-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group {

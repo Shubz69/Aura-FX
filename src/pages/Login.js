@@ -11,6 +11,7 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [passwordError, setPasswordError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showMfaVerification, setShowMfaVerification] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
@@ -95,6 +96,7 @@ const Login = () => {
         e.preventDefault();
         e.stopPropagation();
         errorRef.current = '';
+        setPasswordError(false);
         setError('');
         setIsLoading(true);
 
@@ -127,6 +129,7 @@ const Login = () => {
                 return;
             }
 
+            setPasswordError(true);
             setError('Login failed. Please try again.');
         } catch (err) {
             console.error('Login error details:', err);
@@ -139,6 +142,7 @@ const Login = () => {
 
             if (status === 401) {
                 errorMessage = serverMessage || 'Incorrect password. Please try again or use Forgot Password.';
+                setPasswordError(true);
             } else if (status === 404) {
                 if (isJsonResponse && serverMessage) {
                     errorMessage = serverMessage;
@@ -147,16 +151,26 @@ const Login = () => {
                 } else {
                     errorMessage = 'No account with this email exists. Sign up for an account.';
                 }
+                setPasswordError(false);
             } else if (err.response) {
                 errorMessage = serverMessage || (status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : `Login failed. Please try again.`);
+                setPasswordError(false);
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || (err.message && err.message.includes('Network Error'))) {
                 errorMessage = 'Cannot connect to server. Please try again.';
+                setPasswordError(false);
             } else if (err.code === 'ETIMEDOUT' || (err.message && err.message.includes('timeout'))) {
                 errorMessage = 'The server took too long to respond. Check your connection and try again.';
+                setPasswordError(false);
             } else if (err.message) {
                 errorMessage = err.message;
+                if (errorMessage.toLowerCase().includes('password')) {
+                    setPasswordError(true);
+                } else {
+                    setPasswordError(false);
+                }
             } else {
                 errorMessage = 'Login failed. Please try again.';
+                setPasswordError(false);
             }
 
             errorRef.current = errorMessage;
@@ -338,11 +352,18 @@ const Login = () => {
                             type="password"
                             id="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                                if (passwordError) {
+                                    setPasswordError(false);
+                                }
+                                setPassword(e.target.value);
+                            }}
                             required
                             autoComplete="current-password"
                             placeholder="Enter your password"
-                            className="form-input"
+                            className={`form-input ${passwordError ? 'input-error' : ''}`}
+                            aria-invalid={passwordError}
+                            aria-describedby={passwordError ? 'password-error' : undefined}
                         />
                     </div>
                     
@@ -351,6 +372,7 @@ const Login = () => {
                             className="error-message-under-button" 
                             role="alert" 
                             aria-live="assertive"
+                            id={passwordError ? 'password-error' : undefined}
                             style={{ 
                                 display: 'block !important',
                                 visibility: 'visible !important',

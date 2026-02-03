@@ -5,7 +5,7 @@
     width: 100%;
     position: relative;
     background: #0a0a0a;
-    padding: 15px;
+    padding: 85px 15px 30px;
     font-family: 'Space Grotesk', sans-serif;
     overflow-x: hidden;
 }
@@ -687,7 +687,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
     .profile-container {
-        padding: 15px;
+        padding: 70px 15px 20px;
     }
     
     .profile-banner-container {
@@ -736,6 +736,10 @@
     .profile-banner-container {
         height: 150px;
         margin-bottom: -50px;
+    }
+
+    .profile-container {
+        padding-top: 60px;
     }
     
     .profile-avatar {
