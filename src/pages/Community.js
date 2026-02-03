@@ -5038,8 +5038,19 @@ Let's build generational wealth together! 💰🚀`,
                         <div className="chat-messages">
                             {messages.length === 0 ? (
                                 <div className="empty-state">
-                                    <h3>Welcome to #{selectedChannel.displayName || selectedChannel.name}</h3>
-                                    <p>{selectedChannel.description || 'No messages yet. Be the first to start the conversation!'}</p>
+                                    <h3>
+                                        {selectedChannel?.id === 'welcome' || selectedChannel?.name === 'welcome'
+                                            ? 'Welcome to AURA FX'
+                                            : `Welcome to #${selectedChannel.displayName || selectedChannel.name}`}
+                                    </h3>
+                                    <p>
+                                        {selectedChannel?.id === 'welcome' || selectedChannel?.name === 'welcome'
+                                            ? 'Read the rules above and click the checkmark to unlock your channels.'
+                                            : (() => {
+                                                const desc = (selectedChannel?.description || '').replace(/glitch/gi, 'AURA FX').trim();
+                                                return desc || 'No messages yet. Be the first to start the conversation!';
+                                            })()}
+                                    </p>
                                 </div>
                             ) : (
                                 messages.map((message, index) => {
@@ -7202,18 +7213,32 @@ Let's build generational wealth together! 💰🚀`,
             )}
             
             {/* Context Menu */}
-            {contextMenu && (
+            {contextMenu && (() => {
+                const isMobile = typeof window !== 'undefined' && window.innerWidth <= 1024;
+                const menuWidth = 200;
+                const menuMaxHeight = 360;
+                let top = contextMenu.y;
+                let left = contextMenu.x;
+                if (isMobile) {
+                    const pad = 12;
+                    left = Math.min(Math.max(left, pad), window.innerWidth - menuWidth - pad);
+                    top = Math.min(Math.max(top, pad), window.innerHeight - menuMaxHeight - pad);
+                }
+                return (
                 <div
                     className="message-context-menu"
                     style={{
                         position: 'fixed',
-                        top: `${contextMenu.y}px`,
-                        left: `${contextMenu.x}px`,
+                        top: `${top}px`,
+                        left: `${left}px`,
                         background: '#2B2D31',
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '4px',
-                        minWidth: '200px',
+                        minWidth: `${menuWidth}px`,
+                        maxHeight: isMobile ? '400px' : undefined,
+                        overflowY: isMobile ? 'auto' : undefined,
+                        WebkitOverflowScrolling: isMobile ? 'touch' : undefined,
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
                         zIndex: 10000,
                         display: 'flex',
@@ -7345,7 +7370,8 @@ Let's build generational wealth together! 💰🚀`,
                         return null;
                     })()}
                 </div>
-            )}
+                );
+            })()}
 
             {/* Channel Access Modal - Shows when clicking locked channels */}
             {showChannelAccessModal && lockedChannelInfo && (

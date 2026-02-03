@@ -25,7 +25,8 @@ const PUBLIC_ENDPOINTS = [
     '/api/auth/forgot-password',
     '/api/auth/password-reset',
     '/api/auth/send-signup-verification',
-    '/api/auth/verify-signup-code'
+    '/api/auth/verify-signup-code',
+    '/api/auth/phone-verification'
 ];
 
 // Helper function to check if a URL is public
@@ -764,6 +765,25 @@ const Api = {
         } catch (apiError) {
             console.error('Failed to verify signup code:', apiError);
             throw new Error(apiError.response?.data?.message || 'Invalid or expired code');
+        }
+    },
+
+    sendPhoneVerificationCode: async (phone) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/phone-verification`, { action: 'send', phone });
+            return response.data.success;
+        } catch (error) {
+            if (error.response?.data?.message) throw new Error(error.response.data.message);
+            throw error;
+        }
+    },
+
+    verifyPhoneCode: async (phone, code) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/phone-verification`, { action: 'verify', phone, code });
+            return response.data && (response.data.verified === true || response.data.success === true);
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Invalid or expired code');
         }
     },
 

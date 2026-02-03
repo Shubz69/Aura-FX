@@ -82,6 +82,10 @@
       "destination": "/api/auth/signup-verification.js"
     },
     {
+      "source": "/api/auth/phone-verification",
+      "destination": "/api/auth/phone-verification.js"
+    },
+    {
       "source": "/api/auth/send-mfa",
       "destination": "/api/auth/mfa.js"
     },

@@ -1,5 +1,5 @@
 const { getDbConnection } = require('../../db');
-const { getEntitlements, getChannelPermissions, canAccessChannel } = require('../../utils/entitlements');
+const { getEntitlements, getChannelPermissions, canAccessChannel, isSuperAdminEmail } = require('../../utils/entitlements');
 const { triggerNewMessage } = require('../../utils/pusher');
 
 // Suppress url.parse() deprecation warnings from dependencies
@@ -249,6 +249,14 @@ module.exports = async (req, res) => {
     }
     if ((req.method === 'POST' || req.method === 'PUT') && !perm.canWrite) {
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot post in this channel.' });
+    }
+    /* Announcements: enforce super admin by email (shubzfx@gmail.com) at API level */
+    const channelIdLower = (channelId || '').toString().toLowerCase();
+    if ((req.method === 'POST' || req.method === 'PUT') && channelIdLower === 'announcements') {
+      const userRow = userRows[0];
+      if (!isSuperAdminEmail(userRow)) {
+        return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Only the Super Admin can post announcements.' });
+      }
     }
     
     if (req.method === 'GET') {

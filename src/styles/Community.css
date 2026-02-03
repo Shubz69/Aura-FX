@@ -1621,9 +1621,21 @@ html.community-page-active {
     background: #1a1c1f;
 }
 
-/* Message Context Menu */
+/* Message Context Menu - base (desktop) */
 .message-context-menu {
     user-select: none;
+}
+
+/* Mobile/tablet: context menu scrollable, within viewport, fully accessible */
+@media (max-width: 1024px) {
+    .message-context-menu {
+        max-height: min(60vh, 400px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior: contain !important;
+    }
 }
 
 .context-menu-item {
@@ -1757,6 +1769,8 @@ html.community-page-active {
         background: var(--bg-tertiary) !important;
         flex: 1 !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
         display: flex !important;
         flex-direction: column !important;
     }
@@ -1861,7 +1875,7 @@ html.community-page-active {
         border-radius: 4px !important;
     }
     
-    /* Discord-like messages - fill all available space, extra padding for readability */
+    /* Discord-like messages - fill all available space, no horizontal scroll */
     .chat-messages {
         padding: 16px 12px 12px 12px !important;
         background: #36393f !important;
@@ -1872,6 +1886,8 @@ html.community-page-active {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
     }
     
     /* Empty state - fill the messages container */
@@ -1913,23 +1929,22 @@ html.community-page-active {
         background: rgba(4, 4, 5, 0.06) !important;
     }
     
+    /* 1px gap between same-user messages, 2px between different users */
     .message-item.grouped {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+        padding-top: 1px !important;
+        padding-bottom: 1px !important;
         padding-left: 72px !important;
         margin: 0 !important;
-        margin-top: 0 !important;
+        margin-top: 1px !important;
         margin-bottom: 0 !important;
         min-height: 0 !important;
         height: auto !important;
     }
-    
-    /* Gap between different users' messages - clearer separation on mobile */
     .message-item:not(.grouped) {
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
-        margin-top: 4px !important;
-        margin-bottom: 4px !important;
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
     }
     
     .message-avatar,
@@ -2282,8 +2297,16 @@ html.community-page-active {
         z-index: 1001 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
         margin: 0 !important;
         padding: 0 !important;
+    }
+    .emoji-picker .emoji-grid {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        flex: 1 !important;
+        min-height: 0 !important;
     }
     
     .emoji-picker-header {
@@ -2332,8 +2355,16 @@ html.community-page-active {
         z-index: 1001 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
         margin: 0 !important;
         padding: 0 !important;
+    }
+    .gif-picker .gif-grid {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        flex: 1 !important;
+        min-height: 0 !important;
     }
     
     .gif-picker-header {
@@ -2785,12 +2816,17 @@ html.community-page-active {
         background: transparent !important;
     }
     
-    /* Tablet message spacing and readability */
+    /* Tablet: 1px same-user gap, 2px different-user gap */
+    .message-item.grouped {
+        margin-top: 1px !important;
+        padding-top: 1px !important;
+        padding-bottom: 1px !important;
+    }
     .message-item:not(.grouped) {
-        padding-top: 5px !important;
-        padding-bottom: 5px !important;
-        margin-top: 3px !important;
-        margin-bottom: 3px !important;
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
     }
     .message-text {
         line-height: 1.55 !important;
@@ -2805,13 +2841,18 @@ html.community-page-active {
     }
 }
 
-/* iPhone Specific Fixes (max-width: 480px) - extra message spacing, smaller images */
+/* iPhone Specific Fixes (max-width: 480px) - 1px same-user, 2px different-user, smaller images */
 @media (max-width: 480px) {
+    .message-item.grouped {
+        margin-top: 1px !important;
+        padding-top: 1px !important;
+        padding-bottom: 1px !important;
+    }
     .message-item:not(.grouped) {
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
-        margin-top: 4px !important;
-        margin-bottom: 4px !important;
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
     }
     .message-text {
         line-height: 1.6 !important;
@@ -2878,10 +2919,25 @@ html.community-page-active {
         flex-direction: column !important;
         min-height: 0 !important;
         width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
         /* Enable smooth touch scrolling on iOS */
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior: contain !important;
+    }
+    
+    /* Prevent horizontal scroll - keep all content within bounds */
+    .message-content,
+    .message-text,
+    .message-header-info {
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+    .message-text img,
+    .message-attachment img {
+        max-width: min(120px, 90vw) !important;
     }
     
     .no-channel-selected {

@@ -134,6 +134,7 @@ function getEntitlements(userRow) {
   const onboardingAccepted = isAdmin || (userRow.onboarding_accepted === true || userRow.onboarding_accepted === 1);
   const needsReaccept = !isAdmin && needsOnboardingReaccept(userRow);
 
+  const isSuperAdminUser = isSuperAdminEmail(userRow);
   return {
     role,
     tier,
@@ -145,7 +146,8 @@ function getEntitlements(userRow) {
     canAccessAI: isAdmin || tier === 'PREMIUM' || tier === 'ELITE',
     allowedChannelSlugs: [],
     onboardingAccepted: isAdmin || onboardingAccepted,
-    needsOnboardingReaccept: needsReaccept
+    needsOnboardingReaccept: needsReaccept,
+    isSuperAdminUser
   };
 }
 
@@ -161,43 +163,57 @@ function freeChannelNameKey(name) {
  * Given entitlements and full channel list, return array of channel ids the user may see.
  * Uses effectiveTier only (never stale cached tier).
  * If !onboardingAccepted or needsOnboardingReaccept, only 'welcome' is allowed.
+ * welcome and announcements are ALWAYS visible to all users (no tier restriction).
  */
 function getAllowedChannelSlugs(entitlements, channels) {
   if (!entitlements || !Array.isArray(channels)) return [];
   const { role, effectiveTier, onboardingAccepted, needsOnboardingReaccept } = entitlements;
   const toId = (c) => (c.id != null ? String(c.id) : (c.name != null ? String(c.name) : ''));
+  const ALWAYS_VISIBLE = new Set(['welcome', 'announcements']);
+
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return channels.map(toId).filter(Boolean);
   }
   if (!onboardingAccepted || needsOnboardingReaccept) {
     return channels.filter((c) => {
-      const id = toId(c);
-      return id.toLowerCase() === 'welcome';
+      const id = toId(c).toLowerCase();
+      return id === 'welcome';
     }).map(toId).filter(Boolean);
   }
   const tier = effectiveTier != null ? effectiveTier : entitlements.tier;
+  let allowed = [];
   if (tier === 'FREE') {
-    return channels
+    allowed = channels
       .filter((c) => {
+        const id = toId(c).toLowerCase();
+        if (ALWAYS_VISIBLE.has(id)) return true;
         const nameKey = freeChannelNameKey(c.name);
         const nameLower = (c.name || '').toString().toLowerCase();
         return nameKey && (FREE_CHANNEL_ALLOWLIST.has(nameKey) || FREE_CHANNEL_ALLOWLIST.has(nameLower));
       })
       .map(toId)
       .filter(Boolean);
+  } else {
+    const allowedLevels = tier === 'ELITE' ? ACCESS_LEVELS_ELITE : ACCESS_LEVELS_PREMIUM;
+    allowed = channels
+      .filter((c) => {
+        const id = toId(c).toLowerCase();
+        if (ALWAYS_VISIBLE.has(id)) return true;
+        const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
+        return allowedLevels.has(level);
+      })
+      .map(toId)
+      .filter(Boolean);
   }
-  const allowedLevels = tier === 'ELITE' ? ACCESS_LEVELS_ELITE : ACCESS_LEVELS_PREMIUM;
-  return channels
-    .filter((c) => {
-      const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
-      return allowedLevels.has(level);
-    })
-    .map(toId)
-    .filter(Boolean);
+  return allowed;
 }
 
 /**
  * Per-channel permission flags. Uses effectiveTier only for gating (no stale cache).
+ *
+ * SPECIAL RULES:
+ * - welcome: visible to ALL users, canWrite only for ADMIN/SUPER_ADMIN (read-only for regular users)
+ * - announcements: visible to ALL users, canWrite only for SUPER_ADMIN (shubzfx@gmail.com)
  */
 function getChannelPermissions(entitlements, channel) {
   const id = (channel?.id || channel?.name || '').toString().toLowerCase();
@@ -212,6 +228,24 @@ function getChannelPermissions(entitlements, channel) {
   let canRead = false;
   let canWrite = false;
   let locked = accessLevel === 'admin-only' || accessLevel === 'admin';
+
+  /* Welcome: visible to ALL, write only for admins */
+  if (id === 'welcome') {
+    canSee = true;
+    canRead = true;
+    canWrite = role === 'ADMIN' || role === 'SUPER_ADMIN';
+    locked = !canWrite;
+    return { canSee, canRead, canWrite, locked };
+  }
+
+  /* Announcements: visible to ALL, write only for SUPER_ADMIN (shubzfx@gmail.com enforced at admin API) */
+  if (id === 'announcements') {
+    canSee = true;
+    canRead = true;
+    canWrite = role === 'SUPER_ADMIN';
+    locked = !canWrite;
+    return { canSee, canRead, canWrite, locked };
+  }
 
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     canSee = true;

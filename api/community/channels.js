@@ -487,6 +487,10 @@ module.exports = async (req, res) => {
               }
             };
 
+            // Ensure welcome and announcements exist with AURA FX branding
+            await safeInsertChannel('welcome', 'welcome', 'announcements', 'Welcome to AURA FX Community. Read the rules and click the checkmark below to unlock your channels.', 'open');
+            await safeInsertChannel('announcements', 'announcements', 'announcements', 'Important announcements from AURA FX.', 'open');
+
             // TRADING CHANNELS - Open access for all users to see and post
             const tradingChannels = [
               { id: 'forex', name: 'forex', category: 'trading', description: 'Forex trading discussions', accessLevel: 'open' },

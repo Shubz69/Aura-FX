@@ -102,13 +102,23 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { username, email, password, name, avatar } = req.body;
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch { return res.status(400).json({ success: false, message: 'Invalid JSON' }); }
+    }
+    const { username, email, password, name, phone, avatar } = body;
 
     // Validate required fields
     if (!username || !email || !password) {
       return res.status(400).json({ 
         success: false, 
         message: 'Username, email, and password are required' 
+      });
+    }
+    if (!phone || (phone + '').replace(/\D/g, '').length < 10) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Valid phone number is required' 
       });
     }
 
@@ -164,11 +174,25 @@ module.exports = async (req, res) => {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      // Insert new user
-      const [result] = await db.execute(
-        'INSERT INTO users (username, email, password, name, avatar, role, muted, mfa_verified, dtype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [usernameLower, emailLower, hashedPassword, name || username, avatar || '/avatars/avatar_ai.png', 'USER', 0, 0, 'UserModel']
-      );
+      const phoneClean = (phone || '').toString().trim();
+      // Insert new user (phone column may not exist on older schemas - try with phone first)
+      let result;
+      try {
+        [result] = await db.execute(
+          'INSERT INTO users (username, email, password, name, phone, avatar, role, muted, mfa_verified, dtype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [usernameLower, emailLower, hashedPassword, name || username, phoneClean, avatar || '/avatars/avatar_ai.png', 'USER', 0, 0, 'UserModel']
+        );
+      } catch (colErr) {
+        if (colErr.code === 'ER_BAD_FIELD_ERROR' && colErr.message && colErr.message.includes('phone')) {
+          await db.execute('ALTER TABLE users ADD COLUMN phone VARCHAR(50) DEFAULT NULL');
+          [result] = await db.execute(
+            'INSERT INTO users (username, email, password, name, phone, avatar, role, muted, mfa_verified, dtype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [usernameLower, emailLower, hashedPassword, name || username, phoneClean, avatar || '/avatars/avatar_ai.png', 'USER', 0, 0, 'UserModel']
+          );
+        } else {
+          throw colErr;
+        }
+      }
 
       const userId = result.insertId;
 
@@ -202,6 +226,7 @@ module.exports = async (req, res) => {
         username: usernameLower,
         email: emailLower,
         name: name || username,
+        phone: phoneClean,
         avatar: avatar || '/avatars/avatar_ai.png',
         role: 'USER',
         token: token,
