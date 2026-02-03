@@ -7,11 +7,6 @@ import "../styles/Chatbot.css";
 const Chatbot = () => {
     const { isAuthenticated, user } = useAuth();
     const navigate = useNavigate();
-    
-    // Hide chatbot for premium users - they should use Aura AI instead
-    if (isPremium(user)) {
-        return null;
-    }
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
@@ -19,15 +14,6 @@ const Chatbot = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [connectError, setConnectError] = useState(false);
     const messagesEndRef = useRef(null);
-
-    const toggleChat = () => {
-        setIsOpen(!isOpen);
-        
-        // Reset connection error when reopening
-        if (!isOpen) {
-            setConnectError(false);
-        }
-    };
 
     useEffect(() => {
         if (isOpen) {
@@ -48,6 +34,20 @@ const Chatbot = () => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    // Hide chatbot for premium users - they should use Aura AI instead (after all hooks)
+    if (isPremium(user)) {
+        return null;
+    }
+
+    const toggleChat = () => {
+        setIsOpen(!isOpen);
+        
+        // Reset connection error when reopening
+        if (!isOpen) {
+            setConnectError(false);
+        }
+    };
 
     const sendMessage = async (message) => {
         const updatedMessages = [...messages, { from: "user", text: message }];

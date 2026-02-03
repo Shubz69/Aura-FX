@@ -62,3 +62,5 @@ complete-backup/
 !vercel.json
 !trading-platform-backend/
 !trading-platform-frontend/
+.vercel
+.env*.local

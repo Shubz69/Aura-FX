@@ -14,10 +14,9 @@
 
 .why-container {
   position: relative;
-  min-height: 100vh;
   background: #0a0a0a;
   color: #ffffff;
-  padding: 140px 20px 80px;
+  padding: 140px 20px 3rem;
   overflow: hidden;
   z-index: 1;
   font-family: var(--font-secondary);
@@ -29,6 +28,10 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 3rem;
+}
+
+.content-wrapper > .why-additional-features:last-child {
+  margin-bottom: 0;
 }
 
 /* Header Section */
