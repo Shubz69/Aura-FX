@@ -648,13 +648,15 @@ body.loading-active {
     margin-right: auto;
 }
 
-.markets-top-grid {
-    margin-top: 4rem;
+.markets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.75rem;
+    align-items: start;
+    max-width: 1200px;
+    margin: 2.5rem auto 0;
 }
 
-.markets-bottom-grid {
-    margin-top: 0.05;
-}
 
 /* Decorative divider - never overlaps content */
 .markets-divider {
@@ -674,13 +676,15 @@ body.loading-active {
     text-align: center;
     gap: 1rem;
     padding: 2rem 1.75rem;
-    min-height: 180px;
+    min-height: unset;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     box-sizing: border-box;
+    overflow: hidden;   
+    word-break: break-word;
 }
 
 .market-item:hover {
