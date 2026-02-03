@@ -360,6 +360,10 @@
     {
       "source": "/api/market/prices",
       "destination": "/api/market/prices.js"
+    },
+    {
+      "source": "/api/markets/snapshot",
+      "destination": "/api/markets/snapshot.js"
     }
   ],
   "crons": [

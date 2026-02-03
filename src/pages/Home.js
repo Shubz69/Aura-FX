@@ -185,7 +185,7 @@ const Home = () => {
                             {/* Trading Markets Section */}
                             <div className="trading-markets-section">
                                 <h2 className="section-title">Trade Multiple Markets</h2>
-                                <div className="markets-grid">
+                                <div className="markets-top-grid">
                                     <div className="market-item">
                                         <div className="market-icon"><FaChartLine /></div>
                                         <h3 className="market-title">Forex</h3>
@@ -201,6 +201,9 @@ const Home = () => {
                                         <h3 className="market-title">Crypto</h3>
                                         <p className="market-description">Bitcoin, Ethereum, and altcoins</p>
                                     </div>
+                                </div>
+                                <div className="markets-divider" aria-hidden="true" />
+                                <div className="markets-bottom-grid">
                                     <div className="market-item">
                                         <div className="market-icon"><FaGlobe /></div>
                                         <h3 className="market-title">Futures</h3>

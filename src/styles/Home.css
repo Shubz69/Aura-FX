@@ -629,7 +629,7 @@ body.loading-active {
     font-weight: 300;
 }
 
-/* Trading Markets Section */
+/* Trading Markets Section - robust grid/flex, no overlap */
 .trading-markets-section {
     width: 100%;
     max-width: 1200px;
@@ -637,31 +637,48 @@ body.loading-active {
     text-align: center;
 }
 
-.markets-grid {
+.markets-top-grid,
+.markets-bottom-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 2.5rem;
-    margin-top: 3rem;
+    gap: 24px;
+    align-items: start;
     max-width: 1100px;
     margin-left: auto;
     margin-right: auto;
-    align-items: stretch;
+}
+
+.markets-top-grid {
+    margin-top: 2rem;
+}
+
+.markets-bottom-grid {
+    margin-top: 0;
+}
+
+/* Decorative divider - never overlaps content */
+.markets-divider {
+    margin: 2rem auto;
+    height: 6px;
+    max-width: 260px;
+    opacity: 0.25;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 3px;
+    flex-shrink: 0;
 }
 
 .market-item {
-    padding: 2.25rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 1.5rem 1.25rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.75rem;
-    min-height: 190px;
     box-sizing: border-box;
 }
 
@@ -672,9 +689,14 @@ body.loading-active {
 }
 
 .market-icon {
-    font-size: 2.5rem;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     color: #ffffff;
-    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
     filter: grayscale(0.3);
     transition: filter 0.3s ease;
 }
@@ -684,19 +706,27 @@ body.loading-active {
 }
 
 .market-title {
-    font-size: 1.3rem;
+    margin: 0;
+    margin-top: 6px;
+    font-size: 1.2rem;
     font-weight: 400;
     color: #ffffff;
-    margin-bottom: 1rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
+    line-height: 1.2;
 }
 
 .market-description {
+    margin: 0;
     font-size: 1rem;
-    color: #ffffff;
-    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.5;
     font-weight: 300;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* Key Features Section */
@@ -789,9 +819,22 @@ body.loading-active {
         font-size: 2.2rem;
     }
     
-    .markets-grid {
+    .markets-top-grid,
+    .markets-bottom-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
+    }
+}
+
+/* Mobile: collapse markets to 1 column (768px and below) */
+@media (max-width: 768px) {
+    .markets-top-grid,
+    .markets-bottom-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .markets-divider {
+        margin: 1.5rem auto;
     }
 }
 
@@ -832,9 +875,10 @@ body.loading-active {
         gap: 2rem;
     }
     
-    .markets-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
+    .markets-top-grid,
+    .markets-bottom-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
     }
     
     .central-glow {
@@ -899,7 +943,8 @@ body.loading-active {
         width: 100%;
     }
     
-    .markets-grid {
+    .markets-top-grid,
+    .markets-bottom-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
         width: 100%;
@@ -1039,25 +1084,34 @@ body.loading-active {
         padding: 0 1rem;
     }
     
-    .markets-grid {
+    .markets-top-grid,
+    .markets-bottom-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
     
+    .markets-divider {
+        margin: 1.5rem auto;
+    }
+    
     .market-item {
-        padding: 2rem 1.5rem;
+        padding: 1.5rem 1.25rem;
     }
     
     .market-icon {
-        font-size: 1.8rem;
+        width: 44px;
+        height: 44px;
+        font-size: 1.5rem;
     }
     
     .market-title {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
     
     .market-description {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
     }
     
     .key-features-section {

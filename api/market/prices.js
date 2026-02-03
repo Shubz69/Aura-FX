@@ -277,6 +277,40 @@ async function fetchPrice(symbol) {
   return getFallbackPrice(symbol);
 }
 
+/**
+ * Fetch prices for multiple symbols (used by /api/markets/snapshot).
+ * Does not use per-request cache; snapshot endpoint has its own 60s cache.
+ */
+async function fetchPricesForSymbols(symbols) {
+  if (!symbols || symbols.length === 0) return { prices: {}, timestamp: Date.now() };
+  const REQUEST_TIMEOUT_MS = 5000;
+  const results = await Promise.allSettled(
+    symbols.map(symbol =>
+      Promise.race([
+        fetchPrice(symbol),
+        new Promise(resolve => setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT_MS + 1000))
+      ])
+    )
+  );
+  const prices = {};
+  results.forEach((result, index) => {
+    const symbol = symbols[index];
+    if (result.status === 'fulfilled' && result.value) {
+      const priceData = result.value;
+      if (!priceData.price || priceData.price === '0.00' || parseFloat(priceData.price) === 0) {
+        const fallback = getFallbackPrice(symbol);
+        if (fallback) prices[symbol] = fallback;
+      } else {
+        prices[symbol] = priceData;
+      }
+    } else {
+      const fallback = getFallbackPrice(symbol);
+      if (fallback) prices[symbol] = fallback;
+    }
+  });
+  return { prices, timestamp: Date.now() };
+}
+
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -384,3 +418,5 @@ module.exports = async (req, res) => {
     }
   });
 };
+
+module.exports.fetchPricesForSymbols = fetchPricesForSymbols;

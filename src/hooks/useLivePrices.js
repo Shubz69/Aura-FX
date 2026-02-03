@@ -1,31 +1,28 @@
 /**
- * useLivePrices - Shared hook for live market prices
- * 
- * Features:
- * - Single connection per browser session (shared across all components)
- * - Only ONE upstream connection per symbol (singleton pattern)
- * - Automatic reconnection with exponential backoff
- * - Never shows 0.00 - uses cached prices with "delayed" indicator
- * - Green/red flash on price updates
- * - Correct decimals per instrument type
- * - Health monitoring
+ * useLivePrices - Shared hook for market prices (snapshot every 60s)
+ *
+ * - Single server-side source: GET /api/markets/snapshot (60s cache, same for all users)
+ * - Poll snapshot once every 60,000ms only; no per-second or per-render fetches
+ * - Modal and all site-wide displays reuse the same cached snapshot
+ * - No refetch on re-render, focus, or tab change; one global interval only
+ * - Prices stable for the full minute, then update together
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE_URL = window.location.origin;
+const SNAPSHOT_POLL_MS = 60000; // 1 minute - single global interval
 
 // ============================================================================
-// Singleton Connection Manager
-// Ensures only ONE upstream connection exists across entire app
+// Singleton: one snapshot poll for the whole app
 // ============================================================================
 
 let globalPriceData = {};
 let globalListeners = new Set();
-let fetchInterval = null;
+let snapshotInterval = null;
+let fetchInFlight = false;
 let isConnected = false;
 let lastFetchTime = 0;
-let reconnectAttempts = 0;
 let watchlistConfig = null;
 let activeSymbols = new Set();
 
@@ -88,107 +85,80 @@ function notifyListeners() {
   });
 }
 
-// Fetch prices from API
-async function fetchPrices(symbols) {
-  if (!symbols || symbols.length === 0) return;
-  
+// Fetch snapshot once (single source of truth, 60s server cache)
+async function fetchSnapshot() {
+  if (fetchInFlight) return;
+  fetchInFlight = true;
   const startTime = Date.now();
-  
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
-    
-    const response = await fetch(
-      `${API_BASE_URL}/api/market/prices?symbols=${symbols.join(',')}`,
-      { 
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal
-      }
-    );
-    
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const response = await fetch(`${API_BASE_URL}/api/markets/snapshot`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal
+    });
+
     clearTimeout(timeoutId);
-    
+
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    
+
     const data = await response.json();
-    
-    if (data.success && data.prices) {
-      const latency = Date.now() - startTime;
-      healthStats.avgLatency = (healthStats.avgLatency * healthStats.totalUpdates + latency) / (healthStats.totalUpdates + 1);
+
+    if (data.success && data.prices && typeof data.snapshotTimestamp === 'number') {
+      healthStats.avgLatency = (healthStats.avgLatency * healthStats.totalUpdates + (Date.now() - startTime)) / (healthStats.totalUpdates + 1);
       healthStats.totalUpdates++;
       healthStats.lastUpdateTime = Date.now();
-      healthStats.liveSymbols = data.meta?.liveCount || 0;
-      healthStats.delayedSymbols = data.meta?.delayedCount || 0;
-      
-      // Update global price data with flash detection
+      healthStats.liveSymbols = Object.keys(data.prices).length;
+      healthStats.delayedSymbols = 0;
+
       Object.entries(data.prices).forEach(([symbol, priceData]) => {
         const prev = globalPriceData[symbol];
         const newPrice = parseFloat(priceData.rawPrice || priceData.price);
         const oldPrice = prev ? parseFloat(prev.rawPrice || prev.price) : newPrice;
-        
-        // Skip if price is 0 or invalid
+
         if (!newPrice || newPrice === 0) return;
-        
-        // Detect price direction for flash animation
+
         let flash = null;
         if (prev && prev.rawPrice && newPrice !== oldPrice) {
           flash = newPrice > oldPrice ? 'up' : 'down';
         }
-        
+
         globalPriceData[symbol] = {
           ...priceData,
           displayName: priceData.displayName || getDisplayName(symbol),
           flash,
           flashTime: flash ? Date.now() : (prev?.flashTime || 0),
-          lastUpdate: Date.now()
+          lastUpdate: data.snapshotTimestamp
         };
       });
-      
+
       lastFetchTime = Date.now();
       isConnected = true;
-      reconnectAttempts = 0;
       notifyListeners();
     }
   } catch (error) {
-    console.error('Price fetch error:', error.message);
+    console.error('Snapshot fetch error:', error.message);
     healthStats.errors++;
-    
-    // Mark connection as potentially stale but keep existing data
-    // NEVER clear prices - they should persist
-    
-    // Exponential backoff on errors
-    reconnectAttempts++;
-    const backoffTime = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-    
-    if (fetchInterval) {
-      clearInterval(fetchInterval);
-      fetchInterval = setTimeout(() => startPolling(Array.from(activeSymbols)), backoffTime);
-    }
+    // Keep existing data; next 60s poll will retry
+  } finally {
+    fetchInFlight = false;
   }
 }
 
-// Start polling for prices
-function startPolling(symbols) {
-  if (fetchInterval) {
-    clearInterval(fetchInterval);
-  }
-  
-  // Track active symbols
-  symbols.forEach(s => activeSymbols.add(s));
-  
-  // Initial fetch
-  fetchPrices(symbols);
-  
-  // Set up interval (5 seconds for live updates)
-  fetchInterval = setInterval(() => fetchPrices(Array.from(activeSymbols)), 5000);
+// Start global snapshot polling (once every 60s only)
+function startSnapshotPolling() {
+  if (snapshotInterval) return;
+  fetchSnapshot();
+  snapshotInterval = setInterval(fetchSnapshot, SNAPSHOT_POLL_MS);
 }
 
-// Stop polling
-function stopPolling() {
-  if (fetchInterval) {
-    clearInterval(fetchInterval);
-    fetchInterval = null;
+function stopSnapshotPolling() {
+  if (snapshotInterval) {
+    clearInterval(snapshotInterval);
+    snapshotInterval = null;
   }
   isConnected = false;
 }
@@ -275,68 +245,57 @@ export function useLivePrices(options = {}) {
     setLoading(false);
   }, []);
 
-  // Check for stale data
+  // Stale = no successful snapshot in last 90s (allow one missed poll)
   useEffect(() => {
     const staleCheck = setInterval(() => {
       const now = Date.now();
-      const isStale = lastFetchTime > 0 && now - lastFetchTime > 30000;
+      const isStale = lastFetchTime > 0 && now - lastFetchTime > 90000;
       setStale(isStale);
-    }, 5000);
-    
+    }, SNAPSHOT_POLL_MS);
     return () => clearInterval(staleCheck);
   }, []);
 
-  // Initialize and subscribe
+  // Initialize: watchlist + single snapshot poll (no refetch on modal/focus/tab)
   useEffect(() => {
     let mounted = true;
-    
+
     async function init() {
-      // Fetch watchlist config
       const config = await fetchWatchlist();
       if (!mounted) return;
-      
+
       setWatchlist(config);
-      
-      // Determine symbols to track
+
       let symbolsToTrack = customSymbols;
-      
       if (!symbolsToTrack) {
         if (category && config.groups?.[category]) {
           symbolsToTrack = config.groups[category].symbols.map(s => s.symbol);
         } else if (beginnerMode) {
           symbolsToTrack = config.beginnerSet;
         } else {
-          // All symbols from all groups
           symbolsToTrack = Object.values(config.groups || {})
             .flatMap(g => g.symbols?.map(s => s.symbol) || []);
         }
       }
-      
-      symbolsRef.current = symbolsToTrack;
-      
-      // Register listener
+
+      symbolsRef.current = symbolsToTrack || [];
+      symbolsToTrack.forEach(s => activeSymbols.add(s));
+
       globalListeners.add(handleUpdate);
-      
-      // Start polling if not already running, or merge symbols
-      if (!fetchInterval && symbolsToTrack.length > 0) {
-        startPolling(symbolsToTrack);
-      } else if (fetchInterval) {
-        // Add new symbols to tracking
-        symbolsToTrack.forEach(s => activeSymbols.add(s));
-        // Get current data immediately
-        handleUpdate({ ...globalPriceData });
+
+      // Single global snapshot poll every 60s (same data for ticker + modal)
+      if (globalListeners.size > 0) {
+        startSnapshotPolling();
       }
+      handleUpdate({ ...globalPriceData });
     }
-    
+
     init();
-    
+
     return () => {
       mounted = false;
       globalListeners.delete(handleUpdate);
-      
-      // Stop polling if no more listeners
       if (globalListeners.size === 0) {
-        stopPolling();
+        stopSnapshotPolling();
         activeSymbols.clear();
       }
     };
@@ -447,7 +406,7 @@ export function getTickerHealth() {
     listenerCount: globalListeners.size,
     activeSymbolCount: activeSymbols.size,
     lastFetchTime,
-    reconnectAttempts
+    pollIntervalMs: SNAPSHOT_POLL_MS
   };
 }
 
@@ -456,7 +415,7 @@ export function _getActiveConnections() {
   return {
     listeners: globalListeners.size,
     activeSymbols: activeSymbols.size,
-    hasInterval: !!fetchInterval
+    hasInterval: !!snapshotInterval
   };
 }
 
