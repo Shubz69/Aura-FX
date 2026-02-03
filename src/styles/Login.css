@@ -17,7 +17,9 @@
     align-items: center;
     background: #0a0a0a;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     font-family: var(--font-secondary);
     padding: 20px;
     padding-top: 80px;

@@ -53,14 +53,35 @@ module.exports = async (req, res) => {
   const userId = decoded.id;
 
   try {
-    const [userRows] = await executeQuery(
-      `SELECT id, email, username, name, avatar, role,
-              subscription_status, subscription_plan, subscription_expiry,
-              subscription_started, payment_failed, has_used_free_trial,
-              onboarding_accepted, onboarding_subscription_snapshot
-       FROM users WHERE id = ?`,
-      [userId]
-    );
+    let userRows;
+    try {
+      [userRows] = await executeQuery(
+        `SELECT id, email, username, name, avatar, role,
+                subscription_status, subscription_plan, subscription_expiry,
+                subscription_started, payment_failed, has_used_free_trial,
+                onboarding_accepted, onboarding_subscription_snapshot
+         FROM users WHERE id = ?`,
+        [userId]
+      );
+    } catch (colErr) {
+      // Columns may not exist if migration not run - fallback to basic query
+      if (colErr.code === 'ER_BAD_FIELD_ERROR' || (colErr.message && colErr.message.includes('Unknown column'))) {
+        const [fallbackRows] = await executeQuery(
+          `SELECT id, email, username, name, avatar, role,
+                  subscription_status, subscription_plan, subscription_expiry,
+                  subscription_started, payment_failed, has_used_free_trial
+           FROM users WHERE id = ?`,
+          [userId]
+        );
+        userRows = (fallbackRows || []).map((r) => ({
+          ...r,
+          onboarding_accepted: false,
+          onboarding_subscription_snapshot: null
+        }));
+      } else {
+        throw colErr;
+      }
+    }
 
     if (!userRows || userRows.length === 0) {
       return res.status(404).json({

@@ -6,6 +6,9 @@
     padding: 20px;
     background: #0a0a0a;
     position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .subscription-card {

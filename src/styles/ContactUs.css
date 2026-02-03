@@ -24,6 +24,9 @@
     background: #0a0a0a;
     font-family: var(--font-secondary);
     padding-top: 90px; /* Add padding to account for fixed navbar */
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .contact-info-paper, 

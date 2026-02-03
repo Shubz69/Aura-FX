@@ -18,7 +18,9 @@
   background: #0a0a0a;
   color: #ffffff;
   padding: 140px 20px 80px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 1;
   font-family: var(--font-secondary);
 }

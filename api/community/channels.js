@@ -545,10 +545,26 @@ module.exports = async (req, res) => {
               let userRows = [];
               const userId = decoded.id != null ? String(decoded.id) : null;
               if (userId) {
-                [userRows] = await db.execute(
-                  'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
-                  [userId]
-                );
+                try {
+                  [userRows] = await db.execute(
+                    'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
+                    [userId]
+                  );
+                } catch (colErr) {
+                  if (colErr.code === 'ER_BAD_FIELD_ERROR' || (colErr.message && colErr.message.includes('Unknown column'))) {
+                    const [fallback] = await db.execute(
+                      'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+                      [userId]
+                    );
+                    userRows = (fallback || []).map((r) => ({
+                      ...r,
+                      onboarding_accepted: false,
+                      onboarding_subscription_snapshot: null
+                    }));
+                  } else {
+                    throw colErr;
+                  }
+                }
               }
               if (userRows && userRows.length > 0) {
                 entitlements = getEntitlements(userRows[0]);

@@ -6,6 +6,9 @@
     background: #0a0a0a;
     color: white;
     font-family: 'Space Grotesk', sans-serif;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .page-header {

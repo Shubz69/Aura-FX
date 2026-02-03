@@ -7,7 +7,9 @@
     background: linear-gradient(135deg, #1a0033 0%, #3a0099 100%);
     color: white;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .payment-success-container::before {

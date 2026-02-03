@@ -1,10 +1,12 @@
 /* AdminUserList.css — Infinity Themed Admin Table */
-.page-wrapper {
+.admin-user-list-page {
     min-height: 100vh;
     background: #0a0a0a;
     color: #ffffff;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     font-family: 'Space Grotesk', sans-serif;
 }
 
@@ -146,10 +148,7 @@
     transform: scale(1.03);
 }
 
-/* Remove extra scrollbar */
-.page-wrapper {
-    overflow: hidden;
-}
+/* Scoped - do not override global .page-wrapper */
 
 .container {
     overflow: visible;

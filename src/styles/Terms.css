@@ -8,6 +8,8 @@
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .terms-content {

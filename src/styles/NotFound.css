@@ -5,7 +5,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     position: relative;
     font-family: 'Space Grotesk', sans-serif;
 }

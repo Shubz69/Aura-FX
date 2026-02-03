@@ -75,7 +75,7 @@ const AdminUserList = () => {
     }
 
     return (
-        <div className="page-wrapper">
+        <div className="admin-user-list-page">
             <CosmicBackground />
             <div className="container">
                 <h2 className="gradient-text">REGISTERED USERS</h2>
