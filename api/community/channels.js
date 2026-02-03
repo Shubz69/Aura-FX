@@ -278,6 +278,72 @@ module.exports = async (req, res) => {
     if (!decoded || !decoded.id) {
       return res.status(401).json({ success: false, errorCode: 'UNAUTHORIZED', message: 'Authentication required' });
     }
+
+    // GET with ?channelOrder=true or ?categoryOrder=true (same auth, return order only)
+    if (req.query.channelOrder === 'true') {
+      try {
+        const db = await getDbConnection();
+        if (!db) {
+          return res.status(500).json({ success: false, message: 'Database connection error' });
+        }
+        try {
+          await ensureSettingsTable(db);
+          const [rows] = await db.execute(
+            'SELECT value FROM community_settings WHERE id = ?',
+            ['channelOrder']
+          );
+          if (db && !db.ended) await db.end();
+          if (rows && rows.length > 0) {
+            try {
+              const channelOrder = JSON.parse(rows[0].value);
+              return res.status(200).json({ success: true, channelOrder });
+            } catch (parseError) {
+              console.error('Error parsing channel order:', parseError);
+            }
+          }
+          return res.status(200).json({ success: true, channelOrder: {} });
+        } catch (dbError) {
+          console.error('Database error fetching channel order:', dbError);
+          if (db && !db.ended) await db.end();
+          return res.status(500).json({ success: false, message: 'Database error' });
+        }
+      } catch (error) {
+        console.error('Error in channel order handler:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    }
+
+    if (req.query.categoryOrder === 'true') {
+      try {
+        const db = await getDbConnection();
+        if (!db) {
+          return res.status(500).json({ success: false, message: 'Database connection error' });
+        }
+        try {
+          await ensureSettingsTable(db);
+          const [rows] = await db.execute(
+            'SELECT value FROM community_settings WHERE id = ?',
+            ['category_order']
+          );
+          if (rows && rows.length > 0) {
+            const order = JSON.parse(rows[0].value);
+            if (db && !db.ended) await db.end();
+            return res.status(200).json({ success: true, data: order });
+          }
+          if (db && !db.ended) await db.end();
+          const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
+          return res.status(200).json({ success: true, data: defaultOrder });
+        } catch (dbError) {
+          console.error('Database error fetching category order:', dbError);
+          if (db && !db.ended) await db.end();
+          return res.status(500).json({ success: false, message: 'Database error' });
+        }
+      } catch (error) {
+        console.error('Error in category order handler:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    }
+
     try {
       // Default channels (fallback)
       const defaultChannels = [
@@ -963,93 +1029,6 @@ module.exports = async (req, res) => {
       }
     } catch (error) {
       console.error('Error updating channel:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
-    }
-  }
-
-  // Handle category order GET/POST
-  // Handle channel order request
-  if (req.method === 'GET' && req.query.channelOrder === 'true') {
-    try {
-      const db = await getDbConnection();
-      if (!db) {
-        return res.status(500).json({ success: false, message: 'Database connection error' });
-      }
-
-      try {
-        await ensureSettingsTable(db);
-        const [rows] = await db.execute(
-          'SELECT value FROM community_settings WHERE id = ?',
-          ['channelOrder']
-        );
-
-        if (rows && rows.length > 0) {
-          try {
-            const channelOrder = JSON.parse(rows[0].value);
-            await db.end();
-            return res.status(200).json({ success: true, channelOrder });
-          } catch (parseError) {
-            console.error('Error parsing channel order:', parseError);
-          }
-        }
-
-        await db.end();
-        return res.status(200).json({ success: true, channelOrder: {} });
-      } catch (dbError) {
-        console.error('Database error fetching channel order:', dbError);
-        if (db && !db.ended) await db.end();
-        return res.status(500).json({ success: false, message: 'Database error' });
-      }
-    } catch (error) {
-      console.error('Error in channel order handler:', error);
-      return res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  }
-
-  if (req.method === 'GET' && req.query.categoryOrder === 'true') {
-    try {
-      const db = await getDbConnection();
-      if (!db) {
-        return res.status(500).json({
-          success: false,
-          message: 'Database connection error'
-        });
-      }
-
-      try {
-        await ensureSettingsTable(db);
-        const [rows] = await db.execute(
-          'SELECT value FROM community_settings WHERE id = ?',
-          ['category_order']
-        );
-
-        if (rows && rows.length > 0) {
-          const order = JSON.parse(rows[0].value);
-          return res.status(200).json({
-            success: true,
-            data: order
-          });
-        } else {
-          // Return default order if not set
-          const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
-          return res.status(200).json({
-            success: true,
-            data: defaultOrder
-          });
-        }
-      } catch (dbError) {
-        console.error('Database error fetching category order:', dbError);
-        if (db && !db.ended) await db.end();
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to fetch category order'
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching category order:', error);
       return res.status(500).json({
         success: false,
         message: 'Internal server error'

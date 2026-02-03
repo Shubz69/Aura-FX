@@ -43,6 +43,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "dev": "vercel dev",
     "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
     "test:ai": "jest tests/ai-chat.test.js --verbose",

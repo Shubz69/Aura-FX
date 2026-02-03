@@ -258,12 +258,13 @@ module.exports = async (req, res) => {
       tier = 'AURA_FX';
       logger.info('Access granted: AURA_FX_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // 4. FREE - community access for General channel only
+    // 4. FREE - community access ONLY when user has selected a plan (subscription_plan set, e.g. 'free')
     else {
-      hasCommunityAccess = true;
+      const planSelected = !!(user.subscription_plan && String(user.subscription_plan).trim().length > 0);
+      hasCommunityAccess = planSelected;
       accessType = 'NONE';
       tier = 'FREE';
-      logger.info('Access: FREE tier (General channel only)', { userId, role: userRole });
+      logger.info('Access: FREE tier', { userId, role: userRole, planSelected, hasCommunityAccess });
     }
 
     // Normalize status for entitlements: inactive | trialing | active

@@ -5,11 +5,7 @@
  */
 
 const { executeQuery } = require('./db');
-const {
-  getEntitlements,
-  getAllowedChannelSlugs,
-  normalizeRole
-} = require('./utils/entitlements');
+const { getEntitlements, getAllowedChannelSlugs } = require('./utils/entitlements');
 
 function decodeToken(authHeader) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
@@ -98,13 +94,14 @@ module.exports = async (req, res) => {
 
     entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, channels);
 
+    // user.role must match entitlements.role (super admin by email → SUPER_ADMIN)
     const user = {
       id: userRow.id,
       email: userRow.email,
       username: userRow.username || userRow.email?.split('@')[0] || '',
       name: userRow.name || userRow.username || '',
       avatar: userRow.avatar || '/avatars/avatar_ai.png',
-      role: normalizeRole(userRow.role)
+      role: entitlements.role
     };
 
     return res.status(200).json({

@@ -40,7 +40,8 @@ export const EntitlementsProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/me', {
+      const base = process.env.REACT_APP_API_URL || '';
+      const res = await fetch(`${base}/api/me`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         cache: 'no-store'
       });

@@ -2,6 +2,7 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { normalizeRole, isSuperAdminEmail } = require('../utils/entitlements');
 
 // Get database connection
 const getDbConnection = async () => {
@@ -186,12 +187,13 @@ module.exports = async (req, res) => {
           .replace(/=/g, '');
       };
       
+      const apiRole = isSuperAdminEmail(user) ? 'SUPER_ADMIN' : normalizeRole(user.role);
       const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
       const payload = toBase64Url(JSON.stringify({
         id: user.id,
         email: user.email,
         username: user.username || user.email.split('@')[0],
-        role: user.role || 'USER',
+        role: apiRole,
         exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
       }));
       const signature = toBase64Url('signature-' + Date.now());
@@ -208,7 +210,7 @@ module.exports = async (req, res) => {
         email: user.email,
         name: user.name || user.username,
         avatar: user.avatar || '/avatars/avatar_ai.png',
-        role: user.role || 'USER',
+        role: apiRole,
         token: token,
         status: 'SUCCESS',
         subscription: {

@@ -134,9 +134,8 @@ export const AdminGuard = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  const isAdmin = user?.role === 'admin' || 
-                  user?.role === 'ADMIN' || 
-                  user?.role === 'super_admin' ||
+  const isAdmin = user?.role === 'ADMIN' ||
+                  user?.role === 'SUPER_ADMIN' ||
                   user?.email?.toLowerCase() === 'shubzfx@gmail.com';
   
   if (!isAdmin) {

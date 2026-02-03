@@ -3,14 +3,18 @@
  * Used by: /api/me, /api/community/channels, /api/community/channels/messages,
  * /api/community/bootstrap, AI endpoints, and WebSocket server.
  *
- * STRICT ACCESS RULES (non-negotiable):
- * - FREE: Only General (general) and Announcements (welcome, announcements). Hard allowlist below.
- *   FREE must NEVER see Trading or A7FX/Elite channels, regardless of category or access_level.
- * - Trading channels (forex, crypto, stocks, etc.): access_level 'open', visible only to Premium and Elite.
- * - Elite/A7FX-only channels (access_level 'a7fx' or 'elite'): visible only to Elite.
- * - Admins/Super Admins bypass all checks.
+ * Channel access is decided ONLY by: (1) user role + tier (entitlements), (2) channel access_level
+ * and permission_type. Category is NEVER used for access—only for grouping in the sidebar.
  *
- * Roles: USER | ADMIN | SUPER_ADMIN. Tiers: FREE | PREMIUM | ELITE.
+ * ROLES (from DB): USER | ADMIN | SUPER_ADMIN
+ * TIERS (from entitlements/subscription): FREE | PREMIUM | ELITE
+ *
+ * RULES:
+ * 1) Admin override: role ADMIN or SUPER_ADMIN → canSee/canRead true for all; canWrite true unless read-only.
+ * 2) FREE (role USER): hard allowlist—only channel ids general, welcome, announcements. All others canSee=false.
+ * 3) PREMIUM (role USER): canSee where access_level in open, free, read-only, premium, support, staff. Not a7fx/elite/admin-only.
+ * 4) ELITE (role USER): same as PREMIUM plus access_level a7fx, elite. Still no admin-only unless admin role.
+ * 5) Write: canWrite = false if permission_type === 'read-only' OR access_level === 'read-only'; else true when canSee.
  */
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements']);
 
@@ -172,7 +176,7 @@ function getChannelPermissions(entitlements, channel) {
   const id = (channel?.id || channel?.name || '').toString().toLowerCase();
   const accessLevel = (channel?.access_level ?? channel?.accessLevel ?? 'open').toString().toLowerCase();
   const permissionType = (channel?.permission_type ?? channel?.permissionType ?? 'read-write').toString().toLowerCase();
-  const readOnly = permissionType === 'read-only';
+  const readOnly = permissionType === 'read-only' || accessLevel === 'read-only';
 
   const { role } = entitlements;
   const tier = entitlements.effectiveTier != null ? entitlements.effectiveTier : entitlements.tier;

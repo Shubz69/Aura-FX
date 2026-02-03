@@ -529,54 +529,62 @@ const Community = () => {
     
     const categoryOrder = categoryOrderState;
 
-    // Load category order and channel order from backend
+    // Load category order and channel order from backend (auth required)
+    const apiBase = process.env.REACT_APP_API_URL || '';
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
     useEffect(() => {
         const fetchCategoryOrder = async () => {
             try {
-                const response = await fetch('/api/community/channels?categoryOrder=true');
+                const response = await fetch(`${apiBase}/api/community/channels?categoryOrder=true`, {
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
+                });
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && Array.isArray(data.data)) {
                         setCategoryOrderState(data.data);
                     }
+                } else if (response.status === 401) {
+                    return;
                 }
             } catch (error) {
                 console.error('Error fetching category order:', error);
-                // Fallback to localStorage if backend fails
                 const saved = localStorage.getItem('channelCategoryOrder');
                 if (saved) {
                     try {
                         setCategoryOrderState(JSON.parse(saved));
-                    } catch (e) {
-                        // Use default
-                    }
+                    } catch (e) { /* use default */ }
                 }
             }
         };
-        
+
         const fetchChannelOrder = async () => {
             try {
-                const response = await fetch('/api/community/channels?channelOrder=true');
+                const response = await fetch(`${apiBase}/api/community/channels?channelOrder=true`, {
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
+                });
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && data.channelOrder) {
                         setChannelOrder(data.channelOrder);
                     }
+                } else if (response.status === 401) {
+                    return;
                 }
             } catch (error) {
                 console.error('Error fetching channel order:', error);
-                // Fallback to localStorage if backend fails
                 const saved = localStorage.getItem('channelOrder');
                 if (saved) {
                     try {
                         setChannelOrder(JSON.parse(saved));
-                    } catch (e) {
-                        // Use default
-                    }
+                    } catch (e) { /* use default */ }
                 }
             }
         };
-        
+
         fetchCategoryOrder();
         fetchChannelOrder();
 
@@ -597,15 +605,16 @@ const Community = () => {
             clearInterval(intervalId);
             window.removeEventListener('focus', handleFocus);
         };
-    }, []);
+    }, [apiBase]);
 
     // Save category order to backend
     const saveCategoryOrder = async (newOrder) => {
         try {
-            const response = await fetch('/api/community/channels', {
+            const response = await fetch(`${apiBase}/api/community/channels`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
                 },
                 body: JSON.stringify({ categoryOrder: newOrder })
             });
@@ -630,10 +639,11 @@ const Community = () => {
     const saveChannelOrder = async (category, newOrder) => {
         const updatedOrder = { ...channelOrder, [category]: newOrder };
         try {
-            const response = await fetch('/api/community/channels', {
+            const response = await fetch(`${apiBase}/api/community/channels`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
                 },
                 body: JSON.stringify({ channelOrder: updatedOrder })
             });

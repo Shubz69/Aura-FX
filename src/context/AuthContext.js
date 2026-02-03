@@ -45,10 +45,9 @@ export const AuthProvider = ({ children }) => {
 
   const resolveUserInfo = (data = {}) => {
     const email = (data.email || '').toLowerCase();
-    let finalRole = data.role || 'free';
-    if (email === 'shubzfx@gmail.com') {
-      finalRole = 'super_admin';
-    }
+    let finalRole = (data.role || 'USER').toString().toUpperCase();
+    if (finalRole === 'SUPERADMIN') finalRole = 'SUPER_ADMIN';
+    if (email === 'shubzfx@gmail.com') finalRole = 'SUPER_ADMIN';
     return {
       id: data.id || data.userId || data.sub || null,
       username: data.username || data.name || '',
@@ -444,66 +443,43 @@ export const AuthProvider = ({ children }) => {
           }
         }
         
-        // ============= SERVER-AUTHORITATIVE SUBSCRIPTION CHECK =============
-        // CRITICAL: Always fetch subscription status from server after login
-        // This is the SINGLE SOURCE OF TRUTH for determining redirect
-        // DO NOT use localStorage for access decisions - only server response
-        
-        let hasCommunityAccess = false;
-        let accessType = 'NONE';
-        
+        // ============= SINGLE SOURCE OF TRUTH: /api/me =============
+        // Use /api/me entitlements for redirect (same as RouteGuards and Community)
+        let canAccessCommunity = false;
         try {
           const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
-          const subscriptionResponse = await fetch(`${API_BASE_URL}/api/subscription/status`, {
+          const meResponse = await fetch(`${API_BASE_URL}/api/me`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${data.token}`,
               'Content-Type': 'application/json'
-            }
+            },
+            cache: 'no-store'
           });
-          
-          if (subscriptionResponse.ok) {
-            const subscriptionData = await subscriptionResponse.json();
-            if (subscriptionData.success && subscriptionData.subscription) {
-              // Use the server-authoritative hasCommunityAccess flag
-              hasCommunityAccess = subscriptionData.subscription.hasCommunityAccess === true;
-              accessType = subscriptionData.subscription.accessType || 'NONE';
-              
-              // Store for reference (NOT for access decisions - only server is authoritative)
-              if (hasCommunityAccess) {
+          if (meResponse.ok) {
+            const meData = await meResponse.json();
+            if (meData.success && meData.entitlements) {
+              canAccessCommunity = meData.entitlements.canAccessCommunity === true;
+              if (canAccessCommunity) {
                 localStorage.setItem('hasActiveSubscription', 'true');
-                localStorage.setItem('accessType', accessType);
               } else {
                 localStorage.removeItem('hasActiveSubscription');
                 localStorage.removeItem('accessType');
               }
             }
-          } else {
-            console.error('Subscription status fetch failed:', subscriptionResponse.status);
-            // On fetch failure, check role as fallback (but this should be rare)
-            const userRole = (data.role || '').toLowerCase();
-            hasCommunityAccess = ['admin', 'super_admin', 'premium', 'a7fx', 'elite'].includes(userRole);
           }
-        } catch (subscriptionError) {
-          console.error('Error fetching subscription status on login:', subscriptionError);
-          // On error, check role as fallback
-          const userRole = (data.role || '').toLowerCase();
-          hasCommunityAccess = ['admin', 'super_admin', 'premium', 'a7fx', 'elite'].includes(userRole);
+        } catch (meError) {
+          console.error('Error fetching /api/me on login:', meError);
         }
         
         // ============= DETERMINISTIC ROUTING =============
-        // STRICT RULES:
-        // - hasCommunityAccess === true → ALWAYS go to /community (NEVER /subscription)
-        // - hasCommunityAccess === false → ALWAYS go to /subscription
-        // This is NON-NEGOTIABLE - paid users must NEVER see subscription page after login
-        
-        if (hasCommunityAccess) {
-          // Has plan (Free/Premium/Elite) or admin → Community
-          console.log(`✅ Community access granted (${accessType}) - redirecting to /community`);
+        // canAccessCommunity === true → /community (plan selected or admin)
+        // canAccessCommunity === false → /choose-plan (select Free/Premium/Elite)
+        if (canAccessCommunity) {
+          console.log('✅ Community access granted - redirecting to /community');
           navigate('/community');
         } else {
-          // No plan selected yet → Choose plan page (then Free/Premium/Elite)
-          console.log('❌ No plan selected - redirecting to /choose-plan');
+          console.log('No plan selected - redirecting to /choose-plan');
           navigate('/choose-plan');
         }
         

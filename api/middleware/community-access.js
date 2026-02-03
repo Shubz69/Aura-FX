@@ -115,6 +115,12 @@ async function checkCommunityAccess(userId) {
       return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Premium role' };
     }
     
+    // FREE: allow community access when user has explicitly selected a plan (subscription_plan set)
+    const planSelected = !!(user.subscription_plan && String(user.subscription_plan).trim().length > 0);
+    if (planSelected) {
+      return { hasAccess: true, accessType: 'FREE', reason: 'Plan selected (Free)' };
+    }
+    
     // No valid subscription or role
     return { hasAccess: false, accessType: 'NONE', reason: 'No active subscription' };
     
