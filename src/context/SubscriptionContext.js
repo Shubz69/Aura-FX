@@ -69,7 +69,13 @@ export const SubscriptionProvider = ({ children }) => {
       });
       
       if (data.success && data.subscription) {
-        setSubscription(data.subscription);
+        const sub = data.subscription;
+        setSubscription({
+          ...sub,
+          tier: sub.tier || 'FREE',
+          status: sub.status || (sub.isActive ? 'active' : 'inactive'),
+          hasCommunityAccess: sub.hasCommunityAccess !== false
+        });
       } else {
         console.warn('[SubscriptionContext] No subscription data in response, checking role fallback');
         
@@ -148,32 +154,26 @@ export const SubscriptionProvider = ({ children }) => {
     await fetchSubscriptionStatus();
   }, [fetchSubscriptionStatus]);
   
-  // THE AUTHORITATIVE ACCESS CHECK
-  // Only returns true if server confirms hasCommunityAccess
+  // Entitlements (single source for RouteGuards and API filters)
   const hasCommunityAccess = subscription?.hasCommunityAccess === true;
-  
-  // Access type for routing decisions
+  const tier = subscription?.tier || 'FREE';
+  const status = subscription?.status || 'inactive';
   const accessType = subscription?.accessType || 'NONE';
-  
-  // Check if user has a specific plan active
   const hasAuraFX = accessType === 'AURA_FX_ACTIVE';
   const hasA7FXElite = accessType === 'A7FX_ELITE_ACTIVE';
   const isAdmin = accessType === 'ADMIN';
-  
+
   const value = {
-    // State
     subscription,
     loading,
     error,
-    
-    // Access flags (server-authoritative)
     hasCommunityAccess,
+    tier,
+    status,
     accessType,
     hasAuraFX,
     hasA7FXElite,
     isAdmin,
-    
-    // Actions
     refreshSubscription
   };
   

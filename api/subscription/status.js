@@ -9,21 +9,17 @@
  * - Paid plans: AURA_FX (£99) or A7FX_ELITE (£250)
  * - Admins always have access
  * 
- * Response:
+ * Response (entitlements - single source for RouteGuards and API filters):
  * {
  *   success: true,
  *   subscription: {
+ *     tier: 'FREE' | 'AURA_FX' | 'A7FX',       // Channel access: FREE=General only, AURA_FX=premium, A7FX=elite
+ *     status: 'inactive' | 'trialing' | 'active',
+ *     hasCommunityAccess: boolean,
  *     planId: 'aura' | 'a7fx' | 'free' | null,
- *     planName: 'Aura FX Standard' | 'A7FX Elite' | 'Free' | null,
- *     status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'inactive',
- *     hasCommunityAccess: boolean,  // THE AUTHORITATIVE FLAG FOR COMMUNITY ACCESS
+ *     planName: string | null,
  *     accessType: 'AURA_FX_ACTIVE' | 'A7FX_ELITE_ACTIVE' | 'ADMIN' | 'NONE',
- *     renewsAt: ISO date string | null,
- *     trialEndsAt: ISO date string | null,
- *     canceledAt: ISO date string | null,
- *     startedAt: ISO date string | null,
- *     isActive: boolean,
- *     daysRemaining: number | null
+ *     renewsAt, trialEndsAt, canceledAt, startedAt, isActive, daysRemaining, ...
  *   }
  * }
  */
@@ -232,15 +228,18 @@ module.exports = async (req, res) => {
       isActive = false;
     }
 
-    // ============= COMMUNITY ACCESS DETERMINATION =============
-    // PRIORITY ORDER: Admin > Elite Role/Sub > Aura Role/Sub
+    // ============= ENTITLEMENTS: tier + status + hasCommunityAccess =============
+    // tier: FREE | AURA_FX | A7FX (channel visibility). status: inactive | trialing | active.
+    // Trialing behaves identical to paid (tier grants access).
     let hasCommunityAccess = false;
     let accessType = 'NONE';
-    
-    // 1. ADMIN CHECK - Case insensitive, ALWAYS grants access
+    let tier = 'FREE';
+
+    // 1. ADMIN - full access, tier A7FX
     if (isAdminRole) {
       hasCommunityAccess = true;
       accessType = 'ADMIN';
+      tier = 'A7FX';
       logger.info('Access granted: ADMIN', { userId, role: userRole });
     }
     // 2. A7FX Elite role or subscription (£250)
@@ -248,6 +247,7 @@ module.exports = async (req, res) => {
              (isActive && ['a7fx', 'elite'].includes(userPlan))) {
       hasCommunityAccess = true;
       accessType = 'A7FX_ELITE_ACTIVE';
+      tier = 'A7FX';
       logger.info('Access granted: A7FX_ELITE_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
     // 3. Aura FX role or subscription (£99)
@@ -255,29 +255,29 @@ module.exports = async (req, res) => {
              (isActive && ['aura', 'premium'].includes(userPlan))) {
       hasCommunityAccess = true;
       accessType = 'AURA_FX_ACTIVE';
+      tier = 'AURA_FX';
       logger.info('Access granted: AURA_FX_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // 4. No access
+    // 4. FREE - community access for General channel only
     else {
-      hasCommunityAccess = false;
+      hasCommunityAccess = true;
       accessType = 'NONE';
-      logger.info('Access denied: No valid subscription or role', { 
-        userId, 
-        role: userRole, 
-        plan: userPlan, 
-        isActive,
-        status
-      });
+      tier = 'FREE';
+      logger.info('Access: FREE tier (General channel only)', { userId, role: userRole });
     }
 
-    // Build response
+    // Normalize status for entitlements: inactive | trialing | active
+    const entitlementsStatus = status === 'trialing' ? 'trialing' 
+      : (isActive ? 'active' : 'inactive');
+
+    // Build response (entitlements used by RouteGuards and API filters)
     const subscription = {
+      tier,
+      status: entitlementsStatus,
+      hasCommunityAccess,
       planId,
       planName: PLAN_NAMES[planId] || null,
-      status,
       isActive,
-      // THE AUTHORITATIVE FLAGS FOR COMMUNITY ACCESS
-      hasCommunityAccess,
       accessType,
       renewsAt,
       trialEndsAt,

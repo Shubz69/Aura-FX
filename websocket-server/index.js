@@ -52,6 +52,11 @@ const stats = {
 // WebSocket Server
 // ============================================================================
 
+// Optional: restrict WebSocket origins (e.g. for Vercel: https://your-app.vercel.app, https://aurafx.com)
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : null;
+
 const wss = new WebSocket.Server({ 
     server,
     path: '/ws',
@@ -333,7 +338,12 @@ function createStompFrame(command, headers = {}, body = '') {
 // ============================================================================
 
 wss.on('connection', (ws, req) => {
-    // Check connection limit before accepting
+    const origin = req.headers.origin;
+    if (ALLOWED_ORIGINS && origin && !ALLOWED_ORIGINS.includes(origin)) {
+      console.warn('Connection rejected: origin not allowed', { origin });
+      ws.close(1008, 'Origin not allowed'); // 1008 = Policy Violation
+      return;
+    }
     const preCheck = canAcceptConnection(null);
     if (!preCheck.allowed) {
       console.warn('Connection rejected:', preCheck.reason);

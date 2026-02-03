@@ -809,6 +809,7 @@ const Community = () => {
     const { 
         isConnected, 
         connectionError,
+        reconnectBanner,
         sendMessage: sendWebSocketMessage
     } = useWebSocket(
         selectedChannel?.id,
@@ -5605,6 +5606,22 @@ Let's build generational wealth together! 💰🚀`,
                             )}
                             <div ref={messagesEndRef} />
                         </div>
+                        
+                        {/* WebSocket reconnect failed banner */}
+                        {reconnectBanner && (
+                            <div className="ws-reconnect-banner" style={{
+                                padding: '12px 16px',
+                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.15) 100%)',
+                                border: '1px solid rgba(239, 68, 68, 0.4)',
+                                borderRadius: '8px',
+                                margin: '0 16px 12px',
+                                color: '#FCA5A5',
+                                fontSize: '14px',
+                                fontWeight: 600
+                            }}>
+                                Real-time connection unavailable. Messages will update via polling. Refresh the page to try reconnecting.
+                            </div>
+                        )}
                         
                         {/* Chat Input */}
                         <div className="chat-input-container">

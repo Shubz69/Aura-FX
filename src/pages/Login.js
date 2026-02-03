@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import "../styles/Login.css";
 import { useAuth } from "../context/AuthContext";
 import { RiTerminalBoxFill } from 'react-icons/ri';
@@ -70,100 +71,69 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // Clear previous error
         errorRef.current = '';
         setError('');
         setIsLoading(true);
-        
+
         try {
-            // Use AuthContext login which handles MFA properly
             const result = await loginWithAuth(email, password);
-            
-            // If MFA is required, the login function will redirect to verify-mfa
-            // Don't navigate here - AuthContext handles it
+
             if (result && result.status === "MFA_REQUIRED") {
-                setIsLoading(false);
                 return;
             }
-            
-            // If login succeeds, AuthContext will handle navigation
-            // Only navigate here if AuthContext didn't (shouldn't happen)
+
             if (result && result.token) {
-                setIsLoading(false);
-                // AuthContext already navigated, so we don't need to do anything
                 return;
             }
-            
-            // If we get here without a token, something went wrong
-            setIsLoading(false);
+
             setError('Login failed. Please try again.');
         } catch (err) {
             console.error('Login error details:', err);
 
             let errorMessage = '';
+            const status = err.response?.status;
 
-            // Check if error has a response from the server
             if (err.response) {
-                const status = err.response.status;
                 const serverMessage = err.response.data?.message || err.response.data?.error;
 
-                // Handle specific HTTP status codes with very specific messages
                 if (status === 404) {
-                    // 404 means account doesn't exist (API returns this for non-existent users)
-                    // Always use server message if available, otherwise show default
-                    errorMessage = serverMessage 
-                        ? serverMessage
-                        : 'No account with this email exists. Please check your email or sign up for a new account.';
-                } else if (status === 401) {
-                    // 401 means incorrect password (API returns this for wrong password)
-                    // Always use server message if available, otherwise show default
-                    errorMessage = serverMessage 
-                        ? serverMessage
-                        : 'The password you entered is incorrect. Please check your password and try again, or click "Forgot Password?" to reset it.';
-                } else if (status === 400) {
-                    errorMessage = serverMessage || 'Email and password are required. Please fill in both fields.';
+                    errorMessage = serverMessage
+                        || 'No account with this email exists. Please check your email or sign up for a new account.';
+                } else if (status === 401 || status === 400) {
+                    // 401 = wrong password, 400 = validation — clear inline + toast, no redirect
+                    errorMessage = serverMessage || 'Incorrect email or password.';
+                    toast.error('Incorrect email or password.');
                 } else if (status === 500) {
-                    errorMessage = serverMessage || 'The server encountered an error processing your login. This could be a database connection issue. Please try again in a few moments or contact support.';
+                    errorMessage = serverMessage || 'The server encountered an error. Please try again in a few moments or contact support.';
                 } else if (status === 503) {
-                    errorMessage = 'The login service is temporarily down for maintenance. Please try again later.';
+                    errorMessage = 'The login service is temporarily down. Please try again later.';
                 } else if (status === 429) {
-                    errorMessage = 'You have made too many login attempts. Please wait a few minutes before trying again.';
+                    errorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
                 } else if (serverMessage) {
                     errorMessage = serverMessage;
                 } else {
-                    errorMessage = `Login failed. Server returned error code ${status}. Please try again or contact support if the problem persists.`;
+                    errorMessage = `Login failed (${status}). Please try again or contact support.`;
                 }
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
-                errorMessage = 'Cannot connect to the server. Please check your internet connection and try again.';
+                errorMessage = 'Cannot connect to the server. Check your internet connection and try again.';
             } else if (err.code === 'ETIMEDOUT' || err.message?.includes('timeout')) {
-                errorMessage = 'The server took too long to respond. Please check your internet connection and try again.';
+                errorMessage = 'The server took too long to respond. Check your connection and try again.';
             } else if (err.message) {
-                // Use the error message from AuthContext or API
                 errorMessage = err.message;
             } else {
-                errorMessage = 'An unexpected error occurred during login. Please try again or contact support if the problem persists.';
+                errorMessage = 'An unexpected error occurred. Please try again or contact support.';
             }
 
-            console.log('Setting error message:', errorMessage);
-            // Store error in ref for persistence
             errorRef.current = errorMessage;
-            // Ensure error is set and persists
             setError(errorMessage);
-            setIsLoading(false);
-            
-            // Force error to persist - double-check after render
-            setTimeout(() => {
-                // Force re-render with error message if it was cleared
-                if (errorRef.current && !error) {
-                    console.warn('Error message was cleared, re-setting...');
-                    setError(errorRef.current);
-                }
-            }, 100);
-            
-            // Prevent any navigation or page refresh
-            if (e && e.preventDefault) {
-                e.preventDefault();
+
+            if (status === 401 || status === 400) {
+                setTimeout(() => {
+                    if (errorRef.current) setError(errorRef.current);
+                }, 100);
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 

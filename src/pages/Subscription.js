@@ -12,6 +12,22 @@ const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX 
 
 // Plan configurations
 const PLANS = {
+    free: {
+        id: 'free',
+        name: 'Free',
+        badge: 'Current',
+        price: 0,
+        currency: '£',
+        period: '/month',
+        features: [
+            'General chat only',
+            'Access to free community content',
+            'Create an account and join the conversation'
+        ],
+        paymentLink: null,
+        isElite: false,
+        isFree: true
+    },
     aura: {
         id: 'aura',
         name: 'Aura FX',
@@ -111,6 +127,9 @@ const Subscription = () => {
 
     // Determine button state for a plan
     const getButtonState = (planId) => {
+        if (planId === 'free') {
+            return { type: 'current', disabled: true };
+        }
         if (!subscriptionStatus) {
             return { type: 'select', disabled: false };
         }
@@ -151,6 +170,7 @@ const Subscription = () => {
 
     // Get button text based on state
     const getButtonText = (planId, buttonState) => {
+        if (planId === 'free') return 'GENERAL CHAT ONLY';
         if (processingPlan === planId) {
             return 'PROCESSING...';
         }
@@ -504,6 +524,7 @@ const Subscription = () => {
                         </div>
                     ) : (
                         <div className="subscription-plans">
+                            {renderPlanCard(PLANS.free)}
                             {renderPlanCard(PLANS.aura)}
                             {renderPlanCard(PLANS.a7fx)}
                         </div>

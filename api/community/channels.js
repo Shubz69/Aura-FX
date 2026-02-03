@@ -236,6 +236,58 @@ const ensureSettingsTable = async (db) => {
 
 const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'admin']);
 
+function decodeToken(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  try {
+    const token = authHeader.replace('Bearer ', '');
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padding = payload.length % 4;
+    const padded = padding ? payload + '='.repeat(4 - padding) : payload;
+    return JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+/** Get user tier for channel filtering: FREE | AURA_FX | A7FX */
+async function getTierForUser(db, userId) {
+  if (!userId) return 'FREE';
+  try {
+    const [rows] = await db.execute(
+      'SELECT role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+      [userId]
+    );
+    if (!rows || rows.length === 0) return 'FREE';
+    const u = rows[0];
+    const role = (u.role || '').toLowerCase();
+    const plan = (u.subscription_plan || '').toLowerCase();
+    const status = (u.subscription_status || '').toLowerCase();
+    const expiry = u.subscription_expiry ? new Date(u.subscription_expiry) : null;
+    const active = status === 'active' && expiry && expiry > new Date() && !u.payment_failed;
+    if (['admin', 'super_admin'].includes(role)) return 'A7FX';
+    if (['elite', 'a7fx'].includes(role) || (active && ['a7fx', 'elite'].includes(plan))) return 'A7FX';
+    if (role === 'premium' || (active && ['aura', 'premium'].includes(plan))) return 'AURA_FX';
+    return 'FREE';
+  } catch {
+    return 'FREE';
+  }
+}
+
+/** Filter channels by tier: FREE = General only, AURA_FX = general + premium, A7FX = all */
+function filterChannelsByTier(channels, tier) {
+  if (tier === 'A7FX') return channels;
+  if (tier === 'AURA_FX') {
+    return channels.filter(
+      (ch) => (ch.category || '').toLowerCase() !== 'a7fx' && (ch.category || '').toLowerCase() !== 'elite'
+    );
+  }
+  return channels.filter(
+    (ch) => (ch.category || '').toLowerCase() === 'general' || (ch.id || '').toLowerCase() === 'general'
+  );
+}
+
 module.exports = async (req, res) => {
   // Handle CORS - allow both www and non-www origins
   const origin = req.headers.origin || '*';
@@ -452,7 +504,12 @@ module.exports = async (req, res) => {
                   locked: locked
                 };
               });
-            return res.status(200).json(allChannels);
+            // Strict access: filter by user tier (entitlements)
+            const decoded = decodeToken(req.headers.authorization);
+            const userId = decoded?.id ?? decoded?.userId ?? decoded?.sub;
+            const tier = await getTierForUser(db, userId);
+            const filtered = filterChannelsByTier(allChannels, tier);
+            return res.status(200).json(filtered);
           }
         } catch (dbError) {
           console.error('Database error fetching channels:', dbError);

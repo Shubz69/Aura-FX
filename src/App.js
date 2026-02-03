@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { WebSocketProvider } from './context/WebSocketContext';
 import { CommunityGuard, SubscriptionPageGuard, AdminGuard } from './components/RouteGuards';
 import { isPremium } from './utils/roles';
 import Navbar from './components/Navbar';
@@ -167,7 +168,9 @@ function App() {
         <Router>
             <AuthProvider>
                 <SubscriptionProvider>
-                    <AppRoutes />
+                    <WebSocketProvider>
+                        <AppRoutes />
+                    </WebSocketProvider>
                 </SubscriptionProvider>
             </AuthProvider>
         </Router>
