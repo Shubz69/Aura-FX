@@ -9,6 +9,7 @@ import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
+import { useSubscription } from '../context/SubscriptionContext';
 import {
     getLevelFromXP,
     getXPForNextLevel,
@@ -392,6 +393,7 @@ const Community = () => {
     const location = useLocation();
     const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
     const { refresh: refreshEntitlements } = useEntitlements();
+    const { hasCommunityAccess: hasCommunityAccessFromSubscription, refreshSubscription } = useSubscription();
     
     const [channelList, setChannelList] = useState([]);
     const [selectedChannel, setSelectedChannel] = useState(null);
@@ -2657,7 +2659,7 @@ const Community = () => {
         const pollTimer = setInterval(pollMessages, pollInterval);
 
         return () => clearInterval(pollTimer);
-    }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel, storedUser, userId]);
+    }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel, storedUser, userId, messages.length, updateChannelBadge]);
     
     // Add welcome message when welcome channel is selected for first time
     useEffect(() => {
@@ -3492,9 +3494,9 @@ Let's build generational wealth together! 💰🚀`,
     // Fallback to local check
     const hasActiveSubscriptionLocal = checkSubscription();
     
-    // User has access if ANY of these are true: admin, premium role, OR active subscription
-    // CRITICAL: Premium role and admin ALWAYS grant access, regardless of subscription_status
-    const userHasAccess = isAdminForBanner || hasPremiumRole || hasActiveSubscriptionFromDB || hasActiveSubscriptionStatus || hasActiveSubscriptionLocal;
+    // User has access if ANY of these are true: admin, premium role, active subscription, OR hasCommunityAccess (e.g. free plan selected)
+    // CRITICAL: Premium role and admin ALWAYS grant access. /api/subscription/status sets hasCommunityAccess true for free plan when plan is selected.
+    const userHasAccess = isAdminForBanner || hasPremiumRole || hasActiveSubscriptionFromDB || hasActiveSubscriptionStatus || hasActiveSubscriptionLocal || hasCommunityAccessFromSubscription;
     
     // Only show subscribe banner if user doesn't have access AND is not admin/premium
     // CRITICAL: Never show banner to admins or premium role users
@@ -3522,6 +3524,7 @@ Let's build generational wealth together! 💰🚀`,
                 if (data && data.success) {
                     if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
                     await refreshEntitlements();
+                    await refreshSubscription();
                     await refreshChannelList();
                     setShowSubscriptionModal(false);
                     navigate('/community');

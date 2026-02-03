@@ -226,7 +226,7 @@ const PremiumAI = () => {
         try { recognitionRef.current.stop(); } catch {}
       }
     };
-  }, []);
+  }, [handleSendMessage]);
   
   // Image handling
   const handleImageSelect = async (e) => {
@@ -452,6 +452,8 @@ const PremiumAI = () => {
                 break;
               case 'error':
                 throw new Error(data.message);
+              default:
+                break;
             }
           } catch (parseError) {
             // Skip invalid JSON

@@ -8,7 +8,7 @@
 
 **Option A – Full stack (app + API on your machine)**  
 1. One-time: `npm i -g vercel` and create `.env.local` (see below).  
-2. From the project folder, run: **`vercel dev`** (run this directly; do not use `npm run dev` or Vercel will recurse).  
+2. From the project folder, run: **`npm run local`** (or `vercel dev`). Do **not** use `npm run dev` for full stack — that runs frontend only.  
 3. Open [http://localhost:3000](http://localhost:3000). Edit any file in `src/` or `api/` — the browser updates automatically. Commit only when you’re happy.
 
 **Option B – UI only (fastest, uses live API)**  
@@ -35,9 +35,9 @@
 
 3. **Start local dev** (from project root, e.g. `C:\Users\1230s\OneDrive\Documents\Samy\Aura FX`):
    ```bash
-   vercel dev
+   npm run local
    ```
-   Use `vercel dev` directly. Do **not** use `npm run dev` here, or Vercel will try to run itself again and error.
+   This runs `vercel dev` (app + API). Use `npm run local` for full stack; `npm run dev` runs frontend only (same as `npm start`).
 
 4. **Open** [http://localhost:3000](http://localhost:3000).  
    - The React app runs with **hot reload**: edits to `src/` (JS, CSS) update in the browser without a full refresh.  
@@ -65,16 +65,16 @@ If you only want to work on the UI and use the live API:
 
 ## Summary
 
-| Goal                         | Command        | Hot reload | API        |
-|-----------------------------|----------------|------------|------------|
-| Full local (recommended)    | `vercel dev`   | Yes        | Local      |
-| UI only, API on Vercel      | `npm start`    | Yes        | Production |
+| Goal                         | Command         | Hot reload | API        |
+|-----------------------------|-----------------|------------|------------|
+| Full local (recommended)    | `npm run local` | Yes        | Local      |
+| UI only, API on Vercel      | `npm start`     | Yes        | Production |
 
 ---
 
 ## Daily workflow
 
-1. **Start:** From project folder run `vercel dev` (full stack) or `npm start` (UI only) → open http://localhost:3000  
+1. **Start:** From project folder run `npm run local` (full stack) or `npm start` (UI only) → open http://localhost:3000  
 2. **Edit:** Change any file in `src/` or `api/` (or styles). Save.  
 3. **See:** The app reloads automatically — no manual refresh.  
 4. **Repeat:** Keep editing until everything looks and works the way you want.  

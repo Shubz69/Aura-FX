@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { useNavigate } from 'react-router-dom';
 import Api from '../services/Api';
 import { jwtDecode } from 'jwt-decode';
+import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
 
 // Create the context
 const AuthContext = createContext(null);
@@ -16,6 +17,17 @@ export const AuthProvider = ({ children }) => {
   const [mfaVerified, setMfaVerified] = useState(false);
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const navigate = useNavigate();
+
+  const applyPostAuthRedirect = useCallback(() => {
+    const redirectInfo = consumePostAuthRedirect();
+    if (!redirectInfo || !redirectInfo.next) {
+      return null;
+    }
+
+    const nextPath = redirectInfo.next.startsWith('/') ? redirectInfo.next : `/${redirectInfo.next}`;
+    navigate(nextPath, { replace: true });
+    return redirectInfo;
+  }, [navigate]);
 
   const clearSession = useCallback(() => {
     localStorage.removeItem('token');
@@ -475,6 +487,11 @@ export const AuthProvider = ({ children }) => {
         // ============= DETERMINISTIC ROUTING =============
         // canAccessCommunity === true → /community (plan selected or admin)
         // canAccessCommunity === false → /choose-plan (select Free/Premium/Elite)
+        const redirectInfo = applyPostAuthRedirect();
+        if (redirectInfo) {
+          return data;
+        }
+
         if (canAccessCommunity) {
           console.log('✅ Community access granted - redirecting to /community');
           navigate('/community');
@@ -562,11 +579,15 @@ export const AuthProvider = ({ children }) => {
       if (localStorage.getItem('newSignup') === 'true') {
         localStorage.setItem('pendingSubscription', 'true');
         localStorage.removeItem('newSignup');
-        navigate('/choose-plan');
+        const redirectInfo = applyPostAuthRedirect();
+        if (!redirectInfo) {
+          navigate('/choose-plan');
+        }
         return data;
       }
       
       localStorage.removeItem('newSignup');
+      applyPostAuthRedirect();
       return data;
     } catch (error) {
       console.error('Registration error:', error);

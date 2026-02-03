@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import "../styles/Register.css";
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
+import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 
 const Register = () => {
     const [step, setStep] = useState(1); // 1: email/password entry, 2: email verification code, 3: complete registration
@@ -22,6 +23,24 @@ const Register = () => {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [emailVerified, setEmailVerified] = useState(false);
     const { register: registerUser } = useAuth();
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const nextParam = params.get('next');
+        const planParam = params.get('plan');
+        if (!nextParam) {
+            return;
+        }
+        const existing = loadPostAuthRedirect();
+        if (!existing || existing.next !== nextParam || (existing.plan || null) !== (planParam ? planParam.toLowerCase() : null)) {
+            savePostAuthRedirect({
+                next: nextParam,
+                plan: planParam,
+                from: `${location.pathname}${location.search}`
+            });
+        }
+    }, [location.pathname, location.search]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

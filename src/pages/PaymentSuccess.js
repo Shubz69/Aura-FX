@@ -351,7 +351,7 @@ const PaymentSuccess = () => {
         };
 
         completePurchase();
-    }, [location.search]);
+    }, [location.search, navigate, persistUser, refreshEntitlements]);
 
     const handleLogin = () => {
         navigate("/login", { state: { returnUrl: "/my-courses" } });

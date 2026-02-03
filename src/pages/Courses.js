@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Courses.css';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
 import { useEntitlements } from '../context/EntitlementsContext';
+import useRequireAuthOrRedirect from '../hooks/useRequireAuthOrRedirect';
 
 // Fallback API URL
 const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
@@ -18,6 +19,35 @@ const Courses = () => {
     const [error, setError] = useState(null);
     const [selectingFreePlan, setSelectingFreePlan] = useState(false);
     const [freePlanError, setFreePlanError] = useState('');
+    const requireAuthOrRedirect = useRequireAuthOrRedirect('/choose-plan');
+
+    const handlePremiumSelection = useCallback(() => {
+        if (!requireAuthOrRedirect('/choose-plan?plan=premium')) {
+            return;
+        }
+
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const userEmail = storedUser?.email;
+        const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
+        const paymentLink = userEmail
+            ? `${STRIPE_PAYMENT_LINK_AURA}${STRIPE_PAYMENT_LINK_AURA.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=premium`
+            : `${STRIPE_PAYMENT_LINK_AURA}${STRIPE_PAYMENT_LINK_AURA.includes('?') ? '&' : '?'}plan=premium`;
+        window.location.href = paymentLink;
+    }, [requireAuthOrRedirect]);
+
+    const handleEliteSelection = useCallback(() => {
+        if (!requireAuthOrRedirect('/choose-plan?plan=elite')) {
+            return;
+        }
+
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const userEmail = storedUser?.email;
+        const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
+        const paymentLink = userEmail
+            ? `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=elite`
+            : `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}plan=elite`;
+        window.location.href = paymentLink;
+    }, [requireAuthOrRedirect]);
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -149,6 +179,9 @@ const Courses = () => {
                         <button
                             className="subscription-plan-button free"
                             onClick={async () => {
+                                if (!requireAuthOrRedirect('/choose-plan?plan=free')) {
+                                    return;
+                                }
                                 setFreePlanError('');
                                 setSelectingFreePlan(true);
                                 try {
@@ -194,15 +227,7 @@ const Courses = () => {
                         </ul>
                         <button
                             className="subscription-plan-button premium"
-                            onClick={() => {
-                                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                                const userEmail = storedUser?.email;
-                                const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
-                                const paymentLink = userEmail
-                                    ? `${STRIPE_PAYMENT_LINK_AURA}${STRIPE_PAYMENT_LINK_AURA.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=aura`
-                                    : `${STRIPE_PAYMENT_LINK_AURA}${STRIPE_PAYMENT_LINK_AURA.includes('?') ? '&' : '?'}plan=aura`;
-                                window.location.href = paymentLink;
-                            }}
+                            onClick={handlePremiumSelection}
                         >
                             Select Premium Plan
                         </button>
@@ -224,15 +249,7 @@ const Courses = () => {
                         </ul>
                         <button
                             className="subscription-plan-button elite"
-                            onClick={() => {
-                                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                                const userEmail = storedUser?.email;
-                                const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
-                                const paymentLink = userEmail
-                                    ? `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=a7fx`
-                                    : `${STRIPE_PAYMENT_LINK_A7FX}${STRIPE_PAYMENT_LINK_A7FX.includes('?') ? '&' : '?'}plan=a7fx`;
-                                window.location.href = paymentLink;
-                            }}
+                            onClick={handleEliteSelection}
                         >
                             Select Elite Plan
                         </button>

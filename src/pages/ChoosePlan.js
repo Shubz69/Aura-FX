@@ -5,14 +5,13 @@
  * Premium/Elite: redirect to /subscription with plan param.
  * If user already has plan (canAccessCommunity), redirect to /community.
  */
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import CosmicBackground from '../components/CosmicBackground';
 import '../styles/Subscription.css';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+import Api from '../services/Api';
 const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
 const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
 
@@ -52,8 +51,17 @@ const PLANS = {
   }
 };
 
+const PLAN_ALIAS_MAP = {
+  free: 'free',
+  premium: 'aura',
+  aura: 'aura',
+  elite: 'a7fx',
+  a7fx: 'a7fx'
+};
+
 const ChoosePlan = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, token } = useAuth();
   const { entitlements, loading: entLoading, refresh: refreshEntitlements } = useEntitlements();
   const [processingPlan, setProcessingPlan] = useState(null);
@@ -61,7 +69,7 @@ const ChoosePlan = () => {
 
   useEffect(() => {
     if (!user || !token) {
-      navigate('/signup', { state: { redirectAfter: '/choose-plan' }, replace: true });
+      navigate('/signup?next=/choose-plan', { replace: true });
       return;
     }
   }, [user, token, navigate]);
@@ -73,45 +81,103 @@ const ChoosePlan = () => {
     }
   }, [entitlements, entLoading, navigate]);
 
-  const handleSelectFree = async () => {
+  const handleSelectFree = useCallback(async () => {
     if (!token) {
-      navigate('/signup', { state: { redirectAfter: '/choose-plan' } });
+      const nextPath = '/choose-plan?plan=free';
+      navigate(`/signup?next=${encodeURIComponent(nextPath)}&plan=free`);
       return;
     }
     setProcessingPlan('free');
     setError('');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/subscription/select-free`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (res.status === 401) {
-          navigate('/signup', { state: { redirectAfter: '/choose-plan' } });
-          return;
-        }
-        throw new Error(data.message || 'Failed to set Free plan');
+      const data = await Api.selectFreePlan();
+      if (!data || data.success !== true) {
+        throw new Error(data?.message || 'Failed to set Free plan');
       }
-      if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('community_channels_cache');
+      }
       await refreshEntitlements();
       navigate('/community', { replace: true });
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      const friendlyMessage = err?.message || 'Something went wrong. Please try again.';
+      setError(friendlyMessage);
     } finally {
       setProcessingPlan(null);
     }
-  };
+  }, [token, navigate, refreshEntitlements]);
 
-  const handleSelectPaid = (planId) => {
-    const plan = PLANS[planId];
-    if (!plan?.paymentLink) return;
-    if (!token) {
-      navigate('/signup', { state: { redirectAfter: '/choose-plan' } });
+  const handleSelectPaid = useCallback(
+    (planId, options = {}) => {
+      const normalizedPlanKey = (planId || '').toLowerCase();
+      const targetPlanId = PLAN_ALIAS_MAP[normalizedPlanKey] || normalizedPlanKey;
+      const plan = PLANS[targetPlanId];
+      if (!plan) {
+        return;
+      }
+      if (!token) {
+        const nextPath = `/choose-plan?plan=${normalizedPlanKey || targetPlanId}`;
+        navigate(`/signup?next=${encodeURIComponent(nextPath)}&plan=${normalizedPlanKey || targetPlanId}`);
+        return;
+      }
+
+      const params = new URLSearchParams({ plan: normalizedPlanKey || targetPlanId });
+      if (options.auto) {
+        params.set('auto', '1');
+      }
+      navigate(`/subscription?${params.toString()}`, { replace: options.replace === true });
+    },
+    [navigate, token]
+  );
+
+  useEffect(() => {
+    if (!user || !token) {
       return;
     }
-    navigate(`/subscription?plan=${planId}`, { replace: true });
-  };
+    if (processingPlan !== null) {
+      return;
+    }
+    if (entLoading || entitlements?.canAccessCommunity) {
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const planParam = (params.get('plan') || '').toLowerCase();
+    if (!planParam) {
+      return;
+    }
+
+    const isFreePlan = planParam === 'free';
+    if (isFreePlan) {
+      handleSelectFree();
+    } else if (PLAN_ALIAS_MAP[planParam]) {
+      handleSelectPaid(planParam, { auto: true, replace: true });
+    } else {
+      return;
+    }
+
+    params.delete('plan');
+    params.delete('auto');
+    const nextSearch = params.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : ''
+      },
+      { replace: true }
+    );
+  }, [
+    entLoading,
+    entitlements?.canAccessCommunity,
+    handleSelectFree,
+    handleSelectPaid,
+    location.pathname,
+    location.search,
+    navigate,
+    processingPlan,
+    token,
+    user
+  ]);
 
   if (!user || !token) return null;
   if (entLoading) {

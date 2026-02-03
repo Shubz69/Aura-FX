@@ -203,7 +203,7 @@ const WhyInfinity = () => {
                 </div>
 
                 {/* Why AURA FX Is NOT For You Section */}
-                <div className="why-additional-features">
+                <div className="why-additional-features fade-in-up">
                     <h2 className="why-section-heading">Why AURA FX Is NOT For You</h2>
                     
                     <div className="why-main-content" style={{ marginTop: '20px' }}>
@@ -228,7 +228,7 @@ const WhyInfinity = () => {
                 </div>
 
                 {/* AURA FX vs Typical Trading Communities Section */}
-                <div className="why-additional-features">
+                <div className="why-additional-features fade-in-up">
                     <h2 className="why-section-heading">AURA FX vs Typical Trading Communities</h2>
                     
                     <div className="why-features-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>

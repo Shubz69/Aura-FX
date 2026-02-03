@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
@@ -8,46 +8,83 @@ import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard } fro
 import { isPremium } from './utils/roles';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import SignUp from './pages/SignUp';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import AdminUserList from './pages/AdminUserList';
-import Home from './pages/Home';
-import Courses from './pages/Courses';
-import MyCourses from './pages/MyCourses';
-import Community from './pages/Community';
-import Explore from './pages/Explore';
-import WhyInfinity from './pages/WhyInfinity';
-import ContactUs from './pages/ContactUs';
-import NotFound from './pages/NotFound';
-import Chatbot from './components/Chatbot';
-import Footer from './components/Footer';
-import Profile from "./pages/Profile";
-import EditName from './pages/EditName';
-import EditEmail from './pages/EditEmail';
-import EditAddress from './pages/EditAddress';
-import EditPhone from './pages/EditPhone';
-import EditPassword from './pages/EditPassword';
-import AdminMessages from './pages/AdminMessages';
-import Messages from './pages/Messages';
-import PublicProfile from './pages/PublicProfile';
-import Leaderboard from './pages/Leaderboard';
-import AdminPanel from './pages/AdminPanel';
-import PaymentSuccess from './pages/PaymentSuccess';
-import VerifyMFA from './pages/VerifyMFA';
-import Subscription from './pages/Subscription';
-import ChoosePlan from './pages/ChoosePlan';
-import Settings from './pages/Settings';
-import Terms from './pages/Terms';
-import Privacy from './pages/Privacy';
-import PremiumAI from './pages/PremiumAI';
-
+import GDPRModal from './components/GDPRModal';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
-import GDPRModal from './components/GDPRModal';
+/* Lazy-load pages so each route loads only when visited (faster initial load) */
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const SignUp = lazy(() => import('./pages/SignUp'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const AdminUserList = lazy(() => import('./pages/AdminUserList'));
+const Courses = lazy(() => import('./pages/Courses'));
+const MyCourses = lazy(() => import('./pages/MyCourses'));
+const Community = lazy(() => import('./pages/Community'));
+const Explore = lazy(() => import('./pages/Explore'));
+const WhyInfinity = lazy(() => import('./pages/WhyInfinity'));
+const ContactUs = lazy(() => import('./pages/ContactUs'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Chatbot = lazy(() => import('./components/Chatbot'));
+import Footer from './components/Footer';
+const Profile = lazy(() => import('./pages/Profile'));
+const EditName = lazy(() => import('./pages/EditName'));
+const EditEmail = lazy(() => import('./pages/EditEmail'));
+const EditAddress = lazy(() => import('./pages/EditAddress'));
+const EditPhone = lazy(() => import('./pages/EditPhone'));
+const EditPassword = lazy(() => import('./pages/EditPassword'));
+const AdminMessages = lazy(() => import('./pages/AdminMessages'));
+const Messages = lazy(() => import('./pages/Messages'));
+const PublicProfile = lazy(() => import('./pages/PublicProfile'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
+const VerifyMFA = lazy(() => import('./pages/VerifyMFA'));
+const Subscription = lazy(() => import('./pages/Subscription'));
+const ChoosePlan = lazy(() => import('./pages/ChoosePlan'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const PremiumAI = lazy(() => import('./pages/PremiumAI'));
+
+/** Prefetch common route chunks after initial load so navigation feels instant */
+function usePrefetchRoutes() {
+    useEffect(() => {
+        const prefetch = () => {
+            import('./pages/Courses');
+            import('./pages/Explore');
+            import('./pages/WhyInfinity');
+            import('./pages/ContactUs');
+            import('./pages/Login');
+            import('./pages/SignUp');
+        };
+        if (typeof requestIdleCallback !== 'undefined') {
+            const id = requestIdleCallback(prefetch, { timeout: 4000 });
+            return () => cancelIdleCallback(id);
+        }
+        const t = setTimeout(prefetch, 2500);
+        return () => clearTimeout(t);
+    }, []);
+}
+
+/** Lightweight fallback while a route chunk loads (keeps perceived load fast) */
+function PageLoadFallback() {
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            background: '#0a0a0a',
+            color: 'rgba(255,255,255,0.7)',
+            fontSize: '1rem'
+        }}>
+            <span>Loading…</span>
+        </div>
+    );
+}
 
 function AppRoutes() {
     const { user, loading } = useAuth();
@@ -57,6 +94,8 @@ function AppRoutes() {
     const isHomePage = location.pathname === '/';
 
     const [showGDPR, setShowGDPR] = useState(false);
+
+    usePrefetchRoutes();
     
     useEffect(() => {
         const accepted = localStorage.getItem("gdprAccepted");
@@ -89,6 +128,7 @@ function AppRoutes() {
 
             <Navbar />
             <main className="page-wrapper">
+                <Suspense fallback={<PageLoadFallback />}>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
@@ -159,9 +199,14 @@ function AppRoutes() {
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>
+                </Suspense>
             </main>
             <Footer />
-            {showChatbot && <Chatbot />}
+            {showChatbot && (
+                <Suspense fallback={null}>
+                    <Chatbot />
+                </Suspense>
+            )}
             <ToastContainer position="bottom-right" autoClose={3000} />
         </div>
     );

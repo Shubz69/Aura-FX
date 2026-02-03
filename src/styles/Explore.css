@@ -5,9 +5,11 @@
   background: #0a0a0a;
   color: #ffffff;
   padding: 140px 20px 80px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   z-index: 1;
   font-family: 'Space Grotesk', sans-serif;
+  -webkit-overflow-scrolling: touch;
 }
 
 .explore-content-wrapper {

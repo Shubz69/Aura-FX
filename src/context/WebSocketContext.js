@@ -207,7 +207,7 @@ export const WebSocketProvider = ({ children }) => {
       disconnect();
     }
     return () => disconnect();
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, connect, disconnect]);
 
   const subscribeChannel = useCallback((channelId, onMessage) => {
     onMessageRef.current = onMessage;

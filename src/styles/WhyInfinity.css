@@ -17,9 +17,11 @@
   background: #0a0a0a;
   color: #ffffff;
   padding: 140px 20px 3rem;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   z-index: 1;
   font-family: var(--font-secondary);
+  -webkit-overflow-scrolling: touch;
 }
 
 .content-wrapper {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import CosmicBackground from '../components/CosmicBackground';
@@ -71,8 +71,16 @@ const PLANS = {
     }
 };
 
+const PLAN_ALIAS = {
+    premium: 'aura',
+    aura: 'aura',
+    elite: 'a7fx',
+    a7fx: 'a7fx'
+};
+
 const Subscription = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, isAuthenticated } = useAuth();
     const { refresh: refreshEntitlements } = useEntitlements();
     const [loading, setLoading] = useState(true);
@@ -132,7 +140,7 @@ const Subscription = () => {
     }, [isAuthenticated, navigate]);
 
     // Determine button state for a plan
-    const getButtonState = (planId) => {
+    const getButtonState = useCallback((planId) => {
         if (planId === 'free') {
             return { type: 'current', disabled: true };
         }
@@ -172,7 +180,7 @@ const Subscription = () => {
 
         // No active subscription - show select
         return { type: 'select', disabled: false };
-    };
+    }, [subscriptionStatus]);
 
     // Get button text based on state
     const getButtonText = (planId, buttonState) => {
@@ -269,8 +277,10 @@ const Subscription = () => {
         return null;
     };
 
-    const handleSubscribe = (planType = 'aura') => {
-        const buttonState = getButtonState(planType);
+    const handleSubscribe = useCallback((planType = 'aura') => {
+        const normalizedPlan = (planType || '').toLowerCase();
+        const resolvedPlanId = PLAN_ALIAS[normalizedPlan] || normalizedPlan || 'aura';
+        const buttonState = getButtonState(resolvedPlanId);
         
         // Prevent action on disabled buttons
         if (buttonState.disabled) {
@@ -284,20 +294,20 @@ const Subscription = () => {
             return;
         }
 
-        setProcessingPlan(planType);
-        setSelectedPlan(planType);
+        setProcessingPlan(resolvedPlanId);
+        setSelectedPlan(resolvedPlanId);
         
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email || storedUser?.email;
         
-        const plan = PLANS[planType];
+        const plan = PLANS[resolvedPlanId];
         const paymentLink = userEmail
-            ? `${plan.paymentLink}${plan.paymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`
-            : `${plan.paymentLink}${plan.paymentLink.includes('?') ? '&' : '?'}plan=${planType}`;
+            ? `${plan.paymentLink}${plan.paymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${resolvedPlanId}`
+            : `${plan.paymentLink}${plan.paymentLink.includes('?') ? '&' : '?'}plan=${resolvedPlanId}`;
 
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);
-    };
+    }, [getButtonState, user]);
 
     const handlePayWithCard = (planType) => {
         if (planType === 'free') return;
@@ -358,6 +368,32 @@ const Subscription = () => {
         const baseUrl = window.location.origin;
         window.location.replace(`${baseUrl}/community`);
     };
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            return;
+        }
+        const params = new URLSearchParams(location.search);
+        const auto = params.get('auto');
+        const planParam = (params.get('plan') || '').toLowerCase();
+        if (auto !== '1') {
+            return;
+        }
+        if (!PLAN_ALIAS[planParam]) {
+            return;
+        }
+        const sanitizedPlan = planParam;
+        params.delete('auto');
+        const nextSearch = params.toString();
+        navigate(
+            {
+                pathname: location.pathname,
+                search: nextSearch ? `?${nextSearch}` : ''
+            },
+            { replace: true }
+        );
+        handleSubscribe(sanitizedPlan);
+    }, [handleSubscribe, isAuthenticated, location.pathname, location.search, navigate]);
 
     const handleContactSubmit = async (e) => {
         e.preventDefault();
@@ -522,7 +558,7 @@ const Subscription = () => {
                 countdownIntervalRef.current = null;
             }
         };
-    }, [user, subscriptionActivated]);
+    }, [user, subscriptionActivated, refreshEntitlements]);
 
     if (!isAuthenticated) {
         return null;

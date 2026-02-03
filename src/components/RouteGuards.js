@@ -145,9 +145,11 @@ export const AdminGuard = ({ children }) => {
   return children;
 };
 
-export default {
+const RouteGuards = {
   CommunityGuard,
   SubscriptionPageGuard,
   AuthenticatedGuard,
   AdminGuard
 };
+
+export default RouteGuards;

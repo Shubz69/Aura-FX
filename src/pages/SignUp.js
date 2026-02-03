@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import "../styles/Login.css";
 import CosmicBackground from '../components/CosmicBackground';
 import { useAuth } from "../context/AuthContext";
 import Api from '../services/Api';
+import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 
 function SignUp() {
     const [step, setStep] = useState(1); // 1: email/password entry, 2: email verification code, 3: complete registration
@@ -14,7 +15,24 @@ function SignUp() {
     const [isLoading, setIsLoading] = useState(false);
     const [emailVerified, setEmailVerified] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const { register } = useAuth();
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const nextParam = params.get('next');
+        const planParam = params.get('plan');
+        if (!nextParam) {
+            return;
+        }
+        const existing = loadPostAuthRedirect();
+        if (!existing || existing.next !== nextParam || (existing.plan || null) !== (planParam ? planParam.toLowerCase() : null)) {
+            savePostAuthRedirect({
+                next: nextParam,
+                plan: planParam,
+                from: `${location.pathname}${location.search}`
+            });
+        }
+    }, [location.pathname, location.search]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

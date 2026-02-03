@@ -36,9 +36,16 @@ html, body {
   height: auto;
   min-height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll; /* scroll (not auto) improves iOS touch scrolling */
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+}
+
+/* iOS Safari: fix viewport height and ensure scroll works */
+@supports (-webkit-touch-callout: none) {
+  html, body {
+    min-height: -webkit-fill-available;
+  }
 }
 
 /* Main scrollable containers should allow touch scroll */
@@ -87,7 +94,8 @@ html {
     -ms-text-size-adjust: 100%;
     text-size-adjust: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
     height: auto;
     min-height: 100%;
 }
@@ -122,7 +130,7 @@ body {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   position: relative;
@@ -135,12 +143,13 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   height: auto;
   flex: 1;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  overflow: visible;
+  overflow-y: visible;
   position: relative;
   background: #0a0a0a !important;
 }
@@ -224,17 +233,15 @@ footer {
   position: relative;
 }
 
-/* Scroll Fix for All Pages */
+/* Scroll Fix for All Pages - body is the scroll container on iOS (single scroll root) */
 .page-wrapper {
   flex: 1;
   min-height: 100vh;
   padding-top: 60px;
-  padding-bottom: 0; /* No bottom padding needed since footer is relative */
-  overflow-y: auto;
+  padding-bottom: 0;
   overflow-x: hidden;
-  /* Enable smooth touch scrolling on mobile */
+  overflow-y: visible; /* Let body scroll so iOS touch scroll works */
   -webkit-overflow-scrolling: touch;
-  /* Allow vertical swipes to scroll */
   touch-action: pan-y;
 }
 
@@ -490,7 +497,7 @@ img, video, canvas {
     }
 }
 
-/* iPhone and iPad: allow document scroll; avoid height: 100vh lock on #root */
+/* iPhone and iPad: single scroll root (body) so touch scroll works */
 @media (max-width: 1024px) {
     html {
         background: #0a0a0a !important;
@@ -499,9 +506,10 @@ img, video, canvas {
         text-size-adjust: 100% !important;
         height: auto !important;
         min-height: 100% !important;
+        min-height: -webkit-fill-available !important;
         width: 100% !important;
         overflow-x: hidden !important;
-        overflow-y: auto !important;
+        overflow-y: scroll !important;
         -webkit-overflow-scrolling: touch !important;
     }
     
@@ -511,24 +519,26 @@ img, video, canvas {
         -moz-osx-font-smoothing: grayscale !important;
         height: auto !important;
         min-height: 100vh !important;
+        min-height: -webkit-fill-available !important;
         width: 100% !important;
         overflow-x: hidden !important;
-        overflow-y: auto !important;
+        overflow-y: scroll !important;
         -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
+        touch-action: pan-y pan-x !important;
         position: relative !important;
     }
     
     #root {
         background: #0a0a0a !important;
         min-height: 100vh !important;
+        min-height: -webkit-fill-available !important;
         height: auto !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
-        overflow: visible !important;
+        overflow-y: visible !important;
         position: relative !important;
     }
     
@@ -539,7 +549,12 @@ img, video, canvas {
         width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
-        overflow: visible !important;
+        overflow-y: visible !important;
+    }
+    
+    .page-wrapper {
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
     }
     
     /* Ensure all containers have dark background */

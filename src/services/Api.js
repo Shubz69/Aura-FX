@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { savePostAuthRedirect } from '../utils/postAuthRedirect';
 
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
@@ -30,6 +31,62 @@ const PUBLIC_ENDPOINTS = [
 // Helper function to check if a URL is public
 const isPublicUrl = (url) => {
     return PUBLIC_ENDPOINTS.some(endpoint => url.includes(endpoint));
+};
+
+const SUBSCRIPTION_PATH_FRAGMENT = '/api/subscription';
+let subscriptionRedirectInProgress = false;
+
+const normalizePlanHint = (plan) => {
+    if (!plan || typeof plan !== 'string') {
+        return null;
+    }
+    const normalized = plan.toLowerCase();
+    if (normalized === 'aura') return 'premium';
+    if (normalized === 'a7fx') return 'elite';
+    if (['free', 'premium', 'elite'].includes(normalized)) {
+        return normalized;
+    }
+    return null;
+};
+
+const resolveRequestUrl = (input) => {
+    if (!input) return '';
+    if (typeof input === 'string') {
+        return input;
+    }
+    if (typeof input === 'object' && input.url) {
+        return input.url;
+    }
+    return '';
+};
+
+const isSubscriptionEndpoint = (url = '') => {
+    if (!url) return false;
+    try {
+        return url.includes(SUBSCRIPTION_PATH_FRAGMENT);
+    } catch {
+        return false;
+    }
+};
+
+const redirectToLoginForSubscription401 = (planHint) => {
+    if (subscriptionRedirectInProgress || typeof window === 'undefined') {
+        return;
+    }
+    subscriptionRedirectInProgress = true;
+
+    const normalizedPlan = normalizePlanHint(planHint);
+    const currentPath = `${window.location.pathname}${window.location.search}`;
+    const nextPath = normalizedPlan ? `/choose-plan?plan=${normalizedPlan}` : (currentPath || '/choose-plan');
+
+    savePostAuthRedirect({
+        next: nextPath,
+        plan: normalizedPlan || undefined,
+        from: currentPath
+    });
+
+    const loginUrl = `/login?next=${encodeURIComponent(nextPath)}`;
+    window.location.assign(loginUrl);
 };
 
 // Check if user has valid authentication
@@ -97,6 +154,16 @@ axios.interceptors.response.use(
         return response;
     },
     (error) => {
+        if (error.response && error.response.status === 401) {
+            const requestUrl = resolveRequestUrl(error.config?.url);
+            if (isSubscriptionEndpoint(requestUrl)) {
+                const headerPlan =
+                    error.config?.headers?.['X-Subscription-Plan'] ||
+                    error.config?.headers?.['x-subscription-plan'] ||
+                    null;
+                redirectToLoginForSubscription401(headerPlan);
+            }
+        }
         if (error.response && error.response.status === 403) {
             console.error('Access forbidden: Authentication failed or insufficient permissions');
             
@@ -109,6 +176,21 @@ axios.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+if (typeof window !== 'undefined' && typeof window.fetch === 'function' && !window.__subscriptionFetchInterceptorInstalled) {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+        const response = await originalFetch(...args);
+        if (response?.status === 401) {
+            const requestUrl = resolveRequestUrl(args[0]);
+            if (isSubscriptionEndpoint(requestUrl)) {
+                redirectToLoginForSubscription401();
+            }
+        }
+        return response;
+    };
+    window.__subscriptionFetchInterceptorInstalled = true;
+}
 
 const Api = {
     // Authentication
@@ -499,10 +581,20 @@ const Api = {
 
     selectFreePlan: async () => {
         const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Authentication required');
+        }
         const response = await axios.post(
             `${API_BASE_URL}/api/subscription/select-free`,
             {},
-            { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 15000 }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'X-Subscription-Plan': 'free'
+                },
+                timeout: 15000
+            }
         );
         return response.data;
     },

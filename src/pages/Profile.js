@@ -591,9 +591,7 @@ const Profile = () => {
                             alt="Banner" 
                             className="profile-banner"
                             style={{
-                                imageRendering: 'high-quality',
-                                imageRendering: '-webkit-optimize-contrast',
-                                imageRendering: 'crisp-edges'
+                                imageRendering: 'high-quality'
                             }}
                             loading="eager"
                         />
@@ -625,9 +623,7 @@ const Profile = () => {
                             alt="Avatar" 
                             className="profile-avatar"
                             style={{
-                                imageRendering: 'high-quality',
-                                imageRendering: '-webkit-optimize-contrast',
-                                imageRendering: 'crisp-edges'
+                                imageRendering: 'high-quality'
                             }}
                             loading="eager"
                         />

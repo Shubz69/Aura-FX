@@ -35,7 +35,7 @@ const Chatbot = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Hide chatbot for premium users - they should use Aura AI instead (after all hooks)
+    // Rules of Hooks: all hooks must run unconditionally above. Early return only after hooks.
     if (isPremium(user)) {
         return null;
     }

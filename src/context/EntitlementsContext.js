@@ -76,7 +76,7 @@ export const EntitlementsProvider = ({ children }) => {
       return;
     }
     fetchMe();
-  }, [token, user?.id]);
+  }, [token, user?.id, fetchMe]);
 
   const refresh = useCallback(() => {
     cachedAt.current = 0;

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import "../styles/Login.css";
 import { useAuth } from "../context/AuthContext";
 import { RiTerminalBoxFill } from 'react-icons/ri';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
+import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -18,6 +19,10 @@ const Login = () => {
     const { login: loginWithAuth, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const errorRef = useRef('');
+    const location = useLocation();
+    const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const nextParam = queryParams.get('next');
+    const planParam = queryParams.get('plan');
     
     useEffect(() => {
         // Reset countdown timer if MFA verification is shown
@@ -39,8 +44,7 @@ const Login = () => {
     
     useEffect(() => {
         // Check if account was deleted
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('deleted') === 'true') {
+        if (queryParams.get('deleted') === 'true') {
             setError('Your account has been deleted by an administrator. You have been logged out.');
             // Clear the URL parameter
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -48,9 +52,15 @@ const Login = () => {
         
         // Redirect if already authenticated
         if (isAuthenticated) {
-            navigate('/community');
+            const storedRedirect = loadPostAuthRedirect();
+            const targetPath = storedRedirect?.next;
+            if (targetPath) {
+                navigate(targetPath, { replace: true });
+            } else {
+                navigate('/community');
+            }
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, queryParams]);
     
     // Prevent form from submitting and refreshing page
     useEffect(() => {
@@ -66,6 +76,20 @@ const Login = () => {
             document.removeEventListener('submit', handleFormSubmit, true);
         };
     }, []);
+
+    useEffect(() => {
+        if (!nextParam || isAuthenticated) {
+            return;
+        }
+        const existing = loadPostAuthRedirect();
+        if (!existing || existing.next !== nextParam || (existing.plan || null) !== (planParam ? planParam.toLowerCase() : null)) {
+            savePostAuthRedirect({
+                next: nextParam,
+                plan: planParam,
+                from: `${location.pathname}${location.search}`
+            });
+        }
+    }, [nextParam, planParam, location.pathname, location.search, isAuthenticated]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
