@@ -3,18 +3,15 @@
  * Used by: /api/me, /api/community/channels, /api/community/channels/messages,
  * /api/community/bootstrap, AI endpoints, and WebSocket server.
  *
- * Roles: USER | ADMIN | SUPER_ADMIN (from DB role)
+ * Roles: USER | ADMIN | SUPER_ADMIN (from DB role or super-admin email override)
  * Tiers: FREE | PREMIUM | ELITE (from role + subscription_plan + subscription_status)
- * FREE users: allowlist only (general, general-chat, welcome, announcements).
- * Category is for grouping/sorting only; access is by accessLevel + allowlist.
+ * Super admin by email: Shubzfx@gmail.com always gets SUPER_ADMIN role and full access (all channels, AI, pages).
+ * FREE users: allowlist by channel name only (existing channels); allowedChannelSlugs = channel ids.
  */
+const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements']);
 
-const FREE_CHANNEL_ALLOWLIST = new Set([
-  'general',
-  'general-chat',
-  'welcome',
-  'announcements'
-]);
+/** Super admin email – always gets full access regardless of DB role */
+const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
 
 const ACCESS_LEVELS_ELITE = new Set(['open', 'free', 'read-only', 'premium', 'a7fx', 'elite', 'support', 'staff']);
 const ACCESS_LEVELS_PREMIUM = new Set(['open', 'free', 'read-only', 'premium', 'support', 'staff']);
@@ -33,10 +30,11 @@ function normalizeRole(dbRole) {
 
 /**
  * Compute tier from user row: FREE | PREMIUM | ELITE.
- * ADMIN/SUPER_ADMIN are still USER tier for display; they get full access via role override.
+ * Super admin by email gets ELITE. ADMIN/SUPER_ADMIN get full access via role override.
  */
 function getTier(userRow) {
   if (!userRow) return 'FREE';
+  if (isSuperAdminEmail(userRow)) return 'ELITE';
   const role = (userRow.role || '').toLowerCase();
   const plan = (userRow.subscription_plan || '').toLowerCase();
   const status = (userRow.subscription_status || '').toLowerCase();
@@ -47,6 +45,11 @@ function getTier(userRow) {
   if (['elite', 'a7fx'].includes(role) || (active && ['a7fx', 'elite'].includes(plan))) return 'ELITE';
   if (role === 'premium' || (active && ['aura', 'premium'].includes(plan))) return 'PREMIUM';
   return 'FREE';
+}
+
+function isSuperAdminEmail(userRow) {
+  const email = (userRow?.email || '').toString().trim().toLowerCase();
+  return email === SUPER_ADMIN_EMAIL.toLowerCase();
 }
 
 /**
@@ -65,6 +68,7 @@ function getStatus(userRow) {
 
 /**
  * Entitlements from a single user row (no DB in this function).
+ * Super admin by email (Shubzfx@gmail.com) always gets SUPER_ADMIN role and full access.
  * canAccessCommunity: true for all authenticated users (FREE can enter, see only allowlist).
  * canAccessAI: true for PREMIUM, ELITE, ADMIN, SUPER_ADMIN.
  */
@@ -79,7 +83,8 @@ function getEntitlements(userRow) {
       allowedChannelSlugs: []
     };
   }
-  const role = normalizeRole(userRow.role);
+  // Super admin by email: full access regardless of DB role
+  const role = isSuperAdminEmail(userRow) ? 'SUPER_ADMIN' : normalizeRole(userRow.role);
   const tier = getTier(userRow);
   const status = getStatus(userRow);
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
@@ -95,18 +100,33 @@ function getEntitlements(userRow) {
 }
 
 /**
- * Given entitlements and full channel list, return array of channel ids (slugs) the user may see.
+ * Normalize channel name for FREE allowlist match (avoid general vs general-chat).
+ */
+function freeChannelNameKey(name) {
+  if (name == null) return '';
+  return name.toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || '';
+}
+
+/**
+ * Given entitlements and full channel list, return array of channel ids the user may see.
+ * Uses channel.id only (same as channels API). FREE: only existing channels whose name is in allowlist.
  */
 function getAllowedChannelSlugs(entitlements, channels) {
   if (!entitlements || !Array.isArray(channels)) return [];
   const { role, tier } = entitlements;
+  const toId = (c) => (c.id != null ? String(c.id) : (c.name != null ? String(c.name) : ''));
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-    return channels.map((c) => (c.id || c.name || '').toString());
+    return channels.map(toId).filter(Boolean);
   }
   if (tier === 'FREE') {
     return channels
-      .filter((c) => FREE_CHANNEL_ALLOWLIST.has((c.id || c.name || '').toString().toLowerCase()))
-      .map((c) => (c.id || c.name || '').toString());
+      .filter((c) => {
+        const nameKey = freeChannelNameKey(c.name);
+        const nameLower = (c.name || '').toString().toLowerCase();
+        return nameKey && (FREE_CHANNEL_ALLOWLIST.has(nameKey) || FREE_CHANNEL_ALLOWLIST.has(nameLower));
+      })
+      .map(toId)
+      .filter(Boolean);
   }
   const allowedLevels = tier === 'ELITE' ? ACCESS_LEVELS_ELITE : ACCESS_LEVELS_PREMIUM;
   return channels
@@ -114,7 +134,8 @@ function getAllowedChannelSlugs(entitlements, channels) {
       const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
       return allowedLevels.has(level);
     })
-    .map((c) => (c.id || c.name || '').toString());
+    .map(toId)
+    .filter(Boolean);
 }
 
 /**
@@ -142,7 +163,9 @@ function getChannelPermissions(entitlements, channel) {
   }
 
   if (tier === 'FREE') {
-    canSee = FREE_CHANNEL_ALLOWLIST.has(id);
+    const nameKey = freeChannelNameKey(channel?.name);
+    const nameLower = (channel?.name || '').toString().toLowerCase();
+    canSee = FREE_CHANNEL_ALLOWLIST.has(id) || (nameKey && FREE_CHANNEL_ALLOWLIST.has(nameKey)) || FREE_CHANNEL_ALLOWLIST.has(nameLower);
     canRead = canSee;
     canWrite = canSee && !readOnly;
     return { canSee, canRead, canWrite, locked: locked && canSee };
@@ -185,6 +208,8 @@ function canAccessChannel(entitlements, channelId, channels) {
 
 module.exports = {
   FREE_CHANNEL_ALLOWLIST,
+  SUPER_ADMIN_EMAIL,
+  isSuperAdminEmail,
   normalizeRole,
   getTier,
   getStatus,

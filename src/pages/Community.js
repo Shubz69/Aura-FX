@@ -8,6 +8,7 @@ import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
+import { useEntitlements } from '../context/EntitlementsContext';
 import {
     getLevelFromXP,
     getXPForNextLevel,
@@ -390,6 +391,7 @@ const Community = () => {
     const { id: channelIdParam } = useParams();
     const location = useLocation();
     const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
+    const { refresh: refreshEntitlements } = useEntitlements();
     
     const [channelList, setChannelList] = useState([]);
     const [selectedChannel, setSelectedChannel] = useState(null);
@@ -2325,11 +2327,14 @@ const Community = () => {
         
         if (paymentSuccess || sessionId) {
             // Refresh user data from localStorage (just updated by PaymentSuccess)
-            // Also check AuthContext for latest data
             const latestUser = authUser || JSON.parse(localStorage.getItem('user') || '{}');
             storedUserData = { ...latestUser };
-            // Clear URL params
             window.history.replaceState({}, document.title, window.location.pathname);
+            // Force entitlements refresh and refetch channels so UI updates instantly (no 60s stale tier)
+            refreshEntitlements().then(() => {
+                try { localStorage.removeItem('community_channels_cache'); } catch (e) { /* ignore */ }
+                refreshChannelList();
+            });
         }
 
         if (tokenIsValid) {
@@ -2395,7 +2400,7 @@ const Community = () => {
                 }, 500);
             }
         }
-    }, [navigate, authUser, checkSubscriptionFromDB, fetchLatestUserData]);
+    }, [navigate, authUser, checkSubscriptionFromDB, fetchLatestUserData, refreshEntitlements, refreshChannelList]);
 
     // Prevent page scrolling - Discord-like behavior
     useEffect(() => {
@@ -6221,10 +6226,12 @@ Let's build generational wealth together! 💰🚀`,
                                             color: 'white'
                                         }}
                                     >
+                                        <option value="free">Free - No subscription required</option>
+                                        <option value="open">Open - Everyone can view and post</option>
                                         <option value="read-only">Read Only - View only</option>
                                         <option value="admin-only">Admin Only</option>
-                                        <option value="premium">Premium - Premium & A7FX (Subscription Required)</option>
-                                        <option value="a7fx">A7FX Elite - A7FX only</option>
+                                        <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
+                                        <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
                                     </select>
                                 </div>
                             </div>
@@ -6715,11 +6722,12 @@ Let's build generational wealth together! 💰🚀`,
                                     fontSize: '0.9rem'
                                 }}
                             >
+                                <option value="free">Free - No subscription required</option>
                                 <option value="open">Open - Everyone can view and post</option>
                                 <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
                                 <option value="admin-only">Admin-Only - Only admins can view and post</option>
-                                <option value="premium">Premium - Only premium subscribers</option>
-                                <option value="a7fx">A7FX Elite - Only A7FX subscribers</option>
+                                <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
+                                <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
                             </select>
                         </div>
                         <div style={{ marginBottom: '20px' }}>

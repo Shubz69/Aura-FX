@@ -15,6 +15,18 @@ const http = require('http');
 const WebSocket = require('ws');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const path = require('path');
+
+// Entitlements: same logic as /api/me and REST - enforce on SUBSCRIBE (canSee) and SEND (canWrite)
+let getEntitlements, getAllowedChannelSlugs, getChannelPermissions;
+try {
+  const entitlementsModule = require(path.join(__dirname, '..', 'api', 'utils', 'entitlements'));
+  getEntitlements = entitlementsModule.getEntitlements;
+  getAllowedChannelSlugs = entitlementsModule.getAllowedChannelSlugs;
+  getChannelPermissions = entitlementsModule.getChannelPermissions;
+} catch (e) {
+  console.warn('Entitlements module not loaded, channel access will not be enforced:', e.message);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -110,6 +122,53 @@ const userConnections = new Map();
 
 // Rate limiting: userId -> { count, windowStart }
 const messageRateLimits = new Map();
+
+// ============================================================================
+// Entitlements: resolve canSee / canWrite for a user and channel (stops retry loops)
+// ============================================================================
+
+async function getChannelAccess(userId, channelId) {
+  if (!userId) return { canSee: false, canWrite: false, reason: 'Authentication required' };
+  if (!channelId) return { canSee: false, canWrite: false, reason: 'Channel required' };
+  if (!getEntitlements || !getChannelPermissions || !getAllowedChannelSlugs || !dbPool) {
+    return { canSee: true, canWrite: true }; // entitlements or DB not available: allow
+  }
+  try {
+    const [userRows] = await dbPool.execute(
+      `SELECT id, email, role, subscription_status, subscription_plan, subscription_expiry, subscription_started, payment_failed, has_used_free_trial
+       FROM users WHERE id = ?`,
+      [userId]
+    );
+    if (!userRows || userRows.length === 0) return { canSee: false, canWrite: false, reason: 'User not found' };
+    const userRow = userRows[0];
+    const entitlements = getEntitlements(userRow);
+    let channels = [];
+    try {
+      const [channelRows] = await dbPool.execute(
+        `SELECT id, name, category, description, access_level, permission_type
+         FROM channels ORDER BY COALESCE(category, 'general'), name`
+      );
+      if (channelRows && channelRows.length > 0) {
+        channels = channelRows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          category: r.category,
+          description: r.description,
+          access_level: r.access_level,
+          permission_type: r.permission_type
+        }));
+      }
+    } catch (e) { /* channels table may not exist */ }
+    entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, channels);
+    const channel = channels.find((c) => String(c.id) === String(channelId) || (c.name && String(c.name).toLowerCase() === String(channelId).toLowerCase()));
+    if (!channel) return { canSee: false, canWrite: false, reason: 'Channel not found' };
+    const perm = getChannelPermissions(entitlements, channel);
+    return { canSee: perm.canSee, canWrite: perm.canWrite, reason: !perm.canSee ? 'Access denied' : !perm.canWrite ? 'Write denied' : null };
+  } catch (err) {
+    console.error('getChannelAccess error:', err.message);
+    return { canSee: false, canWrite: false, reason: 'Server error' };
+  }
+}
 
 // ============================================================================
 // Health check endpoint (enhanced)
@@ -432,7 +491,6 @@ wss.on('connection', (ws, req) => {
                 const destination = frame.headers.destination;
                 console.log(`Client ${clientId} subscribed to: ${destination}`);
                 
-                // Extract channel ID from destination (format: /topic/chat/{channelId})
                 let channelId = null;
                 if (destination && destination.startsWith('/topic/chat/')) {
                     channelId = destination.replace('/topic/chat/', '');
@@ -441,6 +499,21 @@ wss.on('connection', (ws, req) => {
                 }
                 
                 if (channelId) {
+                    // Enforce entitlements on chat channels (canSee) to stop retry loops / "closed before established"
+                    if (channelId !== 'online-users') {
+                        const currentUserId = clients.get(ws)?.userId;
+                        const access = await getChannelAccess(currentUserId, channelId);
+                        if (!access.canSee) {
+                            const errMsg = access.reason || 'Access denied';
+                            console.warn(`[${clientId}] SUBSCRIBE denied for channel ${channelId}:`, errMsg);
+                            const errorFrame = createStompFrame('ERROR', { message: errMsg }, errMsg);
+                            ws.send(errorFrame);
+                            if (frame.headers.receipt) {
+                                ws.send(createStompFrame('RECEIPT', { 'receipt-id': frame.headers.receipt }));
+                            }
+                            return;
+                        }
+                    }
                     if (!subscriptions.has(channelId)) {
                         subscriptions.set(channelId, new Set());
                     }
@@ -448,7 +521,6 @@ wss.on('connection', (ws, req) => {
                     clients.get(ws).subscriptions.add(channelId);
                 }
                 
-                // Send receipt if requested
                 if (frame.headers.receipt) {
                     const receiptFrame = createStompFrame('RECEIPT', {
                         'receipt-id': frame.headers.receipt
@@ -476,7 +548,6 @@ wss.on('connection', (ws, req) => {
             } else if (frame.command === 'SEND') {
                 const destination = frame.headers.destination;
                 
-                // Extract channel ID from destination (format: /app/chat/{channelId})
                 let channelId = null;
                 if (destination && destination.startsWith('/app/chat/')) {
                     channelId = destination.replace('/app/chat/', '');
@@ -487,11 +558,20 @@ wss.on('connection', (ws, req) => {
                     return;
                 }
                 
-                // Rate limit check
+                // Enforce entitlements (canWrite) so denied users don't retry in a loop
                 const currentUserId = clients.get(ws)?.userId;
+                const access = await getChannelAccess(currentUserId, channelId);
+                if (!access.canWrite) {
+                    const errMsg = access.reason || 'Write denied';
+                    console.warn(`[${clientId}] SEND denied for channel ${channelId}:`, errMsg);
+                    const errorFrame = createStompFrame('ERROR', { message: errMsg }, errMsg);
+                    ws.send(errorFrame);
+                    return;
+                }
+                
                 if (!checkMessageRateLimit(currentUserId)) {
                     console.warn(`[${clientId}] Rate limited user ${currentUserId}`);
-                    return; // Silently drop - don't send error frame
+                    return;
                 }
                 
                 stats.totalMessages++;

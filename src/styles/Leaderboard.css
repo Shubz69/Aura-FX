@@ -211,6 +211,13 @@
     margin-bottom: 10px;
 }
 
+.podium-trophy-above-name {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    opacity: 0.95;
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+}
+
 .podium-username {
     font-size: 1.1rem;
     font-weight: 700;
@@ -312,6 +319,14 @@
 .username {
     font-weight: 600;
     color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.table-trophy {
+    font-size: 0.9rem;
+    opacity: 0.9;
 }
 
 .user-role {

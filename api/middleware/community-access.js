@@ -73,6 +73,12 @@ async function checkCommunityAccess(userId) {
     const user = rows[0];
     const now = new Date();
     
+    // Super admin by email: full access regardless of DB role (Shubzfx@gmail.com)
+    const superAdminEmail = 'shubzfx@gmail.com';
+    if (user.email && user.email.toString().trim().toLowerCase() === superAdminEmail) {
+      return { hasAccess: true, accessType: 'ADMIN', reason: 'Super admin' };
+    }
+    
     // Check for payment failure first (highest priority denial)
     if (user.payment_failed) {
       return { hasAccess: false, accessType: 'PAYMENT_FAILED', reason: 'Payment failed - subscription inactive' };

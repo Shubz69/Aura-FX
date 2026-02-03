@@ -3,6 +3,18 @@ import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
+// Generated avatar when user has no profile picture – consistent per user, looks like a real avatar
+const getLeaderboardAvatarUrl = (user) => {
+    if (!user) return 'https://api.dicebear.com/7.x/lorelei/svg?seed=default';
+    const avatar = user.avatar || '';
+    const isDefault = !avatar || avatar === 'avatar_ai.png' || avatar.startsWith('avatar_') || avatar === 'default.png';
+    if (isDefault) {
+        const seed = encodeURIComponent(String(user.id || user.username || 'user'));
+        return `https://api.dicebear.com/7.x/lorelei/svg?seed=${seed}`;
+    }
+    return avatar.startsWith('http') ? avatar : `/avatars/${avatar}`;
+};
+
 const Leaderboard = () => {
     const containerRef = useRef(null);
     const [loading, setLoading] = useState(true);
@@ -156,12 +168,13 @@ const Leaderboard = () => {
             return (
                 <div className={`podium-place ${place}-place`}>
                     <div className="podium-avatar">
-                        <img src={`/avatars/${user.avatar || 'avatar_ai.png'}`} alt={user.username} />
+                        <img src={getLeaderboardAvatarUrl(user)} alt={user.username} />
                         {place === 'first' && <div className="crown">👑</div>}
                         {user.isDemo && <span className="demo-badge" title="Demo User">🤖</span>}
                     </div>
                     <div className="podium-info">
                         <div className="podium-rank">{emoji}</div>
+                        <div className="podium-trophy-above-name">🏆</div>
                         <div className="podium-username">{user.username}</div>
                         <div className="podium-xp">{formatXp(user)}</div>
                         <div className="podium-xp-label">{getXpLabel()}</div>
@@ -218,11 +231,12 @@ const Leaderboard = () => {
                                 </div>
                                 <div className="user-cell">
                                     <div className="user-avatar">
-                                        <img src={`/avatars/${user.avatar || 'avatar_ai.png'}`} alt={user.username} />
+                                        <img src={getLeaderboardAvatarUrl(user)} alt={user.username} />
                                         {user.isDemo && <span className="demo-indicator" title="Demo User">🤖</span>}
                                     </div>
                                     <div className="user-info">
                                         <div className="username">
+                                            {index < 3 && <span className="table-trophy">🏆</span>}
                                             {user.username}
                                             {user.isDemo && <span className="demo-tag">Demo</span>}
                                         </div>

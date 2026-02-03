@@ -63,6 +63,12 @@ async function checkCommunityAccess(authHeader) {
     const now = new Date();
     const expiryDate = user.subscription_expiry ? new Date(user.subscription_expiry) : null;
     
+    // Super admin by email: full access regardless of DB role (Shubzfx@gmail.com)
+    const superAdminEmail = 'shubzfx@gmail.com';
+    if (user.email && user.email.toString().trim().toLowerCase() === superAdminEmail) {
+      return { hasAccess: true, accessType: 'ADMIN', userId, error: null };
+    }
+    
     // Check payment failed
     if (user.payment_failed) {
       return { hasAccess: false, accessType: 'NONE', userId, error: 'PAYMENT_FAILED' };

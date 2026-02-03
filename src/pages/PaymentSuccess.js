@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useEntitlements } from "../context/EntitlementsContext";
 import "../styles/PaymentSuccess.css";
 import CosmicBackground from '../components/CosmicBackground';
 
@@ -17,6 +18,7 @@ const PaymentSuccess = () => {
     const [processing, setProcessing] = useState(true);
     const [error, setError] = useState(false);
     const { persistUser } = useAuth();
+    const { refresh: refreshEntitlements } = useEntitlements();
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -119,7 +121,9 @@ const PaymentSuccess = () => {
                                     // Clear URL params immediately
                                     window.history.replaceState({}, document.title, window.location.pathname);
                                     
-                                    // Redirect to community immediately (no delay for mobile)
+                                    // Force entitlements refresh and clear channel cache so UI updates instantly
+                                    await refreshEntitlements();
+                                    localStorage.removeItem('community_channels_cache');
                                     navigate('/community', { replace: true });
                                     return;
                                 } else {
@@ -165,7 +169,9 @@ const PaymentSuccess = () => {
                                         
                                         window.history.replaceState({}, document.title, window.location.pathname);
                                         
-                                        // Redirect to community immediately (no delay for mobile)
+                                        await refreshEntitlements();
+                                        localStorage.removeItem('community_channels_cache');
+                                        
                                         navigate('/community', { replace: true });
                                         return;
                                     }
@@ -189,6 +195,8 @@ const PaymentSuccess = () => {
                                 }
                                 // Still redirect to community - the check there will handle it
                                 window.history.replaceState({}, document.title, window.location.pathname);
+                                await refreshEntitlements();
+                                localStorage.removeItem('community_channels_cache');
                                 navigate('/community', { replace: true });
                                 return;
                             }
@@ -208,6 +216,8 @@ const PaymentSuccess = () => {
                             }
                             // Still redirect to community even if activation failed
                             window.history.replaceState({}, document.title, window.location.pathname);
+                            await refreshEntitlements();
+                            localStorage.removeItem('community_channels_cache');
                             navigate('/community', { replace: true });
                             return;
                         }
@@ -226,8 +236,9 @@ const PaymentSuccess = () => {
                         if (persistUser) {
                             persistUser(user);
                         }
-                        // Still redirect to community
                         window.history.replaceState({}, document.title, window.location.pathname);
+                        await refreshEntitlements();
+                        localStorage.removeItem('community_channels_cache');
                         navigate('/community', { replace: true });
                         return;
                     }

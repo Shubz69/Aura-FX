@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useEntitlements } from '../context/EntitlementsContext';
 import CosmicBackground from '../components/CosmicBackground';
 import axios from 'axios';
 import '../styles/Subscription.css';
@@ -72,6 +73,7 @@ const PLANS = {
 const Subscription = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated } = useAuth();
+    const { refresh: refreshEntitlements } = useEntitlements();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [countdown, setCountdown] = useState(10);
@@ -410,6 +412,10 @@ const Subscription = () => {
                                 setSubscriptionActivated(true);
                                 window.history.replaceState({}, document.title, window.location.pathname);
                                 setLoading(false);
+                                
+                                // Force entitlements refresh and clear channel cache so community UI updates instantly
+                                await refreshEntitlements();
+                                if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
                                 
                                 const baseUrl = window.location.origin;
                                 setCountdown(5);

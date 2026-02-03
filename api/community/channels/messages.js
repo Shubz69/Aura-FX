@@ -219,7 +219,7 @@ module.exports = async (req, res) => {
 
     // Single source of truth: enforce channel access via entitlements
     const [userRows] = await db.execute(
-      'SELECT id, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
+      'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
       [decoded.id]
     );
     if (!userRows || userRows.length === 0) {
