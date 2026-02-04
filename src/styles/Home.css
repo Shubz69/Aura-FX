@@ -1110,7 +1110,7 @@ body.loading-active {
     
     .trading-markets-section .market-item {
         padding: 1.75rem 1.5rem;
-        min-height: 160px;
+        min-height: auto;
     }
     
     .trading-markets-section .market-icon {
@@ -1125,8 +1125,11 @@ body.loading-active {
     
     .trading-markets-section .market-description {
         font-size: 0.95rem;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
+        display: block;
+        overflow: visible;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
+        -webkit-box-orient: unset;
     }
     
     .key-features-section {
