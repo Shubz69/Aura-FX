@@ -2744,9 +2744,11 @@ const Community = () => {
         };
     }, [selectedChannel?.id]);
     
+    const isWelcomeChannel = selectedChannel && (String(selectedChannel.id).toLowerCase() === 'welcome' || (selectedChannel.name && selectedChannel.name.toLowerCase() === 'welcome'));
+
     // Add welcome message when welcome channel is selected for first time
     useEffect(() => {
-        if (selectedChannel && selectedChannel.name === 'welcome' && !hasReadWelcome) {
+        if (selectedChannel && isWelcomeChannel && !hasReadWelcome) {
             // Check if welcome message already exists
             const hasWelcomeMessage = messages.some(msg => msg.id === 'welcome-message');
             
@@ -2838,7 +2840,7 @@ Let's build generational wealth together! 💰🚀`,
                 setMessages([welcomeMessage]);
             }
         }
-    }, [selectedChannel, hasReadWelcome, messages]);
+    }, [selectedChannel, hasReadWelcome, messages, isWelcomeChannel]);
 
     // Handle edit message
     const handleEditMessage = (messageId) => {
@@ -5068,18 +5070,51 @@ Let's build generational wealth together! 💰🚀`,
                             {messages.length === 0 ? (
                                 <div className="empty-state">
                                     <h3>
-                                        {selectedChannel?.id === 'welcome' || selectedChannel?.name === 'welcome'
+                                        {isWelcomeChannel
                                             ? 'Welcome to AURA FX'
-                                            : `Welcome to #${selectedChannel.displayName || selectedChannel.name}`}
+                                            : `Welcome to #${selectedChannel?.displayName || selectedChannel?.name}`}
                                     </h3>
                                     <p>
-                                        {selectedChannel?.id === 'welcome' || selectedChannel?.name === 'welcome'
-                                            ? 'Read the rules above and click the checkmark to unlock your channels.'
+                                        {isWelcomeChannel
+                                            ? 'Read the rules above and click the checkmark below to unlock your channels.'
                                             : (() => {
                                                 const desc = (selectedChannel?.description || '').replace(/glitch/gi, 'AURA FX').trim();
                                                 return desc || 'No messages yet. Be the first to start the conversation!';
                                             })()}
                                     </p>
+                                    {isWelcomeChannel && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
+                                        <div
+                                            role="button"
+                                            tabIndex={0}
+                                            style={{
+                                                marginTop: '24px',
+                                                padding: '16px 24px',
+                                                background: 'rgba(99, 102, 241, 0.15)',
+                                                borderRadius: '10px',
+                                                border: '2px solid rgba(99, 102, 241, 0.4)',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                fontWeight: 600,
+                                                color: '#fff'
+                                            }}
+                                            onClick={handleWelcomeAcknowledgment}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleWelcomeAcknowledgment(); } }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)';
+                                                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.6)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
+                                                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+                                            }}
+                                        >
+                                            <span style={{ fontSize: '1.5rem' }}>✅</span>
+                                            <span>I've read and agree to the rules – unlock my channels</span>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 messages.map((message, index) => {

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import "../styles/Register.css";
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
+import { isFirebasePhoneEnabled, setupRecaptcha, sendPhoneOtp, confirmPhoneOtp } from '../utils/firebasePhoneAuth';
 
 const Register = () => {
-    const [step, setStep] = useState(1); // 1: email/password entry, 2: email verification code, 3: complete registration
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -17,14 +17,19 @@ const Register = () => {
         confirmPassword: '',
         name: ''
     });
-    const [verificationCode, setVerificationCode] = useState('');
+    const [emailCode, setEmailCode] = useState('');
+    const [phoneCode, setPhoneCode] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
-    const [emailVerified, setEmailVerified] = useState(false);
+    const [codesSent, setCodesSent] = useState(false); // true after "Send verification codes" – show email + phone OTP on same page
+    const [firebaseOtpSent, setFirebaseOtpSent] = useState(false);
+    const firebaseConfirmationRef = useRef(null);
+    const useFirebasePhone = isFirebasePhoneEnabled();
     const { register: registerUser } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -51,23 +56,19 @@ const Register = () => {
         }));
     };
 
-    // Step 1: Send verification email - REQUIRED before signup
-    const handleSendVerificationEmail = async (e) => {
+    /** Send both email and phone OTP on the same page; then show both code inputs. */
+    const handleSendVerificationCodes = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
-
-        // Validate username
         if (formData.username.length < 3) {
             setError('Username must be at least 3 characters long');
             return;
         }
-
         if (!/^[a-zA-Z0-9_-]+$/.test(formData.username)) {
             setError('Username can only contain letters, numbers, hyphens, and underscores');
             return;
         }
-
         if (!formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
             setError('All fields are required.');
             return;
@@ -77,148 +78,127 @@ const Register = () => {
             setError('Valid phone number is required (10+ digits).');
             return;
         }
-
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match.');
             return;
         }
-
         if (formData.password.length < 6) {
             setError('Password must be at least 6 characters long.');
             return;
         }
-
         if (!acceptedTerms) {
             setError('Please accept the terms and conditions');
             return;
         }
-
         setIsLoading(true);
-
         try {
-            // Send verification code to email - MUST succeed before proceeding
-            // Also checks username availability
             const result = await Api.sendSignupVerificationEmail(formData.email, formData.username);
-            
-            if (result === true || result === undefined) {
-                setSuccess("Verification code sent! Please check your email for the 6-digit code.");
-                setStep(2);
-            } else {
-                setError("Failed to send verification email. Your email address may not be valid. Please check and try again.");
-                // Do NOT proceed to step 2 if email fails
+            if (result !== true && result !== undefined) {
+                setError("Failed to send verification email. Please try again.");
+                setIsLoading(false);
+                return;
             }
-        } catch (error) {
-            console.error("Email verification error:", error);
-            // If email sending fails, user CANNOT proceed with signup
-            let errorMsg = error.message || "Failed to send verification email. Please check your email address and try again.";
-            
-            if (error.message && error.message.includes("already exists")) {
-                errorMsg = "An account with this email already exists. Please sign in instead.";
-            } else if (error.message && error.message.includes("already taken")) {
-                errorMsg = "This username is already taken. Please choose a different username.";
-            } else if (error.message && error.message.includes("invalid")) {
-                errorMsg = "Invalid email address. Please enter a valid email.";
-            } else if (error.message && error.message.includes("not configured")) {
-                errorMsg = "Email service is temporarily unavailable. Please try again later or contact support.";
+            if (!useFirebasePhone) {
+                try {
+                    const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
+                    if (sendRes?.useFirebase) setError("Backend has Firebase but frontend is not configured. Add REACT_APP_FIREBASE_* or configure Twilio.");
+                    else if (!sendRes?.success && !sendRes?.useFirebase) setError("Could not send phone code. Configure Firebase (free) or Twilio.");
+                } catch (phoneErr) {
+                    setError(phoneErr.message || "Could not send phone code. Configure Firebase (free) or Twilio.");
+                    setIsLoading(false);
+                    return;
+                }
             }
-            
+            setCodesSent(true);
+            setFirebaseOtpSent(false);
+            setSuccess(useFirebasePhone ? "Email code sent! Click 'Send code' below to get your phone code." : "Codes sent! Enter the 6-digit codes from your email and phone below.");
+        } catch (err) {
+            let errorMsg = err.message || "Failed to send verification.";
+            if (err.message && err.message.includes("already exists")) errorMsg = "An account with this email already exists. Please sign in.";
+            if (err.message && err.message.includes("already taken")) errorMsg = "This username is already taken.";
+            if (err.message && err.message.includes("not configured")) errorMsg = "Email service is temporarily unavailable. Please try again later.";
             setError(errorMsg);
-            // Stay on step 1 - don't allow progression without email verification
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Step 2: Verify email code
-    const handleVerifyEmailCode = async (e) => {
-        e.preventDefault();
-        setError('');
+    const handleSendFirebaseOtp = async () => {
         setIsLoading(true);
-
-        if (verificationCode.length !== 6) {
-            setError('Please enter a valid 6-digit code.');
-            setIsLoading(false);
-            return;
-        }
-
-        // Prevent multiple verification attempts
-        if (emailVerified) {
-            // Already verified - don't show error, just proceed
-            setIsLoading(false);
-            return;
-        }
-
+        setError("");
         try {
-            const result = await Api.verifySignupCode(formData.email, verificationCode);
-            
-            if (result && result.verified) {
-                // Clear ALL previous messages
-                setError("");
-                setSuccess("Email verified successfully! Completing registration...");
-                setEmailVerified(true);
-                
-                // Store verification status in localStorage as backup
-                localStorage.setItem('emailVerified', 'true');
-                
-                // Set step and loading state
-                setStep(3);
-                setIsLoading(true); // Keep loading state for registration
-                
-                // Wait a moment for state to update, then proceed to registration
-                setTimeout(() => {
-                    handleCompleteRegistration();
-                }, 100);
-            } else {
-                setError("Invalid verification code. Please check your email and try again.");
-                setSuccess(""); // Clear success message
+            const recaptcha = setupRecaptcha('firebase-phone-send-btn-register');
+            if (!recaptcha) {
+                setError("Firebase reCAPTCHA could not be loaded.");
                 setIsLoading(false);
+                return;
             }
+            const { confirmationResult } = await sendPhoneOtp(formData.phone, recaptcha);
+            firebaseConfirmationRef.current = confirmationResult;
+            setFirebaseOtpSent(true);
+            setSuccess("Code sent! Enter the 6-digit code from your phone.");
         } catch (err) {
-            console.error("Code verification error:", err);
-            setError(err.message || "Invalid verification code. Please try again.");
-            setSuccess(""); // Clear success message
+            setError(err.message || "Failed to send code. Try again.");
+        } finally {
             setIsLoading(false);
         }
     };
 
-    // Step 3: Complete registration after email verification
-    const handleCompleteRegistration = async () => {
-        // Double-check email is verified (use state directly if needed)
-        const isVerified = emailVerified || localStorage.getItem('emailVerified') === 'true';
-        
-        if (!isVerified) {
-            setError("Email must be verified before registration can complete.");
-            setSuccess(""); // Clear success message when showing error
-            setStep(2); // Go back to verification step
-            setIsLoading(false);
+    /** Verify both email and phone OTP, then register – all on the same page. */
+    const handleVerifyAndSignUp = async (e) => {
+        e.preventDefault();
+        if (emailCode.length !== 6) {
+            setError("Please enter the 6-digit code from your email.");
             return;
         }
-
-        // Prevent multiple registration attempts
-        if (isLoading && step === 3) {
+        if (phoneCode.length !== 6) {
+            setError("Please enter the 6-digit code from your phone.");
             return;
         }
-
+        if (useFirebasePhone && !firebaseOtpSent) {
+            setError("Please click 'Send code' to get your phone verification code first.");
+            return;
+        }
         setIsLoading(true);
-        setError(''); // Clear any errors
-        setSuccess('Completing registration...');
-
+        setError("");
         try {
+            const emailResult = await Api.verifySignupCode(formData.email, emailCode);
+            if (!emailResult?.verified) {
+                setError("Invalid or expired email code. Please check and try again.");
+                setIsLoading(false);
+                return;
+            }
+            let verifiedPhone = formData.phone.trim();
+            if (useFirebasePhone && firebaseConfirmationRef.current) {
+                const { idToken, phoneNumber } = await confirmPhoneOtp(firebaseConfirmationRef.current, phoneCode);
+                const res = await Api.verifyPhoneWithFirebase(idToken);
+                if (!res?.verified) {
+                    setError("Invalid or expired phone code.");
+                    setIsLoading(false);
+                    return;
+                }
+                verifiedPhone = res.phone || phoneNumber || formData.phone;
+            } else {
+                const ok = await Api.verifyPhoneCode(formData.phone, phoneCode);
+                if (!ok) {
+                    setError("Invalid or expired phone code.");
+                    setIsLoading(false);
+                    return;
+                }
+            }
+            setSuccess("Creating your account...");
             const submitData = {
-                username: formData.username,
-                email: formData.email,
-                phone: formData.phone.trim(),
+                username: formData.username.trim(),
+                email: formData.email.trim().toLowerCase(),
+                phone: verifiedPhone,
                 password: formData.password,
-                name: formData.name,
+                name: (formData.name || '').trim(),
                 avatar: '/avatars/avatar_ai.png'
             };
-
             localStorage.setItem('newSignup', 'true');
-            localStorage.removeItem('emailVerified');
-
-            await registerUser(submitData);
+            localStorage.setItem('pendingSubscription', 'true');
+            const response = await registerUser(submitData);
             setIsLoading(false);
-
             toast.success('🎉 Account created successfully! Welcome to AURA FX!', {
                 position: "top-center",
                 autoClose: 1500,
@@ -227,42 +207,50 @@ const Register = () => {
                 pauseOnHover: true,
                 draggable: true,
             });
-
-            setError('');
-            setSuccess('');
-        } catch (err) {
-            console.error('Registration error:', err);
-            let errorMsg = err.message || 'Registration failed. Please try again.';
-            
-            // If username or email conflict, go back to step 1 so user can fix it
-            if (err.message && (err.message.includes('already exists') || err.message.includes('already taken'))) {
-                setStep(1);
-                setEmailVerified(false); // Reset verification since we need to start over
-                setVerificationCode('');
-                errorMsg = err.message;
+            if (response && response.status !== "MFA_REQUIRED") {
+                navigate("/choose-plan");
             }
-            
+        } catch (err) {
+            let errorMsg = err.message || "Verification failed. Please try again.";
+            if (err.message && (err.message.includes('already exists') || err.message.includes('already taken'))) {
+                setCodesSent(false);
+                setEmailCode('');
+                setPhoneCode('');
+                setFirebaseOtpSent(false);
+            }
             setError(errorMsg);
             setIsLoading(false);
         }
     };
 
-    // Step 1: Email, password, and user info entry
-    const renderStep1 = () => (
-        <div className="register-form-container">
-            <div className="form-header">
-                <h2 className="register-title">SIGN UP</h2>
-                <p className="register-subtitle">Create your new account</p>
-            </div>
-            
-            {/* Only show one message at a time - error takes priority */}
-            {error ? (
-                <div className="error-message">{error}</div>
-            ) : success ? (
-                <div className="success-message">{success}</div>
-            ) : null}
-            
-            <form onSubmit={handleSendVerificationEmail}>
+    const handleResendPhoneCode = async () => {
+        setError("");
+        setIsLoading(true);
+        try {
+            const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
+            if (sendRes?.useFirebase) setError("Use Firebase 'Send code' or configure Twilio.");
+            else setSuccess("Code resent to your phone.");
+        } catch (err) {
+            setError(err.message || "Failed to resend code.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Single page: form, then email + phone OTP on same page
+    return (
+        <div className="register-container">
+            <CosmicBackground />
+            <div className="register-form-container">
+                <div className="form-header">
+                    <h2 className="register-title">SIGN UP</h2>
+                    <p className="register-subtitle">Create your account – verify email and phone on this page</p>
+                </div>
+                {error ? <div className="error-message">{error}</div> : null}
+                {success ? <div className="success-message">{success}</div> : null}
+
+                {!codesSent && (
+            <form onSubmit={handleSendVerificationCodes}>
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="username" className="form-label">Username</label>
@@ -311,7 +299,7 @@ const Register = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="phone" className="form-label">Phone Number</label>
+                        <label htmlFor="phone" className="form-label">Phone Number (any country)</label>
                         <input
                             type="tel"
                             id="phone"
@@ -319,7 +307,7 @@ const Register = () => {
                             value={formData.phone}
                             onChange={handleInputChange}
                             required
-                            placeholder="e.g. +44 7700 900000"
+                            placeholder="e.g. +44 7700 900000 or +1 555 123 4567"
                             className="form-input"
                             disabled={isLoading}
                         />
@@ -417,93 +405,72 @@ const Register = () => {
                 </div>
                 
                 <button type="submit" className="register-button" disabled={isLoading}>
-                    {isLoading ? 'SENDING VERIFICATION CODE...' : 'SEND VERIFICATION CODE'}
+                    {isLoading ? 'SENDING CODES...' : 'SEND VERIFICATION CODES'}
                 </button>
             </form>
-            
-            <div className="login-link">
-                <p>Already have an account? <Link to="/login">Sign In</Link></p>
-            </div>
-        </div>
-    );
+                )}
 
-    // Step 2: Email verification code entry
-    const renderStep2 = () => (
-        <div className="register-form-container">
-            <div className="form-header">
-                <h2 className="register-title">VERIFY EMAIL</h2>
-                <p className="register-subtitle">Enter the 6-digit code sent to your email</p>
-                <p style={{ color: 'rgba(255, 255, 255, 0.15)', fontSize: '14px', marginTop: '10px' }}>Code sent to: {formData.email}</p>
-            </div>
-            
-            {/* Only show one message at a time - error takes priority */}
-            {error ? (
-                <div className="error-message">{error}</div>
-            ) : success ? (
-                <div className="success-message">{success}</div>
-            ) : null}
-            
-            <form onSubmit={handleVerifyEmailCode}>
-                <div className="form-group" style={{ maxWidth: '300px', margin: '0 auto' }}>
-                    <label htmlFor="verification-code" className="form-label">Verification Code</label>
-                    <input 
-                        type="text"
-                        id="verification-code"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                        maxLength={6}
-                        required
-                        placeholder="Enter 6-digit code"
-                        className="form-input"
-                        disabled={isLoading}
-                        style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '8px' }}
-                    />
+                {codesSent && (
+                    <>
+                        <hr style={{ margin: '1.25rem 0', borderColor: 'rgba(255,255,255,0.2)' }} />
+                        <p className="register-subtitle" style={{ marginBottom: '1rem' }}>Enter the 6-digit codes sent to your email and phone</p>
+                        <form onSubmit={handleVerifyAndSignUp}>
+                            <div className="form-group" style={{ maxWidth: '320px', margin: '0 auto 1rem' }}>
+                                <label htmlFor="email-code-register" className="form-label">Email code (sent to {formData.email})</label>
+                                <input
+                                    type="text"
+                                    id="email-code-register"
+                                    value={emailCode}
+                                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                                    maxLength={6}
+                                    placeholder="6-digit code"
+                                    className="form-input"
+                                    disabled={isLoading}
+                                    style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '6px' }}
+                                />
+                            </div>
+                            <div className="form-group" style={{ maxWidth: '320px', margin: '0 auto 1rem' }}>
+                                <label htmlFor="phone-code-register" className="form-label">Phone code (sent to {formData.phone})</label>
+                                {useFirebasePhone && !firebaseOtpSent ? (
+                                    <div>
+                                        <button type="button" id="firebase-phone-send-btn-register" className="register-button" onClick={handleSendFirebaseOtp} disabled={isLoading} style={{ marginBottom: '0.75rem' }}>
+                                            {isLoading ? 'SENDING...' : 'SEND PHONE CODE'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <input
+                                            type="text"
+                                            id="phone-code-register"
+                                            value={phoneCode}
+                                            onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                                            maxLength={6}
+                                            placeholder="6-digit code"
+                                            className="form-input"
+                                            disabled={isLoading}
+                                            style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '6px' }}
+                                        />
+                                        {useFirebasePhone && firebaseOtpSent && <p><button type="button" onClick={handleSendFirebaseOtp} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
+                                        {!useFirebasePhone && <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
+                                    </>
+                                )}
+                            </div>
+                            {(firebaseOtpSent || !useFirebasePhone) && (
+                                <button type="submit" className="register-button" disabled={isLoading || emailCode.length !== 6 || phoneCode.length !== 6} style={{ marginTop: '0.5rem' }}>
+                                    {isLoading ? 'VERIFYING...' : 'VERIFY & SIGN UP'}
+                                </button>
+                            )}
+                        </form>
+                        <p style={{ marginTop: '1rem' }}>
+                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
+                        </p>
+                    </>
+                )}
+
+                <div className="login-link" style={{ marginTop: '1.25rem' }}>
+                    <p>Already have an account? <Link to="/login">Sign In</Link></p>
                 </div>
-                
-                <button 
-                    type="submit" 
-                    className="register-button"
-                    disabled={isLoading || verificationCode.length !== 6 || emailVerified}
-                    style={{ marginTop: '20px' }}
-                >
-                    {isLoading ? (emailVerified ? 'COMPLETING REGISTRATION...' : 'VERIFYING...') : 'VERIFY CODE'}
-                </button>
-            </form>
-            
-            <div className="login-link" style={{ marginTop: '20px' }}>
-                <p>Didn't receive the code? <button type="button" onClick={handleSendVerificationEmail} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.15)', cursor: 'pointer', textDecoration: 'underline' }}>Resend Code</button></p>
-                <p><button type="button" onClick={() => { setStep(1); setVerificationCode(''); setError(''); setSuccess(''); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.15)', cursor: 'pointer', textDecoration: 'underline' }}>Back to Sign Up</button></p>
             </div>
-        </div>
-    );
-
-    // Step 3: Completing registration (loading state)
-    const renderStep3 = () => (
-        <div className="register-form-container">
-            <div className="form-header">
-                <h2 className="register-title">CREATING ACCOUNT</h2>
-                <p className="register-subtitle">Please wait while we create your account...</p>
-            </div>
-            
-            {/* Only show one message at a time - error takes priority */}
-            {error ? (
-                <div className="error-message">{error}</div>
-            ) : success ? (
-                <div className="success-message">{success}</div>
-            ) : null}
-            
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
-            </div>
-        </div>
-    );
-
-    return (
-        <div className="register-container">
-            <CosmicBackground />
-            {step === 1 && renderStep1()}
-            {step === 2 && renderStep2()}
-            {step === 3 && renderStep3()}
         </div>
     );
 };
