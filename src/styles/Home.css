@@ -983,6 +983,63 @@ body.loading-active {
     }
 }
 
+/* Phones only: Trade Multiple Markets - ensure icon + title + description always visible */
+@media (max-width: 768px) {
+    .trading-markets-section .markets-top-grid,
+    .trading-markets-section .markets-bottom-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        width: 100%;
+        padding: 0;
+    }
+    .trading-markets-section .market-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
+        padding: 1.25rem 1rem;
+        min-height: auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .trading-markets-section .market-icon {
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        font-size: 1.75rem;
+    }
+    .trading-markets-section .market-title {
+        display: block;
+        visibility: visible;
+        opacity: 1;
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ffffff;
+        line-height: 1.3;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .trading-markets-section .market-description {
+        display: block;
+        visibility: visible;
+        opacity: 1;
+        margin: 0;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.45;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
+        overflow: visible;
+        -webkit-box-orient: unset;
+    }
+    .trading-markets-section .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
 /* iPhone X and newer (375px - 812px) */
 @media (min-width: 375px) and (max-width: 812px) {
     .home-container {
