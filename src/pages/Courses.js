@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Courses.css';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
 import { useEntitlements } from '../context/EntitlementsContext';

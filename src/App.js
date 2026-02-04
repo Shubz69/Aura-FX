@@ -11,6 +11,7 @@ import GDPRModal from './components/GDPRModal';
 import Footer from './components/Footer';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import './styles/Courses.css';
 
 /* Lazy-load pages so each route loads only when visited (faster initial load) */
 const Home = lazy(() => import('./pages/Home'));
