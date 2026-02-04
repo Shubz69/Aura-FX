@@ -497,28 +497,36 @@
 
 @media (max-width: 480px) {
     .register-container {
-        padding: 10px;
-        padding-top: 65px;
+        padding: 12px;
+        padding-top: 72px;
     }
     
     .register-form-container {
-        padding: 28px 24px;
-        max-width: 380px;
+        padding: 20px 16px;
+        max-width: 100%;
     }
     
     .register-title {
-        font-size: 2rem;
+        font-size: 1.5rem;
+        letter-spacing: 0.1em;
+    }
+    
+    .register-subtitle {
+        font-size: 0.8rem;
+        margin-bottom: 16px;
     }
     
     .form-input {
         padding: 12px 14px;
         font-size: 0.9rem;
+        min-height: 44px;
     }
     
     .register-button {
         padding: 14px 20px;
         font-size: 0.95rem;
         border-radius: 20px;
+        min-height: 44px;
     }
     
     .avatar-grid {

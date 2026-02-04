@@ -677,7 +677,7 @@
 
 @media (max-width: 768px) {
     .courses-container {
-        padding: 140px 15px 20px;
+        padding: 90px 15px 20px;
     }
     
     .courses-grid {
@@ -737,7 +737,7 @@
 
 @media (max-width: 480px) {
     .courses-container {
-        padding: 120px 12px 15px;
+        padding: 72px 12px 15px;
     }
     
     .subscriptions-grid {
