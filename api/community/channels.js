@@ -234,7 +234,7 @@ const ensureSettingsTable = async (db) => {
   }
 };
 
-const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'admin']);
+const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'levels', 'admin']);
 
 const { getEntitlements, getChannelPermissions } = require('../utils/entitlements');
 
@@ -349,6 +349,7 @@ module.exports = async (req, res) => {
       const defaultChannels = [
         { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA FX community!' },
         { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important announcements' },
+        { id: 'levels', name: 'levels', displayName: 'Levels', category: 'announcements', description: 'Level-up celebrations' },
         { id: 'general', name: 'general', displayName: 'General', category: 'general', description: 'General discussion' }
       ];
 
@@ -487,9 +488,10 @@ module.exports = async (req, res) => {
               }
             };
 
-            // Ensure welcome and announcements exist with AURA FX branding
+            // Ensure welcome, announcements, and levels exist with AURA FX branding
             await safeInsertChannel('welcome', 'welcome', 'announcements', 'Welcome to AURA FX Community. Read the rules and click the checkmark below to unlock your channels.', 'open');
             await safeInsertChannel('announcements', 'announcements', 'announcements', 'Important announcements from AURA FX.', 'open');
+            await safeInsertChannel('levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open');
 
             // TRADING CHANNELS - Open access for all users to see and post
             const tradingChannels = [

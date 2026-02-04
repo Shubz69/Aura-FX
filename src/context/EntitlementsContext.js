@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 
-const CACHE_MS = 60 * 1000;
+const CACHE_MS = 45 * 1000; // 45s cache for near-instant repeat loads, fresh enough for tier/onboarding
 
 const EntitlementsContext = createContext(null);
 
@@ -40,7 +40,9 @@ export const EntitlementsProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const base = process.env.REACT_APP_API_URL || '';
+      const base = typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : (process.env.REACT_APP_API_URL || '');
       const res = await fetch(`${base}/api/me`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         cache: 'no-store'

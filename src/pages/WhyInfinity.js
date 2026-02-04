@@ -234,7 +234,7 @@ const WhyInfinity = () => {
                 <div className="why-additional-features fade-in-up">
                     <h2 className="why-section-heading">AURA FX vs Typical Trading Communities</h2>
                     
-                    <div className="why-features-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                    <div className="why-features-grid why-vs-grid">
                         <div className="why-platform-feature">
                             <div className="why-platform-icon">
                                 <FaUsers />

@@ -264,6 +264,13 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, [token]);
 
+  const retry = useCallback(() => {
+    reconnectAttemptRef.current = 0;
+    setReconnectBanner(false);
+    setConnectionError(null);
+    if (!connectingRef.current && !clientRef.current?.connected) connect();
+  }, [connect]);
+
   const value = {
     isConnected,
     connectionError,
@@ -273,6 +280,7 @@ export const WebSocketProvider = ({ children }) => {
     sendMessage,
     connect,
     disconnect,
+    retry,
   };
 
   return (

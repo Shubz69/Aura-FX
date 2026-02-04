@@ -282,7 +282,7 @@ module.exports = async (req, res) => {
             `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
              FROM messages m 
              LEFT JOIN users u ON m.sender_id = u.id 
-             WHERE m.channel_id = ? 
+             WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
              ORDER BY m.timestamp DESC 
              LIMIT 200`,
             [channelId]
@@ -297,7 +297,7 @@ module.exports = async (req, res) => {
               `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                FROM messages m 
                LEFT JOIN users u ON m.sender_id = u.id 
-               WHERE m.channel_id = ? 
+               WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
                ORDER BY m.timestamp DESC 
                LIMIT 200`,
               [numericChannelId]
@@ -311,7 +311,7 @@ module.exports = async (req, res) => {
                 `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                  FROM messages m 
                  LEFT JOIN users u ON m.sender_id = u.id 
-                 WHERE m.channel_id = ? 
+                 WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
                  ORDER BY m.id DESC 
                  LIMIT 200`,
                 [channelId]
@@ -324,7 +324,7 @@ module.exports = async (req, res) => {
                   `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                    FROM messages m 
                    LEFT JOIN users u ON m.sender_id = u.id 
-                   WHERE m.channel_id = ? 
+                   WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
                    ORDER BY m.id DESC 
                    LIMIT 200`,
                   [numericChannelId]

@@ -19,6 +19,7 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
     subscribeChannel,
     unsubscribeChannel,
     sendMessage: ctxSendMessage,
+    retry: ctxRetry,
   } = useWebSocketContext();
 
   const [localError, setLocalError] = useState(null);
@@ -72,5 +73,6 @@ export const useWebSocket = (channelId, onMessageCallback, shouldConnect = true)
     connectionError: displayError,
     reconnectBanner,
     sendMessage,
+    retry: ctxRetry,
   };
 };

@@ -688,7 +688,7 @@ const Community = () => {
         return false;
     };
 
-    const protectedChannelIds = useMemo(() => (['welcome', 'announcements', 'admin']), []);
+    const protectedChannelIds = useMemo(() => (['welcome', 'announcements', 'levels', 'admin']), []);
 
     const sortChannels = useCallback((channels) => {
         const orderMap = categoryOrder.reduce((map, category, index) => {
@@ -866,6 +866,7 @@ const Community = () => {
         isConnected, 
         connectionError,
         reconnectBanner,
+        retry: retryWebSocket,
         sendMessage: sendWebSocketMessage
     } = useWebSocket(
         selectedChannel?.id,
@@ -884,6 +885,16 @@ const Community = () => {
                                 : msg
                         )
                     );
+                    // After 5 seconds remove from list so other messages fill the gap
+                    const storageKey = `community_messages_${selectedChannel.id}`;
+                    setTimeout(() => {
+                        setMessages(prev => prev.filter(m => String(m.id) !== String(messageId)));
+                        try {
+                            const current = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                            const filtered = current.filter(m => String(m.id) !== String(messageId));
+                            localStorage.setItem(storageKey, JSON.stringify(filtered));
+                        } catch (e) { /* ignore */ }
+                    }, 5000);
                 }
                 return; // Don't process as a new message
             }
@@ -1057,9 +1068,12 @@ const Community = () => {
             // Save to localStorage immediately
             localStorage.setItem('user', JSON.stringify(updatedUser));
             
-            // Update state
+            // Update state and persist so sidebar shows new level immediately
             setStoredUser(updatedUser);
             setUserLevel(newLevel);
+            try {
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+            } catch (e) { /* ignore */ }
             
             // Check if user leveled up
             const leveledUp = newLevel > oldLevel;
@@ -1087,7 +1101,7 @@ const Community = () => {
                         const result = await response.json();
                         console.log(`✅ XP updated: +${earnedXP} XP (Total: ${newXP} XP, Level: ${newLevel})`, result);
                         
-                        // If user leveled up, send notification to announcements channel
+                        // If user leveled up, send notification to Levels channel
                         if (leveledUp) {
                             try {
                                 const notificationResponse = await fetch(`${API_BASE_URL}/api/users/level-up-notification`, {
@@ -2746,17 +2760,16 @@ const Community = () => {
     
     const isWelcomeChannel = selectedChannel && (String(selectedChannel.id).toLowerCase() === 'welcome' || (selectedChannel.name && selectedChannel.name.toLowerCase() === 'welcome'));
 
-    // Add welcome message when welcome channel is selected for first time
+    // Keep welcome message visible for everyone when viewing welcome channel
     useEffect(() => {
-        if (selectedChannel && isWelcomeChannel && !hasReadWelcome) {
-            // Check if welcome message already exists
-            const hasWelcomeMessage = messages.some(msg => msg.id === 'welcome-message');
-            
-            if (!hasWelcomeMessage) {
-                const welcomeMessage = {
-                    id: 'welcome-message',
-                    channelId: selectedChannel.id,
-                    content: `🎉 **WELCOME TO AURA FX COMMUNITY!** 🎉
+        if (!selectedChannel || !isWelcomeChannel) return;
+        const hasWelcomeMessage = messages.some(msg => msg.id === 'welcome-message');
+        if (hasWelcomeMessage) return;
+
+        const welcomeMessage = {
+            id: 'welcome-message',
+            channelId: selectedChannel.id,
+            content: `🎉 **WELCOME TO AURA FX COMMUNITY!** 🎉
 
 Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
 
@@ -2833,14 +2846,15 @@ Let's build generational wealth together! 💰🚀`,
                         role: 'admin'
                     },
                     timestamp: new Date().toISOString(),
-                    file: null,
-                    isWelcomeMessage: true
-                };
-                
-                setMessages([welcomeMessage]);
-            }
-        }
-    }, [selectedChannel, hasReadWelcome, messages, isWelcomeChannel]);
+            file: null,
+            isWelcomeMessage: true
+        };
+        setMessages(prev => {
+            if (prev.length === 0) return [welcomeMessage];
+            if (prev.some(m => m.id === 'welcome-message')) return prev;
+            return [welcomeMessage, ...prev];
+        });
+    }, [selectedChannel, messages, isWelcomeChannel]);
 
     // Handle edit message
     const handleEditMessage = (messageId) => {
@@ -3474,7 +3488,7 @@ Let's build generational wealth together! 💰🚀`,
                 }
             }
             
-            // Update localStorage
+            // Update localStorage (mark as deleted for now; will remove after 5s)
             const storageKey = `community_messages_${selectedChannel.id}`;
             const storedMessages = JSON.parse(localStorage.getItem(storageKey) || '[]');
             const updatedStored = storedMessages.map(msg => 
@@ -3483,6 +3497,16 @@ Let's build generational wealth together! 💰🚀`,
                     : msg
             );
             localStorage.setItem(storageKey, JSON.stringify(updatedStored));
+            
+            // After 5 seconds remove the message from the list so other messages fill the gap
+            setTimeout(() => {
+                setMessages(prev => prev.filter(m => m.id !== messageId));
+                try {
+                    const current = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                    const filtered = current.filter(m => m.id !== messageId);
+                    localStorage.setItem(storageKey, JSON.stringify(filtered));
+                } catch (e) { /* ignore */ }
+            }, 5000);
             
             // Close modal
             setDeleteMessageModal(null);
@@ -5434,8 +5458,7 @@ Let's build generational wealth together! 💰🚀`,
                                                     })
                                                 ) : (
                                                     (() => {
-                                                        // Parse message content for GIFs and images
-                                                        // Remove file references from content (e.g., [File: ...] or [FILE: ...])
+                                                        // Parse message content for GIFs and images; render **bold** as bold (no asterisks shown)
                                                         let content = message.content || '';
                                                         // Remove file references: [File: ...], [FILE: ...], etc.
                                                         content = content.replace(/\[File:[^\]]*\]/gi, '').replace(/\[FILE:[^\]]*\]/gi, '').trim();
@@ -5447,6 +5470,12 @@ Let's build generational wealth together! 💰🚀`,
                                                         
                                                         if (!content) return null;
                                                         
+                                                        // Helper: render text with **segments** as bold (asterisks not shown)
+                                                        const renderTextWithBold = (text) => {
+                                                            const segs = text.split(/\*\*([^*]+)\*\*/g);
+                                                            return segs.map((seg, i) => i % 2 === 1 ? <strong key={i}>{seg}</strong> : <span key={i}>{seg}</span>);
+                                                        };
+                                                        
                                                         // Check for markdown image syntax: ![alt](url)
                                                         const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
                                                         const parts = [];
@@ -5455,14 +5484,13 @@ Let's build generational wealth together! 💰🚀`,
                                                         let keyCounter = 0;
                                                         
                                                         while ((match = imageRegex.exec(content)) !== null) {
-                                                            // Add text before image
+                                                            // Add text before image (with bold rendering)
                                                             if (match.index > lastIndex) {
-                                                                parts.push(<span key={`text-${keyCounter++}`}>{content.substring(lastIndex, match.index)}</span>);
+                                                                const slice = content.substring(lastIndex, match.index);
+                                                                parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBold(slice)}</span>);
                                                             }
-                                                            // Capture URL in a variable to avoid closure issues
                                                             const imageUrl = match[2];
                                                             const imageAlt = match[1] || 'GIF';
-                                                            // Add image/GIF
                                                             parts.push(
                                                                 <img
                                                                     key={`img-${keyCounter++}`}
@@ -5487,12 +5515,13 @@ Let's build generational wealth together! 💰🚀`,
                                                             lastIndex = match.index + match[0].length;
                                                         }
                                                         
-                                                        // Add remaining text
+                                                        // Add remaining text (with bold rendering)
                                                         if (lastIndex < content.length) {
-                                                            parts.push(<span key={`text-${keyCounter++}`}>{content.substring(lastIndex)}</span>);
+                                                            const slice = content.substring(lastIndex);
+                                                            parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBold(slice)}</span>);
                                                         }
                                                         
-                                                        return parts.length > 0 ? parts : content;
+                                                        return parts.length > 0 ? parts : renderTextWithBold(content);
                                                     })()
                                                 )}
                                             </div>
@@ -5712,9 +5741,30 @@ Let's build generational wealth together! 💰🚀`,
                                 margin: '0 16px 12px',
                                 color: '#FCA5A5',
                                 fontSize: '14px',
-                                fontWeight: 600
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '12px',
+                                flexWrap: 'wrap'
                             }}>
-                                Real-time connection unavailable. Messages will update via polling. Refresh the page to try reconnecting.
+                                <span>Real-time connection unavailable. Messages will update via polling.</span>
+                                <button
+                                    type="button"
+                                    onClick={() => retryWebSocket && retryWebSocket()}
+                                    style={{
+                                        padding: '6px 14px',
+                                        background: 'rgba(255, 255, 255, 0.15)',
+                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                        borderRadius: '6px',
+                                        color: '#fff',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        fontSize: '13px'
+                                    }}
+                                >
+                                    Retry connection
+                                </button>
                             </div>
                         )}
                         

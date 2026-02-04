@@ -16,7 +16,7 @@
  * 4) ELITE (role USER): same as PREMIUM plus access_level a7fx, elite. Still no admin-only unless admin role.
  * 5) Write: canWrite = false if permission_type === 'read-only' OR access_level === 'read-only'; else true when canSee.
  */
-const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements']);
+const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels']);
 
 /** Super admin email – always gets full access regardless of DB role */
 const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
@@ -169,7 +169,7 @@ function getAllowedChannelSlugs(entitlements, channels) {
   if (!entitlements || !Array.isArray(channels)) return [];
   const { role, effectiveTier, onboardingAccepted, needsOnboardingReaccept } = entitlements;
   const toId = (c) => (c.id != null ? String(c.id) : (c.name != null ? String(c.name) : ''));
-  const ALWAYS_VISIBLE = new Set(['welcome', 'announcements']);
+  const ALWAYS_VISIBLE = new Set(['welcome', 'announcements', 'levels']);
 
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return channels.map(toId).filter(Boolean);
@@ -244,6 +244,15 @@ function getChannelPermissions(entitlements, channel) {
     canRead = true;
     canWrite = role === 'SUPER_ADMIN';
     locked = !canWrite;
+    return { canSee, canRead, canWrite, locked };
+  }
+
+  /* Levels: visible to ALL, read-only (level-up messages posted by system only) */
+  if (id === 'levels') {
+    canSee = true;
+    canRead = true;
+    canWrite = false;
+    locked = true;
     return { canSee, canRead, canWrite, locked };
   }
 

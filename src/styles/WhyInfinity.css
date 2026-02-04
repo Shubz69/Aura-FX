@@ -334,6 +334,11 @@
   max-width: 1200px;
 }
 
+/* Vs section: 2 columns on desktop, 1 on mobile so words aren't cut off */
+.why-vs-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .why-platform-feature {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -342,10 +347,24 @@
   transition: transform 0.3s;
   box-shadow: none;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   text-align: center;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Readable text: wrap at words, no truncation */
+.why-platform-feature h3,
+.why-platform-feature p {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  overflow: visible;
+  min-width: 0;
 }
 
 .why-platform-feature:hover {
@@ -443,9 +462,21 @@
   }
 }
 
+/* Stack comparison cards earlier so text isn't cramped on phones/tablets */
+@media (max-width: 900px) {
+  .why-vs-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .why-container {
     padding: 80px 15px 60px;
+  }
+  
+  .content-wrapper {
+    padding: 0 1.25rem;
   }
   
   .why-main-title {
@@ -462,12 +493,52 @@
     gap: 1.5rem;
   }
   
+  /* Force comparison section to single column so words aren't cut off */
+  .why-vs-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    max-width: 100%;
+  }
+  
   .why-additional-features {
-    padding: 3rem 2rem;
+    padding: 3rem 1.25rem;
+  }
+  
+  .why-section-heading {
+    font-size: 1.75rem;
+    margin-bottom: 2.5rem;
+    letter-spacing: 0.08em;
+  }
+  
+  .why-platform-feature {
+    padding: 1.5rem 1.25rem;
+  }
+  
+  .why-platform-feature h3 {
+    font-size: 1.15rem;
+    line-height: 1.4;
+  }
+  
+  .why-platform-feature p {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    text-align: left;
+  }
+  
+  .why-platform-feature p + p {
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 576px) {
+  .why-container {
+    padding: 80px 12px 60px;
+  }
+  
+  .content-wrapper {
+    padding: 0 1rem;
+  }
+  
   .why-main-title {
     font-size: 2rem;
   }
@@ -482,6 +553,25 @@
   
   .why-feature-card,
   .why-platform-feature {
-    padding: 1.5rem;
+    padding: 1.25rem 1rem;
+  }
+  
+  .why-additional-features {
+    padding: 2.5rem 1rem;
+  }
+  
+  .why-section-heading {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .why-platform-feature h3 {
+    font-size: 1.1rem;
+  }
+  
+  .why-platform-feature p,
+  .why-platform-feature p + p {
+    font-size: 0.9rem;
+    line-height: 1.6;
   }
 }

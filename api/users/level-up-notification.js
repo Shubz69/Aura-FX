@@ -42,7 +42,7 @@ const getRankTitle = (level) => {
 
 /**
  * API endpoint to handle level-up notifications
- * This creates a system message in the announcements channel when a user levels up
+ * This creates a system message in the Levels channel when a user levels up (no asterisks in message).
  */
 module.exports = async (req, res) => {
     if (req.method !== 'POST') {
@@ -71,29 +71,28 @@ module.exports = async (req, res) => {
             // Get rank title for the new level
             const rankTitle = getRankTitle(newLevel);
             
-            // Create level-up message
-            const levelUpMessage = `🎉 **LEVEL UP!** 🎉\n\n` +
-                `**${username}** has reached **Level ${newLevel}**!\n\n` +
-                `🏆 **New Rank:** ${rankTitle}\n\n` +
+            // Create level-up message (no asterisks – display as plain text; UI can style as needed)
+            const levelUpMessage = `🎉 LEVEL UP! 🎉\n\n` +
+                `${username} has reached Level ${newLevel}!\n\n` +
+                `🏆 New Rank: ${rankTitle}\n\n` +
                 `Congratulations on your progress! Keep trading and engaging to reach even higher levels! 🚀`;
 
-            // Find or create announcements channel
+            // Find or create levels channel (under announcements category)
             let [channels] = await db.execute(
                 'SELECT id FROM channels WHERE id = ? OR name = ? LIMIT 1',
-                ['announcements', 'announcements']
+                ['levels', 'levels']
             );
 
-            let channelId = 'announcements';
+            let channelId = 'levels';
             if (channels.length === 0) {
-                // Create announcements channel if it doesn't exist
                 try {
                     await db.execute(
                         `INSERT INTO channels (id, name, category, description, access_level) 
                          VALUES (?, ?, ?, ?, ?)`,
-                        ['announcements', 'announcements', 'announcements', 'System announcements and level-ups', 'open']
+                        ['levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open']
                     );
                 } catch (createError) {
-                    console.warn('Could not create announcements channel:', createError.message);
+                    console.warn('Could not create levels channel:', createError.message);
                 }
             } else {
                 channelId = channels[0].id;

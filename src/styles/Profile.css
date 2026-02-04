@@ -689,7 +689,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
     .profile-container {
-        padding: 70px 15px 20px;
+        padding: 100px 15px 20px;
     }
     
     .profile-banner-container {
@@ -734,6 +734,7 @@
     }
 }
 
+/* Phones only: more top padding so top of profile is visible, smaller avatar */
 @media (max-width: 480px) {
     .profile-banner-container {
         height: 150px;
@@ -741,12 +742,19 @@
     }
 
     .profile-container {
-        padding-top: 60px;
+        padding-top: 100px;
     }
     
     .profile-avatar {
-        width: 120px;
-        height: 120px;
+        width: 96px;
+        height: 96px;
+        border-width: 3px;
+    }
+    
+    .avatar-upload-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
     }
     
     .profile-username {
