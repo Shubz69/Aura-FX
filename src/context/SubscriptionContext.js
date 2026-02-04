@@ -70,11 +70,13 @@ export const SubscriptionProvider = ({ children }) => {
       
       if (data.success && data.subscription) {
         const sub = data.subscription;
+        const userRole = (user?.role || '').toLowerCase();
+        const isAdmin = ['admin', 'super_admin'].includes(userRole);
         setSubscription({
           ...sub,
           tier: sub.tier || 'FREE',
           status: sub.status || (sub.isActive ? 'active' : 'inactive'),
-          hasCommunityAccess: sub.hasCommunityAccess !== false
+          hasCommunityAccess: isAdmin ? true : (sub.hasCommunityAccess !== false)
         });
       } else {
         console.warn('[SubscriptionContext] No subscription data in response, checking role fallback');

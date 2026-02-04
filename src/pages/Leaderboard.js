@@ -3,16 +3,23 @@ import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
-// Avatar URL: prefer user avatar, else DiceBear, else initials data URI
+// Avatar URL: show real profile picture when present, else fallback circle (DiceBear/initials)
 const getLeaderboardAvatarUrl = (user) => {
     if (!user) return getInitialsAvatarDataUri('?');
-    const avatar = user.avatar || '';
-    const isDefault = !avatar || avatar === 'avatar_ai.png' || avatar.startsWith('avatar_') || avatar === 'default.png';
+    const avatar = (user.avatar || '').trim();
+    const isDefault =
+        !avatar ||
+        avatar === 'avatar_ai.png' ||
+        avatar === 'default.png' ||
+        avatar.endsWith('/avatar_ai.png') ||
+        (avatar.startsWith('avatar_') && (avatar === 'avatar_ai.png' || /^avatar_(ai|money|tech|trading)\.png$/i.test(avatar)));
     if (isDefault) {
         const seed = encodeURIComponent(String(user.id || user.username || 'user'));
         return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
     }
-    return avatar.startsWith('http') ? avatar : `${window.location.origin}/avatars/${avatar}`;
+    if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar;
+    if (avatar.startsWith('/')) return `${window.location.origin}${avatar}`;
+    return `${window.location.origin}/avatars/${avatar}`;
 };
 
 // Fallback when image fails: initials in a circle (no external request)

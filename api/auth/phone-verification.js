@@ -1,6 +1,6 @@
 /**
  * Phone verification for signup KYC - supports send + verify
- * Uses Twilio for SMS. When Twilio is not configured, returns helpful error.
+ * Uses Plivo for SMS. When Plivo is not configured, returns helpful error.
  */
 const mysql = require('mysql2/promise');
 require('../utils/suppress-warnings');
@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
       }
       const phoneE164 = normalizePhone(raw);
 
-      if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+      if (!process.env.PLIVO_AUTH_ID || !process.env.PLIVO_AUTH_TOKEN || !process.env.PLIVO_PHONE_NUMBER) {
         return res.status(503).json({
           success: false,
           message: 'Phone verification is not configured. Please contact support to complete signup.'
@@ -96,15 +96,15 @@ module.exports = async (req, res) => {
       }
 
       try {
-        const twilio = require('twilio');
-        const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+        const plivo = require('plivo');
+        const client = new plivo.Client(process.env.PLIVO_AUTH_ID, process.env.PLIVO_AUTH_TOKEN);
         await client.messages.create({
-          body: `Your AURA FX verification code is: ${verificationCode}. Valid for 10 minutes.`,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: phoneE164
+          src: process.env.PLIVO_PHONE_NUMBER,
+          dst: phoneE164,
+          text: `Your AURA FX verification code is: ${verificationCode}. Valid for 10 minutes.`
         });
-      } catch (twilioErr) {
-        console.error('Twilio SMS error:', twilioErr.message);
+      } catch (plivoErr) {
+        console.error('Plivo SMS error:', plivoErr.message);
         return res.status(500).json({
           success: false,
           message: 'Failed to send SMS. Please check your phone number and try again.'

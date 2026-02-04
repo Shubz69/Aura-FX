@@ -1114,6 +1114,22 @@ html.community-page-active {
     margin-bottom: 2px !important;
 }
 
+/* PC/desktop only: 1px between same-user messages, 2px between different users */
+@media (min-width: 769px) {
+    .message-item.grouped {
+        margin-top: 1px !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    .message-item:not(.grouped) {
+        margin-top: 2px !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+}
+
 /* Deleted message styling */
 .message-text.message-deleted {
     color: #72767D !important;

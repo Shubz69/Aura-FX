@@ -383,8 +383,27 @@ const Community = () => {
     const [requiredSubscriptionType, setRequiredSubscriptionType] = useState(null); // 'premium' or 'a7fx' - for channel access
     const [showChannelAccessModal, setShowChannelAccessModal] = useState(false); // Show channel access modal
     const [lockedChannelInfo, setLockedChannelInfo] = useState(null); // Info about the locked channel
-    const [isAdminUser, setIsAdminUser] = useState(false);
-    const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
+    // Initialize from localStorage so admin/super_admin access is correct on first render (no flicker)
+    const [isAdminUser, setIsAdminUser] = useState(() => {
+        try {
+            const u = JSON.parse(localStorage.getItem('user') || '{}');
+            const r = (u.role || '').toLowerCase();
+            const em = (u.email || '').toLowerCase();
+            return r === 'admin' || r === 'super_admin' || em === SUPER_ADMIN_EMAIL.toLowerCase();
+        } catch {
+            return false;
+        }
+    });
+    const [isSuperAdminUser, setIsSuperAdminUser] = useState(() => {
+        try {
+            const u = JSON.parse(localStorage.getItem('user') || '{}');
+            const r = (u.role || '').toLowerCase();
+            const em = (u.email || '').toLowerCase();
+            return r === 'super_admin' || em === SUPER_ADMIN_EMAIL.toLowerCase();
+        } catch {
+            return false;
+        }
+    });
     const [allUsers, setAllUsers] = useState([]); // All users for @mention autocomplete
     const [mentionAutocomplete, setMentionAutocomplete] = useState(null); // { show: true, query: 'sam', position: { x, y } }
     const [mentionQuery, setMentionQuery] = useState(''); // Current @mention query
@@ -1881,9 +1900,13 @@ const Community = () => {
         setEditingChannel(null);
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('/api/community/channels', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     id: channelData.id,
                     name: channelData.name,
@@ -2070,22 +2093,28 @@ const Community = () => {
         try {
             const result = await Api.checkSubscription(userId);
             if (result.success) {
-                setSubscriptionStatus(result);
-                setPaymentFailed(result.paymentFailed || false);
+                const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+                const role = (storedUserData?.role || '').toLowerCase();
+                const isAdminOrSuper = ['admin', 'super_admin'].includes(role);
+                const merged = isAdminOrSuper
+                    ? { ...result, hasActiveSubscription: true, isAdmin: true, paymentFailed: false }
+                    : result;
+                setSubscriptionStatus(merged);
+                setPaymentFailed(merged.paymentFailed || false);
                 
                 // CRITICAL: User has access if: admin, premium role, OR active subscription
                 // Premium role and admin status from API override subscription status
-                const hasAccess = result.isAdmin || result.isPremium || (result.hasActiveSubscription && !result.paymentFailed);
+                const hasAccess = merged.isAdmin || merged.isPremium || (merged.hasActiveSubscription && !merged.paymentFailed);
                 
                 // Update localStorage to match database
                 if (hasAccess) {
                     localStorage.setItem('hasActiveSubscription', 'true');
-                    if (result.expiry) {
-                        localStorage.setItem('subscriptionExpiry', result.expiry);
+                    if (merged.expiry) {
+                        localStorage.setItem('subscriptionExpiry', merged.expiry);
                     }
                 } else {
                     // Only remove if not admin/premium (they don't need subscription)
-                    if (!result.isAdmin && !result.isPremium) {
+                    if (!merged.isAdmin && !merged.isPremium) {
                         localStorage.removeItem('hasActiveSubscription');
                         localStorage.removeItem('subscriptionExpiry');
                     }

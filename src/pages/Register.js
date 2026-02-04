@@ -12,6 +12,7 @@ const Register = () => {
     const [formData, setFormData] = useState({
         username: '',
         email: '',
+        phone: '',
         password: '',
         confirmPassword: '',
         name: ''
@@ -67,8 +68,13 @@ const Register = () => {
             return;
         }
 
-        if (!formData.email || !formData.password || !formData.confirmPassword) {
+        if (!formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
             setError('All fields are required.');
+            return;
+        }
+        const phoneDigits = (formData.phone || '').replace(/\D/g, '');
+        if (!phoneDigits.trim() || phoneDigits.length < 10) {
+            setError('Valid phone number is required (10+ digits).');
             return;
         }
 
@@ -201,6 +207,7 @@ const Register = () => {
             const submitData = {
                 username: formData.username,
                 email: formData.email,
+                phone: formData.phone.trim(),
                 password: formData.password,
                 name: formData.name,
                 avatar: '/avatars/avatar_ai.png'
@@ -299,6 +306,20 @@ const Register = () => {
                             onChange={handleInputChange}
                             required
                             placeholder="Enter full name"
+                            className="form-input"
+                            disabled={isLoading}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="phone" className="form-label">Phone Number</label>
+                        <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            required
+                            placeholder="e.g. +44 7700 900000"
                             className="form-input"
                             disabled={isLoading}
                         />
