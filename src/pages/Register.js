@@ -7,6 +7,7 @@ import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 import { isFirebasePhoneEnabled, setupRecaptcha, sendPhoneOtp, confirmPhoneOtp } from '../utils/firebasePhoneAuth';
+import { COUNTRY_CODES, toE164 } from '../utils/countryCodes';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -25,11 +26,18 @@ const Register = () => {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [codesSent, setCodesSent] = useState(false); // true after "Send verification codes" – show email + phone OTP on same page
     const [firebaseOtpSent, setFirebaseOtpSent] = useState(false);
+    const [phoneCountryCode, setPhoneCountryCode] = useState('+44');
+    const [phoneNational, setPhoneNational] = useState('');
     const firebaseConfirmationRef = useRef(null);
     const useFirebasePhone = isFirebasePhoneEnabled();
     const { register: registerUser } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+
+    // Keep formData.phone in sync with country code + national number (E.164)
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, phone: toE164(phoneCountryCode, phoneNational) }));
+    }, [phoneCountryCode, phoneNational]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -127,9 +135,9 @@ const Register = () => {
         setIsLoading(true);
         setError("");
         try {
-            const recaptcha = setupRecaptcha('firebase-phone-send-btn-register');
+            const recaptcha = setupRecaptcha('recaptcha-container-register');
             if (!recaptcha) {
-                setError("Firebase reCAPTCHA could not be loaded.");
+                setError("Firebase reCAPTCHA could not be loaded. Try refreshing the page.");
                 setIsLoading(false);
                 return;
             }
@@ -138,7 +146,12 @@ const Register = () => {
             setFirebaseOtpSent(true);
             setSuccess("Code sent! Enter the 6-digit code from your phone.");
         } catch (err) {
-            setError(err.message || "Failed to send code. Try again.");
+            const msg = err.message || "Failed to send code.";
+            if (msg.includes('captcha') || msg.includes('recaptcha') || msg.includes('network')) {
+                setError(msg + " Try completing the 'I'm not a robot' checkbox above, then click Send again.");
+            } else {
+                setError(msg + " Try again.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -298,19 +311,34 @@ const Register = () => {
                             disabled={isLoading}
                         />
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="phone" className="form-label">Phone Number (any country)</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="e.g. +44 7700 900000 or +1 555 123 4567"
-                            className="form-input"
-                            disabled={isLoading}
-                        />
+                    <div className="form-group form-group-phone">
+                        <label htmlFor="phone-national" className="form-label">Phone Number (any country)</label>
+                        <div className="phone-input-row">
+                            <select
+                                id="phone-country"
+                                aria-label="Country code"
+                                value={phoneCountryCode}
+                                onChange={(e) => setPhoneCountryCode(e.target.value)}
+                                className="form-input phone-country-select"
+                                disabled={isLoading}
+                            >
+                                {COUNTRY_CODES.map(({ code, label }) => (
+                                    <option key={code} value={code}>{label}</option>
+                                ))}
+                            </select>
+                            <input
+                                type="tel"
+                                id="phone-national"
+                                name="phoneNational"
+                                value={phoneNational}
+                                onChange={(e) => setPhoneNational(e.target.value.replace(/\D/g, ''))}
+                                required
+                                placeholder="e.g. 7700 900000"
+                                className="form-input phone-national-input"
+                                disabled={isLoading}
+                                autoComplete="tel-national"
+                            />
+                        </div>
                     </div>
                 </div>
                 
@@ -414,6 +442,9 @@ const Register = () => {
                     <>
                         <hr style={{ margin: '1.25rem 0', borderColor: 'rgba(255,255,255,0.2)' }} />
                         <p className="register-subtitle" style={{ marginBottom: '1rem' }}>Enter the 6-digit codes sent to your email and phone</p>
+                        {useFirebasePhone && (
+                            <div id="recaptcha-container-register" style={{ minHeight: 78, marginBottom: '1rem', display: 'flex', justifyContent: 'center' }} />
+                        )}
                         <form onSubmit={handleVerifyAndSignUp}>
                             <div className="form-group" style={{ maxWidth: '320px', margin: '0 auto 1rem' }}>
                                 <label htmlFor="email-code-register" className="form-label">Email code (sent to {formData.email})</label>
@@ -433,7 +464,7 @@ const Register = () => {
                                 <label htmlFor="phone-code-register" className="form-label">Phone code (sent to {formData.phone})</label>
                                 {useFirebasePhone && !firebaseOtpSent ? (
                                     <div>
-                                        <button type="button" id="firebase-phone-send-btn-register" className="register-button" onClick={handleSendFirebaseOtp} disabled={isLoading} style={{ marginBottom: '0.75rem' }}>
+                                        <button type="button" className="register-button" onClick={handleSendFirebaseOtp} disabled={isLoading} style={{ marginBottom: '0.75rem' }}>
                                             {isLoading ? 'SENDING...' : 'SEND PHONE CODE'}
                                         </button>
                                     </div>
@@ -462,7 +493,7 @@ const Register = () => {
                             )}
                         </form>
                         <p style={{ marginTop: '1rem' }}>
-                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
+                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setPhoneCountryCode('+44'); setPhoneNational(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
                         </p>
                     </>
                 )}

@@ -30,16 +30,26 @@ const getAuth = () => {
 };
 
 /**
- * Create RecaptchaVerifier for phone auth. Pass the button element id (e.g. "firebase-phone-send-btn").
- * @param {string} containerId - id of the button or div that will hold reCAPTCHA
+ * Create RecaptchaVerifier for phone auth. Container must exist in DOM with min 78px height.
+ * Uses 'normal' size (visible checkbox) - invisible mode can fail with appVerificationDisabledForTesting errors.
+ * @param {string} containerId - id of the div that will hold reCAPTCHA
  * @returns {object|null} RecaptchaVerifier or null
  */
 const setupRecaptcha = (containerId) => {
   const a = getAuth();
   if (!a) return null;
+  const container = typeof document !== 'undefined' ? document.getElementById(containerId) : null;
+  if (!container) {
+    console.warn('RecaptchaVerifier: container not found:', containerId);
+    return null;
+  }
   try {
     const { RecaptchaVerifier } = require('firebase/auth');
-    return new RecaptchaVerifier(containerId, { size: 'invisible', callback: () => {} }, a);
+    return new RecaptchaVerifier(a, container, {
+      size: 'normal',
+      callback: () => {},
+      'expired-callback': () => {}
+    });
   } catch (e) {
     console.warn('RecaptchaVerifier error:', e.message);
     return null;
