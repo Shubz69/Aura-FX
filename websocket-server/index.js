@@ -242,6 +242,51 @@ function canAcceptConnection(userId) {
   return { allowed: true };
 }
 
+// Endpoint to broadcast new message (called by messages API when message created via REST)
+// Ensures messages sent from one device reach all other devices (including same user on other devices)
+app.post('/api/broadcast-new-message', async (req, res) => {
+    try {
+        const { channelId, message } = req.body;
+        
+        if (!channelId || !message) {
+            return res.status(400).json({ success: false, message: 'channelId and message required' });
+        }
+        
+        const messageBody = typeof message === 'string' ? message : JSON.stringify(message);
+        
+        const messageFrame = createStompFrame('MESSAGE', {
+            'destination': `/topic/chat/${channelId}`,
+            'content-type': 'application/json',
+            'message-id': `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        }, messageBody);
+        
+        let notifiedCount = 0;
+        const channelSubs = subscriptions.get(channelId) || subscriptions.get(String(channelId));
+        
+        if (channelSubs) {
+            channelSubs.forEach((ws) => {
+                try {
+                    if (ws.readyState === 1) {
+                        ws.send(messageFrame);
+                        notifiedCount++;
+                    }
+                } catch (error) {
+                    console.error('Error broadcasting new message:', error);
+                }
+            });
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'Message broadcasted',
+            clientsNotified: notifiedCount
+        });
+    } catch (error) {
+        console.error('Error broadcasting new message:', error);
+        res.status(500).json({ success: false, message: 'Failed to broadcast' });
+    }
+});
+
 // Endpoint to broadcast message deleted (called by delete API)
 app.post('/api/broadcast-message-deleted', async (req, res) => {
     try {

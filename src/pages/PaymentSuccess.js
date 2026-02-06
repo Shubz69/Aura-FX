@@ -54,24 +54,36 @@ const PaymentSuccess = () => {
             
             if (userId) {
                 const activateSubscription = async () => {
-                    try {
-                        const token = localStorage.getItem("token");
-                        const response = await axios.post(
-                            `${API_BASE_URL}/api/stripe/subscription-success`,
-                            { 
-                                userId, 
-                                session_id: sessionId || `stripe-${Date.now()}`,
-                                plan: planParam || 'aura' // Pass plan type to backend
-                            },
-                            {
-                                headers: {
-                                    'Authorization': `Bearer ${token}`,
-                                    'Content-Type': 'application/json'
-                                }
+                    const token = localStorage.getItem("token");
+                    const payload = { 
+                        userId, 
+                        session_id: sessionId || `stripe-${Date.now()}`,
+                        plan: planParam || 'aura' // Pass plan type to backend
+                    };
+                    const headers = {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    };
+                    // Retry subscription-success up to 3 times (handles cold starts / transient failures)
+                    let response = null;
+                    for (let attempt = 1; attempt <= 3; attempt++) {
+                        try {
+                            response = await axios.post(
+                                `${API_BASE_URL}/api/stripe/subscription-success`,
+                                payload,
+                                { headers, timeout: 15000 }
+                            );
+                            if (response?.data?.success) break;
+                        } catch (err) {
+                            if (attempt < 3) {
+                                await new Promise(r => setTimeout(r, attempt * 1000));
+                            } else {
+                                console.error('Subscription activation failed after retries:', err);
                             }
-                        );
-                        
-                        if (response.data && response.data.success) {
+                        }
+                    }
+                    try {
+                        if (response?.data?.success) {
                             // Wait a moment for database to update
                             await new Promise(resolve => setTimeout(resolve, 1000));
                             
@@ -94,17 +106,15 @@ const PaymentSuccess = () => {
                                     if (verifyResponse.data.expiry) {
                                         localStorage.setItem('subscriptionExpiry', verifyResponse.data.expiry);
                                     }
-                                    
-                                    // Update user role in localStorage AND AuthContext immediately
+                                    const verifiedPlan = planParam || verifyResponse.data.subscription_plan || 'aura';
                                     const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                    // Set role based on plan: 'elite' for A7FX Elite, 'premium' for Aura FX
-                                    if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
-                                        user.role = 'elite'; // A7FX purchases get Elite role
+                                    if (verifiedPlan === 'a7fx' || verifiedPlan === 'A7FX' || verifiedPlan === 'elite') {
+                                        user.role = 'elite';
                                     } else {
-                                        user.role = 'premium'; // Default to premium for 'aura' or any other plan
+                                        user.role = 'premium';
                                     }
                                     user.subscription_status = 'active';
-                                    user.subscription_plan = planParam || 'aura';
+                                    user.subscription_plan = verifiedPlan;
                                     
                                     // Update localStorage
                                     localStorage.setItem('user', JSON.stringify(user));

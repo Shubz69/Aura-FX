@@ -171,7 +171,7 @@ module.exports = async (req, res) => {
         }
 
         const [rows] = await db.execute(
-          'SELECT subscription_status, subscription_expiry, payment_failed, role FROM users WHERE id = ?',
+          'SELECT subscription_status, subscription_expiry, payment_failed, role, subscription_plan FROM users WHERE id = ?',
           [userId]
         );
         await db.end();
@@ -206,8 +206,9 @@ module.exports = async (req, res) => {
             hasActiveSubscription: true,
             isAdmin: false,
             isPremium: true,
-            paymentFailed: false, // Premium role users never have payment failed blocking
+            paymentFailed: false,
             expiry: user.subscription_expiry || null,
+            subscription_plan: user.subscription_plan || 'premium',
             message: 'Premium role access granted'
           });
         }
@@ -235,7 +236,8 @@ module.exports = async (req, res) => {
               hasActiveSubscription: true,
               isAdmin: false,
               paymentFailed: false,
-              expiry: user.subscription_expiry
+              expiry: user.subscription_expiry,
+              subscription_plan: user.subscription_plan || 'aura'
             });
           } else {
             return res.status(200).json({
@@ -244,6 +246,7 @@ module.exports = async (req, res) => {
               isAdmin: false,
               paymentFailed: false,
               expiry: user.subscription_expiry,
+              subscription_plan: user.subscription_plan,
               message: 'Your subscription has expired. Please renew to continue using the community.'
             });
           }

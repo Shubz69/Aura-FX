@@ -664,6 +664,20 @@ module.exports = async (req, res) => {
         // Broadcast to all connected clients via Pusher (production realtime)
         triggerNewMessage(channelId, message).catch(() => {});
 
+        // Broadcast to WebSocket subscribers (Railway WS server) - ensures messages reach
+        // all devices including same user on different devices, even when Pusher is down
+        const wsServerUrl = process.env.WEBSOCKET_SERVER_URL || 'https://aura-fx-production.up.railway.app';
+        const wsBroadcastUrl = `${wsServerUrl.replace(/\/$/, '')}/api/broadcast-new-message`;
+        try {
+          if (typeof fetch !== 'undefined') {
+            await fetch(wsBroadcastUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ channelId, message })
+            }).catch(() => {});
+          }
+        } catch (_) { /* non-fatal */ }
+
         return res.status(201).json(message);
       } catch (dbError) {
         console.error('Database error creating message:', dbError);

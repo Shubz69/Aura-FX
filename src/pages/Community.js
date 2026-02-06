@@ -2638,23 +2638,16 @@ const Community = () => {
     }, [selectedChannel?.id, clearChannelBadge]);
 
     // Poll for new messages - Optimized for high traffic (500+ users)
-    // When WebSocket is connected, polling is disabled to reduce database load
-    // When WebSocket is down, poll every 3 seconds for reliability
+    // When WebSocket is down: poll every 1s for fast fallback
+    // When WebSocket is connected: backup poll every 5s to catch any missed messages (multi-device reliability)
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
-        
-        // If WebSocket is connected, don't poll (rely 100% on WebSocket for real-time updates)
-        // This reduces database load significantly for high traffic scenarios
-        if (isConnected) {
-            return; // WebSocket handles all updates, no polling needed
-        }
         
         // Store previous message count for notification detection
         let previousMessageCount = messages.length;
         
-        // Poll interval: 1 second when WebSocket is down (optimized for instant updates)
-        // When WebSocket is connected, polling is completely disabled
-        const pollInterval = 1000; // Reduced to 1s for faster fallback when WS is down
+        // Poll interval: 1s when WS down, 5s backup when WS connected (ensures multi-device messages get through)
+        const pollInterval = isConnected ? 5000 : 1000;
         
         // Start polling immediately
         const pollMessages = async () => {
