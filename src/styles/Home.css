@@ -983,31 +983,45 @@ body.loading-active {
     }
 }
 
-/* Phones only: Trade Multiple Markets - ensure icon + title + description always visible */
+/* Phones only: Trade Multiple Markets - ensure icon + title + description always visible, no overlap */
 @media (max-width: 768px) {
     .trading-markets-section .markets-top-grid,
     .trading-markets-section .markets-bottom-grid {
         grid-template-columns: 1fr;
         gap: 1.25rem;
         width: 100%;
+        max-width: 100%;
         padding: 0;
+        margin-left: auto;
+        margin-right: auto;
+        justify-items: center;
     }
     .trading-markets-section .market-item {
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: flex-start;
         text-align: center;
-        gap: 0.75rem;
-        padding: 1.25rem 1rem;
+        gap: 1rem;
+        padding: 1.5rem 1.25rem;
         min-height: auto;
         width: 100%;
+        max-width: 100%;
         box-sizing: border-box;
+        overflow: visible;
     }
     .trading-markets-section .market-icon {
         flex-shrink: 0;
-        width: 48px;
-        height: 48px;
-        font-size: 1.75rem;
+        flex-grow: 0;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        order: 1;
     }
     .trading-markets-section .market-title {
         display: block;
@@ -1020,6 +1034,9 @@ body.loading-active {
         line-height: 1.3;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        order: 2;
+        min-width: 0;
+        width: 100%;
     }
     .trading-markets-section .market-description {
         display: block;
@@ -1033,10 +1050,23 @@ body.loading-active {
         line-clamp: unset;
         overflow: visible;
         -webkit-box-orient: unset;
+        order: 3;
+        min-width: 0;
+        width: 100%;
     }
     .trading-markets-section .section-title {
         font-size: 1.5rem;
         margin-bottom: 1.5rem;
+        text-align: center;
+        width: 100%;
+    }
+    .trading-markets-section {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        box-sizing: border-box;
+        overflow: visible;
     }
 }
 
@@ -1151,14 +1181,22 @@ body.loading-active {
     
     .trading-markets-section {
         width: 100%;
+        max-width: 100%;
         margin: 3rem 0;
         padding: 0 1rem;
+        box-sizing: border-box;
+        overflow: visible;
     }
     
     .markets-top-grid,
     .markets-bottom-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        width: 100%;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        justify-items: center;
     }
     
     .markets-divider {
@@ -1166,18 +1204,33 @@ body.loading-active {
     }
     
     .trading-markets-section .market-item {
-        padding: 1.75rem 1.5rem;
+        padding: 1.5rem 1.25rem;
         min-height: auto;
+        gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
     }
     
     .trading-markets-section .market-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.75rem;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        flex-grow: 0;
     }
     
     .trading-markets-section .market-title {
         font-size: 1.15rem;
+        min-width: 0;
+        width: 100%;
     }
     
     .trading-markets-section .market-description {
@@ -1187,6 +1240,8 @@ body.loading-active {
         -webkit-line-clamp: unset;
         line-clamp: unset;
         -webkit-box-orient: unset;
+        min-width: 0;
+        width: 100%;
     }
     
     .key-features-section {
@@ -1494,5 +1549,98 @@ body.loading-active {
     
     .section-title {
         font-size: 1.3rem;
+    }
+}
+
+/* ============= PHONES ONLY (max 767px) - Trade Multiple Markets: no overlap, clean stack ============= */
+/* Excludes iPad and desktop. Fixes card/icon/text overlap on 360-430px widths. */
+@media (max-width: 767px) {
+    .home-container,
+    .home-content,
+    .home-main-content {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+
+    .trading-markets-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 1rem !important;
+        margin: 2.5rem 0 !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+
+    .trading-markets-section .markets-top-grid,
+    .trading-markets-section .markets-bottom-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        align-items: center !important;
+    }
+
+    .markets-divider {
+        margin: 1.25rem auto !important;
+    }
+
+    .trading-markets-section .market-item {
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        padding: 1.25rem 1rem !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 0.75rem !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+        transform: none !important;
+    }
+
+    .trading-markets-section .market-item:hover {
+        transform: none !important;
+    }
+
+    .trading-markets-section .market-icon {
+        position: relative !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+    }
+
+    .trading-markets-section .market-title {
+        position: relative !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .trading-markets-section .market-description {
+        position: relative !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        -webkit-line-clamp: unset !important;
+        line-clamp: unset !important;
+        overflow: visible !important;
+        -webkit-box-orient: unset !important;
+    }
+
+    .trading-markets-section .section-title {
+        text-align: center !important;
+        width: 100% !important;
     }
 }
