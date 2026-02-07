@@ -23,12 +23,13 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    
    **⚠️ IMPORTANT:** The API key is stored in `API_KEYS_SECURE.md` (gitignored) for your reference. Copy it from there.
 
-4. **REACT_APP_RECAPTCHA_SITE_KEY (RECOMMENDED for Sign Up):**
-   - Required for the "I'm not a robot" captcha on the Sign Up page
-   - Get your key at: https://www.google.com/recaptcha/admin (reCAPTCHA v2 Checkbox)
+4. **REACT_APP_RECAPTCHA_SITE_KEY (REQUIRED for Sign Up):**
+   - **Required** for the "I'm not a robot" captcha on the Sign Up page - signup will not work without it
+   - Get your key at: https://www.google.com/recaptcha/admin (choose reCAPTCHA v2 → "I'm not a robot" Checkbox)
+   - Add your domain (e.g. aura-fx-ten.vercel.app) to the key's allowed domains
    - **Key:** `REACT_APP_RECAPTCHA_SITE_KEY`
    - **Value:** Your reCAPTCHA site key
-   - **Environment:** Select all
+   - **Environment:** Select all (Production, Preview, Development)
 
 5. **JWT_SECRET (OPTIONAL - Not Required):**
    - Your system uses a custom token format, so JWT_SECRET is **NOT needed**

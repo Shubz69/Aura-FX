@@ -454,9 +454,17 @@ const Register = () => {
 
                 {(useFirebasePhone || RECAPTCHA_SITE_KEY) && (
                     <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', minHeight: 90, overflow: 'visible' }}>
+                        {!RECAPTCHA_SITE_KEY && (
+                            <div className="captcha-setup-alert" style={{ background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.5)', borderRadius: 12, padding: '14px 16px', marginBottom: 12, width: '100%', maxWidth: 520 }}>
+                                <strong style={{ color: '#fbbf24', fontSize: '0.9rem' }}>reCAPTCHA setup required</strong>
+                                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', margin: '8px 0 0', lineHeight: 1.5 }}>
+                                    Add <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: 4, fontSize: '0.8rem' }}>REACT_APP_RECAPTCHA_SITE_KEY</code> in Vercel → Settings → Environment Variables, then redeploy. Get a free key at <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', textDecoration: 'underline' }}>google.com/recaptcha/admin</a> (reCAPTCHA v2 Checkbox). Add your domain (e.g. aura-fx-ten.vercel.app).
+                                </p>
+                            </div>
+                        )}
                         {RECAPTCHA_SITE_KEY ? (
                             <>
-                                <div style={{ transform: 'scale(1)', transformOrigin: 'left top' }}>
+                                <div style={{ transform: 'scale(1)', transformOrigin: 'left top', minHeight: 78 }} data-recaptcha-container>
                                     <ReCAPTCHA
                                         sitekey={RECAPTCHA_SITE_KEY}
                                         size="normal"
@@ -474,10 +482,7 @@ const Register = () => {
                             </>
                         ) : (
                             <>
-                                <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', minHeight: 78, overflow: 'visible' }} />
-                                <p className="captcha-setup-msg" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', marginTop: '0.5rem', maxWidth: 360 }}>
-                                    If you don&apos;t see the reCAPTCHA above, add <code style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>REACT_APP_RECAPTCHA_SITE_KEY</code> in Vercel → Settings → Environment Variables. Get a free key at <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>google.com/recaptcha/admin</a> (reCAPTCHA v2 Checkbox).
-                                </p>
+                                <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', minHeight: 78, width: '100%', overflow: 'visible' }} />
                                 {recaptchaLoadError && (
                                     <p className="captcha-error-msg" style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '0.5rem' }}>
                                         Firebase reCAPTCHA failed to load. Add <code style={{ fontSize: '0.8rem' }}>REACT_APP_RECAPTCHA_SITE_KEY</code> in Vercel for a more reliable option.
