@@ -1,0 +1,7 @@
+# Nixpacks config for root - used when Railway builds from repo root (e.g. full-stack deploy)
+# Increases Node heap to avoid OOM during React build
+[phases.setup]
+nixPkgs = ["nodejs_18"]
+
+[variables]
+NODE_OPTIONS = "--max-old-space-size=4096"

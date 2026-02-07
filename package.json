@@ -50,7 +50,7 @@
     "start": "react-scripts start",
     "dev": "react-scripts start",
     "local": "vercel dev",
-    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "build": "GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
     "test:security": "node tests/security-rbac.test.js && node tests/rate-limit.test.js && node tests/entitlements-api.test.js",
     "test:ai": "jest tests/ai-chat.test.js --verbose",

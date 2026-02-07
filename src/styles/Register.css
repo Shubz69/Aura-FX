@@ -16,15 +16,14 @@
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
-    background: #0a0a0a;
+  align-items: flex-start;
+  background: #0a0a0a;
   position: relative;
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-    font-family: var(--font-secondary);
-    padding: 20px;
-    padding-top: 80px;
+  font-family: var(--font-secondary);
+  padding: 24px 20px 40px;
+  padding-top: 80px;
+  box-sizing: border-box;
 }
 
 /* Clean minimal background */
@@ -32,48 +31,45 @@
     display: none;
 }
 
-/* CLEAN MODERN FORM CONTAINER */
+/* CLEAN MODERN FORM CONTAINER - no inner scroll, page scrolls naturally */
 .register-form-container {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
     border-radius: 24px;
-    padding: 40px 36px;
+    padding: 36px 40px;
     width: 100%;
-    max-width: 520px;
+    max-width: 560px;
     box-shadow: none;
     position: relative;
     z-index: 10;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    max-height: 90vh;
-    overflow-y: auto;
-    overflow-x: hidden;
     box-sizing: border-box;
 }
 
 /* Clean header */
 .form-header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 }
 
 .register-title {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     font-weight: 200;
     color: #ffffff;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-family: var(--font-main);
     letter-spacing: 0.15em;
     line-height: 1.1;
 }
 
 .register-subtitle {
-    color: #ffffff;
-    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.8rem;
     font-weight: 300;
     font-family: var(--font-secondary);
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 /* Form - prevent horizontal overflow */
@@ -86,13 +82,13 @@
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 14px;
+    margin-bottom: 14px;
     min-width: 0;
 }
 
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 0;
     min-width: 0;
 }
 
@@ -464,7 +460,7 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     position: relative;
     cursor: pointer;
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
@@ -558,8 +554,8 @@
 /* Clean login link */
 .login-link {
     text-align: center;
-    margin-top: 20px;
-    padding-top: 16px;
+    margin-top: 16px;
+    padding-top: 14px;
     border-top: 1px solid rgba(59, 130, 246, 0.2);
 }
 
@@ -621,26 +617,46 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Responsive design */
+/* Laptop / desktop - polished layout */
+@media (min-width: 769px) {
+    .register-container {
+        align-items: center;
+        padding: 40px 24px 60px;
+        padding-top: 90px;
+    }
+    .register-form-container {
+        max-width: 540px;
+    }
+}
+
+/* Mobile - single column, compact */
 @media (max-width: 768px) {
     .register-container {
-        padding: 15px;
+        padding: 16px 12px 32px;
         padding-top: 70px;
     }
     
     .register-form-container {
-        padding: 32px 24px;
-        max-width: 440px;
-        overflow-x: hidden;
+        padding: 28px 20px;
+        max-width: 100%;
+    }
+    
+    .form-header {
+        margin-bottom: 20px;
     }
     
     .register-title {
-        font-size: 2.2rem;
+        font-size: 1.9rem;
+    }
+    
+    .register-subtitle {
+        font-size: 0.75rem;
     }
     
     .form-row {
         grid-template-columns: 1fr;
         gap: 12px;
+        margin-bottom: 12px;
     }
     
     .avatar-grid {

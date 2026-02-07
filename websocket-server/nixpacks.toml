@@ -1,0 +1,9 @@
+# Nixpacks config for WebSocket server - install + start only (no build step)
+[phases.setup]
+nixPkgs = ["nodejs_18"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[start]
+cmd = "npm start"
