@@ -983,20 +983,48 @@ body.loading-active {
     }
 }
 
-/* Phones: Trade Multiple Markets - same simple 2-col grid as tablet, compact like laptop */
+/* Phones: Trade Multiple Markets - single horizontal scroll row, clear cards */
 @media (max-width: 768px) {
+    .markets-scroll-wrap {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 1rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+        margin: 0 -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    .markets-scroll-wrap::-webkit-scrollbar {
+        height: 6px;
+    }
+    .markets-scroll-wrap::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+        border-radius: 3px;
+    }
+    .markets-scroll-wrap::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.2);
+        border-radius: 3px;
+    }
     .trading-markets-section .markets-top-grid,
     .trading-markets-section .markets-bottom-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
         gap: 1rem;
-        width: 100%;
-        max-width: 100%;
+        flex-shrink: 0;
         padding: 0;
-        margin-left: auto;
-        margin-right: auto;
+        margin: 0;
+    }
+    .trading-markets-section .markets-divider {
+        display: none;
     }
     .trading-markets-section .market-item {
+        flex-shrink: 0;
+        min-width: 160px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1006,7 +1034,6 @@ body.loading-active {
         padding: 1rem 0.75rem;
         min-height: auto;
         box-sizing: border-box;
-        overflow: visible;
     }
     .trading-markets-section .market-icon {
         flex-shrink: 0;
@@ -1028,16 +1055,17 @@ body.loading-active {
         line-height: 1.2;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        min-width: 0;
     }
     .trading-markets-section .market-description {
-        display: block;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
         margin: 0;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         color: rgba(255, 255, 255, 0.9);
         line-height: 1.35;
-        overflow-wrap: break-word;
-        min-width: 0;
     }
     .trading-markets-section .section-title {
         font-size: 1.5rem;
@@ -1052,9 +1080,6 @@ body.loading-active {
         padding-right: 1rem;
         box-sizing: border-box;
         overflow: visible;
-    }
-    .markets-divider {
-        margin: 1rem auto;
     }
 }
 
@@ -1540,7 +1565,7 @@ body.loading-active {
     }
 }
 
-/* ============= PHONES ONLY (max 767px) - Trade Multiple Markets: same 2-col grid as laptop, compact ============= */
+/* ============= PHONES ONLY (max 767px) - Trade Multiple Markets: 1 line horizontal scroll ============= */
 @media (max-width: 767px) {
     .home-container,
     .home-content,
@@ -1558,65 +1583,42 @@ body.loading-active {
         overflow: visible !important;
     }
 
+    .markets-scroll-wrap {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.75rem !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
     .trading-markets-section .markets-top-grid,
     .trading-markets-section .markets-bottom-grid {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.75rem !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 0 !important;
-        margin: 0 auto !important;
-    }
-
-    .markets-divider {
-        margin: 1rem auto !important;
-    }
-
-    .trading-markets-section .market-item {
-        position: relative !important;
-        min-width: 0 !important;
-        padding: 1rem 0.6rem !important;
-        margin: 0 !important;
         display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        gap: 0.5rem !important;
-        box-sizing: border-box !important;
-        overflow: visible !important;
-        transform: none !important;
-    }
-
-    .trading-markets-section .market-item:hover {
-        transform: none !important;
-    }
-
-    .trading-markets-section .market-icon {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.75rem !important;
         flex-shrink: 0 !important;
     }
 
+    .trading-markets-section .markets-divider {
+        display: none !important;
+    }
+
+    .trading-markets-section .market-item {
+        flex-shrink: 0 !important;
+        min-width: 150px !important;
+        padding: 1rem 0.6rem !important;
+    }
+
     .trading-markets-section .market-title {
-        margin: 0 !important;
-        padding: 0 !important;
         font-size: 0.8rem !important;
-        min-width: 0 !important;
     }
 
     .trading-markets-section .market-description {
-        margin: 0 !important;
-        padding: 0 !important;
+        -webkit-line-clamp: 2 !important;
+        line-clamp: 2 !important;
         font-size: 0.7rem !important;
-        line-height: 1.3 !important;
-        min-width: 0 !important;
-    }
-
-    .trading-markets-section .section-title {
-        text-align: center !important;
-        width: 100% !important;
     }
 }

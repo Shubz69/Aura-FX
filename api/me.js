@@ -2,27 +2,16 @@
  * GET /api/me
  * Single source-of-truth: returns user.role + entitlements.
  * Frontend must render channels/features ONLY from these; never guess access.
+ *
+ * PERFORMANCE: Entitlements cached 60s per userId. Invalidated on tier/role change.
  */
 
 const { executeQuery } = require('./db');
 const { getEntitlements, getAllowedChannelSlugs } = require('./utils/entitlements');
+const { verifyToken } = require('./utils/auth');
+const { getOrFetch } = require('./cache');
 
-function decodeToken(authHeader) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  try {
-    const token = authHeader.replace('Bearer ', '');
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = payload.length % 4;
-    const padded = padding ? payload + '='.repeat(4 - padding) : payload;
-    const decoded = JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
-    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) return null;
-    return decoded;
-  } catch {
-    return null;
-  }
-}
+const ENTITLEMENTS_TTL = 60000; // 60s - low latency, fresh enough for tier changes
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -41,7 +30,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
-  const decoded = decodeToken(req.headers.authorization);
+  const decoded = verifyToken(req.headers.authorization);
   if (!decoded || !decoded.id) {
     return res.status(401).json({
       success: false,
@@ -53,9 +42,10 @@ module.exports = async (req, res) => {
   const userId = decoded.id;
 
   try {
-    let userRows;
-    try {
-      [userRows] = await executeQuery(
+    const fetchEntitlements = async () => {
+      let userRows;
+      try {
+        [userRows] = await executeQuery(
         `SELECT id, email, username, name, avatar, role,
                 subscription_status, subscription_plan, subscription_expiry,
                 subscription_started, payment_failed, has_used_free_trial,
@@ -87,11 +77,7 @@ module.exports = async (req, res) => {
     }
 
     if (!userRows || userRows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        errorCode: 'USER_NOT_FOUND',
-        message: 'User not found'
-      });
+      throw Object.assign(new Error('USER_NOT_FOUND'), { code: 'USER_NOT_FOUND' });
     }
 
     const userRow = userRows[0];
@@ -119,35 +105,54 @@ module.exports = async (req, res) => {
 
     entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, channels);
 
-    // user.role must match entitlements.role (super admin by email → SUPER_ADMIN)
-    const user = {
-      id: userRow.id,
-      email: userRow.email,
-      username: userRow.username || userRow.email?.split('@')[0] || '',
-      name: userRow.name || userRow.username || '',
-      avatar: userRow.avatar || '/avatars/avatar_ai.png',
-      role: entitlements.role,
-      level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
-      xp: userRow.xp != null ? parseFloat(userRow.xp) : 0
+      const updatedAt = Date.now();
+      entitlements.updatedAt = updatedAt;
+      entitlements.version = String(updatedAt);
+
+      // user.role must match entitlements.role (super admin by email → SUPER_ADMIN)
+      const user = {
+          id: userRow.id,
+        email: userRow.email,
+        username: userRow.username || userRow.email?.split('@')[0] || '',
+        name: userRow.name || userRow.username || '',
+        avatar: userRow.avatar || '/avatars/avatar_ai.png',
+        role: entitlements.role,
+        level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
+        xp: userRow.xp != null ? parseFloat(userRow.xp) : 0
+      };
+
+      return { user, entitlements };
     };
+
+    const cacheKey = `entitlements:${userId}`;
+    const { user, entitlements: ent } = await getOrFetch(cacheKey, fetchEntitlements, ENTITLEMENTS_TTL);
 
     return res.status(200).json({
       success: true,
       user,
       entitlements: {
-        tier: entitlements.tier,
-        status: entitlements.status,
-        periodEnd: entitlements.periodEnd ?? null,
-        pendingTier: entitlements.pendingTier ?? null,
-        effectiveTier: entitlements.effectiveTier ?? entitlements.tier,
-        canAccessCommunity: entitlements.canAccessCommunity,
-        canAccessAI: entitlements.canAccessAI,
-        allowedChannelSlugs: entitlements.allowedChannelSlugs,
-        onboardingAccepted: entitlements.onboardingAccepted,
-        needsOnboardingReaccept: entitlements.needsOnboardingReaccept
+        tier: ent.tier,
+        status: ent.status,
+        periodEnd: ent.periodEnd ?? null,
+        pendingTier: ent.pendingTier ?? null,
+        effectiveTier: ent.effectiveTier ?? ent.tier,
+        canAccessCommunity: ent.canAccessCommunity,
+        canAccessAI: ent.canAccessAI,
+        allowedChannelSlugs: ent.allowedChannelSlugs,
+        onboardingAccepted: ent.onboardingAccepted,
+        needsOnboardingReaccept: ent.needsOnboardingReaccept,
+        updatedAt: ent.updatedAt,
+        version: ent.version
       }
     });
   } catch (error) {
+    if (error.code === 'USER_NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        errorCode: 'USER_NOT_FOUND',
+        message: 'User not found'
+      });
+    }
     console.error('Error in /api/me:', error);
     return res.status(500).json({
       success: false,

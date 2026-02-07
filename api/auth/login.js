@@ -1,8 +1,9 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
-// Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { normalizeRole, isSuperAdminEmail } = require('../utils/entitlements');
+const { signToken } = require('../utils/auth');
+const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 
 // Get database connection
 const getDbConnection = async () => {
@@ -51,6 +52,17 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Rate limit login attempts (5 per 5 min per IP)
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+    const rateKey = `login:${clientIp}`;
+    if (!checkRateLimit(rateKey, RATE_LIMIT_CONFIGS.STRICT.requests, RATE_LIMIT_CONFIGS.STRICT.windowMs)) {
+      return res.status(429).json({
+        success: false,
+        error: 'RATE_LIMITED',
+        message: 'Too many login attempts. Please try again later.'
+      });
+    }
+
     const { email, password } = req.body;
 
     if (!email || typeof email !== 'string' || !email.trim()) {
@@ -178,28 +190,14 @@ module.exports = async (req, res) => {
         console.log('Subscription columns not found, will be created on first subscription');
       }
 
-      // Generate JWT token (3-part format: header.payload.signature)
-      // Convert to base64url (replace + with -, / with _, remove = padding)
-      const toBase64Url = (str) => {
-        return Buffer.from(str).toString('base64')
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=/g, '');
-      };
-      
+      // Generate JWT token - cryptographically signed when JWT_SECRET is set
       const apiRole = isSuperAdminEmail(user) ? 'SUPER_ADMIN' : normalizeRole(user.role);
-      const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = toBase64Url(JSON.stringify({
+      const token = signToken({
         id: user.id,
         email: user.email,
         username: user.username || user.email.split('@')[0],
-        role: apiRole,
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-      }));
-      const signature = toBase64Url('signature-' + Date.now());
-      const token = `${header}.${payload}.${signature}`;
-      
-      console.log('Generated login token (length):', token.length, 'parts:', token.split('.').length);
+        role: apiRole
+      }, '24h');
 
       await db.end();
 

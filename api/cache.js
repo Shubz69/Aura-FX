@@ -276,12 +276,21 @@ const warmCache = async (warmers) => {
   return results;
 };
 
+/**
+ * Invalidate entitlements cache for a user (call on tier/role change, logout, password change)
+ */
+const invalidateEntitlementsCache = (userId) => {
+  if (!userId) return;
+  deleteCached(`entitlements:${userId}`);
+};
+
 // Clean expired entries every 5 minutes
 setInterval(() => {
   cleanExpired();
 }, 300000);
 
 module.exports = {
+  invalidateEntitlementsCache,
   getCached,
   getCachedWithMeta,
   setCached,

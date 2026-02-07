@@ -185,6 +185,7 @@ const Home = () => {
                             {/* Trading Markets Section */}
                             <div className="trading-markets-section">
                                 <h2 className="section-title">Trade Multiple Markets</h2>
+                                <div className="markets-scroll-wrap">
                                 <div className="markets-top-grid">
                                     <div className="market-item">
                                         <div className="market-icon"><FaChartLine /></div>
@@ -219,6 +220,7 @@ const Home = () => {
                                         <h3 className="market-title">Indices</h3>
                                         <p className="market-description">Major global indices including S&P 500, NASDAQ, and more</p>
                                     </div>
+                                </div>
                                 </div>
                             </div>
 

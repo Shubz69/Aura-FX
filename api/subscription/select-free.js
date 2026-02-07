@@ -6,21 +6,8 @@
 
 const { executeQuery } = require('../db');
 const { generateRequestId, createLogger } = require('../utils/logger');
-
-function decodeToken(authHeader) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  try {
-    const token = authHeader.replace('Bearer ', '');
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = payload.length % 4;
-    const paddedPayload = padding ? payload + '='.repeat(4 - padding) : payload;
-    return JSON.parse(Buffer.from(paddedPayload, 'base64').toString('utf-8'));
-  } catch {
-    return null;
-  }
-}
+const { verifyToken } = require('../utils/auth');
+const { invalidateEntitlementsCache } = require('../cache');
 
 const PLAN_NAMES = { free: 'Free' };
 const PLAN_PRICES = { free: { amount: 0, currency: 'GBP', interval: 'month' } };
@@ -39,7 +26,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, errorCode: 'METHOD_NOT_ALLOWED', message: 'Method not allowed', requestId });
   }
 
-  const decoded = decodeToken(req.headers.authorization);
+  const decoded = verifyToken(req.headers.authorization);
   if (!decoded || !decoded.id) {
     return res.status(401).json({ success: false, errorCode: 'UNAUTHORIZED', message: 'Authentication required', requestId });
   }
@@ -93,6 +80,7 @@ module.exports = async (req, res) => {
     };
 
     logger.info('FREE tier activated', { userId, planId: 'free' });
+    invalidateEntitlementsCache(userId);
 
     return res.status(200).json({
       success: true,

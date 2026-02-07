@@ -868,7 +868,8 @@ const Community = () => {
         connectionError,
         reconnectBanner,
         retry: retryWebSocket,
-        sendMessage: sendWebSocketMessage
+        sendMessage: sendWebSocketMessage,
+        addReconnectListener
     } = useWebSocket(
         selectedChannel?.id,
         (message) => {
@@ -1009,6 +1010,40 @@ const Community = () => {
         },
         enableRealtime
     );
+
+    const messagesRef = useRef(messages);
+    messagesRef.current = messages;
+
+    useEffect(() => {
+        if (!addReconnectListener) return;
+        return addReconnectListener(async () => {
+            const ch = selectedChannelRef.current?.id;
+            const msgs = messagesRef.current || [];
+            if (!ch) return;
+            const numericIds = msgs
+                .filter(m => m.id != null && (typeof m.id === 'number' || /^\d+$/.test(String(m.id))))
+                .map(m => Number(m.id));
+            const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 0;
+            if (maxId === 0) return;
+            try {
+                const response = await Api.getChannelMessages(ch, { afterId: maxId });
+                if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+                    setMessages(prev => {
+                        const existingIds = new Set(prev.map(m => String(m.id)));
+                        const newOnes = response.data.filter(m => !existingIds.has(String(m.id)));
+                        if (newOnes.length === 0) return prev;
+                        const merged = [...prev, ...newOnes].sort((a, b) =>
+                            (a.sequence ?? a.id ?? 0) - (b.sequence ?? b.id ?? 0)
+                        );
+                        saveMessagesToStorage(ch, merged);
+                        return merged;
+                    });
+                }
+            } catch (e) {
+                console.warn('Catch-up fetch failed:', e);
+            }
+        });
+    }, [addReconnectListener]);
 
     // ***** MESSAGE PERSISTENCE: SERVER ONLY (no localStorage) *****
     // Community messages use the API as the single source of truth to avoid
@@ -1440,17 +1475,20 @@ const Community = () => {
         const messageContent = gifMarkdown;
         const senderUsername = storedUser?.username || storedUser?.name || 'User';
 
-        // Prepare message data
+        const clientMessageId = typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const messageToSend = {
             channelId: selectedChannel.id,
             content: messageContent,
             userId,
-            username: senderUsername
+            username: senderUsername,
+            clientMessageId
         };
 
         // Optimistic update - add message to UI immediately
         const optimisticMessage = {
-            id: `temp_${Date.now()}`,
+            id: clientMessageId,
             channelId: selectedChannel.id,
             content: messageContent,
             sender: {
@@ -1487,7 +1525,7 @@ const Community = () => {
             try {
                 const response = await Api.sendMessage(selectedChannel.id, messageToSend);
                 
-                if (response && response.data) {
+                    if (response && response.data) {
                     // Replace optimistic message with server response (has real ID)
                     const serverMessage = response.data;
                     setMessages(prev => {
@@ -1495,18 +1533,6 @@ const Community = () => {
                         saveMessagesToStorage(selectedChannel.id, final);
                         return final;
                     });
-                    
-                    // Broadcast message via WebSocket so all users see it in real-time
-                    if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
-                        try {
-                            sendWebSocketMessage({
-                                ...serverMessage,
-                                channelId: selectedChannel.id
-                            });
-                        } catch (wsError) {
-                            // WebSocket failed - that's okay, REST API already saved it
-                        }
-                    }
                 } else {
                     // If response doesn't have expected format, keep optimistic message
                     const permanentMessage = {
@@ -3067,12 +3093,15 @@ Let's build generational wealth together! 💰🚀`,
         const senderUsername = storedUser?.username || storedUser?.name || 'User';
 
         // Prepare message data - include file metadata if file exists
-        // Don't include file name in content - file attachment will display it
+        const clientMessageId = typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const messageToSend = {
             channelId: selectedChannel.id,
             content: messageContent || '', // Empty if no text, file will be shown separately
             userId,
-            username: senderUsername
+            username: senderUsername,
+            clientMessageId
         };
         
         // Add file metadata if file exists
@@ -3091,7 +3120,7 @@ Let's build generational wealth together! 💰🚀`,
 
         // Optimistic update - add message to UI immediately
         const optimisticMessage = {
-            id: `temp_${Date.now()}`,
+            id: clientMessageId,
             channelId: selectedChannel.id,
             content: messageContent,
             sender: {
@@ -3130,28 +3159,19 @@ Let's build generational wealth together! 💰🚀`,
         scrollToBottomInstant();
 
         try {
-            // Broadcast via WebSocket for instant delivery to other clients (no DB save in WS server)
-            if (sendWebSocketMessage && isConnected && selectedChannel?.id) {
-                const wsMsg = {
-                    ...messageToSend,
-                    id: optimisticMessage.id,
-                    timestamp: optimisticMessage.timestamp,
-                    sender: optimisticMessage.sender,
-                    channelId: selectedChannel.id
-                };
-                sendWebSocketMessage(wsMsg);
-            }
-            // Send via API (DB persistence + Pusher broadcast for production)
+            // Send via API only - API persists and broadcasts via Pusher + WebSocket (no client-side broadcast to avoid duplicates)
             Api.sendMessage(selectedChannel.id, messageToSend)
                 .then(response => {
                     if (response && response.data) {
                         // Replace optimistic message with server response (has real ID)
                         const serverMessage = response.data;
                         setMessages(prev => {
-                            // Check if message already exists (might have been added via WebSocket)
-                            const existingIndex = prev.findIndex(m => 
-                                m.id === optimisticMessage.id || 
-                                (m.content === serverMessage.content && 
+                            const clientId = optimisticMessage.id;
+                            const serverId = serverMessage.id;
+                            const existingIndex = prev.findIndex(m =>
+                                String(m.id) === String(clientId) || String(m.id) === String(serverId) ||
+                                (m.clientMessageId && m.clientMessageId === messageToSend.clientMessageId) ||
+                                (m.content === serverMessage.content &&
                                  String(m.userId) === String(serverMessage.userId) &&
                                  Math.abs(new Date(m.timestamp) - new Date(serverMessage.timestamp)) < 5000)
                             );

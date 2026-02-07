@@ -273,22 +273,25 @@ module.exports = async (req, res) => {
         // channel_id is bigint in actual table, but we receive it as string, so we need to handle both
         let [rows] = [];
         try {
-          // Try with channel_id as string first (for string IDs like 'welcome')
-          // JOIN with users table to get username
-          // PRODUCTION OPTIMIZATION: Use indexed query for instant response
-          // LIMIT to last 200 messages for performance (most recent messages)
-          // Using timestamp index for sub-millisecond queries
+          const afterId = req.query && req.query.afterId ? parseInt(req.query.afterId, 10) : null;
+          const isCursor = Number.isInteger(afterId) && afterId > 0;
+          const whereClause = isCursor
+            ? 'm.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> \'[deleted]\')'
+            : 'm.channel_id = ? AND (m.content IS NULL OR m.content <> \'[deleted]\')';
+          const params = isCursor ? [channelId, afterId] : [channelId];
+          // For catch-up: ORDER BY m.id ASC (newer messages after cursor). For initial load: DESC then reverse.
+          const orderLimit = isCursor
+            ? 'ORDER BY m.id ASC LIMIT 200'
+            : 'ORDER BY m.timestamp DESC LIMIT 200';
           [rows] = await db.execute(
             `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
              FROM messages m 
              LEFT JOIN users u ON m.sender_id = u.id 
-             WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
-             ORDER BY m.timestamp DESC 
-             LIMIT 200`,
-            [channelId]
+             WHERE ${whereClause}
+             ${orderLimit}`,
+            params
           );
-          // Reverse to get chronological order
-          rows = rows.reverse();
+          if (!isCursor) rows = rows.reverse();
         } catch (queryError) {
           // If that fails, try converting channelId to number (for numeric IDs)
           const numericChannelId = parseInt(channelId);
@@ -377,6 +380,7 @@ module.exports = async (req, res) => {
           
           return {
             id: row.id,
+            sequence: row.id,
             channelId: row.channel_id,
             userId: row.sender_id,
             username: username,
@@ -430,7 +434,8 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
       // Create a new message
-      const { userId, username, content, file } = req.body;
+      const { userId, username, content, file, clientMessageId } = req.body;
+      const senderId = userId || decoded.id;
 
       // Allow empty content if file metadata is present
       if ((!content || !content.trim()) && !file) {
@@ -461,6 +466,45 @@ module.exports = async (req, res) => {
             message: 'Failed to initialize messages table. Please contact support.',
             error: 'Table initialization failed'
           });
+        }
+
+        // Rate limit: max 30 messages per minute per user per channel
+        try {
+          const [rateRows] = await db.execute(
+            'SELECT COUNT(*) as cnt FROM messages WHERE sender_id = ? AND channel_id = ? AND timestamp > DATE_SUB(NOW(), INTERVAL 1 MINUTE)',
+            [senderId, channelId]
+          );
+          const count = rateRows?.[0]?.cnt ?? 0;
+          if (count >= 30) {
+            return res.status(429).json({ success: false, message: 'Rate limit exceeded. Please slow down.' });
+          }
+        } catch (e) { /* non-fatal */ }
+
+        // Idempotent: if clientMessageId provided, return existing message to prevent duplicates
+        if (clientMessageId && senderId) {
+          try {
+            const [existing] = await db.execute(
+              'SELECT m.*, u.username, u.name, u.email, u.avatar, u.role FROM messages m LEFT JOIN users u ON m.sender_id = u.id WHERE m.sender_id = ? AND m.client_message_id = ? LIMIT 1',
+              [senderId, String(clientMessageId).substring(0, 64)]
+            );
+            if (existing && existing.length > 0) {
+              const r = existing[0];
+              const uname = r.username || r.name || (r.email ? r.email.split('@')[0] : 'Anonymous');
+              const msg = {
+                id: r.id,
+                channelId: r.channel_id,
+                userId: r.sender_id,
+                username: uname,
+                content: r.content,
+                createdAt: r.timestamp,
+                timestamp: r.timestamp,
+                file: r.file_data ? (typeof r.file_data === 'string' ? JSON.parse(r.file_data) : r.file_data) : null,
+                sender: { id: r.sender_id, username: uname, avatar: r.avatar || '/avatars/avatar_ai.png', role: r.role || 'USER' },
+                sequence: r.id
+              };
+              return res.status(200).json(msg);
+            }
+          } catch (e) { /* non-fatal, continue to insert */ }
         }
 
         // Check and convert channel_id column type if needed (to support string channel IDs)
@@ -569,16 +613,37 @@ module.exports = async (req, res) => {
         }
         
         // Insert message - use actual column names
-        // Include encrypted field with default FALSE value and file_data if present
+        // client_message_id for dedupe (nullable)
+        const clientMsgId = clientMessageId ? String(clientMessageId).substring(0, 64) : null;
         let result;
         try {
-          const insertResult = await db.execute(
-            'INSERT INTO messages (channel_id, sender_id, content, encrypted, file_data, timestamp) VALUES (?, ?, ?, FALSE, ?, NOW())',
-            [channelIdValue, userId || null, messageContent, fileDataJson]
-          );
+          const insertCols = 'channel_id, sender_id, content, encrypted, file_data, timestamp';
+          const insertVals = '?, ?, ?, FALSE, ?, NOW()';
+          const insertParams = [channelIdValue, senderId || userId || null, messageContent, fileDataJson];
+          let insertResult;
+          if (clientMsgId) {
+            try {
+              insertResult = await db.execute(
+                `INSERT INTO messages (${insertCols}, client_message_id) VALUES (${insertVals}, ?)`,
+                [...insertParams, clientMsgId]
+              );
+            } catch (colErr) {
+              if (colErr.code === 'ER_BAD_FIELD_ERROR' || (colErr.message && colErr.message.includes('client_message_id'))) {
+                insertResult = await db.execute(
+                  `INSERT INTO messages (${insertCols}) VALUES (${insertVals})`,
+                  insertParams
+                );
+              } else throw colErr;
+            }
+          } else {
+            insertResult = await db.execute(
+              `INSERT INTO messages (${insertCols}) VALUES (${insertVals})`,
+              insertParams
+            );
+          }
           // result is [ResultSetHeader, fields], we need the first element
           result = insertResult[0];
-          console.log('Message inserted successfully with ID:', result.insertId);
+          console.log('Message inserted successfully with ID:', result.insertId, clientMsgId ? '(clientMessageId:' + clientMsgId + ')' : '');
         } catch (insertError) {
           console.error('Insert error:', insertError.message);
           console.error('Insert error code:', insertError.code);
@@ -643,9 +708,10 @@ module.exports = async (req, res) => {
             }
         }
         
-        // Map to frontend format
+        // Map to frontend format (include sequence for message:ack / cursor sync)
         const message = {
           id: newMessage.id,
+          sequence: newMessage.id,
           channelId: newMessage.channel_id,
           userId: newMessage.sender_id, // Actual column is sender_id
           username: senderUsername,

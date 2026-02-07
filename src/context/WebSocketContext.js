@@ -16,6 +16,11 @@ import { useAuth } from './AuthContext';
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 16000];
 const MAX_ATTEMPTS = BACKOFF_MS.length;
 
+function backoffWithJitter(baseMs) {
+  const jitter = Math.random() * Math.min(500, baseMs * 0.25);
+  return baseMs + jitter;
+}
+
 function resolveWsBaseUrl() {
   const configured =
     (typeof process !== 'undefined' && process.env?.REACT_APP_WS_URL) ||
@@ -64,6 +69,7 @@ export const WebSocketProvider = ({ children }) => {
   const onMessageRef = useRef(null);
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef(null);
+  const reconnectListenersRef = useRef(new Set());
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
   const [reconnectBanner, setReconnectBanner] = useState(false);
@@ -120,6 +126,7 @@ export const WebSocketProvider = ({ children }) => {
     });
 
     client.onConnect = () => {
+      const wasReconnect = reconnectAttemptRef.current > 0;
       connectingRef.current = false;
       clientRef.current = client;
       reconnectAttemptRef.current = 0;
@@ -154,6 +161,9 @@ export const WebSocketProvider = ({ children }) => {
           // ignore
         }
       });
+      if (wasReconnect && reconnectListenersRef.current.size > 0) {
+        reconnectListenersRef.current.forEach((cb) => { try { cb(); } catch (e) { console.warn('Reconnect listener error', e); } });
+      }
     };
 
     function scheduleReconnect() {
@@ -163,7 +173,7 @@ export const WebSocketProvider = ({ children }) => {
         setReconnectBanner(true);
         return;
       }
-      const delay = BACKOFF_MS[attempt];
+      const delay = backoffWithJitter(BACKOFF_MS[attempt]);
       reconnectAttemptRef.current = attempt + 1;
       reconnectTimeoutRef.current = setTimeout(() => {
         reconnectTimeoutRef.current = null;
@@ -271,6 +281,11 @@ export const WebSocketProvider = ({ children }) => {
     if (!connectingRef.current && !clientRef.current?.connected) connect();
   }, [connect]);
 
+  const addReconnectListener = useCallback((callback) => {
+    reconnectListenersRef.current.add(callback);
+    return () => reconnectListenersRef.current.delete(callback);
+  }, []);
+
   const value = {
     isConnected,
     connectionError,
@@ -281,6 +296,7 @@ export const WebSocketProvider = ({ children }) => {
     connect,
     disconnect,
     retry,
+    addReconnectListener,
   };
 
   return (

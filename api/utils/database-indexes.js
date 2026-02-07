@@ -17,7 +17,9 @@ const INDEXES = {
     { name: 'idx_users_username', columns: 'username' },
     { name: 'idx_users_role', columns: 'role' },
     { name: 'idx_users_last_seen', columns: 'last_seen' },
-    { name: 'idx_users_level_xp', columns: ['level', 'xp'] }
+    { name: 'idx_users_level_xp', columns: ['level', 'xp'] },
+    { name: 'idx_users_subscription_status', columns: 'subscription_status' },
+    { name: 'idx_users_subscription_plan', columns: 'subscription_plan' }
   ],
   
   // XP Events table (leaderboard performance)

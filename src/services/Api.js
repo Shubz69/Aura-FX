@@ -404,11 +404,14 @@ const Api = {
         }
     },
 
-    getChannelMessages: async (channelId, customHeaders = {}) => {
-        console.log(`Attempting to fetch messages for channel ${channelId}`);
+    getChannelMessages: async (channelId, options = {}, customHeaders = {}) => {
+        const { afterId } = options;
+        const params = afterId ? { afterId: String(afterId) } : {};
+        console.log(`Attempting to fetch messages for channel ${channelId}${afterId ? ` (afterId=${afterId})` : ''}`);
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get(`${API_BASE_URL}/api/community/channels/${channelId}/messages`, {
+                params,
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     ...customHeaders

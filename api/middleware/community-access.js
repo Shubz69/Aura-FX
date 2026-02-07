@@ -15,33 +15,7 @@
  */
 
 const { executeQuery } = require('../db');
-
-// Decode JWT token
-function decodeToken(authHeader) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-  
-  try {
-    const token = authHeader.replace('Bearer ', '');
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = payload.length % 4;
-    const paddedPayload = padding ? payload + '='.repeat(4 - padding) : payload;
-    const decoded = JSON.parse(Buffer.from(paddedPayload, 'base64').toString('utf-8'));
-    
-    // Check token expiry
-    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
-      return null; // Token expired
-    }
-    
-    return decoded;
-  } catch {
-    return null;
-  }
-}
+const { verifyToken } = require('../utils/auth');
 
 /**
  * Check if user has community access based on subscription/role
@@ -141,8 +115,7 @@ async function checkCommunityAccess(userId) {
  * @returns {Object|null} - Returns error response if denied, or accessInfo if granted
  */
 async function requireCommunityAccess(req, res) {
-  // Decode token
-  const decoded = decodeToken(req.headers.authorization);
+  const decoded = verifyToken(req.headers.authorization);
   
   if (!decoded || !decoded.id) {
     return {
@@ -201,7 +174,6 @@ async function requireCommunityAccess(req, res) {
 const communityApiGuard = requireCommunityAccess;
 
 module.exports = {
-  decodeToken,
   checkCommunityAccess,
   requireCommunityAccess,
   communityApiGuard

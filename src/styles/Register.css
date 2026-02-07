@@ -38,14 +38,16 @@
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 40px 36px;
-  width: 100%;
-    max-width: 460px;
+    width: 100%;
+    max-width: 520px;
     box-shadow: none;
     position: relative;
     z-index: 10;
     border: 1px solid rgba(255, 255, 255, 0.1);
     max-height: 90vh;
     overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* Clean header */
@@ -74,16 +76,24 @@
     margin-bottom: 20px;
 }
 
+/* Form - prevent horizontal overflow */
+.register-form-container form {
+    min-width: 0;
+    overflow-x: hidden;
+}
+
 /* Compact form layout - two columns */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 16px;
+    min-width: 0;
 }
 
 .form-group {
     margin-bottom: 16px;
+    min-width: 0;
 }
 
 .form-group.full-width {
@@ -104,6 +114,8 @@
 
 .form-input {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
@@ -187,18 +199,18 @@
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    min-width: 240px;
-    max-width: min(320px, calc(100vw - 24px));
+    width: 280px;
+    max-width: min(280px, calc(100vw - 32px));
     z-index: 100;
     background: #0f0f0f;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
     overflow: hidden;
 }
 .phone-country-search {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px 14px;
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.05);
@@ -214,20 +226,32 @@
     background: rgba(255, 255, 255, 0.08);
 }
 .phone-country-list {
-    max-height: 200px;
+    max-height: 220px;
     overflow-y: auto;
+    overflow-x: hidden;
     list-style: none;
     margin: 0;
-    padding: 4px 0;
+    padding: 6px 0;
+}
+.phone-country-list::-webkit-scrollbar {
+    width: 6px;
+}
+.phone-country-list::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+}
+.phone-country-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
 }
 .phone-country-item {
-    padding: 8px 12px;
+    padding: 10px 14px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
     color: var(--secondary);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     transition: background 0.15s;
 }
 .phone-country-item:hover {
@@ -245,9 +269,11 @@
 .phone-country-item-label {
     flex: 1;
     min-width: 0;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
 }
 .phone-country-item.no-results {
     cursor: default;
@@ -603,8 +629,9 @@
     }
     
     .register-form-container {
-        padding: 32px 28px;
-        max-width: 420px;
+        padding: 32px 24px;
+        max-width: 440px;
+        overflow-x: hidden;
     }
     
     .register-title {
@@ -629,8 +656,9 @@
     }
     
     .register-form-container {
-        padding: 20px 16px;
+        padding: 24px 18px;
         max-width: 100%;
+        overflow-x: hidden;
     }
     
     .register-title {

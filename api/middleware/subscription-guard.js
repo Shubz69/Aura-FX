@@ -9,33 +9,14 @@
  */
 
 const { executeQuery } = require('../db');
-
-// Decode JWT token
-function decodeToken(authHeader) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-  
-  try {
-    const token = authHeader.replace('Bearer ', '');
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = payload.length % 4;
-    const paddedPayload = padding ? payload + '='.repeat(4 - padding) : payload;
-    return JSON.parse(Buffer.from(paddedPayload, 'base64').toString('utf-8'));
-  } catch {
-    return null;
-  }
-}
+const { verifyToken } = require('../utils/auth');
 
 /**
  * Check if user has community access (server-authoritative)
  * Returns: { hasAccess: boolean, accessType: string, userId: number, error: string|null }
  */
 async function checkCommunityAccess(authHeader) {
-  const decoded = decodeToken(authHeader);
+  const decoded = verifyToken(authHeader);
   
   if (!decoded || !decoded.id) {
     return { hasAccess: false, accessType: 'NONE', userId: null, error: 'UNAUTHORIZED' };
@@ -178,6 +159,5 @@ function getErrorMessage(errorCode) {
 
 module.exports = {
   requireCommunityAccess,
-  checkCommunityAccess,
-  decodeToken
+  checkCommunityAccess
 };
