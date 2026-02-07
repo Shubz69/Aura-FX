@@ -373,7 +373,7 @@ const Register = () => {
                     </div>
                     <div className="form-group form-group-phone">
                         <label htmlFor="phone-national" className="form-label">Phone Number (any country)</label>
-                        <div className="phone-single-box">
+                        <div className="phone-input-row">
                             <PhoneCountrySelect
                                 id="phone-country"
                                 value={phoneCountryCode}
@@ -391,9 +391,8 @@ const Register = () => {
                                     setPhoneNational(v);
                                 }}
                                 required
-                                placeholder="e.g. 7700 900000"
+                                placeholder="e.g. 201 555 5555"
                                 className="form-input phone-national-input"
-                                style={{ boxShadow: 'none' }}
                                 disabled={isLoading}
                                 autoComplete="tel-national"
                                 maxLength={20}

@@ -1,28 +1,36 @@
+/** Convert ISO 3166-1 alpha-2 (e.g. 'GB') to flag emoji */
+export const isoToFlag = (iso) => {
+  if (!iso || iso.length !== 2) return '';
+  const a = iso.toUpperCase().charCodeAt(0) - 65 + 0x1F1E6;
+  const b = iso.toUpperCase().charCodeAt(1) - 65 + 0x1F1E6;
+  return String.fromCodePoint(a, b);
+};
+
 /**
  * Country calling codes for phone input dropdown (E.164).
- * Format: { code: '+44', label: 'United Kingdom (+44)' }
+ * Format: { code: '+44', label: 'United Kingdom (+44)', iso: 'GB' }
  */
 export const COUNTRY_CODES = [
-    { code: '+44', label: 'United Kingdom (+44)' },
-    { code: '+1', label: 'United States / Canada (+1)' },
-    { code: '+91', label: 'India (+91)' },
-    { code: '+61', label: 'Australia (+61)' },
-    { code: '+81', label: 'Japan (+81)' },
-    { code: '+86', label: 'China (+86)' },
-    { code: '+49', label: 'Germany (+49)' },
-    { code: '+33', label: 'France (+33)' },
-    { code: '+39', label: 'Italy (+39)' },
-    { code: '+34', label: 'Spain (+34)' },
-    { code: '+31', label: 'Netherlands (+31)' },
-    { code: '+32', label: 'Belgium (+32)' },
-    { code: '+41', label: 'Switzerland (+41)' },
-    { code: '+43', label: 'Austria (+43)' },
-    { code: '+46', label: 'Sweden (+46)' },
-    { code: '+47', label: 'Norway (+47)' },
-    { code: '+45', label: 'Denmark (+45)' },
-    { code: '+358', label: 'Finland (+358)' },
-    { code: '+353', label: 'Ireland (+353)' },
-    { code: '+351', label: 'Portugal (+351)' },
+    { code: '+44', label: 'United Kingdom (+44)', name: 'United Kingdom', iso: 'GB' },
+    { code: '+1', label: 'United States / Canada (+1)', name: 'United States', iso: 'US' },
+    { code: '+91', label: 'India (+91)', name: 'India', iso: 'IN' },
+    { code: '+61', label: 'Australia (+61)', name: 'Australia', iso: 'AU' },
+    { code: '+81', label: 'Japan (+81)', name: 'Japan', iso: 'JP' },
+    { code: '+86', label: 'China (+86)', name: 'China', iso: 'CN' },
+    { code: '+49', label: 'Germany (+49)', name: 'Germany', iso: 'DE' },
+    { code: '+33', label: 'France (+33)', name: 'France', iso: 'FR' },
+    { code: '+39', label: 'Italy (+39)', name: 'Italy', iso: 'IT' },
+    { code: '+34', label: 'Spain (+34)', name: 'Spain', iso: 'ES' },
+    { code: '+31', label: 'Netherlands (+31)', name: 'Netherlands', iso: 'NL' },
+    { code: '+32', label: 'Belgium (+32)', name: 'Belgium', iso: 'BE' },
+    { code: '+41', label: 'Switzerland (+41)', name: 'Switzerland', iso: 'CH' },
+    { code: '+43', label: 'Austria (+43)', name: 'Austria', iso: 'AT' },
+    { code: '+46', label: 'Sweden (+46)', name: 'Sweden', iso: 'SE' },
+    { code: '+47', label: 'Norway (+47)', name: 'Norway', iso: 'NO' },
+    { code: '+45', label: 'Denmark (+45)', name: 'Denmark', iso: 'DK' },
+    { code: '+358', label: 'Finland (+358)', name: 'Finland', iso: 'FI' },
+    { code: '+353', label: 'Ireland (+353)', name: 'Ireland', iso: 'IE' },
+    { code: '+351', label: 'Portugal (+351)', name: 'Portugal', iso: 'PT' },
     { code: '+48', label: 'Poland (+48)' },
     { code: '+420', label: 'Czech Republic (+420)' },
     { code: '+36', label: 'Hungary (+36)' },

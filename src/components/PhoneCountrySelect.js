@@ -1,9 +1,9 @@
 /**
  * Phone country/dial code selector.
- * Displays only the dial code (e.g. +44) when closed; dropdown is searchable by country name.
+ * Trigger: flag + code + chevron. Dropdown below with flags, names, codes (reference layout).
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { COUNTRY_CODES } from '../utils/countryCodes.js';
+import { COUNTRY_CODES, isoToFlag } from '../utils/countryCodes.js';
 
 const PhoneCountrySelect = ({ value, onChange, disabled, id, className }) => {
   const [open, setOpen] = useState(false);
@@ -13,12 +13,14 @@ const PhoneCountrySelect = ({ value, onChange, disabled, id, className }) => {
   const filtered = search.trim()
     ? COUNTRY_CODES.filter(
         (c) =>
-          c.label.toLowerCase().includes(search.toLowerCase()) ||
-          c.code.includes(search.replace(/\D/g, ''))
+          (c.label || '').toLowerCase().includes(search.toLowerCase()) ||
+          (c.name || c.label || '').toLowerCase().includes(search.toLowerCase()) ||
+          (c.code || '').includes(search.replace(/\D/g, ''))
       )
     : COUNTRY_CODES;
 
   const selected = COUNTRY_CODES.find((c) => c.code === value) || COUNTRY_CODES[0];
+  const selectedFlag = selected.iso ? isoToFlag(selected.iso) : '';
 
   useEffect(() => {
     const onOutside = (e) => {
@@ -49,6 +51,7 @@ const PhoneCountrySelect = ({ value, onChange, disabled, id, className }) => {
         onClick={() => !disabled && setOpen(!open)}
         className="phone-country-trigger"
       >
+        {selectedFlag && <span className="phone-country-flag" aria-hidden>{selectedFlag}</span>}
         <span className="phone-country-value">{value || selected.code}</span>
         <span className="phone-country-chevron" aria-hidden>▼</span>
       </button>
@@ -68,22 +71,27 @@ const PhoneCountrySelect = ({ value, onChange, disabled, id, className }) => {
             {filtered.length === 0 ? (
               <li className="phone-country-item no-results">No matches</li>
             ) : (
-              filtered.map(({ code, label }) => (
-                <li
-                  key={code}
-                  role="option"
-                  aria-selected={code === value}
-                  className={`phone-country-item ${code === value ? 'selected' : ''}`}
-                  onClick={() => {
-                    onChange(code);
-                    setOpen(false);
-                    setSearch('');
-                  }}
-                >
-                  <span className="phone-country-item-code">{code}</span>
-                  <span className="phone-country-item-label">{label}</span>
-                </li>
-              ))
+              filtered.map((c) => {
+                const flag = c.iso ? isoToFlag(c.iso) : '';
+                const name = c.name || c.label || c.code;
+                return (
+                  <li
+                    key={c.code}
+                    role="option"
+                    aria-selected={c.code === value}
+                    className={`phone-country-item ${c.code === value ? 'selected' : ''}`}
+                    onClick={() => {
+                      onChange(c.code);
+                      setOpen(false);
+                      setSearch('');
+                    }}
+                  >
+                    {flag && <span className="phone-country-item-flag" aria-hidden>{flag}</span>}
+                    <span className="phone-country-item-label">{name}</span>
+                    <span className="phone-country-item-code">{c.code}</span>
+                  </li>
+                );
+              })
             )}
           </ul>
         </div>
