@@ -31,8 +31,8 @@ const Home = () => {
             setTimeout(() => {
                 document.body.style.overflow = 'auto';
                 setShowContent(true);
-            }, 500); // Small delay for smooth transition
-        }, 3000); // 3 second loading screen
+            }, 200); // Brief delay for smooth transition
+        }, 1500); // 1.5 second loading screen (1.5s faster)
 
         return () => {
             clearTimeout(loadingTimer);

@@ -55,11 +55,7 @@ const Navbar = () => {
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
                 {(showSuperAdminLinks || isAdmin(user)) && (
-                    <>
-                        <li><Link to="/admin">Admin Panel</Link></li>
-                        <li><Link to="/admin/inbox"><FaEnvelope className="dropdown-icon" /> User Messages</Link></li>
-                        <li><Link to="/admin/messages"><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
-                    </>
+                    <li><Link to="/admin">Admin Panel</Link></li>
                 )}
             </ul>
 
@@ -93,10 +89,18 @@ const Navbar = () => {
                                         🤖 Premium AI Assistant
                                     </Link>
                                 )}
-                                {showSuperAdminLinks && (
-                                    <Link to="/admin" className="dropdown-item">
-                                        <FaCog className="dropdown-icon" /> Admin Panel
-                                    </Link>
+                                {(showSuperAdminLinks || isAdmin(user)) && (
+                                    <>
+                                        <Link to="/admin" className="dropdown-item">
+                                            <FaCog className="dropdown-icon" /> Admin Panel
+                                        </Link>
+                                        <Link to="/admin/inbox" className="dropdown-item">
+                                            <FaEnvelope className="dropdown-icon" /> User Messages
+                                        </Link>
+                                        <Link to="/admin/messages" className="dropdown-item">
+                                            <FaHeadset className="dropdown-icon" /> Contact Submissions
+                                        </Link>
+                                    </>
                                 )}
                                 {(isAdmin(user) || isSuperAdmin(user)) && (
                                     <Link to="/settings" className="dropdown-item">
@@ -130,11 +134,7 @@ const Navbar = () => {
                         <li><Link to="/premium-ai" onClick={toggleMobileMenu}>🤖 Premium AI</Link></li>
                     )}
                     {(showSuperAdminLinks || isAdmin(user)) && (
-                        <>
-                            <li><Link to="/admin" onClick={toggleMobileMenu}>Admin Panel</Link></li>
-                            <li><Link to="/admin/inbox" onClick={toggleMobileMenu}><FaEnvelope className="dropdown-icon" /> User Messages</Link></li>
-                            <li><Link to="/admin/messages" onClick={toggleMobileMenu}><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
-                        </>
+                        <li><Link to="/admin" onClick={toggleMobileMenu}>Admin Panel</Link></li>
                     )}
                 </ul>
                 <div className="mobile-buttons">
@@ -193,6 +193,9 @@ const Navbar = () => {
                                 </Link></li>
                                 <li><Link to="/admin/inbox" onClick={toggleMobileUserMenu}>
                                     <FaEnvelope className="dropdown-icon" /> User Messages
+                                </Link></li>
+                                <li><Link to="/admin/messages" onClick={toggleMobileUserMenu}>
+                                    <FaHeadset className="dropdown-icon" /> Contact Submissions
                                 </Link></li>
                             </>
                         )}

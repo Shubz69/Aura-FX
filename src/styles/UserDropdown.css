@@ -15,16 +15,16 @@
 }
 
 .user-dropdown {
-    position: absolute;
-    top: 50px;
-    right: 0;
+    position: fixed;
+    top: calc(55px + env(safe-area-inset-top, 0) + 8px);
+    right: 16px;
     width: 240px;
     background: rgba(28, 28, 28, 0.95); /* 60% darker grey background */
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
     overflow: hidden;
-    z-index: 1000;
+    z-index: 10002;
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: dropdownAppear 0.3s ease;
     transform-origin: top center;
@@ -123,8 +123,10 @@
 /* Responsive */
 @media (max-width: 768px) {
     .user-dropdown {
-        top: 45px;
-        width: 220px;
+        top: calc(58px + env(safe-area-inset-top, 0) + 8px);
+        right: 12px;
+        width: calc(100vw - 24px);
+        max-width: 280px;
     }
     
     .user-dropdown a, .user-dropdown button {

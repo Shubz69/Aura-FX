@@ -106,7 +106,7 @@ function AppRoutes() {
             if (isHomePage) {
                 const gdprTimer = setTimeout(() => {
                     setShowGDPR(true);
-                }, 3500); // Show 0.5 seconds after loading screen ends
+                }, 2000); // Show 0.5 seconds after loading screen ends (1.5s load + 0.5s)
                 return () => clearTimeout(gdprTimer);
             } else {
                 setShowGDPR(true);

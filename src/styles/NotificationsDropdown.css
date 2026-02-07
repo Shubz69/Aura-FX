@@ -317,17 +317,24 @@
   border-radius: 50%;
 }
 
-/* Responsive */
+/* Responsive - ensure dropdown always appears below navbar on all devices */
+@media (max-width: 768px) {
+    .notifications-dropdown {
+        top: calc(60px + env(safe-area-inset-top, 0) + 10px) !important;
+        max-height: calc(100vh - 90px);
+    }
+}
+
 @media (max-width: 480px) {
-  .notifications-dropdown {
-    width: calc(100vw - 20px);
-    max-height: 80vh;
-    left: 10px !important;
-    right: 10px !important;
-    top: 60px !important;
-  }
-  
-  .mark-all-read-btn span {
-    display: none;
-  }
+    .notifications-dropdown {
+        width: calc(100vw - 20px);
+        max-height: calc(100vh - 90px);
+        left: 10px !important;
+        right: 10px !important;
+        top: calc(58px + env(safe-area-inset-top, 0) + 10px) !important;
+    }
+    
+    .mark-all-read-btn span {
+        display: none;
+    }
 }
