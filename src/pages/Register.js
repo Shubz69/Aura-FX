@@ -7,7 +7,7 @@ import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 import { isFirebasePhoneEnabled, setupRecaptcha, sendPhoneOtp, confirmPhoneOtp } from '../utils/firebasePhoneAuth';
-import { COUNTRY_CODES, toE164 } from '../utils/countryCodes';
+import { COUNTRY_CODES, toE164 } from '../utils/countryCodes.js';
 
 const Register = () => {
     const [formData, setFormData] = useState({
