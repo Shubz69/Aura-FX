@@ -524,7 +524,7 @@ const Community = () => {
     const [newChannelCategory, setNewChannelCategory] = useState('trading');
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
-    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 1024);
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
     const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
     const [touchStartX, setTouchStartX] = useState(null); // For swipe gestures
     const [channelActionStatus, setChannelActionStatus] = useState(null);
@@ -1316,12 +1316,21 @@ const Community = () => {
         return storedUser?.courses || [];
     };
 
+    // Channels free users can always see (read-only; only admins can post)
+    const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
+
     // Check if user can access channel (view)
-    // PAID ONLY - All channels require subscription (premium or a7fx)
     // Channel access levels: 'premium' (premium + a7fx), 'a7fx' (a7fx only), 'admin-only' (admins only)
     const canUserAccessChannel = (channel) => {
         const userRole = getCurrentUserRole();
+        const channelId = (channel.id || channel.name || '').toString().toLowerCase();
         const accessLevel = (channel.accessLevel || 'premium').toLowerCase(); // Default to premium instead of open
+
+        // FREE users: can see and read allowlist channels (general, welcome, announcements, levels, notifications)
+        // Posting is still restricted by canUserPostInChannel (only admins can post in announcements)
+        if (FREE_CHANNEL_ALLOWLIST.has(channelId)) {
+            return true;
+        }
         
         // Admin-only channels: only admins can see
         if (accessLevel === 'admin-only') {
@@ -1341,12 +1350,12 @@ const Community = () => {
             return true;
         }
         
-        // For non-admin, non-premium users: check subscription
+        // For non-admin, non-premium users: check subscription for non-allowlist channels
         const hasActiveSubscription = subscriptionStatus 
             ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
             : checkSubscription();
         
-        // If no subscription, deny access
+        // If no subscription, deny access to paid channels only (allowlist already handled above)
         if (!hasActiveSubscription) {
             return false;
         }
@@ -2306,7 +2315,7 @@ const Community = () => {
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
-            const isMobileWidth = width <= 1024;
+            const isMobileWidth = width <= 768;
             setIsMobile(isMobileWidth);
             // Close sidebar when switching to desktop
             if (!isMobileWidth && sidebarOpen) {
@@ -5988,7 +5997,9 @@ Let's build generational wealth together! 💰🚀`,
                                     color: 'var(--text-muted)',
                                     fontSize: '0.875rem'
                                 }}>
-                                    This channel is read-only. Upgrade to post here.
+                                    {['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
+                                        ? 'This channel is read-only. Only admins can post here.'
+                                        : 'This channel is read-only. Upgrade to post here.'}
                                 </div>
                             )}
                             <form className="chat-form" onSubmit={handleSendMessage}>
@@ -6129,7 +6140,9 @@ Let's build generational wealth together! 💰🚀`,
                                                 ? 'Edit your message...'
                                                 : selectedChannel?.canWrite !== false
                                                     ? `Message #${selectedChannel?.name || ''}`
-                                                    : 'Read-only channel. Upgrade to post here.'
+                                                    : ['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
+                                                        ? 'Read-only. Only admins can post here.'
+                                                        : 'Read-only channel. Upgrade to post here.'
                                         }
                                         disabled={selectedChannel?.canWrite === false}
                                         rows="3"
@@ -7470,7 +7483,7 @@ Let's build generational wealth together! 💰🚀`,
             
             {/* Context Menu */}
             {contextMenu && (() => {
-                const isMobile = typeof window !== 'undefined' && window.innerWidth <= 1024;
+                const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
                 const menuWidth = 200;
                 const menuMaxHeight = 360;
                 let top = contextMenu.y;

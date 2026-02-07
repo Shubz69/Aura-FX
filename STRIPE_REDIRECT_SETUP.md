@@ -80,14 +80,15 @@ https://aura-fx-ten.vercel.app/payment-success?payment_success=true&subscription
 3. **Webhook Support**: The system also supports Stripe webhooks for payment events
 4. **Fallback**: If plan parameter is missing, defaults to `aura` (premium role)
 
-## Stripe Webhook Configuration (Optional but Recommended)
+## Stripe Webhook Configuration (Recommended)
 
-If you want to use webhooks for more reliable payment processing:
+Webhooks ensure subscriptions activate for all users even if the redirect fails:
 
 1. Go to **Developers** → **Webhooks** in Stripe Dashboard
 2. Add endpoint: `https://aura-fx-ten.vercel.app/api/stripe/webhook`
 3. Select events:
-   - `invoice.payment_succeeded`
+   - **`checkout.session.completed`** (first-time subscription activation – important!)
+   - `invoice.payment_succeeded` (renewals)
    - `invoice.payment_failed`
    - `customer.subscription.deleted`
 

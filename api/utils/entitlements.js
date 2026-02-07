@@ -174,10 +174,11 @@ function getAllowedChannelSlugs(entitlements, channels) {
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return channels.map(toId).filter(Boolean);
   }
+  // Before onboarding: still show welcome, announcements, levels to everyone (read-only)
   if (!onboardingAccepted || needsOnboardingReaccept) {
     return channels.filter((c) => {
       const id = toId(c).toLowerCase();
-      return id === 'welcome';
+      return id === 'welcome' || id === 'announcements' || id === 'levels';
     }).map(toId).filter(Boolean);
   }
   const tier = effectiveTier != null ? effectiveTier : entitlements.tier;

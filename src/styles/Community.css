@@ -2806,7 +2806,7 @@ html.community-page-active {
     }
 }
 
-/* iPad and Tablet Specific Fixes (768px - 1024px) */
+/* iPad and Tablet Specific Fixes (768px - 1024px) - Desktop-style layout: sidebar + main, one hamburger only */
 @media (min-width: 768px) and (max-width: 1024px) {
     html, body, #root {
         background: #0a0a0a !important;
@@ -2814,28 +2814,49 @@ html.community-page-active {
         height: 100vh !important;
     }
     
+    /* Fill layout like PC: sidebar + main content side by side */
     .community-container {
-        grid-template-columns: 1fr !important;
-        padding-top: 80px !important; /* Reduced since we have slideable sidebar */
+        grid-template-columns: 200px 1fr !important;
+        display: grid !important;
+        flex-direction: unset !important;
+        padding-top: 0 !important;
         background: #0a0a0a !important;
-        min-height: 100vh !important;
-        height: 100vh !important;
-        display: flex !important;
-        flex-direction: column !important;
+        min-height: calc(100vh - 60px) !important;
+        height: calc(100vh - 60px) !important;
         width: 100% !important;
         max-width: 100vw !important;
         overflow: hidden !important;
+        position: fixed !important;
+        top: 60px !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+    }
+    
+    /* Hide Community sidebar toggle - only Navbar hamburger shows */
+    .mobile-sidebar-toggle {
+        display: none !important;
+    }
+    
+    .community-sidebar {
+        width: 200px !important;
+        min-width: 200px !important;
+        display: flex !important;
         position: relative !important;
+        transform: none !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .chat-main {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
+        min-width: 0 !important;
         max-width: 100% !important;
         background: var(--bg-tertiary) !important;
-        min-height: calc(100vh - 200px) !important;
-        height: calc(100vh - 200px) !important;
+        min-height: 100% !important;
+        height: 100% !important;
         position: relative !important;
         overflow: hidden !important;
     }
@@ -2855,7 +2876,8 @@ html.community-page-active {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        min-height: calc(100vh - 200px) !important;
+        min-height: 100% !important;
+        height: 100% !important;
     }
     
     .empty-state {

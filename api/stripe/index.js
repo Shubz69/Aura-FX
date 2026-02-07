@@ -309,7 +309,70 @@ module.exports = async (req, res) => {
     try {
       const event = req.body;
       
-      if (event.type === 'invoice.payment_failed' || event.type === 'customer.subscription.deleted') {
+      // checkout.session.completed: Activate subscription when payment succeeds (first purchase)
+      // This ensures ALL users get activated even if redirect fails - no bypass, real payment required
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data?.object;
+        const customerEmail = session?.customer_details?.email || session?.customer_email;
+        
+        if (customerEmail) {
+          const db = await getDbConnection();
+          if (db) {
+            try {
+              const [userRows] = await db.execute(
+                'SELECT id, has_used_free_trial FROM users WHERE email = ?',
+                [customerEmail.toLowerCase()]
+              );
+              
+              if (userRows && userRows.length > 0) {
+                const userId = userRows[0].id;
+                const hasUsedFreeTrial = userRows[0].has_used_free_trial || false;
+                
+                let planType = 'aura';
+                const successUrl = session?.success_url || '';
+                const planMatch = successUrl.match(/[?&]plan=([^&]+)/i);
+                if (planMatch) planType = planMatch[1].toLowerCase();
+                if (session?.metadata?.plan) planType = String(session.metadata.plan).toLowerCase();
+                if (planType === 'elite' || planType === 'premium') planType = planType === 'elite' ? 'a7fx' : 'aura';
+                
+                const expiryDate = new Date();
+                let subscriptionDays = 30;
+                let markFreeTrialUsed = hasUsedFreeTrial;
+                
+                if (planType === 'aura' || planType === 'a7fx') {
+                  if (!hasUsedFreeTrial) {
+                    subscriptionDays = 90;
+                    markFreeTrialUsed = true;
+                  }
+                }
+                expiryDate.setDate(expiryDate.getDate() + subscriptionDays);
+                
+                const userRole = (planType === 'a7fx' || planType === 'elite') ? 'elite' : 'premium';
+                const expiryStr = expiryDate.toISOString().slice(0, 19).replace('T', ' ');
+                
+                await db.execute(
+                  `UPDATE users 
+                   SET subscription_status = 'active',
+                       subscription_expiry = ?,
+                       subscription_started = NOW(),
+                       stripe_session_id = ?,
+                       payment_failed = FALSE,
+                       role = ?,
+                       subscription_plan = ?,
+                       has_used_free_trial = ?
+                   WHERE id = ?`,
+                  [expiryStr, session?.id || null, userRole, planType, markFreeTrialUsed, userId]
+                );
+                console.log(`✅ Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${planType}`);
+              }
+              await db.end();
+            } catch (dbErr) {
+              console.error('Webhook checkout.session.completed error:', dbErr);
+              if (db && !db.ended) await db.end();
+            }
+          }
+        }
+      } else if (event.type === 'invoice.payment_failed' || event.type === 'customer.subscription.deleted') {
         const customerId = event.data.object.customer;
         const subscriptionId = event.data.object.subscription || event.data.object.id;
         
