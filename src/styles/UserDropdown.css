@@ -3,6 +3,14 @@
     display: inline-block;
 }
 
+.user-dropdown-overlay {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: 10001;
+    cursor: default;
+}
+
 .user-icon {
     cursor: pointer;
     font-size: 24px;

@@ -16,7 +16,7 @@ body.loading-active .navbar {
     width: 100%;
     max-width: 100vw;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow-x: clip;
     overflow-y: visible;
     background: #0a0a0a;
     backdrop-filter: blur(20px);
@@ -269,6 +269,10 @@ body.loading-active .navbar {
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     color: #ffffff;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .user-icon:hover {

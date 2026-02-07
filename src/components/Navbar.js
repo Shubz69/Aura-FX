@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ReactDOM from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
@@ -18,7 +19,18 @@ const Navbar = () => {
     const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
     
     const toggleDropdown = () => {
-        setDropdownOpen(!dropdownOpen);
+        setDropdownOpen(prev => !prev);
+    };
+
+    const handleUserIconClick = (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+    };
+
+    const dropdownPosition = {
+        top: 'calc(55px + env(safe-area-inset-top, 0) + 8px)',
+        right: 16,
+        left: 'auto'
     };
 
     const toggleMobileMenu = () => {
@@ -54,9 +66,6 @@ const Navbar = () => {
                     {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
-                {(showSuperAdminLinks || isAdmin(user)) && (
-                    <li><Link to="/admin">Admin Panel</Link></li>
-                )}
             </ul>
 
             <div className="nav-buttons">
@@ -69,49 +78,63 @@ const Navbar = () => {
                     <>
                         <NavbarNotifications />
                         <div className="user-profile">
-                            <div className="user-icon" onClick={toggleDropdown}>
+                            <button
+                                type="button"
+                                className="user-icon"
+                                onClick={handleUserIconClick}
+                                aria-expanded={dropdownOpen}
+                                aria-haspopup="true"
+                                aria-label="User menu"
+                            >
                                 <FaUserCircle />
-                            </div>
-                            {dropdownOpen && (
-                                <div className="user-dropdown">
-                                <p>{user.email}</p>
-                                <Link to="/messages" className="dropdown-item">
-                                    <FaEnvelope className="dropdown-icon" /> Messages
-                                </Link>
-                                <Link to="/profile" className="dropdown-item">
-                                    <FaUserCircle className="dropdown-icon" /> Profile
-                                </Link>
-                                <Link to="/leaderboard" className="dropdown-item">
-                                    <FaTrophy className="dropdown-icon" /> Leaderboard
-                                </Link>
-                                {isPremium(user) && (
-                                    <Link to="/premium-ai" className="dropdown-item">
-                                        🤖 Premium AI Assistant
-                                    </Link>
-                                )}
-                                {(showSuperAdminLinks || isAdmin(user)) && (
-                                    <>
-                                        <Link to="/admin" className="dropdown-item">
-                                            <FaCog className="dropdown-icon" /> Admin Panel
+                            </button>
+                            {dropdownOpen && ReactDOM.createPortal(
+                                <div className="user-dropdown-overlay" onClick={() => setDropdownOpen(false)}>
+                                    <div 
+                                        className="user-dropdown"
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={dropdownPosition}
+                                    >
+                                        <p>{user.email}</p>
+                                        <Link to="/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <FaEnvelope className="dropdown-icon" /> Messages
                                         </Link>
-                                        <Link to="/admin/inbox" className="dropdown-item">
-                                            <FaEnvelope className="dropdown-icon" /> User Messages
+                                        <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <FaUserCircle className="dropdown-icon" /> Profile
                                         </Link>
-                                        <Link to="/admin/messages" className="dropdown-item">
-                                            <FaHeadset className="dropdown-icon" /> Contact Submissions
+                                        <Link to="/leaderboard" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <FaTrophy className="dropdown-icon" /> Leaderboard
                                         </Link>
-                                    </>
-                                )}
-                                {(isAdmin(user) || isSuperAdmin(user)) && (
-                                    <Link to="/settings" className="dropdown-item">
-                                        <FaSlidersH className="dropdown-icon" /> Settings
-                                    </Link>
-                                )}
-                                <button onClick={logout} className="dropdown-item">
-                                    <FaSignOutAlt className="dropdown-icon" /> Logout
-                                </button>
-                            </div>
-                        )}
+                                        {isPremium(user) && (
+                                            <Link to="/premium-ai" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                                🤖 Premium AI Assistant
+                                            </Link>
+                                        )}
+                                        {(showSuperAdminLinks || isAdmin(user)) && (
+                                            <>
+                                                <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                                    <FaCog className="dropdown-icon" /> Admin Panel
+                                                </Link>
+                                                <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                                    <FaEnvelope className="dropdown-icon" /> User Messages
+                                                </Link>
+                                                <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                                    <FaHeadset className="dropdown-icon" /> Contact Submissions
+                                                </Link>
+                                            </>
+                                        )}
+                                        {(isAdmin(user) || isSuperAdmin(user)) && (
+                                            <Link to="/settings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                                <FaSlidersH className="dropdown-icon" /> Settings
+                                            </Link>
+                                        )}
+                                        <button onClick={() => { setDropdownOpen(false); logout(); }} className="dropdown-item">
+                                            <FaSignOutAlt className="dropdown-icon" /> Logout
+                                        </button>
+                                    </div>
+                                </div>,
+                                document.body
+                            )}
                     </div>
                     </>
                 )}
@@ -132,9 +155,6 @@ const Navbar = () => {
                     {user && <li><Link to="/leaderboard" onClick={toggleMobileMenu}>Leaderboard</Link></li>}
                     {isPremium(user) && (
                         <li><Link to="/premium-ai" onClick={toggleMobileMenu}>🤖 Premium AI</Link></li>
-                    )}
-                    {(showSuperAdminLinks || isAdmin(user)) && (
-                        <li><Link to="/admin" onClick={toggleMobileMenu}>Admin Panel</Link></li>
                     )}
                 </ul>
                 <div className="mobile-buttons">
