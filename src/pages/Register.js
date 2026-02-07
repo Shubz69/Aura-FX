@@ -439,7 +439,7 @@ const Register = () => {
                         <p className="register-subtitle" style={{ marginBottom: '1rem' }}>Enter the 6-digit codes sent to your email and phone</p>
                         {useFirebasePhone && <div id="recaptcha-container-register" style={{ minHeight: 78, marginBottom: '1rem', display: 'flex', justifyContent: 'center' }} />}
                         <form onSubmit={handleVerifyAndSignUp}>
-                            <div className="form-group" style={{ maxWidth: '320px', margin: '0 auto 1rem' }}>
+                            <div className="verification-code-group">
                                 <label htmlFor="email-code-register" className="form-label">Email code (sent to {formData.email})</label>
                                 <input
                                     type="text"
@@ -448,12 +448,11 @@ const Register = () => {
                                     onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                                     maxLength={6}
                                     placeholder="6-digit code"
-                                    className="form-input"
+                                    className="verification-code-input"
                                     disabled={isLoading}
-                                    style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '6px' }}
                                 />
                             </div>
-                            <div className="form-group" style={{ maxWidth: '320px', margin: '0 auto 1rem' }}>
+                            <div className="verification-code-group">
                                 <label htmlFor="phone-code-register" className="form-label">Phone code (sent to {formData.phone})</label>
                                 <input
                                     type="text"
@@ -462,9 +461,8 @@ const Register = () => {
                                     onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                                     maxLength={6}
                                     placeholder="6-digit code"
-                                    className="form-input"
+                                    className="verification-code-input"
                                     disabled={isLoading}
-                                    style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '6px' }}
                                 />
                                 {useFirebasePhone && firebaseOtpSent && <p><button type="button" onClick={handleSendFirebaseOtp} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
                                 {!useFirebasePhone && <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
