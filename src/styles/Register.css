@@ -142,23 +142,31 @@
     font-weight: 400;
 }
 
-/* Phone: two separate boxes - country code box + number box */
+/* Phone: single unified input - country code left, number right, one box */
 .form-group-phone {
     width: 100%;
     min-width: 0;
 }
 .phone-input-row {
     display: flex;
-    gap: 10px;
     align-items: stretch;
     width: 100%;
     min-width: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s, background 0.2s;
+}
+.phone-input-row:focus-within {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.06);
 }
 .phone-country-select-wrap {
     position: relative;
     flex-shrink: 0;
-    width: 86px;
-    min-width: 86px;
+    width: 88px;
+    min-width: 88px;
     z-index: 100;
 }
 .phone-country-trigger {
@@ -168,24 +176,33 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 12px 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 14px;
+    gap: 4px;
+    padding: 0 10px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0;
     color: var(--primary);
     font-family: var(--font-secondary);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s;
 }
 .phone-country-trigger:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
 }
 .phone-national-input {
     flex: 1;
     min-width: 0;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding-left: 14px;
+}
+.phone-national-input:focus {
+    transform: none;
 }
 .phone-country-trigger:disabled {
     opacity: 0.6;
@@ -800,54 +817,48 @@
         line-height: 1.5;
     }
     
-    /* Phone: small square button for country code, rectangle for number */
+    /* Phone: compact country code on mobile */
+    .phone-input-row {
+        border-radius: 12px;
+    }
     .phone-country-select-wrap {
-        width: 48px;
-        min-width: 48px;
-        flex-shrink: 0;
+        width: 68px;
+        min-width: 68px;
     }
     .phone-country-trigger {
-        min-height: 48px;
-        height: 48px;
-        width: 48px;
-        padding: 0;
-        aspect-ratio: 1;
+        min-height: 44px;
+        padding: 0 6px;
+        font-size: 0.8rem;
+    }
+    .phone-country-flag {
+        font-size: 1rem;
     }
     .phone-national-input {
-        flex: 1;
-        min-width: 100px;
+        min-width: 80px;
+        padding: 12px 14px 12px 10px;
     }
 }
 
-/* Phone layout for tablets and smaller - square code button, rectangle for number */
+/* Phone layout for tablets and smaller - compact country code, same unified box */
 @media (max-width: 768px) {
     .phone-input-row {
-        gap: 8px;
+        border-radius: 12px;
     }
     .phone-country-select-wrap {
-        width: 48px;
-        min-width: 48px;
-        flex-shrink: 0;
+        width: 72px;
+        min-width: 72px;
     }
     .phone-country-trigger {
-        min-height: 48px;
-        height: 48px;
-        width: 48px;
-        min-width: 48px;
-        padding: 0;
-        flex-shrink: 0;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        min-height: 46px;
+        padding: 0 8px;
+        font-size: 0.85rem;
+    }
+    .phone-country-flag {
+        font-size: 1rem;
     }
     .phone-national-input {
-        flex: 1;
-        min-width: 80px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 12px 14px;
+        min-width: 60px;
+        padding: 12px 14px 12px 12px;
     }
 }
 

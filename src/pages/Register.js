@@ -379,7 +379,6 @@ const Register = () => {
                                 value={phoneCountryCode}
                                 onChange={setPhoneCountryCode}
                                 disabled={isLoading}
-                                className="form-input"
                             />
                             <input
                                 type="tel"
