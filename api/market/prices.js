@@ -17,7 +17,7 @@ const axios = require('axios');
 // Persistent price cache (survives between requests)
 // Key: symbol, Value: { ...priceData, timestamp }
 const priceCache = new Map();
-const CACHE_TTL = 3000; // Fresh data TTL: 3 seconds (fresher for accuracy)
+const CACHE_TTL = 2000; // Fresh data TTL: 2 seconds for accuracy
 const STALE_TTL = 300000; // Stale data TTL: 5 minutes (use as delayed fallback)
 const REQUEST_TIMEOUT = 5000; // 5 second timeout per request
 
@@ -42,6 +42,12 @@ const YAHOO_SYMBOLS = {
   'DOGEUSD': 'DOGE-USD', 'EURUSD': 'EURUSD=X', 'GBPUSD': 'GBPUSD=X',
   'USDJPY': 'JPY=X', 'USDCHF': 'CHF=X', 'AUDUSD': 'AUDUSD=X',
   'USDCAD': 'CAD=X', 'NZDUSD': 'NZDUSD=X', 'XAUUSD': 'GC=F', 'XAGUSD': 'SI=F'
+};
+
+// CoinGecko ID mapping (free, no API key, real-time crypto)
+const COINGECKO_IDS = {
+  'BTCUSD': 'bitcoin', 'ETHUSD': 'ethereum', 'SOLUSD': 'solana', 'XRPUSD': 'ripple',
+  'BNBUSD': 'binancecoin', 'ADAUSD': 'cardano', 'DOGEUSD': 'dogecoin'
 };
 
 // Finnhub symbol mapping - OANDA for forex/metals (spot), Binance for crypto (real-time)
@@ -69,6 +75,9 @@ const TWELVE_DATA_SYMBOLS = {
   'GOOGL': 'GOOGL', 'META': 'META', 'TSLA': 'TSLA'
 };
 
+// Crypto symbols (CoinGecko supported)
+const CRYPTO_SYMBOLS = new Set(['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD']);
+
 // Spot instruments: prefer Finnhub (OANDA spot) / Twelve Data over Yahoo (futures/delayed)
 const SPOT_SYMBOLS = new Set([
   'XAUUSD', 'XAGUSD', 'BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD',
@@ -85,16 +94,15 @@ const DECIMALS = {
   'AAPL': 2, 'MSFT': 2, 'NVDA': 2, 'AMZN': 2, 'GOOGL': 2, 'META': 2, 'TSLA': 2
 };
 
-// Realistic fallback prices (last known good prices for when all providers fail)
-// This ensures we NEVER show 0.00
+// Realistic fallback prices (when all providers fail) - updated for accuracy
 const FALLBACK_PRICES = {
-  'BTCUSD': 98500, 'ETHUSD': 3450, 'SOLUSD': 185, 'XRPUSD': 2.35,
-  'BNBUSD': 685, 'ADAUSD': 0.95, 'DOGEUSD': 0.32, 'EURUSD': 1.0420,
-  'GBPUSD': 1.2210, 'USDJPY': 155.50, 'USDCHF': 0.9150, 'AUDUSD': 0.6280,
-  'USDCAD': 1.4350, 'NZDUSD': 0.5680, 'XAUUSD': 2755, 'XAGUSD': 30.85,
-  'WTI': 74.50, 'BRENT': 78.20, 'SPX': 6050, 'NDX': 21500, 'DJI': 44200,
-  'DAX': 21200, 'FTSE': 8520, 'NIKKEI': 39800, 'DXY': 108.5, 'US10Y': 4.65, 'VIX': 16.5,
-  'AAPL': 232, 'MSFT': 448, 'NVDA': 138, 'AMZN': 235, 'GOOGL': 198, 'META': 625, 'TSLA': 395
+  'BTCUSD': 70500, 'ETHUSD': 3550, 'SOLUSD': 175, 'XRPUSD': 1.47,
+  'BNBUSD': 655, 'ADAUSD': 0.27, 'DOGEUSD': 0.098, 'EURUSD': 1.0810,
+  'GBPUSD': 1.2680, 'USDJPY': 157.20, 'USDCHF': 0.8970, 'AUDUSD': 0.6520,
+  'USDCAD': 1.3680, 'NZDUSD': 0.6020, 'XAUUSD': 2655, 'XAGUSD': 31.20,
+  'WTI': 72.50, 'BRENT': 76.80, 'SPX': 6050, 'NDX': 21200, 'DJI': 43500,
+  'DAX': 21000, 'FTSE': 8550, 'NIKKEI': 42500, 'DXY': 104.8, 'US10Y': 4.21, 'VIX': 15.5,
+  'AAPL': 228, 'MSFT': 425, 'NVDA': 138, 'AMZN': 198, 'GOOGL': 175, 'META': 565, 'TSLA': 385
 };
 
 function getDecimals(symbol) {
@@ -161,6 +169,81 @@ async function fetchYahooPrice(symbol) {
       console.log(`Yahoo fetch error for ${symbol}: ${e.message}`);
     }
     return null;
+  }
+}
+
+/**
+ * Fetch from CoinGecko (free, no API key, real-time crypto)
+ */
+async function fetchCoinGeckoPrice(symbol) {
+  const cgId = COINGECKO_IDS[symbol];
+  if (!cgId) return null;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/simple/price`,
+      {
+        params: { ids: cgId, vs_currencies: 'usd' },
+        timeout: REQUEST_TIMEOUT,
+        signal: controller.signal
+      }
+    );
+    clearTimeout(timeoutId);
+
+    const price = response.data?.[cgId]?.usd;
+    if (!price || isNaN(price) || price <= 0) return null;
+
+    return {
+      symbol,
+      price: formatPrice(price, symbol),
+      rawPrice: price,
+      previousClose: formatPrice(price, symbol),
+      change: '0.00',
+      changeSign: '+',
+      changePercent: '0.00',
+      isUp: true,
+      timestamp: Date.now(),
+      source: 'coingecko',
+      delayed: false
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Fetch crypto batch from CoinGecko (efficient - one request for all crypto)
+ */
+let coingeckoCache = {};
+let coingeckoCacheTime = 0;
+const COINGECKO_CACHE_TTL = 5000; // 5s
+
+async function fetchCoinGeckoBatch() {
+  if (Date.now() - coingeckoCacheTime < COINGECKO_CACHE_TTL) return coingeckoCache;
+  const ids = Object.keys(COINGECKO_IDS).filter(s => CRYPTO_SYMBOLS.has(s)).map(s => COINGECKO_IDS[s]).join(',');
+  if (!ids) return {};
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: { ids, vs_currencies: 'usd' },
+      timeout: REQUEST_TIMEOUT,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const raw = response.data || {};
+    const result = {};
+    Object.entries(COINGECKO_IDS).forEach(([sym, id]) => {
+      const p = raw[id]?.usd;
+      if (p && !isNaN(p) && p > 0) result[sym] = p;
+    });
+    coingeckoCache = result;
+    coingeckoCacheTime = Date.now();
+    return result;
+  } catch (e) {
+    return coingeckoCache;
   }
 }
 
@@ -328,8 +411,14 @@ async function fetchPrice(symbol) {
   const isSpot = SPOT_SYMBOLS.has(symbol);
   let result = null;
 
-  if (isSpot) {
-    // Spot: Finnhub (OANDA/Binance) -> Twelve Data -> Yahoo
+  if (CRYPTO_SYMBOLS.has(symbol)) {
+    // Crypto: CoinGecko (free, accurate) -> Finnhub -> Twelve Data -> Yahoo
+    result = await fetchCoinGeckoPrice(symbol);
+    if (!result) result = await fetchFinnhubPrice(symbol);
+    if (!result) result = await fetchTwelveDataPrice(symbol);
+    if (!result) result = await fetchYahooPrice(symbol);
+  } else if (isSpot) {
+    // Forex/metals: Finnhub (OANDA) -> Twelve Data -> Yahoo
     result = await fetchFinnhubPrice(symbol);
     if (!result) result = await fetchTwelveDataPrice(symbol);
     if (!result) result = await fetchYahooPrice(symbol);
@@ -355,11 +444,36 @@ async function fetchPrice(symbol) {
 
 /**
  * Fetch prices for multiple symbols (used by /api/markets/snapshot).
- * Does not use per-request cache; snapshot endpoint has its own 60s cache.
+ * Pre-fetches crypto from CoinGecko (free, accurate) then fetches rest.
  */
 async function fetchPricesForSymbols(symbols) {
   if (!symbols || symbols.length === 0) return { prices: {}, timestamp: Date.now() };
   const REQUEST_TIMEOUT_MS = 5000;
+
+  // Pre-fetch crypto from CoinGecko (free, no key, real-time)
+  const cryptoSymbols = symbols.filter(s => CRYPTO_SYMBOLS.has(s));
+  if (cryptoSymbols.length > 0) {
+    const cgPrices = await fetchCoinGeckoBatch();
+    cryptoSymbols.forEach(sym => {
+      const p = cgPrices[sym];
+      if (p && p > 0) {
+        priceCache.set(sym, {
+          symbol: sym,
+          price: formatPrice(p, sym),
+          rawPrice: p,
+          previousClose: formatPrice(p, sym),
+          change: '0.00',
+          changeSign: '+',
+          changePercent: '0.00',
+          isUp: true,
+          timestamp: Date.now(),
+          source: 'coingecko',
+          delayed: false
+        });
+      }
+    });
+  }
+
   const results = await Promise.allSettled(
     symbols.map(symbol =>
       Promise.race([

@@ -10,7 +10,7 @@
 const { getCached, setCached } = require('../cache');
 
 const CACHE_KEY = 'markets:snapshot:v1';
-const CACHE_TTL_MS = 30 * 1000;           // 30 seconds - fresher updates for TradingView-like accuracy
+const CACHE_TTL_MS = 20 * 1000;           // 20 seconds - fresher updates for accuracy
 const STALE_OK_MS = 15 * 60 * 1000;      // 15 minutes - use last good snapshot if fetch fails
 
 // All symbols shown in All Markets (same as watchlist groups flattened)
