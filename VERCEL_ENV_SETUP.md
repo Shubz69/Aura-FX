@@ -23,12 +23,19 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    
    **⚠️ IMPORTANT:** The API key is stored in `API_KEYS_SECURE.md` (gitignored) for your reference. Copy it from there.
 
-4. **JWT_SECRET (OPTIONAL - Not Required):**
+4. **REACT_APP_RECAPTCHA_SITE_KEY (RECOMMENDED for Sign Up):**
+   - Required for the "I'm not a robot" captcha on the Sign Up page
+   - Get your key at: https://www.google.com/recaptcha/admin (reCAPTCHA v2 Checkbox)
+   - **Key:** `REACT_APP_RECAPTCHA_SITE_KEY`
+   - **Value:** Your reCAPTCHA site key
+   - **Environment:** Select all
+
+5. **JWT_SECRET (OPTIONAL - Not Required):**
    - Your system uses a custom token format, so JWT_SECRET is **NOT needed**
    - The Premium AI endpoint has been updated to work with your existing token system
    - You can skip this step
 
-4. **Redeploy:**
+6. **Redeploy:**
    - After adding the variable, go to "Deployments"
    - Click the three dots on the latest deployment
    - Click "Redeploy"

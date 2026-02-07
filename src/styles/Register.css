@@ -38,7 +38,7 @@
     border-radius: 24px;
     padding: 36px 40px;
     width: 100%;
-    max-width: 560px;
+    max-width: 640px;
     box-shadow: none;
     position: relative;
     z-index: 10;
@@ -72,10 +72,13 @@
     margin-bottom: 0;
 }
 
-/* Form - prevent horizontal overflow */
+/* Form - allow dropdown overflow, prevent horizontal scroll */
+.register-form-container {
+    overflow: visible;
+}
 .register-form-container form {
     min-width: 0;
-    overflow-x: hidden;
+    overflow: visible;
 }
 
 /* Compact form layout - two columns */
@@ -139,27 +142,26 @@
     font-weight: 400;
 }
 
-/* Phone: [ +44 ▼ ] [ phone number ] - dial code small, number field wide */
+/* Phone: single unified box - country code + number in one container */
 .form-group-phone {
     width: 100%;
     min-width: 0;
 }
-.phone-input-row {
+.phone-single-box {
     display: flex;
-    gap: 8px;
     align-items: stretch;
     width: 100%;
     min-width: 0;
-}
-.phone-national-input {
-    flex: 1;
-    min-width: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    overflow: hidden;
 }
 .phone-country-select-wrap {
     position: relative;
     flex-shrink: 0;
-    width: 68px;
-    min-width: 68px;
+    width: 72px;
+    min-width: 72px;
     z-index: 100;
 }
 .phone-country-trigger {
@@ -171,9 +173,9 @@
     justify-content: center;
     gap: 2px;
     padding: 12px 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 14px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
     color: var(--primary);
     font-family: var(--font-secondary);
     font-size: 0.95rem;
@@ -182,8 +184,14 @@
     transition: all 0.2s ease;
 }
 .phone-country-trigger:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.4);
     background: rgba(255, 255, 255, 0.08);
+}
+.phone-national-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
 }
 .phone-country-trigger:disabled {
     opacity: 0.6;
@@ -202,7 +210,7 @@
     left: 0;
     width: 280px;
     max-width: min(280px, calc(100vw - 32px));
-    z-index: 9999;
+    z-index: 99999;
     background: #0f0f0f;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
@@ -279,10 +287,6 @@
 .phone-country-item.no-results {
     cursor: default;
     color: rgba(255, 255, 255, 0.5);
-}
-.phone-national-input {
-    flex: 1;
-    min-width: 140px;
 }
 
 /* PROFILE PICTURE SECTION */
@@ -787,12 +791,58 @@
         line-height: 1.5;
     }
     
+    /* Phone: small square button for country code, rectangle for number */
     .phone-country-select-wrap {
-        width: 68px;
-        min-width: 68px;
+        width: 48px;
+        min-width: 48px;
+        flex-shrink: 0;
+    }
+    .phone-country-trigger {
+        min-height: 48px;
+        height: 48px;
+        width: 48px;
+        padding: 0;
+        aspect-ratio: 1;
     }
     .phone-national-input {
-        min-width: 120px;
+        flex: 1;
+        min-width: 100px;
+    }
+}
+
+/* Phone layout for tablets and smaller - square code button, rectangle for number */
+@media (max-width: 768px) {
+    .phone-single-box {
+        align-items: stretch;
+        gap: 8px;
+        padding: 0;
+        background: transparent;
+        border: none;
+    }
+    .phone-country-select-wrap {
+        width: 48px;
+        min-width: 48px;
+        flex-shrink: 0;
+    }
+    .phone-country-trigger {
+        min-height: 48px;
+        height: 48px;
+        width: 48px;
+        min-width: 48px;
+        padding: 0;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .phone-national-input {
+        flex: 1;
+        min-width: 80px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 12px 14px;
     }
 }
 

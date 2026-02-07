@@ -373,7 +373,7 @@ const Register = () => {
                     </div>
                     <div className="form-group form-group-phone">
                         <label htmlFor="phone-national" className="form-label">Phone Number (any country)</label>
-                        <div className="phone-input-row">
+                        <div className="phone-single-box">
                             <PhoneCountrySelect
                                 id="phone-country"
                                 value={phoneCountryCode}
@@ -393,6 +393,7 @@ const Register = () => {
                                 required
                                 placeholder="e.g. 7700 900000"
                                 className="form-input phone-national-input"
+                                style={{ boxShadow: 'none' }}
                                 disabled={isLoading}
                                 autoComplete="tel-national"
                                 maxLength={20}
@@ -448,16 +449,16 @@ const Register = () => {
                 </label>
 
                 {(useFirebasePhone || RECAPTCHA_SITE_KEY) && (
-                    <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-start', minHeight: 78 }}>
-                        {useFirebasePhone ? (
-                            <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'center' }} />
-                        ) : (
+                    <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', minHeight: 78 }}>
+                        {RECAPTCHA_SITE_KEY ? (
                             <ReCAPTCHA
                                 sitekey={RECAPTCHA_SITE_KEY}
                                 onChange={() => setCaptchaCompleted(true)}
                                 onExpired={() => setCaptchaCompleted(false)}
                                 theme="dark"
                             />
+                        ) : (
+                            <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'center' }} />
                         )}
                     </div>
                 )}
