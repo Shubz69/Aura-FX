@@ -9,7 +9,8 @@ import A7Logo from './A7Logo';
 import NotificationSystem, { triggerNotification } from './NotificationSystem';
 
 const Navbar = () => {
-    const { user, logout } = useAuth();
+    const { user, loading, logout } = useAuth();
+    const showSuperAdminLinks = !loading && user && isSuperAdmin(user);
     const navigate = useNavigate();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false); 
@@ -58,7 +59,7 @@ const Navbar = () => {
                     {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
-                {isSuperAdmin(user) && (
+                {showSuperAdminLinks && (
                     <>
                         <li><Link to="/admin">Admin Panel</Link></li>
                         <li><Link to="/admin/messages"><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
@@ -96,7 +97,7 @@ const Navbar = () => {
                                         🤖 Premium AI Assistant
                                     </Link>
                                 )}
-                                {isSuperAdmin(user) && (
+                                {showSuperAdminLinks && (
                                     <Link to="/admin" className="dropdown-item">
                                         <FaCog className="dropdown-icon" /> Admin Panel
                                     </Link>
@@ -132,7 +133,7 @@ const Navbar = () => {
                     {isPremium(user) && (
                         <li><Link to="/premium-ai" onClick={toggleMobileMenu}>🤖 Premium AI</Link></li>
                     )}
-                    {isSuperAdmin(user) && (
+                    {showSuperAdminLinks && (
                         <>
                             <li><Link to="/admin" onClick={toggleMobileMenu}>Admin Panel</Link></li>
                             <li><Link to="/admin/messages" onClick={toggleMobileMenu}><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
@@ -188,7 +189,7 @@ const Navbar = () => {
                         <li><Link to="/leaderboard" onClick={toggleMobileUserMenu}>
                             <FaTrophy className="dropdown-icon" /> Leaderboard
                         </Link></li>
-                        {isSuperAdmin(user) && (
+                        {showSuperAdminLinks && (
                             <li><Link to="/admin" onClick={toggleMobileUserMenu}>
                                 <FaCog className="dropdown-icon" /> Admin Panel
                             </Link></li>

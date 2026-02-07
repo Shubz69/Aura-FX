@@ -7,7 +7,8 @@ import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
 import { isFirebasePhoneEnabled, setupRecaptcha, sendPhoneOtp, confirmPhoneOtp } from '../utils/firebasePhoneAuth';
-import { COUNTRY_CODES, toE164 } from '../utils/countryCodes.js';
+import { toE164 } from '../utils/countryCodes.js';
+import PhoneCountrySelect from '../components/PhoneCountrySelect';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -81,7 +82,11 @@ const Register = () => {
             setError('All fields are required.');
             return;
         }
-        const phoneDigits = (formData.phone || '').replace(/\D/g, '');
+        if (!phoneCountryCode || !phoneCountryCode.startsWith('+')) {
+            setError('Please select a country code.');
+            return;
+        }
+        const phoneDigits = (phoneNational || '').replace(/\D/g, '');
         if (!phoneDigits.trim() || phoneDigits.length < 10) {
             setError('Valid phone number is required (10+ digits).');
             return;
@@ -314,29 +319,28 @@ const Register = () => {
                     <div className="form-group form-group-phone">
                         <label htmlFor="phone-national" className="form-label">Phone Number (any country)</label>
                         <div className="phone-input-row">
-                            <select
+                            <PhoneCountrySelect
                                 id="phone-country"
-                                aria-label="Country code"
                                 value={phoneCountryCode}
-                                onChange={(e) => setPhoneCountryCode(e.target.value)}
-                                className="form-input phone-country-select"
+                                onChange={setPhoneCountryCode}
                                 disabled={isLoading}
-                            >
-                                {COUNTRY_CODES.map(({ code, label }) => (
-                                    <option key={code} value={code}>{label}</option>
-                                ))}
-                            </select>
+                                className="form-input"
+                            />
                             <input
                                 type="tel"
                                 id="phone-national"
                                 name="phoneNational"
                                 value={phoneNational}
-                                onChange={(e) => setPhoneNational(e.target.value.replace(/\D/g, ''))}
+                                onChange={(e) => {
+                                    const v = e.target.value.replace(/[^\d\s]/g, '');
+                                    setPhoneNational(v);
+                                }}
                                 required
                                 placeholder="e.g. 7700 900000"
                                 className="form-input phone-national-input"
                                 disabled={isLoading}
                                 autoComplete="tel-national"
+                                maxLength={20}
                             />
                         </div>
                     </div>
