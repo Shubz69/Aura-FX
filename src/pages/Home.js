@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import CosmicBackground from "../components/CosmicBackground";
 import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
-import { FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaCoins, FaChartBar } from 'react-icons/fa';
+import { FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaCoins, FaChartBar, FaChartLine, FaGlobe } from 'react-icons/fa';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -182,36 +182,50 @@ const Home = () => {
                                 </div>
                             </div>
 
-                            {/* Trade Multiple Markets - phone only */}
-                            <div className="trade-markets-mobile">
-                                <h2 className="trade-markets-mobile__title">Trade Multiple Markets</h2>
-                                <div className="trade-markets-mobile__grid">
-                                    <div className="trade-markets-mobile__card">
-                                        <div className="trade-markets-mobile__icon"><FaRocket /></div>
-                                        <div className="trade-markets-mobile__card-body">
-                                            <h3 className="trade-markets-mobile__card-title">Crypto</h3>
-                                            <p className="trade-markets-mobile__card-desc">Bitcoin, Ethereum, and altcoins</p>
+                            {/* Trade Multiple Markets - same content on mobile and laptop */}
+                            <div className="trade-markets-section">
+                                <h2 className="trade-markets-section__title">Trade Multiple Markets</h2>
+                                <div className="trade-markets-section__grid">
+                                    <div className="trade-markets-section__card">
+                                        <div className="trade-markets-section__icon"><FaChartLine /></div>
+                                        <div className="trade-markets-section__card-body">
+                                            <h3 className="trade-markets-section__card-title">Forex</h3>
+                                            <p className="trade-markets-section__card-desc">Major, minor, and exotic currency pairs</p>
                                         </div>
                                     </div>
-                                    <div className="trade-markets-mobile__card">
-                                        <div className="trade-markets-mobile__icon"><FaTrophy /></div>
-                                        <div className="trade-markets-mobile__card-body">
-                                            <h3 className="trade-markets-mobile__card-title">Stocks</h3>
-                                            <p className="trade-markets-mobile__card-desc">US and international equity markets</p>
+                                    <div className="trade-markets-section__card">
+                                        <div className="trade-markets-section__icon"><FaGlobe /></div>
+                                        <div className="trade-markets-section__card-body">
+                                            <h3 className="trade-markets-section__card-title">Futures</h3>
+                                            <p className="trade-markets-section__card-desc">Master futures contracts and commodity trading</p>
                                         </div>
                                     </div>
-                                    <div className="trade-markets-mobile__card">
-                                        <div className="trade-markets-mobile__icon"><FaChartBar /></div>
-                                        <div className="trade-markets-mobile__card-body">
-                                            <h3 className="trade-markets-mobile__card-title">Indices</h3>
-                                            <p className="trade-markets-mobile__card-desc">S&P 500, NASDAQ, and more</p>
+                                    <div className="trade-markets-section__card">
+                                        <div className="trade-markets-section__icon"><FaRocket /></div>
+                                        <div className="trade-markets-section__card-body">
+                                            <h3 className="trade-markets-section__card-title">Crypto</h3>
+                                            <p className="trade-markets-section__card-desc">Bitcoin, Ethereum, and altcoins</p>
                                         </div>
                                     </div>
-                                    <div className="trade-markets-mobile__card">
-                                        <div className="trade-markets-mobile__icon"><FaCoins /></div>
-                                        <div className="trade-markets-mobile__card-body">
-                                            <h3 className="trade-markets-mobile__card-title">Commodities</h3>
-                                            <p className="trade-markets-mobile__card-desc">Trade gold, oil, and valuable resources</p>
+                                    <div className="trade-markets-section__card">
+                                        <div className="trade-markets-section__icon"><FaTrophy /></div>
+                                        <div className="trade-markets-section__card-body">
+                                            <h3 className="trade-markets-section__card-title">Stocks</h3>
+                                            <p className="trade-markets-section__card-desc">US and international equity markets</p>
+                                        </div>
+                                    </div>
+                                    <div className="trade-markets-section__card">
+                                        <div className="trade-markets-section__icon"><FaChartBar /></div>
+                                        <div className="trade-markets-section__card-body">
+                                            <h3 className="trade-markets-section__card-title">Indices</h3>
+                                            <p className="trade-markets-section__card-desc">S&P 500, NASDAQ, and more</p>
+                                        </div>
+                                    </div>
+                                    <div className="trade-markets-section__card">
+                                        <div className="trade-markets-section__icon"><FaCoins /></div>
+                                        <div className="trade-markets-section__card-body">
+                                            <h3 className="trade-markets-section__card-title">Commodities</h3>
+                                            <p className="trade-markets-section__card-desc">Trade gold, oil, and valuable resources</p>
                                         </div>
                                     </div>
                                 </div>
