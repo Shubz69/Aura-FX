@@ -10,8 +10,8 @@
 const { getCached, setCached } = require('../cache');
 
 const CACHE_KEY = 'markets:snapshot:v1';
-const CACHE_TTL_MS = 60 * 1000;           // 60 seconds
-const STALE_OK_MS = 30 * 60 * 1000;      // 30 minutes - use last good snapshot if fetch fails
+const CACHE_TTL_MS = 30 * 1000;           // 30 seconds - fresher updates for TradingView-like accuracy
+const STALE_OK_MS = 15 * 60 * 1000;      // 15 minutes - use last good snapshot if fetch fails
 
 // All symbols shown in All Markets (same as watchlist groups flattened)
 const SNAPSHOT_SYMBOLS = [
@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
+  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=15');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

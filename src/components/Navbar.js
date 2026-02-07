@@ -58,7 +58,7 @@ const Navbar = () => {
                     {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
-                {(isAdmin(user) || isSuperAdmin(user)) && (
+                {isSuperAdmin(user) && (
                     <>
                         <li><Link to="/admin">Admin Panel</Link></li>
                         <li><Link to="/admin/messages"><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
@@ -96,15 +96,15 @@ const Navbar = () => {
                                         🤖 Premium AI Assistant
                                     </Link>
                                 )}
+                                {isSuperAdmin(user) && (
+                                    <Link to="/admin" className="dropdown-item">
+                                        <FaCog className="dropdown-icon" /> Admin Panel
+                                    </Link>
+                                )}
                                 {(isAdmin(user) || isSuperAdmin(user)) && (
-                                    <>
-                                        <Link to="/admin" className="dropdown-item">
-                                            <FaCog className="dropdown-icon" /> Admin Panel
-                                        </Link>
-                                        <Link to="/settings" className="dropdown-item">
-                                            <FaSlidersH className="dropdown-icon" /> Settings
-                                        </Link>
-                                    </>
+                                    <Link to="/settings" className="dropdown-item">
+                                        <FaSlidersH className="dropdown-icon" /> Settings
+                                    </Link>
                                 )}
                                 <button onClick={logout} className="dropdown-item">
                                     <FaSignOutAlt className="dropdown-icon" /> Logout
@@ -132,7 +132,7 @@ const Navbar = () => {
                     {isPremium(user) && (
                         <li><Link to="/premium-ai" onClick={toggleMobileMenu}>🤖 Premium AI</Link></li>
                     )}
-                    {user?.role?.toUpperCase() === "ADMIN" && (
+                    {isSuperAdmin(user) && (
                         <>
                             <li><Link to="/admin" onClick={toggleMobileMenu}>Admin Panel</Link></li>
                             <li><Link to="/admin/messages" onClick={toggleMobileMenu}><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
@@ -188,15 +188,15 @@ const Navbar = () => {
                         <li><Link to="/leaderboard" onClick={toggleMobileUserMenu}>
                             <FaTrophy className="dropdown-icon" /> Leaderboard
                         </Link></li>
+                        {isSuperAdmin(user) && (
+                            <li><Link to="/admin" onClick={toggleMobileUserMenu}>
+                                <FaCog className="dropdown-icon" /> Admin Panel
+                            </Link></li>
+                        )}
                         {(isAdmin(user) || isSuperAdmin(user)) && (
-                            <>
-                                <li><Link to="/admin" onClick={toggleMobileUserMenu}>
-                                    <FaCog className="dropdown-icon" /> Admin Panel
-                                </Link></li>
-                                <li><Link to="/settings" onClick={toggleMobileUserMenu}>
-                                    <FaSlidersH className="dropdown-icon" /> Settings
-                                </Link></li>
-                            </>
+                            <li><Link to="/settings" onClick={toggleMobileUserMenu}>
+                                <FaSlidersH className="dropdown-icon" /> Settings
+                            </Link></li>
                         )}
                         <li><button onClick={() => { toggleMobileUserMenu(); logout(); }}>
                             <FaSignOutAlt className="dropdown-icon" /> Logout

@@ -1,27 +1,42 @@
 /**
  * Firebase Phone Auth for signup - free OTP verification (no Twilio).
  * Only active when REACT_APP_FIREBASE_API_KEY is set.
+ * Uses compat API for CRA/webpack compatibility.
  */
 const isFirebasePhoneEnabled = () =>
   !!(process.env.REACT_APP_FIREBASE_API_KEY && process.env.REACT_APP_FIREBASE_AUTH_DOMAIN && process.env.REACT_APP_FIREBASE_PROJECT_ID);
 
 let auth = null;
 let app = null;
+let firebase = null;
+
+const getFirebase = () => {
+  if (!isFirebasePhoneEnabled()) return null;
+  if (firebase) return firebase;
+  try {
+    firebase = require('firebase/compat/app');
+    require('firebase/compat/auth');
+  } catch (e) {
+    console.warn('Firebase init error:', e.message);
+    return null;
+  }
+  return firebase;
+};
 
 const getAuth = () => {
   if (!isFirebasePhoneEnabled()) return null;
   if (auth) return auth;
   try {
-    const { getAuth: getFirebaseAuth } = require('firebase/auth');
-    const { initializeApp } = require('firebase/app');
+    const fb = getFirebase();
+    if (!fb) return null;
     const config = {
       apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
       authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
       projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
       appId: process.env.REACT_APP_FIREBASE_APP_ID || undefined
     };
-    app = initializeApp(config);
-    auth = getFirebaseAuth(app);
+    app = fb.initializeApp(config);
+    auth = fb.auth();
     return auth;
   } catch (e) {
     console.warn('Firebase init error:', e.message);
@@ -44,8 +59,9 @@ const setupRecaptcha = (containerId) => {
     return null;
   }
   try {
-    const { RecaptchaVerifier } = require('firebase/auth');
-    return new RecaptchaVerifier(a, container, {
+    const fb = getFirebase();
+    if (!fb) return null;
+    return new fb.auth.RecaptchaVerifier(container, {
       size: 'normal',
       callback: () => {},
       'expired-callback': () => {}
@@ -73,10 +89,9 @@ const toE164 = (phone) => {
 const sendPhoneOtp = async (phoneNumber, recaptchaVerifier) => {
   const a = getAuth();
   if (!a) throw new Error('Firebase is not configured');
-  const { signInWithPhoneNumber } = require('firebase/auth');
   const e164 = toE164(phoneNumber);
   if (!e164) throw new Error('Invalid phone number');
-  const confirmationResult = await signInWithPhoneNumber(a, e164, recaptchaVerifier);
+  const confirmationResult = await a.signInWithPhoneNumber(e164, recaptchaVerifier);
   return { confirmationResult };
 };
 

@@ -170,6 +170,10 @@
       "destination": "/api/admin/index.js"
     },
     {
+      "source": "/api/admin/migrate-level-up-messages",
+      "destination": "/api/admin/migrate-level-up-messages.js"
+    },
+    {
       "source": "/api/leaderboard",
       "destination": "/api/leaderboard.js"
     },

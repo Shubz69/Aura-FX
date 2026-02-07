@@ -92,9 +92,9 @@ export const getUserRole = (user) => {
   return user.role || ROLES.FREE;
 };
 
-// Check if user is admin
+// Check if user is admin (handles both uppercase and lowercase role from API/AuthContext)
 export const isAdmin = (user = null) => {
-  const role = getUserRole(user);
+  const role = (getUserRole(user) || '').toString().toLowerCase();
   return role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN;
 };
 
@@ -103,21 +103,24 @@ export const isSuperAdmin = (user = null) => {
   if (!user) {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     const email = storedUser.email || '';
+    const role = (storedUser.role || '').toString().toLowerCase();
     return email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() || 
-           storedUser.role === ROLES.SUPER_ADMIN;
+           role === ROLES.SUPER_ADMIN;
   }
   const email = user.email || '';
+  const role = (user.role || '').toString().toLowerCase();
   return email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() || 
-         user.role === ROLES.SUPER_ADMIN;
+         role === ROLES.SUPER_ADMIN;
 };
 
 // Check if user has premium subscription (premium or a7fx)
 export const isPremium = (user = null) => {
+  const norm = (v) => (v || '').toString().toLowerCase();
   if (!user) {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const role = storedUser.role || ROLES.FREE;
-    const subscriptionStatus = storedUser.subscription_status || 'inactive';
-    const subscriptionPlan = storedUser.subscription_plan;
+    const role = norm(storedUser.role || ROLES.FREE);
+    const subscriptionStatus = norm(storedUser.subscription_status || 'inactive');
+    const subscriptionPlan = norm(storedUser.subscription_plan);
     
     return role === ROLES.PREMIUM || 
            role === ROLES.A7FX || 
@@ -127,9 +130,9 @@ export const isPremium = (user = null) => {
            (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
   }
   
-  const role = user.role || ROLES.FREE;
-  const subscriptionStatus = user.subscription_status || 'inactive';
-  const subscriptionPlan = user.subscription_plan;
+  const role = norm(user.role || ROLES.FREE);
+  const subscriptionStatus = norm(user.subscription_status || 'inactive');
+  const subscriptionPlan = norm(user.subscription_plan);
   
   return role === ROLES.PREMIUM || 
          role === ROLES.A7FX || 

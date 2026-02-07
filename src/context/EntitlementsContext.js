@@ -59,6 +59,14 @@ export const EntitlementsProvider = ({ children }) => {
       if (json.success && json.user && json.entitlements) {
         setData({ user: json.user, entitlements: json.entitlements });
         cachedAt.current = Date.now();
+        // Keep localStorage user in sync so sidebar/profile show correct level/xp
+        try {
+          const existing = JSON.parse(localStorage.getItem('user') || '{}');
+          if (existing.id === json.user.id && (json.user.level != null || json.user.xp != null)) {
+            const merged = { ...existing, level: json.user.level, xp: json.user.xp };
+            localStorage.setItem('user', JSON.stringify(merged));
+          }
+        } catch (_) {}
       } else {
         setData(null);
       }

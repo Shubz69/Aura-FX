@@ -509,7 +509,7 @@ const Api = {
     
     // User Profile
     getUserData: () => {
-        return axios.get(`${API_BASE_URL}/api/users/me`);
+        return axios.get(`${API_BASE_URL}/api/me`);
     },
     
     getUserProfile: (userId) => {

@@ -59,7 +59,8 @@ module.exports = async (req, res) => {
         `SELECT id, email, username, name, avatar, role,
                 subscription_status, subscription_plan, subscription_expiry,
                 subscription_started, payment_failed, has_used_free_trial,
-                onboarding_accepted, onboarding_subscription_snapshot
+                onboarding_accepted, onboarding_subscription_snapshot,
+                level, xp
          FROM users WHERE id = ?`,
         [userId]
       );
@@ -76,7 +77,9 @@ module.exports = async (req, res) => {
         userRows = (fallbackRows || []).map((r) => ({
           ...r,
           onboarding_accepted: false,
-          onboarding_subscription_snapshot: null
+          onboarding_subscription_snapshot: null,
+          level: r.level != null ? r.level : 1,
+          xp: r.xp != null ? r.xp : 0
         }));
       } else {
         throw colErr;
@@ -123,7 +126,9 @@ module.exports = async (req, res) => {
       username: userRow.username || userRow.email?.split('@')[0] || '',
       name: userRow.name || userRow.username || '',
       avatar: userRow.avatar || '/avatars/avatar_ai.png',
-      role: entitlements.role
+      role: entitlements.role,
+      level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
+      xp: userRow.xp != null ? parseFloat(userRow.xp) : 0
     };
 
     return res.status(200).json({

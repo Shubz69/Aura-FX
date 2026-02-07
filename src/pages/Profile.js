@@ -261,6 +261,13 @@ const Profile = () => {
                 xp: newXP,
                 level: newLevel
             }));
+            // Keep localStorage in sync so sidebar and other tabs show correct level
+            try {
+                const u = JSON.parse(localStorage.getItem('user') || '{}');
+                if (u.id) {
+                    localStorage.setItem('user', JSON.stringify({ ...u, xp: newXP, level: newLevel }));
+                }
+            } catch (_) {}
         };
         
         // Listen for level-up events

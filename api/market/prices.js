@@ -17,7 +17,7 @@ const axios = require('axios');
 // Persistent price cache (survives between requests)
 // Key: symbol, Value: { ...priceData, timestamp }
 const priceCache = new Map();
-const CACHE_TTL = 5000; // Fresh data TTL: 5 seconds
+const CACHE_TTL = 3000; // Fresh data TTL: 3 seconds (fresher for accuracy)
 const STALE_TTL = 300000; // Stale data TTL: 5 minutes (use as delayed fallback)
 const REQUEST_TIMEOUT = 5000; // 5 second timeout per request
 
@@ -44,15 +44,36 @@ const YAHOO_SYMBOLS = {
   'USDCAD': 'CAD=X', 'NZDUSD': 'NZDUSD=X', 'XAUUSD': 'GC=F', 'XAGUSD': 'SI=F'
 };
 
-// Finnhub symbol mapping (secondary provider)
+// Finnhub symbol mapping - OANDA for forex/metals (spot), Binance for crypto (real-time)
+// Prioritized for TradingView-like accuracy
 const FINNHUB_SYMBOLS = {
   'BTCUSD': 'BINANCE:BTCUSDT', 'ETHUSD': 'BINANCE:ETHUSDT',
   'SOLUSD': 'BINANCE:SOLUSDT', 'XRPUSD': 'BINANCE:XRPUSDT',
   'BNBUSD': 'BINANCE:BNBUSDT', 'ADAUSD': 'BINANCE:ADAUSDT',
   'DOGEUSD': 'BINANCE:DOGEUSDT', 'EURUSD': 'OANDA:EUR_USD',
   'GBPUSD': 'OANDA:GBP_USD', 'USDJPY': 'OANDA:USD_JPY',
-  'XAUUSD': 'OANDA:XAU_USD'
+  'USDCHF': 'OANDA:USD_CHF', 'AUDUSD': 'OANDA:AUD_USD',
+  'USDCAD': 'OANDA:USD_CAD', 'NZDUSD': 'OANDA:NZD_USD',
+  'XAUUSD': 'OANDA:XAU_USD', 'XAGUSD': 'OANDA:XAG_USD'
 };
+
+// Twelve Data symbol mapping (spot prices - XAU/USD format for commodities/forex)
+const TWELVE_DATA_SYMBOLS = {
+  'BTCUSD': 'BTC/USD', 'ETHUSD': 'ETH/USD', 'SOLUSD': 'SOL/USD',
+  'XRPUSD': 'XRP/USD', 'BNBUSD': 'BNB/USD', 'ADAUSD': 'ADA/USD',
+  'DOGEUSD': 'DOGE/USD', 'EURUSD': 'EUR/USD', 'GBPUSD': 'GBP/USD',
+  'USDJPY': 'USD/JPY', 'USDCHF': 'USD/CHF', 'AUDUSD': 'AUD/USD',
+  'USDCAD': 'USD/CAD', 'NZDUSD': 'NZD/USD',
+  'XAUUSD': 'XAU/USD', 'XAGUSD': 'XAG/USD',
+  'AAPL': 'AAPL', 'MSFT': 'MSFT', 'NVDA': 'NVDA', 'AMZN': 'AMZN',
+  'GOOGL': 'GOOGL', 'META': 'META', 'TSLA': 'TSLA'
+};
+
+// Spot instruments: prefer Finnhub (OANDA spot) / Twelve Data over Yahoo (futures/delayed)
+const SPOT_SYMBOLS = new Set([
+  'XAUUSD', 'XAGUSD', 'BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD',
+  'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'
+]);
 
 // Decimals by symbol
 const DECIMALS = {
@@ -200,6 +221,53 @@ async function fetchFinnhubPrice(symbol) {
 }
 
 /**
+ * Fetch from Twelve Data (spot prices - TradingView accuracy)
+ * Requires TWELVE_DATA_API_KEY environment variable
+ */
+async function fetchTwelveDataPrice(symbol) {
+  const apiKey = process.env.TWELVE_DATA_API_KEY;
+  if (!apiKey) return null;
+
+  const tdSymbol = TWELVE_DATA_SYMBOLS[symbol];
+  if (!tdSymbol) return null;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    const response = await axios.get(
+      'https://api.twelvedata.com/price',
+      {
+        params: { symbol: tdSymbol, apikey: apiKey },
+        timeout: REQUEST_TIMEOUT,
+        signal: controller.signal
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    const price = parseFloat(response.data?.price);
+    if (!response.data?.price || isNaN(price) || price <= 0) return null;
+
+    return {
+      symbol,
+      price: formatPrice(price, symbol),
+      rawPrice: price,
+      previousClose: formatPrice(price, symbol),
+      change: '0.00',
+      changeSign: '+',
+      changePercent: '0.00',
+      isUp: true,
+      timestamp: Date.now(),
+      source: 'twelvedata',
+      delayed: false
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * Get fallback price data when all providers fail
  * Uses cached data or static fallback prices - NEVER returns 0.00
  */
@@ -242,11 +310,12 @@ function getFallbackPrice(symbol) {
 }
 
 /**
- * Fetch price with fallback chain:
+ * Fetch price with fallback chain.
+ * For spot instruments (gold, forex, crypto): Finnhub/Twelve Data first (TradingView-like accuracy).
+ * For stocks/indices: Yahoo first.
  * 1. Check fresh cache
- * 2. Try Yahoo Finance
- * 3. Try Finnhub
- * 4. Use stale cache or static fallback (NEVER 0.00)
+ * 2. Spot: Finnhub -> Twelve Data -> Yahoo | Non-spot: Yahoo -> Finnhub -> Twelve Data
+ * 3. Use stale cache or static fallback (NEVER 0.00)
  */
 async function fetchPrice(symbol) {
   // Check fresh cache first
@@ -255,15 +324,22 @@ async function fetchPrice(symbol) {
     healthStats.cacheHits++;
     return { ...cached, fromCache: true, delayed: false };
   }
-  
-  // Try primary provider (Yahoo)
-  let result = await fetchYahooPrice(symbol);
-  
-  // Try secondary provider if primary fails
-  if (!result) {
+
+  const isSpot = SPOT_SYMBOLS.has(symbol);
+  let result = null;
+
+  if (isSpot) {
+    // Spot: Finnhub (OANDA/Binance) -> Twelve Data -> Yahoo
     result = await fetchFinnhubPrice(symbol);
+    if (!result) result = await fetchTwelveDataPrice(symbol);
+    if (!result) result = await fetchYahooPrice(symbol);
+  } else {
+    // Stocks, indices, DXY, etc: Yahoo first
+    result = await fetchYahooPrice(symbol);
+    if (!result) result = await fetchFinnhubPrice(symbol);
+    if (!result) result = await fetchTwelveDataPrice(symbol);
   }
-  
+
   // Got fresh data
   if (result && result.rawPrice > 0) {
     healthStats.successfulFetches++;
@@ -271,7 +347,7 @@ async function fetchPrice(symbol) {
     priceCache.set(symbol, result);
     return result;
   }
-  
+
   // All providers failed - use fallback (NEVER return 0.00)
   healthStats.errors++;
   return getFallbackPrice(symbol);

@@ -83,10 +83,17 @@ export const AuthProvider = ({ children }) => {
       name: fullUser.name,
       avatar: fullUser.avatar,
       role: fullUser.role,
-      mfaVerified: fullUser.mfaVerified
+      mfaVerified: fullUser.mfaVerified,
+      level: fullUser.level != null ? fullUser.level : undefined,
+      xp: fullUser.xp != null ? fullUser.xp : undefined
     };
     try {
-      localStorage.setItem('user', JSON.stringify(safeUser));
+      // Merge with existing user so we preserve level/xp (and other fields) set by Community/Profile
+      const existing = JSON.parse(localStorage.getItem('user') || '{}');
+      const merged = { ...existing, ...safeUser };
+      if (merged.level === undefined && existing.level != null) merged.level = existing.level;
+      if (merged.xp === undefined && existing.xp != null) merged.xp = existing.xp;
+      localStorage.setItem('user', JSON.stringify(merged));
     } catch (e) {
       if (e.name === 'QuotaExceededError' || e.code === 22) {
         try {

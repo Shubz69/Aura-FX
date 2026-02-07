@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE_URL = window.location.origin;
-const SNAPSHOT_POLL_MS = 60000; // 1 minute - single global interval
+const SNAPSHOT_POLL_MS = 30000; // 30 seconds - fresher updates for TradingView-like accuracy
 
 // ============================================================================
 // Singleton: one snapshot poll for the whole app

@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
 import { WebSocketProvider } from './context/WebSocketContext';
-import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard } from './components/RouteGuards';
+import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard, AuthenticatedGuard } from './components/RouteGuards';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import GDPRModal from './components/GDPRModal';
@@ -141,12 +141,12 @@ function AppRoutes() {
                     <Route path="/explore" element={<Explore />} />
                     <Route path="/why-glitch" element={<WhyInfinity />} />
                     <Route path="/contact" element={<ContactUs />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/profile/edit-name" element={<EditName />} />
-                    <Route path="/profile/edit-email" element={<EditEmail />} />
-                    <Route path="/profile/edit-address" element={<EditAddress />} />
-                    <Route path="/profile/edit-phone" element={<EditPhone />} />
-                    <Route path="/profile/edit-password" element={<EditPassword />} />
+                    <Route path="/profile" element={<AuthenticatedGuard><Profile /></AuthenticatedGuard>} />
+                    <Route path="/profile/edit-name" element={<AuthenticatedGuard><EditName /></AuthenticatedGuard>} />
+                    <Route path="/profile/edit-email" element={<AuthenticatedGuard><EditEmail /></AuthenticatedGuard>} />
+                    <Route path="/profile/edit-address" element={<AuthenticatedGuard><EditAddress /></AuthenticatedGuard>} />
+                    <Route path="/profile/edit-phone" element={<AuthenticatedGuard><EditPhone /></AuthenticatedGuard>} />
+                    <Route path="/profile/edit-password" element={<AuthenticatedGuard><EditPassword /></AuthenticatedGuard>} />
                     <Route path="/profile/:userId" element={<PublicProfile />} />
                     <Route path="/public-profile/:userId" element={<PublicProfile />} />
                     <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -183,12 +183,8 @@ function AppRoutes() {
                     } />
                     
                     {/* Authenticated routes (no subscription required) */}
-                    {user && (
-                        <>
-                            <Route path="/leaderboard" element={<Leaderboard />} />
-                            <Route path="/messages" element={<Messages />} />
-                        </>
-                    )}
+                    <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
+                    <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
 
                     {/* Admin-only Routes */}
                     <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
