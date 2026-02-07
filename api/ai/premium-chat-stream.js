@@ -20,8 +20,8 @@ const CONFIG = {
   OPENAI_TIMEOUT: 45000,      // 45s for OpenAI streaming
   MAX_HISTORY: 6,             // Keep last 6 messages for context
   CACHE_TTL: 30000,           // 30s cache for market data
-  MAX_TOKENS: 1500,           // Faster responses with fewer tokens
-  MODEL: 'gpt-4o-mini',       // Fast model
+  MAX_TOKENS: 2500,           // Allow thorough, well-structured responses
+  MODEL: 'gpt-4o',            // Smarter model for trading insights
   TEMPERATURE: 0.7
 };
 
@@ -219,19 +219,15 @@ async function fetchAllData(message, requestId) {
 // System Prompt (Concise for Speed)
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are AURA, an expert financial AI assistant. Provide concise, actionable trading insights.
+const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant. You help traders with analysis, position sizing, risk management, and market insights.
 
-Key behaviors:
-- Be direct and professional
-- Include specific levels, percentages, and actionable advice
-- Structure responses with clear sections when appropriate
-- Acknowledge data sources when provided
-- If data is unavailable, provide analysis based on general market knowledge
+**Expertise**: Forex, crypto, stocks, commodities, indices. You understand technical analysis (support/resistance, market structure, chart patterns), fundamental drivers, and risk/reward calculations.
 
-Format guidelines:
-- Use **bold** for key levels and important points
-- Use bullet points for multiple items
-- Keep responses focused and under 400 words unless complexity requires more`;
+**Position sizing & risk**: When asked about position size, use the formula: (Account × Risk%) / (Entry - Stop Loss in price units). For forex use pips (0.0001 for most pairs, 0.01 for JPY). Always show the calculation step-by-step. Recommend 1-2% risk per trade.
+
+**Response style**: Be direct and actionable. Use **bold** for key levels and numbers. Structure with clear steps or sections when explaining concepts. Include specific figures when data is provided. Keep explanations tight—avoid filler. If data is unavailable, use general market knowledge and note it.
+
+**Format**: Use compact bullet points and numbered steps. Avoid large gaps between sections. Be thorough but concise.`;
 
 // ============================================================================
 // Token Decoding

@@ -719,7 +719,23 @@ const PremiumAI = () => {
                   </div>
                   <div className="ai-message-content">
                     <div className="message-text">
-                      <ReactMarkdown>{streamingContent}</ReactMarkdown>
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="md-p">{children}</p>,
+                          strong: ({ children }) => <strong className="md-bold">{children}</strong>,
+                          ul: ({ children }) => <ul className="md-list">{children}</ul>,
+                          ol: ({ children }) => <ol className="md-list md-ol">{children}</ol>,
+                          li: ({ children }) => <li className="md-li">{children}</li>,
+                          h1: ({ children }) => <h3 className="md-heading">{children}</h3>,
+                          h2: ({ children }) => <h4 className="md-heading">{children}</h4>,
+                          h3: ({ children }) => <h5 className="md-heading">{children}</h5>,
+                          code: ({ inline, children }) =>
+                            inline ? <code className="md-code">{children}</code> : <pre className="md-pre"><code>{children}</code></pre>,
+                          blockquote: ({ children }) => <blockquote className="md-quote">{children}</blockquote>
+                        }}
+                      >
+                        {streamingContent}
+                      </ReactMarkdown>
                     </div>
                     <div className="streaming-indicator">
                       <span className="pulse"></span>
