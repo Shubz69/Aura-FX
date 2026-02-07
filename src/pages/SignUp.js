@@ -20,7 +20,7 @@ function SignUp() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [codesSent, setCodesSent] = useState(false); // true after "Send verification codes" – show email + phone OTP on same page
+    const [codesSent, setCodesSent] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { register } = useAuth();
@@ -32,11 +32,7 @@ function SignUp() {
         if (!nextParam) return;
         const existing = loadPostAuthRedirect();
         if (!existing || existing.next !== nextParam || (existing.plan || null) !== (planParam ? planParam.toLowerCase() : null)) {
-            savePostAuthRedirect({
-                next: nextParam,
-                plan: planParam,
-                from: `${location.pathname}${location.search}`
-            });
+            savePostAuthRedirect({ next: nextParam, plan: planParam, from: `${location.pathname}${location.search}` });
         }
     }, [location.pathname, location.search]);
 
@@ -77,7 +73,6 @@ function SignUp() {
         return true;
     };
 
-    /** Send both email and phone OTP on the same page; then show both code inputs. */
     const handleSendVerificationCodes = async (e) => {
         e.preventDefault();
         if (!validateStep1()) return;
@@ -85,21 +80,9 @@ function SignUp() {
         setError("");
         setSuccess("");
         try {
-            // Send phone OTP first (backend API – Twilio)
-            try {
-                const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-                if (sendRes?.useFirebase) {
-                    setError("Phone verification requires Twilio. Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER in Vercel.");
-                    setIsLoading(false);
-                    return;
-                }
-                if (!sendRes?.success && !sendRes?.useFirebase) {
-                    setError("Could not send phone code. Configure Twilio for SMS verification.");
-                    setIsLoading(false);
-                    return;
-                }
-            } catch (phoneErr) {
-                setError(phoneErr.message || "Could not send phone code. Configure Twilio for SMS verification.");
+            const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
+            if (!sendRes?.success) {
+                setError(sendRes?.message || "Could not send phone code. Please try again.");
                 setIsLoading(false);
                 return;
             }
@@ -110,7 +93,7 @@ function SignUp() {
                 return;
             }
             setCodesSent(true);
-            setSuccess("Codes sent! Enter the 6-digit codes from your email and phone below.");
+            setSuccess("Codes sent! Enter the 6-digit codes from your email and phone.");
         } catch (err) {
             let msg = err.message || "Failed to send verification.";
             if (err.message?.includes("already exists")) msg = "An account with this email already exists. Please sign in.";
@@ -121,7 +104,6 @@ function SignUp() {
         }
     };
 
-    /** Verify both email and phone OTP, then register – all on the same page. */
     const handleVerifyAndSignUp = async (e) => {
         e.preventDefault();
         if (emailCode.length !== 6) {
@@ -147,13 +129,12 @@ function SignUp() {
                 setIsLoading(false);
                 return;
             }
-            const verifiedPhone = formData.phone.trim();
             setSuccess("Creating your account...");
             const response = await register({
                 username: formData.username.trim(),
                 name: formData.fullName.trim(),
                 email: formData.email.trim().toLowerCase(),
-                phone: verifiedPhone,
+                phone: formData.phone.trim(),
                 password: formData.password
             });
             if (response && response.status !== "MFA_REQUIRED") {
@@ -172,9 +153,21 @@ function SignUp() {
         setError("");
         setIsLoading(true);
         try {
-            const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-            if (sendRes?.useFirebase) setError("Configure Twilio for SMS verification.");
-            else setSuccess("Code resent to your phone.");
+            await Api.sendPhoneVerificationCode(formData.phone);
+            setSuccess("Code resent to your phone.");
+        } catch (err) {
+            setError(err.message || "Failed to resend code.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResendEmailCode = async () => {
+        setError("");
+        setIsLoading(true);
+        try {
+            await Api.sendSignupVerificationEmail(formData.email, formData.username);
+            setSuccess("Code resent to your email.");
         } catch (err) {
             setError(err.message || "Failed to resend code.");
         } finally {
@@ -188,7 +181,7 @@ function SignUp() {
             <div className="login-form-container">
                 <div className="form-header">
                     <h2 className="login-title">SIGN UP</h2>
-                    <p className="login-subtitle">Create your account – verify email and phone on this page</p>
+                    <p className="login-subtitle">Create your account – verify email and phone</p>
                 </div>
                 {error && <div className="error-message">{error}</div>}
                 {success && <div className="success-message">{success}</div>}
@@ -197,38 +190,32 @@ function SignUp() {
                     <div className="form-group">
                         <label htmlFor="username" className="form-label">Username</label>
                         <input type="text" id="username" name="username" value={formData.username} onChange={handleChange}
-                            required minLength={3} placeholder="e.g. trader2024" className="form-input" disabled={isLoading && !codesSent}
-                        />
+                            required minLength={3} placeholder="e.g. trader2024" className="form-input" disabled={isLoading && !codesSent} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="fullName" className="form-label">Full Name</label>
                         <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange}
-                            required placeholder="Enter your full name" className="form-input" disabled={isLoading && !codesSent}
-                        />
+                            required placeholder="Enter your full name" className="form-input" disabled={isLoading && !codesSent} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="email" className="form-label">Email Address</label>
                         <input type="email" id="email" name="email" value={formData.email} onChange={handleChange}
-                            required placeholder="Enter your email" className="form-input" disabled={isLoading && !codesSent}
-                        />
+                            required placeholder="Enter your email" className="form-input" disabled={isLoading && !codesSent} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="phone" className="form-label">Phone Number (any country)</label>
                         <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange}
-                            required placeholder="e.g. +44 7700 900000 or +1 555 123 4567" className="form-input" disabled={isLoading && !codesSent}
-                        />
+                            required placeholder="e.g. +44 7700 900000 or +1 555 123 4567" className="form-input" disabled={isLoading && !codesSent} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="password" className="form-label">Password</label>
                         <input type="password" id="password" name="password" value={formData.password} onChange={handleChange}
-                            required minLength={6} placeholder="Create a password" className="form-input" disabled={isLoading && !codesSent}
-                        />
+                            required minLength={6} placeholder="Create a password" className="form-input" disabled={isLoading && !codesSent} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
                         <input type="password" id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
-                            required placeholder="Confirm your password" className="form-input" disabled={isLoading && !codesSent}
-                        />
+                            required placeholder="Confirm your password" className="form-input" disabled={isLoading && !codesSent} />
                     </div>
                     {!codesSent && (
                         <button type="submit" className="login-button" disabled={isLoading}>
@@ -246,15 +233,14 @@ function SignUp() {
                                 <label htmlFor="email-code" className="form-label">Email code (sent to {formData.email})</label>
                                 <input type="text" id="email-code" value={emailCode}
                                     onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                    maxLength={6} placeholder="6-digit code" className="form-input" disabled={isLoading}
-                                />
+                                    maxLength={6} placeholder="6-digit code" className="form-input" disabled={isLoading} />
+                                <p><button type="button" onClick={handleResendEmailCode} className="link-button" disabled={isLoading}>Resend email code</button></p>
                             </div>
                             <div className="form-group">
                                 <label htmlFor="phone-code" className="form-label">Phone code (sent to {formData.phone})</label>
                                 <input type="text" id="phone-code" value={phoneCode}
                                     onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                    maxLength={6} placeholder="6-digit code" className="form-input" disabled={isLoading}
-                                />
+                                    maxLength={6} placeholder="6-digit code" className="form-input" disabled={isLoading} />
                                 <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading}>Resend phone code</button></p>
                             </div>
                             <button type="submit" className="login-button" disabled={isLoading || emailCode.length !== 6 || phoneCode.length !== 6}>

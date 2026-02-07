@@ -24,7 +24,7 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    **⚠️ IMPORTANT:** The API key is stored in `API_KEYS_SECURE.md` (gitignored) for your reference. Copy it from there.
 
 4. **Phone verification (Twilio – REQUIRED for signup):**
-   - Sign up uses email + phone verification codes. Phone codes are sent via Twilio.
+   - Sign up uses email + phone verification. Phone codes are sent via Twilio.
    - **Keys:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
    - Get these at: https://www.twilio.com/console
    - **Environment:** Select all (Production, Preview, Development)

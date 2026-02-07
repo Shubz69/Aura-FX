@@ -1,39 +1,11 @@
 /**
- * Phone verification for signup - supports send + verify.
- * Two modes (no KYC / minimal setup):
- * 1. Firebase (free): client uses Firebase Phone Auth; backend verifies Firebase ID token and returns verified phone.
- * 2. Twilio (paid): backend sends SMS and verifies code from DB.
+ * Phone verification for signup - Twilio only.
+ * Sends SMS via Twilio, verifies code from DB.
  */
 const mysql = require('mysql2/promise');
 require('../utils/suppress-warnings');
 
 const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
-
-const isFirebaseConfigured = () =>
-  process.env.FIREBASE_PROJECT_ID &&
-  process.env.FIREBASE_CLIENT_EMAIL &&
-  process.env.FIREBASE_PRIVATE_KEY;
-
-const getFirebaseAuth = () => {
-  if (!isFirebaseConfigured()) return null;
-  try {
-    const admin = require('firebase-admin');
-    if (!admin.apps || admin.apps.length === 0) {
-      const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: privateKey
-        })
-      });
-    }
-    return admin.auth();
-  } catch (e) {
-    console.error('Firebase Admin init error:', e.message);
-    return null;
-  }
-};
 
 const getDbConnection = async () => {
   if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
@@ -89,32 +61,14 @@ module.exports = async (req, res) => {
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { return res.status(400).json({ success: false, message: 'Invalid JSON' }); }
     }
-    const { action, phone, code, idToken } = body;
+    const { action, phone, code } = body;
 
-    // Firebase path: client verified phone with Firebase; we just verify the token and return the phone
-    if (action === 'verify_firebase') {
-      const token = (idToken || '').toString().trim();
-      if (!token) {
-        return res.status(400).json({ success: false, message: 'Firebase ID token is required' });
-      }
-      const auth = getFirebaseAuth();
-      if (!auth) {
-        return res.status(503).json({
-          success: false,
-          message: 'Firebase phone verification is not configured.'
-        });
-      }
-      try {
-        const decoded = await auth.verifyIdToken(token);
-        const verifiedPhone = decoded.phone_number || decoded.firebase?.identities?.phone?.[0] || '';
-        if (!verifiedPhone) {
-          return res.status(400).json({ success: false, message: 'Token is not a phone sign-in' });
-        }
-        return res.status(200).json({ success: true, verified: true, phone: verifiedPhone });
-      } catch (firebaseErr) {
-        console.error('Firebase verify error:', firebaseErr.message);
-        return res.status(400).json({ success: false, message: 'Invalid or expired verification. Please try again.' });
-      }
+    const twilioOk = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER;
+    if (!twilioOk) {
+      return res.status(503).json({
+        success: false,
+        message: 'Phone verification requires Twilio. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER in Vercel.'
+      });
     }
 
     if (action === 'send' || !action) {
@@ -123,17 +77,6 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Valid phone number is required' });
       }
       const phoneE164 = normalizePhone(raw);
-
-      const twilioOk = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER;
-      if (!twilioOk) {
-        if (isFirebaseConfigured()) {
-          return res.status(200).json({ success: true, useFirebase: true, message: 'Use Firebase on client' });
-        }
-        return res.status(503).json({
-          success: false,
-          message: 'Phone verification is not configured. Configure Firebase (free) or Twilio.'
-        });
-      }
 
       const verificationCode = generateCode();
       const expiresAt = Date.now() + (10 * 60 * 1000);
@@ -163,6 +106,14 @@ module.exports = async (req, res) => {
         });
       } catch (twilioErr) {
         console.error('Twilio SMS error:', twilioErr.message);
+        const code = twilioErr.code || twilioErr.status || 0;
+        const msg = (twilioErr.message || '').toLowerCase();
+        if (code === 21608 || msg.includes('unverified') || msg.includes('trial')) {
+          return res.status(400).json({
+            success: false,
+            message: 'Twilio trial: verify this number at twilio.com/console/phone-numbers/verified or upgrade your account.'
+          });
+        }
         return res.status(500).json({
           success: false,
           message: 'Failed to send SMS. Please check your phone number and try again.'

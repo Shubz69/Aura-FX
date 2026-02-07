@@ -790,19 +790,6 @@ const Api = {
         }
     },
 
-    /** Firebase path: verify phone via Firebase ID token (free OTP, no Twilio) */
-    verifyPhoneWithFirebase: async (idToken) => {
-        try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/phone-verification`, { action: 'verify_firebase', idToken });
-            if (response.data && (response.data.verified === true || response.data.success === true)) {
-                return { verified: true, phone: response.data.phone || '' };
-            }
-            return { verified: false };
-        } catch (error) {
-            throw new Error(error.response?.data?.message || 'Invalid or expired verification');
-        }
-    },
-
     // Enhanced login with better error handling
     loginWithErrorDetails: async (credentials) => {
         try {

@@ -24,14 +24,13 @@ const Register = () => {
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
-    const [codesSent, setCodesSent] = useState(false); // true after "Send verification codes" – show email + phone OTP on same page
+    const [codesSent, setCodesSent] = useState(false);
     const [phoneCountryCode, setPhoneCountryCode] = useState('+44');
     const [phoneNational, setPhoneNational] = useState('');
     const { register: registerUser } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Keep formData.phone in sync with country code + national number (E.164)
     useEffect(() => {
         setFormData(prev => ({ ...prev, phone: toE164(phoneCountryCode, phoneNational) }));
     }, [phoneCountryCode, phoneNational]);
@@ -40,28 +39,18 @@ const Register = () => {
         const params = new URLSearchParams(location.search);
         const nextParam = params.get('next');
         const planParam = params.get('plan');
-        if (!nextParam) {
-            return;
-        }
+        if (!nextParam) return;
         const existing = loadPostAuthRedirect();
         if (!existing || existing.next !== nextParam || (existing.plan || null) !== (planParam ? planParam.toLowerCase() : null)) {
-            savePostAuthRedirect({
-                next: nextParam,
-                plan: planParam,
-                from: `${location.pathname}${location.search}`
-            });
+            savePostAuthRedirect({ next: nextParam, plan: planParam, from: `${location.pathname}${location.search}` });
         }
     }, [location.pathname, location.search]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    /** Send both email and phone OTP on the same page; then show both code inputs. */
     const handleSendVerificationCodes = async (e) => {
         e.preventDefault();
         setError('');
@@ -101,26 +90,12 @@ const Register = () => {
         }
         setIsLoading(true);
         try {
-            // Send phone OTP first (backend API – Twilio)
-            try {
-                const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-                if (sendRes?.useFirebase) {
-                    setError("Phone verification requires Twilio. Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER in Vercel.");
-                    setIsLoading(false);
-                    return;
-                }
-                if (!sendRes?.success && !sendRes?.useFirebase) {
-                    setError("Could not send phone code. Configure Twilio for SMS verification.");
-                    setIsLoading(false);
-                    return;
-                }
-            } catch (phoneErr) {
-                setError(phoneErr.message || "Could not send phone code. Configure Twilio for SMS verification.");
+            const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
+            if (!sendRes?.success) {
+                setError(sendRes?.message || "Could not send phone code. Please try again.");
                 setIsLoading(false);
                 return;
             }
-
-            // Send email verification after phone succeeded
             const result = await Api.sendSignupVerificationEmail(formData.email, formData.username);
             if (result !== true && result !== undefined) {
                 setError("Failed to send verification email. Please try again.");
@@ -128,7 +103,7 @@ const Register = () => {
                 return;
             }
             setCodesSent(true);
-            setSuccess("Codes sent! Enter the 6-digit codes from your email and phone below.");
+            setSuccess("Codes sent! Enter the 6-digit codes from your email and phone.");
         } catch (err) {
             let errorMsg = err.message || "Failed to send verification.";
             if (err.message && err.message.includes("already exists")) errorMsg = "An account with this email already exists. Please sign in.";
@@ -140,7 +115,6 @@ const Register = () => {
         }
     };
 
-    /** Verify both email and phone OTP, then register – all on the same page. */
     const handleVerifyAndSignUp = async (e) => {
         e.preventDefault();
         if (emailCode.length !== 6) {
@@ -166,12 +140,11 @@ const Register = () => {
                 setIsLoading(false);
                 return;
             }
-            const verifiedPhone = formData.phone.trim();
             setSuccess("Creating your account...");
             const submitData = {
                 username: formData.username.trim(),
                 email: formData.email.trim().toLowerCase(),
-                phone: verifiedPhone,
+                phone: formData.phone.trim(),
                 password: formData.password,
                 name: (formData.name || '').trim(),
                 avatar: '/avatars/avatar_ai.png'
@@ -207,9 +180,8 @@ const Register = () => {
         setError("");
         setIsLoading(true);
         try {
-            const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-            if (sendRes?.useFirebase) setError("Configure Twilio for SMS verification.");
-            else setSuccess("Code resent to your phone.");
+            await Api.sendPhoneVerificationCode(formData.phone);
+            setSuccess("Code resent to your phone.");
         } catch (err) {
             setError(err.message || "Failed to resend code.");
         } finally {
@@ -217,146 +189,83 @@ const Register = () => {
         }
     };
 
-    // Single page: form, then email + phone OTP on same page
+    const handleResendEmailCode = async () => {
+        setError("");
+        setIsLoading(true);
+        try {
+            await Api.sendSignupVerificationEmail(formData.email, formData.username);
+            setSuccess("Code resent to your email.");
+        } catch (err) {
+            setError(err.message || "Failed to resend code.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="register-container">
             <CosmicBackground />
             <div className="register-form-container">
                 <div className="form-header">
                     <h2 className="register-title">SIGN UP</h2>
-                    <p className="register-subtitle">Create your account – verify email and phone on this page</p>
+                    <p className="register-subtitle">Create your account – verify email and phone</p>
                 </div>
                 {error ? <div className="error-message">{error}</div> : null}
                 {success ? <div className="success-message">{success}</div> : null}
 
                 {!codesSent && (
-            <form onSubmit={handleSendVerificationCodes}>
-                <div className="form-row">
-                    <div className="form-group">
-                        <label htmlFor="username" className="form-label">Username</label>
-                        <input
-                            type="text"
-                            id="username"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Enter username"
-                            className="form-input"
-                            disabled={isLoading}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label htmlFor="email" className="form-label">Email</label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Enter email"
-                            className="form-input"
-                            disabled={isLoading}
-                        />
-                    </div>
-                </div>
-                
-                <div className="form-row">
-                    <div className="form-group">
-                        <label htmlFor="name" className="form-label">Full Name</label>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Enter full name"
-                            className="form-input"
-                            disabled={isLoading}
-                        />
-                    </div>
-                    <div className="form-group form-group-phone">
-                        <label htmlFor="phone-national" className="form-label">Phone Number (any country)</label>
-                        <div className="phone-input-row">
-                            <PhoneCountrySelect
-                                id="phone-country"
-                                value={phoneCountryCode}
-                                onChange={setPhoneCountryCode}
-                                disabled={isLoading}
-                            />
-                            <input
-                                type="tel"
-                                id="phone-national"
-                                name="phoneNational"
-                                value={phoneNational}
-                                onChange={(e) => {
-                                    const v = e.target.value.replace(/[^\d\s]/g, '');
-                                    setPhoneNational(v);
-                                }}
-                                required
-                                placeholder="e.g. 201 555 5555"
-                                className="form-input phone-national-input"
-                                disabled={isLoading}
-                                autoComplete="tel-national"
-                                maxLength={20}
-                            />
+                    <form onSubmit={handleSendVerificationCodes}>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="username" className="form-label">Username</label>
+                                <input type="text" id="username" name="username" value={formData.username} onChange={handleInputChange}
+                                    required placeholder="Enter username" className="form-input" disabled={isLoading} />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="email" className="form-label">Email</label>
+                                <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange}
+                                    required placeholder="Enter email" className="form-input" disabled={isLoading} />
+                            </div>
                         </div>
-                    </div>
-                </div>
-                
-                <div className="form-row">
-                    <div className="form-group">
-                        <label htmlFor="password" className="form-label">Password</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Enter password"
-                            className="form-input"
-                            disabled={isLoading}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Confirm password"
-                            className="form-input"
-                            disabled={isLoading}
-                        />
-                    </div>
-                </div>
-                
-                <label className="terms-checkbox" htmlFor="terms">
-                    <input
-                        type="checkbox"
-                        id="terms"
-                        checked={acceptedTerms}
-                        onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        required
-                        disabled={isLoading}
-                    />
-                    <span className="terms-checkbox-text">
-                        I agree to the <Link to="/terms" target="_blank" onClick={(e) => e.stopPropagation()}>Terms and Conditions</Link> and <Link to="/privacy" target="_blank" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
-                    </span>
-                </label>
-
-                <button type="submit" className="register-button" disabled={isLoading}>
-                    {isLoading ? 'SENDING CODES...' : 'SEND VERIFICATION CODES'}
-                </button>
-            </form>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="name" className="form-label">Full Name</label>
+                                <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange}
+                                    required placeholder="Enter full name" className="form-input" disabled={isLoading} />
+                            </div>
+                            <div className="form-group form-group-phone">
+                                <label htmlFor="phone-national" className="form-label">Phone Number (any country)</label>
+                                <div className="phone-input-row">
+                                    <PhoneCountrySelect id="phone-country" value={phoneCountryCode} onChange={setPhoneCountryCode} disabled={isLoading} />
+                                    <input type="tel" id="phone-national" name="phoneNational" value={phoneNational}
+                                        onChange={(e) => { const v = e.target.value.replace(/[^\d\s]/g, ''); setPhoneNational(v); }}
+                                        required placeholder="e.g. 201 555 5555" className="form-input phone-national-input" disabled={isLoading}
+                                        autoComplete="tel-national" maxLength={20} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="password" className="form-label">Password</label>
+                                <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange}
+                                    required placeholder="Enter password" className="form-input" disabled={isLoading} />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange}
+                                    required placeholder="Confirm password" className="form-input" disabled={isLoading} />
+                            </div>
+                        </div>
+                        <label className="terms-checkbox" htmlFor="terms">
+                            <input type="checkbox" id="terms" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} required disabled={isLoading} />
+                            <span className="terms-checkbox-text">
+                                I agree to the <Link to="/terms" target="_blank" onClick={(e) => e.stopPropagation()}>Terms</Link> and <Link to="/privacy" target="_blank" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
+                            </span>
+                        </label>
+                        <button type="submit" className="register-button" disabled={isLoading}>
+                            {isLoading ? 'SENDING CODES...' : 'SEND VERIFICATION CODES'}
+                        </button>
+                    </form>
                 )}
 
                 {codesSent && (
@@ -366,29 +275,16 @@ const Register = () => {
                         <form onSubmit={handleVerifyAndSignUp}>
                             <div className="verification-code-group">
                                 <label htmlFor="email-code-register" className="form-label">Email code (sent to {formData.email})</label>
-                                <input
-                                    type="text"
-                                    id="email-code-register"
-                                    value={emailCode}
-                                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                    maxLength={6}
-                                    placeholder="6-digit code"
-                                    className="verification-code-input"
-                                    disabled={isLoading}
-                                />
+                                <input type="text" id="email-code-register" value={emailCode}
+                                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').substring(0, 6))} maxLength={6} placeholder="6-digit code"
+                                    className="verification-code-input" disabled={isLoading} />
+                                <p><button type="button" onClick={handleResendEmailCode} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend email code</button></p>
                             </div>
                             <div className="verification-code-group">
                                 <label htmlFor="phone-code-register" className="form-label">Phone code (sent to {formData.phone})</label>
-                                <input
-                                    type="text"
-                                    id="phone-code-register"
-                                    value={phoneCode}
-                                    onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                    maxLength={6}
-                                    placeholder="6-digit code"
-                                    className="verification-code-input"
-                                    disabled={isLoading}
-                                />
+                                <input type="text" id="phone-code-register" value={phoneCode}
+                                    onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))} maxLength={6} placeholder="6-digit code"
+                                    className="verification-code-input" disabled={isLoading} />
                                 <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>
                             </div>
                             <button type="submit" className="register-button" disabled={isLoading || emailCode.length !== 6 || phoneCode.length !== 6} style={{ marginTop: '0.5rem' }}>
