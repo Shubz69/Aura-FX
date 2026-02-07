@@ -23,10 +23,14 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    
    **⚠️ IMPORTANT:** The API key is stored in `API_KEYS_SECURE.md` (gitignored) for your reference. Copy it from there.
 
-4. **Phone verification (Twilio – REQUIRED for signup):**
-   - Sign up uses email + phone verification. Phone codes are sent via Twilio.
-   - **Keys:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
-   - Get these at: https://www.twilio.com/console
+4. **Phone verification (Twilio Verify – REQUIRED for signup):**
+   - Sign up uses email + phone verification. Phone codes are sent via **Twilio Verify** (works for UK, US, India, 180+ countries – no purchased number needed).
+   - **Keys:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`
+   - **Setup:** Go to [Twilio Console → Verify → Services](https://console.twilio.com/us1/develop/verify/services)
+     - Click "Create new"
+     - Name it "AURA FX" (or any name)
+     - Copy the Service SID (starts with `VA...`)
+   - Add to Vercel: `TWILIO_VERIFY_SERVICE_SID` = your Service SID
    - **Environment:** Select all (Production, Preview, Development)
 
 5. **JWT_SECRET (OPTIONAL - Not Required):**

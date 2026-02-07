@@ -92,18 +92,14 @@ You do **not** need Twilio if Firebase is set up. If both are set, the app uses 
 
 ---
 
-## 3. Get a Twilio phone number
+## 3. Create a Twilio Verify Service (no phone number needed)
 
-1. In the Console go to **Phone Numbers** → **Manage** → **Buy a number** ([console.twilio.com → Phone Numbers](https://console.twilio.com/us1/develop/phone-numbers/manage/search)).
-2. **Country**: e.g. United States (or your target country).
-3. **Capabilities**: check **SMS** (and Voice if you want).
-4. Click **Search**, pick a number, then **Buy**.
-5. Confirm; the number appears under **Active Numbers**.
-6. Copy the number in **E.164** format (e.g. `+12025551234`) – this is **`TWILIO_PHONE_NUMBER`**.
+1. In the Console go to **Verify** → **Services** ([console.twilio.com → Verify → Services](https://console.twilio.com/us1/develop/verify/services)).
+2. Click **Create new**.
+3. Name it "AURA FX" (or any name) and create.
+4. Copy the **Service SID** (starts with `VA...`) – this is **`TWILIO_VERIFY_SERVICE_SID`**.
 
-**US/Canada:**
-- **Toll-free** numbers may need **Toll-Free Verification** before sending to many users; Twilio will prompt you.
-- **Local (10DLC)** numbers may need **10DLC registration** for production. For testing, a new number is often enough.
+**Why Verify?** Twilio Verify works for UK, US, India, 180+ countries. Purchased phone numbers (e.g. US) are blocked by UK carriers when sending to UK numbers. Verify uses Twilio’s infrastructure and appropriate sender types per country.
 
 ---
 
@@ -123,25 +119,25 @@ Add these where your app runs (e.g. Vercel, Railway) and in local `.env` for dev
 |----------|-------------|--------|
 | `TWILIO_ACCOUNT_SID` | Account SID from Console Dashboard | `ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` |
 | `TWILIO_AUTH_TOKEN` | Auth Token from Console (Show → copy) | `your_auth_token_string` |
-| `TWILIO_PHONE_NUMBER` | Your Twilio number in E.164 format | `+12025551234` |
+| `TWILIO_VERIFY_SERVICE_SID` | Verify Service SID (from Verify → Services) | `VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` |
 
 **Vercel:**
 1. Project → **Settings** → **Environment Variables**.
-2. Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` for Production (and Preview if you use it).
+2. Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` for Production (and Preview if you use it).
 3. **Save** and **redeploy** so the API uses the new values.
 
 **Local (`.env` in project root – do not commit):**
 ```env
 TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_AUTH_TOKEN=your_auth_token_string
-TWILIO_PHONE_NUMBER=+12025551234
+TWILIO_VERIFY_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ---
 
 ## 6. Database
 
-The **`phone_verification_codes`** table is created automatically when the phone-verification API runs. No manual schema change is required.
+With Twilio Verify, codes are stored by Twilio. No `phone_verification_codes` table is used.
 
 ---
 
@@ -162,7 +158,7 @@ If Firebase (frontend + backend) and Twilio are both missing, the phone step wil
 > "Phone verification is not configured. Configure Firebase (free) or Twilio."
 
 - **Free path:** Set up Firebase (Option A) and add the env vars above.
-- **Paid path:** Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_PHONE_NUMBER` and redeploy.
+- **Paid path:** Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_VERIFY_SERVICE_SID` and redeploy.
 
 ---
 
@@ -187,7 +183,7 @@ If Firebase (frontend + backend) and Twilio are both missing, the phone step wil
 
 | Issue | What to check |
 |-------|----------------|
-| "Phone verification is not configured" | All three env vars set and redeployed. No typos or extra spaces. |
+| "Phone verification is not configured" | All three env vars (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`) set and redeployed. No typos or extra spaces. |
 | SMS not received | Number in E.164 (`+1...` for US). Account upgraded (not trial) if sending to unverified numbers. Check Twilio Console → Monitor → Logs for errors. |
 | 401 / auth errors | `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` match the Console; token copied fully, no line breaks. |
 | Trial: "can only send to verified numbers" | Add the test number in Console → Phone Numbers → Verified Caller IDs, or upgrade the account to send to any number. |
@@ -203,11 +199,11 @@ If Firebase (frontend + backend) and Twilio are both missing, the phone step wil
 - [ ] Service account: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` set in backend env.
 - [ ] Redeploy; test signup and phone OTP.
 
-**Twilio (paid):**
+**Twilio Verify (paid):**
 - [ ] Twilio account created; Account SID and Auth Token copied.
-- [ ] Twilio phone number bought; E.164 value copied.
+- [ ] Verify Service created; Service SID (starts with `VA...`) copied.
 - [ ] Account upgraded if you need to send to any user phone.
-- [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` set in backend env.
+- [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` set in backend env.
 - [ ] Redeploy; test signup and phone OTP.
 
 After this, phone verification works with Firebase (free) or Twilio; verified numbers are stored in your database.
