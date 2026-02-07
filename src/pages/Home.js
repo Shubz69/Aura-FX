@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import CosmicBackground from "../components/CosmicBackground";
 import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
-import { FaChartLine, FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaGlobe, FaCoins, FaChartBar } from 'react-icons/fa';
+import { FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaCoins, FaChartBar } from 'react-icons/fa';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -182,45 +182,38 @@ const Home = () => {
                                 </div>
                             </div>
 
-                            {/* Trading Markets Section */}
-                            <div className="trading-markets-section">
-                                <h2 className="section-title">Trade Multiple Markets</h2>
-                                <div className="markets-scroll-wrap">
-                                <div className="markets-top-grid">
-                                    <div className="market-item">
-                                        <div className="market-icon"><FaChartLine /></div>
-                                        <h3 className="market-title">Forex</h3>
-                                        <p className="market-description">Major, minor, and exotic currency pairs</p>
+                            {/* Trade Multiple Markets - phone only */}
+                            <div className="trade-markets-mobile">
+                                <h2 className="trade-markets-mobile__title">Trade Multiple Markets</h2>
+                                <div className="trade-markets-mobile__grid">
+                                    <div className="trade-markets-mobile__card">
+                                        <div className="trade-markets-mobile__icon"><FaRocket /></div>
+                                        <div className="trade-markets-mobile__card-body">
+                                            <h3 className="trade-markets-mobile__card-title">Crypto</h3>
+                                            <p className="trade-markets-mobile__card-desc">Bitcoin, Ethereum, and altcoins</p>
+                                        </div>
                                     </div>
-                                    <div className="market-item">
-                                        <div className="market-icon"><FaTrophy /></div>
-                                        <h3 className="market-title">Stocks</h3>
-                                        <p className="market-description">US and international equity markets</p>
+                                    <div className="trade-markets-mobile__card">
+                                        <div className="trade-markets-mobile__icon"><FaTrophy /></div>
+                                        <div className="trade-markets-mobile__card-body">
+                                            <h3 className="trade-markets-mobile__card-title">Stocks</h3>
+                                            <p className="trade-markets-mobile__card-desc">US and international equity markets</p>
+                                        </div>
                                     </div>
-                                    <div className="market-item">
-                                        <div className="market-icon"><FaRocket /></div>
-                                        <h3 className="market-title">Crypto</h3>
-                                        <p className="market-description">Bitcoin, Ethereum, and altcoins</p>
+                                    <div className="trade-markets-mobile__card">
+                                        <div className="trade-markets-mobile__icon"><FaChartBar /></div>
+                                        <div className="trade-markets-mobile__card-body">
+                                            <h3 className="trade-markets-mobile__card-title">Indices</h3>
+                                            <p className="trade-markets-mobile__card-desc">S&P 500, NASDAQ, and more</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="markets-divider" aria-hidden="true" />
-                                <div className="markets-bottom-grid">
-                                    <div className="market-item">
-                                        <div className="market-icon"><FaGlobe /></div>
-                                        <h3 className="market-title">Futures</h3>
-                                        <p className="market-description">Master futures contracts and commodity trading with professional strategies</p>
+                                    <div className="trade-markets-mobile__card">
+                                        <div className="trade-markets-mobile__icon"><FaCoins /></div>
+                                        <div className="trade-markets-mobile__card-body">
+                                            <h3 className="trade-markets-mobile__card-title">Commodities</h3>
+                                            <p className="trade-markets-mobile__card-desc">Trade gold, oil, and valuable resources</p>
+                                        </div>
                                     </div>
-                                    <div className="market-item">
-                                        <div className="market-icon"><FaCoins /></div>
-                                        <h3 className="market-title">Commodities</h3>
-                                        <p className="market-description">Trade gold, oil, and other valuable resources</p>
-                                    </div>
-                                    <div className="market-item">
-                                        <div className="market-icon"><FaChartBar /></div>
-                                        <h3 className="market-title">Indices</h3>
-                                        <p className="market-description">Major global indices including S&P 500, NASDAQ, and more</p>
-                                    </div>
-                                </div>
                                 </div>
                             </div>
 
