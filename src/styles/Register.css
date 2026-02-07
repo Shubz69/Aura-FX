@@ -14,15 +14,20 @@
 
 .register-container {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   background: #0a0a0a;
   position: relative;
   overflow-x: hidden;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   font-family: var(--font-secondary);
   padding: 24px 20px 40px;
   padding-top: 80px;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0));
   box-sizing: border-box;
 }
 

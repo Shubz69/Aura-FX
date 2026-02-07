@@ -153,6 +153,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const [settings, setSettings] = useState(null);
     const [stats, setStats] = useState(null);
     const [friendStatus, setFriendStatus] = useState('none');
+    const [friendRequestId, setFriendRequestId] = useState(null);
     const [friendLoading, setFriendLoading] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [settingsLoading, setSettingsLoading] = useState(false);
@@ -241,23 +242,26 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         }
     }, [isOwnProfile, token]);
 
-    // Check friend status
+    // Check friend status (uses api/friends for notification support)
     const checkFriendStatus = useCallback(async () => {
         if (isOwnProfile || !token || !userId) return;
         try {
-            const response = await fetch(`${window.location.origin}/api/users/friends/status/${userId}`, {
+            const response = await fetch(`${window.location.origin}/api/friends/status/${userId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
-                setFriendStatus(data.status || 'none');
+                const s = (data.status || 'NONE').toLowerCase();
+                setFriendStatus(s === 'friends' ? 'accepted' : s);
+                setFriendRequestId(data.requestId || null);
             } else {
-                // Graceful fallback - don't break the UI
                 setFriendStatus('none');
+                setFriendRequestId(null);
             }
         } catch (err) {
             console.error("Error checking friend status:", err);
             setFriendStatus('none');
+            setFriendRequestId(null);
         }
     }, [isOwnProfile, token, userId]);
 
@@ -291,7 +295,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     if (!isOpen) return null;
 
-    // Friend action handlers
+    // Friend action handlers (uses api/friends - creates notifications for recipient)
     const handleFriendAction = async (action) => {
         if (!token) {
             toast.error('Please log in to manage friends');
@@ -302,20 +306,25 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         try {
             let endpoint = '';
             let method = 'POST';
+            let body = {};
             
             switch (action) {
                 case 'add':
-                    endpoint = '/api/users/friends/request';
+                    endpoint = '/api/friends/request';
+                    body = { receiverUserId: userId };
                     break;
                 case 'accept':
-                    endpoint = '/api/users/friends/accept';
+                    endpoint = '/api/friends/accept';
+                    body = { requestId: friendRequestId };
                     break;
                 case 'reject':
-                    endpoint = '/api/users/friends/reject';
+                    endpoint = '/api/friends/decline';
+                    body = { requestId: friendRequestId };
                     break;
                 case 'remove':
-                    endpoint = `/api/users/friends/${userId}`;
+                    endpoint = '/api/friends/remove';
                     method = 'DELETE';
+                    body = { friendUserId: userId };
                     break;
                 default:
                     return;
@@ -327,14 +336,17 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: method !== 'DELETE' ? JSON.stringify({ friendId: userId }) : undefined
+                body: method !== 'DELETE' ? JSON.stringify(body) : JSON.stringify(body)
             });
 
             const data = await response.json();
             
             if (data.success) {
-                setFriendStatus(data.status || 'none');
+                const s = (data.status || 'none').toLowerCase();
+                setFriendStatus(s === 'friends' ? 'accepted' : s);
+                setFriendRequestId(data.request?.id || data.requestId || null);
                 toast.success(data.message);
+                checkFriendStatus();
             } else {
                 toast.error(data.message || 'Action failed');
             }

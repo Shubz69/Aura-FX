@@ -1,7 +1,16 @@
 const { getDbConnection } = require('../db');
+const { verifyToken } = require('../utils/auth');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+
+// Import notification creator for notifying recipients of new messages
+let createNotification;
+try {
+  createNotification = require('../notifications').createNotification;
+} catch (e) {
+  createNotification = null;
+}
 
 // Parse body for Vercel (sometimes passed as string)
 function parseBody(req) {
@@ -52,6 +61,14 @@ module.exports = async (req, res) => {
   if (!token) {
     return res.status(401).json({ success: false, message: 'Authentication required' });
   }
+
+  const decoded = verifyToken(req.headers.authorization);
+  if (!decoded || !decoded.id) {
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+  }
+
+  const authRole = (decoded.role || '').toString().toUpperCase();
+  const isAdmin = authRole === 'ADMIN' || authRole === 'SUPER_ADMIN';
 
   let db = null;
   try {
@@ -158,6 +175,10 @@ module.exports = async (req, res) => {
 
     // Handle /api/messages/threads - List all threads (admin only)
     if (pathname.endsWith('/threads') && !pathname.includes('/threads/') && req.method === 'GET') {
+      if (!isAdmin) {
+        db.release && db.release();
+        return res.status(403).json({ success: false, message: 'Admin access required' });
+      }
       const [threads] = await db.execute(
         'SELECT * FROM threads ORDER BY lastMessageAt DESC LIMIT 100'
       );
@@ -207,6 +228,52 @@ module.exports = async (req, res) => {
       );
 
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
+
+      // Notify recipient: admin→user (recipientId is user id) or user→admin (recipientId is 'ADMIN')
+      if (createNotification) {
+        const recipientUserId = parseInt(recipientId, 10);
+        if (!isNaN(recipientUserId) && recipientUserId > 0) {
+          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [userId]);
+          const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'Admin';
+          const preview = typeof messageBody === 'string' && messageBody.length > 80
+            ? messageBody.substring(0, 77) + '...'
+            : messageBody;
+          createNotification({
+            userId: recipientUserId,
+            type: 'REPLY',
+            title: 'New message from Admin',
+            body: `${senderName}: ${preview}`,
+            channelId: 0,
+            messageId: threadId,
+            fromUserId: userId,
+            friendRequestId: null,
+            actionStatus: null
+          }).catch((e) => console.warn('Thread notification failed:', e.message));
+        } else if (recipientId === 'ADMIN') {
+          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [userId]);
+          const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'A user';
+          const preview = typeof messageBody === 'string' && messageBody.length > 80
+            ? messageBody.substring(0, 77) + '...'
+            : messageBody;
+          const [adminRows] = await db.execute(
+            "SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin')"
+          );
+          const adminIds = (adminRows || []).map((r) => r.id).filter(Boolean);
+          for (const adminId of adminIds) {
+            createNotification({
+              userId: adminId,
+              type: 'REPLY',
+              title: 'New message from user',
+              body: `${senderName}: ${preview}`,
+              channelId: 0,
+              messageId: threadId,
+              fromUserId: userId,
+              friendRequestId: null,
+              actionStatus: null
+            }).catch((e) => console.warn('Thread notification failed:', e.message));
+          }
+        }
+      }
 
       db.release && db.release();
       return res.status(200).json({ success: true, message: 'Message sent' });

@@ -250,12 +250,14 @@ module.exports = async (req, res) => {
     if ((req.method === 'POST' || req.method === 'PUT') && !perm.canWrite) {
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You cannot post in this channel.' });
     }
-    /* Announcements: enforce super admin by email (shubzfx@gmail.com) at API level */
+    /* Announcement channels (welcome, announcements, levels, notifications): only super admin can post */
     const channelIdLower = (channelId || '').toString().toLowerCase();
-    if ((req.method === 'POST' || req.method === 'PUT') && channelIdLower === 'announcements') {
+    const SUPER_ADMIN_ONLY_CHANNELS = new Set(['welcome', 'announcements', 'levels', 'notifications']);
+    if ((req.method === 'POST' || req.method === 'PUT') && SUPER_ADMIN_ONLY_CHANNELS.has(channelIdLower)) {
       const userRow = userRows[0];
-      if (!isSuperAdminEmail(userRow)) {
-        return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Only the Super Admin can post announcements.' });
+      const isSuperAdmin = isSuperAdminEmail(userRow) || (userRow.role || '').toString().toUpperCase() === 'SUPER_ADMIN';
+      if (!isSuperAdmin) {
+        return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Only the Super Admin can post in this channel.' });
       }
     }
     

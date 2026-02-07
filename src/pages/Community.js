@@ -806,11 +806,16 @@ const Community = () => {
                     .join(' ');
                 const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
                 const readOnly = (channel.permissionType || channel.permission_type || 'read-write').toString().toLowerCase() === 'read-only';
+                const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
 
                 const canSee = isAdminOrSuperForChannels || channel.canSee === true;
                 const canRead = isAdminOrSuperForChannels ? true : (canSee && (channel.canRead !== false));
-                const canWrite = isAdminOrSuperForChannels ? !readOnly : (canSee && (channel.canWrite !== false));
-                const locked = isAdminOrSuperForChannels ? false : (channel.locked ?? accessLevelValue === 'admin-only');
+                const canWrite = (channel.canWrite !== undefined && channel.canWrite !== null)
+                    ? channel.canWrite
+                    : (readOnly ? isSuperAdminForChannels : (isAdminOrSuperForChannels ? true : (canSee && (channel.canWrite !== false))));
+                const locked = (channel.locked !== undefined && channel.locked !== null)
+                    ? channel.locked
+                    : (isAdminOrSuperForChannels ? false : (accessLevelValue === 'admin-only'));
                 return {
                     ...channel,
                     id: idString,
@@ -1334,7 +1339,13 @@ const Community = () => {
         const channelName = (channel.name || '').toLowerCase();
         const isAdminChannel = accessLevel === 'admin-only' || channel.locked || channelName === 'admin';
         
-        // Check permission type first - if channel is read-only, only admins can post
+        // Announcement channels (welcome, announcements, levels, notifications): only super admin can post
+        const announcementChannelIds = new Set(['welcome', 'announcements', 'levels', 'notifications']);
+        if (announcementChannelIds.has(channelName)) {
+            return userRole === 'super_admin' || isSuperAdminUser;
+        }
+        
+        // Read-only permission type: only admins/super_admin can post (for non-announcement channels)
         if (permissionType === 'read-only') {
             return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
         }
@@ -1346,7 +1357,7 @@ const Community = () => {
         
         // Legacy: Read-only access level (for backward compatibility)
         if (accessLevel === 'read-only') {
-            return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
+            return userRole === 'super_admin' || isSuperAdminUser;
         }
         
         // CRITICAL: Admins and premium role users ALWAYS have posting access
@@ -1942,29 +1953,32 @@ const Community = () => {
         setChannelActionLoading(true);
         setChannelActionStatus(null);
         setChannelContextMenu(null);
-        setEditingChannel(null);
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/community/channels', {
+            const body = {
+                id: channelData.id,
+                name: channelData.name || channelData.id,
+                displayName: channelData.displayName || channelData.name || channelData.id,
+                description: channelData.description ?? '',
+                category: channelData.category || 'general',
+                accessLevel: (channelData.accessLevel || 'open').toLowerCase(),
+                permissionType: (channelData.permissionType || 'read-write').toLowerCase()
+            };
+            const response = await fetch(`${window.location.origin}/api/community/channels`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {})
                 },
-                body: JSON.stringify({
-                    id: channelData.id,
-                    name: channelData.name,
-                    displayName: channelData.displayName || channelData.name,
-                    description: channelData.description || '',
-                    category: channelData.category,
-                    accessLevel: channelData.accessLevel,
-                    permissionType: channelData.permissionType || 'read-write'
-                })
+                body: JSON.stringify(body)
             });
 
             if (response.ok) {
+                const u = JSON.parse(localStorage.getItem('user') || '{}');
+                try { localStorage.removeItem(`community_channels_cache_${u.id || 'anon'}`); } catch (e) { /* ignore */ }
                 await refreshChannelList();
+                setEditingChannel(null);
                 setChannelActionStatus({ type: 'success', message: 'Channel updated successfully.' });
             } else {
                 const errorData = await response.json();
@@ -1979,6 +1993,11 @@ const Community = () => {
         } finally {
             setChannelActionLoading(false);
         }
+    };
+
+    const handleEditChannelCancel = () => {
+        setEditingChannel(null);
+        setChannelContextMenu(null);
     };
 
     const handleDeleteCategory = async (categoryName) => {
@@ -2680,17 +2699,14 @@ const Community = () => {
         }
     }, [selectedChannel?.id, clearChannelBadge]);
 
-    // Poll for new messages - Optimized for high traffic (500+ users)
-    // When WebSocket is down: poll every 1s for fast fallback
-    // When WebSocket is connected: backup poll every 5s to catch any missed messages (multi-device reliability)
+    // Poll for new messages - Fast delivery even under high traffic
+    // When WebSocket is down: poll every 400ms for near-instant fallback
+    // When WebSocket is connected: backup poll every 800ms to catch missed messages (multi-device reliability)
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Store previous message count for notification detection
-        let previousMessageCount = messages.length;
-        
-        // Poll interval: 1s when WS down, 5s backup when WS connected (ensures multi-device messages get through)
-        const pollInterval = isConnected ? 5000 : 1000;
+        // Poll interval: 400ms when WS down, 800ms backup when WS connected (fast delivery under load)
+        const pollInterval = isConnected ? 800 : 400;
         
         // Start polling immediately
         const pollMessages = async () => {
@@ -2760,7 +2776,7 @@ const Community = () => {
         const pollTimer = setInterval(pollMessages, pollInterval);
 
         return () => clearInterval(pollTimer);
-    }, [selectedChannel?.id, isAuthenticated, isConnected, fetchMessages, selectedChannel, storedUser, userId, messages.length, updateChannelBadge]);
+    }, [selectedChannel?.id, isAuthenticated, isConnected, selectedChannel, storedUser, userId, updateChannelBadge]);
 
     // Pusher realtime subscription (production - when configured)
     useEffect(() => {
@@ -6813,7 +6829,7 @@ Let's build generational wealth together! 💰🚀`,
                     justifyContent: 'center',
                     zIndex: 10001,
                     padding: '20px'
-                }} onClick={() => setEditingChannel(null)}>
+                }} onClick={() => !channelActionLoading && handleEditChannelCancel()}>
                     <div style={{
                         background: '#1E1E1E',
                         borderRadius: '12px',
@@ -6930,7 +6946,7 @@ Let's build generational wealth together! 💰🚀`,
                         </div>
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                             <button
-                                onClick={() => setEditingChannel(null)}
+                                onClick={handleEditChannelCancel}
                                 style={{
                                     padding: '10px 20px',
                                     background: 'transparent',

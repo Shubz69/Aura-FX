@@ -36,6 +36,7 @@ const EditAddress = lazy(() => import('./pages/EditAddress'));
 const EditPhone = lazy(() => import('./pages/EditPhone'));
 const EditPassword = lazy(() => import('./pages/EditPassword'));
 const AdminMessages = lazy(() => import('./pages/AdminMessages'));
+const AdminInbox = lazy(() => import('./pages/AdminInbox'));
 const Messages = lazy(() => import('./pages/Messages'));
 const PublicProfile = lazy(() => import('./pages/PublicProfile'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
@@ -188,6 +189,7 @@ function AppRoutes() {
 
                     {/* Admin-only Routes */}
                     <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
+                    <Route path="/admin/inbox" element={<AdminGuard><AdminInbox /></AdminGuard>} />
                     <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
                     <Route path="/admin/users" element={<AdminGuard><AdminUserList /></AdminGuard>} />
                     <Route path="/admin/tools" element={<AdminGuard><AdminPanel /></AdminGuard>} />

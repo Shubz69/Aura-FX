@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Box, Typography, List, ListItemButton, ListItemText, Paper, Divider, TextField, Button, IconButton } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendIcon from '@mui/icons-material/Send';
@@ -9,8 +10,10 @@ import CosmicBackground from '../components/CosmicBackground';
 
 const AdminInbox = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const threadFromUrl = searchParams.get('thread');
   const [threads, setThreads] = useState([]);
-  const [activeThreadId, setActiveThreadId] = useState(null);
+  const [activeThreadId, setActiveThreadId] = useState(threadFromUrl ? parseInt(threadFromUrl, 10) : null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [file, setFile] = useState(null);
@@ -20,7 +23,8 @@ const AdminInbox = () => {
   const activeThread = useMemo(() => threads.find(t => t.id === activeThreadId), [threads, activeThreadId]);
 
   useEffect(() => {
-    if (user?.role !== 'ADMIN') return;
+    const role = (user?.role || '').toUpperCase();
+    if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') return;
     let mounted = true;
     const load = async () => {
       try {
@@ -28,17 +32,23 @@ const AdminInbox = () => {
         if (!mounted) return;
         const list = resp.data.threads || [];
         setThreads(list);
-        if (!activeThreadId && list.length) setActiveThreadId(list[0].id);
+        const targetId = threadFromUrl ? parseInt(threadFromUrl, 10) : (activeThreadId || list[0]?.id);
+        if (list.length) {
+          const exists = list.some(t => t.id === targetId);
+          setActiveThreadId(exists ? targetId : list[0].id);
+          if (threadFromUrl && exists) setSearchParams({}, { replace: true });
+        }
       } catch (e) {
         console.error('List threads failed', e);
       }
     };
     load();
     return () => { mounted = false; };
-  }, [user, activeThreadId]);
+  }, [user, threadFromUrl]);
 
   useEffect(() => {
-    if (user?.role !== 'ADMIN' || !activeThreadId) return;
+    const role = (user?.role || '').toUpperCase();
+    if ((role !== 'ADMIN' && role !== 'SUPER_ADMIN') || !activeThreadId) return;
     let mounted = true;
     WebSocketService.connect({ userId: user.id, role: user.role }, async () => {
       WebSocketService.offThreadEvents();

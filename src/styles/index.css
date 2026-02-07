@@ -32,15 +32,23 @@
 /* Ensures document can scroll on touch devices; no global overflow: hidden on html/body */
 /* DO NOT add touch-action: none or overflow: hidden to body/html globally */
 
+/* Use dynamic viewport on mobile (fixes iOS Safari address bar) */
+@supports (height: 100dvh) {
+  html, body { min-height: 100dvh; }
+  .page-wrapper { min-height: 100dvh; }
+}
+
 html, body {
   height: auto;
   min-height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-y pan-x;
+  overscroll-behavior-y: auto;
 }
 
+/* iOS Safari: -webkit-fill-available for correct viewport */
 @supports (-webkit-touch-callout: none) {
   html,
   body {
@@ -249,18 +257,20 @@ footer {
   position: relative;
 }
 
-/* Scroll Fix for All Pages */
+/* Scroll Fix for All Pages - primary scroll container on mobile */
 .page-wrapper {
   flex: 1;
   min-height: 100vh;
-  padding-top: 60px;
-  padding-bottom: 0; /* No bottom padding needed since footer is relative */
+  padding-top: calc(60px + env(safe-area-inset-top, 0));
+  padding-bottom: env(safe-area-inset-bottom, 0);
   overflow-y: auto;
   overflow-x: hidden;
-  /* Enable smooth touch scrolling on mobile */
   -webkit-overflow-scrolling: touch;
-  /* Allow vertical swipes to scroll */
-  touch-action: pan-y;
+  touch-action: pan-y pan-x;
+  overscroll-behavior-y: contain;
+  /* Prevent scroll chaining issues on mobile */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Community page layout - Discord-like with internal scroll */
@@ -510,17 +520,17 @@ img, video, canvas {
         background: #0a0a0a !important;
     }
     
-    * {
-        max-width: 100%;
+    /* Target only elements that can cause horizontal overflow, not all */
+    html, body, #root, .app-container, .page-wrapper, [class*="container"] {
+        max-width: 100vw !important;
     }
 }
 
-/* iPhone and iPad: allow document scroll; avoid height: 100vh lock on #root */
+/* iPhone and iPad: allow document scroll; use dvh for correct mobile viewport */
 @media (max-width: 1024px) {
     html {
         background: #0a0a0a !important;
         -webkit-text-size-adjust: 100% !important;
-        -ms-text-size-adjust: 100% !important;
         text-size-adjust: 100% !important;
         height: auto !important;
         min-height: 100% !important;
@@ -533,47 +543,73 @@ img, video, canvas {
     body {
         background: #0a0a0a !important;
         -webkit-font-smoothing: antialiased !important;
-        -moz-osx-font-smoothing: grayscale !important;
         height: auto !important;
         min-height: 100vh !important;
+        min-height: 100dvh !important;
         width: 100% !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
+        touch-action: pan-y pan-x !important;
         position: relative !important;
     }
     
     #root {
         background: #0a0a0a !important;
         min-height: 100vh !important;
+        min-height: 100dvh !important;
         height: auto !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
-        overflow: visible !important;
+        overflow-y: visible !important;
         position: relative !important;
     }
     
     .app-container {
         background: #0a0a0a !important;
         min-height: 100vh !important;
+        min-height: 100dvh !important;
         height: auto !important;
+        flex: 1 !important;
         width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
-        overflow: visible !important;
+        overflow-y: visible !important;
     }
     
-    /* Ensure all containers have dark background */
+    .page-wrapper {
+        flex: 1 !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y pan-x !important;
+        overscroll-behavior-y: contain !important;
+        padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+    }
+    
     * {
         box-sizing: border-box;
     }
     
-    /* Force dark background on all page containers */
     [class*="container"], [class*="page"], [class*="main"] {
         background: #0a0a0a !important;
+    }
+    
+    /* Ensure all page containers allow touch scroll */
+    .home-container, .login-container, .register-container, .profile-container,
+    .contact-container, .explore-container, .why-container, .courses-container,
+    .leaderboard-container, .settings-container, .subscription-container,
+    .terms-container, .privacy-container, .not-found-container, .payment-success-container,
+    .my-courses-container, .admin-panel-container, .messages-page-container,
+    .public-profile-container, .verify-mfa-container {
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y pan-x !important;
+        overflow-x: hidden !important;
+        padding-bottom: env(safe-area-inset-bottom, 0) !important;
     }
 }

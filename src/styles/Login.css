@@ -12,6 +12,7 @@
 
 .login-container {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -20,9 +21,11 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     font-family: var(--font-secondary);
     padding: 20px;
     padding-top: 80px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
 }
 
 /* Subtle background pattern */

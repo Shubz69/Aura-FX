@@ -349,7 +349,7 @@ const Api = {
     
     // Community/Channels
     getChannels: async (customHeaders = {}) => {
-        console.log('Attempting to fetch channels from:', `${API_BASE_URL}/api/community/channels`);
+        if (process.env.NODE_ENV === 'development') console.log('Attempting to fetch channels from:', `${API_BASE_URL}/api/community/channels`);
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get(`${API_BASE_URL}/api/community/channels`, {
@@ -407,7 +407,7 @@ const Api = {
     getChannelMessages: async (channelId, options = {}, customHeaders = {}) => {
         const { afterId } = options;
         const params = afterId ? { afterId: String(afterId) } : {};
-        console.log(`Attempting to fetch messages for channel ${channelId}${afterId ? ` (afterId=${afterId})` : ''}`);
+        if (process.env.NODE_ENV === 'development') console.log(`Attempting to fetch messages for channel ${channelId}${afterId ? ` (afterId=${afterId})` : ''}`);
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get(`${API_BASE_URL}/api/community/channels/${channelId}/messages`, {
@@ -425,7 +425,7 @@ const Api = {
     },
     
     sendMessage: async (channelId, messageData) => {
-        console.log(`Attempting to send message to channel ${channelId}`);
+        if (process.env.NODE_ENV === 'development') console.log(`Attempting to send message to channel ${channelId}`);
         
         if (!shouldMakeRequest(`${API_BASE_URL}/api/community/channels/${channelId}/messages`)) {
             console.log('Cannot send message: Not authenticated');

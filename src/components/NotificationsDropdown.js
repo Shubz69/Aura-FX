@@ -51,7 +51,7 @@ function getAvatarPath(avatar) {
   return `/avatars/${avatar}`;
 }
 
-const NotificationsDropdown = ({ isOpen, onClose, anchorRef }) => {
+const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCountChange }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -90,7 +90,9 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef }) => {
         }
         setNextCursor(data.nextCursor);
         setHasMore(data.hasMore);
-        setUnreadCount(data.unreadCount);
+        const count = data.unreadCount || 0;
+        setUnreadCount(count);
+        onUnreadCountChange?.(count);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -99,7 +101,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef }) => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [token, baseUrl]);
+  }, [token, baseUrl, onUnreadCountChange]);
 
   // Load on open
   useEffect(() => {
@@ -131,7 +133,11 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef }) => {
       setNotifications(prev => prev.map(n => 
         n.id === notificationId ? { ...n, status: 'READ', readAt: new Date().toISOString() } : n
       ));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount(prev => {
+        const next = Math.max(0, prev - 1);
+        onUnreadCountChange?.(next);
+        return next;
+      });
     } catch (error) {
       console.error('Failed to mark as read:', error);
     }
@@ -149,6 +155,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef }) => {
       
       setNotifications(prev => prev.map(n => ({ ...n, status: 'READ', readAt: new Date().toISOString() })));
       setUnreadCount(0);
+      onUnreadCountChange?.(0);
       toast.success('All notifications marked as read');
     } catch (error) {
       console.error('Failed to mark all as read:', error);
@@ -164,12 +171,20 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef }) => {
     }
     
     // Handle message-type notifications (jump to message)
-    if ((notification.type === 'MENTION' || notification.type === 'REPLY') && 
-        notification.channelId && notification.messageId) {
+    if ((notification.type === 'MENTION' || notification.type === 'REPLY') && notification.messageId) {
       onClose();
-      
-      // Navigate to channel with jump param
-      navigate(`/community?channel=${notification.channelId}&jump=${notification.messageId}&focus=1`);
+      // channelId 0 = admin/user thread message
+      if (notification.channelId === 0 || notification.channelId === '0') {
+        const role = (user?.role || '').toString().toLowerCase();
+        const isAdminUser = role === 'admin' || role === 'super_admin';
+        if (isAdminUser && notification.title?.toLowerCase().includes('from user')) {
+          navigate(`/admin/inbox?thread=${notification.messageId}`);
+        } else {
+          navigate('/messages');
+        }
+      } else if (notification.channelId) {
+        navigate(`/community?channel=${notification.channelId}&jump=${notification.messageId}&focus=1`);
+      }
     }
   };
 

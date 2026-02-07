@@ -16,7 +16,7 @@
  * 4) ELITE (role USER): same as PREMIUM plus access_level a7fx, elite. Still no admin-only unless admin role.
  * 5) Write: canWrite = false if permission_type === 'read-only' OR access_level === 'read-only'; else true when canSee.
  */
-const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels']);
+const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
 /** Super admin email – always gets full access regardless of DB role */
 const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
@@ -229,16 +229,16 @@ function getChannelPermissions(entitlements, channel) {
   let canWrite = false;
   let locked = accessLevel === 'admin-only' || accessLevel === 'admin';
 
-  /* Welcome: visible to ALL, write only for admins */
+  /* Welcome: visible to ALL, write only for SUPER_ADMIN */
   if (id === 'welcome') {
     canSee = true;
     canRead = true;
-    canWrite = role === 'ADMIN' || role === 'SUPER_ADMIN';
+    canWrite = role === 'SUPER_ADMIN';
     locked = !canWrite;
     return { canSee, canRead, canWrite, locked };
   }
 
-  /* Announcements: visible to ALL, write only for SUPER_ADMIN (shubzfx@gmail.com enforced at admin API) */
+  /* Announcements: visible to ALL, write only for SUPER_ADMIN */
   if (id === 'announcements') {
     canSee = true;
     canRead = true;
@@ -247,12 +247,21 @@ function getChannelPermissions(entitlements, channel) {
     return { canSee, canRead, canWrite, locked };
   }
 
-  /* Levels: visible to ALL, read-only (level-up messages posted by system only) */
+  /* Levels: visible to ALL, write only for SUPER_ADMIN (level-up messages posted by system or super admin) */
   if (id === 'levels') {
     canSee = true;
     canRead = true;
-    canWrite = false;
-    locked = true;
+    canWrite = role === 'SUPER_ADMIN';
+    locked = !canWrite;
+    return { canSee, canRead, canWrite, locked };
+  }
+
+  /* Notifications: visible to ALL, write only for SUPER_ADMIN */
+  if (id === 'notifications') {
+    canSee = true;
+    canRead = true;
+    canWrite = role === 'SUPER_ADMIN';
+    locked = !canWrite;
     return { canSee, canRead, canWrite, locked };
   }
 

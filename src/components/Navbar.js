@@ -6,7 +6,8 @@ import "../styles/UserDropdown.css";
 import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH } from 'react-icons/fa';
 import { isSuperAdmin, isAdmin, isPremium } from '../utils/roles';
 import A7Logo from './A7Logo';
-import NotificationSystem, { triggerNotification } from './NotificationSystem';
+import { triggerNotification } from './NotificationSystem';
+import NavbarNotifications from './NavbarNotifications';
 
 const Navbar = () => {
     const { user, loading, logout } = useAuth();
@@ -16,12 +17,6 @@ const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false); 
     const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
     
-    const handleNotificationClick = (link) => {
-        if (link) {
-            navigate(link);
-        }
-    };
-
     const toggleDropdown = () => {
         setDropdownOpen(!dropdownOpen);
     };
@@ -59,9 +54,10 @@ const Navbar = () => {
                     {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
-                {showSuperAdminLinks && (
+                {(showSuperAdminLinks || isAdmin(user)) && (
                     <>
                         <li><Link to="/admin">Admin Panel</Link></li>
+                        <li><Link to="/admin/inbox"><FaEnvelope className="dropdown-icon" /> User Messages</Link></li>
                         <li><Link to="/admin/messages"><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
                     </>
                 )}
@@ -75,7 +71,7 @@ const Navbar = () => {
                     </>
                 ) : (
                     <>
-                        <NotificationSystem user={user} onNotificationClick={handleNotificationClick} />
+                        <NavbarNotifications />
                         <div className="user-profile">
                             <div className="user-icon" onClick={toggleDropdown}>
                                 <FaUserCircle />
@@ -133,9 +129,10 @@ const Navbar = () => {
                     {isPremium(user) && (
                         <li><Link to="/premium-ai" onClick={toggleMobileMenu}>🤖 Premium AI</Link></li>
                     )}
-                    {showSuperAdminLinks && (
+                    {(showSuperAdminLinks || isAdmin(user)) && (
                         <>
                             <li><Link to="/admin" onClick={toggleMobileMenu}>Admin Panel</Link></li>
+                            <li><Link to="/admin/inbox" onClick={toggleMobileMenu}><FaEnvelope className="dropdown-icon" /> User Messages</Link></li>
                             <li><Link to="/admin/messages" onClick={toggleMobileMenu}><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
                         </>
                     )}
@@ -189,10 +186,15 @@ const Navbar = () => {
                         <li><Link to="/leaderboard" onClick={toggleMobileUserMenu}>
                             <FaTrophy className="dropdown-icon" /> Leaderboard
                         </Link></li>
-                        {showSuperAdminLinks && (
-                            <li><Link to="/admin" onClick={toggleMobileUserMenu}>
-                                <FaCog className="dropdown-icon" /> Admin Panel
-                            </Link></li>
+                        {(showSuperAdminLinks || isAdmin(user)) && (
+                            <>
+                                <li><Link to="/admin" onClick={toggleMobileUserMenu}>
+                                    <FaCog className="dropdown-icon" /> Admin Panel
+                                </Link></li>
+                                <li><Link to="/admin/inbox" onClick={toggleMobileUserMenu}>
+                                    <FaEnvelope className="dropdown-icon" /> User Messages
+                                </Link></li>
+                            </>
                         )}
                         {(isAdmin(user) || isSuperAdmin(user)) && (
                             <li><Link to="/settings" onClick={toggleMobileUserMenu}>

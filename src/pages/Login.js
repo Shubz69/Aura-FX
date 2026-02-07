@@ -137,23 +137,20 @@ const Login = () => {
             let errorMessage = '';
             const status = err.response?.status;
             const data = err.response?.data;
-            const isJsonResponse = data != null && typeof data === 'object';
-            const serverMessage = isJsonResponse ? (data.message || data.error) : '';
+            const isJsonResponse = data != null && typeof data === 'object' && !Array.isArray(data);
+            const serverMessage = isJsonResponse ? (data.message || data.error || '') : '';
+            const errMsg = (err.message || '').trim();
 
             if (status === 401) {
-                errorMessage = serverMessage || 'Incorrect password. Please try again or use Forgot Password.';
+                // Wrong password – account exists but password is incorrect
+                errorMessage = serverMessage || errMsg || 'Incorrect password. Please try again or use Forgot Password.';
                 setPasswordError(true);
             } else if (status === 404) {
-                if (isJsonResponse && serverMessage) {
-                    errorMessage = serverMessage;
-                } else if (!isJsonResponse) {
-                    errorMessage = 'Login service is unavailable. Please try again later.';
-                } else {
-                    errorMessage = 'No account with this email exists. Sign up for an account.';
-                }
+                // No account – email not found
+                errorMessage = serverMessage || errMsg || 'No account with this email exists. Please sign up for an account.';
                 setPasswordError(false);
             } else if (err.response) {
-                errorMessage = serverMessage || (status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : `Login failed. Please try again.`);
+                errorMessage = serverMessage || errMsg || (status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : 'Login failed. Please try again.');
                 setPasswordError(false);
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || (err.message && err.message.includes('Network Error'))) {
                 errorMessage = 'Cannot connect to server. Please try again.';
@@ -161,13 +158,9 @@ const Login = () => {
             } else if (err.code === 'ETIMEDOUT' || (err.message && err.message.includes('timeout'))) {
                 errorMessage = 'The server took too long to respond. Check your connection and try again.';
                 setPasswordError(false);
-            } else if (err.message) {
-                errorMessage = err.message;
-                if (errorMessage.toLowerCase().includes('password')) {
-                    setPasswordError(true);
-                } else {
-                    setPasswordError(false);
-                }
+            } else if (errMsg) {
+                errorMessage = errMsg;
+                setPasswordError(errMsg.toLowerCase().includes('password') || errMsg.toLowerCase().includes('incorrect'));
             } else {
                 errorMessage = 'Login failed. Please try again.';
                 setPasswordError(false);
@@ -330,6 +323,39 @@ const Login = () => {
                     <h2 className="login-title">SIGN IN</h2>
                     <p className="login-subtitle">Access your trading account</p>
                 </div>
+
+                {error && error.trim() && (
+                    <div
+                        className="error-message-under-button"
+                        role="alert"
+                        aria-live="assertive"
+                        id={passwordError ? 'password-error' : undefined}
+                        style={{
+                            display: 'block !important',
+                            visibility: 'visible !important',
+                            opacity: '1 !important',
+                            marginBottom: '16px',
+                            marginTop: '0',
+                            padding: '16px 20px',
+                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                            border: '2px solid #EF4444',
+                            borderRadius: '12px',
+                            color: '#FFFFFF',
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            textAlign: 'center',
+                            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
+                            zIndex: 1000,
+                            position: 'relative',
+                            textTransform: 'none',
+                            lineHeight: '1.5',
+                            wordWrap: 'break-word',
+                            maxWidth: '100%'
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
                 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
@@ -366,39 +392,6 @@ const Login = () => {
                             aria-describedby={passwordError ? 'password-error' : undefined}
                         />
                     </div>
-                    
-                    {error && error.trim() && (
-                        <div 
-                            className="error-message-under-button" 
-                            role="alert" 
-                            aria-live="assertive"
-                            id={passwordError ? 'password-error' : undefined}
-                            style={{ 
-                                display: 'block !important',
-                                visibility: 'visible !important',
-                                opacity: '1 !important',
-                                marginBottom: '16px',
-                                marginTop: '0',
-                                padding: '16px 20px',
-                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
-                                border: '2px solid #EF4444',
-                                borderRadius: '12px',
-                                color: '#FFFFFF',
-                                fontSize: '15px',
-                                fontWeight: '600',
-                                textAlign: 'center',
-                                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
-                                zIndex: 1000,
-                                position: 'relative',
-                                textTransform: 'none',
-                                lineHeight: '1.5',
-                                wordWrap: 'break-word',
-                                maxWidth: '100%'
-                            }}
-                        >
-                            {error}
-                        </div>
-                    )}
                     
                     <button 
                         type="submit" 

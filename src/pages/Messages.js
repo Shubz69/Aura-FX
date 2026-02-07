@@ -13,54 +13,43 @@ const Messages = () => {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null);
 
+    const loadMessages = React.useCallback(async () => {
+        if (!user) return;
+        try {
+            const threadResponse = await Api.ensureAdminThread();
+            const threadId = threadResponse.data?.thread?.id;
+            if (threadId) {
+                const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
+                const apiMessages = messagesResponse.data?.messages || [];
+                const formattedMessages = apiMessages.map(msg => ({
+                    id: msg.id,
+                    sender: String(msg.senderId) === String(user.id) ? 'user' : 'admin',
+                    senderName: String(msg.senderId) === String(user.id) ? (user.username || user.name || 'You') : 'Admin',
+                    content: msg.body,
+                    timestamp: msg.createdAt || msg.created_at,
+                    read: !!msg.readAt || !!msg.read_at
+                }));
+                setMessages(formattedMessages);
+            } else {
+                const savedMessages = localStorage.getItem(`messages_${user.id}`);
+                if (savedMessages) setMessages(JSON.parse(savedMessages));
+            }
+        } catch (error) {
+            console.error('Error loading messages:', error);
+            const savedMessages = localStorage.getItem(`messages_${user.id}`);
+            if (savedMessages) setMessages(JSON.parse(savedMessages));
+        }
+    }, [user]);
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
             return;
         }
-
-        // Load messages from API
-        const loadMessages = async () => {
-            try {
-                // Ensure admin thread exists
-                const threadResponse = await Api.ensureAdminThread();
-                const threadId = threadResponse.data?.thread?.id;
-                
-                if (threadId) {
-                    // Load messages from thread
-                    const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
-                    const apiMessages = messagesResponse.data?.messages || [];
-                    
-                    // Convert API format to display format
-                    const formattedMessages = apiMessages.map(msg => ({
-                        id: msg.id,
-                        sender: String(msg.senderId) === String(user.id) ? 'user' : 'admin',
-                        senderName: String(msg.senderId) === String(user.id) ? (user.username || user.name || 'You') : 'Admin',
-                        content: msg.body,
-                        timestamp: msg.createdAt || msg.created_at,
-                        read: !!msg.readAt || !!msg.read_at
-                    }));
-                    
-                    setMessages(formattedMessages);
-                } else {
-                    // Fallback to localStorage if API fails
-                    const savedMessages = localStorage.getItem(`messages_${user.id}`);
-                    if (savedMessages) {
-                        setMessages(JSON.parse(savedMessages));
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading messages:', error);
-                // Fallback to localStorage
-                const savedMessages = localStorage.getItem(`messages_${user.id}`);
-                if (savedMessages) {
-                    setMessages(JSON.parse(savedMessages));
-                }
-            }
-        };
-
         loadMessages();
-    }, [user, navigate]);
+        const pollInterval = setInterval(loadMessages, 3000);
+        return () => clearInterval(pollInterval);
+    }, [user, navigate, loadMessages]);
 
     useEffect(() => {
         // Scroll to bottom when messages change
