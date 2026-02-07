@@ -4552,6 +4552,7 @@ Let's build generational wealth together! 💰🚀`,
                                                             return;
                                                         }
                                                         setSelectedChannel(channel);
+                                                        if (isMobile) setSidebarOpen(false);
                                                     }}
                                                 style={{ 
                                                         cursor: isLocked ? 'not-allowed' : ((isAdminUser || isSuperAdminUser) ? 'grab' : 'pointer'),
