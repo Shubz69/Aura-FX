@@ -345,12 +345,12 @@ module.exports = async (req, res) => {
     }
 
     try {
-      // Default channels (fallback)
+      // Default channels (fallback) - include canSee/canRead so free users see them
       const defaultChannels = [
-        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA FX community!' },
-        { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important announcements' },
-        { id: 'levels', name: 'levels', displayName: 'Levels', category: 'announcements', description: 'Level-up celebrations' },
-        { id: 'general', name: 'general', displayName: 'General', category: 'general', description: 'General discussion' }
+        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA FX community!', canSee: true, canRead: true, canWrite: false },
+        { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important announcements', canSee: true, canRead: true, canWrite: false },
+        { id: 'levels', name: 'levels', displayName: 'Levels', category: 'announcements', description: 'Level-up celebrations', canSee: true, canRead: true, canWrite: false },
+        { id: 'general', name: 'general', displayName: 'General', category: 'general', description: 'General discussion', canSee: true, canRead: true, canWrite: true }
       ];
 
       const db = await getDbConnection();

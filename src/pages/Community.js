@@ -1867,15 +1867,15 @@ const Community = () => {
                     // 1. There are new messages from API
                     // 2. API has messages (even if count matches, content might differ)
                     // 3. API messages exist (to ensure persistence)
+                    const isAllowlistChannel = ['announcements', 'levels'].includes(String(channelId).toLowerCase());
                     if (hasNewMessages || apiMessages.length > 0) {
                         // Save to localStorage as backup/cache (CRITICAL for persistence)
                         saveMessagesToStorage(channelId, apiMessages);
-                        
-                        // Update with fresh messages from API (always use API as source of truth)
                         setMessages(apiMessages);
                     } else if (apiMessages.length === 0 && cachedMessages.length > 0) {
-                        // If API returns empty but we have cached messages, keep cached (might be loading)
-                        // But still save empty array to localStorage to sync state
+                        saveMessagesToStorage(channelId, []);
+                    } else if (apiMessages.length === 0 && isAllowlistChannel) {
+                        // Don't overwrite - placeholder useEffect will show content for empty announcements/levels
                         saveMessagesToStorage(channelId, []);
                     }
                 }
@@ -2920,6 +2920,8 @@ const Community = () => {
     }, [selectedChannel?.id, userId]);
     
     const isWelcomeChannel = selectedChannel && (String(selectedChannel.id).toLowerCase() === 'welcome' || (selectedChannel.name && selectedChannel.name.toLowerCase() === 'welcome'));
+    const isAnnouncementsChannel = selectedChannel && (String(selectedChannel.id).toLowerCase() === 'announcements' || (selectedChannel.name && selectedChannel.name.toLowerCase() === 'announcements'));
+    const isLevelsChannel = selectedChannel && (String(selectedChannel.id).toLowerCase() === 'levels' || (selectedChannel.name && selectedChannel.name.toLowerCase() === 'levels'));
 
     // Keep welcome message visible for everyone when viewing welcome channel
     useEffect(() => {
@@ -3016,6 +3018,70 @@ Let's build generational wealth together! 💰🚀`,
             return [welcomeMessage, ...prev];
         });
     }, [selectedChannel, messages, isWelcomeChannel]);
+
+    // Placeholder for empty Announcements channel - ensures free users see content
+    useEffect(() => {
+        if (!selectedChannel || !isAnnouncementsChannel) return;
+        const hasPlaceholder = messages.some(msg => msg.id === 'announcements-placeholder');
+        if (hasPlaceholder) return;
+        const hasRealMessages = messages.some(m => m.id && m.id !== 'announcements-placeholder');
+        if (hasRealMessages) return;
+
+        const placeholderMessage = {
+            id: 'announcements-placeholder',
+            channelId: selectedChannel.id,
+            content: `📢 **ANNOUNCEMENTS**
+
+Important updates and news from AURA FX will appear here.
+
+Check back regularly for:
+• New features and platform updates
+• Trading insights and market analysis
+• Community events and challenges
+• Course updates and new content`,
+            sender: { id: 'system', username: 'AURA FX', avatar: '/avatars/avatar_ai.png', role: 'admin' },
+            timestamp: new Date().toISOString(),
+            file: null,
+            isPlaceholder: true
+        };
+        setMessages(prev => {
+            if (prev.length === 0) return [placeholderMessage];
+            if (prev.some(m => m.id === 'announcements-placeholder')) return prev;
+            return [placeholderMessage, ...prev];
+        });
+    }, [selectedChannel, messages, isAnnouncementsChannel]);
+
+    // Placeholder for empty Levels channel - ensures free users see content
+    useEffect(() => {
+        if (!selectedChannel || !isLevelsChannel) return;
+        const hasPlaceholder = messages.some(msg => msg.id === 'levels-placeholder');
+        if (hasPlaceholder) return;
+        const hasRealMessages = messages.some(m => m.id && m.id !== 'levels-placeholder');
+        if (hasRealMessages) return;
+
+        const placeholderMessage = {
+            id: 'levels-placeholder',
+            channelId: selectedChannel.id,
+            content: `🏆 **LEVEL-UP CELEBRATIONS**
+
+When members level up by earning XP, their achievements will be celebrated here!
+
+Earn XP by:
+• Sending messages in the community
+• Sharing files and insights
+• Being active in discussions
+• Completing courses`,
+            sender: { id: 'system', username: 'AURA FX', avatar: '/avatars/avatar_ai.png', role: 'admin' },
+            timestamp: new Date().toISOString(),
+            file: null,
+            isPlaceholder: true
+        };
+        setMessages(prev => {
+            if (prev.length === 0) return [placeholderMessage];
+            if (prev.some(m => m.id === 'levels-placeholder')) return prev;
+            return [placeholderMessage, ...prev];
+        });
+    }, [selectedChannel, messages, isLevelsChannel]);
 
     // Handle edit message
     const handleEditMessage = (messageId) => {
