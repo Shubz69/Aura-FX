@@ -99,6 +99,16 @@
     grid-column: 1 / -1;
 }
 
+/* reCAPTCHA - ensure visible on all devices */
+.captcha-wrapper {
+    overflow: visible !important;
+    min-height: 90px;
+}
+.captcha-wrapper iframe {
+    max-width: 100% !important;
+    visibility: visible !important;
+}
+
 /* CLEAN MODERN FORM FIELDS */
 .form-label {
     display: block;

@@ -453,16 +453,19 @@ const Register = () => {
                 </label>
 
                 {(useFirebasePhone || RECAPTCHA_SITE_KEY) && (
-                    <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', minHeight: 78 }}>
+                    <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', minHeight: 90, overflow: 'visible' }}>
                         {RECAPTCHA_SITE_KEY ? (
                             <>
-                                <ReCAPTCHA
-                                    sitekey={RECAPTCHA_SITE_KEY}
-                                    onChange={() => { setCaptchaCompleted(true); setRecaptchaLoadError(false); }}
-                                    onExpired={() => setCaptchaCompleted(false)}
-                                    onErrored={() => setRecaptchaLoadError(true)}
-                                    theme="dark"
-                                />
+                                <div style={{ transform: 'scale(1)', transformOrigin: 'left top' }}>
+                                    <ReCAPTCHA
+                                        sitekey={RECAPTCHA_SITE_KEY}
+                                        size="normal"
+                                        onChange={() => { setCaptchaCompleted(true); setRecaptchaLoadError(false); }}
+                                        onExpired={() => setCaptchaCompleted(false)}
+                                        onErrored={() => setRecaptchaLoadError(true)}
+                                        theme="dark"
+                                    />
+                                </div>
                                 {recaptchaLoadError && (
                                     <p className="captcha-error-msg" style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '0.5rem' }}>
                                         reCAPTCHA failed to load. Check your connection or <button type="button" onClick={() => window.location.reload()} style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', textDecoration: 'underline' }}>refresh the page</button>.
@@ -471,10 +474,13 @@ const Register = () => {
                             </>
                         ) : (
                             <>
-                                <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'center', minHeight: 78 }} />
+                                <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', minHeight: 78, overflow: 'visible' }} />
+                                <p className="captcha-setup-msg" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', marginTop: '0.5rem', maxWidth: 360 }}>
+                                    If you don&apos;t see the reCAPTCHA above, add <code style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>REACT_APP_RECAPTCHA_SITE_KEY</code> in Vercel → Settings → Environment Variables. Get a free key at <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>google.com/recaptcha/admin</a> (reCAPTCHA v2 Checkbox).
+                                </p>
                                 {recaptchaLoadError && (
                                     <p className="captcha-error-msg" style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                                        reCAPTCHA failed to load. Add <code style={{ fontSize: '0.8rem' }}>REACT_APP_RECAPTCHA_SITE_KEY</code> in Vercel or refresh the page.
+                                        Firebase reCAPTCHA failed to load. Add <code style={{ fontSize: '0.8rem' }}>REACT_APP_RECAPTCHA_SITE_KEY</code> in Vercel for a more reliable option.
                                     </p>
                                 )}
                             </>
