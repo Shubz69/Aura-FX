@@ -11,7 +11,7 @@ import { isFirebasePhoneEnabled, setupRecaptcha, sendPhoneOtp, confirmPhoneOtp }
 import { toE164 } from '../utils/countryCodes.js';
 import PhoneCountrySelect from '../components/PhoneCountrySelect';
 
-const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
+const RECAPTCHA_SITE_KEY = (process.env.REACT_APP_RECAPTCHA_SITE_KEY || '').trim() || null;
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -31,6 +31,7 @@ const Register = () => {
     const [codesSent, setCodesSent] = useState(false); // true after "Send verification codes" – show email + phone OTP on same page
     const [firebaseOtpSent, setFirebaseOtpSent] = useState(false);
     const [captchaCompleted, setCaptchaCompleted] = useState(false);
+    const [recaptchaLoadError, setRecaptchaLoadError] = useState(false);
     const [phoneCountryCode, setPhoneCountryCode] = useState('+44');
     const [phoneNational, setPhoneNational] = useState('');
     const firebaseConfirmationRef = useRef(null);
@@ -49,13 +50,18 @@ const Register = () => {
     useEffect(() => {
         if (!codesSent && useFirebasePhone) {
             setCaptchaCompleted(false);
+            setRecaptchaLoadError(false);
             const t = setTimeout(() => {
                 const container = document.getElementById('recaptcha-container-register');
                 if (container && !recaptchaVerifierRef.current) {
                     const r = setupRecaptcha('recaptcha-container-register', () => setCaptchaCompleted(true));
-                    if (r) recaptchaVerifierRef.current = r;
+                    if (r) {
+                        recaptchaVerifierRef.current = r;
+                    } else {
+                        setRecaptchaLoadError(true);
+                    }
                 }
-            }, 300);
+            }, 500);
             return () => clearTimeout(t);
         }
         if (!codesSent && !useFirebasePhone) {
@@ -447,21 +453,36 @@ const Register = () => {
                 </label>
 
                 {(useFirebasePhone || RECAPTCHA_SITE_KEY) && (
-                    <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', minHeight: 78 }}>
+                    <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', minHeight: 78 }}>
                         {RECAPTCHA_SITE_KEY ? (
-                            <ReCAPTCHA
-                                sitekey={RECAPTCHA_SITE_KEY}
-                                onChange={() => setCaptchaCompleted(true)}
-                                onExpired={() => setCaptchaCompleted(false)}
-                                theme="dark"
-                            />
+                            <>
+                                <ReCAPTCHA
+                                    sitekey={RECAPTCHA_SITE_KEY}
+                                    onChange={() => { setCaptchaCompleted(true); setRecaptchaLoadError(false); }}
+                                    onExpired={() => setCaptchaCompleted(false)}
+                                    onErrored={() => setRecaptchaLoadError(true)}
+                                    theme="dark"
+                                />
+                                {recaptchaLoadError && (
+                                    <p className="captcha-error-msg" style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                                        reCAPTCHA failed to load. Check your connection or <button type="button" onClick={() => window.location.reload()} style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', textDecoration: 'underline' }}>refresh the page</button>.
+                                    </p>
+                                )}
+                            </>
                         ) : (
-                            <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'center' }} />
+                            <>
+                                <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'center', minHeight: 78 }} />
+                                {recaptchaLoadError && (
+                                    <p className="captcha-error-msg" style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                                        reCAPTCHA failed to load. Add <code style={{ fontSize: '0.8rem' }}>REACT_APP_RECAPTCHA_SITE_KEY</code> in Vercel or refresh the page.
+                                    </p>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
                 
-                <button type="submit" className="register-button" disabled={isLoading || ((useFirebasePhone || RECAPTCHA_SITE_KEY) && !captchaCompleted)}>
+                <button type="submit" className="register-button" disabled={isLoading}>
                     {isLoading ? 'SENDING CODES...' : ((useFirebasePhone || RECAPTCHA_SITE_KEY) && !captchaCompleted ? 'COMPLETE reCAPTCHA ABOVE' : 'SEND VERIFICATION CODES')}
                 </button>
             </form>
