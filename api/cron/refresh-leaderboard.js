@@ -24,16 +24,23 @@ function getRows(result) {
 }
 
 module.exports = async (req, res) => {
-  // Verify cron secret or allow from Vercel
+  // Verify cron secret or allow from Vercel Cron
+  // See: https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs
   const authHeader = req.headers.authorization;
   const cronSecret = process.env.CRON_SECRET;
-  
-  // Allow if from Vercel Cron (has x-vercel-cron header) or has correct secret
-  const isVercelCron = req.headers['x-vercel-cron'] === '1';
+  const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+
+  const isVercelCronHeader = req.headers['x-vercel-cron'] === '1';
   const hasValidSecret = cronSecret && authHeader === `Bearer ${cronSecret}`;
-  
-  if (!isVercelCron && !hasValidSecret && process.env.NODE_ENV === 'production') {
-    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  const isVercelCronUA = userAgent.includes('vercel-cron');
+
+  const allowed = isVercelCronHeader || hasValidSecret || (isVercelCronUA && process.env.VERCEL);
+
+  if (!allowed && process.env.NODE_ENV === 'production') {
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized. Set CRON_SECRET in Vercel env vars for secure cron auth.'
+    });
   }
 
   const startTime = Date.now();

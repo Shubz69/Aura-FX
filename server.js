@@ -5,7 +5,12 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'your_stripe_k
 const path = require('path');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
-const sqlite3 = require('better-sqlite3');
+let sqlite3;
+try {
+  sqlite3 = require('better-sqlite3');
+} catch (e) {
+  sqlite3 = null;
+}
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -22,11 +27,12 @@ const transporter = nodemailer.createTransporter({
 // Database setup
 let db;
 try {
-  db = sqlite3('data.sqlite3');
-  console.log('Connected to SQLite database');
+  if (sqlite3) {
+    db = sqlite3('data.sqlite3');
+    console.log('Connected to SQLite database');
   
-  // Create reset_codes table if it doesn't exist
-  db.exec(`
+    // Create reset_codes table if it doesn't exist
+    db.exec(`
     CREATE TABLE IF NOT EXISTS reset_codes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL,
@@ -39,9 +45,13 @@ try {
   `);
   
   // Clean up expired codes on startup
-  const expiredCount = db.prepare('DELETE FROM reset_codes WHERE expires_at < ?').run(Date.now()).changes;
-  if (expiredCount > 0) {
-    console.log(`Cleaned up ${expiredCount} expired reset codes`);
+    const expiredCount = db.prepare('DELETE FROM reset_codes WHERE expires_at < ?').run(Date.now()).changes;
+    if (expiredCount > 0) {
+      console.log(`Cleaned up ${expiredCount} expired reset codes`);
+    }
+  } else {
+    db = null;
+    console.warn('better-sqlite3 not available - using in-memory storage for reset codes');
   }
 } catch (error) {
   console.error('Database connection error:', error);

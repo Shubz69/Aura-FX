@@ -156,6 +156,7 @@
     flex-shrink: 0;
     width: 90px;
     min-width: 90px;
+    z-index: 100;
 }
 .phone-country-trigger {
     width: 100%;
@@ -197,7 +198,7 @@
     left: 0;
     width: 280px;
     max-width: min(280px, calc(100vw - 32px));
-    z-index: 100;
+    z-index: 9999;
     background: #0f0f0f;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
@@ -517,25 +518,14 @@
     border-color: #ffffff !important;
 }
 
-.terms-checkbox label {
+.terms-checkbox-text {
     color: #ffffff;
     font-size: 0.8rem;
     font-family: var(--font-secondary);
-    line-height: 1.4;
+    line-height: 1.5;
     cursor: pointer;
     font-weight: 300;
-    user-select: none;
-    -webkit-user-select: none;
-    pointer-events: auto;
     flex: 1;
-    position: relative;
-    z-index: 1;
-}
-
-.terms-checkbox label a {
-    pointer-events: auto;
-    position: relative;
-    z-index: 2;
 }
 
 .terms-checkbox a {
@@ -544,6 +534,8 @@
     font-weight: 300;
     font-family: var(--font-main);
     transition: color 0.3s ease;
+    display: inline;
+    white-space: nowrap;
 }
 
 .terms-checkbox a:hover {

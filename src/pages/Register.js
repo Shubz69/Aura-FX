@@ -30,6 +30,7 @@ const Register = () => {
     const [phoneCountryCode, setPhoneCountryCode] = useState('+44');
     const [phoneNational, setPhoneNational] = useState('');
     const firebaseConfirmationRef = useRef(null);
+    const recaptchaVerifierRef = useRef(null);
     const useFirebasePhone = isFirebasePhoneEnabled();
     const { register: registerUser } = useAuth();
     const location = useLocation();
@@ -39,6 +40,20 @@ const Register = () => {
     useEffect(() => {
         setFormData(prev => ({ ...prev, phone: toE164(phoneCountryCode, phoneNational) }));
     }, [phoneCountryCode, phoneNational]);
+
+    // Initialize Firebase reCAPTCHA before SEND button when form is shown (Firebase phone only)
+    useEffect(() => {
+        if (!codesSent && useFirebasePhone) {
+            const t = setTimeout(() => {
+                const container = document.getElementById('recaptcha-container-register');
+                if (container && !recaptchaVerifierRef.current) {
+                    const r = setupRecaptcha('recaptcha-container-register');
+                    if (r) recaptchaVerifierRef.current = r;
+                }
+            }, 300);
+            return () => clearTimeout(t);
+        }
+    }, [codesSent, useFirebasePhone]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -111,7 +126,24 @@ const Register = () => {
                 setIsLoading(false);
                 return;
             }
-            if (!useFirebasePhone) {
+            if (useFirebasePhone) {
+                const recaptcha = recaptchaVerifierRef.current || setupRecaptcha('recaptcha-container-register');
+                if (!recaptcha) {
+                    setError("reCAPTCHA could not load. Please complete the 'I'm not a robot' checkbox above and try again.");
+                    setIsLoading(false);
+                    return;
+                }
+                try {
+                    const { confirmationResult } = await sendPhoneOtp(formData.phone, recaptcha);
+                    firebaseConfirmationRef.current = confirmationResult;
+                    setFirebaseOtpSent(true);
+                } catch (phoneErr) {
+                    const msg = phoneErr.message || "Could not send phone code.";
+                    setError(msg + (msg.includes('captcha') || msg.includes('recaptcha') ? " Complete the 'I'm not a robot' checkbox above, then try again." : ""));
+                    setIsLoading(false);
+                    return;
+                }
+            } else {
                 try {
                     const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
                     if (sendRes?.useFirebase) setError("Backend has Firebase but frontend is not configured. Add REACT_APP_FIREBASE_* or configure Twilio.");
@@ -123,8 +155,7 @@ const Register = () => {
                 }
             }
             setCodesSent(true);
-            setFirebaseOtpSent(false);
-            setSuccess(useFirebasePhone ? "Email code sent! Click 'Send code' below to get your phone code." : "Codes sent! Enter the 6-digit codes from your email and phone below.");
+            setSuccess("Codes sent! Enter the 6-digit codes from your email and phone below.");
         } catch (err) {
             let errorMsg = err.message || "Failed to send verification.";
             if (err.message && err.message.includes("already exists")) errorMsg = "An account with this email already exists. Please sign in.";
@@ -378,63 +409,23 @@ const Register = () => {
                     </div>
                 </div>
                 
-                <div 
-                    className="terms-checkbox" 
-                    onClick={(e) => {
-                        // If clicking on a link, don't toggle checkbox
-                        if (e.target.tagName === 'A' || e.target.closest('a')) {
-                            return;
-                        }
-                        // Toggle checkbox when clicking anywhere in the container
-                        setAcceptedTerms(!acceptedTerms);
-                    }}
-                    onTouchStart={(e) => {
-                        // Handle touch events for iOS
-                        if (e.target.tagName === 'A' || e.target.closest('a')) {
-                            return;
-                        }
-                        e.preventDefault();
-                        setAcceptedTerms(!acceptedTerms);
-                    }}
-                >
+                <label className="terms-checkbox" htmlFor="terms">
                     <input
                         type="checkbox"
                         id="terms"
                         checked={acceptedTerms}
                         onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setAcceptedTerms(e.target.checked);
-                        }}
-                        onTouchStart={(e) => {
-                            e.stopPropagation();
-                            setAcceptedTerms(!acceptedTerms);
-                        }}
                         required
                         disabled={isLoading}
                     />
-                    <label 
-                        htmlFor="terms" 
-                        onClick={(e) => {
-                            // If clicking on a link, don't toggle
-                            if (e.target.tagName === 'A' || e.target.closest('a')) {
-                                return;
-                            }
-                            // Prevent default label behavior and let container handle it
-                            e.preventDefault();
-                            setAcceptedTerms(!acceptedTerms);
-                        }}
-                        onTouchStart={(e) => {
-                            if (e.target.tagName === 'A' || e.target.closest('a')) {
-                                return;
-                            }
-                            e.preventDefault();
-                            setAcceptedTerms(!acceptedTerms);
-                        }}
-                    >
+                    <span className="terms-checkbox-text">
                         I agree to the <Link to="/terms" target="_blank" onClick={(e) => e.stopPropagation()}>Terms and Conditions</Link> and <Link to="/privacy" target="_blank" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
-                    </label>
-                </div>
+                    </span>
+                </label>
+
+                {useFirebasePhone && (
+                    <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ minHeight: 78, marginBottom: '1rem', display: 'flex', justifyContent: 'center' }} />
+                )}
                 
                 <button type="submit" className="register-button" disabled={isLoading}>
                     {isLoading ? 'SENDING CODES...' : 'SEND VERIFICATION CODES'}
@@ -446,9 +437,7 @@ const Register = () => {
                     <>
                         <hr style={{ margin: '1.25rem 0', borderColor: 'rgba(255,255,255,0.2)' }} />
                         <p className="register-subtitle" style={{ marginBottom: '1rem' }}>Enter the 6-digit codes sent to your email and phone</p>
-                        {useFirebasePhone && (
-                            <div id="recaptcha-container-register" style={{ minHeight: 78, marginBottom: '1rem', display: 'flex', justifyContent: 'center' }} />
-                        )}
+                        {useFirebasePhone && <div id="recaptcha-container-register" style={{ minHeight: 78, marginBottom: '1rem', display: 'flex', justifyContent: 'center' }} />}
                         <form onSubmit={handleVerifyAndSignUp}>
                             <div className="form-group" style={{ maxWidth: '320px', margin: '0 auto 1rem' }}>
                                 <label htmlFor="email-code-register" className="form-label">Email code (sent to {formData.email})</label>
@@ -466,29 +455,19 @@ const Register = () => {
                             </div>
                             <div className="form-group" style={{ maxWidth: '320px', margin: '0 auto 1rem' }}>
                                 <label htmlFor="phone-code-register" className="form-label">Phone code (sent to {formData.phone})</label>
-                                {useFirebasePhone && !firebaseOtpSent ? (
-                                    <div>
-                                        <button type="button" className="register-button" onClick={handleSendFirebaseOtp} disabled={isLoading} style={{ marginBottom: '0.75rem' }}>
-                                            {isLoading ? 'SENDING...' : 'SEND PHONE CODE'}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <input
-                                            type="text"
-                                            id="phone-code-register"
-                                            value={phoneCode}
-                                            onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                            maxLength={6}
-                                            placeholder="6-digit code"
-                                            className="form-input"
-                                            disabled={isLoading}
-                                            style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '6px' }}
-                                        />
-                                        {useFirebasePhone && firebaseOtpSent && <p><button type="button" onClick={handleSendFirebaseOtp} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
-                                        {!useFirebasePhone && <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
-                                    </>
-                                )}
+                                <input
+                                    type="text"
+                                    id="phone-code-register"
+                                    value={phoneCode}
+                                    onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                                    maxLength={6}
+                                    placeholder="6-digit code"
+                                    className="form-input"
+                                    disabled={isLoading}
+                                    style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '6px' }}
+                                />
+                                {useFirebasePhone && firebaseOtpSent && <p><button type="button" onClick={handleSendFirebaseOtp} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
+                                {!useFirebasePhone && <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Resend phone code</button></p>}
                             </div>
                             {(firebaseOtpSent || !useFirebasePhone) && (
                                 <button type="submit" className="register-button" disabled={isLoading || emailCode.length !== 6 || phoneCode.length !== 6} style={{ marginTop: '0.5rem' }}>
@@ -497,7 +476,7 @@ const Register = () => {
                             )}
                         </form>
                         <p style={{ marginTop: '1rem' }}>
-                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setPhoneCountryCode('+44'); setPhoneNational(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
+                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setPhoneCountryCode('+44'); setPhoneNational(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); recaptchaVerifierRef.current = null; }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
                         </p>
                     </>
                 )}
