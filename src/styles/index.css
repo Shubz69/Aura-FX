@@ -260,15 +260,15 @@ footer {
 /* Scroll Fix for All Pages - primary scroll container on mobile */
 .page-wrapper {
   flex: 1;
+  min-height: 0; /* Allow flex shrink so overflow scroll works */
   min-height: 100vh;
   padding-top: calc(60px + env(safe-area-inset-top, 0));
   padding-bottom: env(safe-area-inset-bottom, 0);
-  overflow-y: auto;
+  overflow-y: scroll; /* scroll (not auto) improves touch scroll reliability on iOS */
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y pan-x;
-  overscroll-behavior-y: contain;
-  /* Prevent scroll chaining issues on mobile */
+  touch-action: pan-y;
+  overscroll-behavior-y: auto;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }
@@ -558,13 +558,13 @@ img, video, canvas {
         background: #0a0a0a !important;
         min-height: 100vh !important;
         min-height: 100dvh !important;
-        height: auto !important;
+        height: 100vh !important;
+        height: 100dvh !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100vw !important;
-        overflow-x: hidden !important;
-        overflow-y: visible !important;
+        overflow: hidden !important;
         position: relative !important;
     }
     
@@ -572,24 +572,28 @@ img, video, canvas {
         background: #0a0a0a !important;
         min-height: 100vh !important;
         min-height: 100dvh !important;
-        height: auto !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
         flex: 1 !important;
         width: 100% !important;
         max-width: 100vw !important;
-        overflow-x: hidden !important;
-        overflow-y: visible !important;
+        overflow: hidden !important; /* Constrain so page-wrapper scrolls */
     }
     
     .page-wrapper {
-        flex: 1 !important;
-        min-height: 100vh !important;
-        min-height: 100dvh !important;
-        overflow-y: auto !important;
+        flex: 1 1 0 !important; /* Shrink to fit, enable overflow scroll */
+        min-height: 0 !important;
+        overflow-y: scroll !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y pan-x !important;
-        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: auto !important;
         padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+        position: relative !important;
+        -webkit-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
     }
     
     * {
@@ -600,16 +604,16 @@ img, video, canvas {
         background: #0a0a0a !important;
     }
     
-    /* Ensure all page containers allow touch scroll */
+    /* Page containers: no nested scroll - let page-wrapper be the single scroll container */
     .home-container, .login-container, .register-container, .profile-container,
     .contact-container, .explore-container, .why-container, .courses-container,
     .leaderboard-container, .settings-container, .subscription-container,
     .terms-container, .privacy-container, .not-found-container, .payment-success-container,
     .my-courses-container, .admin-panel-container, .messages-page-container,
     .public-profile-container, .verify-mfa-container {
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y pan-x !important;
+        overflow-y: visible !important;
         overflow-x: hidden !important;
+        touch-action: pan-y !important;
         padding-bottom: env(safe-area-inset-bottom, 0) !important;
     }
 }

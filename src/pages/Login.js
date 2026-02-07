@@ -11,7 +11,9 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [errorType, setErrorType] = useState(null);
     const [passwordError, setPasswordError] = useState(false);
+    const [emailError, setEmailError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showMfaVerification, setShowMfaVerification] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
@@ -97,7 +99,9 @@ const Login = () => {
         e.stopPropagation();
         errorRef.current = '';
         setPasswordError(false);
+        setEmailError(false);
         setError('');
+        setErrorType(null);
         setIsLoading(true);
 
         const emailTrimmed = (email || '').trim();
@@ -130,7 +134,8 @@ const Login = () => {
             }
 
             setPasswordError(true);
-            setError('Login failed. Please try again.');
+            setErrorType('password');
+            setError('The password you entered is incorrect. Try again or use Forgot Password.');
         } catch (err) {
             console.error('Login error details:', err);
 
@@ -138,32 +143,46 @@ const Login = () => {
             const status = err.response?.status;
             const data = err.response?.data;
             const isJsonResponse = data != null && typeof data === 'object' && !Array.isArray(data);
-            const serverMessage = isJsonResponse ? (data.message || data.error || '') : '';
+            const serverErrorCode = isJsonResponse ? (data.error || '') : '';
+            const serverMessage = isJsonResponse ? (data.message || '') : '';
             const errMsg = (err.message || '').trim();
 
-            if (status === 401) {
-                // Wrong password – account exists but password is incorrect
-                errorMessage = serverMessage || errMsg || 'Incorrect password. Please try again or use Forgot Password.';
+            if (status === 401 || serverErrorCode === 'INVALID_PASSWORD') {
+                setErrorType('password');
                 setPasswordError(true);
-            } else if (status === 404) {
-                // No account – email not found
-                errorMessage = serverMessage || errMsg || 'No account with this email exists. Please sign up for an account.';
+                setEmailError(false);
+                errorMessage = serverMessage || 'The password you entered is incorrect. Try again or use Forgot Password.';
+            } else if (status === 404 || serverErrorCode === 'NO_ACCOUNT') {
+                setErrorType('email');
                 setPasswordError(false);
+                setEmailError(true);
+                errorMessage = serverMessage || 'No account exists with this email address. Please sign up for an account.';
             } else if (err.response) {
+                setErrorType(null);
+                setPasswordError(false);
+                setEmailError(false);
                 errorMessage = serverMessage || errMsg || (status === 429 ? 'Too many attempts. Try again shortly.' : status === 500 ? 'Something went wrong. Please try again.' : 'Login failed. Please try again.');
-                setPasswordError(false);
             } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK' || (err.message && err.message.includes('Network Error'))) {
+                setErrorType(null);
+                setPasswordError(false);
+                setEmailError(false);
                 errorMessage = 'Cannot connect to server. Please try again.';
-                setPasswordError(false);
             } else if (err.code === 'ETIMEDOUT' || (err.message && err.message.includes('timeout'))) {
+                setErrorType(null);
+                setPasswordError(false);
+                setEmailError(false);
                 errorMessage = 'The server took too long to respond. Check your connection and try again.';
-                setPasswordError(false);
             } else if (errMsg) {
+                const isPwErr = errMsg.toLowerCase().includes('password') || errMsg.toLowerCase().includes('incorrect');
+                setErrorType(isPwErr ? 'password' : 'email');
+                setPasswordError(isPwErr);
+                setEmailError(!isPwErr);
                 errorMessage = errMsg;
-                setPasswordError(errMsg.toLowerCase().includes('password') || errMsg.toLowerCase().includes('incorrect'));
             } else {
-                errorMessage = 'Login failed. Please try again.';
+                setErrorType(null);
                 setPasswordError(false);
+                setEmailError(false);
+                errorMessage = 'Login failed. Please try again.';
             }
 
             errorRef.current = errorMessage;
@@ -324,39 +343,6 @@ const Login = () => {
                     <p className="login-subtitle">Access your trading account</p>
                 </div>
 
-                {error && error.trim() && (
-                    <div
-                        className="error-message-under-button"
-                        role="alert"
-                        aria-live="assertive"
-                        id={passwordError ? 'password-error' : undefined}
-                        style={{
-                            display: 'block !important',
-                            visibility: 'visible !important',
-                            opacity: '1 !important',
-                            marginBottom: '16px',
-                            marginTop: '0',
-                            padding: '16px 20px',
-                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
-                            border: '2px solid #EF4444',
-                            borderRadius: '12px',
-                            color: '#FFFFFF',
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            textAlign: 'center',
-                            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
-                            zIndex: 1000,
-                            position: 'relative',
-                            textTransform: 'none',
-                            lineHeight: '1.5',
-                            wordWrap: 'break-word',
-                            maxWidth: '100%'
-                        }}
-                    >
-                        {error}
-                    </div>
-                )}
-                
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label htmlFor="email" className="form-label">Email Address</label>
@@ -364,11 +350,16 @@ const Login = () => {
                             type="email"
                             id="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                if (emailError) setEmailError(false);
+                                setEmail(e.target.value);
+                            }}
                             required
                             autoComplete="email"
                             placeholder="Enter your email"
-                            className="form-input"
+                            className={`form-input ${emailError ? 'input-error' : ''}`}
+                            aria-invalid={emailError}
+                            aria-describedby={emailError ? 'email-error' : undefined}
                         />
                     </div>
                     
@@ -400,6 +391,38 @@ const Login = () => {
                     >
                         {isLoading ? 'AUTHENTICATING...' : 'LOGIN'}
                     </button>
+
+                    {error && error.trim() && (
+                        <div
+                            className="error-message-under-button"
+                            role="alert"
+                            aria-live="assertive"
+                            id={passwordError ? 'password-error' : emailError ? 'email-error' : undefined}
+                            style={{
+                                display: 'block !important',
+                                visibility: 'visible !important',
+                                opacity: '1 !important',
+                                marginTop: '16px',
+                                marginBottom: '8px',
+                                padding: '16px 20px',
+                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                                border: '2px solid #EF4444',
+                                borderRadius: '12px',
+                                color: '#FFFFFF',
+                                fontSize: '15px',
+                                fontWeight: '600',
+                                textAlign: 'center',
+                                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
+                                textTransform: 'none',
+                                lineHeight: '1.5',
+                                wordWrap: 'break-word'
+                            }}
+                        >
+                            {errorType === 'password' && <div style={{ fontSize: '12px', opacity: 0.95, marginBottom: '6px', letterSpacing: '0.5px' }}>PASSWORD INCORRECT</div>}
+                            {errorType === 'email' && <div style={{ fontSize: '12px', opacity: 0.95, marginBottom: '6px', letterSpacing: '0.5px' }}>EMAIL NOT FOUND</div>}
+                            {error}
+                        </div>
+                    )}
                     
                     <Link to="/forgot-password" className="forgot-password">
                         Forgot Password?

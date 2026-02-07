@@ -106,8 +106,7 @@
     position: relative;
     background: #0a0a0a;
     overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: visible; /* Let page-wrapper handle scroll - no nested scroll on mobile */
     padding: 100px 20px 60px;
     color: #ffffff;
     box-sizing: border-box;

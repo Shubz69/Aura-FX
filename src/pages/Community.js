@@ -982,15 +982,16 @@ const Community = () => {
                     }
                     
                     // Fast content-based duplicate check (optimized)
-                    // Check for same content, same sender, within 3 seconds
+                    // Check for same content/file, same sender, within 5 seconds
                     const isDuplicate = prev.some(m => {
-                        const sameContent = m.content === message.content;
+                        const sameContent = (m.content || '') === (message.content || '');
+                        const sameFile = (m.file?.name || '') === (message.file?.name || '');
                         const sameSender = String(m.userId || m.sender?.id || '') === String(message.userId || message.sender?.id || '');
                         const timeDiff = Math.abs(
                             new Date(m.timestamp || m.createdAt || 0).getTime() - 
                             new Date(message.timestamp || message.createdAt || 0).getTime()
                         );
-                        return sameContent && sameSender && timeDiff < 3000;
+                        return sameSender && timeDiff < 5000 && (sameContent && (sameFile || (!m.file && !message.file)));
                     });
                     
                     if (isDuplicate) {
@@ -1038,21 +1039,43 @@ const Community = () => {
                 const response = await Api.getChannelMessages(ch, { afterId: maxId });
                 if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
                     setMessages(prev => {
-                        const existingIds = new Set(prev.map(m => String(m.id)));
-                        const newOnes = response.data.filter(m => !existingIds.has(String(m.id)));
-                        if (newOnes.length === 0) return prev;
-                        const merged = [...prev, ...newOnes].sort((a, b) =>
-                            (a.sequence ?? a.id ?? 0) - (b.sequence ?? b.id ?? 0)
-                        );
-                        saveMessagesToStorage(ch, merged);
-                        return merged;
+                        const currentUserId = String(userId || '');
+                        let result = prev;
+                        for (const apiMsg of response.data) {
+                            if (result.some(m => String(m.id) === String(apiMsg.id))) continue;
+                            const apiSenderId = String(apiMsg.sender?.id || apiMsg.userId || '');
+                            if (apiSenderId === currentUserId) {
+                                const apiTime = new Date(apiMsg.timestamp || apiMsg.created_at || 0).getTime();
+                                const apiFile = apiMsg.file?.name || '';
+                                const apiContent = apiMsg.content || '';
+                                const optimisticMatch = result.find(m => {
+                                    const mid = m.id;
+                                    const isOpt = typeof mid === 'string' && (mid.startsWith('temp_') || mid.length === 36);
+                                    if (!isOpt) return false;
+                                    if (String(m.userId || m.sender?.id || '') !== currentUserId) return false;
+                                    const mTime = new Date(m.timestamp || 0).getTime();
+                                    if (Math.abs(mTime - apiTime) > 10000) return false;
+                                    const mFile = m.file?.name || '';
+                                    const mContent = m.content || '';
+                                    return (apiFile && mFile === apiFile) || (apiContent && mContent === apiContent);
+                                });
+                                if (optimisticMatch) {
+                                    result = result.map(r => r.id === optimisticMatch.id ? apiMsg : r);
+                                    continue;
+                                }
+                            }
+                            result = [...result, apiMsg];
+                        }
+                        result = result.sort((a, b) => (a.sequence ?? a.id ?? 0) - (b.sequence ?? b.id ?? 0));
+                        saveMessagesToStorage(ch, result);
+                        return result;
                     });
                 }
             } catch (e) {
                 console.warn('Catch-up fetch failed:', e);
             }
         });
-    }, [addReconnectListener]);
+    }, [addReconnectListener, userId]);
 
     // ***** MESSAGE PERSISTENCE: SERVER ONLY (no localStorage) *****
     // Community messages use the API as the single source of truth to avoid
@@ -2771,16 +2794,47 @@ const Community = () => {
                         }
                         
                         if (newMessages.length > 0) {
-                            // Merge new messages with existing ones, sorted by timestamp
-                            const merged = [...prev, ...newMessages].sort((a, b) => {
+                            const currentUserId = String(userId || '');
+                            let result = prev;
+                            for (const apiMsg of newMessages) {
+                                const apiSenderId = String(apiMsg.sender?.id || apiMsg.userId || '');
+                                const isFromCurrentUser = apiSenderId === currentUserId;
+                                const apiId = apiMsg.id;
+                                const apiTime = new Date(apiMsg.timestamp || apiMsg.created_at || 0).getTime();
+                                const apiFile = apiMsg.file;
+                                const apiFileName = apiFile?.name || '';
+                                const apiContent = apiMsg.content || '';
+
+                                if (isFromCurrentUser) {
+                                    const optimisticMatch = result.find(m => {
+                                        const mid = m.id;
+                                        const isOptimistic = typeof mid === 'string' && (mid.startsWith('temp_') || mid.length === 36);
+                                        if (!isOptimistic) return false;
+                                        const mSenderId = String(m.userId || m.sender?.id || '');
+                                        if (mSenderId !== currentUserId) return false;
+                                        const mTime = new Date(m.timestamp || 0).getTime();
+                                        if (Math.abs(mTime - apiTime) > 10000) return false;
+                                        const mFile = m.file;
+                                        const mFileName = mFile?.name || '';
+                                        const mContent = m.content || '';
+                                        return (apiFileName && mFileName === apiFileName) || (apiContent && mContent === apiContent) || (mContent === apiContent && mFileName === apiFileName);
+                                    });
+                                    if (optimisticMatch) {
+                                        result = result.map(m => m.id === optimisticMatch.id ? apiMsg : m);
+                                        continue;
+                                    }
+                                }
+                                if (!result.some(m => String(m.id) === String(apiId))) {
+                                    result = [...result, apiMsg];
+                                }
+                            }
+                            result = result.sort((a, b) => {
                                 const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
                                 const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
                                 return timeA - timeB;
                             });
-                            
-                            // Save to localStorage
-                            saveMessagesToStorage(selectedChannel.id, merged);
-                            return merged;
+                            saveMessagesToStorage(selectedChannel.id, result);
+                            return result;
                         }
                         
                         return prev; // No new messages
@@ -2816,6 +2870,30 @@ const Community = () => {
                 setMessages(prev => {
                     const existingIds = new Set(prev.map(m => String(m.id || '')));
                     if (data.id && existingIds.has(String(data.id))) return prev;
+                    const currentUserId = String(userId || '');
+                    const dataSenderId = String(data.sender?.id || data.userId || '');
+                    if (dataSenderId === currentUserId) {
+                        const dataTime = new Date(data.timestamp || data.createdAt || 0).getTime();
+                        const dataFile = data.file?.name || '';
+                        const dataContent = data.content || '';
+                        const optimisticMatch = prev.find(m => {
+                            const mid = m.id;
+                            const isOptimistic = typeof mid === 'string' && (mid.startsWith('temp_') || mid.length === 36);
+                            if (!isOptimistic) return false;
+                            const mSenderId = String(m.userId || m.sender?.id || '');
+                            if (mSenderId !== currentUserId) return false;
+                            const mTime = new Date(m.timestamp || 0).getTime();
+                            if (Math.abs(mTime - dataTime) > 10000) return false;
+                            const mFile = m.file?.name || '';
+                            const mContent = m.content || '';
+                            return (dataFile && mFile === dataFile) || (dataContent && mContent === dataContent);
+                        });
+                        if (optimisticMatch) {
+                            const merged = prev.map(m => m.id === optimisticMatch.id ? data : m);
+                            saveMessagesToStorage(selectedChannel.id, merged);
+                            return merged;
+                        }
+                    }
                     const merged = [...prev, data].sort((a, b) =>
                         new Date(a.timestamp || a.createdAt || 0) - new Date(b.timestamp || b.createdAt || 0)
                     );
@@ -2830,7 +2908,7 @@ const Community = () => {
             if (channel) channel.unbind_all();
             if (pusher) pusher.unsubscribe(`channel-${selectedChannel.id}`);
         };
-    }, [selectedChannel?.id]);
+    }, [selectedChannel?.id, userId]);
     
     const isWelcomeChannel = selectedChannel && (String(selectedChannel.id).toLowerCase() === 'welcome' || (selectedChannel.name && selectedChannel.name.toLowerCase() === 'welcome'));
 
@@ -3205,31 +3283,22 @@ Let's build generational wealth together! 💰🚀`,
             Api.sendMessage(selectedChannel.id, messageToSend)
                 .then(response => {
                     if (response && response.data) {
-                        // Replace optimistic message with server response (has real ID)
+                        // Replace optimistic with server response; remove any duplicate (poll/Pusher may have added it)
                         const serverMessage = response.data;
+                        const clientId = optimisticMessage.id;
+                        const serverId = serverMessage.id;
                         setMessages(prev => {
-                            const clientId = optimisticMessage.id;
-                            const serverId = serverMessage.id;
-                            const existingIndex = prev.findIndex(m =>
-                                String(m.id) === String(clientId) || String(m.id) === String(serverId) ||
-                                (m.clientMessageId && m.clientMessageId === messageToSend.clientMessageId) ||
-                                (m.content === serverMessage.content &&
-                                 String(m.userId) === String(serverMessage.userId) &&
-                                 Math.abs(new Date(m.timestamp) - new Date(serverMessage.timestamp)) < 5000)
-                            );
-                            
-                            if (existingIndex !== -1) {
-                                // Replace existing message
-                                const updated = [...prev];
-                                updated[existingIndex] = serverMessage;
-                                saveMessagesToStorage(selectedChannel.id, updated);
-                                return updated;
-                            } else {
-                                // Add new message if not already present
-                                const final = replaceMessageById(prev, optimisticMessage.id, serverMessage);
-                                saveMessagesToStorage(selectedChannel.id, final);
-                                return final;
-                            }
+                            const withoutDuplicates = prev.filter(m => {
+                                const id = String(m.id || '');
+                                if (id === String(serverId)) return false;
+                                if (id === String(clientId)) return false;
+                                if (m.clientMessageId === messageToSend.clientMessageId) return false;
+                                return true;
+                            });
+                            const final = [...withoutDuplicates, serverMessage].sort((a, b) =>
+                                new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
+                            saveMessagesToStorage(selectedChannel.id, final);
+                            return final;
                         });
                     }
                 })
