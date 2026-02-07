@@ -617,15 +617,57 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Laptop / desktop - polished layout */
+/* Laptop / desktop - polished, balanced layout */
 @media (min-width: 769px) {
     .register-container {
         align-items: center;
-        padding: 40px 24px 60px;
-        padding-top: 90px;
+        justify-content: center;
+        padding: 60px 40px 80px;
+        padding-top: 100px;
+        min-height: 100vh;
     }
     .register-form-container {
-        max-width: 540px;
+        max-width: 620px;
+        width: 100%;
+        padding: 48px 56px;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+    .form-header {
+        margin-bottom: 32px;
+    }
+    .register-title {
+        font-size: 2.5rem;
+        letter-spacing: 0.18em;
+        margin-bottom: 10px;
+    }
+    .register-subtitle {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    .form-row {
+        gap: 20px;
+        margin-bottom: 18px;
+    }
+    .form-input {
+        padding: 16px 18px;
+        font-size: 1rem;
+        min-height: 52px;
+    }
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    .register-button {
+        padding: 1rem 2rem;
+        font-size: 1.05rem;
+        margin-top: 16px;
+    }
+    .terms-checkbox {
+        margin-bottom: 20px;
+    }
+    .login-link {
+        margin-top: 24px;
+        padding-top: 20px;
     }
 }
 
