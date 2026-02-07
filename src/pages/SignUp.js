@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import "../styles/Login.css";
 import CosmicBackground from '../components/CosmicBackground';
 import { useAuth } from "../context/AuthContext";
 import Api from '../services/Api';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
-import { isFirebasePhoneEnabled, setupRecaptcha, sendPhoneOtp, confirmPhoneOtp } from '../utils/firebasePhoneAuth';
 
 function SignUp() {
     const [formData, setFormData] = useState({
@@ -22,10 +21,7 @@ function SignUp() {
     const [success, setSuccess] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [codesSent, setCodesSent] = useState(false); // true after "Send verification codes" – show email + phone OTP on same page
-    const [firebaseOtpSent, setFirebaseOtpSent] = useState(false);
-    const firebaseConfirmationRef = useRef(null);
     const navigate = useNavigate();
-    const useFirebasePhone = isFirebasePhoneEnabled();
     const location = useLocation();
     const { register } = useAuth();
 
@@ -89,51 +85,37 @@ function SignUp() {
         setError("");
         setSuccess("");
         try {
+            // Send phone OTP first (backend API – Twilio)
+            try {
+                const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
+                if (sendRes?.useFirebase) {
+                    setError("Phone verification requires Twilio. Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER in Vercel.");
+                    setIsLoading(false);
+                    return;
+                }
+                if (!sendRes?.success && !sendRes?.useFirebase) {
+                    setError("Could not send phone code. Configure Twilio for SMS verification.");
+                    setIsLoading(false);
+                    return;
+                }
+            } catch (phoneErr) {
+                setError(phoneErr.message || "Could not send phone code. Configure Twilio for SMS verification.");
+                setIsLoading(false);
+                return;
+            }
             const result = await Api.sendSignupVerificationEmail(formData.email, formData.username);
             if (result !== true && result !== undefined) {
                 setError("Failed to send verification email. Please try again.");
                 setIsLoading(false);
                 return;
             }
-            if (!useFirebasePhone) {
-                try {
-                    const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-                    if (sendRes?.useFirebase) setError("Backend has Firebase but frontend is not configured. Add REACT_APP_FIREBASE_* or configure Twilio.");
-                    else if (!sendRes?.success && !sendRes?.useFirebase) setError("Could not send phone code. Configure Firebase (free) or Twilio.");
-                } catch (phoneErr) {
-                    setError(phoneErr.message || "Could not send phone code. Configure Firebase (free) or Twilio.");
-                    setIsLoading(false);
-                    return;
-                }
-            }
             setCodesSent(true);
-            setSuccess(useFirebasePhone ? "Email code sent! Click 'Send code' below to get your phone code." : "Codes sent! Enter the 6-digit codes from your email and phone below.");
+            setSuccess("Codes sent! Enter the 6-digit codes from your email and phone below.");
         } catch (err) {
             let msg = err.message || "Failed to send verification.";
             if (err.message?.includes("already exists")) msg = "An account with this email already exists. Please sign in.";
             if (err.message?.includes("already taken")) msg = "This username is already taken.";
             setError(msg);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSendFirebaseOtp = async () => {
-        setIsLoading(true);
-        setError("");
-        try {
-            const recaptcha = setupRecaptcha('firebase-phone-send-btn');
-            if (!recaptcha) {
-                setError("Firebase reCAPTCHA could not be loaded.");
-                setIsLoading(false);
-                return;
-            }
-            const { confirmationResult } = await sendPhoneOtp(formData.phone, recaptcha);
-            firebaseConfirmationRef.current = confirmationResult;
-            setFirebaseOtpSent(true);
-            setSuccess("Code sent! Enter the 6-digit code from your phone.");
-        } catch (err) {
-            setError(err.message || "Failed to send code. Try again.");
         } finally {
             setIsLoading(false);
         }
@@ -150,10 +132,6 @@ function SignUp() {
             setError("Please enter the 6-digit code from your phone.");
             return;
         }
-        if (useFirebasePhone && !firebaseOtpSent) {
-            setError("Please click 'Send code' to get your phone verification code first.");
-            return;
-        }
         setIsLoading(true);
         setError("");
         try {
@@ -163,24 +141,13 @@ function SignUp() {
                 setIsLoading(false);
                 return;
             }
-            let verifiedPhone = formData.phone.trim();
-            if (useFirebasePhone && firebaseConfirmationRef.current) {
-                const { idToken, phoneNumber } = await confirmPhoneOtp(firebaseConfirmationRef.current, phoneCode);
-                const res = await Api.verifyPhoneWithFirebase(idToken);
-                if (!res?.verified) {
-                    setError("Invalid or expired phone code.");
-                    setIsLoading(false);
-                    return;
-                }
-                verifiedPhone = res.phone || phoneNumber || formData.phone;
-            } else {
-                const ok = await Api.verifyPhoneCode(formData.phone, phoneCode);
-                if (!ok) {
-                    setError("Invalid or expired phone code.");
-                    setIsLoading(false);
-                    return;
-                }
+            const ok = await Api.verifyPhoneCode(formData.phone, phoneCode);
+            if (!ok) {
+                setError("Invalid or expired phone code.");
+                setIsLoading(false);
+                return;
             }
+            const verifiedPhone = formData.phone.trim();
             setSuccess("Creating your account...");
             const response = await register({
                 username: formData.username.trim(),
@@ -206,7 +173,7 @@ function SignUp() {
         setIsLoading(true);
         try {
             const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-            if (sendRes?.useFirebase) setError("Use Firebase 'Send code' or configure Twilio.");
+            if (sendRes?.useFirebase) setError("Configure Twilio for SMS verification.");
             else setSuccess("Code resent to your phone.");
         } catch (err) {
             setError(err.message || "Failed to resend code.");
@@ -284,31 +251,18 @@ function SignUp() {
                             </div>
                             <div className="form-group">
                                 <label htmlFor="phone-code" className="form-label">Phone code (sent to {formData.phone})</label>
-                                {useFirebasePhone && !firebaseOtpSent ? (
-                                    <div>
-                                        <button type="button" id="firebase-phone-send-btn" className="login-button" onClick={handleSendFirebaseOtp} disabled={isLoading} style={{ marginBottom: '0.75rem' }}>
-                                            {isLoading ? 'SENDING...' : 'SEND PHONE CODE'}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <input type="text" id="phone-code" value={phoneCode}
-                                            onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                            maxLength={6} placeholder="6-digit code" className="form-input" disabled={isLoading}
-                                        />
-                                        {useFirebasePhone && firebaseOtpSent && <p><button type="button" onClick={handleSendFirebaseOtp} className="link-button" disabled={isLoading}>Resend phone code</button></p>}
-                                        {!useFirebasePhone && <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading}>Resend phone code</button></p>}
-                                    </>
-                                )}
+                                <input type="text" id="phone-code" value={phoneCode}
+                                    onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                                    maxLength={6} placeholder="6-digit code" className="form-input" disabled={isLoading}
+                                />
+                                <p><button type="button" onClick={handleResendPhoneCode} className="link-button" disabled={isLoading}>Resend phone code</button></p>
                             </div>
-                            {(firebaseOtpSent || !useFirebasePhone) && (
-                                <button type="submit" className="login-button" disabled={isLoading || emailCode.length !== 6 || phoneCode.length !== 6}>
-                                    {isLoading ? 'VERIFYING...' : 'VERIFY & SIGN UP'}
-                                </button>
-                            )}
+                            <button type="submit" className="login-button" disabled={isLoading || emailCode.length !== 6 || phoneCode.length !== 6}>
+                                {isLoading ? 'VERIFYING...' : 'VERIFY & SIGN UP'}
+                            </button>
                         </form>
                         <p style={{ marginTop: '1rem' }}>
-                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); }} className="link-button">Start over</button>
+                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setError(''); setSuccess(''); }} className="link-button">Start over</button>
                         </p>
                     </>
                 )}
