@@ -412,7 +412,7 @@ const Community = () => {
     const { id: channelIdParam } = useParams();
     const location = useLocation();
     const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
-    const { entitlements, refresh: refreshEntitlements } = useEntitlements();
+    const { entitlements, loading: entitlementsLoading, refresh: refreshEntitlements } = useEntitlements();
     const { hasCommunityAccess: hasCommunityAccessFromSubscription, refreshSubscription } = useSubscription();
     
     const [channelList, setChannelList] = useState([]);
@@ -715,15 +715,15 @@ const Community = () => {
             return channelListRef.current;
         }
 
-        // OPTIMIZATION: Load cached channels first for instant display
-        const cachedChannelsKey = 'community_channels_cache';
+        // OPTIMIZATION: Load cached channels first for instant display (keyed by user to avoid wrong permissions)
+        const u = JSON.parse(localStorage.getItem('user') || '{}');
+        const cachedChannelsKey = `community_channels_cache_${u.id || 'anon'}`;
         let cachedChannels = [];
         try {
             const cached = localStorage.getItem(cachedChannelsKey);
             if (cached) {
                 cachedChannels = JSON.parse(cached);
                 if (cachedChannels.length > 0) {
-                    const u = JSON.parse(localStorage.getItem('user') || '{}');
                     const r = (u.role || '').toString().toLowerCase();
                     const em = (u.email || '').toString().toLowerCase();
                     const adminOrSuper = r === 'admin' || r === 'super_admin' || em === SUPER_ADMIN_EMAIL.toLowerCase();
@@ -773,7 +773,8 @@ const Community = () => {
             
             if (channelsFromServer.length > 0) {
                 try {
-                    localStorage.setItem(cachedChannelsKey, JSON.stringify(channelsFromServer));
+                    const u = JSON.parse(localStorage.getItem('user') || '{}');
+                    localStorage.setItem(`community_channels_cache_${u.id || 'anon'}`, JSON.stringify(channelsFromServer));
                 } catch (e) { /* ignore */ }
             }
         } catch (error) {
@@ -853,7 +854,7 @@ const Community = () => {
         }
 
         return sortedChannels;
-    }, [isAuthenticated, sortChannels, channelIdParam]);
+    }, [isAuthenticated, sortChannels]);
     
     // Initialize WebSocket connection for real-time messaging
     const enableRealtime = useMemo(() => {
@@ -2338,7 +2339,10 @@ const Community = () => {
             window.history.replaceState({}, document.title, window.location.pathname);
             // Force entitlements refresh and refetch channels so UI updates instantly (no 60s stale tier)
             refreshEntitlements().then(() => {
-                try { localStorage.removeItem('community_channels_cache'); } catch (e) { /* ignore */ }
+                try {
+                    const u = JSON.parse(localStorage.getItem('user') || '{}');
+                    localStorage.removeItem(`community_channels_cache_${u.id || 'anon'}`);
+                } catch (e) { /* ignore */ }
                 refreshChannelList();
             });
         }
@@ -2470,9 +2474,9 @@ const Community = () => {
         }
     }, []);
 
-    // Load channels initially and on dependency changes
+    // Load channels on mount/auth change only - NOT on channel navigation (avoids reset/flash)
     useEffect(() => {
-        refreshChannelList();
+        refreshChannelList({ selectChannelId: channelIdParam || undefined });
     }, [refreshChannelList]);
 
     // Periodically refresh channels so new ones appear for everyone
@@ -2607,11 +2611,20 @@ const Community = () => {
         return () => clearInterval(statusInterval);
     }, [isAuthenticated, updateOnlineCount]);
 
+    // Sync selectedChannel from URL (handles back/forward, direct links, refresh)
+    useEffect(() => {
+        if (!channelIdParam || !channelList.length) return;
+        const targetId = String(channelIdParam);
+        if (selectedChannel?.id === targetId) return;
+        const ch = channelList.find((c) => String(c.id) === targetId);
+        if (ch) setSelectedChannel(ch);
+    }, [channelIdParam, channelList, selectedChannel?.id]);
+
     // Load messages when channel changes - optimized for instant display
     useEffect(() => {
         if (selectedChannel && selectedChannel.id) {
-            // Navigate immediately (non-blocking)
-            navigate(`/community/${selectedChannel.id}`);
+            // Update URL without refetch (replace keeps history clean, no reset)
+            navigate(`/community/${selectedChannel.id}`, { replace: true });
             
             // Load cached messages first for instant display
             const cachedMessages = loadMessagesFromStorage(selectedChannel.id);
@@ -3360,7 +3373,7 @@ Let's build generational wealth together! 💰🚀`,
             await Api.acceptOnboarding();
             localStorage.setItem('welcomeMessageRead', 'true');
             setHasReadWelcome(true);
-            localStorage.removeItem('community_channels_cache');
+            try { const u = JSON.parse(localStorage.getItem('user') || '{}'); localStorage.removeItem(`community_channels_cache_${u.id || 'anon'}`); } catch (e) { /* ignore */ }
             await refreshEntitlements();
             await refreshChannelList();
         } catch (err) {
@@ -3628,7 +3641,7 @@ Let's build generational wealth together! 💰🚀`,
             try {
                 const data = await Api.selectFreePlan();
                 if (data && data.success) {
-                    if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
+                    try { const u = JSON.parse(localStorage.getItem('user') || '{}'); if (typeof localStorage !== 'undefined') localStorage.removeItem(`community_channels_cache_${u.id || 'anon'}`); } catch (e) { /* ignore */ }
                     await refreshEntitlements();
                     await refreshSubscription();
                     await refreshChannelList();
@@ -4835,8 +4848,11 @@ Let's build generational wealth together! 💰🚀`,
             }}>
                 {selectedChannel ? (
                     <>
-                        {/* Check if user can access this channel */}
+                        {/* Check if user can access this channel - don't show "not allowed" while entitlements loading (avoids flash) */}
                         {selectedChannel?.canSee === false ? (
+                            entitlementsLoading ? (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>Loading...</div>
+                            ) : (
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -5054,6 +5070,7 @@ Let's build generational wealth together! 💰🚀`,
                                     );
                                 })()}
                             </div>
+                            )
                         ) : (
                     <>
                         {/* Chat Header */}
