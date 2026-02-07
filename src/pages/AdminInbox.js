@@ -101,16 +101,27 @@ const AdminInbox = () => {
         <Typography variant="h6" sx={{ p: 2 }}>Inbox</Typography>
         <Divider />
         <List>
-          {threads.map(t => (
-            <ListItemButton key={t.id} selected={t.id === activeThreadId} onClick={() => setActiveThreadId(t.id)}>
-              <ListItemText primary={`User ${t.userId}`} secondary={t.lastMessageAt ? new Date(t.lastMessageAt).toLocaleString() : 'No messages'} />
-            </ListItemButton>
-          ))}
+          {threads.length === 0 ? (
+            <Typography variant="body2" sx={{ p: 2, color: 'text.secondary' }}>
+              No user messages yet. Users will appear here when they send a message.
+            </Typography>
+          ) : (
+            threads.map(t => (
+              <ListItemButton key={t.id} selected={t.id === activeThreadId} onClick={() => setActiveThreadId(t.id)}>
+                <ListItemText 
+                  primary={t.username || t.name || t.email || `User ${t.userId}`} 
+                  secondary={t.lastMessageAt ? new Date(t.lastMessageAt).toLocaleString() : 'No messages'} 
+                />
+              </ListItemButton>
+            ))
+          )}
         </List>
       </Paper>
 
       <Paper sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column' }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>Conversation</Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          {activeThread ? `Conversation with ${activeThread.username || activeThread.name || activeThread.email || `User ${activeThread.userId}`}` : 'Select a user to message'}
+        </Typography>
         <Paper sx={{ p: 2, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {messages.map(m => (
             <Box key={m.id} sx={{ display: 'flex', justifyContent: isOwn(m) ? 'flex-end' : 'flex-start', mb: 1 }}>
@@ -125,12 +136,12 @@ const AdminInbox = () => {
         <Divider sx={{ my: 2 }} />
         <form onSubmit={handleSend}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton component="label" sx={{ mr: 1 }}>
+            <IconButton component="label" sx={{ mr: 1 }} disabled={!activeThreadId}>
               <AttachFileIcon />
               <input type="file" hidden onChange={(e) => setFile(e.target.files?.[0] || null)} />
             </IconButton>
-            <TextField fullWidth value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message…" />
-            <Button type="submit" disabled={!input.trim() && !file} sx={{ ml: 1 }} variant="contained"><SendIcon /></Button>
+            <TextField fullWidth value={input} onChange={(e) => setInput(e.target.value)} placeholder={activeThreadId ? 'Type a message…' : 'Select a user first'} disabled={!activeThreadId} />
+            <Button type="submit" disabled={(!input.trim() && !file) || !activeThreadId} sx={{ ml: 1 }} variant="contained"><SendIcon /></Button>
           </Box>
         </form>
       </Paper>

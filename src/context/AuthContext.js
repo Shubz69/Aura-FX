@@ -578,8 +578,6 @@ export const AuthProvider = ({ children }) => {
       persistTokens(data.token, data.refreshToken);
       const userInfo = persistUser(data);
       
-      sendWelcomeMessage(userInfo.id, userData.email);
-      
       if (userInfo.role === 'ADMIN') {
         localStorage.setItem('mfaVerified', 'true');
         setMfaVerified(true);
@@ -611,36 +609,6 @@ export const AuthProvider = ({ children }) => {
   const verifyMfa = () => {
     localStorage.setItem('mfaVerified', 'true');
     setMfaVerified(true);
-  };
-
-  // Function to send welcome message to new users
-  const sendWelcomeMessage = (userId, email) => {
-    const welcomeMessage = {
-      id: Date.now(),
-      text: `Welcome to AURA FX platform, ${email}! 🎉 We're excited to have you join our community. Our admin team is here to help you get started and answer any questions you might have. Feel free to reach out anytime!`,
-      sender: 'admin',
-      timestamp: new Date().toISOString(),
-      read: false
-    };
-
-    // Store the welcome message
-    const existingMessages = JSON.parse(localStorage.getItem(`messages_${userId}`) || '[]');
-    const updatedMessages = [...existingMessages, welcomeMessage];
-    localStorage.setItem(`messages_${userId}`, JSON.stringify(updatedMessages));
-
-    // Also notify admin about new user
-    const adminNotification = {
-      id: Date.now() + 1,
-      text: `New user registered: ${email}`,
-      sender: 'system',
-      timestamp: new Date().toISOString(),
-      read: false,
-      type: 'user_registration'
-    };
-
-    const adminMessages = JSON.parse(localStorage.getItem('admin_notifications') || '[]');
-    const updatedAdminMessages = [...adminMessages, adminNotification];
-    localStorage.setItem('admin_notifications', JSON.stringify(updatedAdminMessages));
   };
 
   // Context value

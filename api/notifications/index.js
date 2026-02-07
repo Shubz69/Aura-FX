@@ -128,8 +128,9 @@ async function ensureSchema() {
   }
 }
 
-// Create a notification
+// Create a notification (called by threads, friends, etc.)
 async function createNotification(data) {
+  await ensureSchema();
   const id = generateUUID();
   const {
     userId,

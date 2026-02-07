@@ -173,17 +173,23 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, thread: newThreadRows[0] });
     }
 
-    // Handle /api/messages/threads - List all threads (admin only)
+    // Handle /api/messages/threads - List all user-support threads (admin only)
+    // Only threads with adminId IS NULL = shared inbox; all admins see same users
     if (pathname.endsWith('/threads') && !pathname.includes('/threads/') && req.method === 'GET') {
       if (!isAdmin) {
         db.release && db.release();
         return res.status(403).json({ success: false, message: 'Admin access required' });
       }
       const [threads] = await db.execute(
-        'SELECT * FROM threads ORDER BY lastMessageAt DESC LIMIT 100'
+        `SELECT t.*, u.username, u.email, u.name 
+         FROM threads t 
+         LEFT JOIN users u ON u.id = t.userId 
+         WHERE t.adminId IS NULL 
+         ORDER BY t.lastMessageAt DESC 
+         LIMIT 200`
       );
       db.release && db.release();
-      return res.status(200).json({ success: true, threads });
+      return res.status(200).json({ success: true, threads: threads || [] });
     }
 
     // Handle /api/messages/threads/:threadId/messages - Get messages for a thread
@@ -191,6 +197,18 @@ module.exports = async (req, res) => {
     if (threadMessagesMatch && req.method === 'GET') {
       const threadId = parseInt(threadMessagesMatch[1]);
       const limit = Math.min(parseInt(req.query?.limit) || 50, 100);
+
+      const [threadRows] = await db.execute('SELECT * FROM threads WHERE id = ?', [threadId]);
+      if (!threadRows || threadRows.length === 0) {
+        db.release && db.release();
+        return res.status(404).json({ success: false, message: 'Thread not found' });
+      }
+      const thread = threadRows[0];
+      const isOwner = String(thread.userId) === String(decoded.id);
+      if (!isOwner && !isAdmin) {
+        db.release && db.release();
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
 
       const [messages] = await db.execute(
         'SELECT * FROM thread_messages WHERE threadId = ? ORDER BY createdAt DESC LIMIT ?',
@@ -207,11 +225,12 @@ module.exports = async (req, res) => {
     if (threadMessagesMatch && req.method === 'POST') {
       const threadId = parseInt(threadMessagesMatch[1]);
       const body = parseBody(req);
-      const { body: messageBody, userId } = body;
+      const { body: messageBody } = body;
+      const senderId = decoded.id;
 
-      if (!messageBody || !userId) {
+      if (!messageBody) {
         db.release && db.release();
-        return res.status(400).json({ success: false, message: 'Message body and user ID required' });
+        return res.status(400).json({ success: false, message: 'Message body required' });
       }
 
       const [threadRows] = await db.execute('SELECT * FROM threads WHERE id = ?', [threadId]);
@@ -219,12 +238,18 @@ module.exports = async (req, res) => {
         db.release && db.release();
         return res.status(404).json({ success: false, message: 'Thread not found' });
       }
+      const thread = threadRows[0];
+      const isOwner = String(thread.userId) === String(senderId);
+      if (!isOwner && !isAdmin) {
+        db.release && db.release();
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
 
-      const recipientId = String(threadRows[0].userId) === String(userId) ? 'ADMIN' : String(threadRows[0].userId);
+      const recipientId = isOwner ? 'ADMIN' : String(thread.userId);
 
       await db.execute(
         'INSERT INTO thread_messages (threadId, senderId, recipientId, body) VALUES (?, ?, ?, ?)',
-        [threadId, userId, recipientId, messageBody]
+        [threadId, senderId, recipientId, messageBody]
       );
 
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
@@ -233,7 +258,7 @@ module.exports = async (req, res) => {
       if (createNotification) {
         const recipientUserId = parseInt(recipientId, 10);
         if (!isNaN(recipientUserId) && recipientUserId > 0) {
-          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [userId]);
+          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [senderId]);
           const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'Admin';
           const preview = typeof messageBody === 'string' && messageBody.length > 80
             ? messageBody.substring(0, 77) + '...'
@@ -245,12 +270,12 @@ module.exports = async (req, res) => {
             body: `${senderName}: ${preview}`,
             channelId: 0,
             messageId: threadId,
-            fromUserId: userId,
+            fromUserId: senderId,
             friendRequestId: null,
             actionStatus: null
           }).catch((e) => console.warn('Thread notification failed:', e.message));
         } else if (recipientId === 'ADMIN') {
-          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [userId]);
+          const [senderRows] = await db.execute('SELECT username FROM users WHERE id = ?', [senderId]);
           const senderName = senderRows && senderRows[0] ? senderRows[0].username : 'A user';
           const preview = typeof messageBody === 'string' && messageBody.length > 80
             ? messageBody.substring(0, 77) + '...'
@@ -267,7 +292,7 @@ module.exports = async (req, res) => {
               body: `${senderName}: ${preview}`,
               channelId: 0,
               messageId: threadId,
-              fromUserId: userId,
+              fromUserId: senderId,
               friendRequestId: null,
               actionStatus: null
             }).catch((e) => console.warn('Thread notification failed:', e.message));

@@ -63,7 +63,7 @@ const Navbar = () => {
                 {user && <li><Link to="/community">Community</Link></li>}
                 <li><Link to="/courses">C & S</Link></li>
                 {!user && <li><Link to="/explore">Explore</Link></li>}
-                    {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
+                {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
             </ul>
@@ -96,7 +96,7 @@ const Navbar = () => {
                                         style={dropdownPosition}
                                     >
                                         <p>{user.email}</p>
-                                        <Link to="/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                        <Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                             <FaEnvelope className="dropdown-icon" /> Messages
                                         </Link>
                                         <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
@@ -110,13 +110,10 @@ const Navbar = () => {
                                                 🤖 Premium AI Assistant
                                             </Link>
                                         )}
-                                        {(showSuperAdminLinks || isAdmin(user)) && (
+                                        {showSuperAdminLinks && (
                                             <>
                                                 <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                     <FaCog className="dropdown-icon" /> Admin Panel
-                                                </Link>
-                                                <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                                                    <FaEnvelope className="dropdown-icon" /> User Messages
                                                 </Link>
                                                 <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                     <FaHeadset className="dropdown-icon" /> Contact Submissions
@@ -197,7 +194,7 @@ const Navbar = () => {
                     </button>
                     <div className="mobile-user-email">{user.email}</div>
                     <ul className="mobile-user-links">
-                        <li><Link to="/messages" onClick={toggleMobileUserMenu}>
+                        <li><Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} onClick={toggleMobileUserMenu}>
                             <FaEnvelope className="dropdown-icon" /> Messages
                         </Link></li>
                         <li><Link to="/profile" onClick={toggleMobileUserMenu}>
@@ -206,13 +203,10 @@ const Navbar = () => {
                         <li><Link to="/leaderboard" onClick={toggleMobileUserMenu}>
                             <FaTrophy className="dropdown-icon" /> Leaderboard
                         </Link></li>
-                        {(showSuperAdminLinks || isAdmin(user)) && (
+                        {showSuperAdminLinks && (
                             <>
                                 <li><Link to="/admin" onClick={toggleMobileUserMenu}>
                                     <FaCog className="dropdown-icon" /> Admin Panel
-                                </Link></li>
-                                <li><Link to="/admin/inbox" onClick={toggleMobileUserMenu}>
-                                    <FaEnvelope className="dropdown-icon" /> User Messages
                                 </Link></li>
                                 <li><Link to="/admin/messages" onClick={toggleMobileUserMenu}>
                                     <FaHeadset className="dropdown-icon" /> Contact Submissions

@@ -11,7 +11,7 @@
   max-height: 100vh;
   background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
   color: #e4e4e7;
-  padding-top: 70px;
+  padding-top: 48px;
   overflow: hidden;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
@@ -20,7 +20,7 @@
 /* Header */
 .ai-header {
   position: fixed;
-  top: 60px;
+  top: calc(55px + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
   z-index: 100;
@@ -89,22 +89,41 @@
   color: #ef4444;
 }
 
-/* Chat Area */
+/* Chat Area - full width so scrollbar is at viewport edge */
 .ai-chat-area {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 1000px;
   width: 100%;
-  margin: 0 auto;
-  padding: 80px 16px 200px;
-  /* Mobile scrolling fix - min-height: 0 allows flex child to shrink and scroll */
+  margin: 0;
+  padding: 52px 16px 200px;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior: contain;
+  scroll-padding-top: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Thin overlay-style scrollbar (WebKit) */
+.ai-chat-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ai-chat-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-chat-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.ai-chat-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .ai-messages-container {
@@ -113,7 +132,10 @@
   flex-direction: column;
   gap: 24px;
   min-height: 0;
-  /* Ensure messages can scroll on mobile */
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 8px;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
@@ -209,6 +231,8 @@
   display: flex;
   gap: 16px;
   animation: messageIn 0.3s ease;
+  scroll-margin-top: 24px;
+  scroll-margin-bottom: 24px;
 }
 
 @keyframes messageIn {
@@ -824,7 +848,7 @@
   .ai-chat-area {
     flex: 1;
     min-height: 0;
-    padding: 70px 12px 180px;
+    padding: 52px 12px 200px;
     overflow-y: auto !important;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch !important;

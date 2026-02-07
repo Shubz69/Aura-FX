@@ -24,7 +24,9 @@ const NavbarNotifications = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setUnreadCount(data.unreadCount || 0);
+        if (data.success !== false) {
+          setUnreadCount(data.unreadCount ?? 0);
+        }
       }
     } catch (e) {
       console.warn('Failed to fetch notification count:', e.message);
@@ -34,7 +36,7 @@ const NavbarNotifications = () => {
   useEffect(() => {
     if (!user) return;
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 60000); // poll every 60s
+    const interval = setInterval(fetchUnreadCount, 30000); // poll every 30s for fresher badge
     const onFocus = () => fetchUnreadCount();
     window.addEventListener('focus', onFocus);
     return () => {
@@ -65,7 +67,10 @@ const NavbarNotifications = () => {
       </button>
       <NotificationsDropdown
         isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        onClose={() => {
+          setIsOpen(false);
+          fetchUnreadCount(); // Refresh badge when closing
+        }}
         anchorRef={bellRef}
         user={user}
         onUnreadCountChange={handleUnreadChange}

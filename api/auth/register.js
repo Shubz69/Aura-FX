@@ -196,6 +196,64 @@ module.exports = async (req, res) => {
 
       const userId = result.insertId;
 
+      // Create admin thread and send welcome message for new user
+      const WELCOME_MESSAGE = `Welcome to AURA FX! This is a place where you can complain, ask questions, or get help. A personal admin will be there to assist you whenever you need it.`;
+      try {
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS threads (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            userId INT NOT NULL,
+            adminId INT DEFAULT NULL,
+            lastMessageAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_userId (userId),
+            INDEX idx_adminId (adminId)
+          )
+        `);
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS thread_messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            threadId INT NOT NULL,
+            senderId INT NOT NULL,
+            recipientId VARCHAR(50) NOT NULL,
+            body TEXT NOT NULL,
+            createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            readAt TIMESTAMP NULL,
+            INDEX idx_threadId (threadId),
+            INDEX idx_senderId (senderId),
+            FOREIGN KEY (threadId) REFERENCES threads(id) ON DELETE CASCADE
+          )
+        `);
+        const [existingThread] = await db.execute(
+          'SELECT id FROM threads WHERE userId = ? AND adminId IS NULL LIMIT 1',
+          [userId]
+        );
+        let threadId;
+        if (existingThread.length > 0) {
+          threadId = existingThread[0].id;
+        } else {
+          const [insertThread] = await db.execute(
+            'INSERT INTO threads (userId, adminId) VALUES (?, NULL)',
+            [userId]
+          );
+          threadId = insertThread.insertId;
+        }
+        const [adminRow] = await db.execute(
+          "SELECT id FROM users WHERE LOWER(role) IN ('admin', 'super_admin') OR LOWER(email) = 'shubzfx@gmail.com' ORDER BY id ASC LIMIT 1"
+        );
+        const adminId = adminRow && adminRow[0] ? adminRow[0].id : null;
+        if (adminId) {
+          await db.execute(
+            'INSERT INTO thread_messages (threadId, senderId, recipientId, body) VALUES (?, ?, ?, ?)',
+            [threadId, adminId, String(userId), WELCOME_MESSAGE]
+          );
+          await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
+        }
+      } catch (welcomeErr) {
+        console.warn('Could not send welcome message to new user:', welcomeErr.message);
+      }
+
       // Generate JWT token (3-part format: header.payload.signature)
       // Convert to base64url (replace + with -, / with _, remove = padding)
       const toBase64Url = (str) => {

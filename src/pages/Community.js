@@ -1058,9 +1058,22 @@ const Community = () => {
     // Community messages use the API as the single source of truth to avoid
     // localStorage quota limits (5–10MB). All users see the same data from the server.
 
-    const saveMessagesToStorage = (channelId, messages) => {}; // No-op: server is source of truth
+    const saveMessagesToStorage = (channelId, messages) => {
+        if (!channelId || !Array.isArray(messages)) return;
+        try {
+            localStorage.setItem(`community_messages_${channelId}`, JSON.stringify(messages));
+        } catch (e) { /* ignore quota */ }
+    };
 
-    const loadMessagesFromStorage = (channelId) => []; // No-op: always fetch from API
+    const loadMessagesFromStorage = (channelId) => {
+        if (!channelId) return [];
+        try {
+            const raw = localStorage.getItem(`community_messages_${channelId}`);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) { return []; }
+    };
 
     const persistMessagesList = (channelId, nextMessages) => {
         setMessages(nextMessages);
@@ -1956,10 +1969,11 @@ const Community = () => {
 
         try {
             const token = localStorage.getItem('token');
+            const displayName = channelData.displayName || channelData.name || channelData.id;
             const body = {
-                id: channelData.id,
-                name: channelData.name || channelData.id,
-                displayName: channelData.displayName || channelData.name || channelData.id,
+                id: String(channelData.id),
+                name: displayName,
+                displayName: displayName,
                 description: channelData.description ?? '',
                 category: channelData.category || 'general',
                 accessLevel: (channelData.accessLevel || 'open').toLowerCase(),
@@ -1977,12 +1991,16 @@ const Community = () => {
             if (response.ok) {
                 const u = JSON.parse(localStorage.getItem('user') || '{}');
                 try { localStorage.removeItem(`community_channels_cache_${u.id || 'anon'}`); } catch (e) { /* ignore */ }
-                await refreshChannelList();
                 setEditingChannel(null);
                 setChannelActionStatus({ type: 'success', message: 'Channel updated successfully.' });
+                refreshChannelList().catch((err) => console.warn('Refresh after edit failed:', err));
             } else {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update channel');
+                let errorMessage = 'Failed to update channel';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (_) { /* response not JSON */ }
+                throw new Error(errorMessage);
             }
         } catch (error) {
             console.error('Failed to update channel:', error);
@@ -2700,19 +2718,23 @@ const Community = () => {
     }, [selectedChannel?.id, clearChannelBadge]);
 
     // Poll for new messages - Fast delivery even under high traffic
-    // When WebSocket is down: poll every 400ms for near-instant fallback
-    // When WebSocket is connected: backup poll every 800ms to catch missed messages (multi-device reliability)
+    // When WebSocket is down: poll every 200ms for near-instant fallback
+    // When WebSocket is connected: backup poll every 400ms to catch missed messages (multi-device reliability)
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Poll interval: 400ms when WS down, 800ms backup when WS connected (fast delivery under load)
-        const pollInterval = isConnected ? 800 : 400;
+        // Poll interval: 200ms when WS down, 400ms backup when WS connected (faster delivery)
+        const pollInterval = isConnected ? 400 : 200;
         
         // Start polling immediately
         const pollMessages = async () => {
             try {
-                // Use merge mode to only add new messages, not replace all
-                const response = await Api.getChannelMessages(selectedChannel.id);
+                const msgs = messagesRef.current || [];
+                const numericIds = msgs
+                    .filter(m => m.id != null && (typeof m.id === 'number' || /^\d+$/.test(String(m.id))))
+                    .map(m => Number(m.id));
+                const afterId = numericIds.length > 0 ? Math.max(...numericIds) : null;
+                const response = await Api.getChannelMessages(selectedChannel.id, afterId ? { afterId } : {});
                 if (response && response.data && Array.isArray(response.data)) {
                     const apiMessages = response.data;
                     

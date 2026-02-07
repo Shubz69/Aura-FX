@@ -83,14 +83,19 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       
       if (response.ok) {
         const data = await response.json();
-        if (append) {
-          setNotifications(prev => [...prev, ...data.items]);
-        } else {
-          setNotifications(data.items);
+        if (data.success === false) {
+          toast.error(data.message || 'Failed to load notifications');
+          return;
         }
-        setNextCursor(data.nextCursor);
-        setHasMore(data.hasMore);
-        const count = data.unreadCount || 0;
+        const items = data.items ?? [];
+        if (append) {
+          setNotifications(prev => [...prev, ...items]);
+        } else {
+          setNotifications(items);
+        }
+        setNextCursor(data.nextCursor ?? null);
+        setHasMore(data.hasMore ?? false);
+        const count = data.unreadCount ?? 0;
         setUnreadCount(count);
         onUnreadCountChange?.(count);
       }
@@ -122,14 +127,15 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
 
   // Mark single as read
   const markAsRead = async (notificationId) => {
-    if (!token) return;
+    if (!token || !notificationId) return;
     
     try {
-      await fetch(`${baseUrl}/api/notifications/${notificationId}/read`, {
+      const res = await fetch(`${baseUrl}/api/notifications/${notificationId}/read`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
+      // Optimistic update - apply regardless of response
       setNotifications(prev => prev.map(n => 
         n.id === notificationId ? { ...n, status: 'READ', readAt: new Date().toISOString() } : n
       ));
@@ -138,6 +144,10 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
         onUnreadCountChange?.(next);
         return next;
       });
+      
+      if (!res.ok) {
+        console.warn('Mark as read failed:', res.status);
+      }
     } catch (error) {
       console.error('Failed to mark as read:', error);
     }
@@ -148,15 +158,21 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
     if (!token) return;
     
     try {
-      await fetch(`${baseUrl}/api/notifications/read-all`, {
+      const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
+      // Optimistic update
       setNotifications(prev => prev.map(n => ({ ...n, status: 'READ', readAt: new Date().toISOString() })));
       setUnreadCount(0);
       onUnreadCountChange?.(0);
-      toast.success('All notifications marked as read');
+      
+      if (res.ok) {
+        toast.success('All notifications marked as read');
+      } else {
+        toast.error('Failed to mark all as read');
+      }
     } catch (error) {
       console.error('Failed to mark all as read:', error);
       toast.error('Failed to mark all as read');
