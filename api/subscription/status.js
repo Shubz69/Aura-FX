@@ -145,6 +145,9 @@ module.exports = async (req, res) => {
     // NORMALIZE ROLE TO LOWERCASE for case-insensitive comparison
     const userRole = (user.role || '').toLowerCase();
     const userPlan = (user.subscription_plan || '').toLowerCase();
+    const userEmail = (user.email || '').toString().trim().toLowerCase();
+    const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
+    const isSuperAdminByEmail = userEmail === SUPER_ADMIN_EMAIL;
     
     logger.info('User data retrieved', { 
       userId, 
@@ -177,8 +180,8 @@ module.exports = async (req, res) => {
     }
     
     // ============= ADMIN CHECK FIRST - ADMINS ALWAYS HAVE ACCESS =============
-    // This check happens BEFORE any subscription logic
-    const isAdminRole = ['admin', 'super_admin'].includes(userRole);
+    // Super admin by email (shubzfx@gmail.com) OR admin/super_admin role - full access regardless of DB subscription
+    const isAdminRole = isSuperAdminByEmail || ['admin', 'super_admin'].includes(userRole);
     
     if (isAdminRole) {
       // Admins ALWAYS have access, regardless of payment status

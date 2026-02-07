@@ -60,34 +60,29 @@ export const SubscriptionProvider = ({ children }) => {
       
       const data = await response.json();
       
-      console.log('[SubscriptionContext] Server response:', {
-        success: data.success,
-        hasCommunityAccess: data.subscription?.hasCommunityAccess,
-        accessType: data.subscription?.accessType,
-        status: data.subscription?.status,
-        planId: data.subscription?.planId
-      });
-      
       if (data.success && data.subscription) {
         const sub = data.subscription;
         const userRole = (user?.role || '').toLowerCase();
-        const isAdmin = ['admin', 'super_admin'].includes(userRole);
+        const userEmail = (user?.email || '').toString().trim().toLowerCase();
+        const isSuperAdminByEmail = userEmail === 'shubzfx@gmail.com';
+        const isAdmin = isSuperAdminByEmail || ['admin', 'super_admin'].includes(userRole);
+        // Admins and super admin (by email) ALWAYS have access - override server response if needed
+        const hasAccess = isAdmin ? true : (sub.hasCommunityAccess !== false);
         setSubscription({
           ...sub,
           tier: sub.tier || 'FREE',
           status: sub.status || (sub.isActive ? 'active' : 'inactive'),
-          hasCommunityAccess: isAdmin ? true : (sub.hasCommunityAccess !== false)
+          hasCommunityAccess: hasAccess,
+          accessType: isAdmin ? 'ADMIN' : (sub.accessType || 'NONE')
         });
       } else {
-        console.warn('[SubscriptionContext] No subscription data in response, checking role fallback');
-        
-        // Check role fallback
+        // Check role/email fallback when API returns no subscription data
         const userRole = (user?.role || '').toLowerCase();
-        const isAdmin = ['admin', 'super_admin'].includes(userRole);
+        const userEmail = (user?.email || '').toString().trim().toLowerCase();
+        const isAdmin = (userEmail === 'shubzfx@gmail.com') || ['admin', 'super_admin'].includes(userRole);
         const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
         
         if (isAdmin || isPremiumRole) {
-          console.log('[SubscriptionContext] Role-based access granted:', userRole);
           setSubscription({
             hasCommunityAccess: true,
             accessType: isAdmin ? 'ADMIN' : (userRole === 'elite' || userRole === 'a7fx' ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE'),
@@ -108,14 +103,13 @@ export const SubscriptionProvider = ({ children }) => {
       console.error('Subscription fetch error:', err);
       setError(err.message);
       
-      // FALLBACK: Check if user has admin role - admins should always have access
-      // This prevents admins from being locked out if the subscription API fails
+      // FALLBACK: admins/super admin by email should always have access if API fails
       const userRole = (user?.role || '').toLowerCase();
-      const isAdmin = ['admin', 'super_admin'].includes(userRole);
+      const userEmail = (user?.email || '').toString().trim().toLowerCase();
+      const isAdmin = (userEmail === 'shubzfx@gmail.com') || ['admin', 'super_admin'].includes(userRole);
       const isPremiumRole = ['premium', 'elite', 'a7fx'].includes(userRole);
       
       if (isAdmin) {
-        console.log('[SubscriptionContext] API failed but user is admin - granting access');
         setSubscription({
           hasCommunityAccess: true,
           accessType: 'ADMIN',
@@ -124,7 +118,6 @@ export const SubscriptionProvider = ({ children }) => {
           _fallback: true
         });
       } else if (isPremiumRole) {
-        console.log('[SubscriptionContext] API failed but user has premium role - granting access');
         setSubscription({
           hasCommunityAccess: true,
           accessType: userRole === 'elite' || userRole === 'a7fx' ? 'A7FX_ELITE_ACTIVE' : 'AURA_FX_ACTIVE',
