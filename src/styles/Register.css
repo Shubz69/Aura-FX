@@ -155,7 +155,7 @@
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
-    overflow: hidden;
+    overflow: visible;
     transition: border-color 0.2s, background 0.2s;
 }
 .phone-input-row:focus-within {
@@ -168,6 +168,7 @@
     width: 88px;
     min-width: 88px;
     z-index: 100;
+    overflow: visible;
 }
 .phone-country-trigger {
     width: 100%;
@@ -220,7 +221,7 @@
     font-size: 0.5rem;
     opacity: 0.7;
 }
-/* Dropdown appears outside the country code box, below it */
+/* Dropdown fully drops down below - no clipping on any device */
 .phone-country-dropdown {
     position: absolute;
     top: 100%;
@@ -228,11 +229,12 @@
     margin-top: 6px;
     width: 280px;
     max-width: min(280px, calc(100vw - 32px));
-    z-index: 99999;
+    max-height: min(320px, calc(100vh - 120px));
+    z-index: 999999;
     background: #0f0f0f;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
     overflow: hidden;
 }
 .phone-country-search {
@@ -253,7 +255,7 @@
     background: rgba(255, 255, 255, 0.08);
 }
 .phone-country-list {
-    max-height: 220px;
+    max-height: 260px;
     overflow-y: auto;
     overflow-x: hidden;
     list-style: none;
