@@ -269,15 +269,20 @@ module.exports = async (req, res) => {
         // Use existing table structure - don't try to create/modify
         // The actual table has: id, content, encrypted, timestamp, channel_id, sender_id
         
+        // Announcements: exclude level-up and future-style messages (keep only real announcements)
+        const excludeLevelUp = channelIdLower === 'announcements'
+          ? " AND (m.content NOT LIKE '%LEVEL UP%' AND m.content NOT LIKE '%Level up%' AND m.content NOT LIKE '%has reached Level%' AND m.content NOT LIKE '%New Rank:%')"
+          : '';
+        
         // Try to fetch messages with username from users table
         // channel_id is bigint in actual table, but we receive it as string, so we need to handle both
         let [rows] = [];
         try {
           const afterId = req.query && req.query.afterId ? parseInt(req.query.afterId, 10) : null;
           const isCursor = Number.isInteger(afterId) && afterId > 0;
-          const whereClause = isCursor
+          const whereClause = (isCursor
             ? 'm.channel_id = ? AND m.id > ? AND (m.content IS NULL OR m.content <> \'[deleted]\')'
-            : 'm.channel_id = ? AND (m.content IS NULL OR m.content <> \'[deleted]\')';
+            : 'm.channel_id = ? AND (m.content IS NULL OR m.content <> \'[deleted]\')') + excludeLevelUp;
           const params = isCursor ? [channelId, afterId] : [channelId];
           // For catch-up: ORDER BY m.id ASC (newer messages after cursor). For initial load: DESC then reverse.
           const orderLimit = isCursor
@@ -300,7 +305,7 @@ module.exports = async (req, res) => {
               `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                FROM messages m 
                LEFT JOIN users u ON m.sender_id = u.id 
-               WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
+               WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
                ORDER BY m.timestamp DESC 
                LIMIT 200`,
               [numericChannelId]
@@ -314,7 +319,7 @@ module.exports = async (req, res) => {
                 `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                  FROM messages m 
                  LEFT JOIN users u ON m.sender_id = u.id 
-                 WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
+                 WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
                  ORDER BY m.id DESC 
                  LIMIT 200`,
                 [channelId]
@@ -327,7 +332,7 @@ module.exports = async (req, res) => {
                   `SELECT m.*, u.username, u.name, u.email, u.avatar, u.role 
                    FROM messages m 
                    LEFT JOIN users u ON m.sender_id = u.id 
-                   WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')
+                   WHERE m.channel_id = ? AND (m.content IS NULL OR m.content <> '[deleted]')${excludeLevelUp}
                    ORDER BY m.id DESC 
                    LIMIT 200`,
                   [numericChannelId]
