@@ -149,21 +149,25 @@ const GifPicker = ({ onGifSelect, onClose }) => {
                 ) : gifs.length === 0 ? (
                     <div className="gif-empty">No GIFs found</div>
                 ) : (
-                    gifs.map((gif) => (
-                        <div
-                            key={gif.id}
-                            className="gif-item"
-                            onClick={() => {
-                                onGifSelect(gif.images.fixed_height.url || gif.images.original.url);
-                            }}
-                        >
-                            <img
-                                src={gif.images.fixed_height_small.url || gif.images.preview_gif.url}
-                                alt={gif.title}
-                                loading="lazy"
-                            />
-                        </div>
-                    ))
+                    gifs.map((gif) => {
+                        const imgs = gif?.images || {};
+                        const displayUrl = imgs.fixed_height_small?.url || imgs.preview_gif?.url || imgs.downsized_small?.url || imgs.fixed_height?.url || imgs.original?.url || imgs.downsized?.url;
+                        const sendUrl = imgs.fixed_height?.url || imgs.original?.url || imgs.downsized?.url || displayUrl;
+                        if (!displayUrl) return null;
+                        return (
+                            <div
+                                key={gif.id}
+                                className="gif-item"
+                                onClick={() => onGifSelect(sendUrl)}
+                            >
+                                <img
+                                    src={displayUrl}
+                                    alt={gif.title || 'GIF'}
+                                    loading="lazy"
+                                />
+                            </div>
+                        );
+                    })
                 )}
             </div>
         </div>
