@@ -151,11 +151,15 @@
     width: 100%;
     min-width: 0;
 }
+.phone-national-input {
+    flex: 1;
+    min-width: 0;
+}
 .phone-country-select-wrap {
     position: relative;
     flex-shrink: 0;
-    width: 90px;
-    min-width: 90px;
+    width: 68px;
+    min-width: 68px;
     z-index: 100;
 }
 .phone-country-trigger {
@@ -165,8 +169,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 12px 8px;
+    gap: 2px;
+    padding: 12px 6px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
@@ -784,8 +788,8 @@
     }
     
     .phone-country-select-wrap {
-        width: 82px;
-        min-width: 82px;
+        width: 68px;
+        min-width: 68px;
     }
     .phone-national-input {
         min-width: 120px;

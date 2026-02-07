@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import ReCAPTCHA from 'react-google-recaptcha';
 import "../styles/Register.css";
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
@@ -9,6 +10,8 @@ import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRed
 import { isFirebasePhoneEnabled, setupRecaptcha, sendPhoneOtp, confirmPhoneOtp } from '../utils/firebasePhoneAuth';
 import { toE164 } from '../utils/countryCodes.js';
 import PhoneCountrySelect from '../components/PhoneCountrySelect';
+
+const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -27,6 +30,7 @@ const Register = () => {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [codesSent, setCodesSent] = useState(false); // true after "Send verification codes" – show email + phone OTP on same page
     const [firebaseOtpSent, setFirebaseOtpSent] = useState(false);
+    const [captchaCompleted, setCaptchaCompleted] = useState(false);
     const [phoneCountryCode, setPhoneCountryCode] = useState('+44');
     const [phoneNational, setPhoneNational] = useState('');
     const firebaseConfirmationRef = useRef(null);
@@ -44,14 +48,18 @@ const Register = () => {
     // Initialize Firebase reCAPTCHA before SEND button when form is shown (Firebase phone only)
     useEffect(() => {
         if (!codesSent && useFirebasePhone) {
+            setCaptchaCompleted(false);
             const t = setTimeout(() => {
                 const container = document.getElementById('recaptcha-container-register');
                 if (container && !recaptchaVerifierRef.current) {
-                    const r = setupRecaptcha('recaptcha-container-register');
+                    const r = setupRecaptcha('recaptcha-container-register', () => setCaptchaCompleted(true));
                     if (r) recaptchaVerifierRef.current = r;
                 }
             }, 300);
             return () => clearTimeout(t);
+        }
+        if (!codesSent && !useFirebasePhone) {
+            setCaptchaCompleted(false);
         }
     }, [codesSent, useFirebasePhone]);
 
@@ -118,14 +126,14 @@ const Register = () => {
             setError('Please accept the terms and conditions');
             return;
         }
+        const needsCaptcha = useFirebasePhone || RECAPTCHA_SITE_KEY;
+        if (needsCaptcha && !captchaCompleted) {
+            setError("Please complete the 'I'm not a robot' reCAPTCHA above before sending codes.");
+            return;
+        }
         setIsLoading(true);
         try {
-            const result = await Api.sendSignupVerificationEmail(formData.email, formData.username);
-            if (result !== true && result !== undefined) {
-                setError("Failed to send verification email. Please try again.");
-                setIsLoading(false);
-                return;
-            }
+            // Send phone OTP first when using Firebase – if it fails (e.g. billing), don't send email
             if (useFirebasePhone) {
                 const recaptcha = recaptchaVerifierRef.current || setupRecaptcha('recaptcha-container-register');
                 if (!recaptcha) {
@@ -146,13 +154,29 @@ const Register = () => {
             } else {
                 try {
                     const sendRes = await Api.sendPhoneVerificationCode(formData.phone);
-                    if (sendRes?.useFirebase) setError("Backend has Firebase but frontend is not configured. Add REACT_APP_FIREBASE_* or configure Twilio.");
-                    else if (!sendRes?.success && !sendRes?.useFirebase) setError("Could not send phone code. Configure Firebase (free) or Twilio.");
+                    if (sendRes?.useFirebase) {
+                        setError("Backend has Firebase but frontend is not configured. Add REACT_APP_FIREBASE_* or configure Twilio.");
+                        setIsLoading(false);
+                        return;
+                    }
+                    if (!sendRes?.success && !sendRes?.useFirebase) {
+                        setError("Could not send phone code. Configure Firebase (free) or Twilio.");
+                        setIsLoading(false);
+                        return;
+                    }
                 } catch (phoneErr) {
                     setError(phoneErr.message || "Could not send phone code. Configure Firebase (free) or Twilio.");
                     setIsLoading(false);
                     return;
                 }
+            }
+
+            // Only send email after phone step succeeded – no email sent if there were issues
+            const result = await Api.sendSignupVerificationEmail(formData.email, formData.username);
+            if (result !== true && result !== undefined) {
+                setError("Failed to send verification email. Please try again.");
+                setIsLoading(false);
+                return;
             }
             setCodesSent(true);
             setSuccess("Codes sent! Enter the 6-digit codes from your email and phone below.");
@@ -423,12 +447,23 @@ const Register = () => {
                     </span>
                 </label>
 
-                {useFirebasePhone && (
-                    <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ minHeight: 78, marginBottom: '1rem', display: 'flex', justifyContent: 'center' }} />
+                {(useFirebasePhone || RECAPTCHA_SITE_KEY) && (
+                    <div className="captcha-wrapper" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-start', minHeight: 78 }}>
+                        {useFirebasePhone ? (
+                            <div id="recaptcha-container-register" className="recaptcha-container-inline" style={{ display: 'flex', justifyContent: 'center' }} />
+                        ) : (
+                            <ReCAPTCHA
+                                sitekey={RECAPTCHA_SITE_KEY}
+                                onChange={() => setCaptchaCompleted(true)}
+                                onExpired={() => setCaptchaCompleted(false)}
+                                theme="dark"
+                            />
+                        )}
+                    </div>
                 )}
                 
-                <button type="submit" className="register-button" disabled={isLoading}>
-                    {isLoading ? 'SENDING CODES...' : 'SEND VERIFICATION CODES'}
+                <button type="submit" className="register-button" disabled={isLoading || ((useFirebasePhone || RECAPTCHA_SITE_KEY) && !captchaCompleted)}>
+                    {isLoading ? 'SENDING CODES...' : ((useFirebasePhone || RECAPTCHA_SITE_KEY) && !captchaCompleted ? 'COMPLETE reCAPTCHA ABOVE' : 'SEND VERIFICATION CODES')}
                 </button>
             </form>
                 )}
@@ -474,7 +509,7 @@ const Register = () => {
                             )}
                         </form>
                         <p style={{ marginTop: '1rem' }}>
-                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setPhoneCountryCode('+44'); setPhoneNational(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); recaptchaVerifierRef.current = null; }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
+                            <button type="button" onClick={() => { setCodesSent(false); setEmailCode(''); setPhoneCode(''); setPhoneCountryCode('+44'); setPhoneNational(''); setError(''); setSuccess(''); setFirebaseOtpSent(false); setCaptchaCompleted(false); recaptchaVerifierRef.current = null; }} className="link-button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}>Start over</button>
                         </p>
                     </>
                 )}

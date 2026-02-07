@@ -48,9 +48,10 @@ const getAuth = () => {
  * Create RecaptchaVerifier for phone auth. Container must exist in DOM with min 78px height.
  * Uses 'normal' size (visible checkbox) - invisible mode can fail with appVerificationDisabledForTesting errors.
  * @param {string} containerId - id of the div that will hold reCAPTCHA
+ * @param {Function} [onVerified] - called when user completes reCAPTCHA (before any codes sent)
  * @returns {object|null} RecaptchaVerifier or null
  */
-const setupRecaptcha = (containerId) => {
+const setupRecaptcha = (containerId, onVerified) => {
   const a = getAuth();
   if (!a) return null;
   const container = typeof document !== 'undefined' ? document.getElementById(containerId) : null;
@@ -63,7 +64,9 @@ const setupRecaptcha = (containerId) => {
     if (!fb) return null;
     return new fb.auth.RecaptchaVerifier(container, {
       size: 'normal',
-      callback: () => {},
+      callback: (response) => {
+        if (typeof onVerified === 'function') onVerified(response);
+      },
       'expired-callback': () => {}
     });
   } catch (e) {
