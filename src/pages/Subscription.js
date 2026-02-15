@@ -97,6 +97,10 @@ const Subscription = () => {
     const [showCardForm, setShowCardForm] = useState(false);
     const [planForCard, setPlanForCard] = useState(null);
     const [cardPaymentError, setCardPaymentError] = useState('');
+    const [showDowngradeModal, setShowDowngradeModal] = useState(false);
+    const [downgradeTargetPlanId, setDowngradeTargetPlanId] = useState(null);
+    const [downgradeSubmitting, setDowngradeSubmitting] = useState(false);
+    const [downgradeError, setDowngradeError] = useState('');
 
     // Subscription status from server
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
@@ -214,7 +218,7 @@ const Subscription = () => {
         const isActive = subscriptionStatus.isActive;
 
         if (currentPlanId === planId && isActive) {
-            if (subscriptionStatus.status === 'canceled') {
+            if (subscriptionStatus.status === 'canceled' || subscriptionStatus.cancelAtPeriodEnd) {
                 return <div className="plan-status-badge canceled">Canceling</div>;
             }
             if (subscriptionStatus.paymentFailed) {
@@ -243,8 +247,9 @@ const Subscription = () => {
             );
         }
 
-        if (subscriptionStatus.status === 'canceled' && subscriptionStatus.expiresAt) {
+        if ((subscriptionStatus.status === 'canceled' || subscriptionStatus.cancelAtPeriodEnd) && subscriptionStatus.expiresAt) {
             const expiryDate = new Date(subscriptionStatus.expiresAt);
+            const targetName = subscriptionStatus.downgradeToPlanId === 'free' ? 'Free' : (subscriptionStatus.downgradeToPlanId === 'aura' ? 'Aura FX' : '');
             return (
                 <div className="plan-renewal-info canceled">
                     Active until {expiryDate.toLocaleDateString('en-GB', { 
@@ -252,6 +257,7 @@ const Subscription = () => {
                         month: 'short', 
                         year: 'numeric' 
                     })}
+                    {targetName && <span> · Then switching to {targetName}</span>}
                 </div>
             );
         }
@@ -289,8 +295,15 @@ const Subscription = () => {
 
         // Handle update payment
         if (buttonState.type === 'update_payment') {
-            // Redirect to Stripe billing portal or contact
             window.open('https://billing.stripe.com/p/login/test', '_blank');
+            return;
+        }
+
+        // Downgrade: show confirmation modal (no refunds / at period end)
+        if (buttonState.type === 'downgrade') {
+            setDowngradeError('');
+            setDowngradeTargetPlanId(resolvedPlanId);
+            setShowDowngradeModal(true);
             return;
         }
 
@@ -308,6 +321,33 @@ const Subscription = () => {
         const redirectPage = `${window.location.origin}/stripe-redirect.html?paymentLink=${encodeURIComponent(paymentLink)}`;
         window.location.assign(redirectPage);
     }, [getButtonState, user]);
+
+    const handleDowngradeChoice = useCallback(async (when) => {
+        if (!downgradeTargetPlanId || downgradeSubmitting) return;
+        setDowngradeError('');
+        setDowngradeSubmitting(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `${API_BASE_URL}/api/subscription/downgrade`,
+                { targetPlanId: downgradeTargetPlanId, when },
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+            );
+            if (response.data && response.data.success) {
+                setShowDowngradeModal(false);
+                setDowngradeTargetPlanId(null);
+                await fetchSubscriptionStatus();
+                await refreshEntitlements();
+                if (typeof localStorage !== 'undefined') localStorage.removeItem('community_channels_cache');
+            } else {
+                setDowngradeError(response.data?.message || 'Something went wrong.');
+            }
+        } catch (err) {
+            setDowngradeError(err.response?.data?.message || err.message || 'Failed to process. Please try again.');
+        } finally {
+            setDowngradeSubmitting(false);
+        }
+    }, [downgradeTargetPlanId, downgradeSubmitting, fetchSubscriptionStatus, refreshEntitlements]);
 
     const handlePayWithCard = (planType) => {
         if (planType === 'free') return;
@@ -633,6 +673,52 @@ const Subscription = () => {
                             {renderPlanCard(PLANS.free)}
                             {renderPlanCard(PLANS.aura)}
                             {renderPlanCard(PLANS.a7fx)}
+                        </div>
+                    )}
+                    {/* Downgrade confirmation modal */}
+                    {showDowngradeModal && downgradeTargetPlanId && (
+                        <div className="downgrade-modal-overlay" onClick={() => !downgradeSubmitting && setShowDowngradeModal(false)}>
+                            <div className="downgrade-modal" onClick={e => e.stopPropagation()}>
+                                <h3 className="downgrade-modal-title">Switch plan</h3>
+                                <p className="downgrade-modal-message">
+                                    <strong>No refunds will be given</strong> if you stop your subscription straight away.
+                                </p>
+                                <p className="downgrade-modal-message">
+                                    You can either:
+                                </p>
+                                <ul className="downgrade-modal-list">
+                                    <li><strong>End now</strong> – Your subscription ends immediately. No refund for the unused period. You will have access only to the plan you switch to.</li>
+                                    <li><strong>At end of period</strong> – Keep your current access until your subscription end date, then switch automatically to {downgradeTargetPlanId === 'free' ? 'Free' : 'Aura FX'}.</li>
+                                </ul>
+                                {downgradeError && <div className="downgrade-modal-error" role="alert">{downgradeError}</div>}
+                                {downgradeSubmitting && <p className="downgrade-modal-message" style={{ marginBottom: 8 }}>Processing...</p>}
+                                <div className="downgrade-modal-actions">
+                                    <button
+                                        type="button"
+                                        className="downgrade-modal-btn downgrade-modal-btn-end"
+                                        onClick={() => handleDowngradeChoice('now')}
+                                        disabled={downgradeSubmitting}
+                                    >
+                                        End now (no refund)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="downgrade-modal-btn downgrade-modal-btn-period"
+                                        onClick={() => handleDowngradeChoice('period_end')}
+                                        disabled={downgradeSubmitting}
+                                    >
+                                        At end of period
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="downgrade-modal-btn downgrade-modal-btn-cancel"
+                                        onClick={() => !downgradeSubmitting && (setShowDowngradeModal(false), setDowngradeTargetPlanId(null), setDowngradeError(''))}
+                                        disabled={downgradeSubmitting}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
                     <p className="pricing-note" style={{ textAlign: 'center', marginTop: '20px' }}>Cancel anytime • No hidden fees</p>

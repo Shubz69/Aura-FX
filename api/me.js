@@ -10,6 +10,7 @@ const { executeQuery } = require('./db');
 const { getEntitlements, getAllowedChannelSlugs } = require('./utils/entitlements');
 const { verifyToken } = require('./utils/auth');
 const { getOrFetch } = require('./cache');
+const { applyScheduledDowngrade } = require('./utils/apply-scheduled-downgrade');
 
 const ENTITLEMENTS_TTL = 60000; // 60s - low latency, fresh enough for tier changes
 
@@ -43,44 +44,14 @@ module.exports = async (req, res) => {
 
   try {
     const fetchEntitlements = async () => {
-      let userRows;
-      try {
-        [userRows] = await executeQuery(
-        `SELECT id, email, username, name, avatar, role,
-                subscription_status, subscription_plan, subscription_expiry,
-                subscription_started, payment_failed, has_used_free_trial,
-                onboarding_accepted, onboarding_subscription_snapshot,
-                level, xp
-         FROM users WHERE id = ?`,
-        [userId]
-      );
-    } catch (colErr) {
-      // Columns may not exist if migration not run - fallback to basic query
-      if (colErr.code === 'ER_BAD_FIELD_ERROR' || (colErr.message && colErr.message.includes('Unknown column'))) {
-        const [fallbackRows] = await executeQuery(
-          `SELECT id, email, username, name, avatar, role,
-                  subscription_status, subscription_plan, subscription_expiry,
-                  subscription_started, payment_failed, has_used_free_trial
-           FROM users WHERE id = ?`,
-          [userId]
-        );
-        userRows = (fallbackRows || []).map((r) => ({
-          ...r,
-          onboarding_accepted: false,
-          onboarding_subscription_snapshot: null,
-          level: r.level != null ? r.level : 1,
-          xp: r.xp != null ? r.xp : 0
-        }));
-      } else {
-        throw colErr;
+      const userRow = await applyScheduledDowngrade(userId);
+      if (!userRow) {
+        throw Object.assign(new Error('USER_NOT_FOUND'), { code: 'USER_NOT_FOUND' });
       }
-    }
-
-    if (!userRows || userRows.length === 0) {
-      throw Object.assign(new Error('USER_NOT_FOUND'), { code: 'USER_NOT_FOUND' });
-    }
-
-    const userRow = userRows[0];
+      if (userRow.onboarding_accepted === undefined) userRow.onboarding_accepted = false;
+      if (userRow.onboarding_subscription_snapshot === undefined) userRow.onboarding_subscription_snapshot = null;
+      if (userRow.level === undefined && userRow.level !== 0) userRow.level = 1;
+      if (userRow.xp === undefined && userRow.xp !== 0) userRow.xp = 0;
     const entitlements = getEntitlements(userRow);
 
     let channels = [];

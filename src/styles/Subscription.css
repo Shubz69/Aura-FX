@@ -687,3 +687,82 @@
         font-size: 2.5rem;
     }
 }
+
+/* Downgrade confirmation modal */
+.downgrade-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+.downgrade-modal {
+    background: linear-gradient(135deg, rgba(26, 15, 46, 0.98), rgba(37, 26, 58, 0.98));
+    border-radius: 16px;
+    padding: 28px 32px;
+    max-width: 480px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+.downgrade-modal-title {
+    margin: 0 0 16px;
+    font-size: 1.35rem;
+    color: rgba(255, 255, 255, 0.95);
+}
+.downgrade-modal-message {
+    margin: 0 0 10px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+.downgrade-modal-list {
+    margin: 12px 0 20px;
+    padding-left: 20px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+.downgrade-modal-list li {
+    margin-bottom: 8px;
+}
+.downgrade-modal-error {
+    color: #f87171;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+.downgrade-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.downgrade-modal-btn {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-size: 0.95rem;
+}
+.downgrade-modal-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+.downgrade-modal-btn-end {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.downgrade-modal-btn-period {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+.downgrade-modal-btn-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}

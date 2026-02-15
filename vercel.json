@@ -133,6 +133,10 @@
       "destination": "/api/subscription/select-free.js"
     },
     {
+      "source": "/api/subscription/downgrade",
+      "destination": "/api/subscription/downgrade.js"
+    },
+    {
       "source": "/api/me",
       "destination": "/api/me.js"
     },

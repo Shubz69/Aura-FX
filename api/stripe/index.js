@@ -202,7 +202,7 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN has_used_free_trial BOOLEAN DEFAULT FALSE');
         }
 
-        // Check if user has already used a free trial on premium/elite plans
+        // Trial is once per account: if they have already used a free trial, they cannot get it again.
         const [userRows] = await db.execute(
           'SELECT has_used_free_trial FROM users WHERE id = ?',
           [userId]

@@ -236,7 +236,8 @@ const ensureSettingsTable = async (db) => {
 
 const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'levels', 'admin']);
 
-const { getEntitlements, getChannelPermissions } = require('../utils/entitlements');
+const { getEntitlements, getChannelPermissions, getAllowedChannelSlugs } = require('../utils/entitlements');
+const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 
 function decodeToken(authHeader) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
@@ -549,33 +550,10 @@ module.exports = async (req, res) => {
             // Single source of truth: add per-channel permission flags from entitlements (effectiveTier)
             let entitlements = { role: 'USER', tier: 'FREE', effectiveTier: 'FREE', allowedChannelSlugs: [] };
             try {
-              let userRows = [];
               const userId = decoded.id != null ? String(decoded.id) : null;
-              if (userId) {
-                try {
-                  [userRows] = await db.execute(
-                    'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed, onboarding_accepted, onboarding_subscription_snapshot FROM users WHERE id = ?',
-                    [userId]
-                  );
-                } catch (colErr) {
-                  if (colErr.code === 'ER_BAD_FIELD_ERROR' || (colErr.message && colErr.message.includes('Unknown column'))) {
-                    const [fallback] = await db.execute(
-                      'SELECT id, email, role, subscription_plan, subscription_status, subscription_expiry, payment_failed FROM users WHERE id = ?',
-                      [userId]
-                    );
-                    userRows = (fallback || []).map((r) => ({
-                      ...r,
-                      onboarding_accepted: false,
-                      onboarding_subscription_snapshot: null
-                    }));
-                  } else {
-                    throw colErr;
-                  }
-                }
-              }
-              if (userRows && userRows.length > 0) {
-                entitlements = getEntitlements(userRows[0]);
-                const { getAllowedChannelSlugs } = require('../utils/entitlements');
+              const userRow = userId ? await applyScheduledDowngrade(userId) : null;
+              if (userRow) {
+                entitlements = getEntitlements(userRow);
                 entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, allChannels);
               } else {
                 const freeDefaultIds = ['welcome', 'announcements', 'levels', 'general'];

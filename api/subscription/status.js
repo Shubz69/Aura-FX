@@ -27,6 +27,7 @@
 const { executeQuery } = require('../db');
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
+const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 
 // Decode JWT token
 function decodeToken(authHeader) {
@@ -117,20 +118,8 @@ module.exports = async (req, res) => {
   logger.info('Fetching subscription status', { userId });
 
   try {
-    const [rows] = await executeQuery(`
-      SELECT 
-        id, email, role, 
-        subscription_status, 
-        subscription_plan, 
-        subscription_expiry, 
-        subscription_started,
-        payment_failed,
-        has_used_free_trial
-      FROM users 
-      WHERE id = ?
-    `, [userId]);
-
-    if (!rows || rows.length === 0) {
+    const user = await applyScheduledDowngrade(userId);
+    if (!user) {
       return res.status(404).json({
         success: false,
         errorCode: 'USER_NOT_FOUND',
@@ -138,8 +127,6 @@ module.exports = async (req, res) => {
         requestId
       });
     }
-
-    const user = rows[0];
     const now = new Date();
     
     // NORMALIZE ROLE TO LOWERCASE for case-insensitive comparison
@@ -204,7 +191,7 @@ module.exports = async (req, res) => {
         const startDate = new Date(user.subscription_started);
         const daysSinceStart = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
         
-        if (daysSinceStart <= 90 && !user.has_used_free_trial_before) {
+        if (daysSinceStart <= 90 && !user.has_used_free_trial) {
           // User is in trial period
         }
       }
@@ -291,7 +278,9 @@ module.exports = async (req, res) => {
       daysRemaining: daysRemaining > 0 ? daysRemaining : null,
       price: PLAN_PRICES[planId] || null,
       paymentFailed: !!user.payment_failed,
-      hasUsedFreeTrial: !!user.has_used_free_trial
+      hasUsedFreeTrial: !!user.has_used_free_trial,
+      cancelAtPeriodEnd: !!(user.cancel_at_period_end === true || user.cancel_at_period_end === 1),
+      downgradeToPlanId: (user.downgrade_to_plan || '').toString().trim() || null
     };
 
     logger.info('Subscription status fetched', { 
