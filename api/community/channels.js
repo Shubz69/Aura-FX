@@ -603,7 +603,8 @@ module.exports = async (req, res) => {
               const canSee = perm.canSee && inAllowed;
               return { ...ch, canSee, canRead: canSee && perm.canRead, canWrite: canSee && perm.canWrite, locked: perm.locked };
             });
-            return res.status(200).json(channelsWithFlags);
+            const visibleOnly = channelsWithFlags.filter((ch) => ch.canSee === true);
+            return res.status(200).json(visibleOnly);
           }
         } catch (dbError) {
           console.error('Database error fetching channels:', dbError);
@@ -1071,7 +1072,9 @@ module.exports = async (req, res) => {
         const updatedChannel = updatedRows[0];
 
         const displayNameFinal = displayName || toDisplayName(updatedChannel.name);
-        const locked = (updatedChannel.access_level || 'open') === 'admin-only';
+        const accessLevel = (updatedChannel.access_level || 'open').toLowerCase();
+        const permissionType = (updatedChannel.permission_type || 'read-write').toLowerCase();
+        const locked = accessLevel === 'admin-only' || accessLevel === 'admin' || permissionType === 'read-only';
 
         await db.end();
 

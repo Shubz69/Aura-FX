@@ -20,7 +20,7 @@ import {
 } from '../utils/xpSystem';
 
 // Icons
-import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft } from 'react-icons/fa';
+import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft, FaDownload } from 'react-icons/fa';
 import ProfileModal from '../components/ProfileModal';
 
 // All API calls use real endpoints only - no mock mode
@@ -719,49 +719,9 @@ const Community = () => {
             return channelListRef.current;
         }
 
-        // OPTIMIZATION: Load cached channels first for instant display (keyed by user to avoid wrong permissions)
         const u = JSON.parse(localStorage.getItem('user') || '{}');
         const cachedChannelsKey = `community_channels_cache_${u.id || 'anon'}`;
         let cachedChannels = [];
-        try {
-            const cached = localStorage.getItem(cachedChannelsKey);
-            if (cached) {
-                cachedChannels = JSON.parse(cached);
-                if (cachedChannels.length > 0) {
-                    const r = (u.role || '').toString().toLowerCase();
-                    const em = (u.email || '').toString().toLowerCase();
-                    const adminOrSuper = r === 'admin' || r === 'super_admin' || em === SUPER_ADMIN_EMAIL.toLowerCase();
-                    const preparedCached = cachedChannels.map((channel) => {
-                        const baseId = channel.id ?? channel.name ?? `channel-${Date.now()}`;
-                        const idString = String(baseId);
-                        const normalizedName = channel.name || idString;
-                        const displayNameValue = channel.displayName || normalizedName
-                            .split('-')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(' ');
-                        const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
-                        const canSee = adminOrSuper || channel.canSee === true;
-                        return {
-                            ...channel,
-                            id: idString,
-                            name: normalizedName,
-                            displayName: displayNameValue,
-                            category: channel.category || 'general',
-                            description: channel.description || '',
-                            accessLevel: accessLevelValue,
-                            locked: adminOrSuper ? false : (channel.locked ?? accessLevelValue === 'admin-only'),
-                            canSee,
-                            canRead: adminOrSuper ? true : (canSee && (channel.canRead !== false)),
-                            canWrite: adminOrSuper ? true : (canSee && (channel.canWrite !== false))
-                        };
-                    }).filter((ch) => ch.canSee === true);
-                    setChannelList(sortChannels(preparedCached));
-                }
-            }
-        } catch (cacheError) {
-            console.warn('Error loading cached channels:', cacheError);
-        }
-
         let channelsFromServer = [];
 
         try {
@@ -772,9 +732,7 @@ const Community = () => {
                 channelsFromServer = response.data.channels;
             }
             
-            // Show ALL channels - no filtering (API returns all channels from database)
-            // Admin can control access via access_level in database
-            
+            // API returns only channels this user can see (by role: free/premium/elite)
             if (channelsFromServer.length > 0) {
                 try {
                     const u = JSON.parse(localStorage.getItem('user') || '{}');
@@ -3106,143 +3064,98 @@ Earn XP by:
         setNewMessage('');
     };
 
-    // Handle opening/downloading files - Always make files downloadable
+    // Open/view file first (new tab). Does not download.
     const handleFileClick = (file) => {
         if (!file) return;
-        
-        // Always try to download the file first
-        if (file.preview) {
-            try {
-                // Convert base64 to blob for download
-                const base64Data = file.preview.includes(',') 
-                    ? file.preview.split(',')[1] 
-                    : file.preview;
-                const byteCharacters = atob(base64Data);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: file.type || 'application/octet-stream' });
-                
-                // Create download link
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = getFileName(file.name); // Use just filename, no path
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                return; // Download successful, don't open in new tab
-            } catch (error) {
-                console.error('Error downloading file:', error);
-            }
-        }
-        
-        // If it's an image with preview, also open in new tab after download attempt
-        if (file.preview && file.type && file.type.startsWith('image/')) {
-            const newWindow = window.open();
-            if (newWindow) {
-                newWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>${file.name}</title>
-                            <style>
-                                body {
-                                    margin: 0;
-                                    padding: 20px;
-                                    background: #1a1a1a;
-                                    display: flex;
-                                    justify-content: center;
-                                    align-items: center;
-                                    min-height: 100vh;
-                                }
-                                img {
-                                    max-width: 100%;
-                                    max-height: 100vh;
-                                    border-radius: 8px;
-                                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-                                }
-                            </style>
-                        </head>
-                        <body>
-                            <img src="${file.preview}" alt="${file.name}" />
-                        </body>
-                    </html>
-                `);
-            }
-        } else if (file.preview) {
-            // For documents with preview (base64 data), download the file
-            try {
-                // Convert base64 to blob
-                const base64Data = file.preview.includes(',') 
-                    ? file.preview.split(',')[1] 
-                    : file.preview;
-                const byteCharacters = atob(base64Data);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: file.type || 'application/octet-stream' });
-                
-                // Create download link
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = file.name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('Error downloading file:', error);
-                // Fallback: try to open in new tab if it's a viewable format
-                if (file.type && (file.type.includes('pdf') || file.type.includes('text'))) {
-                    const newWindow = window.open();
-                    if (newWindow && file.preview) {
-                        newWindow.document.write(`
-                            <html>
-                                <head>
-                                    <title>${file.name}</title>
-                                    <style>
-                                        body {
-                                            margin: 0;
-                                            padding: 20px;
-                                            background: #1a1a1a;
-                                            color: #fff;
-                                            font-family: Arial, sans-serif;
-                                        }
-                                        .container {
-                                            max-width: 800px;
-                                            margin: 0 auto;
-                                            padding: 20px;
-                                        }
-                                        iframe {
-                                            width: 100%;
-                                            height: 80vh;
-                                            border: none;
-                                            border-radius: 8px;
-                                        }
-                                    </style>
-                                </head>
-                                <body>
-                                    <div class="container">
-                                        <h2>${file.name}</h2>
-                                        <iframe src="${file.preview}"></iframe>
-                                    </div>
-                                </body>
-                            </html>
-                        `);
-                    }
-                } else {
-                    alert(`File "${file.name}" cannot be downloaded. File data is not available.`);
-                }
-            }
-        } else {
-            // No preview available - file data not stored
+        if (!file.preview) {
             alert(`File "${file.name}" cannot be opened. The file data was not saved when the message was sent.`);
+            return;
+        }
+        const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        const newWindow = window.open();
+        if (!newWindow) return;
+        if (file.type && file.type.startsWith('image/')) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>${esc(file.name)}</title>
+                    <style>
+                        body { margin: 0; padding: 20px; background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                        img { max-width: 100%; max-height: 100vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+                    </style></head>
+                    <body><img src="${file.preview}" alt="${esc(file.name)}" /></body>
+                </html>
+            `);
+            return;
+        }
+        if (file.type && (file.type.includes('pdf') || file.type.includes('text') || file.type === 'application/pdf')) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>${esc(file.name)}</title>
+                    <style>
+                        body { margin: 0; padding: 20px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; }
+                        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+                        iframe { width: 100%; height: 80vh; border: none; border-radius: 8px; }
+                    </style></head>
+                    <body><div class="container"><h2>${esc(file.name)}</h2><iframe src="${file.preview}" title="${esc(file.name)}"></iframe></div></body>
+                </html>
+            `);
+            return;
+        }
+        newWindow.document.write(`
+            <html>
+                <head><title>${esc(file.name)}</title>
+                <style>
+                    body { margin: 0; padding: 24px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                    .card { background: #2a2a2a; padding: 24px; border-radius: 12px; text-align: center; max-width: 360px; }
+                    h2 { margin: 0 0 8px; font-size: 1rem; word-break: break-all; }
+                    p { margin: 0 0 16px; color: #999; font-size: 0.875rem; }
+                    a { display: inline-block; padding: 10px 20px; background: #5865f2; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
+                    a:hover { background: #4752c4; }
+                </style></head>
+                <body><div class="card"><h2>${esc(file.name)}</h2><p>This file cannot be previewed in the browser.</p><a href="#" id="dl">Download</a></div></body>
+            </html>
+        `);
+        const blob = (() => {
+            try {
+                const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                return new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
+            } catch (e) { return null; }
+        })();
+        if (blob) {
+            const url = URL.createObjectURL(blob);
+            newWindow.document.getElementById('dl').href = url;
+            newWindow.document.getElementById('dl').download = getFileName(file.name);
+        }
+    };
+
+    // Download file (explicit action). Used by Download button.
+    const handleFileDownload = (e, file) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!file || !file.preview) {
+            alert(`File "${(file && file.name) || 'Unknown'}" cannot be downloaded. File data is not available.`);
+            return;
+        }
+        try {
+            const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+            const blob = new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = getFileName(file.name);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading file:', error);
+            toast.error('Download failed.');
         }
     };
 
@@ -3378,8 +3291,9 @@ Earn XP by:
                     }
                 })
                 .catch(error => {
-                    console.error('Error saving message to API:', error);
-                    toast.error('Failed to send. Please try again.');
+                    const msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
+                    if (process.env.NODE_ENV === 'development') console.error('Error saving message to API:', error);
+                    toast.error(msg);
                 });
             
             // Check for @mentions and send notifications (don't wait for API response)
@@ -4458,12 +4372,11 @@ Earn XP by:
                                             
                                             if (response.ok) {
                                                 // Refresh channel list to show updated category
-                                                const refreshResponse = await fetch('/api/community/channels');
+                                                const refreshResponse = await fetch('/api/community/channels', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                                                 if (refreshResponse.ok) {
                                                     const data = await refreshResponse.json();
-                                                    if (data.success && Array.isArray(data.channels)) {
-                                                        setChannelList(data.channels);
-                                                    }
+                                                    const list = Array.isArray(data) ? data : (data?.channels || []);
+                                                    if (list.length) setChannelList(list);
                                                 }
                                                 setDraggedChannel(null);
                                             } else {
@@ -4613,9 +4526,8 @@ Earn XP by:
                                                                             const refreshResponse = await fetch('/api/community/channels');
                                                                             if (refreshResponse.ok) {
                                                                                 const data = await refreshResponse.json();
-                                                                                if (data.success && Array.isArray(data.channels)) {
-                                                                                    setChannelList(data.channels);
-                                                                                }
+                                                                                const list = Array.isArray(data) ? data : (data?.channels || []);
+                                                                                if (list.length) setChannelList(list);
                                                                             }
                                                                             setDraggedChannel(null);
                                                                             setDragOverChannel(null);
@@ -4744,9 +4656,8 @@ Earn XP by:
                                                                         const refreshResponse = await fetch('/api/community/channels');
                                                                         if (refreshResponse.ok) {
                                                                             const data = await refreshResponse.json();
-                                                                            if (data.success && Array.isArray(data.channels)) {
-                                                                                setChannelList(data.channels);
-                                                                            }
+                                                                            const list = Array.isArray(data) ? data : (data?.channels || []);
+                                                                            if (list.length) setChannelList(list);
                                                                         }
                                                                         setDraggedChannel(null);
                                                                         setDragOverChannel(null);
@@ -4875,12 +4786,11 @@ Earn XP by:
                                                                 });
                                                                 
                                                                 if (response.ok) {
-                                                                    const refreshResponse = await fetch('/api/community/channels');
+                                                                    const refreshResponse = await fetch('/api/community/channels', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                                                                     if (refreshResponse.ok) {
                                                                         const data = await refreshResponse.json();
-                                                                        if (data.success && Array.isArray(data.channels)) {
-                                                                            setChannelList(data.channels);
-                                                                        }
+                                                                        const list = Array.isArray(data) ? data : (data?.channels || []);
+                                                                        if (list.length) setChannelList(list);
                                                                     }
                                                                     setDraggedChannel(null);
                                                                     setDragOverChannel(null);
@@ -5788,7 +5698,7 @@ Earn XP by:
                                                         e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                                                         e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
                                                     }}
-                                                    title="Click to open in new window"
+                                                    title="Click to open"
                                                 >
                                                     <img 
                                                         src={message.file.preview} 
@@ -5823,6 +5733,24 @@ Earn XP by:
                                                         }}>
                                                             {getDisplayFileName(message.file.name, message.file.type)}
                                                         </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => handleFileDownload(e, message.file)}
+                                                            title="Download"
+                                                            style={{
+                                                                padding: '6px 10px',
+                                                                background: 'rgba(88, 101, 242, 0.3)',
+                                                                border: 'none',
+                                                                borderRadius: '8px',
+                                                                color: 'var(--accent-blue)',
+                                                                cursor: 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
+                                                            }}
+                                                        >
+                                                            <FaDownload style={{ fontSize: '0.875rem' }} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             )}
@@ -5855,7 +5783,7 @@ Earn XP by:
                                                         e.currentTarget.style.transform = 'translateX(0)';
                                                         e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                                                     }}
-                                                    title="Click to download"
+                                                    title="Click to open"
                                                 >
                                                     <div style={{
                                                         width: '40px',
@@ -5880,6 +5808,24 @@ Earn XP by:
                                                     }}>
                                                         {getDisplayFileName(message.file.name, message.file.type)}
                                                     </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleFileDownload(e, message.file)}
+                                                        title="Download"
+                                                        style={{
+                                                            padding: '8px 12px',
+                                                            background: 'rgba(88, 101, 242, 0.3)',
+                                                            border: 'none',
+                                                            borderRadius: '8px',
+                                                            color: 'var(--accent-blue)',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        <FaDownload style={{ fontSize: '1rem' }} />
+                                                    </button>
                                                 </div>
                                             )}
                                             

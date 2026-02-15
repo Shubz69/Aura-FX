@@ -449,7 +449,8 @@ const Api = {
             );
             return response;
         } catch (error) {
-            console.error(`Error sending message to channel ${channelId}:`, error);
+            const msg = error?.response?.data?.message || error?.message || 'Send failed';
+            console.error(`Error sending message to channel ${channelId}:`, msg);
             throw error; // Rethrow as sending messages should report errors to user
         }
     },

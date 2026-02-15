@@ -4,6 +4,7 @@ const Stripe = require('stripe');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { invalidateEntitlementsCache } = require('../cache');
 
 // Validate Stripe secret key (backend only – never expose sk_ in frontend)
 function getStripeClient() {
@@ -260,6 +261,7 @@ module.exports = async (req, res) => {
         
         // Log the role update for debugging
         console.log(`✅ Subscription activated for user ${userId}: role=${userRole}, plan=${planType}, expiry=${expiryDate}`);
+        invalidateEntitlementsCache(userId);
 
         const [updatedUser] = await db.execute(
           'SELECT id, subscription_status, subscription_expiry FROM users WHERE id = ?',
@@ -364,6 +366,7 @@ module.exports = async (req, res) => {
                   [expiryStr, session?.id || null, userRole, planType, markFreeTrialUsed, userId]
                 );
                 console.log(`✅ Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${planType}`);
+                invalidateEntitlementsCache(userId);
               }
               await db.end();
             } catch (dbErr) {
@@ -412,7 +415,8 @@ module.exports = async (req, res) => {
               [userId]
             );
             console.log('Immediate downgrade to FREE for user:', userId);
-            
+            invalidateEntitlementsCache(userId);
+
             // Send email notification
             if (userEmail) {
               try {
@@ -468,8 +472,9 @@ module.exports = async (req, res) => {
               ['active', expiryDate.toISOString().slice(0, 19).replace('T', ' '), userRole, userId]
             );
             console.log('Reactivated subscription for user:', userId, 'with role:', userRole);
+            invalidateEntitlementsCache(userId);
           }
-          
+
           await db.end();
         } catch (dbError) {
           console.error('Database error in webhook:', dbError);

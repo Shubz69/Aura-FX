@@ -262,6 +262,8 @@ export const WebSocketProvider = ({ children }) => {
   const sendMessage = useCallback((channelId, message) => {
     const client = clientRef.current;
     if (!ENABLED || !client?.connected || !channelId || !token) return false;
+    const ws = client.webSocket;
+    if (ws && ws.readyState !== 1) return false;
     try {
       client.publish({
         destination: `/app/chat/${channelId}`,

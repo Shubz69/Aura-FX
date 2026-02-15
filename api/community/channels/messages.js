@@ -226,20 +226,35 @@ module.exports = async (req, res) => {
     if (!userRows || userRows.length === 0) {
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'Access denied.' });
     }
-    const entitlements = getEntitlements(userRows[0]);
+    let entitlements = getEntitlements(userRows[0]);
+    // JWT fallback: align with channels API – if token says ADMIN/SUPER_ADMIN, grant full channel access
+    const jwtRole = (decoded.role || '').toString().toUpperCase();
+    if (jwtRole === 'ADMIN' || jwtRole === 'SUPER_ADMIN') {
+      entitlements = { ...entitlements, role: jwtRole, tier: 'ELITE', effectiveTier: 'ELITE' };
+    }
+
     let [channelRows] = await db.execute(
       'SELECT id, name, access_level, permission_type FROM channels WHERE id = ?',
       [channelId]
     );
     if (!channelRows || channelRows.length === 0) {
+      [channelRows] = await db.execute(
+        'SELECT id, name, access_level, permission_type FROM channels WHERE LOWER(id) = LOWER(?)',
+        [channelId]
+      );
+    }
+    if (!channelRows || channelRows.length === 0) {
       return res.status(404).json({ success: false, message: 'Channel not found.' });
     }
     const channelRow = channelRows[0];
+    channelId = channelRow.id;
     const perm = getChannelPermissions(entitlements, {
       id: channelRow.id,
       name: channelRow.name,
       access_level: channelRow.access_level,
-      permission_type: channelRow.permission_type
+      accessLevel: channelRow.access_level,
+      permission_type: channelRow.permission_type,
+      permissionType: channelRow.permission_type
     });
     if (!perm.canSee) {
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN', message: 'You do not have access to this channel.' });
