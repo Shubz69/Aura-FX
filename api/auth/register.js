@@ -2,6 +2,7 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt'); // bcrypt is in package.json
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { sendSignupNotification } = require('../utils/email');
 
 // Get database connection
 const getDbConnection = async () => {
@@ -195,6 +196,20 @@ module.exports = async (req, res) => {
       }
 
       const userId = result.insertId;
+
+      // Notify support with signup count (for milestones e.g. 10th user prize)
+      try {
+        const [countRows] = await db.execute('SELECT COUNT(*) AS cnt FROM users');
+        const userCount = countRows && countRows[0] && countRows[0].cnt != null ? Number(countRows[0].cnt) : userId;
+        sendSignupNotification({
+          email: emailLower,
+          name: name || username,
+          username: usernameLower,
+          userCount
+        }).catch((err) => console.error('Signup notification email:', err.message));
+      } catch (countErr) {
+        console.warn('Could not get user count for signup email:', countErr.message);
+      }
 
       // Create admin thread and send welcome message for new user
       const WELCOME_MESSAGE = `Welcome to AURA FX! This is a place where you can complain, ask questions, or get help. A personal admin will be there to assist you whenever you need it.`;

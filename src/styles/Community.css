@@ -1327,6 +1327,14 @@ html.community-page-active {
 .chat-input-wrapper {
     flex: 1;
     position: relative;
+    overflow: visible;
+}
+
+.mention-autocomplete {
+    overflow: visible;
+}
+.mention-autocomplete .mention-item {
+    transition: background 0.1s ease;
 }
 
 .chat-input {

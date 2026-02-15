@@ -144,7 +144,7 @@ app.post('/api/contact', async (req, res) => {
     // Email content
     const mailOptions = {
       from: process.env.EMAIL_USER || 'your-email@gmail.com',
-      to: 'shubzfx@gmail.com',
+      to: process.env.CONTACT_INBOX || 'Support@auraxfx.com',
       subject: `Contact Form Message from ${name}`,
       html: `
         <h3>New Contact Form Submission</h3>

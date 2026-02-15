@@ -51,7 +51,8 @@ function getTier(userRow) {
   const active = status === 'active' && expiry && expiry > new Date() && !userRow.payment_failed;
 
   if (['admin', 'super_admin'].includes(role)) return 'ELITE';
-  if (['elite', 'a7fx'].includes(role) || (active && ['a7fx', 'elite'].includes(plan))) return 'ELITE';
+  if (active && plan === 'a7fx') return 'A7FX';
+  if (['elite', 'a7fx'].includes(role) || (active && plan === 'elite')) return 'ELITE';
   if (role === 'premium' || (active && ['aura', 'premium'].includes(plan))) return 'PREMIUM';
   return 'FREE';
 }
@@ -97,6 +98,7 @@ function needsOnboardingReaccept(userRow) {
   const snapshot = (userRow.onboarding_subscription_snapshot || '').toString().toLowerCase();
   const tier = getTier(userRow);
   if (tier === 'ELITE' && !['elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
+  if (tier === 'A7FX' && !['a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
   if (tier === 'PREMIUM' && !['premium', 'aura', 'elite', 'a7fx', 'admin', 'super_admin'].includes(snapshot)) return true;
   if (tier === 'FREE' && !['free', 'open', ''].includes(snapshot)) return true;
   const current = (userRow.subscription_plan || userRow.role || 'free').toString().toLowerCase();
@@ -143,7 +145,7 @@ function getEntitlements(userRow) {
     periodEnd,
     status,
     canAccessCommunity: isAdmin || planSelected,
-    canAccessAI: isAdmin || tier === 'PREMIUM' || tier === 'ELITE',
+    canAccessAI: isAdmin || tier === 'PREMIUM' || tier === 'ELITE' || tier === 'A7FX',
     allowedChannelSlugs: [],
     onboardingAccepted: isAdmin || onboardingAccepted,
     needsOnboardingReaccept: needsReaccept,
@@ -191,6 +193,28 @@ function getAllowedChannelSlugs(entitlements, channels) {
         const nameKey = freeChannelNameKey(c.name);
         const nameLower = (c.name || '').toString().toLowerCase();
         return nameKey && (FREE_CHANNEL_ALLOWLIST.has(nameKey) || FREE_CHANNEL_ALLOWLIST.has(nameLower));
+      })
+      .map(toId)
+      .filter(Boolean);
+  } else if (tier === 'PREMIUM') {
+    allowed = channels
+      .filter((c) => {
+        const id = toId(c).toLowerCase();
+        if (ALWAYS_VISIBLE.has(id)) return true;
+        const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
+        const category = (c.category || '').toString().toLowerCase();
+        return level === 'premium' || category === 'premium';
+      })
+      .map(toId)
+      .filter(Boolean);
+  } else if (tier === 'A7FX') {
+    allowed = channels
+      .filter((c) => {
+        const id = toId(c).toLowerCase();
+        if (ALWAYS_VISIBLE.has(id)) return true;
+        const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
+        const category = (c.category || '').toString().toLowerCase();
+        return level === 'a7fx' || category === 'a7fx';
       })
       .map(toId)
       .filter(Boolean);
@@ -284,10 +308,15 @@ function getChannelPermissions(entitlements, channel) {
     return { canSee, canRead, canWrite, locked };
   }
 
-  if (tier === 'ELITE') {
+  const category = (channel?.category || '').toString().toLowerCase();
+  const ALWAYS_VISIBLE_IDS = new Set(['welcome', 'announcements', 'levels', 'notifications']);
+
+  if (tier === 'PREMIUM') {
+    canSee = ALWAYS_VISIBLE_IDS.has(id) || accessLevel === 'premium' || category === 'premium';
+  } else if (tier === 'A7FX') {
+    canSee = ALWAYS_VISIBLE_IDS.has(id) || accessLevel === 'a7fx' || category === 'a7fx';
+  } else if (tier === 'ELITE') {
     canSee = ACCESS_LEVELS_ELITE.has(accessLevel);
-  } else if (tier === 'PREMIUM') {
-    canSee = ACCESS_LEVELS_PREMIUM.has(accessLevel);
   } else {
     canSee = false;
   }

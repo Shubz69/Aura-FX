@@ -146,7 +146,7 @@ const ContactUs = () => {
                             )}
                             
                             <div className="direct-email-option">
-                                <p>Or email us directly at: <a href="mailto:platform@aurafx.com">platform@aurafx.com</a></p>
+                                <p>Or email us directly at: <a href="mailto:Support@auraxfx.com">Support@auraxfx.com</a></p>
                             </div>
                         </form>
                     </div>
@@ -161,7 +161,7 @@ const ContactUs = () => {
                                 </div>
                                 <div className="contact-text">
                                     <strong>Email</strong>
-                                    <span>platform@aurafx.com</span>
+                                    <span>Support@auraxfx.com</span>
                                 </div>
                             </div>
                             

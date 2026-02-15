@@ -488,10 +488,11 @@ module.exports = async (req, res) => {
               }
             };
 
-            // Ensure welcome, announcements, and levels exist with AURA FX branding
+            // Ensure welcome, announcements, levels, and general exist (visible to all / free subscribers)
             await safeInsertChannel('welcome', 'welcome', 'announcements', 'Welcome to AURA FX Community. Read the rules and click the checkmark below to unlock your channels.', 'open');
             await safeInsertChannel('announcements', 'announcements', 'announcements', 'Important announcements from AURA FX.', 'open');
             await safeInsertChannel('levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open');
+            await safeInsertChannel('general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open');
 
             // TRADING CHANNELS - Open access for all users to see and post
             const tradingChannels = [
@@ -576,6 +577,12 @@ module.exports = async (req, res) => {
                 entitlements = getEntitlements(userRows[0]);
                 const { getAllowedChannelSlugs } = require('../utils/entitlements');
                 entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, allChannels);
+              } else {
+                const freeDefaultIds = ['welcome', 'announcements', 'levels', 'general'];
+                entitlements.allowedChannelSlugs = allChannels
+                  .filter((c) => freeDefaultIds.includes(String(c.id || c.name || '').toLowerCase()))
+                  .map((c) => c.id || c.name)
+                  .filter(Boolean);
               }
               // JWT fallback: if token has ADMIN or SUPER_ADMIN role, grant full channel access (e.g. when DB lookup fails or role not synced)
               const jwtRole = (decoded.role || '').toString().toUpperCase();
@@ -595,6 +602,7 @@ module.exports = async (req, res) => {
               const perm = getChannelPermissions(entitlements, {
                 id: ch.id,
                 name: ch.name,
+                category: ch.category,
                 access_level: ch.accessLevel,
                 permission_type: ch.permissionType
               });
