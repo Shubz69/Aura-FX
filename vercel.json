@@ -325,6 +325,10 @@
       "destination": "/api/cron/refresh-leaderboard.js"
     },
     {
+      "source": "/api/cron/weekly-signup-report",
+      "destination": "/api/cron/weekly-signup-report.js"
+    },
+    {
       "source": "/api/seed/demo-leaderboard",
       "destination": "/api/seed/demo-leaderboard.js"
     },
@@ -405,6 +409,10 @@
     {
       "path": "/api/cron/refresh-leaderboard",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/weekly-signup-report",
+      "schedule": "0 0 * * 0"
     }
   ]
 }

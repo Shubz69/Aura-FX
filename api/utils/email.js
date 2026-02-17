@@ -58,8 +58,91 @@ const sendSignupNotification = async ({ email, name, username, userCount }) => {
   }
 };
 
+/**
+ * Send weekly signup report to support with list of all signups from past week and their subscriptions.
+ */
+const sendWeeklySignupReport = async ({ signups }) => {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.warn('Weekly signup report skipped – email not configured.');
+    return { sent: false };
+  }
+  const from = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@aurafx.com';
+  
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getPlanName = (plan) => {
+    if (!plan) return 'None';
+    const p = (plan || '').toString().toLowerCase();
+    if (p === 'free') return 'Free';
+    if (p === 'aura' || p === 'premium') return 'Aura FX (Premium)';
+    if (p === 'a7fx' || p === 'elite') return 'A7FX (Elite)';
+    return plan;
+  };
+
+  const signupsHtml = signups.length > 0 
+    ? signups.map((user, idx) => `
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px;">${idx + 1}</td>
+          <td style="padding: 8px;">${user.name || 'N/A'}</td>
+          <td style="padding: 8px;">${user.username || 'N/A'}</td>
+          <td style="padding: 8px;">${user.email || 'N/A'}</td>
+          <td style="padding: 8px;">${getPlanName(user.subscription_plan)}</td>
+          <td style="padding: 8px;">${formatDate(user.created_at)}</td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="6" style="padding: 8px; text-align: center;">No signups this week</td></tr>';
+
+  try {
+    await transporter.sendMail({
+      from,
+      to: SUPPORT_EMAIL,
+      subject: `[AURA FX] Weekly Signup Report – ${signups.length} new signup${signups.length !== 1 ? 's' : ''} this week`,
+      html: `
+        <h2>Weekly Signup Report</h2>
+        <p><strong>Week ending:</strong> ${formatDate(new Date())}</p>
+        <p><strong>Total new signups:</strong> ${signups.length}</p>
+        <hr />
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr style="background-color: #f0f0f0; font-weight: bold;">
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #333;">#</th>
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #333;">Name</th>
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #333;">Username</th>
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #333;">Email</th>
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #333;">Subscription</th>
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #333;">Signed Up</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${signupsHtml}
+          </tbody>
+        </table>
+        <hr />
+        <p style="font-size: 12px; color: #666; margin-top: 20px;">
+          This is an automated weekly report sent every Sunday at midnight UTC.
+        </p>
+      `
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error('Failed to send weekly signup report:', error.message);
+    return { sent: false, reason: error.message };
+  }
+};
+
 module.exports = {
   SUPPORT_EMAIL,
   createTransporter,
-  sendSignupNotification
+  sendSignupNotification,
+  sendWeeklySignupReport
 };
