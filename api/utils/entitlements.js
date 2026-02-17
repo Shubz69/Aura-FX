@@ -293,7 +293,7 @@ function getChannelPermissions(entitlements, channel) {
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     canSee = true;
     canRead = true;
-    canWrite = !readOnly;
+    canWrite = true; /* Admins/super_admins can post in ALL channels including read-only */
     locked = false;
     return { canSee, canRead, canWrite, locked };
   }

@@ -1031,6 +1031,11 @@ module.exports = async (req, res) => {
           const channelAccess = normalizeAccessLevel(accessLevel);
           updates.push('access_level = ?');
           values.push(channelAccess);
+          /* When admin sets read-only via access level, also set permission_type for consistent enforcement */
+          if (channelAccess === 'read-only' && permissionType === undefined) {
+            updates.push('permission_type = ?');
+            values.push('read-only');
+          }
         }
 
         if (permissionType !== undefined) {
