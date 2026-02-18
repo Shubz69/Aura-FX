@@ -36,7 +36,7 @@ const NavbarNotifications = () => {
   useEffect(() => {
     if (!user) return;
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000); // poll every 30s for fresher badge
+    const interval = setInterval(fetchUnreadCount, 15000); // poll every 15s for fresher badge
     const onFocus = () => fetchUnreadCount();
     window.addEventListener('focus', onFocus);
     return () => {

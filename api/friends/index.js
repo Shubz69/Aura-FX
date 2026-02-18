@@ -222,28 +222,63 @@ module.exports = async (req, res) => {
       }
       
       logger.startTimer('db_query');
-      const result = await executeQueryWithTimeout(`
-        SELECT 
-          u.id, u.username, u.avatar, u.level, u.xp, u.role,
-          u.last_seen, f.created_at as friends_since
-        FROM friendships f
-        JOIN users u ON f.friend_id = u.id
-        WHERE f.user_id = ?
-        ORDER BY u.last_seen DESC
-      `, [userId], 10000, requestId);
-      logger.endTimer('db_query');
-      
-      const friends = getRows(result).map(f => ({
-        id: f.id,
-        username: f.username,
-        avatar: f.avatar,
-        level: f.level,
-        xp: f.xp,
-        role: f.role,
-        isOnline: f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000),
-        lastSeen: f.last_seen,
-        friendsSince: f.friends_since
-      }));
+      let friends;
+      try {
+        const result = await executeQueryWithTimeout(`
+          SELECT 
+            u.id, u.username, u.avatar, u.level, u.xp, u.role,
+            u.last_seen, f.created_at as friends_since,
+            COALESCE(s.show_online_status, 1) as show_online_status
+          FROM friendships f
+          JOIN users u ON f.friend_id = u.id
+          LEFT JOIN user_settings s ON s.user_id = u.id
+          WHERE f.user_id = ?
+          ORDER BY u.last_seen DESC
+        `, [userId], 10000, requestId);
+        logger.endTimer('db_query');
+        const rows = getRows(result);
+        friends = rows.map(f => {
+          const showOnline = f.show_online_status !== 0 && f.show_online_status !== false;
+          const actuallyOnline = f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000);
+          return {
+            id: f.id,
+            username: f.username,
+            avatar: f.avatar,
+            level: f.level,
+            xp: f.xp,
+            role: f.role,
+            isOnline: showOnline && actuallyOnline,
+            lastSeen: showOnline ? f.last_seen : null,
+            friendsSince: f.friends_since
+          };
+        });
+      } catch (joinErr) {
+        logger.endTimer('db_query');
+        // Fallback if user_settings join fails (e.g. table missing)
+        {
+          const result = await executeQueryWithTimeout(`
+            SELECT 
+              u.id, u.username, u.avatar, u.level, u.xp, u.role,
+              u.last_seen, f.created_at as friends_since
+            FROM friendships f
+            JOIN users u ON f.friend_id = u.id
+            WHERE f.user_id = ?
+            ORDER BY u.last_seen DESC
+          `, [userId], 10000, requestId);
+          const rows = getRows(result);
+          friends = rows.map(f => ({
+            id: f.id,
+            username: f.username,
+            avatar: f.avatar,
+            level: f.level,
+            xp: f.xp,
+            role: f.role,
+            isOnline: f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000),
+            lastSeen: f.last_seen,
+            friendsSince: f.friends_since
+          }));
+        }
+      }
       
       // Cache the result
       setCached(cacheKey, friends, DEFAULT_TTLS.FRIENDS_LIST);
@@ -597,6 +632,13 @@ module.exports = async (req, res) => {
         'UPDATE notifications SET action_status = ? WHERE friend_request_id = ?',
         ['DECLINED', friendRequestId]
       );
+      
+      // Notify requester that their request was declined
+      const requesterId = friendRequest.requester_id;
+      const userResult = await executeQuery('SELECT username FROM users WHERE id = ?', [userId]);
+      const declinerUsername = getRows(userResult)[0]?.username || 'Someone';
+      await notify(requesterId, 'FRIEND_DECLINED', 'Friend Request Declined',
+        `${declinerUsername} declined your friend request`, { fromUserId: userId });
       
       console.log(`[${requestId}] Friend request declined: ${friendRequest.requester_id} -> ${userId}`);
       

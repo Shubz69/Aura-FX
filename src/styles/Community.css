@@ -1168,8 +1168,10 @@ html.community-page-active {
     object-fit: contain;
     border-radius: 8px;
     margin-top: 6px;
+    margin-bottom: 6px;
     display: block;
     cursor: pointer;
+    vertical-align: top;
 }
 
 .message-text img:hover {
@@ -1232,7 +1234,7 @@ html.community-page-active {
     border-top: none;
     flex-shrink: 0;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     max-width: 100%;
 }
 
@@ -1330,11 +1332,40 @@ html.community-page-active {
     overflow: visible;
 }
 
+/* @ mention dropdown - Discord-style: big, above input, in front of messages */
 .mention-autocomplete {
     overflow: visible;
+    z-index: 3000;
+    min-width: 380px;
+    max-width: 420px;
+    max-height: 380px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 .mention-autocomplete .mention-item {
     transition: background 0.1s ease;
+    padding: 12px 16px;
+    min-height: 52px;
+}
+.mention-autocomplete .mention-item > div:first-of-type {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+.mention-autocomplete .mention-item > div:last-of-type {
+    min-width: 0;
+    flex: 1;
+}
+.mention-autocomplete .mention-item > div:last-of-type > div:first-of-type {
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mention-autocomplete .mention-item > div:last-of-type > div:last-of-type {
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chat-input {
@@ -2074,12 +2105,14 @@ html.community-page-active {
         -webkit-text-size-adjust: 100%;
     }
     
-    /* Smaller, cleaner images on mobile - no long filenames (handled by getDisplayFileName) */
+    /* Smaller, cleaner images on mobile - each GIF separate when scrolling */
     .message-text img {
         max-width: 140px !important;
         max-height: 140px !important;
         border-radius: 8px !important;
         margin-top: 8px !important;
+        margin-bottom: 8px !important;
+        display: block !important;
     }
     .message-attachment img {
         max-width: 140px !important;
@@ -2224,6 +2257,14 @@ html.community-page-active {
         padding: 20px 16px !important;
         min-height: calc(100vh - 56px) !important;
         background: #36393f !important;
+    }
+}
+
+/* Landscape (e.g. tablet sideways): prevent messaging box from being cut off by system nav bar */
+@media (orientation: landscape) and (max-height: 900px) {
+    .chat-input-container {
+        padding-bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 24px)) !important;
+        padding-top: 12px !important;
     }
 }
 
@@ -2412,15 +2453,19 @@ html.community-page-active {
     }
     .gif-picker .gif-grid {
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         flex: 1 !important;
         min-height: 0 !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
     }
     
     .gif-picker-header {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        flex-shrink: 0 !important;
     }
     
     .gif-picker-search {
@@ -2428,6 +2473,7 @@ html.community-page-active {
         max-width: 100% !important;
         box-sizing: border-box !important;
         padding: 12px !important;
+        flex-shrink: 0 !important;
     }
     
     .gif-search-input {
@@ -2441,24 +2487,28 @@ html.community-page-active {
         max-width: 100% !important;
         box-sizing: border-box !important;
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 8px !important;
+        gap: 10px !important;
         padding: 12px !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         flex: 1 !important;
         min-height: 0 !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     
     .gif-item {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        min-height: 80px !important;
+        aspect-ratio: 1 !important;
     }
     
     .gif-item img {
         width: 100% !important;
         height: 100% !important;
         object-fit: cover !important;
+        display: block !important;
     }
 }
 
@@ -2637,7 +2687,7 @@ html.community-page-active {
     opacity: 1;
 }
 
-/* GIF Picker */
+/* GIF Picker - each GIF separate, scroll works on all devices */
 .gif-picker {
     position: absolute;
     bottom: 70px;
@@ -2652,6 +2702,7 @@ html.community-page-active {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .gif-picker-header {
@@ -2714,25 +2765,34 @@ html.community-page-active {
 
 .gif-grid {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 12px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 12px;
     max-height: 400px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    box-sizing: border-box;
 }
 
 .gif-item {
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     aspect-ratio: 1;
+    min-height: 80px;
     background: var(--bg-primary);
     transition: all 0.2s ease;
     border: 2px solid transparent;
     position: relative;
+    box-sizing: border-box;
+    /* Each GIF separate: consistent cell size, no overlap */
+    width: 100%;
     min-width: 0;
-    min-height: 0;
 }
 
 .gif-item:hover {
@@ -2751,8 +2811,8 @@ html.community-page-active {
     height: 100%;
     object-fit: cover;
     display: block;
+    vertical-align: top;
     min-width: 0;
-    min-height: 0;
 }
 
 .gif-loading,
@@ -2776,6 +2836,11 @@ html.community-page-active {
         transform: translateX(50%);
         width: 350px;
     }
+    
+    .gif-grid {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
 }
 
 @media (max-width: 1024px) {
@@ -2785,6 +2850,16 @@ html.community-page-active {
         width: 300px;
         max-height: 400px;
         transform: none;
+    }
+    
+    .gif-grid {
+        max-height: 320px;
+        min-height: 0;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .gif-item {
+        min-height: 72px;
     }
 }
 
@@ -2809,8 +2884,16 @@ html.community-page-active {
     
     .gif-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        gap: 10px;
         padding: 10px;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .gif-item {
+        min-height: 80px;
     }
 }
 
@@ -2937,6 +3020,8 @@ html.community-page-active {
     .message-text img {
         max-width: 160px !important;
         max-height: 160px !important;
+        margin-bottom: 6px !important;
+        display: block !important;
     }
     .message-attachment img {
         max-width: 160px !important;
@@ -2965,6 +3050,8 @@ html.community-page-active {
     .message-attachment img {
         max-width: 120px !important;
         max-height: 120px !important;
+        margin-bottom: 8px !important;
+        display: block !important;
     }
     .chat-messages {
         padding: 12px 0 12px 0 !important;
@@ -3163,5 +3250,87 @@ html.community-page-active {
     .message-text img {
         max-width: min(140px, 85vw) !important;
         height: auto !important;
+    }
+}
+
+/* ============= TABLETS ONLY (768px–1280px) – Channel text like PC, no layout change on desktop ============= */
+@media (min-width: 768px) and (max-width: 1280px) {
+    .message-item {
+        padding: 0.0625rem 16px 0.0625rem 72px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-start !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        position: relative !important;
+    }
+    .message-item.grouped {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    .message-item.grouped .message-avatar,
+    .message-item.grouped .message-avatar-text {
+        display: none !important;
+    }
+    .message-item.grouped .message-content {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    .message-item:not(.grouped) {
+        margin-top: 1px !important;
+        margin-bottom: 0 !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+    }
+    .message-avatar,
+    .message-avatar-text {
+        position: absolute !important;
+        left: 16px !important;
+        top: 0.125rem !important;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+    }
+    .message-content {
+        margin-left: 0 !important;
+        min-width: 0 !important;
+        flex: 1 !important;
+        padding: 0 !important;
+        position: relative !important;
+    }
+    .message-header-info {
+        display: flex !important;
+        align-items: baseline !important;
+        gap: 4px !important;
+        line-height: 1.2 !important;
+    }
+    .message-author,
+    .message-username {
+        font-size: 0.9375rem !important;
+        font-weight: 500 !important;
+        color: #FFFFFF !important;
+        line-height: 1.2 !important;
+    }
+    .message-timestamp {
+        font-size: 0.6875rem !important;
+        color: #72767D !important;
+        line-height: 1.375 !important;
+    }
+    .message-text {
+        color: #DCDDDE !important;
+        font-size: 0.9375rem !important;
+        line-height: 1.375 !important;
+        word-wrap: break-word !important;
+        white-space: pre-wrap !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .message-item.grouped .message-text {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
 }

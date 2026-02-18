@@ -2,6 +2,13 @@ const { getDbConnection } = require('../../db');
 const { getEntitlements, getChannelPermissions, canAccessChannel, isSuperAdminEmail } = require('../../utils/entitlements');
 const { triggerNewMessage } = require('../../utils/pusher');
 
+let createNotification;
+try {
+  createNotification = require('../../notifications').createNotification;
+} catch (e) {
+  createNotification = null;
+}
+
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
 
@@ -706,6 +713,48 @@ module.exports = async (req, res) => {
         const senderUsername = newMessage.username || newMessage.name || (newMessage.email ? newMessage.email.split('@')[0] : 'Anonymous');
         const senderAvatar = newMessage.avatar || '/avatars/avatar_ai.png';
         const senderRole = newMessage.role || 'USER';
+        
+        // Create notifications for @mentioned users (before releasing db)
+        if (createNotification && messageContent) {
+          const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+          const matches = [...messageContent.matchAll(mentionRegex)];
+          const mentionedUsernames = [...new Set(matches.map(m => (m[1] || '').toLowerCase()).filter(Boolean))];
+          if (mentionedUsernames.length > 0) {
+            const userIdsToNotify = new Set();
+            try {
+              for (const uname of mentionedUsernames) {
+                if (uname === 'admin') {
+                  const [adminRows] = await db.execute(
+                    'SELECT id FROM users WHERE role IN (?, ?)',
+                    ['admin', 'super_admin']
+                  );
+                  (adminRows || []).forEach(r => { if (r.id && r.id !== senderId) userIdsToNotify.add(r.id); });
+                } else {
+                  const [userRows] = await db.execute(
+                    'SELECT id FROM users WHERE LOWER(TRIM(username)) = ? OR LOWER(TRIM(name)) = ? LIMIT 1',
+                    [uname, uname]
+                  );
+                  if (userRows && userRows[0] && userRows[0].id !== senderId) userIdsToNotify.add(userRows[0].id);
+                }
+              }
+              const channelLabel = typeof channelId === 'string' ? channelId : `channel-${channelId}`;
+              const bodySnippet = messageContent.length > 80 ? messageContent.substring(0, 77) + '...' : messageContent;
+              for (const targetUserId of userIdsToNotify) {
+                createNotification({
+                  userId: targetUserId,
+                  type: 'MENTION',
+                  title: 'You were mentioned',
+                  body: `${senderUsername} mentioned you in #${channelLabel}: ${bodySnippet}`,
+                  channelId: null,
+                  messageId: newMessage.id,
+                  fromUserId: senderId
+                }).catch(err => console.warn('Mention notification create failed:', err.message));
+              }
+            } catch (mentionErr) {
+              console.warn('Mention notification lookup failed:', mentionErr.message);
+            }
+          }
+        }
         
         // Release connection back to pool
         try {
