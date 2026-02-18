@@ -6169,27 +6169,27 @@ Earn XP by:
                                         }}
                                     />
                                     
-                                    {/* @Mention Autocomplete Dropdown - Discord-style */}
+                                    {/* @Mention Autocomplete Dropdown - Discord-style: big, above input, in front of messages */}
                                     {mentionAutocomplete?.show && (
                                         <div className="mention-autocomplete" style={{
                                             position: 'absolute',
                                             bottom: '100%',
                                             left: 0,
-                                            marginBottom: '10px',
-                                            minWidth: '320px',
-                                            maxWidth: 'min(400px, 100vw - 24px)',
+                                            marginBottom: '12px',
+                                            minWidth: '380px',
+                                            maxWidth: 'min(420px, 100vw - 24px)',
                                             width: 'max-content',
                                             background: '#2f3136',
                                             border: '1px solid rgba(0, 0, 0, 0.3)',
                                             borderRadius: '12px',
-                                            maxHeight: '280px',
+                                            maxHeight: '380px',
                                             overflowY: 'auto',
-                                            overflowX: 'visible',
-                                            zIndex: 1000,
-                                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06)'
+                                            overflowX: 'hidden',
+                                            zIndex: 3000,
+                                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)'
                                         }}>
                                             <div style={{
-                                                padding: '10px 14px 8px',
+                                                padding: '12px 16px 10px',
                                                 fontSize: '0.7rem',
                                                 fontWeight: 700,
                                                 color: '#b9bbbe',
@@ -6199,13 +6199,13 @@ Earn XP by:
                                             }}>
                                                 Members
                                             </div>
-                                            <div style={{ padding: '6px 0' }}>
+                                            <div style={{ padding: '8px 0' }}>
                                             {(() => {
                                                 const query = mentionQuery.toLowerCase();
                                                 const filteredUsers = allUsers.filter(u => {
                                                     const username = (u.username || u.name || '').toLowerCase();
                                                     return username.includes(query) && String(u.id) !== String(userId);
-                                                }).slice(0, 10);
+                                                }).slice(0, 15);
                                                 const showAdmin = query === '' || 'admin'.includes(query);
                                                 return (
                                                     <>
@@ -6227,11 +6227,11 @@ Earn XP by:
                                                                     }, 0);
                                                                 }}
                                                                 style={{
-                                                                    padding: '10px 14px',
+                                                                    padding: '12px 16px',
                                                                     cursor: 'pointer',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
-                                                                    gap: '12px',
+                                                                    gap: '14px',
                                                                     background: query === '' ? 'rgba(88, 101, 242, 0.25)' : 'transparent'
                                                                 }}
                                                                 onMouseEnter={(e) => {
@@ -6242,8 +6242,8 @@ Earn XP by:
                                                                 }}
                                                             >
                                                                 <div style={{
-                                                                    width: '36px',
-                                                                    height: '36px',
+                                                                    width: '40px',
+                                                                    height: '40px',
                                                                     borderRadius: '50%',
                                                                     background: 'linear-gradient(135deg, #5865F2 0%, #4752c4 100%)',
                                                                     display: 'flex',
@@ -6254,9 +6254,9 @@ Earn XP by:
                                                                     fontSize: '0.9rem',
                                                                     flexShrink: 0
                                                                 }}>A</div>
-                                                                <div style={{ minWidth: 0, flex: 1 }}>
-                                                                    <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9375rem' }}>@admin</div>
-                                                                    <div style={{ fontSize: '0.75rem', color: '#b9bbbe', marginTop: '2px' }}>Notify all admins</div>
+                                                                <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                                                                    <div style={{ fontWeight: 600, color: '#fff', fontSize: '1rem' }}>@admin</div>
+                                                                    <div style={{ fontSize: '0.8125rem', color: '#b9bbbe', marginTop: '2px' }}>Notify all admins</div>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -6282,11 +6282,11 @@ Earn XP by:
                                                                     }, 0);
                                                                 }}
                                                                 style={{
-                                                                    padding: '10px 14px',
+                                                                    padding: '12px 16px',
                                                                     cursor: 'pointer',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
-                                                                    gap: '12px',
+                                                                    gap: '14px',
                                                                     background: 'transparent'
                                                                 }}
                                                                 onMouseEnter={(e) => {
@@ -6297,8 +6297,8 @@ Earn XP by:
                                                                 }}
                                                             >
                                                                 <div style={{
-                                                                    width: '36px',
-                                                                    height: '36px',
+                                                                    width: '40px',
+                                                                    height: '40px',
                                                                     borderRadius: '50%',
                                                                     overflow: 'hidden',
                                                                     background: 'linear-gradient(135deg, #5865F2, #4752c4)',
@@ -6307,7 +6307,7 @@ Earn XP by:
                                                                     justifyContent: 'center',
                                                                     color: 'white',
                                                                     fontWeight: 'bold',
-                                                                    fontSize: '0.875rem',
+                                                                    fontSize: '0.9rem',
                                                                     flexShrink: 0
                                                                 }}>
                                                                     {user.avatar && user.avatar !== '/avatars/avatar_ai.png' ? (
@@ -6325,24 +6325,24 @@ Earn XP by:
                                                                         <span>{(username || 'U').substring(0, 2).toUpperCase()}</span>
                                                                     )}
                                                                 </div>
-                                                                <div style={{ minWidth: 0, flex: 1, overflow: 'visible' }}>
+                                                                <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                                                     <div style={{
                                                                         fontWeight: 600,
                                                                         color: '#fff',
-                                                                        fontSize: '0.9375rem',
+                                                                        fontSize: '1rem',
                                                                         whiteSpace: 'nowrap',
-                                                                        overflow: 'visible',
-                                                                        textOverflow: 'clip'
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
                                                                     }}>
                                                                         {displayName !== username ? displayName : `@${username}`}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '0.75rem',
+                                                                        fontSize: '0.8125rem',
                                                                         color: '#b9bbbe',
                                                                         marginTop: '2px',
                                                                         whiteSpace: 'nowrap',
-                                                                        overflow: 'visible',
-                                                                        textOverflow: 'clip'
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
                                                                     }}>
                                                                         {displayName !== username ? `@${username}` : (user.role === 'admin' || user.role === 'super_admin' ? 'Admin' : user.role || 'Member')}
                                                                     </div>

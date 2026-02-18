@@ -461,13 +461,9 @@ module.exports = async (req, res) => {
             throw minimalError;
           }
         }
-        
-        // Close connection (using createConnection, not pool)
-        if (db && typeof db.end === 'function' && !db.ended) {
-          await db.end();
-        }
 
         if (rows.length === 0) {
+          if (db && typeof db.end === 'function' && !db.ended) await db.end();
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
@@ -475,6 +471,27 @@ module.exports = async (req, res) => {
         
         // Check if this is a public profile request (exclude personal information)
         const isPublicProfile = req.url && req.url.includes('/public-profile/');
+        
+        // Respect "appear offline": if profile owner has show_online_status false, don't expose last_seen
+        let lastSeenValue = (hasLastSeen && user.last_seen) ? user.last_seen : null;
+        if (isPublicProfile && lastSeenValue) {
+          try {
+            const [settingsRows] = await db.execute(
+              'SELECT show_online_status FROM user_settings WHERE user_id = ? LIMIT 1',
+              [userId]
+            );
+            if (settingsRows && settingsRows.length > 0 && settingsRows[0].show_online_status === 0) {
+              lastSeenValue = null;
+            }
+          } catch (e) {
+            // user_settings table may not exist; keep last_seen as-is
+          }
+        }
+        
+        // Close connection (using createConnection, not pool)
+        if (db && typeof db.end === 'function' && !db.ended) {
+          await db.end();
+        }
         
         // Return user data with formatted dates
         const responseData = {
@@ -490,7 +507,7 @@ module.exports = async (req, res) => {
           joinDate: user.created_at,
           createdAt: user.created_at,
           login_streak: (user.login_streak !== undefined && user.login_streak !== null) ? user.login_streak : 0,
-          last_seen: (hasLastSeen && user.last_seen) ? user.last_seen : null,
+          last_seen: lastSeenValue,
           stats: {
             reputation: Math.floor((user.xp || 0) / 100), // Calculate reputation from XP
             totalTrades: 0,
