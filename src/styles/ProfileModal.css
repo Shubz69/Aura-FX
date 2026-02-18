@@ -11,6 +11,13 @@
     pointer-events: none;
 }
 
+@media (max-width: 480px) {
+    #profile-modal-root {
+        height: 100dvh !important;
+        max-height: 100vh !important;
+    }
+}
+
 .profile-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -19,6 +26,8 @@
     bottom: 0 !important;
     width: 100% !important;
     height: 100% !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
     background: rgba(0, 0, 0, 0.92) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -27,10 +36,14 @@
     align-items: center !important;
     justify-content: center !important;
     padding: 20px !important;
-    box-sizing: border-box;
+    padding-left: env(safe-area-inset-left, 20px) !important;
+    padding-right: env(safe-area-inset-right, 20px) !important;
+    box-sizing: border-box !important;
     animation: fadeIn 0.3s ease;
     pointer-events: auto !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
 }
 
 .profile-modal-content {
@@ -48,6 +61,8 @@
     position: relative;
     animation: slideUp 0.3s ease;
     margin: auto;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
 }
 
 .profile-modal-content::-webkit-scrollbar {
@@ -138,28 +153,41 @@
 /* Responsive - Mobile */
 @media (max-width: 768px) {
     .profile-modal-overlay {
-        padding: 10px;
+        padding: 10px !important;
+        padding-left: max(10px, env(safe-area-inset-left)) !important;
+        padding-right: max(10px, env(safe-area-inset-right)) !important;
     }
     
     .profile-modal-content {
-        max-width: 100%;
-        max-height: 95vh;
-        border-radius: 15px;
-        margin: 10px;
+        max-width: 100% !important;
+        max-height: 85vh !important;
+        max-height: min(85vh, 85dvh) !important;
+        border-radius: 15px !important;
+        margin: 10px auto !important;
     }
 }
 
-/* Responsive - Small Mobile */
+/* Responsive - iPhone: full-height modal with safe area so profile is seen properly */
 @media (max-width: 480px) {
     .profile-modal-overlay {
-        padding: 0;
+        padding: 0 !important;
+        padding-left: env(safe-area-inset-left, 0) !important;
+        padding-right: env(safe-area-inset-right, 0) !important;
+        align-items: stretch !important;
+        justify-content: flex-end !important;
     }
     
     .profile-modal-content {
-        max-width: 100%;
-        max-height: 100vh;
-        min-height: 100vh;
-        border-radius: 0;
-        margin: 0;
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: none !important;
+        height: min(100vh, 100dvh) !important;
+        min-height: min(100vh, 100dvh) !important;
+        border-radius: 20px 20px 0 0 !important;
+        margin: 0 !important;
+        padding-top: max(16px, env(safe-area-inset-top, 0)) !important;
+        padding-bottom: max(16px, env(safe-area-inset-bottom, 0)) !important;
+        box-sizing: border-box !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 }

@@ -27,6 +27,8 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    max-width: 100vw;
+    box-sizing: border-box;
 }
 
 .contact-info-paper, 
@@ -133,6 +135,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .contact-grid {
@@ -141,6 +145,8 @@
     gap: 3rem;
     width: 100%;
     max-width: 1000px;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .contact-header {
@@ -220,10 +226,19 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow-x: hidden;
+    min-width: 0;
+}
+
+.contact-form {
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .form-group {
     margin-bottom: 25px;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .form-group label {
@@ -236,6 +251,8 @@
 
 .form-control {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #ffffff;
@@ -274,6 +291,8 @@
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: none;
+    box-sizing: border-box;
+    max-width: 100%;
 }
 
 .submit-btn:hover {
@@ -418,22 +437,26 @@
     text-decoration: underline;
 }
 
-/* Responsive Design */
+/* Responsive Design - keep grey boxes inside container on iPhone */
 @media (max-width: 768px) {
     .contact-container {
         padding-top: 80px;
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
         overflow-y: auto;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
     }
     
     .contact-content {
-        padding: 0 20px;
+        padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+        width: 100%;
     }
     
     .contact-grid {
         grid-template-columns: 1fr;
         gap: 2rem;
+        width: 100%;
     }
     
     .glitch {
@@ -441,7 +464,7 @@
     }
     
     .contact-form-container, .contact-info-container {
-        padding: 20px;
+        padding: 20px max(16px, env(safe-area-inset-right)) 20px max(16px, env(safe-area-inset-left));
     }
     
     .contact-item {
@@ -455,11 +478,13 @@
     }
 }
 
-/* iPhone and small mobile devices */
+/* iPhone and small mobile devices - grey boxes stay inside the container */
 @media (max-width: 480px) {
     .contact-container {
         padding-top: 70px !important;
         padding-bottom: 20px !important;
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
         min-height: 100vh !important;
         height: auto !important;
         overflow-y: auto !important;
@@ -469,13 +494,14 @@
     }
     
     .contact-content {
-        padding: 0 16px !important;
+        padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left)) !important;
         width: 100% !important;
         max-width: 100% !important;
     }
     
     .contact-header {
         margin-bottom: 24px !important;
+        padding: 0 !important;
     }
     
     .glitch {
@@ -493,7 +519,7 @@
     }
     
     .contact-form-container, .contact-info-container {
-        padding: 16px !important;
+        padding: 16px max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)) !important;
         border-radius: 12px !important;
     }
     
@@ -504,12 +530,14 @@
     .form-control {
         padding: 10px 12px !important;
         font-size: 0.95rem !important;
+        max-width: 100% !important;
     }
     
     .submit-btn {
         padding: 10px 24px !important;
         font-size: 0.95rem !important;
         width: 100% !important;
+        max-width: 100% !important;
     }
     
     .contact-info-header {

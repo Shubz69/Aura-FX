@@ -651,8 +651,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 margin: 'auto'
             }} onClick={(e) => e.stopPropagation()}>
                 
-                {/* Action Buttons */}
-                <div style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '8px', zIndex: 10 }}>
+                {/* Action Buttons - safe area aware on iPhone via CSS class */}
+                <div className="profile-modal-actions" style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '8px', zIndex: 10 }}>
                     {isOwnProfile && (
                         <button onClick={() => setShowSettings(true)} title="Settings" style={{
                             background: 'rgba(0, 0, 0, 0.7)', border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -998,27 +998,11 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     50% { opacity: 0.7; transform: scale(1.1); }
                 }
                 
-                /* Responsive styles */
-                @media (max-width: 768px) {
-                    .profile-modal-content {
-                        max-width: 95vw !important;
-                        max-height: 85vh !important;
-                        margin: 10px !important;
-                        border-radius: 16px !important;
-                    }
-                }
-                
+                /* iPhone: position close/settings buttons below safe area */
                 @media (max-width: 480px) {
-                    .profile-modal-content {
-                        max-width: 100vw !important;
-                        max-height: 90vh !important;
-                        margin: 0 !important;
-                        border-radius: 16px 16px 0 0 !important;
-                    }
-                    
-                    .profile-modal-overlay {
-                        align-items: flex-end !important;
-                        padding: 0 !important;
+                    .profile-modal-actions {
+                        top: max(15px, env(safe-area-inset-top, 15px)) !important;
+                        right: max(15px, env(safe-area-inset-right, 15px)) !important;
                     }
                 }
             `}</style>

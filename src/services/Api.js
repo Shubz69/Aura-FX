@@ -945,6 +945,28 @@ const Api = {
         }
     },
 
+    /** For admin inbox: create/get thread for a target user (shared inbox thread) */
+    ensureAdminThreadForUser: async (targetUserId) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!targetUserId) throw new Error('Target user ID required');
+            const response = await axios.post(
+                `${API_BASE_URL}/api/messages/threads/ensure-admin`,
+                { userId: targetUserId },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error ensuring admin thread:', error);
+            throw error;
+        }
+    },
+
     ensureUserThread: async (targetUserId) => {
         try {
             const token = localStorage.getItem('token');

@@ -39,6 +39,18 @@ const getAvatarPath = (avatarName) => {
         : '/avatars/avatar_ai.png';
 };
 
+// Default avatar as SVG data URI: dark circle, no white gap, initials. Used when no custom avatar.
+const isDefaultAvatar = (avatarName) => {
+    if (!avatarName || avatarName.startsWith('data:image')) return !!(!avatarName);
+    const defaults = ['avatar_ai.png', 'avatar_money.png', 'avatar_tech.png', 'avatar_trading.png', 'default.png'];
+    return defaults.includes(avatarName) || (avatarName.startsWith('avatar_') && avatarName.endsWith('.png'));
+};
+const getDefaultProfileAvatarDataUri = (username) => {
+    const initial = (username || 'U').toString().trim().charAt(0).toUpperCase() || 'U';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#1a1a2e"/><stop offset="100%" style="stop-color:#16213e"/></linearGradient><linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#8b5cf6"/><stop offset="100%" style="stop-color:#a78bfa"/></linearGradient></defs><circle cx="100" cy="100" r="100" fill="url(#bg)"/><circle cx="100" cy="100" r="92" fill="none" stroke="url(#ring)" stroke-width="6"/><text x="100" y="100" dominant-baseline="central" text-anchor="middle" fill="rgba(255,255,255,0.95)" font-family="system-ui, sans-serif" font-size="72" font-weight="700">${initial}</text></svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+};
+
 // Helper function to convert file to base64
 const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -626,7 +638,7 @@ const Profile = () => {
                 <div className="profile-header-section">
                     <div className="profile-avatar-wrapper">
                         <img 
-                            src={avatarPreview || getAvatarPath(formData.avatar)} 
+                            src={avatarPreview || (isDefaultAvatar(formData.avatar) ? getDefaultProfileAvatarDataUri(formData.username || formData.email) : getAvatarPath(formData.avatar))} 
                             alt="Avatar" 
                             className="profile-avatar"
                             style={{
