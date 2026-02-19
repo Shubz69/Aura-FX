@@ -633,7 +633,15 @@ const Profile = () => {
                 {/* Profile Avatar & Header */}
                 <div className="profile-header-section">
                     <div className="profile-avatar-wrapper">
-                        <div className="avatar-placeholder profile-avatar" aria-hidden />
+                        {(avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')))) ? (
+                            <img
+                                src={avatarPreview || formData.avatar}
+                                alt="Profile"
+                                className="profile-avatar profile-avatar-img"
+                            />
+                        ) : (
+                            <div className="avatar-placeholder profile-avatar" aria-hidden />
+                        )}
                         <input
                             type="file"
                             ref={fileInputRef}
