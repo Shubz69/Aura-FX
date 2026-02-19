@@ -591,6 +591,19 @@ const Api = {
     deleteJournalTrade: (id) => {
         return axios.delete(`${API_BASE_URL}/api/journal/trades/${id}`);
     },
+
+    getJournalTasks: (params = {}) => {
+        return axios.get(`${API_BASE_URL}/api/journal/tasks`, { params });
+    },
+    createJournalTask: (body) => {
+        return axios.post(`${API_BASE_URL}/api/journal/tasks`, body);
+    },
+    updateJournalTask: (id, body) => {
+        return axios.put(`${API_BASE_URL}/api/journal/tasks/${id}`, body);
+    },
+    deleteJournalTask: (id) => {
+        return axios.delete(`${API_BASE_URL}/api/journal/tasks/${id}`);
+    },
     
     // Contact
     getBaseUrl: () => getApiBaseUrl(),

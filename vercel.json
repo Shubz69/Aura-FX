@@ -401,6 +401,14 @@
       "destination": "/api/journal/trades.js"
     },
     {
+      "source": "/api/journal/tasks",
+      "destination": "/api/journal/tasks.js"
+    },
+    {
+      "source": "/api/journal/tasks/:id",
+      "destination": "/api/journal/tasks.js"
+    },
+    {
       "source": "/api/market/watchlist",
       "destination": "/api/market/watchlist.js"
     },
