@@ -31,3 +31,36 @@ export function resolveAvatarUrl(avatar, baseUrl = '') {
     if (v.startsWith('/')) return baseUrl ? `${baseUrl.replace(/\/$/, '')}${v}` : v;
     return baseUrl ? `${baseUrl.replace(/\/$/, '')}/avatars/${v}` : `/avatars/${v}`;
 }
+
+/** Colours users can pick for their placeholder circle when they have no profile pic. */
+export const PLACEHOLDER_COLORS = [
+    '#8B5CF6', '#6366F1', '#3B82F6', '#0EA5E9', '#06B6D4', '#10B981', '#22C55E', '#84CC16',
+    '#EAB308', '#F59E0B', '#EF4444', '#EC4899', '#A855F7', '#14B8A6'
+];
+
+const STORAGE_KEY_PREFIX = 'avatar_placeholder_';
+
+/** Stable colour for placeholder circle. Uses saved choice for this user if set, else derived from id/username. */
+export function getPlaceholderColor(userIdOrUsername) {
+    if (userIdOrUsername == null || userIdOrUsername === '') return PLACEHOLDER_COLORS[0];
+    const key = `${STORAGE_KEY_PREFIX}${userIdOrUsername}`;
+    if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(key);
+        if (saved && PLACEHOLDER_COLORS.includes(saved)) return saved;
+    }
+    const str = String(userIdOrUsername);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    const idx = Math.abs(hash) % PLACEHOLDER_COLORS.length;
+    return PLACEHOLDER_COLORS[idx];
+}
+
+/** Save user's chosen placeholder colour (when no profile pic). */
+export function setPlaceholderColor(userId, color) {
+    if (typeof localStorage === 'undefined' || !userId) return;
+    if (color && PLACEHOLDER_COLORS.includes(color)) {
+        localStorage.setItem(`${STORAGE_KEY_PREFIX}${userId}`, color);
+    } else {
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}${userId}`);
+    }
+}

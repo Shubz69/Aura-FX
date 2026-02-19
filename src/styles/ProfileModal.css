@@ -44,6 +44,14 @@
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.profile-modal-overlay::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .profile-modal-content {
@@ -65,22 +73,16 @@
     -webkit-overflow-scrolling: touch;
 }
 
+/* Hide scrollbar but keep content scrollable */
+.profile-modal-content {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
 .profile-modal-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.profile-modal-content::-webkit-scrollbar-track {
-    background: rgba(20, 20, 35, 0.5);
-    border-radius: 10px;
-}
-
-.profile-modal-content::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.5);
-    border-radius: 10px;
-}
-
-.profile-modal-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(139, 92, 246, 0.7);
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 /* Loading State */

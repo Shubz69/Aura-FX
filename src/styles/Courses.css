@@ -414,10 +414,10 @@
 
 .courses-header {
     text-align: center;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     z-index: 2;
     position: relative;
-    padding-top: 24px;
+    padding-top: 16px;
     margin-top: 0;
 }
 
@@ -455,10 +455,10 @@
 .subscriptions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 4px;
+    gap: 2px;
     width: 100%;
     max-width: 1200px;
-    margin: 2px auto 6px;
+    margin: 0 auto 4px;
     padding: 0 20px;
     box-sizing: border-box;
 }

@@ -12,6 +12,7 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
+import { resolveAvatarUrl, getPlaceholderColor } from '../utils/avatar';
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 
 const PublicProfile = () => {
@@ -144,9 +145,18 @@ const PublicProfile = () => {
                         </div>
                     )}
                     
-                    {/* Avatar: placeholder only (no profile pictures) */}
+                    {/* Avatar: show profile pic or coloured circle */}
                     <div className="profile-avatar-overlay">
-                        <div className="avatar-placeholder profile-avatar-large" aria-hidden />
+                        {resolveAvatarUrl(profile.avatar, resolveApiBaseUrl()) ? (
+                            <img
+                                src={resolveAvatarUrl(profile.avatar, resolveApiBaseUrl())}
+                                alt=""
+                                className="profile-avatar-large"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
+                            />
+                        ) : (
+                            <div className="profile-avatar-large" aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(profile.id ?? profile.username), border: '4px solid rgba(139, 92, 246, 0.6)', boxSizing: 'border-box' }} />
+                        )}
                     </div>
                 </div>
 

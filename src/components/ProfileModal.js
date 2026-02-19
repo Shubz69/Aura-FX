@@ -16,6 +16,7 @@ import {
     FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { resolveAvatarUrl, getPlaceholderColor } from '../utils/avatar';
 import '../styles/ProfileModal.css';
 
 // Get or create portal root for modals
@@ -31,9 +32,11 @@ const getModalRoot = () => {
 };
 
 /**
- * Avatar: placeholder only (no profile pictures); tier border + online indicator.
+ * Avatar: show profile picture when available; tier border + online indicator.
  */
-const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
+const AvatarWithFallback = ({ size = 130, tierColor, isOnline, avatar, userId }) => {
+    const avatarSrc = resolveAvatarUrl(avatar, typeof window !== 'undefined' ? window.location?.origin : '');
+    const placeholderColor = getPlaceholderColor(userId);
     return (
         <div style={{
             position: 'relative',
@@ -42,7 +45,6 @@ const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
             flexShrink: 0
         }}>
             <div
-                className="avatar-placeholder"
                 style={{
                     position: 'absolute',
                     top: 0,
@@ -50,13 +52,19 @@ const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
                     width: '100%',
                     height: '100%',
                     borderRadius: '50%',
-                    background: 'transparent',
+                    background: avatarSrc ? 'transparent' : placeholderColor,
                     border: `5px solid ${tierColor}`,
                     boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    overflow: 'hidden'
                 }}
-                aria-hidden
-            />
+            >
+                {avatarSrc ? (
+                    <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                ) : (
+                    <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: placeholderColor }} />
+                )}
+            </div>
             <div style={{
                 position: 'absolute',
                 bottom: `${size * 0.06}px`,
@@ -680,13 +688,15 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             size={130}
                             tierColor={tierColor}
                             isOnline={isOnline}
+                            avatar={profile?.avatar}
+                            userId={profile?.id ?? profile?.username}
                         />
                     </div>
                 </div>
 
                 {/* Profile Header */}
-                <div style={{ padding: '0 40px 20px', marginTop: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                <div style={{ padding: '0 40px 16px', marginTop: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
                         <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'white', margin: 0 }}>
                             {profile.username || profile.name || 'User'}
                         </h1>
@@ -698,7 +708,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     <div style={{
                         display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '12px 20px',
                         background: `linear-gradient(135deg, ${tierColor}30, ${tierColor}10)`,
-                        border: `2px solid ${tierColor}60`, borderRadius: '14px', marginBottom: '15px'
+                        border: `2px solid ${tierColor}60`, borderRadius: '14px', marginBottom: '10px'
                     }}>
                         <div style={{
                             width: '36px', height: '36px', borderRadius: '10px', background: tierColor,
@@ -715,24 +725,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         </div>
                     </div>
 
-                    {/* Discipline Streak – visible when on a streak */}
-                    {loginStreak > 0 && (
-                        <div style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '10px 18px',
-                            background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.08))',
-                            border: '1px solid rgba(255, 107, 53, 0.5)', borderRadius: '12px',
-                            marginBottom: '15px'
-                        }}>
-                            <span style={{ fontSize: '1.25rem' }}>🔥</span>
-                            <div>
-                                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Discipline Streak</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FF6B35' }}>{loginStreak} day{loginStreak !== 1 ? 's' : ''}</div>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Animated XP Progress Bar */}
-                    <div style={{ marginTop: '20px' }}>
+                    <div style={{ marginTop: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: 600 }}>
                                 Level {level} → Level {level + 1}
@@ -766,10 +760,10 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 </div>
 
                 {/* Tabs */}
-                <div style={{ display: 'flex', gap: '5px', padding: '0 40px', borderBottom: '2px solid rgba(139, 92, 246, 0.2)', marginBottom: '25px', overflowX: 'auto' }}>
+                <div style={{ display: 'flex', gap: '4px', padding: '0 40px', borderBottom: '2px solid rgba(139, 92, 246, 0.2)', marginBottom: '16px', overflowX: 'auto' }}>
                     {['overview', 'identity', 'statistics', 'achievements'].map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                            background: 'transparent', border: 'none', padding: '14px 20px',
+                            background: 'transparent', border: 'none', padding: '12px 16px',
                             color: activeTab === tab ? tierColor : 'rgba(255, 255, 255, 0.5)',
                             fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase',
                             letterSpacing: '0.5px', position: 'relative', whiteSpace: 'nowrap'
@@ -786,11 +780,11 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 </div>
 
                 {/* Tab Content */}
-                <div style={{ padding: '0 40px 40px', minHeight: '250px' }}>
+                <div style={{ padding: '0 40px 32px', minHeight: '220px' }}>
                     {/* Overview Tab */}
                     {activeTab === 'overview' && (
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                        <div style={{ display: 'grid', gap: '12px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
                                 {[
                                     { icon: '⚡', label: 'Power Level', value: level, color: tierColor },
                                     { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
@@ -798,14 +792,14 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                     { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#5865F2' }
                                 ].map((stat, i) => (
                                     <div key={i} style={{
-                                        padding: '20px', background: 'rgba(139, 92, 246, 0.08)',
-                                        border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '16px',
-                                        display: 'flex', alignItems: 'center', gap: '15px'
+                                        padding: '14px 16px', background: 'rgba(139, 92, 246, 0.08)',
+                                        border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '12px',
+                                        display: 'flex', alignItems: 'center', gap: '12px'
                                     }}>
-                                        <span style={{ fontSize: '2rem' }}>{stat.icon}</span>
-                                        <div>
-                                            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{stat.label}</div>
-                                            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
+                                        <span style={{ fontSize: '1.5rem' }}>{stat.icon}</span>
+                                        <div style={{ minWidth: 0 }}>
+                                            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{stat.label}</div>
+                                            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -814,12 +808,12 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {/* Next Milestone */}
                             {nextMilestone && (
                                 <div style={{
-                                    padding: '25px', background: `linear-gradient(135deg, ${tierColor}15, ${tierColor}08)`,
-                                    border: `1px solid ${tierColor}40`, borderRadius: '16px', textAlign: 'center'
+                                    padding: '16px 20px', background: `linear-gradient(135deg, ${tierColor}12, ${tierColor}06)`,
+                                    border: `1px solid ${tierColor}40`, borderRadius: '12px', textAlign: 'center'
                                 }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>NEXT MILESTONE</div>
-                                    <div style={{ fontSize: '1.6rem', fontWeight: 700, color: tierColor }}>{nextMilestone.title}</div>
-                                    <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', marginTop: '5px' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Next milestone</div>
+                                    <div style={{ fontSize: '1.35rem', fontWeight: 700, color: tierColor }}>{nextMilestone.title}</div>
+                                    <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
                                         {nextMilestone.level - level} levels to go
                                     </div>
                                 </div>

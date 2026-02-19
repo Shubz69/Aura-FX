@@ -6,6 +6,7 @@ import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
 import CosmicBackground from '../components/CosmicBackground';
 import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
+import { getPlaceholderColor, setPlaceholderColor as savePlaceholderColor, PLACEHOLDER_COLORS } from '../utils/avatar';
 import {
     getRankTitle,
     getTierName,
@@ -100,10 +101,7 @@ const Profile = () => {
         const loadProfile = async () => {
             if (!user?.id) return;
 
-            // First, check localStorage for latest XP data (updated in real-time from Community)
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-            
-            // Set data from auth context, but prioritize localStorage for XP/level
             const authData = {
                 username: user.username || storedUser.username || "",
                 email: user.email || storedUser.email || "",
@@ -118,144 +116,77 @@ const Profile = () => {
                 timezone: user.timezone || storedUser.timezone || ""
             };
 
-            setFormData(prev => ({
-                ...prev,
-                ...authData
-            }));
-
-            // Set avatar preview if it's a base64 image
-            if (authData.avatar && authData.avatar.startsWith('data:image')) {
-                setAvatarPreview(authData.avatar);
-            }
-            if (authData.banner && authData.banner.startsWith('data:image')) {
-                setBannerPreview(authData.banner);
-            }
-
-            // Set user role
+            setFormData(prev => ({ ...prev, ...authData }));
+            if (authData.avatar && authData.avatar.startsWith('data:image')) setAvatarPreview(authData.avatar);
+            if (authData.banner && authData.banner.startsWith('data:image')) setBannerPreview(authData.banner);
             setUserRole(user.role || "");
+            setLoginStreak(storedUser.login_streak ?? user.login_streak ?? 0);
+            setLoading(false);
 
-            // Fetch timezone from settings (for daily journal notification at 08:00 local)
-            try {
-                const token = localStorage.getItem("token");
-                if (token) {
-                    const settingsRes = await axios.get(`${resolveApiBaseUrl()}/api/users/settings`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (settingsRes.data?.timezone != null) {
-                        setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
-                    }
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            const baseUrl = resolveApiBaseUrl();
+            const headers = { Authorization: `Bearer ${token}` };
+
+            const [settingsRes, userRes] = await Promise.all([
+                axios.get(`${baseUrl}/api/users/settings`, { headers }).catch(() => ({ data: null })),
+                axios.get(`${baseUrl}/api/users/${user.id}`, { headers }).catch(() => ({ status: 0, data: null }))
+            ]);
+
+            if (settingsRes?.data?.timezone != null) {
+                setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
+            }
+
+            if (userRes?.status === 200 && userRes.data) {
+                const userData = userRes.data;
+                const backendData = {
+                    username: userData.username || authData.username,
+                    email: userData.email || authData.email,
+                    phone: userData.phone || authData.phone,
+                    address: userData.address || authData.address,
+                    avatar: userData.avatar || authData.avatar,
+                    name: userData.name || authData.name,
+                    bio: userData.bio || authData.bio || "",
+                    banner: userData.banner || authData.banner || "",
+                    level: storedUser.level ?? userData.level ?? authData.level,
+                    xp: storedUser.xp ?? userData.xp ?? authData.xp
+                };
+                if (userData.last_username_change) {
+                    setLastUsernameChange(userData.last_username_change);
+                    setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
                 }
-            } catch (_) {}
+                setFormData(prev => ({ ...prev, ...backendData }));
+                if (backendData.avatar && backendData.avatar.startsWith('data:image')) setAvatarPreview(backendData.avatar);
+                if (backendData.banner && backendData.banner.startsWith('data:image')) setBannerPreview(backendData.banner);
+                setLoginStreak(userData.login_streak ?? 0);
+                setAchievements(userData.achievements || []);
+                updateLocalUserData(backendData);
 
-            // Try to fetch additional profile data from the backend
-            try {
-                const token = localStorage.getItem("token");
-                if (token) {
-                    const response = await axios.get(
-                        `${resolveApiBaseUrl()}/api/users/${user.id}`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        }
-                    );
-
-                    if (response.status === 200) {
-                        const userData = response.data;
-                        // Prioritize localStorage XP/level over backend (for real-time updates)
-                        const backendData = {
-                            username: userData.username || authData.username,
-                            email: userData.email || authData.email,
-                            phone: userData.phone || authData.phone,
-                            address: userData.address || authData.address,
-                            avatar: userData.avatar || authData.avatar,
-                            name: userData.name || authData.name,
-                            bio: userData.bio || authData.bio || "",
-                            banner: userData.banner || authData.banner || "",
-                            level: storedUser.level || userData.level || authData.level,
-                            xp: storedUser.xp || userData.xp || authData.xp
-                        };
-                        
-                        // Store last username change date if available
-                        if (userData.last_username_change) {
-                            setLastUsernameChange(userData.last_username_change);
-                            const cooldownCheck = canChangeUsername(userData.last_username_change);
-                            setUsernameCooldownInfo(cooldownCheck);
-                        }
-
-                        setFormData(prev => ({
-                            ...prev,
-                            ...backendData
-                        }));
-
-                        // Set avatar preview if it's a base64 image
-                        if (backendData.avatar && backendData.avatar.startsWith('data:image')) {
-                            setAvatarPreview(backendData.avatar);
-                        }
-                        if (backendData.banner && backendData.banner.startsWith('data:image')) {
-                            setBannerPreview(backendData.banner);
-                        }
-
-                        // Load login streak and achievements
-                        // Fetch latest streak from API (includes daily login check) - non-blocking with timeout
-                        // IMPORTANT: Only check if we haven't checked today (prevent duplicate XP awards)
-                        const currentUserId = user?.id || userData.id;
-                        if (currentUserId) {
-                            const lastCheckKey = `daily_login_check_${currentUserId}`;
-                            const lastCheckDate = localStorage.getItem(lastCheckKey);
-                            const today = new Date().toDateString();
-                            
-                            // Only check if we haven't checked today
-                            if (lastCheckDate !== today) {
-                                // Use Promise.race to timeout after 3 seconds
-                                const loginCheckPromise = Api.checkDailyLogin(currentUserId);
-                                const timeoutPromise = new Promise((_, reject) => 
-                                    setTimeout(() => reject(new Error('Timeout')), 3000)
-                                );
-                                
-                                try {
-                                    const loginResponse = await Promise.race([loginCheckPromise, timeoutPromise]);
-                                    if (loginResponse.data && loginResponse.data.success) {
-                                        // Mark that we checked today
-                                        localStorage.setItem(lastCheckKey, today);
-                                        
-                                        setLoginStreak(loginResponse.data.streak || userData.login_streak || 0);
-                                        
-                                        // CRITICAL: Only update XP/level if XP was actually awarded (not already logged in)
-                                        if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                xp: loginResponse.data.newXP,
-                                                level: loginResponse.data.newLevel || prev.level
-                                            }));
-                                        }
-                                        // If already logged in, don't update XP/level - just update streak display
-                                    } else {
-                                        setLoginStreak(userData.login_streak || 0);
-                                    }
-                                } catch (error) {
-                                    // Fallback to stored value if API fails or times out
-                                    // Don't mark as checked on error, so it can retry later
-                                    console.warn('Daily login check failed or timed out, using stored value:', error);
-                                    setLoginStreak(userData.login_streak || 0);
-                                }
-                            } else {
-                                // Already checked today - just use stored streak
-                                setLoginStreak(userData.login_streak || 0);
+                const currentUserId = user?.id || userData.id;
+                const lastCheckKey = `daily_login_check_${currentUserId}`;
+                const lastCheckDate = localStorage.getItem(lastCheckKey);
+                const today = new Date().toDateString();
+                if (currentUserId && lastCheckDate !== today) {
+                    Promise.race([
+                        Api.checkDailyLogin(currentUserId),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), 3000))
+                    ]).then((loginResponse) => {
+                        if (loginResponse?.data?.success) {
+                            localStorage.setItem(lastCheckKey, today);
+                            setLoginStreak(loginResponse.data.streak ?? userData.login_streak ?? 0);
+                            if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    xp: loginResponse.data.newXP,
+                                    level: loginResponse.data.newLevel ?? prev.level
+                                }));
                             }
                         } else {
-                            setLoginStreak(userData.login_streak || 0);
+                            setLoginStreak(userData.login_streak ?? 0);
                         }
-                        setAchievements(userData.achievements || []);
-
-                        // Save to local storage
-                        updateLocalUserData(backendData);
-                    }
+                    }).catch(() => setLoginStreak(userData.login_streak ?? 0));
                 }
-            } catch (err) {
-                console.error("Error fetching profile data:", err);
-            } finally {
-                setLoading(false);
             }
         };
 
@@ -630,10 +561,54 @@ const Profile = () => {
                     </button>
                 </div>
 
-                {/* Profile Header (no avatars) */}
+                {/* Profile Avatar & Header */}
                 <div className="profile-header-section">
                     <div className="profile-avatar-wrapper">
-                        <div className="avatar-placeholder profile-avatar" aria-hidden />
+                        <div style={{ position: 'relative', flexShrink: 0, width: 150, height: 150 }}>
+                            {(avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')))) ? (
+                                <img
+                                    src={avatarPreview || formData.avatar}
+                                    alt="Profile"
+                                    className="profile-avatar profile-avatar-img"
+                                />
+                            ) : (
+                                <div aria-hidden className="profile-avatar" style={{ width: 150, height: 150, borderRadius: '50%', background: getPlaceholderColor(user?.id ?? formData.username), border: '5px solid rgba(139, 92, 246, 0.6)', boxSizing: 'border-box' }} />
+                            )}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept="image/*"
+                                onChange={handleAvatarChange}
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                className="avatar-upload-btn"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                📷
+                            </button>
+                        </div>
+                        {!(avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')))) && (
+                            <div className="profile-avatar-color-picker">
+                                <span className="profile-avatar-color-label">Pick a colour (no photo):</span>
+                                <div className="profile-avatar-color-swatches">
+                                    {PLACEHOLDER_COLORS.map((color) => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            className="profile-avatar-swatch"
+                                            style={{ background: color }}
+                                            title={color}
+                                            onClick={() => {
+                                                savePlaceholderColor(user?.id ?? formData.username, color);
+                                                setStatus('Colour saved. It will show wherever your profile is seen.');
+                                                setTimeout(() => setStatus(''), 2000);
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="profile-header-info">
                         <h1 className="profile-username">{formData.username || 'User'}</h1>

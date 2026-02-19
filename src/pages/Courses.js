@@ -132,14 +132,14 @@ const Courses = () => {
 
             {/* SUBSCRIPTIONS SECTION */}
             <div style={{
-                marginTop: '12px',
-                marginBottom: '10px'
+                marginTop: '6px',
+                marginBottom: '4px'
             }}>
                 <h2 className="section-title subscriptions-title" style={{
                     color: '#ffffff',
                     fontSize: '36px',
                     fontWeight: 'bold',
-                    marginBottom: '4px',
+                    marginBottom: '2px',
                     textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
@@ -152,9 +152,9 @@ const Courses = () => {
                 <p className="section-description subscriptions-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
                     fontSize: '18px',
-                    marginBottom: '8px',
+                    marginBottom: '4px',
                     textAlign: 'center',
-                    lineHeight: '1.6',
+                    lineHeight: '1.5',
                     padding: '0 20px'
                 }}>
                     Choose the perfect plan for your trading journey. Upgrade, downgrade, or cancel anytime.
@@ -259,7 +259,7 @@ const Courses = () => {
                     textAlign: 'center',
                     color: 'rgba(255, 255, 255, 0.6)',
                     fontSize: 'clamp(12px, 2vw, 14px)',
-                    marginTop: '12px',
+                    marginTop: '6px',
                     padding: '0 20px'
                 }}>
                     Cancel anytime • No hidden fees • Switch plans anytime
@@ -268,14 +268,14 @@ const Courses = () => {
 
             {/* COURSES SECTION */}
             <div style={{
-                marginTop: '10px',
-                marginBottom: '18px'
+                marginTop: '6px',
+                marginBottom: '14px'
             }}>
                 <h2 className="section-title courses-section-title" style={{
                     color: '#ffffff',
                     fontSize: '36px',
                     fontWeight: 'bold',
-                    marginBottom: '4px',
+                    marginBottom: '2px',
                     textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
@@ -288,9 +288,9 @@ const Courses = () => {
                 <p className="section-description courses-section-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
                     fontSize: '18px',
-                    marginBottom: '8px',
+                    marginBottom: '4px',
                     textAlign: 'center',
-                    lineHeight: '1.6',
+                    lineHeight: '1.5',
                     padding: '0 20px'
                 }}>
                     Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs

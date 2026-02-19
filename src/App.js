@@ -62,6 +62,8 @@ function usePrefetchRoutes() {
             import('./pages/ContactUs');
             import('./pages/Login');
             import('./pages/SignUp');
+            import('./pages/Leaderboard');
+            import('./pages/Profile');
         };
         if (typeof requestIdleCallback !== 'undefined') {
             const id = requestIdleCallback(prefetch, { timeout: 4000 });

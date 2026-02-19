@@ -32,61 +32,24 @@ const Leaderboard = () => {
     const [selectedTimeframe, setSelectedTimeframe] = useState('all-time');
 
     useEffect(() => {
-        const container = containerRef.current;
-        if (container) {
-            const containerRect = container.getBoundingClientRect();
-            
-            for (let i = 0; i < 50; i++) {
-                const dataPoint = document.createElement('div');
-                dataPoint.className = 'data-point';
-                
-                const left = Math.floor(Math.random() * containerRect.width);
-                const top = Math.floor(Math.random() * containerRect.height);
-                
-                dataPoint.style.left = `${left}px`;
-                dataPoint.style.top = `${top}px`;
-                dataPoint.style.animationDelay = `${Math.random() * 8}s`;
-                
-                container.appendChild(dataPoint);
-            }
-        }
-
         const fetchLeaderboard = async () => {
             setLoading(true);
             setError(null);
-            
             try {
                 const response = await Api.getLeaderboard(selectedTimeframe);
-                
-                // Debug logging with requestId
-                const requestId = response?.data?.requestId || 'unknown';
-                console.log(`[${requestId}] Leaderboard response for ${selectedTimeframe}:`, {
-                    success: response?.data?.success,
-                    count: response?.data?.leaderboard?.length || 0,
-                    cached: response?.data?.cached,
-                    error: response?.data?.error
-                });
-                
                 if (response?.data?.success === false) {
-                    console.error(`[${requestId}] API error:`, response.data.error);
+                    console.error('Leaderboard API error:', response.data?.error);
                 }
-                
-                if (response && response.data) {
-                    const data = Array.isArray(response.data) 
-                        ? response.data 
+                if (response?.data) {
+                    const data = Array.isArray(response.data)
+                        ? response.data
                         : (response.data.leaderboard || []);
                     setLeaderboardData(data);
                 } else {
-                    console.warn('Empty response from leaderboard API');
                     setLeaderboardData([]);
                 }
             } catch (err) {
                 console.error('Error fetching leaderboard:', err);
-                // Log more details for debugging
-                if (err.response) {
-                    console.error('Response status:', err.response.status);
-                    console.error('Response data:', err.response.data);
-                }
                 setError('Failed to load leaderboard. Please try again.');
                 setLeaderboardData([]);
             } finally {
@@ -95,14 +58,30 @@ const Leaderboard = () => {
         };
 
         fetchLeaderboard();
-
-        return () => {
-            if (container) {
-                const dataPoints = container.querySelectorAll('.data-point');
-                dataPoints.forEach(point => point.remove());
-            }
-        };
     }, [selectedTimeframe]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        let cancelled = false;
+        const id = requestAnimationFrame(() => {
+            if (cancelled) return;
+            const rect = container.getBoundingClientRect();
+            for (let i = 0; i < 50; i++) {
+                const el = document.createElement('div');
+                el.className = 'data-point';
+                el.style.left = `${Math.floor(Math.random() * rect.width)}px`;
+                el.style.top = `${Math.floor(Math.random() * rect.height)}px`;
+                el.style.animationDelay = `${Math.random() * 8}s`;
+                container.appendChild(el);
+            }
+        });
+        return () => {
+            cancelled = true;
+            if (id) cancelAnimationFrame(id);
+            container.querySelectorAll('.data-point').forEach(p => p.remove());
+        };
+    }, []);
 
     const getRankEmoji = (rank) => {
         if (rank === 1) return '🥇';
@@ -284,44 +263,34 @@ const Leaderboard = () => {
         );
     };
 
-    if (loading) {
+    if (error) {
         return (
             <div className="leaderboard-container" ref={containerRef}>
                 <CosmicBackground />
-                <div className="loading-screen">
-                    <div className="loading-spinner"></div>
-                    <div className="loading-text">Loading Leaderboard...</div>
+                <div className="leaderboard-header">
+                    <h1 className="leaderboard-main-title">LEADERBOARD</h1>
+                    <p className="leaderboard-subtitle">Compete with the best traders in the cyber realm</p>
                 </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="leaderboard-container">
-                <CosmicBackground />
                 <div className="error-message">
                     <h2>⚠️ Error Loading Leaderboard</h2>
                     <p>{error}</p>
                     <button onClick={() => window.location.reload()}>Retry</button>
                 </div>
-                </div>
+            </div>
         );
     }
 
     const top3 = leaderboardData.slice(0, 3);
     const top10 = leaderboardData.slice(0, 10);
-                        
-                        return (
+
+    return (
         <div className="leaderboard-container" ref={containerRef}>
             <CosmicBackground />
             
-            {/* Header */}
             <div className="leaderboard-header">
                 <h1 className="leaderboard-main-title">LEADERBOARD</h1>
                 <p className="leaderboard-subtitle">Compete with the best traders in the cyber realm</p>
                 
-                {/* Timeframe Selector */}
                 <div className="timeframe-selector">
                     <button 
                         className={`timeframe-btn ${selectedTimeframe === 'daily' ? 'active' : ''}`}
@@ -350,6 +319,13 @@ const Leaderboard = () => {
                 </div>
             </div>
 
+            {loading ? (
+                <div className="loading-screen" style={{ minHeight: '280px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                    <div className="loading-spinner"></div>
+                    <div className="loading-text">Loading leaderboard…</div>
+                </div>
+            ) : (
+                <>
             {/* Top 3 Podium */}
             <Top3Podium top3={top3} />
 
@@ -408,6 +384,8 @@ const Leaderboard = () => {
                     </ul>
                 </div>
             </div>
+                </>
+            )}
         </div>
     );
 };
