@@ -18,8 +18,6 @@ import {
     isOnCooldown,
     XP_REWARDS
 } from '../utils/xpSystem';
-import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
-
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft, FaDownload } from 'react-icons/fa';
 import ProfileModal from '../components/ProfileModal';
@@ -4903,34 +4901,18 @@ avatar: storedUser?.avatar || null,
                         alignItems: 'center',
                         gap: '12px'
                     }}>
-                        {/* Avatar: real pic or purple placeholder */}
+                        {/* Avatar: coloured circle only (no personal PFP) */}
                         <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
-                            {hasRealAvatar(storedUser?.avatar) ? (
-                                <img 
-                                    src={resolveAvatarUrl(storedUser.avatar)} 
-                                    alt="Avatar"
-                                    style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '50%',
-                                        objectFit: 'cover',
-                                        border: '2px solid rgba(139, 92, 246, 0.5)',
-                                        boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)',
-                                        display: 'block'
-                                    }}
-                                />
-                            ) : (
-                                <div 
-                                    className="avatar-placeholder"
-                                    style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        border: '2px solid rgba(139, 92, 246, 0.5)',
-                                        boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)'
-                                    }}
-                                    aria-hidden
-                                />
-                            )}
+                            <div 
+                                className="avatar-placeholder"
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    border: '2px solid rgba(139, 92, 246, 0.5)',
+                                    boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)'
+                                }}
+                                aria-hidden
+                            />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ 
@@ -5426,19 +5408,7 @@ avatar: storedUser?.avatar || null,
                                                         e.currentTarget.style.opacity = '1';
                                                     }}
                                                 >
-                                                    {hasRealAvatar(message.sender?.avatar) ? (
-                                                        <img 
-                                                            src={resolveAvatarUrl(message.sender.avatar)} 
-                                                            alt={message.sender?.username || 'User'}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                objectFit: 'cover'
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
-                                                    )}
+                                                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
                                                 </div>
                                             )}
                                             <div className="message-content">
@@ -6318,15 +6288,7 @@ avatar: storedUser?.avatar || null,
                                                                     fontSize: '0.9rem',
                                                                     flexShrink: 0
                                                                 }}>
-                                                                    {hasRealAvatar(user.avatar) ? (
-                                                                        <img
-                                                                            src={resolveAvatarUrl(user.avatar)}
-                                                                            alt=""
-                                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                                        />
-                                                                    ) : (
-                                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
-                                                                    )}
+                                                                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
                                                                 </div>
                                                                 <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                                                     <div style={{

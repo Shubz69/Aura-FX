@@ -2,11 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
-import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
-
-// Renders avatar: user image or purple placeholder; supports image load error.
+// Renders coloured placeholder only on leaderboard (no personal PFP); users pick avatar in profile.
 const LeaderboardAvatar = ({ user, className, emptyLabel = '?', noWrap }) => {
-    const [imgError, setImgError] = useState(false);
     if (!user) {
         if (noWrap) return <div className="empty-avatar-placeholder">{emptyLabel}</div>;
         return (
@@ -15,15 +12,8 @@ const LeaderboardAvatar = ({ user, className, emptyLabel = '?', noWrap }) => {
             </div>
         );
     }
-    const showImg = hasRealAvatar(user.avatar) && !imgError;
-    const content = showImg ? (
-        <img
-            src={resolveAvatarUrl(user.avatar)}
-            alt={user.username}
-            onError={() => setImgError(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-        />
-    ) : (
+    // Leaderboard: only coloured placeholders (no personal PFP); they pick avatar in profile.
+    const content = (
         <div className="avatar-placeholder" style={{ width: '100%', height: '100%', borderRadius: '50%' }} aria-hidden />
     );
     if (noWrap) return content;

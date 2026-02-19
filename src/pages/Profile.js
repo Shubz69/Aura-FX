@@ -15,8 +15,6 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
-import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
-
 const resolveApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location?.origin) {
         return window.location.origin;
@@ -610,17 +608,7 @@ const Profile = () => {
                 {/* Profile Avatar & Header */}
                 <div className="profile-header-section">
                     <div className="profile-avatar-wrapper">
-                        {hasRealAvatar(avatarPreview || formData.avatar) ? (
-                            <img 
-                                src={resolveAvatarUrl(avatarPreview || formData.avatar)} 
-                                alt="Avatar" 
-                                className="profile-avatar"
-                                style={{ imageRendering: 'high-quality' }}
-                                loading="eager"
-                            />
-                        ) : (
-                            <div className="avatar-placeholder profile-avatar" aria-hidden />
-                        )}
+                        <div className="avatar-placeholder profile-avatar" aria-hidden />
                         <input
                             type="file"
                             ref={fileInputRef}

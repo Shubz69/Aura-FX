@@ -7,7 +7,6 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Sidebar from '../components/Sidebar';
-import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 import '../styles/Friends.css';
 
 // Format relative time
@@ -490,11 +489,7 @@ const Friends = () => {
                               {onlineFriends.map(friend => (
                                 <div key={friend.id} className="friend-card">
                                   <div className="friend-avatar">
-                                    {hasRealAvatar(friend.avatar) ? (
-                                      <img src={resolveAvatarUrl(friend.avatar)} alt={friend.username} />
-                                    ) : (
-                                      <div className="avatar-placeholder" aria-hidden />
-                                    )}
+                                    <div className="avatar-placeholder" aria-hidden />
                                     <div className="online-indicator" />
                                   </div>
                                   <div className="friend-info">
@@ -546,11 +541,7 @@ const Friends = () => {
                               {offlineFriends.map(friend => (
                                 <div key={friend.id} className="friend-card offline">
                                   <div className="friend-avatar">
-                                    {hasRealAvatar(friend.avatar) ? (
-                                      <img src={resolveAvatarUrl(friend.avatar)} alt={friend.username} />
-                                    ) : (
-                                      <div className="avatar-placeholder" aria-hidden />
-                                    )}
+                                    <div className="avatar-placeholder" aria-hidden />
                                     <div className="offline-indicator" />
                                   </div>
                                   <div className="friend-info">
@@ -604,11 +595,7 @@ const Friends = () => {
                       {incomingRequests.map(request => (
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
-                            {hasRealAvatar(request.avatar) ? (
-                              <img src={resolveAvatarUrl(request.avatar)} alt={request.username} />
-                            ) : (
-                              <div className="avatar-placeholder" aria-hidden />
-                            )}
+                            <div className="avatar-placeholder" aria-hidden />
                           </div>
                           <div className="request-info">
                             <span className="request-name">{request.username}</span>
@@ -658,11 +645,7 @@ const Friends = () => {
                       {outgoingRequests.map(request => (
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
-                            {hasRealAvatar(request.avatar) ? (
-                              <img src={resolveAvatarUrl(request.avatar)} alt={request.username} />
-                            ) : (
-                              <div className="avatar-placeholder" aria-hidden />
-                            )}
+                            <div className="avatar-placeholder" aria-hidden />
                           </div>
                           <div className="request-info">
                             <span className="request-name">{request.username}</span>
@@ -715,11 +698,7 @@ const Friends = () => {
                       {searchResults.map(user => (
                         <div key={user.id} className="search-result-card">
                           <div className="result-avatar">
-                            {hasRealAvatar(user.avatar) ? (
-                              <img src={resolveAvatarUrl(user.avatar)} alt={user.username} />
-                            ) : (
-                              <div className="avatar-placeholder" aria-hidden />
-                            )}
+                            <div className="avatar-placeholder" aria-hidden />
                           </div>
                           <div className="result-info">
                             <span className="result-name">{user.username}</span>

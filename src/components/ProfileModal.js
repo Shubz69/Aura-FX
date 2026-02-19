@@ -16,7 +16,6 @@ import {
     FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 import '../styles/ProfileModal.css';
 
 // Get or create portal root for modals
@@ -32,19 +31,9 @@ const getModalRoot = () => {
 };
 
 /**
- * Avatar component: shows user image or clean purple transparent circle (no default PFP).
+ * Avatar: coloured transparent circle only (no personal PFP).
  */
-const AvatarWithFallback = ({ src, name, size = 130, tierColor, isOnline }) => {
-    const [imageError, setImageError] = React.useState(false);
-    const [imageLoaded, setImageLoaded] = React.useState(false);
-    
-    React.useEffect(() => {
-        setImageError(false);
-        setImageLoaded(false);
-    }, [src]);
-    
-    const showImage = src && !imageError;
-    
+const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
     return (
         <div style={{
             position: 'relative',
@@ -52,7 +41,6 @@ const AvatarWithFallback = ({ src, name, size = 130, tierColor, isOnline }) => {
             height: `${size}px`,
             flexShrink: 0
         }}>
-            {/* No-avatar fallback: purple transparent circle */}
             <div
                 className="avatar-placeholder"
                 style={{
@@ -61,38 +49,14 @@ const AvatarWithFallback = ({ src, name, size = 130, tierColor, isOnline }) => {
                     left: 0,
                     width: '100%',
                     height: '100%',
+                    borderRadius: '50%',
+                    background: 'transparent',
                     border: `5px solid ${tierColor}`,
                     boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
                     boxSizing: 'border-box'
                 }}
                 aria-hidden
             />
-            
-            {showImage && (
-                <img 
-                    src={src} 
-                    alt={name}
-                    onLoad={() => setImageLoaded(true)}
-                    onError={() => setImageError(true)}
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                        border: `5px solid ${tierColor}`,
-                        boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px ${tierColor}60`,
-                        boxSizing: 'border-box',
-                        opacity: imageLoaded ? 1 : 0,
-                        transition: 'opacity 0.3s ease'
-                    }} 
-                />
-            )}
-            
-            {/* Online indicator */}
             <div style={{
                 position: 'absolute',
                 bottom: `${size * 0.06}px`,
@@ -705,8 +669,6 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         height: '130px'
                     }}>
                         <AvatarWithFallback 
-                            src={hasRealAvatar(profile.avatar) ? resolveAvatarUrl(profile.avatar) : null}
-                            name={profile.username || profile.name || 'User'}
                             size={130}
                             tierColor={tierColor}
                             isOnline={isOnline}

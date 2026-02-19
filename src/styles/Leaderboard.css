@@ -173,23 +173,32 @@
     order: 3;
 }
 
+/* No large icons: podium avatars fixed at one small size */
 .podium-avatar {
     position: relative;
     margin-bottom: 15px;
     width: 56px;
     height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    max-width: 56px;
+    max-height: 56px;
     flex-shrink: 0;
     border-radius: 50%;
 }
 
 .podium-avatar img,
-.podium-avatar .avatar-placeholder {
+.podium-avatar .avatar-placeholder,
+.podium-avatar > * {
     width: 56px !important;
     height: 56px !important;
-    min-width: 56px;
-    min-height: 56px;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
     border-radius: 50%;
     object-fit: cover;
+    box-sizing: border-box;
 }
 
 .podium-avatar img {
@@ -349,10 +358,33 @@
     gap: 15px;
 }
 
-.user-avatar img {
+/* No large icons: all leaderboard avatars fixed small size */
+.user-avatar {
+    position: relative;
+    flex-shrink: 0;
     width: 40px;
     height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
+}
+
+.user-avatar img,
+.user-avatar .avatar-placeholder,
+.user-avatar > * {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
     border-radius: 50%;
+    object-fit: cover;
+    box-sizing: border-box;
+}
+
+.user-avatar img {
     border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -880,9 +912,16 @@
         font-size: 0.75rem !important;
     }
     
-    .user-avatar img {
+    .user-avatar,
+    .user-avatar img,
+    .user-avatar .avatar-placeholder,
+    .user-avatar > * {
         width: 32px !important;
         height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        max-width: 32px !important;
+        max-height: 32px !important;
     }
     
     .user-info {
@@ -988,9 +1027,5 @@
     text-transform: uppercase;
     margin-top: -5px;
     margin-bottom: 5px;
-}
-
-.user-avatar {
-    position: relative;
 }
 

@@ -14,7 +14,6 @@ import {
 } from '../utils/xpSystem';
 
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
-import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 
 const PublicProfile = () => {
     const { userId } = useParams();
@@ -141,17 +140,9 @@ const PublicProfile = () => {
                         </div>
                     )}
                     
-                    {/* Avatar overlapping banner */}
+                    {/* Avatar overlapping banner - coloured circle only (no personal PFP) */}
                     <div className="profile-avatar-overlay">
-                        {hasRealAvatar(profile.avatar) ? (
-                            <img 
-                                src={resolveAvatarUrl(profile.avatar)} 
-                                alt="Avatar" 
-                                className="profile-avatar-large"
-                            />
-                        ) : (
-                            <div className="avatar-placeholder profile-avatar-large" aria-hidden />
-                        )}
+                        <div className="avatar-placeholder profile-avatar-large" aria-hidden />
                     </div>
                 </div>
 
