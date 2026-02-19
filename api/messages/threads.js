@@ -207,8 +207,9 @@ module.exports = async (req, res) => {
     // Handle /api/messages/threads/:threadId/messages - Get messages for a thread
     const threadMessagesMatch = pathname.match(/\/threads\/(\d+)\/messages/);
     if (threadMessagesMatch && req.method === 'GET') {
-      const threadId = parseInt(threadMessagesMatch[1]);
-      const limit = Math.min(parseInt(req.query?.limit) || 50, 100);
+      const threadId = parseInt(threadMessagesMatch[1], 10);
+      const limitRaw = parseInt(req.query?.limit, 10) || 50;
+      const limit = Math.min(Math.max(1, Number.isNaN(limitRaw) ? 50 : limitRaw), 100);
 
       const [threadRows] = await db.execute('SELECT * FROM threads WHERE id = ?', [threadId]);
       if (!threadRows || threadRows.length === 0) {
@@ -222,9 +223,10 @@ module.exports = async (req, res) => {
         return res.status(403).json({ success: false, message: 'Access denied' });
       }
 
+      // LIMIT must be a literal integer for mysql2 (avoids "Incorrect arguments to myqld_start_execute")
       const [messages] = await db.execute(
-        'SELECT * FROM thread_messages WHERE threadId = ? ORDER BY createdAt DESC LIMIT ?',
-        [threadId, limit]
+        `SELECT * FROM thread_messages WHERE threadId = ? ORDER BY createdAt DESC LIMIT ${limit}`,
+        [threadId]
       );
 
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);

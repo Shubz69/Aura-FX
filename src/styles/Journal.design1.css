@@ -1,7 +1,9 @@
 /* =============================================================================
-   AURA JOURNAL – Modern vibrant design (current)
-   Design 1 (original dark/minimal) saved as Journal.design1.css
+   AURA JOURNAL – DESIGN 1 (backup)
+   Original dark, minimal design. To use: in Journal.js import this file instead
+   of Journal.css to revert to Design 1.
    ============================================================================= */
+/* Task Journal – calendar sidebar, task list, day/week/month %, daily notes, mood */
 
 /* Motion */
 @keyframes journal-fadeIn {
@@ -40,7 +42,7 @@
 
 .journal-page {
   min-height: 100vh;
-  background: linear-gradient(165deg, #0f0f1a 0%, #1a1a2e 35%, #16213e 100%);
+  background: var(--bg-dark, #0a0a0a);
   color: var(--primary, #fff);
   padding-top: 32px;
   padding-bottom: 48px;
@@ -52,7 +54,7 @@
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(165deg, #0f0f1a 0%, #1a1a2e 35%, #16213e 100%);
+  background: var(--bg-dark, #0a0a0a);
   pointer-events: none;
 }
 
@@ -68,9 +70,8 @@
   width: 300px;
   flex-shrink: 0;
   padding: 24px 20px;
-  border-right: 1px solid rgba(139, 92, 246, 0.2);
-  background: rgba(15, 15, 26, 0.6);
-  backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
   animation: journal-fadeIn 0.4s ease-out;
 }
 
@@ -92,13 +93,13 @@
   margin: 0;
 }
 
-/* Calendar – modern glass + purple accent */
+/* Calendar – enhanced look and motion */
 .journal-calendar {
-  background: linear-gradient(160deg, rgba(30, 30, 46, 0.95) 0%, rgba(22, 22, 38, 0.98) 100%);
+  background: linear-gradient(160deg, rgba(40, 42, 50, 0.98) 0%, rgba(24, 26, 32, 0.98) 100%);
   border-radius: 24px;
   padding: 24px;
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   margin-bottom: 20px;
   animation: journal-scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
@@ -227,16 +228,16 @@
 }
 
 .journal-calendar-day--selected {
-  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  background: linear-gradient(135deg, var(--blue-primary, #1E90FF) 0%, #1a7ae0 100%);
   color: #fff;
-  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 6px 20px rgba(30, 144, 255, 0.45);
   transform: scale(1.05);
 }
 
 .journal-calendar-day--selected:hover {
-  background: linear-gradient(135deg, #A78BFA 0%, #C4B5FD 100%);
+  background: linear-gradient(135deg, var(--blue-secondary, #4169E1) 0%, #3558c7 100%);
   transform: scale(1.08);
-  box-shadow: 0 8px 28px rgba(139, 92, 246, 0.55);
+  box-shadow: 0 8px 24px rgba(30, 144, 255, 0.4);
 }
 
 .journal-calendar-day-num {
@@ -271,10 +272,9 @@
 .journal-stat-mini {
   flex: 1;
   text-align: center;
-  padding: 12px 10px;
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.18);
-  border-radius: 14px;
+  padding: 10px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
 }
 
 .journal-stat-mini-label {
@@ -303,13 +303,10 @@
 }
 
 .journal-main-title {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 6px 0;
-  background: linear-gradient(135deg, #fff 0%, #e9d5ff 50%, #c4b5fd 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary, #fff);
   letter-spacing: -0.02em;
 }
 
@@ -331,11 +328,11 @@
 }
 
 .journal-progress-card {
-  background: linear-gradient(145deg, rgba(30, 30, 46, 0.9) 0%, rgba(22, 22, 38, 0.95) 100%);
-  border-radius: 18px;
-  padding: 20px 22px;
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  background: linear-gradient(145deg, rgba(37, 37, 37, 0.95) 0%, rgba(28, 28, 28, 0.95) 100%);
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   animation: journal-fadeIn 0.4s ease-out;
   animation-fill-mode: both;
 }
@@ -368,10 +365,9 @@
 
 .journal-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #8B5CF6, #22c55e);
+  background: linear-gradient(90deg, var(--blue-primary, #1E90FF), #22c55e);
   border-radius: 3px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
 }
 
 /* Add task form */
@@ -398,8 +394,7 @@
 
 .journal-add-input:focus {
   outline: none;
-  border-color: rgba(139, 92, 246, 0.6);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  border-color: var(--blue-primary, #1E90FF);
 }
 
 .journal-add-btn {
@@ -407,20 +402,18 @@
   align-items: center;
   gap: 8px;
   padding: 14px 22px;
-  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  background: var(--blue-primary, #1E90FF);
   border: none;
   border-radius: 12px;
   color: #fff;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+  transition: background 0.2s, opacity 0.2s;
 }
 
 .journal-add-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+  background: var(--blue-secondary, #4169E1);
 }
 
 .journal-add-btn:disabled {
@@ -440,9 +433,9 @@
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  background: rgba(30, 30, 46, 0.7);
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  border-radius: 14px;
+  background: var(--bg-light, #252525);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
   margin-bottom: 8px;
   transition: background 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s;
   animation: journal-fadeIn 0.35s ease-out both;
@@ -456,8 +449,12 @@
 .journal-task-list .journal-task-item:nth-child(n+6) { animation-delay: 0.18s; }
 
 .journal-task-item:hover {
-  background: rgba(139, 92, 246, 0.08);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.journal-task-item:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .journal-task-item--done .journal-task-title {
@@ -658,7 +655,7 @@
 .journal-notes-section {
   margin-top: 28px;
   padding-top: 24px;
-  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   animation: journal-fadeIn 0.4s ease-out 0.1s both;
 }
 
@@ -679,8 +676,8 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: rgba(30, 30, 46, 0.6);
-  border: 1px solid rgba(139, 92, 246, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   margin-bottom: 8px;
   animation: journal-fadeIn 0.3s ease-out;
@@ -688,7 +685,7 @@
 }
 
 .journal-note-item:hover {
-  background: rgba(139, 92, 246, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   transform: translateX(4px);
 }
 
@@ -743,8 +740,7 @@
 
 .journal-add-note-input:focus {
   outline: none;
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+  border-color: var(--blue-primary, #1E90FF);
 }
 
 .journal-add-note-btn {
@@ -752,20 +748,20 @@
   align-items: center;
   gap: 6px;
   padding: 12px 18px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(167, 139, 250, 0.3) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.5);
+  background: rgba(30, 144, 255, 0.25);
+  border: 1px solid rgba(30, 144, 255, 0.4);
   border-radius: 12px;
-  color: #e9d5ff;
+  color: #93c5fd;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
 
 .journal-add-note-btn:hover:not(:disabled) {
-  border-color: #A78BFA;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+  background: rgba(30, 144, 255, 0.35);
+  border-color: var(--blue-primary, #1E90FF);
+  transform: scale(1.02);
 }
 
 .journal-add-note-btn:disabled {
@@ -792,21 +788,20 @@
 
 /* Daily notes & mood */
 .journal-daily-section {
-  background: linear-gradient(145deg, rgba(30, 30, 46, 0.9) 0%, rgba(22, 22, 38, 0.95) 100%);
-  border-radius: 20px;
-  padding: 24px 26px;
-  border: 1px solid rgba(139, 92, 246, 0.22);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  background: linear-gradient(145deg, rgba(37, 37, 37, 0.95) 0%, rgba(28, 28, 28, 0.95) 100%);
+  border-radius: 18px;
+  padding: 22px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
   margin-bottom: 24px;
   animation: journal-fadeIn 0.4s ease-out;
 }
 
 .journal-section-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--primary, #fff);
   margin: 0 0 14px 0;
-  letter-spacing: 0.02em;
 }
 
 /* Saved note display – visible on screen after save */
@@ -874,9 +869,8 @@
 }
 
 .journal-mood-btn--active {
-  border-color: #8B5CF6;
-  background: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.35);
+  border-color: var(--blue-primary, #1E90FF);
+  background: rgba(30, 144, 255, 0.2);
 }
 
 .journal-notes-input {

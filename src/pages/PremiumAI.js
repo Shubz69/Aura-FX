@@ -168,7 +168,13 @@ const PremiumAI = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingContent]);
-  
+
+  // Single scroll: only the chat area scrolls, not the whole page
+  useEffect(() => {
+    document.body.classList.add('premium-ai-page-active');
+    return () => document.body.classList.remove('premium-ai-page-active');
+  }, []);
+
   // Auto-resize textarea
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -847,23 +853,23 @@ const PremiumAI = () => {
               rows={1}
               className={isRecording ? 'recording' : ''}
             />
-          </div>
-          
-          <div className="composer-actions-right">
-            {isStreaming ? (
-              <button className="composer-btn stop-btn" onClick={handleStopStreaming} title="Stop generating">
-                <StopIcon />
-              </button>
-            ) : (
-              <button
-                className="send-btn"
-                onClick={handleSendMessage}
-                disabled={isLoading || (!input.trim() && selectedImages.length === 0)}
-                title="Send message"
-              >
-                <SendIcon />
-              </button>
-            )}
+            <div className="composer-send-inside">
+              {isStreaming ? (
+                <button type="button" className="composer-btn stop-btn" onClick={handleStopStreaming} title="Stop generating">
+                  <StopIcon />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="send-btn"
+                  onClick={handleSendMessage}
+                  disabled={isLoading || (!input.trim() && selectedImages.length === 0)}
+                  title="Send message"
+                >
+                  <SendIcon />
+                </button>
+              )}
+            </div>
           </div>
         </div>
         

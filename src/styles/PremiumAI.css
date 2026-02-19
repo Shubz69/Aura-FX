@@ -2,6 +2,12 @@
    AURA AI Premium - ChatGPT-Level UX
    ============================================================================ */
 
+/* Single scroll: only .ai-chat-area scrolls when this page is active */
+body.premium-ai-page-active {
+  overflow: hidden;
+  height: 100%;
+}
+
 /* Full-viewport dark layer: no white border on any device */
 .premium-ai-page::before {
   content: '';
@@ -383,15 +389,25 @@
 
 .message-text .md-list {
   margin: 4px 0;
-  padding-left: 20px;
+  padding-left: 1.5em;
+  list-style-position: outside;
 }
 
+/* Unordered lists: bullets */
+.message-text .md-list:not(.md-ol) {
+  list-style-type: disc;
+}
+
+/* Ordered lists: correct decimal numbering (1, 2, 3...) */
 .message-text .md-ol {
   list-style-type: decimal;
+  list-style-position: outside;
+  padding-left: 1.8em;
 }
 
 .message-text .md-li {
   margin: 2px 0;
+  display: list-item;
 }
 
 .message-text .md-heading {
@@ -709,14 +725,15 @@
   gap: 8px;
   max-width: 900px;
   margin: 0 auto;
-  align-items: flex-end;
+  align-items: stretch;
 }
 
-.composer-actions-left,
-.composer-actions-right {
+.composer-actions-left {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  align-items: flex-end;
+  padding-bottom: 2px;
 }
 
 .composer-btn {
@@ -765,11 +782,14 @@
 .composer-input-wrapper {
   flex: 1;
   min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: stretch;
 }
 
 .composer-input-wrapper textarea {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 56px 12px 16px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -781,6 +801,24 @@
   min-height: 44px;
   max-height: 200px;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Send button inside input, vertically centred */
+.composer-send-inside {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.composer-send-inside .send-btn,
+.composer-send-inside .composer-btn {
+  pointer-events: auto;
 }
 
 .composer-input-wrapper textarea:focus {
@@ -807,11 +845,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
   background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   color: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -936,7 +975,7 @@
   }
   
   .composer-input-wrapper textarea {
-    padding: 10px 14px;
+    padding: 10px 52px 10px 14px;
     font-size: 0.9rem;
     min-height: 40px;
   }

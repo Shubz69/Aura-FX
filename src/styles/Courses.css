@@ -416,7 +416,7 @@
     z-index: 2;
     position: relative;
     padding-top: 0;
-    margin-top: 0;
+    margin-top: 28px;
 }
 
 .courses-header p {
@@ -453,7 +453,7 @@
 .subscriptions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
+    gap: 10px;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto 12px;
@@ -645,7 +645,7 @@
     
     .subscriptions-grid {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
-        gap: 24px !important;
+        gap: 12px !important;
         padding: 0 20px !important;
         max-width: 900px !important;
     }
@@ -689,7 +689,7 @@
     
     .subscriptions-grid {
         grid-template-columns: 1fr !important;
-        gap: 24px !important;
+        gap: 12px !important;
         padding: 0 15px !important;
         max-width: 500px !important;
         margin: 0 auto 20px !important;
@@ -741,7 +741,7 @@
     
     .subscriptions-grid {
         grid-template-columns: 1fr !important;
-        gap: 20px !important;
+        gap: 12px !important;
         padding: 0 12px !important;
         max-width: 100% !important;
     }

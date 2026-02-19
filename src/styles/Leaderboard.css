@@ -176,37 +176,65 @@
 .podium-avatar {
     position: relative;
     margin-bottom: 15px;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: 50%;
 }
 
-.podium-avatar img {
-    width: 80px;
-    height: 80px;
+.podium-avatar img,
+.podium-avatar .avatar-placeholder {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px;
+    min-height: 56px;
     border-radius: 50%;
-    border: 3px solid #ffffff;
     object-fit: cover;
 }
 
-/* Update gold colors to blue */
+.podium-avatar img {
+    border: 3px solid #ffffff;
+}
+
+/* Rank-coloured placeholders (no default PFP) */
+.first-place .podium-avatar .avatar-placeholder {
+    background: rgba(139, 92, 246, 0.45);
+    border: 3px solid rgba(167, 139, 250, 0.8);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+}
+
+.second-place .podium-avatar .avatar-placeholder {
+    background: rgba(192, 192, 192, 0.35);
+    border: 3px solid rgba(192, 192, 192, 0.7);
+    box-shadow: 0 0 10px rgba(192, 192, 192, 0.4);
+}
+
+.third-place .podium-avatar .avatar-placeholder {
+    background: rgba(205, 127, 50, 0.35);
+    border: 3px solid rgba(205, 127, 50, 0.7);
+    box-shadow: 0 0 10px rgba(205, 127, 50, 0.4);
+}
+
 .first-place .podium-avatar img {
-    color: var(--accent); /* Changed from gold-primary to blue */
-    box-shadow: 0 0 3px var(--accent); /* Changed from gold-primary to blue */
+    border-color: rgba(167, 139, 250, 0.9);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
 }
 
 .second-place .podium-avatar img {
     border-color: #c0c0c0;
-    box-shadow: 0 0 15px rgba(192, 192, 192, 0.6);
+    box-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
 }
 
 .third-place .podium-avatar img {
     border-color: #cd7f32;
-    box-shadow: 0 0 15px rgba(205, 127, 50, 0.6);
+    box-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
 }
 
 .crown {
     position: absolute;
-    top: -10px;
-    right: -10px;
-    font-size: 24px;
+    top: -6px;
+    right: -6px;
+    font-size: 18px;
     animation: crown-sparkle 2s ease-in-out infinite alternate;
 }
 
@@ -638,10 +666,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 56px;
+    height: 56px;
 }
 
 .empty-avatar-placeholder {
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: var(--text-muted, #888);
 }
 
@@ -774,9 +804,13 @@
         max-width: 280px !important;
     }
     
-    .podium-avatar img {
-        width: 70px !important;
-        height: 70px !important;
+    .podium-avatar,
+    .podium-avatar img,
+    .podium-avatar .avatar-placeholder {
+        width: 52px !important;
+        height: 52px !important;
+        min-width: 52px !important;
+        min-height: 52px !important;
     }
     
     .podium-info {

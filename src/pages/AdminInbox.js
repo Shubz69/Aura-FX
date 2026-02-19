@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Box, Typography, List, ListItemButton, ListItemText, Paper, Divider, TextField, Button, IconButton, InputAdornment } from '@mui/material';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import SendIcon from '@mui/icons-material/Send';
-import SearchIcon from '@mui/icons-material/Search';
+import { FaPaperclip, FaPaperPlane, FaSearch } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import WebSocketService from '../services/WebSocketService';
 import CosmicBackground from '../components/CosmicBackground';
+import '../styles/AdminInbox.css';
 
 const API_BASE = () => (typeof window !== 'undefined' ? window.location.origin : '');
 
@@ -212,101 +210,104 @@ const AdminInbox = () => {
   return (
     <>
       <CosmicBackground />
-      <Box sx={{ display: 'flex', height: 'calc(100vh - 160px)', p: 2 }}>
-        <Paper sx={{ width: 320, mr: 2, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="h6" sx={{ p: 2 }}>Inbox</Typography>
-          <TextField
-            size="small"
-            placeholder="Search users…"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ mx: 2, mb: 1 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment>
-              )
-            }}
-          />
-          <Divider />
-          <List sx={{ flex: 1, overflowY: 'auto' }}>
-            {loadingUsers ? (
-              <Typography variant="body2" sx={{ p: 2, color: 'text.secondary' }}>Loading users…</Typography>
-            ) : inboxList.length === 0 ? (
-              <Typography variant="body2" sx={{ p: 2, color: 'text.secondary' }}>
-                {searchTerm ? 'No users match your search.' : 'No users found.'}
-              </Typography>
-            ) : (
-              inboxList.map((u) => {
-                const thread = u.thread || threads.find(t => t.userId === u.id);
-                const isSelected = activeThreadId && thread?.id === activeThreadId || selectedUserId === u.id;
-                const unread = u.adminUnreadCount ?? thread?.adminUnreadCount ?? 0;
-                return (
-                  <ListItemButton
-                    key={u.id}
-                    selected={isSelected}
-                    onClick={() => handleSelectUser(u)}
-                    disabled={ensuringThread}
-                  >
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <span>{displayName(u)}</span>
-                          {unread > 0 && (
-                            <Box component="span" sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', borderRadius: 1, px: 0.75, py: 0, fontSize: '0.75rem', fontWeight: 600 }}>
-                              {unread > 99 ? '99+' : unread}
-                            </Box>
-                          )}
-                        </Box>
-                      }
-                      secondary={thread?.lastMessageAt ? new Date(thread.lastMessageAt).toLocaleString() : 'No messages yet'}
-                    />
-                  </ListItemButton>
-                );
-              })
-            )}
-          </List>
-        </Paper>
-
-        <Paper sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            {activeUser ? `Conversation with ${displayName(activeUser)}` : 'Select a user to message'}
-          </Typography>
-          <Paper sx={{ p: 2, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 200 }}>
-            {ensuringThread && selectedUserId && !activeThreadId ? (
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>Starting conversation…</Typography>
-            ) : (
-              <>
-                {messages.map(m => (
-                  <Box key={m.id || `msg-${m.createdAt}-${m.body?.slice(0, 10)}`} sx={{ display: 'flex', justifyContent: isOwn(m) ? 'flex-end' : 'flex-start', mb: 1 }}>
-                    <Paper sx={{ p: 1.25, bgcolor: isOwn(m) ? '#fff' : 'rgba(255,255,255,0.08)', color: isOwn(m) ? '#000' : '#fff', maxWidth: '80%' }}>
-                      <Typography variant="body1">{m.body}</Typography>
-                      <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', textAlign: 'right' }}>{formatTime(m.createdAt ?? m.created_at)}</Typography>
-                    </Paper>
-                  </Box>
-                ))}
-                <div ref={endRef} />
-              </>
-            )}
-          </Paper>
-          <Divider sx={{ my: 2 }} />
-          <form onSubmit={handleSend}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <IconButton component="label" sx={{ mr: 1 }} disabled={!activeThreadId}>
-                <AttachFileIcon />
-                <input type="file" hidden onChange={(e) => setFile(e.target.files?.[0] || null)} />
-              </IconButton>
-              <TextField
-                fullWidth
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={activeThreadId ? 'Type a message…' : 'Select a user first'}
-                disabled={!activeThreadId}
+      <div className="admin-inbox-page">
+        <div className="admin-inbox-layout">
+          {/* Left: user list with scroll on the right */}
+          <aside className="admin-inbox-sidebar">
+            <h2 className="admin-inbox-sidebar-title">Inbox</h2>
+            <div className="admin-inbox-sidebar-search">
+              <FaSearch className="search-icon" aria-hidden />
+              <input
+                type="text"
+                placeholder="Search users…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search users"
               />
-              <Button type="submit" disabled={(!input.trim() && !file) || !activeThreadId} sx={{ ml: 1 }} variant="contained"><SendIcon /></Button>
-            </Box>
-          </form>
-        </Paper>
-      </Box>
+            </div>
+            <div className="admin-inbox-user-list">
+              {loadingUsers ? (
+                <div className="admin-inbox-loading">Loading users…</div>
+              ) : inboxList.length === 0 ? (
+                <div className="admin-inbox-empty-list">
+                  {searchTerm ? 'No users match your search.' : 'No users found. Users will appear here once they message support.'}
+                </div>
+              ) : (
+                inboxList.map((u) => {
+                  const thread = u.thread || threads.find(t => t.userId === u.id);
+                  const isSelected = (activeThreadId && thread?.id === activeThreadId) || selectedUserId === u.id;
+                  const unread = u.adminUnreadCount ?? thread?.adminUnreadCount ?? 0;
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      className={`admin-inbox-user-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handleSelectUser(u)}
+                      disabled={ensuringThread}
+                    >
+                      <div className="admin-inbox-user-name">
+                        {displayName(u)}
+                        {unread > 0 && (
+                          <span className="unread-badge">{unread > 99 ? '99+' : unread}</span>
+                        )}
+                      </div>
+                      <div className="admin-inbox-user-meta">
+                        {thread?.lastMessageAt ? new Date(thread.lastMessageAt).toLocaleString() : 'No messages yet'}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </aside>
+
+          {/* Right: conversation */}
+          <main className="admin-inbox-main">
+            <h2 className="admin-inbox-main-title">
+              {activeUser ? `Conversation with ${displayName(activeUser)}` : 'Select a user to message'}
+            </h2>
+            <div className="admin-inbox-messages-wrap">
+              {ensuringThread && selectedUserId && !activeThreadId ? (
+                <div className="admin-inbox-empty-list">Starting conversation…</div>
+              ) : (
+                <>
+                  {messages.map((m) => (
+                    <div
+                      key={m.id || `msg-${m.createdAt}-${(m.body || '').slice(0, 10)}`}
+                      className={`admin-inbox-message-row ${isOwn(m) ? 'own' : 'other'}`}
+                    >
+                      <div className="admin-inbox-message-bubble">
+                        <div>{m.body}</div>
+                        <div className="admin-inbox-message-time">{formatTime(m.createdAt ?? m.created_at)}</div>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={endRef} />
+                </>
+              )}
+            </div>
+            <div className="admin-inbox-form-wrap">
+              <form onSubmit={handleSend} className="admin-inbox-form-row">
+                <label className="admin-inbox-attach-btn" style={{ cursor: activeThreadId ? 'pointer' : 'not-allowed' }}>
+                  <FaPaperclip size={18} />
+                  <input type="file" hidden onChange={(e) => setFile(e.target.files?.[0] || null)} disabled={!activeThreadId} />
+                </label>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={activeThreadId ? 'Type a message…' : 'Select a user first'}
+                  disabled={!activeThreadId}
+                  aria-label="Message input"
+                />
+                <button type="submit" disabled={(!input.trim() && !file) || !activeThreadId}>
+                  <FaPaperPlane size={18} />
+                </button>
+              </form>
+            </div>
+          </main>
+        </div>
+      </div>
     </>
   );
 };

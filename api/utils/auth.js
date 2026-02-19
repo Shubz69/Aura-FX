@@ -14,6 +14,7 @@
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_SIGNING_KEY;
+let jwtSecretWarned = false;
 
 /**
  * Verify JWT token from Authorization header.
@@ -25,7 +26,10 @@ function verifyToken(authHeader) {
   if (!token) return null;
 
   if (!JWT_SECRET || JWT_SECRET.length < 16) {
-    console.warn('JWT_SECRET not set or too short - auth verification degraded');
+    if (!jwtSecretWarned) {
+      jwtSecretWarned = true;
+      console.warn('JWT_SECRET not set or too short - auth verification degraded. Set JWT_SECRET in Vercel env for production.');
+    }
     return decodeTokenUnsafe(token);
   }
 

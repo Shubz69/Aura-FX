@@ -3,6 +3,7 @@ const mysql = require('mysql2/promise');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const nodemailer = require('nodemailer');
+const { verifyToken } = require('../utils/auth');
 
 // Configure email transporter (optional – logs warning if credentials missing)
 const createTransporter = () => {
@@ -541,17 +542,17 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Handle /api/admin/users - Get all users (Super Admin only)
+  // Handle /api/admin/users - Get all users (Admin or Super Admin)
   if ((pathname.includes('/users') || pathname.endsWith('/users')) && req.method === 'GET') {
     try {
-      // Check if user is super admin
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      if (!token) {
+      const decoded = verifyToken(req.headers.authorization);
+      if (!decoded || !decoded.id) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
       }
-
-      // TODO: Verify JWT and check if user is super admin
-      // For now, allow if token exists (you should add proper JWT verification)
+      const role = (decoded.role || '').toString().toUpperCase();
+      if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+        return res.status(403).json({ success: false, message: 'Admin access required' });
+      }
 
       const db = await getDbConnection();
       if (!db) {

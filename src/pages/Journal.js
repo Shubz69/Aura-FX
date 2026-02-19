@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
+/* Current: modern vibrant design. To use Design 1 (original): import '../styles/Journal.design1.css' */
 import '../styles/Journal.css';
 import { FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave, FaCamera } from 'react-icons/fa';
 
