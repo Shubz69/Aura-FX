@@ -131,7 +131,7 @@ const Courses = () => {
             )}
 
             {/* SUBSCRIPTIONS SECTION */}
-            <div style={{
+            <div className="courses-subscriptions-section" style={{
                 marginTop: '6px',
                 marginBottom: '4px'
             }}>
