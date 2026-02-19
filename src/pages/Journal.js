@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Api from '../services/Api';
 import '../styles/Journal.css';
-import { FaPlus, FaTrash, FaCheck, FaCircle } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave } from 'react-icons/fa';
+
+const MOOD_OPTIONS = [
+  { value: 'great', label: 'Great', emoji: '😊' },
+  { value: 'good', label: 'Good', emoji: '🙂' },
+  { value: 'ok', label: 'Okay', emoji: '😐' },
+  { value: 'low', label: 'Low', emoji: '😔' },
+  { value: 'rough', label: 'Rough', emoji: '😤' },
+];
 
 function getMonthStart(d) {
   const x = new Date(d);
@@ -46,6 +54,11 @@ export default function Journal() {
   const [error, setError] = useState(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [adding, setAdding] = useState(false);
+  const [dailyNotes, setDailyNotes] = useState('');
+  const [dailyMood, setDailyMood] = useState(null);
+  const [dailySaving, setDailySaving] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
 
   const monthStart = getMonthStart(calendarMonth + '-01');
   const monthEnd = getMonthEnd(calendarMonth + '-01');
@@ -73,6 +86,37 @@ export default function Journal() {
   useEffect(() => {
     fetchMonthTasks();
   }, [fetchMonthTasks]);
+
+  const fetchDailyNote = useCallback(async (date) => {
+    try {
+      const res = await Api.getJournalDaily(date);
+      const note = res.data?.note;
+      setDailyNotes(note?.notes ?? '');
+      setDailyMood(note?.mood ?? null);
+    } catch {
+      setDailyNotes('');
+      setDailyMood(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDailyNote(selectedDate);
+  }, [selectedDate, fetchDailyNote]);
+
+  const saveDailyNote = useCallback(async (overrides = {}) => {
+    setDailySaving(true);
+    try {
+      await Api.updateJournalDaily({
+        date: selectedDate,
+        notes: overrides.notes !== undefined ? overrides.notes : dailyNotes,
+        mood: overrides.mood !== undefined ? overrides.mood : dailyMood,
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save notes.');
+    } finally {
+      setDailySaving(false);
+    }
+  }, [selectedDate, dailyNotes, dailyMood]);
 
   const dayTasks = monthTasks.filter((t) => isSameDay(t.date, selectedDate));
   const weekTasks = monthTasks.filter((t) => t.date >= weekStart && t.date <= weekEnd);
@@ -152,6 +196,34 @@ export default function Journal() {
     }
   };
 
+  const handleEditStart = (task) => {
+    setEditingTaskId(task.id);
+    setEditTitle(task.title);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingTaskId || !editTitle.trim()) {
+      setEditingTaskId(null);
+      return;
+    }
+    try {
+      const res = await Api.updateJournalTask(editingTaskId, { title: editTitle.trim() });
+      const updated = res.data?.task;
+      if (updated) {
+        setMonthTasks((prev) => prev.map((t) => (t.id === editingTaskId ? updated : t)));
+      }
+      setEditingTaskId(null);
+      setEditTitle('');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update task.');
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingTaskId(null);
+    setEditTitle('');
+  };
+
   const calendarDays = (() => {
     const year = parseInt(calendarMonth.split('-')[0], 10);
     const month = parseInt(calendarMonth.split('-')[1], 10) - 1;
@@ -187,11 +259,11 @@ export default function Journal() {
       })();
 
   return (
-    <div className="journal-page">
+    <div className="journal-page" id="journal-top">
       <div className="journal-layout">
         <aside className="journal-sidebar">
           <header className="journal-sidebar-header">
-            <h2 className="journal-sidebar-title">Journal</h2>
+            <h2 className="journal-sidebar-title">Aura Journal</h2>
             <p className="journal-sidebar-sub">Tasks & progress</p>
           </header>
 
@@ -305,6 +377,7 @@ export default function Journal() {
             </div>
           </div>
 
+          <h3 className="journal-section-title">Tasks</h3>
           <form className="journal-add-form" onSubmit={handleAddTask}>
             <input
               type="text"
@@ -318,6 +391,41 @@ export default function Journal() {
               <FaPlus /> Add
             </button>
           </form>
+
+          <section className="journal-daily-section">
+            <h3 className="journal-section-title">Daily notes & mood</h3>
+            <div className="journal-mood-row">
+              <span className="journal-mood-label">Mood</span>
+              <div className="journal-mood-options">
+                {MOOD_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`journal-mood-btn ${dailyMood === opt.value ? 'journal-mood-btn--active' : ''}`}
+                    onClick={() => {
+                      const newMood = dailyMood === opt.value ? null : opt.value;
+                      setDailyMood(newMood);
+                      saveDailyNote({ mood: newMood });
+                    }}
+                    title={opt.label}
+                  >
+                    {opt.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              className="journal-notes-input"
+              placeholder="Reflections, goals, or notes for this day..."
+              value={dailyNotes}
+              onChange={(e) => setDailyNotes(e.target.value)}
+              onBlur={saveDailyNote}
+              rows={4}
+            />
+            <button type="button" className="journal-save-notes-btn" onClick={saveDailyNote} disabled={dailySaving}>
+              {dailySaving ? 'Saving…' : <><FaSave /> Save notes</>}
+            </button>
+          </section>
 
           {loading ? (
             <div className="journal-loading">Loading…</div>
@@ -336,15 +444,28 @@ export default function Journal() {
                     >
                       {task.completed ? <FaCheck /> : <span className="journal-task-check-empty" />}
                     </button>
-                    <span className="journal-task-title">{task.title}</span>
-                    <button
-                      type="button"
-                      className="journal-task-delete"
-                      onClick={() => handleDelete(task.id)}
-                      aria-label="Delete task"
-                    >
-                      <FaTrash />
-                    </button>
+                    {editingTaskId === task.id ? (
+                      <div className="journal-task-edit-wrap">
+                        <input
+                          type="text"
+                          className="journal-task-edit-input"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleEditSave(); if (e.key === 'Escape') handleEditCancel(); }}
+                          autoFocus
+                        />
+                        <button type="button" className="journal-task-edit-btn" onClick={handleEditSave} aria-label="Save"><FaSave /></button>
+                        <button type="button" className="journal-task-edit-btn journal-task-edit-btn--cancel" onClick={handleEditCancel} aria-label="Cancel">Cancel</button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="journal-task-title" onClick={() => handleEditStart(task)} title="Click to edit">{task.title}</span>
+                        <div className="journal-task-actions">
+                          <button type="button" className="journal-task-edit-icon" onClick={(e) => { e.stopPropagation(); handleEditStart(task); }} aria-label="Edit task"><FaEdit /></button>
+                          <button type="button" className="journal-task-delete" onClick={() => handleDelete(task.id)} aria-label="Delete task"><FaTrash /></button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))
               )}

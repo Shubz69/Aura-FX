@@ -409,6 +409,10 @@
       "destination": "/api/journal/tasks.js"
     },
     {
+      "source": "/api/journal/daily",
+      "destination": "/api/journal/daily.js"
+    },
+    {
       "source": "/api/market/watchlist",
       "destination": "/api/market/watchlist.js"
     },

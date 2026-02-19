@@ -604,6 +604,12 @@ const Api = {
     deleteJournalTask: (id) => {
         return axios.delete(`${API_BASE_URL}/api/journal/tasks/${id}`);
     },
+    getJournalDaily: (date) => {
+        return axios.get(`${API_BASE_URL}/api/journal/daily`, { params: { date } });
+    },
+    updateJournalDaily: (body) => {
+        return axios.put(`${API_BASE_URL}/api/journal/daily`, body);
+    },
     
     // Contact
     getBaseUrl: () => getApiBaseUrl(),

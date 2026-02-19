@@ -1,9 +1,16 @@
-/* Task Journal – calendar sidebar, task list, day/week/month % */
+/* Task Journal – calendar sidebar, task list, day/week/month %, daily notes, mood */
+
+#journal-top {
+  scroll-margin-top: calc(70px + env(safe-area-inset-top, 0));
+}
 
 .journal-page {
   min-height: 100vh;
   background: var(--bg-dark, #0a0a0a);
   color: var(--primary, #fff);
+  padding-top: 32px;
+  padding-bottom: 48px;
+  box-sizing: border-box;
 }
 
 .journal-page::before {
@@ -19,7 +26,7 @@
   display: flex;
   max-width: 1200px;
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
 }
 
 /* Sidebar */
@@ -389,6 +396,81 @@
   font-size: 1rem;
   color: var(--primary, #fff);
   text-align: left;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.journal-task-title:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.journal-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.journal-task-edit-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.journal-task-edit-input {
+  flex: 1;
+  background: var(--bg-dark, #0a0a0a);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  color: var(--primary, #fff);
+}
+
+.journal-task-edit-input:focus {
+  outline: none;
+  border-color: var(--blue-primary, #1E90FF);
+}
+
+.journal-task-edit-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: var(--blue-primary, #1E90FF);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.journal-task-edit-btn--cancel {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--primary, #fff);
+}
+
+.journal-task-edit-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: color 0.2s, background 0.2s;
+}
+
+.journal-task-edit-icon:hover {
+  color: var(--primary, #fff);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .journal-task-delete {
@@ -420,6 +502,109 @@
   background: var(--bg-light, #252525);
   border-radius: 12px;
   border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* Daily notes & mood */
+.journal-daily-section {
+  background: var(--bg-light, #252525);
+  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 24px;
+}
+
+.journal-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary, #fff);
+  margin: 0 0 14px 0;
+}
+
+.journal-mood-row {
+  margin-bottom: 12px;
+}
+
+.journal-mood-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--secondary, rgba(255, 255, 255, 0.7));
+  margin-bottom: 8px;
+}
+
+.journal-mood-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.journal-mood-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.journal-mood-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.journal-mood-btn--active {
+  border-color: var(--blue-primary, #1E90FF);
+  background: rgba(30, 144, 255, 0.2);
+}
+
+.journal-notes-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-dark, #0a0a0a);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  color: var(--primary, #fff);
+  resize: vertical;
+  min-height: 88px;
+  margin-bottom: 12px;
+}
+
+.journal-notes-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.journal-notes-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.journal-save-notes-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: var(--primary, #fff);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.journal-save-notes-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.journal-save-notes-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .journal-loading {
