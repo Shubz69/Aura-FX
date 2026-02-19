@@ -49,7 +49,6 @@
 /* Use dynamic viewport on mobile (fixes iOS Safari address bar) */
 @supports (height: 100dvh) {
   html, body { min-height: 100dvh; }
-  .page-wrapper { min-height: 100dvh; }
 }
 
 html, body {
@@ -182,12 +181,13 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   height: auto;
   flex: 1;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  overflow: visible;
+  overflow-y: hidden; /* Scroll lives in .page-wrapper only */
   position: relative;
   background: #0a0a0a !important;
 }
@@ -196,12 +196,13 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   height: auto;
   flex: 1;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  overflow: visible;
+  overflow-y: hidden; /* Scroll lives in .page-wrapper only */
   position: relative;
 }
 
@@ -271,20 +272,20 @@ footer {
   position: relative;
 }
 
-/* Scroll Fix for All Pages - primary scroll container on mobile */
+/* Scroll Fix for All Pages - single scroll container; must have min-height: 0 so flex constrains height */
 .page-wrapper {
-  flex: 1;
-  min-height: 0; /* Allow flex shrink so overflow scroll works */
-  min-height: 100vh;
+  flex: 1 1 0;
+  min-height: 0; /* Required: allows flex to constrain height so overflow scroll works on all devices */
   padding-top: calc(60px + env(safe-area-inset-top, 0));
-  padding-bottom: env(safe-area-inset-bottom, 0);
-  overflow-y: scroll; /* scroll (not auto) improves touch scroll reliability on iOS */
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 0));
+  overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch; /* Smooth touch scroll on iOS */
+  touch-action: pan-y pan-x; /* Allow touch scroll on phones, tablets, iPads */
   overscroll-behavior-y: auto;
-  -webkit-transform: translateZ(0);
+  -webkit-transform: translateZ(0); /* GPU layer for reliable touch scroll */
   transform: translateZ(0);
+  overflow-anchor: auto;
 }
 
 /* Community page layout - Discord-like with internal scroll */
@@ -315,7 +316,7 @@ html.community-page-active .page-wrapper {
 
 /* Ensure all pages have proper footer spacing */
 .page-wrapper > * {
-  margin-bottom: 20px; /* Add space between page content and footer */
+  margin-bottom: 20px;
 }
 
 /* Specific page adjustments */
@@ -572,8 +573,7 @@ img, video, canvas {
         background: #0a0a0a !important;
         min-height: 100vh !important;
         min-height: 100dvh !important;
-        height: 100vh !important;
-        height: 100dvh !important;
+        height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
@@ -586,28 +586,28 @@ img, video, canvas {
         background: #0a0a0a !important;
         min-height: 100vh !important;
         min-height: 100dvh !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: 100vh !important;
-        max-height: 100dvh !important;
         flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
         width: 100% !important;
         max-width: 100vw !important;
         overflow: hidden !important; /* Constrain so page-wrapper scrolls */
+        position: relative !important;
     }
     
     .page-wrapper {
-        flex: 1 1 0 !important; /* Shrink to fit, enable overflow scroll */
+        flex: 1 1 0 !important;
         min-height: 0 !important;
-        overflow-y: scroll !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
+        touch-action: pan-y pan-x !important;
         overscroll-behavior-y: auto !important;
-        padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom, 0)) !important;
         position: relative !important;
         -webkit-transform: translateZ(0) !important;
         transform: translateZ(0) !important;
+        overflow-anchor: auto !important;
     }
     
     * {

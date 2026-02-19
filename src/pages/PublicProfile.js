@@ -12,6 +12,7 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 
@@ -34,6 +35,11 @@ const PublicProfile = () => {
     };
 
     useEffect(() => {
+        if (!userId || String(userId).toLowerCase() === 'system') {
+            setError("Profile not found. System profile is not available.");
+            setLoading(false);
+            return;
+        }
         const fetchProfile = async () => {
             try {
                 setLoading(true);
@@ -140,9 +146,18 @@ const PublicProfile = () => {
                         </div>
                     )}
                     
-                    {/* Avatar overlapping banner - coloured circle only (no personal PFP) */}
+                    {/* Avatar overlapping banner - show PFP when available */}
                     <div className="profile-avatar-overlay">
-                        <div className="avatar-placeholder profile-avatar-large" aria-hidden />
+                        {resolveAvatarUrl(profile.avatar, resolveApiBaseUrl()) ? (
+                            <img
+                                src={resolveAvatarUrl(profile.avatar, resolveApiBaseUrl())}
+                                alt=""
+                                className="profile-avatar-large"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
+                            />
+                        ) : (
+                            <div className="avatar-placeholder profile-avatar-large" aria-hidden />
+                        )}
                     </div>
                 </div>
 

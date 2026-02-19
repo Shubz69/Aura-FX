@@ -16,6 +16,7 @@ import {
     FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { resolveAvatarUrl } from '../utils/avatar';
 import '../styles/ProfileModal.css';
 
 // Get or create portal root for modals
@@ -31,9 +32,10 @@ const getModalRoot = () => {
 };
 
 /**
- * Avatar: coloured transparent circle only (no personal PFP).
+ * Avatar: show PFP when available, else coloured circle; tier border + online indicator.
  */
-const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
+const AvatarWithFallback = ({ size = 130, tierColor, isOnline, avatar }) => {
+    const avatarSrc = resolveAvatarUrl(avatar, typeof window !== 'undefined' ? window.location?.origin : '');
     return (
         <div style={{
             position: 'relative',
@@ -42,7 +44,6 @@ const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
             flexShrink: 0
         }}>
             <div
-                className="avatar-placeholder"
                 style={{
                     position: 'absolute',
                     top: 0,
@@ -53,10 +54,16 @@ const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
                     background: 'transparent',
                     border: `5px solid ${tierColor}`,
                     boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    overflow: 'hidden'
                 }}
-                aria-hidden
-            />
+            >
+                {avatarSrc ? (
+                    <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                ) : (
+                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
+                )}
+            </div>
             <div style={{
                 position: 'absolute',
                 bottom: `${size * 0.06}px`,
@@ -109,9 +116,12 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const isOwnProfile = userId === storedUser.id || userId === currentUserId;
     const token = localStorage.getItem('token');
 
+    // Skip API for system/bot user (avoids 400 on /api/users/public-profile/system)
+    const isSystemUser = userId && String(userId).toLowerCase() === 'system';
+
     // Fetch profile data
     const fetchProfile = useCallback(async () => {
-        if (!userId) return;
+        if (!userId || isSystemUser) return;
         try {
             setLoading(true);
             const baseUrl = window.location.origin;
@@ -133,7 +143,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         } finally {
             setLoading(false);
         }
-    }, [userId]);
+    }, [userId, isSystemUser]);
 
     // Fetch settings and stats (for own profile)
     const fetchSettings = useCallback(async () => {
@@ -189,7 +199,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     // Check friend status (uses api/friends for notification support)
     const checkFriendStatus = useCallback(async () => {
-        if (isOwnProfile || !token || !userId) return;
+        if (isOwnProfile || !token || !userId || isSystemUser) return;
         try {
             const response = await fetch(`${window.location.origin}/api/friends/status/${userId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -208,11 +218,16 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             setFriendStatus('none');
             setFriendRequestId(null);
         }
-    }, [isOwnProfile, token, userId]);
+    }, [isOwnProfile, token, userId, isSystemUser]);
 
     // Initialize
     useEffect(() => {
         if (isOpen && userId) {
+            if (isSystemUser) {
+                setProfile(userData || { username: 'AURA FX', id: 'system' });
+                setLoading(false);
+                return;
+            }
             if (!userData) fetchProfile();
             else {
                 setProfile(userData);
@@ -226,7 +241,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             fetchSettings();
             checkFriendStatus();
         }
-    }, [isOpen, userId, userData, fetchProfile, fetchSettings, checkFriendStatus]);
+    }, [isOpen, userId, userData, isSystemUser, fetchProfile, fetchSettings, checkFriendStatus]);
 
     // Animate XP bar
     useEffect(() => {
@@ -672,6 +687,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             size={130}
                             tierColor={tierColor}
                             isOnline={isOnline}
+                            avatar={profile?.avatar}
                         />
                     </div>
                 </div>

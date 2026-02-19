@@ -122,20 +122,26 @@ class WebSocketService {
     }
 
     send(destination, message) {
-        if (!this.isConnected) {
+        if (!this.isConnected || !this.stompClient) {
             console.warn('WebSocket not connected, connecting now...');
             this.connect(undefined, () => this.send(destination, message));
             return;
         }
-
+        const ws = this.stompClient?.ws || this.stompClient?.webSocket;
+        if (ws && ws.readyState !== 1) {
+            this.isConnected = false;
+            return;
+        }
         let messageToSend = JSON.stringify(message);
-        
-        // Encrypt message if encryption is enabled
         if (this.encryptionEnabled) {
             messageToSend = this.encryptMessage(messageToSend);
         }
-        
-        this.stompClient.send(destination, {}, messageToSend);
+        try {
+            this.stompClient.send(destination, {}, messageToSend);
+        } catch (e) {
+            if (process.env.NODE_ENV === 'development') console.warn('WebSocket send failed:', e?.message || e);
+            this.isConnected = false;
+        }
     }
 
     encryptMessage(message) {

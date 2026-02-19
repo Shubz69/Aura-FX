@@ -21,6 +21,7 @@ import {
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft, FaDownload } from 'react-icons/fa';
 import ProfileModal from '../components/ProfileModal';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 // All API calls use real endpoints only - no mock mode
 
@@ -3635,17 +3636,19 @@ avatar: storedUser?.avatar || null,
                     throw new Error(data.message || 'Failed to delete message');
                 }
                 
-                // Broadcast deletion via WebSocket if available
-                if (window.wsConnection && window.wsConnection.readyState === WebSocket.OPEN) {
+                // Broadcast deletion via WebSocket if available (only when OPEN; avoid send on CLOSING/CLOSED)
+                const ws = typeof window !== 'undefined' ? window.wsConnection : null;
+                if (ws && ws.readyState === 1) {
                     try {
-                        window.wsConnection.send(JSON.stringify({
+                        ws.send(JSON.stringify({
                             type: 'MESSAGE_DELETED',
                             channelId: selectedChannel.id,
                             messageId: messageId,
                             deletedAt: data.deletedAt
                         }));
                     } catch (wsError) {
-                        console.warn('WebSocket broadcast failed:', wsError);
+                        const msg = wsError?.message || String(wsError);
+                        if (!msg.includes('CLOSING') && !msg.includes('CLOSED')) console.warn('WebSocket broadcast failed:', wsError);
                     }
                 }
             }
@@ -4901,18 +4904,17 @@ avatar: storedUser?.avatar || null,
                         alignItems: 'center',
                         gap: '12px'
                     }}>
-                        {/* Avatar: coloured circle only (no personal PFP) */}
-                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
-                            <div 
-                                className="avatar-placeholder"
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    border: '2px solid rgba(139, 92, 246, 0.5)',
-                                    boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)'
-                                }}
-                                aria-hidden
-                            />
+                        {/* Avatar: show PFP when available */}
+                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(139, 92, 246, 0.5)', boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)' }}>
+                            {resolveAvatarUrl(storedUser?.avatar, window.location?.origin) ? (
+                                <img
+                                    src={resolveAvatarUrl(storedUser?.avatar, window.location?.origin)}
+                                    alt=""
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                />
+                            ) : (
+                                <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
+                            )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ 
@@ -5359,24 +5361,27 @@ avatar: storedUser?.avatar || null,
                                                     className="message-avatar" 
                                                     onClick={async () => {
                                                         const userId = message.sender?.id || message.userId;
-                                                        if (userId) {
-                                                            try {
-                                                                const baseUrl = window.location.origin;
-                                                                const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
-                                                                if (response.ok) {
-                                                                    const data = await response.json();
-                                                                    setProfileModalData(data);
-                                                                    setShowProfileModal(true);
-                                                                } else {
-                                                                    // Fallback to sender data
-                                                                    setProfileModalData(message.sender || { id: userId });
-                                                                    setShowProfileModal(true);
-                                                                }
-                                                            } catch (error) {
-                                                                console.error('Error fetching profile:', error);
+                                                        if (!userId) return;
+                                                        if (String(userId).toLowerCase() === 'system') {
+                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                            setShowProfileModal(true);
+                                                            return;
+                                                        }
+                                                        try {
+                                                            const baseUrl = window.location.origin;
+                                                            const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
+                                                            if (response.ok) {
+                                                                const data = await response.json();
+                                                                setProfileModalData(data);
+                                                                setShowProfileModal(true);
+                                                            } else {
                                                                 setProfileModalData(message.sender || { id: userId });
                                                                 setShowProfileModal(true);
                                                             }
+                                                        } catch (error) {
+                                                            console.error('Error fetching profile:', error);
+                                                            setProfileModalData(message.sender || { id: userId });
+                                                            setShowProfileModal(true);
                                                         }
                                                     }}
                                                     style={{
@@ -5408,7 +5413,11 @@ avatar: storedUser?.avatar || null,
                                                         e.currentTarget.style.opacity = '1';
                                                     }}
                                                 >
-                                                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
+                                                    {resolveAvatarUrl(message.sender?.avatar, window.location?.origin) ? (
+                                                        <img src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                                    ) : (
+                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
+                                                    )}
                                                 </div>
                                             )}
                                             <div className="message-content">
@@ -5419,23 +5428,27 @@ avatar: storedUser?.avatar || null,
                                                                 className="message-author"
                                                                 onClick={async () => {
                                                                     const userId = message.sender?.id || message.userId;
-                                                                    if (userId) {
-                                                                        try {
-                                                                            const baseUrl = window.location.origin;
-                                                                            const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
-                                                                            if (response.ok) {
-                                                                                const data = await response.json();
-                                                                                setProfileModalData(data);
-                                                                                setShowProfileModal(true);
-                                                                            } else {
-                                                                                setProfileModalData(message.sender || { id: userId });
-                                                                                setShowProfileModal(true);
-                                                                            }
-                                                                        } catch (error) {
-                                                                            console.error('Error fetching profile:', error);
+                                                                    if (!userId) return;
+                                                                    if (String(userId).toLowerCase() === 'system') {
+                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                                        setShowProfileModal(true);
+                                                                        return;
+                                                                    }
+                                                                    try {
+                                                                        const baseUrl = window.location.origin;
+                                                                        const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
+                                                                        if (response.ok) {
+                                                                            const data = await response.json();
+                                                                            setProfileModalData(data);
+                                                                            setShowProfileModal(true);
+                                                                        } else {
                                                                             setProfileModalData(message.sender || { id: userId });
                                                                             setShowProfileModal(true);
                                                                         }
+                                                                    } catch (error) {
+                                                                        console.error('Error fetching profile:', error);
+                                                                        setProfileModalData(message.sender || { id: userId });
+                                                                        setShowProfileModal(true);
                                                                     }
                                                                 }}
                                                                 style={{
@@ -6288,7 +6301,11 @@ avatar: storedUser?.avatar || null,
                                                                     fontSize: '0.9rem',
                                                                     flexShrink: 0
                                                                 }}>
-                                                                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
+                                                                    {resolveAvatarUrl(user?.avatar, window.location?.origin) ? (
+                                                                        <img src={resolveAvatarUrl(user.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '50%' }} />
+                                                                    ) : (
+                                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
+                                                                    )}
                                                                 </div>
                                                                 <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                                                     <div style={{

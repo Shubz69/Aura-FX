@@ -33,10 +33,11 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
    - Add to Vercel: `TWILIO_VERIFY_SERVICE_SID` = your Service SID
    - **Environment:** Select all (Production, Preview, Development)
 
-5. **JWT_SECRET (OPTIONAL - Not Required):**
-   - Your system uses a custom token format, so JWT_SECRET is **NOT needed**
-   - The Premium AI endpoint has been updated to work with your existing token system
-   - You can skip this step
+5. **JWT_SECRET (REQUIRED for production – stops auth warnings and secures tokens):**
+   - **Key:** `JWT_SECRET`
+   - **Value:** A long random string (at least 16 characters). Generate one with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+   - **Environment:** Production (and Preview/Development if you want full auth there too)
+   - If this is not set, Vercel logs will show: "JWT_SECRET not set or too short - auth verification degraded." and token signing falls back to an insecure legacy mode. Set it in Vercel to remove the warning and enable secure HMAC-SHA256 signing.
 
 6. **Redeploy:**
    - After adding the variable, go to "Deployments"
@@ -58,11 +59,11 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
 - ✅ API key is documented in `API_KEYS_SECURE.md` (gitignored)
 - ⚠️ **MUST ADD TO VERCEL** for production to work
 - ⚠️ Never commit API keys to Git (already protected)
-- ✅ JWT_SECRET is **NOT required** - your system uses custom tokens
+- ✅ Set **JWT_SECRET** in Vercel (min 16 chars) to remove auth warnings and secure token signing
 
 ## Current Status:
 
 - ✅ Local development: Ready (`.env.local` created)
-- ⚠️ Production: **NEEDS VERCEL ENV VARIABLE** (OPENAI_API_KEY only)
+- ⚠️ Production: **NEEDS VERCEL ENV VARIABLES** (OPENAI_API_KEY and JWT_SECRET recommended)
 - ✅ Git protection: All key files are gitignored
-- ✅ Token system: Works with existing custom token format (no JWT_SECRET needed)
+- ✅ Token system: Set JWT_SECRET in Vercel for production to enable secure signing and clear log warnings

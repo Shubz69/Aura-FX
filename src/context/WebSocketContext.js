@@ -89,25 +89,38 @@ export const WebSocketProvider = ({ children }) => {
     }
     currentChannelRef.current = null;
     onMessageRef.current = null;
-    if (clientRef.current) {
-      try {
-        clientRef.current.deactivate();
-      } catch (e) {
-        // ignore
-      }
-      clientRef.current = null;
-    }
+    const client = clientRef.current;
+    clientRef.current = null;
     connectingRef.current = false;
     setIsConnected(false);
+    if (typeof window !== 'undefined') {
+      window.wsConnection = null;
+    }
+    if (client) {
+      try {
+        client.deactivate?.();
+      } catch (e) {
+        // ignore - socket may already be CLOSING/CLOSED
+      }
+    }
   }, []);
 
   const connect = useCallback(() => {
     if (!ENABLED || !isAuthenticated || !token) return;
-    if (clientRef.current?.connected) return;
     if (connectingRef.current) return;
     if (reconnectAttemptRef.current >= MAX_ATTEMPTS) {
       setReconnectBanner(true);
       return;
+    }
+    const existing = clientRef.current;
+    if (existing?.connected) return;
+    if (existing) {
+      try {
+        existing.deactivate?.();
+      } catch (e) {
+        // ignore
+      }
+      clientRef.current = null;
     }
 
     connectingRef.current = true;
@@ -120,7 +133,7 @@ export const WebSocketProvider = ({ children }) => {
       debug: (str) => {
         if (process.env.NODE_ENV === 'development') console.log(`STOMP: ${str}`);
       },
-      reconnectDelay: 0,
+      reconnectDelay: 5000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
     });
@@ -129,6 +142,9 @@ export const WebSocketProvider = ({ children }) => {
       const wasReconnect = reconnectAttemptRef.current > 0;
       connectingRef.current = false;
       clientRef.current = client;
+      if (typeof window !== 'undefined' && client.webSocket) {
+        window.wsConnection = client.webSocket;
+      }
       reconnectAttemptRef.current = 0;
       setReconnectBanner(false);
       setIsConnected(true);
@@ -184,6 +200,7 @@ export const WebSocketProvider = ({ children }) => {
     client.onStompError = (frame) => {
       connectingRef.current = false;
       clientRef.current = null;
+      if (typeof window !== 'undefined') window.wsConnection = null;
       setConnectionError(frame.headers?.message || 'STOMP error');
       setIsConnected(false);
       if (reconnectAttemptRef.current < MAX_ATTEMPTS) scheduleReconnect();
@@ -193,6 +210,7 @@ export const WebSocketProvider = ({ children }) => {
     client.onWebSocketError = () => {
       connectingRef.current = false;
       clientRef.current = null;
+      if (typeof window !== 'undefined') window.wsConnection = null;
       setConnectionError('Connection failed');
       setIsConnected(false);
       if (reconnectAttemptRef.current < MAX_ATTEMPTS) scheduleReconnect();
@@ -201,6 +219,9 @@ export const WebSocketProvider = ({ children }) => {
 
     client.onDisconnect = () => {
       clientRef.current = null;
+      if (typeof window !== 'undefined') {
+        window.wsConnection = null;
+      }
       setIsConnected(false);
     };
 
@@ -261,10 +282,12 @@ export const WebSocketProvider = ({ children }) => {
 
   const sendMessage = useCallback((channelId, message) => {
     const client = clientRef.current;
-    if (!ENABLED || !client?.connected || !channelId || !token) return false;
-    const ws = client.webSocket;
-    if (ws && ws.readyState !== 1) return false;
+    if (!ENABLED || !channelId || !token) return false;
+    if (!client?.connected) return false;
+    const ws = client?.webSocket;
+    if (!ws || ws.readyState !== 1) return false; // 1 = OPEN; skip if CLOSING (2) or CLOSED (3)
     try {
+      if (ws.readyState !== 1) return false; // Re-check right before send (avoid race)
       client.publish({
         destination: `/app/chat/${channelId}`,
         headers: { Authorization: `Bearer ${token}` },
@@ -272,6 +295,9 @@ export const WebSocketProvider = ({ children }) => {
       });
       return true;
     } catch (e) {
+      const msg = e?.message || String(e);
+      if (msg.includes('CLOSING') || msg.includes('CLOSED')) return false; // Normal during disconnect; don't log
+      if (process.env.NODE_ENV === 'development') console.warn('WebSocket send failed:', msg);
       return false;
     }
   }, [token]);

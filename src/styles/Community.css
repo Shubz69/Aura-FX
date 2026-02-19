@@ -2126,10 +2126,10 @@ html.community-page-active {
         text-overflow: ellipsis;
     }
     
-    /* Discord-like input bar */
+    /* Discord-like input bar - minimal bottom gap so more chat is visible on mobile */
     .chat-input-container {
         padding: 12px 16px !important;
-        padding-bottom: max(12px, env(safe-area-inset-bottom)) !important; /* Safe area for iPhone */
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)) !important;
         background: #36393f !important;
         border-top: 1px solid rgba(4, 4, 5, 0.3) !important;
         position: relative !important;
@@ -2260,11 +2260,18 @@ html.community-page-active {
     }
 }
 
-/* Landscape (e.g. tablet sideways): prevent messaging box from being cut off by system nav bar */
+/* Landscape (e.g. tablet sideways): minimal gap so more community visible on all mobile devices */
 @media (orientation: landscape) and (max-height: 900px) {
     .chat-input-container {
-        padding-bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 24px)) !important;
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)) !important;
         padding-top: 12px !important;
+    }
+}
+
+/* All mobile/tablet: minimal gap under message input so more chat is visible */
+@media (max-width: 1024px) {
+    .chat-input-container {
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)) !important;
     }
 }
 
