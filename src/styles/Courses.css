@@ -412,17 +412,17 @@
 
 .courses-header {
     text-align: center;
-    margin-bottom: 22px;
+    margin-bottom: 10px;
     z-index: 2;
     position: relative;
     padding-top: 0;
-    margin-top: 28px;
+    margin-top: 12px;
 }
 
 .courses-header p {
     font-size: 18px;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 4px auto 0;
     color: #ffffff;
     font-family: var(--font-secondary);
     font-weight: 300;
@@ -453,17 +453,17 @@
 .subscriptions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     max-width: 1200px;
-    margin: 0 auto 12px;
+    margin: 6px auto 8px;
     padding: 0 20px;
     box-sizing: border-box;
 }
 
 /* Subscription Plan Cards */
 .subscription-plan-card {
-    padding: clamp(16px, 3vw, 24px);
+    padding: clamp(12px, 2.5vw, 18px);
     background: rgba(255, 255, 255, 0.05);
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -496,7 +496,7 @@
     color: #fff;
     font-size: clamp(22px, 4.5vw, 28px);
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
     line-height: 1.2;
 }
 
@@ -504,23 +504,23 @@
     font-size: clamp(32px, 7vw, 48px);
     font-weight: 700;
     color: #8B5CF6;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     line-height: 1;
 }
 
 .subscription-plan-period {
     color: rgba(255, 255, 255, 0.7);
     font-size: clamp(13px, 2.5vw, 16px);
-    margin-bottom: 14px;
+    margin-bottom: 6px;
 }
 
 /* Promotional Pricing Styles */
 .subscription-pricing-container {
-    margin-bottom: 14px;
+    margin-bottom: 6px;
 }
 
 .promotional-pricing {
-    margin-bottom: 12px;
+    margin-bottom: 4px;
 }
 
 .promo-price {
@@ -536,7 +536,7 @@
     color: rgba(255, 255, 255, 0.9);
     font-size: clamp(12px, 2.2vw, 14px);
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -545,8 +545,8 @@
     display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 6px;
+    margin-top: 4px;
 }
 
 .original-price-strikethrough {
@@ -574,15 +574,15 @@
     text-align: left;
     color: rgba(255, 255, 255, 0.9);
     font-size: clamp(13px, 2.5vw, 15px);
-    margin-bottom: 14px;
+    margin-bottom: 6px;
     padding-left: 16px;
     list-style: none;
     flex: 1;
 }
 
 .subscription-plan-features li {
-    margin-bottom: 8px;
-    line-height: 1.5;
+    margin-bottom: 3px;
+    line-height: 1.45;
 }
 
 .subscription-plan-button {
@@ -645,7 +645,7 @@
     
     .subscriptions-grid {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
-        gap: 12px !important;
+        gap: 8px !important;
         padding: 0 20px !important;
         max-width: 900px !important;
     }
@@ -689,10 +689,10 @@
     
     .subscriptions-grid {
         grid-template-columns: 1fr !important;
-        gap: 12px !important;
+        gap: 8px !important;
         padding: 0 15px !important;
         max-width: 500px !important;
-        margin: 0 auto 20px !important;
+        margin: 0 auto 12px !important;
     }
     
     .subscription-plan-card {
@@ -706,9 +706,9 @@
     }
     
     .courses-header {
-        margin-bottom: 20px;
-        padding-top: 16px;
-        margin-top: 8px;
+        margin-bottom: 10px;
+        padding-top: 8px;
+        margin-top: 6px;
     }
     
     .courses-header p {
@@ -756,9 +756,9 @@
     }
     
     .courses-header {
-        padding-top: 12px;
-        margin-top: 8px;
-        margin-bottom: 18px;
+        padding-top: 8px;
+        margin-top: 6px;
+        margin-bottom: 10px;
     }
     
     .courses-header p {

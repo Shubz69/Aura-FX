@@ -22,6 +22,16 @@ const resolveApiBaseUrl = () => {
     return process.env.REACT_APP_API_URL || '';
 };
 
+// Full IANA timezone list for daily journal notification (08:00 local)
+const getIANATimezones = () => {
+    try {
+        if (typeof Intl !== 'undefined' && Intl.supportedValuesOf && typeof Intl.supportedValuesOf('timeZone') !== 'undefined') {
+            return Intl.supportedValuesOf('timeZone').slice().sort();
+        }
+    } catch (_) {}
+    return ['Europe/London', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Tokyo', 'Australia/Sydney', 'UTC'];
+};
+
 // Helper function to convert file to base64
 const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -46,7 +56,8 @@ const Profile = () => {
         bio: "",
         banner: "",
         level: 1,
-        xp: 0
+        xp: 0,
+        timezone: ""
     });
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [bannerPreview, setBannerPreview] = useState(null);
@@ -103,7 +114,8 @@ const Profile = () => {
                 bio: user.bio || storedUser.bio || "",
                 banner: user.banner || storedUser.banner || "",
                 level: storedUser.level || user.level || 1,
-                xp: storedUser.xp || user.xp || 0
+                xp: storedUser.xp || user.xp || 0,
+                timezone: user.timezone || storedUser.timezone || ""
             };
 
             setFormData(prev => ({
@@ -121,6 +133,19 @@ const Profile = () => {
 
             // Set user role
             setUserRole(user.role || "");
+
+            // Fetch timezone from settings (for daily journal notification at 08:00 local)
+            try {
+                const token = localStorage.getItem("token");
+                if (token) {
+                    const settingsRes = await axios.get(`${resolveApiBaseUrl()}/api/users/settings`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (settingsRes.data?.timezone != null) {
+                        setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
+                    }
+                }
+            } catch (_) {}
 
             // Try to fetch additional profile data from the backend
             try {
@@ -727,6 +752,41 @@ const Profile = () => {
                                     rows="3"
                                     className="form-input"
                                 />
+                            </div>
+
+                            {/* Timezone (IANA) – daily journal notification at 08:00 local */}
+                            <div className="form-group">
+                                <label htmlFor="profile-timezone">Timezone (for daily journal reminder)</label>
+                                <select
+                                    id="profile-timezone"
+                                    name="timezone"
+                                    value={formData.timezone || ''}
+                                    onChange={async (e) => {
+                                        const val = e.target.value || '';
+                                        setFormData(prev => ({ ...prev, timezone: val }));
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            if (token) {
+                                                await axios.put(
+                                                    `${resolveApiBaseUrl()}/api/users/settings`,
+                                                    { timezone: val || null },
+                                                    { headers: { Authorization: `Bearer ${token}` } }
+                                                );
+                                                if (setUser) {
+                                                    const u = JSON.parse(localStorage.getItem('user') || '{}');
+                                                    setUser({ ...u, timezone: val || null });
+                                                }
+                                            }
+                                        } catch (_) {}
+                                    }}
+                                    className="form-input"
+                                >
+                                    <option value="">Auto (browser)</option>
+                                    {getIANATimezones().map(tz => (
+                                        <option key={tz} value={tz}>{tz}</option>
+                                    ))}
+                                </select>
+                                <small className="form-hint">Daily journal notification at 08:00 in this timezone.</small>
                             </div>
 
                             {/* Username */}

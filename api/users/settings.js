@@ -3,6 +3,7 @@
  */
 
 const { executeQuery } = require('../db');
+const { ensureTimezoneColumn } = require('../utils/ensure-timezone-column');
 
 // Track if table has been created this session
 let settingsTableCreated = false;
@@ -120,9 +121,10 @@ module.exports = async (req, res) => {
   try {
     // GET /api/users/settings
     if (req.method === 'GET') {
-      // Get user from users table for basic stats
+      await ensureTimezoneColumn();
+      // Get user from users table for basic stats and timezone (IANA)
       const userResult = await executeQuery(
-        'SELECT id, xp, level, login_streak, subscription_status, role FROM users WHERE id = ?',
+        'SELECT id, xp, level, login_streak, subscription_status, role, timezone FROM users WHERE id = ?',
         [userId]
       );
       const users = getRows(userResult);
@@ -181,7 +183,8 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         success: true,
         settings: settingsData,
-        stats: stats
+        stats: stats,
+        timezone: user.timezone ?? null
       });
     }
 
@@ -193,12 +196,22 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'No updates provided' });
       }
 
-      // For now, just return success - settings are stored client-side until table is ready
-      // This prevents blocking the UI while providing a graceful experience
-      
+      // Timezone (IANA) is stored on users table
+      if (updates.timezone !== undefined) {
+        const tz = typeof updates.timezone === 'string' ? updates.timezone.trim() : null;
+        if (tz === null || (tz.length > 0 && tz.length <= 64)) {
+          try {
+            await ensureTimezoneColumn();
+            await executeQuery('UPDATE users SET timezone = ? WHERE id = ?', [tz || null, userId]);
+          } catch (e) {
+            console.warn('Settings timezone update:', e.message);
+          }
+        }
+      }
+
       // Try to save to database if table exists
       try {
-        // Allowed fields for update
+        // Allowed fields for update (user_settings only; timezone handled above)
         const allowedFields = [
           'preferred_markets', 'trading_sessions', 'risk_profile', 'trading_style',
           'experience_level', 'theme', 'notifications_enabled', 'email_notifications',

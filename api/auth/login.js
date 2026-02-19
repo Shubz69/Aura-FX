@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { email, password } = req.body;
+    const { email, password, timezone } = req.body;
 
     if (!email || typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({
@@ -159,6 +159,21 @@ module.exports = async (req, res) => {
         [user.id]
       );
 
+      // Auto-detect/save timezone (IANA) on login for daily journal notifications
+      const tz = typeof timezone === 'string' ? timezone.trim() : '';
+      if (tz && tz.length <= 64) {
+        try {
+          const { ensureTimezoneColumn } = require('../utils/ensure-timezone-column');
+          await ensureTimezoneColumn();
+          await db.execute(
+            'UPDATE users SET timezone = ? WHERE id = ?',
+            [tz, user.id]
+          );
+        } catch (e) {
+          console.warn('Login timezone update:', e.message);
+        }
+      }
+
       // Check subscription status (add columns if they don't exist)
       let subscriptionStatus = 'inactive';
       let subscriptionExpiry = null;
@@ -201,6 +216,7 @@ module.exports = async (req, res) => {
 
       await db.end();
 
+      const updatedTimezone = tz || user.timezone || null;
       return res.status(200).json({
         success: true,
         id: user.id,
@@ -210,6 +226,7 @@ module.exports = async (req, res) => {
         avatar: user.avatar ?? null,
         role: apiRole,
         token: token,
+        timezone: updatedTimezone,
         status: 'SUCCESS',
         subscription: {
           status: subscriptionStatus,

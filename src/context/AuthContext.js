@@ -70,7 +70,8 @@ export const AuthProvider = ({ children }) => {
       address: data.address || '',
       role: finalRole,
       capabilities: data.capabilities || [],
-      mfaVerified: data.mfaVerified || false
+      mfaVerified: data.mfaVerified || false,
+      timezone: data.timezone ?? null
     };
   };
 
@@ -85,7 +86,8 @@ export const AuthProvider = ({ children }) => {
       role: fullUser.role,
       mfaVerified: fullUser.mfaVerified,
       level: fullUser.level != null ? fullUser.level : undefined,
-      xp: fullUser.xp != null ? fullUser.xp : undefined
+      xp: fullUser.xp != null ? fullUser.xp : undefined,
+      timezone: fullUser.timezone ?? undefined
     };
     try {
       // Merge with existing user so we preserve level/xp (and other fields) set by Community/Profile
@@ -339,8 +341,12 @@ export const AuthProvider = ({ children }) => {
         const email = emailOrToken;
         const password = passwordOrRole;
         
-        // Call the login API
-        const response = await Api.login({ email, password });
+        // Auto-detect IANA timezone for daily journal notifications (08:00 local)
+        let timezone = '';
+        try {
+          timezone = (typeof Intl !== 'undefined' && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
+        } catch (_) {}
+        const response = await Api.login({ email, password, timezone });
         const data = response.data || {};
         
         // Check if login was successful - must have a token and success flag

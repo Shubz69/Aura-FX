@@ -11,6 +11,7 @@ const { getEntitlements, getAllowedChannelSlugs } = require('./utils/entitlement
 const { verifyToken } = require('./utils/auth');
 const { getOrFetch } = require('./cache');
 const { applyScheduledDowngrade } = require('./utils/apply-scheduled-downgrade');
+const { ensureTimezoneColumn } = require('./utils/ensure-timezone-column');
 
 const ENTITLEMENTS_TTL = 60000; // 60s - low latency, fresh enough for tier changes
 
@@ -43,6 +44,7 @@ module.exports = async (req, res) => {
   const userId = decoded.id;
 
   try {
+    await ensureTimezoneColumn();
     const fetchEntitlements = async () => {
       const userRow = await applyScheduledDowngrade(userId);
       if (!userRow) {
@@ -89,7 +91,8 @@ module.exports = async (req, res) => {
         avatar: userRow.avatar ?? null,
         role: entitlements.role,
         level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
-        xp: userRow.xp != null ? parseFloat(userRow.xp) : 0
+        xp: userRow.xp != null ? parseFloat(userRow.xp) : 0,
+        timezone: userRow.timezone ?? null
       };
 
       return { user, entitlements };

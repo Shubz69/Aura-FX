@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import {
   FaBell, FaTimes, FaUserPlus, FaReply, FaAt, FaCheck,
   FaTimes as FaDecline, FaCog, FaUserCheck, FaUserTimes,
-  FaComments, FaExclamationCircle, FaSpinner
+  FaComments, FaExclamationCircle, FaSpinner, FaBook
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import '../styles/NotificationsDropdown.css';
@@ -16,7 +16,8 @@ const TYPE_ICONS = {
   FRIEND_REQUEST: FaUserPlus,
   FRIEND_ACCEPTED: FaUserCheck,
   FRIEND_DECLINED: FaUserTimes,
-  SYSTEM: FaCog
+  SYSTEM: FaCog,
+  DAILY_JOURNAL: FaBook
 };
 
 // Notification type colors
@@ -26,7 +27,8 @@ const TYPE_COLORS = {
   FRIEND_REQUEST: '#FFB800',
   FRIEND_ACCEPTED: '#23A55A',
   FRIEND_DECLINED: '#ED4245',
-  SYSTEM: '#8B5CF6'
+  SYSTEM: '#8B5CF6',
+  DAILY_JOURNAL: '#8B5CF6'
 };
 
 // Format relative time
@@ -179,6 +181,16 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       markAsRead(notification.id);
     }
     
+    if (notification.type === 'DAILY_JOURNAL') {
+      onClose();
+      navigate('/journal');
+      return;
+    }
+    if (notification.type === 'DAILY_JOURNAL') {
+      onClose();
+      navigate('/journal');
+      return;
+    }
     // Handle message-type notifications (jump to message)
     if ((notification.type === 'MENTION' || notification.type === 'REPLY') && notification.messageId) {
       onClose();

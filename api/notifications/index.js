@@ -21,7 +21,7 @@
  * - Structured logging
  */
 
-const { executeQuery, executeQueryWithTimeout } = require('../db');
+const { executeQuery, executeQueryWithTimeout, addColumnIfNotExists, addIndexIfNotExists } = require('../db');
 const { getCached, setCached, invalidatePattern, DEFAULT_TTLS } = require('../cache');
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
@@ -74,7 +74,7 @@ async function ensureSchema() {
       CREATE TABLE IF NOT EXISTS notifications (
         id VARCHAR(36) PRIMARY KEY,
         user_id INT NOT NULL,
-        type ENUM('MENTION', 'REPLY', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'FRIEND_DECLINED', 'SYSTEM') NOT NULL,
+        type ENUM('MENTION', 'REPLY', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'FRIEND_DECLINED', 'SYSTEM', 'DAILY_JOURNAL') NOT NULL,
         title VARCHAR(255) NOT NULL,
         body TEXT,
         channel_id INT NULL,
@@ -85,6 +85,9 @@ async function ensureSchema() {
         action_status ENUM('PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED') NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         read_at TIMESTAMP NULL,
+        scheduled_for_utc TIMESTAMP NULL,
+        local_date DATE NULL,
+        meta JSON NULL,
         INDEX idx_user_status_created (user_id, status, created_at),
         INDEX idx_user_created (user_id, created_at),
         INDEX idx_friend_request (friend_request_id)
@@ -120,6 +123,20 @@ async function ensureSchema() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     
+    // Extend existing table: add DAILY_JOURNAL columns and enum value if missing
+    try {
+      await addColumnIfNotExists('notifications', 'scheduled_for_utc', 'TIMESTAMP NULL');
+      await addColumnIfNotExists('notifications', 'local_date', 'DATE NULL');
+      await addColumnIfNotExists('notifications', 'meta', 'JSON NULL');
+      await executeQuery(`
+        ALTER TABLE notifications MODIFY COLUMN type ENUM(
+          'MENTION', 'REPLY', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'FRIEND_DECLINED', 'SYSTEM', 'DAILY_JOURNAL'
+        ) NOT NULL
+      `);
+      await addIndexIfNotExists('notifications', 'idx_notif_user_type_local', ['user_id', 'type', 'local_date']);
+    } catch (alterErr) {
+      // Ignore if already applied
+    }
     schemaCreated = true;
     console.log('Notifications schema ready');
   } catch (e) {
@@ -141,19 +158,41 @@ async function createNotification(data) {
     messageId = null,
     fromUserId = null,
     friendRequestId = null,
-    actionStatus = null
+    actionStatus = null,
+    scheduledForUTC = null,
+    localDate = null,
+    meta = null
   } = data;
-  
+  const metaStr = meta != null ? JSON.stringify(meta) : null;
   await executeQuery(`
-    INSERT INTO notifications (id, user_id, type, title, body, channel_id, message_id, from_user_id, friend_request_id, action_status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `, [id, userId, type, title, body, channelId, messageId, fromUserId, friendRequestId, actionStatus]);
-  
+    INSERT INTO notifications (id, user_id, type, title, body, channel_id, message_id, from_user_id, friend_request_id, action_status, scheduled_for_utc, local_date, meta)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [id, userId, type, title, body, channelId, messageId, fromUserId, friendRequestId, actionStatus, scheduledForUTC, localDate, metaStr]);
   return id;
+}
+
+// Idempotent daily journal notification: at most one per user per local date
+async function createDailyJournalNotificationIfNotSent(userId, localDate, title, body, meta) {
+  await ensureSchema();
+  const rows = getRows(await executeQuery(
+    'SELECT id FROM notifications WHERE user_id = ? AND type = ? AND local_date = ? LIMIT 1',
+    [userId, 'DAILY_JOURNAL', localDate]
+  ));
+  if (rows.length > 0) return null;
+  return createNotification({
+    userId,
+    type: 'DAILY_JOURNAL',
+    title,
+    body,
+    scheduledForUTC: new Date(),
+    localDate,
+    meta: meta || {}
+  });
 }
 
 // Export for use by other modules
 module.exports.createNotification = createNotification;
+module.exports.createDailyJournalNotificationIfNotSent = createDailyJournalNotificationIfNotSent;
 module.exports.ensureSchema = ensureSchema;
 
 // Main API handler
@@ -281,7 +320,10 @@ module.exports = async (req, res) => {
           status: n.status,
           actionStatus: n.action_status,
           createdAt: n.created_at,
-          readAt: n.read_at
+          readAt: n.read_at,
+          scheduledForUTC: n.scheduled_for_utc ?? null,
+          localDate: n.local_date ?? null,
+          meta: n.meta != null ? (typeof n.meta === 'string' ? JSON.parse(n.meta) : n.meta) : null
         })),
         nextCursor,
         hasMore,
