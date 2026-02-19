@@ -104,6 +104,41 @@
     background: transparent;
 }
 
+/* Discipline Streak – visible on overview when user has a streak */
+.public-profile-discipline-streak {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.08));
+    border: 1px solid rgba(255, 107, 53, 0.5);
+    border-radius: 12px;
+}
+
+.public-profile-streak-icon {
+    font-size: 1.5rem;
+}
+
+.public-profile-streak-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.public-profile-streak-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.public-profile-streak-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #FF6B35;
+}
+
 /* Profile Header Info */
 .profile-header-info {
     padding: 0 40px 20px;

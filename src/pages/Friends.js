@@ -6,7 +6,6 @@ import {
   FaEnvelope, FaChevronDown, FaChevronUp
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { resolveAvatarUrl } from '../utils/avatar';
 import Sidebar from '../components/Sidebar';
 import '../styles/Friends.css';
 
@@ -490,11 +489,7 @@ const Friends = () => {
                               {onlineFriends.map(friend => (
                                 <div key={friend.id} className="friend-card">
                                   <div className="friend-avatar">
-                                    {resolveAvatarUrl(friend.avatar, baseUrl) ? (
-                                      <img src={resolveAvatarUrl(friend.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
-                                    ) : (
-                                      <div className="avatar-placeholder" aria-hidden />
-                                    )}
+                                    <div className="avatar-placeholder" aria-hidden />
                                     <div className="online-indicator" />
                                   </div>
                                   <div className="friend-info">
@@ -546,11 +541,7 @@ const Friends = () => {
                               {offlineFriends.map(friend => (
                                 <div key={friend.id} className="friend-card offline">
                                   <div className="friend-avatar">
-                                    {resolveAvatarUrl(friend.avatar, baseUrl) ? (
-                                      <img src={resolveAvatarUrl(friend.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
-                                    ) : (
-                                      <div className="avatar-placeholder" aria-hidden />
-                                    )}
+                                    <div className="avatar-placeholder" aria-hidden />
                                     <div className="offline-indicator" />
                                   </div>
                                   <div className="friend-info">
@@ -604,11 +595,7 @@ const Friends = () => {
                       {incomingRequests.map(request => (
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
-                            {resolveAvatarUrl(request.avatar, baseUrl) ? (
-                              <img src={resolveAvatarUrl(request.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
-                            ) : (
-                              <div className="avatar-placeholder" aria-hidden />
-                            )}
+                            <div className="avatar-placeholder" aria-hidden />
                           </div>
                           <div className="request-info">
                             <span className="request-name">{request.username}</span>
@@ -658,11 +645,7 @@ const Friends = () => {
                       {outgoingRequests.map(request => (
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
-                            {resolveAvatarUrl(request.avatar, baseUrl) ? (
-                              <img src={resolveAvatarUrl(request.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
-                            ) : (
-                              <div className="avatar-placeholder" aria-hidden />
-                            )}
+                            <div className="avatar-placeholder" aria-hidden />
                           </div>
                           <div className="request-info">
                             <span className="request-name">{request.username}</span>
@@ -715,11 +698,7 @@ const Friends = () => {
                       {searchResults.map(user => (
                         <div key={user.id} className="search-result-card">
                           <div className="result-avatar">
-                            {resolveAvatarUrl(user.avatar, baseUrl) ? (
-                              <img src={resolveAvatarUrl(user.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
-                            ) : (
-                              <div className="avatar-placeholder" aria-hidden />
-                            )}
+                            <div className="avatar-placeholder" aria-hidden />
                           </div>
                           <div className="result-info">
                             <span className="result-name">{user.username}</span>

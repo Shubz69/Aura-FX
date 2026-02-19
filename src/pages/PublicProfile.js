@@ -12,8 +12,6 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
-import { resolveAvatarUrl } from '../utils/avatar';
-
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 
 const PublicProfile = () => {
@@ -146,18 +144,9 @@ const PublicProfile = () => {
                         </div>
                     )}
                     
-                    {/* Avatar overlapping banner - show PFP when available */}
+                    {/* Avatar: placeholder only (no profile pictures) */}
                     <div className="profile-avatar-overlay">
-                        {resolveAvatarUrl(profile.avatar, resolveApiBaseUrl()) ? (
-                            <img
-                                src={resolveAvatarUrl(profile.avatar, resolveApiBaseUrl())}
-                                alt=""
-                                className="profile-avatar-large"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
-                            />
-                        ) : (
-                            <div className="avatar-placeholder profile-avatar-large" aria-hidden />
-                        )}
+                        <div className="avatar-placeholder profile-avatar-large" aria-hidden />
                     </div>
                 </div>
 
@@ -227,6 +216,16 @@ const PublicProfile = () => {
                 <div className="profile-tab-content">
                     {activeTab === 'overview' && (
                         <div className="tab-panel">
+                            {/* Discipline Streak – prominent when on a streak */}
+                            {loginStreak > 0 && (
+                                <div className="public-profile-discipline-streak">
+                                    <span className="public-profile-streak-icon">🔥</span>
+                                    <div className="public-profile-streak-text">
+                                        <span className="public-profile-streak-label">Discipline Streak</span>
+                                        <span className="public-profile-streak-value">{loginStreak} day{loginStreak !== 1 ? 's' : ''}</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="info-section">
                                 <div className="info-row">
                                     <span className="info-label">Power Level:</span>
@@ -238,7 +237,7 @@ const PublicProfile = () => {
                                     <span className="info-value">{(profile.xp || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="info-row">
-                                    <span className="info-label">Login Streak:</span>
+                                    <span className="info-label">Discipline Streak:</span>
                                     <span className="info-value">{loginStreak}+ days</span>
                                 </div>
                             </div>

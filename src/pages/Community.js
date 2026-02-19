@@ -21,8 +21,6 @@ import {
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft, FaDownload } from 'react-icons/fa';
 import ProfileModal from '../components/ProfileModal';
-import { resolveAvatarUrl } from '../utils/avatar';
-
 // All API calls use real endpoints only - no mock mode
 
 // Emojis array for the emoji picker
@@ -2970,7 +2968,7 @@ Welcome to the most elite trading and wealth-building community on the planet! W
 
 ## 🚀 **GETTING STARTED**
 
-1. **Complete your profile** - Add your avatar and bio
+1. **Complete your profile** - Add your bio
 2. **Explore channels** - Check out different course and trading channels
 3. **Join discussions** - Start participating in conversations
 4. **Enroll in courses** - Begin your wealth-building journey
@@ -4904,17 +4902,9 @@ avatar: storedUser?.avatar || null,
                         alignItems: 'center',
                         gap: '12px'
                     }}>
-                        {/* Avatar: show PFP when available */}
-                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(139, 92, 246, 0.5)', boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)' }}>
-                            {resolveAvatarUrl(storedUser?.avatar, window.location?.origin) ? (
-                                <img
-                                    src={resolveAvatarUrl(storedUser?.avatar, window.location?.origin)}
-                                    alt=""
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                />
-                            ) : (
-                                <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
-                            )}
+                        {/* Avatar: placeholder only (no profile pictures) */}
+                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
+                            <div className="avatar-placeholder" style={{ width: '40px', height: '40px', border: '2px solid rgba(139, 92, 246, 0.5)', boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)' }} aria-hidden />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ 
@@ -5413,11 +5403,7 @@ avatar: storedUser?.avatar || null,
                                                         e.currentTarget.style.opacity = '1';
                                                     }}
                                                 >
-                                                    {resolveAvatarUrl(message.sender?.avatar, window.location?.origin) ? (
-                                                        <img src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                                                    ) : (
-                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
-                                                    )}
+                                                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
                                                 </div>
                                             )}
                                             <div className="message-content">
@@ -6301,11 +6287,7 @@ avatar: storedUser?.avatar || null,
                                                                     fontSize: '0.9rem',
                                                                     flexShrink: 0
                                                                 }}>
-                                                                    {resolveAvatarUrl(user?.avatar, window.location?.origin) ? (
-                                                                        <img src={resolveAvatarUrl(user.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '50%' }} />
-                                                                    ) : (
-                                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
-                                                                    )}
+                                                                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
                                                                 </div>
                                                                 <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                                                     <div style={{

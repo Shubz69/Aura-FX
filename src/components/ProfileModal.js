@@ -16,7 +16,6 @@ import {
     FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { resolveAvatarUrl } from '../utils/avatar';
 import '../styles/ProfileModal.css';
 
 // Get or create portal root for modals
@@ -32,10 +31,9 @@ const getModalRoot = () => {
 };
 
 /**
- * Avatar: show PFP when available, else coloured circle; tier border + online indicator.
+ * Avatar: placeholder only (no profile pictures); tier border + online indicator.
  */
-const AvatarWithFallback = ({ size = 130, tierColor, isOnline, avatar }) => {
-    const avatarSrc = resolveAvatarUrl(avatar, typeof window !== 'undefined' ? window.location?.origin : '');
+const AvatarWithFallback = ({ size = 130, tierColor, isOnline }) => {
     return (
         <div style={{
             position: 'relative',
@@ -44,6 +42,7 @@ const AvatarWithFallback = ({ size = 130, tierColor, isOnline, avatar }) => {
             flexShrink: 0
         }}>
             <div
+                className="avatar-placeholder"
                 style={{
                     position: 'absolute',
                     top: 0,
@@ -54,16 +53,10 @@ const AvatarWithFallback = ({ size = 130, tierColor, isOnline, avatar }) => {
                     background: 'transparent',
                     border: `5px solid ${tierColor}`,
                     boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
-                    boxSizing: 'border-box',
-                    overflow: 'hidden'
+                    boxSizing: 'border-box'
                 }}
-            >
-                {avatarSrc ? (
-                    <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                ) : (
-                    <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
-                )}
-            </div>
+                aria-hidden
+            />
             <div style={{
                 position: 'absolute',
                 bottom: `${size * 0.06}px`,
@@ -687,7 +680,6 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             size={130}
                             tierColor={tierColor}
                             isOnline={isOnline}
-                            avatar={profile?.avatar}
                         />
                     </div>
                 </div>
@@ -722,6 +714,22 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{tierName}</div>
                         </div>
                     </div>
+
+                    {/* Discipline Streak – visible when on a streak */}
+                    {loginStreak > 0 && (
+                        <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '10px 18px',
+                            background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.08))',
+                            border: '1px solid rgba(255, 107, 53, 0.5)', borderRadius: '12px',
+                            marginBottom: '15px'
+                        }}>
+                            <span style={{ fontSize: '1.25rem' }}>🔥</span>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Discipline Streak</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FF6B35' }}>{loginStreak} day{loginStreak !== 1 ? 's' : ''}</div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Animated XP Progress Bar */}
                     <div style={{ marginTop: '20px' }}>
@@ -786,7 +794,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 {[
                                     { icon: '⚡', label: 'Power Level', value: level, color: tierColor },
                                     { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
-                                    { icon: '🔥', label: 'Login Streak', value: `${loginStreak} days`, color: '#FF6B35' },
+                                    { icon: '🔥', label: 'Discipline Streak', value: `${loginStreak} day${loginStreak !== 1 ? 's' : ''}`, color: '#FF6B35' },
                                     { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#5865F2' }
                                 ].map((stat, i) => (
                                     <div key={i} style={{
@@ -883,7 +891,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 { icon: <FaRobot />, label: 'AI Chats', value: stats?.ai_chats_count || 0, color: '#FF6B35' },
                                 { icon: <FaComments />, label: 'Messages Sent', value: stats?.community_messages || 0, color: '#5865F2' },
                                 { icon: <FaGraduationCap />, label: 'Courses Done', value: stats?.courses_completed || 0, color: '#00B894' },
-                                { icon: <FaFire />, label: 'Best Streak', value: `${stats?.longest_streak || loginStreak} days`, color: '#FF6B35' },
+                                { icon: <FaFire />, label: 'Longest Discipline Streak', value: `${stats?.longest_streak || loginStreak} days`, color: '#FF6B35' },
                                 { icon: <FaCalendarCheck />, label: 'Login Days', value: stats?.total_login_days || 0, color: '#9B59B6' },
                                 { icon: <FaBolt />, label: 'Monthly XP', value: (stats?.current_month_xp || xp).toLocaleString(), color: '#FFD700' }
                             ].map((stat, i) => (
