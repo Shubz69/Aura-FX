@@ -10,21 +10,28 @@ class WebSocketService {
         this.messageHandlers = new Map();
         this.encryptionEnabled = false;
         this.encryptionKey = process.env.REACT_APP_ENCRYPTION_KEY || 'default-encryption-key';
+        this.threadSubscription = null;
+        this.threadSubscriptionDestination = null;
+        this.threadMessageHandler = null;
+        this.threadReadHandler = null;
     }
 
-    connect(endpoint = null, callback = () => {}) {
+    connect(endpointOrConfig = null, callback = () => {}) {
         const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
             ? window.location.origin
             : (process.env.REACT_APP_API_URL || '');
-        const wsEndpoint = endpoint || `${API_BASE_URL}/ws`;
+        // If caller passes an object (e.g. { userId, role }), use default WS URL to avoid [object Object] in path
+        const wsEndpoint = (typeof endpointOrConfig === 'string' && endpointOrConfig)
+            ? endpointOrConfig
+            : `${API_BASE_URL}/ws`;
         if (this.isConnected) {
             console.log('WebSocket already connected');
             callback();
             return;
         }
 
-        const socket = new SockJS(wsEndpoint);
-        this.stompClient = Stomp.over(socket);
+        const socketFactory = () => new SockJS(wsEndpoint);
+        this.stompClient = Stomp.over(socketFactory);
         
         // Disable debug logs
         this.stompClient.debug = () => {};
@@ -36,7 +43,7 @@ class WebSocketService {
         }, (error) => {
             console.error('WebSocket connection error:', error);
             this.isConnected = false;
-            setTimeout(() => this.connect(endpoint, callback), 5000);
+            setTimeout(() => this.connect(endpointOrConfig, callback), 5000);
         });
     }
 
@@ -146,6 +153,44 @@ class WebSocketService {
 
     setEncryptionKey(key) {
         this.encryptionKey = key;
+    }
+
+    offThreadEvents() {
+        this.threadMessageHandler = null;
+        this.threadReadHandler = null;
+        const dest = this.threadSubscriptionDestination;
+        if (dest && this.subscriptions.has(dest)) {
+            this.unsubscribe(dest);
+        }
+        this.threadSubscription = null;
+        this.threadSubscriptionDestination = null;
+    }
+
+    joinThread(threadId) {
+        const id = threadId != null ? String(threadId) : null;
+        if (!id) return;
+        this.offThreadEvents();
+        const destination = `/topic/thread/${id}`;
+        this.threadSubscriptionDestination = destination;
+        if (this.isConnected && this.stompClient) {
+            this.threadSubscription = this.subscribe(destination, (payload) => {
+                try {
+                    const data = typeof payload === 'object' ? payload : (typeof payload === 'string' ? JSON.parse(payload) : null);
+                    if (data && this.threadMessageHandler) this.threadMessageHandler(data);
+                    if (data?.thread && this.threadReadHandler) this.threadReadHandler(data);
+                } catch (e) {
+                    if (this.threadMessageHandler) this.threadMessageHandler({ threadId: id, message: payload, thread: null });
+                }
+            });
+        }
+    }
+
+    onThreadMessage(callback) {
+        this.threadMessageHandler = typeof callback === 'function' ? callback : null;
+    }
+
+    onThreadRead(callback) {
+        this.threadReadHandler = typeof callback === 'function' ? callback : null;
     }
 }
 

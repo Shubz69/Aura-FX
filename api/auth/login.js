@@ -160,17 +160,27 @@ module.exports = async (req, res) => {
       );
 
       // Auto-detect/save timezone (IANA) on login for daily journal notifications
+      const { ensureTimezoneColumn } = require('../utils/ensure-timezone-column');
+      await ensureTimezoneColumn();
       const tz = typeof timezone === 'string' ? timezone.trim() : '';
       if (tz && tz.length <= 64) {
         try {
-          const { ensureTimezoneColumn } = require('../utils/ensure-timezone-column');
-          await ensureTimezoneColumn();
           await db.execute(
             'UPDATE users SET timezone = ? WHERE id = ?',
             [tz, user.id]
           );
         } catch (e) {
           console.warn('Login timezone update:', e.message);
+        }
+      } else if (!user.timezone || String(user.timezone || '').trim() === '') {
+        // Default to UTC so user still receives daily journal at 08:00 UTC until they set a timezone
+        try {
+          await db.execute(
+            'UPDATE users SET timezone = ? WHERE id = ?',
+            ['UTC', user.id]
+          );
+        } catch (e) {
+          console.warn('Login timezone default:', e.message);
         }
       }
 
@@ -216,7 +226,7 @@ module.exports = async (req, res) => {
 
       await db.end();
 
-      const updatedTimezone = tz || user.timezone || null;
+      const updatedTimezone = tz || (user.timezone && String(user.timezone).trim()) || 'UTC';
       return res.status(200).json({
         success: true,
         id: user.id,

@@ -33,14 +33,15 @@ module.exports = async (req, res) => {
 
   try {
     await ensureTimezoneColumn();
+    // Include all users: use IANA timezone when set, otherwise UTC so everyone can receive daily notification
     const [userRows] = await executeQuery(
-      'SELECT id, username, timezone FROM users WHERE timezone IS NOT NULL AND timezone != ""'
+      `SELECT id, username, COALESCE(NULLIF(TRIM(timezone), ''), 'UTC') AS timezone FROM users`
     );
     const users = getRows(userRows);
     if (!users.length) {
       return res.status(200).json({
         success: true,
-        message: 'No users with timezone',
+        message: 'No users',
         sent: 0,
         skipped: 0,
         ms: Date.now() - start
@@ -49,7 +50,7 @@ module.exports = async (req, res) => {
 
     const nowUtc = DateTime.utc();
     for (const user of users) {
-      const tz = user.timezone;
+      const tz = (user.timezone && String(user.timezone).trim()) || 'UTC';
       let local;
       try {
         local = nowUtc.setZone(tz);

@@ -134,6 +134,16 @@ async function ensureSchema() {
         ) NOT NULL
       `);
       await addIndexIfNotExists('notifications', 'idx_notif_user_type_local', ['user_id', 'type', 'local_date']);
+      // Idempotency: at most one DAILY_JOURNAL per user per local date (allows multiple NULL local_date for other types)
+      try {
+        await executeQuery(`
+          ALTER TABLE notifications ADD UNIQUE KEY unique_user_type_local_date (user_id, type, local_date)
+        `);
+      } catch (uniqueErr) {
+        if (uniqueErr.code !== 'ER_DUP_KEYNAME' && uniqueErr.code !== 'ER_MULTIPLE_PRI_KEY') {
+          console.warn('Unique key unique_user_type_local_date:', uniqueErr.message);
+        }
+      }
     } catch (alterErr) {
       // Ignore if already applied
     }
@@ -190,13 +200,8 @@ async function createDailyJournalNotificationIfNotSent(userId, localDate, title,
   });
 }
 
-// Export for use by other modules
-module.exports.createNotification = createNotification;
-module.exports.createDailyJournalNotificationIfNotSent = createDailyJournalNotificationIfNotSent;
-module.exports.ensureSchema = ensureSchema;
-
-// Main API handler
-module.exports = async (req, res) => {
+// Main API handler (assign first so we can attach helpers)
+const handler = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -400,3 +405,8 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+module.exports = handler;
+module.exports.createNotification = createNotification;
+module.exports.createDailyJournalNotificationIfNotSent = createDailyJournalNotificationIfNotSent;
+module.exports.ensureSchema = ensureSchema;

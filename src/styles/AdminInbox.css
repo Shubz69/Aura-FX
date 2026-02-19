@@ -3,7 +3,7 @@
     position: relative;
     z-index: 1;
     min-height: calc(100vh - 120px);
-    padding: 20px 16px 24px;
+    padding: calc(70px + env(safe-area-inset-top, 0px) + 24px) 16px 24px;
     box-sizing: border-box;
 }
 

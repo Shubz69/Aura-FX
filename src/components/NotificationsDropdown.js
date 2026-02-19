@@ -186,11 +186,6 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       navigate('/journal');
       return;
     }
-    if (notification.type === 'DAILY_JOURNAL') {
-      onClose();
-      navigate('/journal');
-      return;
-    }
     // Handle message-type notifications (jump to message)
     if ((notification.type === 'MENTION' || notification.type === 'REPLY') && notification.messageId) {
       onClose();

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
+import { useAuth } from '../context/AuthContext';
 /* Current: modern vibrant design. To use Design 1 (original): import '../styles/Journal.design1.css' */
 import '../styles/Journal.css';
-import { FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave, FaCamera } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave, FaCamera, FaFire, FaBolt } from 'react-icons/fa';
 
 const MOOD_OPTIONS = [
   { value: 'great', label: 'Great', emoji: '😊' },
@@ -48,6 +49,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function Journal() {
+  const { user: authUser } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState(today);
   const [calendarMonth, setCalendarMonth] = useState(today.slice(0, 7));
@@ -66,6 +68,11 @@ export default function Journal() {
   const [dailyNotesList, setDailyNotesList] = useState([]);
   const [newNoteContent, setNewNoteContent] = useState('');
   const [addingNote, setAddingNote] = useState(false);
+  const [completionBannerDismissed, setCompletionBannerDismissed] = useState(false);
+
+  useEffect(() => {
+    setCompletionBannerDismissed(false);
+  }, [selectedDate]);
 
   const monthStart = getMonthStart(calendarMonth + '-01');
   const monthEnd = getMonthEnd(calendarMonth + '-01');
@@ -410,18 +417,51 @@ export default function Journal() {
             </div>
           </div>
 
-          <div className="journal-stats-sidebar">
-            <div className="journal-stat-mini">
-              <span className="journal-stat-mini-label">Day</span>
-              <span className="journal-stat-mini-value">{dayPct != null ? `${dayPct}%` : '—'}</span>
+          {/* 7 Day Discipline Streak card – matches reference image */}
+          <div className="journal-streak-card">
+            <div className="journal-streak-flame">
+              <FaFire />
             </div>
-            <div className="journal-stat-mini">
-              <span className="journal-stat-mini-label">Week</span>
-              <span className="journal-stat-mini-value">{weekPct != null ? `${weekPct}%` : '—'}</span>
+            <div className="journal-streak-title">
+              {(() => {
+                const streak = authUser?.login_streak ?? (typeof localStorage !== 'undefined' ? (JSON.parse(localStorage.getItem('user') || '{}').login_streak) : 0) ?? 0;
+                return `${streak} Day Discipline Streak`;
+              })()}
             </div>
-            <div className="journal-stat-mini">
-              <span className="journal-stat-mini-label">Month</span>
-              <span className="journal-stat-mini-value">{monthPct != null ? `${monthPct}%` : '—'}</span>
+            <div className="journal-streak-longest">
+              Longest Streak: <span className="journal-streak-longest-value">
+                {(() => {
+                  const streak = authUser?.login_streak ?? (typeof localStorage !== 'undefined' ? (JSON.parse(localStorage.getItem('user') || '{}').login_streak) : 0) ?? 0;
+                  return `${streak} Days`;
+                })()}
+              </span>
+            </div>
+            <div className="journal-streak-consistency">
+              Consistency Score: {(() => {
+                const streak = authUser?.login_streak ?? (typeof localStorage !== 'undefined' ? (JSON.parse(localStorage.getItem('user') || '{}').login_streak) : 0) ?? 0;
+                return Math.min(100, Math.round((streak / 21) * 100));
+              })()}%
+            </div>
+          </div>
+
+          <div className="journal-stats-sidebar journal-stats-circles">
+            <div className="journal-stat-circle">
+              <div className="journal-stat-circle-ring" style={{ '--pct': dayPct != null ? dayPct : 0 }}>
+                <span className="journal-stat-circle-value">{dayPct != null ? `${dayPct}%` : '—'}</span>
+              </div>
+              <span className="journal-stat-circle-label">Today</span>
+            </div>
+            <div className="journal-stat-circle">
+              <div className="journal-stat-circle-ring" style={{ '--pct': weekPct != null ? weekPct : 0 }}>
+                <span className="journal-stat-circle-value">{weekPct != null ? `${weekPct}%` : '—'}</span>
+              </div>
+              <span className="journal-stat-circle-label">This week</span>
+            </div>
+            <div className="journal-stat-circle">
+              <div className="journal-stat-circle-ring" style={{ '--pct': monthPct != null ? monthPct : 0 }}>
+                <span className="journal-stat-circle-value">{monthPct != null ? `${monthPct}%` : '—'}</span>
+              </div>
+              <span className="journal-stat-circle-label">This month</span>
             </div>
           </div>
         </aside>
@@ -438,7 +478,11 @@ export default function Journal() {
             <div className="journal-main-meta">
               {dayTotal > 0 ? (
                 <span className="journal-main-percent">
-                  {dayDone}/{dayTotal} tasks · <strong>{dayPct}%</strong> done
+                  {dayDone}/{dayTotal} tasks{dayPct != null ? (dayPct >= 100 ? (
+                    <>: <strong className="journal-percent-done">{dayPct}% done</strong></>
+                  ) : (
+                    <>: <strong>{dayPct}%</strong> done</>
+                  )) : ''}
                 </span>
               ) : (
                 <span className="journal-main-percent">No tasks yet</span>
@@ -467,6 +511,17 @@ export default function Journal() {
               <div className="journal-progress-bar">
                 <div className="journal-progress-fill" style={{ width: `${monthPct ?? 0}%` }} />
               </div>
+            </div>
+          </div>
+
+          {/* Discipline Score bar – matches reference */}
+          <div className="journal-discipline-score">
+            <span className="journal-discipline-label">Discipline Score: {dayPct != null && weekPct != null && monthPct != null ? Math.round((dayPct + weekPct + monthPct) / 3) : (dayPct ?? 0)}%</span>
+            <div className="journal-progress-bar">
+              <div
+                className="journal-progress-fill"
+                style={{ width: `${dayPct != null && weekPct != null && monthPct != null ? Math.min(100, Math.round((dayPct + weekPct + monthPct) / 3)) : (dayPct ?? 0)}%` }}
+              />
             </div>
           </div>
 
@@ -521,6 +576,7 @@ export default function Journal() {
                     ) : (
                       <>
                         <span className="journal-task-title" onClick={() => handleEditStart(task)} title="Click to edit">{task.title}</span>
+                        {task.completed && <span className="journal-task-xp">+5 XP</span>}
                         {task.proofImage ? (
                           <span className="journal-task-proof-thumb" title="Proof attached">
                             <img src={task.proofImage} alt="Proof" />
@@ -541,8 +597,17 @@ export default function Journal() {
             </ul>
           )}
 
-          <section className="journal-notes-section">
-            <h3 className="journal-section-title">Notes</h3>
+          {dayPct >= 100 && dayTotal > 0 && !completionBannerDismissed && (
+            <div className="journal-completion-banner">
+              All tasks completed! Great job. <button type="button" className="journal-completion-dismiss" aria-label="Dismiss" onClick={() => setCompletionBannerDismissed(true)}>✕</button>
+            </div>
+          )}
+
+          <section className="journal-notes-section journal-reflection-section">
+            <h3 className="journal-section-title">
+              <FaBolt className="journal-reflection-icon" /> Reflection
+            </h3>
+            <p className="journal-reflection-prompt">What did you improve today?</p>
             <p className="journal-notes-hint">Save multiple notes for this day. They appear here under your tasks.</p>
             {dailyNotesList.length > 0 && (
               <ul className="journal-notes-list">
@@ -565,8 +630,8 @@ export default function Journal() {
                 onChange={(e) => setNewNoteContent(e.target.value)}
                 disabled={addingNote}
               />
-              <button type="submit" className="journal-add-note-btn" disabled={addingNote || !newNoteContent.trim()}>
-                <FaPlus /> Add note
+              <button type="submit" className="journal-add-note-btn journal-add-note-btn-purple" disabled={addingNote || !newNoteContent.trim()}>
+                <FaPlus /> Add Note
               </button>
             </form>
           </section>

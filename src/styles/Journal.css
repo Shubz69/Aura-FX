@@ -305,6 +305,105 @@
   color: var(--primary, #fff);
 }
 
+/* Discipline Streak card – glass, flame icon, matches reference */
+.journal-streak-card {
+  background: linear-gradient(160deg, rgba(30, 30, 46, 0.95) 0%, rgba(22, 22, 38, 0.98) 100%);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 40px rgba(139, 92, 246, 0.06);
+  margin-bottom: 20px;
+  text-align: center;
+  backdrop-filter: blur(12px);
+}
+
+.journal-streak-flame {
+  font-size: 2.5rem;
+  color: #f59e0b;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));
+}
+
+.journal-streak-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary, #fff);
+  margin-bottom: 8px;
+}
+
+.journal-streak-longest {
+  font-size: 0.85rem;
+  color: var(--secondary, rgba(255, 255, 255, 0.75));
+  margin-bottom: 4px;
+}
+
+.journal-streak-longest-value {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.journal-streak-consistency {
+  font-size: 0.9rem;
+  color: var(--primary, #fff);
+  font-weight: 600;
+}
+
+/* Circular progress in sidebar – purple/green gradient ring */
+.journal-stats-circles {
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 16px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.journal-stat-circle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.journal-stat-circle-ring {
+  --pct: 0;
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #22c55e 0deg,
+    #8B5CF6 calc(var(--pct) * 3.6deg),
+    rgba(255, 255, 255, 0.08) calc(var(--pct) * 3.6deg)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.journal-stat-circle-ring::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(22, 22, 38, 0.98) 0%, rgba(30, 30, 46, 0.95) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.journal-stat-circle-value {
+  position: relative;
+  z-index: 1;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary, #fff);
+}
+
+.journal-stat-circle-label {
+  font-size: 0.7rem;
+  color: var(--secondary, rgba(255, 255, 255, 0.6));
+  text-align: center;
+}
+
 /* Main */
 .journal-main {
   flex: 1;
@@ -335,6 +434,95 @@
 
 .journal-main-percent strong {
   color: #22c55e;
+}
+
+.journal-percent-done {
+  color: #22c55e !important;
+}
+
+/* Discipline Score bar */
+.journal-discipline-score {
+  margin-bottom: 20px;
+}
+
+.journal-discipline-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--secondary, rgba(255, 255, 255, 0.8));
+  margin-bottom: 8px;
+}
+
+.journal-discipline-score .journal-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.journal-discipline-score .journal-progress-fill {
+  border-radius: 4px;
+}
+
+/* Completion banner */
+.journal-completion-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(22, 22, 38, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 14px;
+  margin-bottom: 20px;
+  color: var(--primary, #fff);
+  font-size: 0.95rem;
+}
+
+.journal-completion-dismiss {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.journal-completion-dismiss:hover {
+  color: #fff;
+}
+
+/* Reflection section */
+.journal-reflection-section .journal-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.journal-reflection-icon {
+  color: #f59e0b;
+}
+
+.journal-reflection-prompt {
+  font-size: 0.9rem;
+  color: var(--secondary, rgba(255, 255, 255, 0.8));
+  margin: -6px 0 10px 0;
+}
+
+.journal-add-note-btn-purple {
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+}
+
+.journal-add-note-btn-purple:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+}
+
+.journal-task-xp {
+  color: #22c55e;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: 6px;
 }
 
 /* Progress cards */
@@ -982,6 +1170,18 @@
 
   .journal-stats-sidebar {
     justify-content: center;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .journal-streak-card {
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .journal-stats-circles {
     max-width: 320px;
     margin-left: auto;
     margin-right: auto;
