@@ -11,7 +11,7 @@
     --bg-medium: #1a1a1a;
     --bg-light: #252525;
     
-    /* Fonts */
+    /* Fonts - same as navbar "AURA FX" logo everywhere */
     --font-main: 'Space Grotesk', sans-serif;
     --font-secondary: 'Space Grotesk', sans-serif;
     
@@ -138,6 +138,17 @@ html {
     min-height: 100%;
 }
 
+/* Site-wide font: same as navbar "AURA FX" logo (Space Grotesk) - every word on the site */
+body,
+body * {
+    font-family: 'Space Grotesk', sans-serif;
+}
+/* Keep monospace for code blocks only */
+pre, code, .md-pre, .md-code,
+[class*="monospace"], [class*="code-block"] {
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
+}
+
 html, body, #root {
     margin: 0;
     padding: 0;
@@ -204,6 +215,7 @@ body {
   overflow-x: hidden;
   overflow-y: hidden; /* Scroll lives in .page-wrapper only */
   position: relative;
+  background: #0a0a0a;
 }
 
 .container {
