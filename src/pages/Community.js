@@ -614,11 +614,11 @@ const Community = () => {
         fetchCategoryOrder();
         fetchChannelOrder();
 
-        // Poll for updates every 5 seconds to sync across users (optimized for production)
+        // Poll for order updates every 30s (bootstrap loads orders with channels for fast initial load)
         const intervalId = setInterval(() => {
             fetchCategoryOrder();
             fetchChannelOrder();
-        }, 5000);
+        }, 30000);
 
         // Also check when window regains focus
         const handleFocus = () => {
@@ -724,37 +724,27 @@ const Community = () => {
         let cachedChannels = [];
         let channelsFromServer = [];
 
+        // Cache-first: show cached channels immediately so list loads fast
         try {
-            const response = await Api.getChannels();
-            if (Array.isArray(response?.data)) {
-                    channelsFromServer = response.data;
-            } else if (Array.isArray(response?.data?.channels)) {
-                channelsFromServer = response.data.channels;
+            const raw = localStorage.getItem(cachedChannelsKey);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    cachedChannels = parsed;
+                    channelsFromServer = parsed;
+                }
             }
-            
-            // API returns only channels this user can see (by role: free/premium/elite)
-            if (channelsFromServer.length > 0) {
-                try {
-                    const u = JSON.parse(localStorage.getItem('user') || '{}');
-                    localStorage.setItem(`community_channels_cache_${u.id || 'anon'}`, JSON.stringify(channelsFromServer));
-                } catch (e) { /* ignore */ }
-            }
-        } catch (error) {
-            console.warn('Failed to fetch channels from API:', error?.message || error);
-            // Keep showing cached channels if API fails
-            if (cachedChannels.length > 0) {
-                return channelListRef.current;
-            }
-        }
+        } catch (e) { /* ignore */ }
 
-        let preparedChannels = [];
         const storedUserForChannels = JSON.parse(localStorage.getItem('user') || '{}');
         const userRoleForChannels = (storedUserForChannels.role || '').toString().toLowerCase();
         const userEmailForChannels = (storedUserForChannels.email || '').toString().toLowerCase();
         const isAdminOrSuperForChannels = userRoleForChannels === 'admin' || userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
+        const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
 
-        if (Array.isArray(channelsFromServer) && channelsFromServer.length > 0) {
-            preparedChannels = channelsFromServer.map((channel) => {
+        const buildPreparedFromServer = (serverList) => {
+            if (!Array.isArray(serverList) || serverList.length === 0) return [];
+            return serverList.map((channel) => {
                 const baseId = channel.id ?? channel.name ?? `channel-${Date.now()}`;
                 const idString = String(baseId);
                 const normalizedName = channel.name || idString;
@@ -764,8 +754,6 @@ const Community = () => {
                     .join(' ');
                 const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
                 const readOnly = (channel.permissionType || channel.permission_type || 'read-write').toString().toLowerCase() === 'read-only';
-                const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
-
                 const canSee = isAdminOrSuperForChannels || channel.canSee === true;
                 const canRead = isAdminOrSuperForChannels ? true : (canSee && (channel.canRead !== false));
                 const canWrite = (channel.canWrite !== undefined && channel.canWrite !== null)
@@ -787,8 +775,57 @@ const Community = () => {
                     canRead,
                     canWrite
                 };
-            });
-            preparedChannels = preparedChannels.filter((ch) => ch.canSee === true);
+            }).filter((ch) => ch.canSee === true);
+        };
+
+        // Show cache immediately so channels appear fast
+        if (cachedChannels.length > 0) {
+            const fromCache = buildPreparedFromServer(cachedChannels);
+            if (fromCache.length > 0) {
+                const sortedCache = sortChannels(fromCache);
+                setChannelList(sortedCache);
+            }
+        }
+
+        try {
+            const response = await Api.getChannelsBootstrap();
+            const data = response?.data;
+            if (data?.success && Array.isArray(data.channels)) {
+                channelsFromServer = data.channels;
+                if (Array.isArray(data.categoryOrder) && data.categoryOrder.length > 0) {
+                    setCategoryOrderState(data.categoryOrder);
+                }
+                if (data.channelOrder && typeof data.channelOrder === 'object') {
+                    setChannelOrder(data.channelOrder);
+                }
+            } else if (Array.isArray(data)) {
+                channelsFromServer = data;
+            } else if (Array.isArray(data?.channels)) {
+                channelsFromServer = data.channels;
+            }
+        } catch (_) {
+            try {
+                const response = await Api.getChannels();
+                if (Array.isArray(response?.data)) {
+                    channelsFromServer = response.data;
+                } else if (Array.isArray(response?.data?.channels)) {
+                    channelsFromServer = response.data.channels;
+                }
+            } catch (error) {
+                console.warn('Failed to fetch channels from API:', error?.message || error);
+                if (cachedChannels.length > 0) return channelListRef.current;
+            }
+        }
+
+        if (channelsFromServer.length > 0) {
+            try {
+                localStorage.setItem(cachedChannelsKey, JSON.stringify(channelsFromServer));
+            } catch (e) { /* ignore */ }
+        }
+
+        let preparedChannels = [];
+        if (Array.isArray(channelsFromServer) && channelsFromServer.length > 0) {
+            preparedChannels = buildPreparedFromServer(channelsFromServer);
         } else if (channelListRef.current.length > 0) {
             preparedChannels = channelListRef.current;
         }

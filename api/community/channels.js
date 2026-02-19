@@ -590,6 +590,21 @@ module.exports = async (req, res) => {
               return { ...ch, canSee, canRead: canSee && perm.canRead, canWrite: canSee && perm.canWrite, locked: perm.locked };
             });
             const visibleOnly = channelsWithFlags.filter((ch) => ch.canSee === true);
+            // Single bootstrap response: channels + categoryOrder + channelOrder (faster load)
+            if (req.query.bootstrap === 'true') {
+              try {
+                await ensureSettingsTable(db);
+                const [[catRows], [chanRows]] = await Promise.all([
+                  db.execute('SELECT value FROM community_settings WHERE id = ?', ['category_order']),
+                  db.execute('SELECT value FROM community_settings WHERE id = ?', ['channelOrder'])
+                ]);
+                const categoryOrder = (catRows && catRows[0] && catRows[0].value) ? JSON.parse(catRows[0].value) : ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
+                const channelOrder = (chanRows && chanRows[0] && chanRows[0].value) ? JSON.parse(chanRows[0].value) : {};
+                return res.status(200).json({ success: true, channels: visibleOnly, categoryOrder, channelOrder });
+              } catch (bootstrapErr) {
+                console.warn('Bootstrap order fetch failed, returning channels only:', bootstrapErr.message);
+              }
+            }
             return res.status(200).json(visibleOnly);
           }
         } catch (dbError) {

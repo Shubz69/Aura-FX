@@ -364,6 +364,14 @@ const Api = {
             throw error;
         }
     },
+    /** Single request: channels + categoryOrder + channelOrder for faster load */
+    getChannelsBootstrap: async (customHeaders = {}) => {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_BASE_URL}/api/community/channels?bootstrap=true`, {
+            headers: { 'Authorization': `Bearer ${token}`, ...customHeaders }
+        });
+        return response;
+    },
     
     createChannel: async (channelData) => {
         const token = localStorage.getItem('token');
