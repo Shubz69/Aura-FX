@@ -47,6 +47,7 @@
   padding-bottom: 48px;
   box-sizing: border-box;
   position: relative;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .journal-page::before {

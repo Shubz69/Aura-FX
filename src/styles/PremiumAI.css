@@ -37,6 +37,7 @@ body.premium-ai-page-active {
   width: 100%;
   max-width: 100vw;
   box-sizing: border-box;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Header */
@@ -53,6 +54,7 @@ body.premium-ai-page-active {
   background: rgba(15, 15, 26, 0.85);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .ai-header-content {
@@ -68,6 +70,7 @@ body.premium-ai-page-active {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
   background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
