@@ -156,7 +156,7 @@ export const TRADING_RANKS = {
     970: 'Chart God',
     980: 'Institutional God',
     990: 'Supreme Trader',
-    1000: 'Aura FX Legend'
+    1000: 'AURA FX Legend'
 };
 
 /**

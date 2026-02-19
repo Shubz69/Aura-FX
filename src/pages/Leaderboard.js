@@ -434,7 +434,7 @@ const Leaderboard = () => {
                 <div className="xp-system-info">
                     <h4>📊 XP System Details</h4>
                     <ul>
-                        <li><strong>Level Cap:</strong> 1000 (Aura FX Legend)</li>
+                        <li><strong>Level Cap:</strong> 1000 (AURA FX Legend)</li>
                         <li><strong>Scaling:</strong> Early levels are easier, higher levels require more XP</li>
                         <li><strong>Anti-Spam:</strong> Cooldowns prevent abuse (5s between messages, 24h for daily login)</li>
                         <li><strong>Rank Titles:</strong> Earn unique trading rank titles every 10 levels</li>

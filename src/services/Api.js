@@ -610,6 +610,9 @@ const Api = {
     updateJournalDaily: (body) => {
         return axios.put(`${API_BASE_URL}/api/journal/daily`, body);
     },
+    getJournalXpCheck: (date) => {
+        return axios.get(`${API_BASE_URL}/api/journal/xp-check`, { params: { date } });
+    },
     
     // Contact
     getBaseUrl: () => getApiBaseUrl(),

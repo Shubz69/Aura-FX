@@ -181,6 +181,10 @@
       "destination": "/api/admin/index.js"
     },
     {
+      "source": "/api/admin/journal-stats",
+      "destination": "/api/admin/index.js"
+    },
+    {
       "source": "/api/admin/revoke-access",
       "destination": "/api/admin/index.js"
     },
@@ -411,6 +415,10 @@
     {
       "source": "/api/journal/daily",
       "destination": "/api/journal/daily.js"
+    },
+    {
+      "source": "/api/journal/xp-check",
+      "destination": "/api/journal/xp-check.js"
     },
     {
       "source": "/api/market/watchlist",

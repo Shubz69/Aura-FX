@@ -14,6 +14,18 @@ let poolStats = {
 // Query time tracking (keep last 100)
 const MAX_QUERY_TIMES = 100;
 
+// Connection error codes/messages that warrant pool reset (e.g. Vercel serverless + MySQL)
+const CONNECTION_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'PROTOCOL_CONNECTION_LOST', 'ER_CON_COUNT_ERROR']);
+const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT'];
+
+function isConnectionError(error) {
+  if (!error) return false;
+  const code = (error.code || '').toString();
+  const msg = (error.message || '').toString();
+  if (CONNECTION_ERROR_CODES.has(code)) return true;
+  return CONNECTION_ERROR_MESSAGES.some(m => msg.includes(m));
+}
+
 /**
  * Get or create database connection pool
  * This should be used by ALL API endpoints instead of creating new connections
@@ -21,11 +33,15 @@ const MAX_QUERY_TIMES = 100;
 const getDbPool = () => {
   if (pool) return pool;
 
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || 
+  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER ||
       !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
     console.warn('Database credentials not found');
     return null;
   }
+
+  // Serverless-friendly: smaller limit to avoid holding many idle connections; connectTimeout to avoid long hangs
+  const connectionLimit = process.env.VERCEL ? 10 : 100;
+  const queueLimit = process.env.VERCEL ? 20 : 500;
 
   pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
@@ -34,19 +50,17 @@ const getDbPool = () => {
     database: process.env.MYSQL_DATABASE,
     port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
     waitForConnections: true,
-    connectionLimit: 100, // PRODUCTION: Increased for high traffic (500+ concurrent users)
-    queueLimit: 500, // Limit queue to prevent memory issues under extreme load
+    connectionLimit,
+    queueLimit,
+    connectTimeout: 10000,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
-    // Removed acquireTimeout and timeout - these cause warnings in mysql2
-    // Connection timeouts are handled by the pool's waitForConnections and queueLimit
     ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false,
-    // PRODUCTION OPTIMIZATIONS:
-    multipleStatements: false, // Security: prevent SQL injection
-    dateStrings: false, // Use Date objects for better performance
-    supportBigNumbers: true, // Support large numbers
-    bigNumberStrings: false, // Use numbers, not strings
-    typeCast: true // Enable type casting for performance
+    multipleStatements: false,
+    dateStrings: false,
+    supportBigNumbers: true,
+    bigNumberStrings: false,
+    typeCast: true
   });
 
   poolStats.created = new Date().toISOString();
@@ -67,14 +81,26 @@ const getDbPool = () => {
  * }
  */
 const getDbConnection = async () => {
-  const pool = getDbPool();
-  if (!pool) return null;
-  
+  let p = getDbPool();
+  if (!p) return null;
   try {
-    const connection = await pool.getConnection();
-    return connection;
+    let connection = await p.getConnection();
+    try {
+      await connection.ping();
+      return connection;
+    } catch (pingErr) {
+      connection.release();
+      if (!isConnectionError(pingErr)) throw pingErr;
+      await closePool();
+      pool = null;
+      p = getDbPool();
+      if (!p) return null;
+      connection = await p.getConnection();
+      await connection.ping();
+      return connection;
+    }
   } catch (error) {
-    console.error('Error getting database connection:', error);
+    console.error('Error getting database connection:', error.message);
     return null;
   }
 };
@@ -93,39 +119,33 @@ const getDbConnection = async () => {
  * const [rows] = await executeQuery('SELECT * FROM users WHERE id = ?', [userId]);
  */
 const executeQuery = async (query, params = [], options = {}) => {
-  const pool = getDbPool();
-  if (!pool) return [[], []];
-
-  const startTime = Date.now();
-  const timeout = options.timeout || 30000; // 30 second default
+  const timeout = options.timeout || 30000;
   const requestId = options.requestId || 'unknown';
+  const isRetry = options._connectionRetry === true;
 
-  // Validate parameters - replace undefined with null
   const safeParams = params.map(p => p === undefined ? null : p);
 
-  try {
-    // Execute with timeout protection
-    const queryPromise = pool.execute(query, safeParams);
+  const run = async () => {
+    const p = getDbPool();
+    if (!p) return [[], []];
+    const startTime = Date.now();
+    const queryPromise = p.execute(query, safeParams);
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Query timeout')), timeout);
     });
-
     const [rows, fields] = await Promise.race([queryPromise, timeoutPromise]);
-    
-    // Track metrics
     const queryTime = Date.now() - startTime;
     poolStats.totalQueries++;
     poolStats.queryTimes.push(queryTime);
-    if (poolStats.queryTimes.length > MAX_QUERY_TIMES) {
-      poolStats.queryTimes.shift();
-    }
+    if (poolStats.queryTimes.length > MAX_QUERY_TIMES) poolStats.queryTimes.shift();
     poolStats.avgQueryTime = poolStats.queryTimes.reduce((a, b) => a + b, 0) / poolStats.queryTimes.length;
-    
     return [rows, fields];
+  };
+
+  try {
+    return await run();
   } catch (error) {
     poolStats.failedQueries++;
-    
-    // Enhanced error logging
     const errorInfo = {
       requestId,
       query: query.substring(0, 100),
@@ -135,7 +155,13 @@ const executeQuery = async (query, params = [], options = {}) => {
       errno: error.errno
     };
     console.error('Database query error:', JSON.stringify(errorInfo));
-    
+
+    if (!isRetry && isConnectionError(error)) {
+      console.warn('Connection error detected, resetting pool and retrying once');
+      await closePool();
+      pool = null;
+      return executeQuery(query, params, { ...options, _connectionRetry: true });
+    }
     throw error;
   }
 };

@@ -5,6 +5,7 @@
 
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
+const { XP, awardOnce } = require('./xp-helper');
 
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -88,6 +89,8 @@ module.exports = async (req, res) => {
       [userId, date, notes || '', mood, notes, mood]
     );
 
+    const xpResult = await awardOnce(userId, 'journal_note_saved', XP.SAVE_NOTE, null, date);
+
     const [rows] = await executeQuery(
       'SELECT date, notes, mood, updatedAt FROM journal_daily WHERE userId = ? AND date = ?',
       [userId, date]
@@ -101,7 +104,11 @@ module.exports = async (req, res) => {
           updatedAt: row.updatedAt,
         }
       : { date, notes: notes || '', mood, updatedAt: null };
-    return res.status(200).json({ success: true, note });
+    return res.status(200).json({
+      success: true,
+      note,
+      xpAwarded: xpResult.awarded ? xpResult.xpAdded : null,
+    });
   }
 
   return res.status(405).json({ success: false, message: 'Method not allowed' });

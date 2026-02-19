@@ -1,0 +1,217 @@
+/* Admin Journal – stats and per-user progress */
+.admin-journal-page {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #fff;
+  position: relative;
+  overflow-x: hidden;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.admin-journal-container {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-journal-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold-primary, #c9a227);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.admin-journal-sub {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 28px;
+}
+
+.admin-journal-loading,
+.admin-journal-error,
+.admin-journal-empty {
+  text-align: center;
+  padding: 24px;
+}
+.admin-journal-error {
+  color: #ef4444;
+}
+
+.admin-journal-denied {
+  color: #ef4444;
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.admin-journal-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.admin-journal-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.admin-journal-card-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gold-primary, #c9a227);
+}
+
+.admin-journal-card-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-journal-table-title {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.admin-journal-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-journal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-journal-table th,
+.admin-journal-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-journal-table th {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.admin-journal-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-journal-user-email {
+  font-weight: 500;
+}
+.admin-journal-username {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+}
+
+.admin-journal-view-btn {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.admin-journal-view-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Modal */
+.admin-journal-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 24px;
+}
+
+.admin-journal-modal-inner {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-journal-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.admin-journal-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.admin-journal-modal-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.admin-journal-modal-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.admin-journal-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+.admin-journal-modal-body h4 {
+  margin: 16px 0 8px 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+.admin-journal-modal-body h4:first-child {
+  margin-top: 0;
+}
+
+.admin-journal-xp-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.admin-journal-xp-list li {
+  padding: 4px 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.admin-journal-by-date {
+  font-size: 0.85rem;
+}
+.admin-journal-date-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+}

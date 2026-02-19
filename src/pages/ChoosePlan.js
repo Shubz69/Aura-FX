@@ -208,9 +208,9 @@ const ChoosePlan = () => {
             </button>
           </div>
 
-          {/* Aura FX (Premium) */}
+          {/* AURA FX (Premium) */}
           <div className="subscription-plan-card premium">
-            <h3 className="subscription-plan-title">Aura FX</h3>
+            <h3 className="subscription-plan-title">AURA FX</h3>
             <div className="subscription-pricing-container">
               <div className="promotional-pricing">
                 <div className="promo-price">£0</div>

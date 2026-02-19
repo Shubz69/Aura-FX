@@ -1075,6 +1075,204 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Handle /api/admin/journal-stats - Journal progress overview (admin only)
+  if ((pathname.includes('/journal-stats') || pathname.endsWith('/journal-stats')) && req.method === 'GET') {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+
+      const db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({ success: false, message: 'Database connection error' });
+      }
+
+      try {
+        let requesterId = null;
+        try {
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+            requesterId = payload.id;
+          }
+        } catch (e) { /* ignore */ }
+        if (!requesterId) {
+          await db.end();
+          return res.status(401).json({ success: false, message: 'Invalid token' });
+        }
+
+        const [roleRows] = await db.execute('SELECT role FROM users WHERE id = ?', [requesterId]);
+        if (roleRows.length === 0) {
+          await db.end();
+          return res.status(401).json({ success: false, message: 'User not found' });
+        }
+        const role = (roleRows[0].role || '').toString().toLowerCase();
+        if (role !== 'admin' && role !== 'super_admin') {
+          await db.end();
+          return res.status(403).json({ success: false, message: 'Admin only' });
+        }
+
+        const userId = req.query?.userId ? parseInt(req.query.userId, 10) : null;
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+        // Ensure journal tables exist (optional – may 404 if not used yet)
+        try {
+          await db.execute('SELECT 1 FROM journal_tasks LIMIT 1');
+        } catch (e) {
+          await db.end();
+          return res.status(200).json({
+            summary: { usersWithJournal: 0, tasksLast7: 0, tasksLast30: 0, completedWithProofLast7: 0, completedWithProofLast30: 0, totalJournalXpAwarded: 0 },
+            users: []
+          });
+        }
+
+        if (userId) {
+          // Single-user detail
+          const [userRows] = await db.execute(
+            'SELECT id, email, username, xp, level FROM users WHERE id = ?',
+            [userId]
+          );
+          const u = userRows && userRows[0];
+          if (!u) {
+            await db.end();
+            return res.status(404).json({ success: false, message: 'User not found' });
+          }
+          const [taskRows] = await db.execute(
+            `SELECT date, COUNT(*) as total, SUM(completed=1) as completed, SUM(CASE WHEN completed=1 AND proof_image IS NOT NULL AND proof_image != '' THEN 1 ELSE 0 END) as withProof
+             FROM journal_tasks WHERE userId = ? GROUP BY date ORDER BY date DESC LIMIT 90`,
+            [userId]
+          );
+          const [xpRows] = await db.execute(
+            'SELECT award_type, SUM(xp_amount) as xp, COUNT(*) as count FROM journal_xp_awards WHERE userId = ? GROUP BY award_type',
+            [userId]
+          );
+          const [notesRows] = await db.execute(
+            'SELECT COUNT(*) as cnt FROM journal_daily WHERE userId = ? AND notes IS NOT NULL AND notes != ""',
+            [userId]
+          );
+          await db.end();
+          return res.status(200).json({
+            user: {
+              id: u.id,
+              email: u.email,
+              username: u.username || u.email,
+              xp: u.xp || 0,
+              level: u.level || 1
+            },
+            tasksByDate: (taskRows || []).map(r => ({
+              date: r.date ? String(r.date).slice(0, 10) : null,
+              total: Number(r.total),
+              completed: Number(r.completed),
+              withProof: Number(r.withProof)
+            })),
+            xpByType: (xpRows || []).map(r => ({ type: r.award_type, xp: Number(r.xp), count: Number(r.count) })),
+            notesSaved: (notesRows && notesRows[0]) ? Number(notesRows[0].cnt) : 0
+          });
+        }
+
+        // Summary
+        const [usersWithJournal] = await db.execute(
+          'SELECT COUNT(DISTINCT userId) as c FROM journal_tasks'
+        );
+        const [tasks7] = await db.execute(
+          'SELECT COUNT(*) as c FROM journal_tasks WHERE date >= ?',
+          [sevenDaysAgo]
+        );
+        const [tasks30] = await db.execute(
+          'SELECT COUNT(*) as c FROM journal_tasks WHERE date >= ?',
+          [thirtyDaysAgo]
+        );
+        const [proof7] = await db.execute(
+          `SELECT COUNT(*) as c FROM journal_tasks WHERE date >= ? AND completed = 1 AND proof_image IS NOT NULL AND proof_image != ''`,
+          [sevenDaysAgo]
+        );
+        const [proof30] = await db.execute(
+          `SELECT COUNT(*) as c FROM journal_tasks WHERE date >= ? AND completed = 1 AND proof_image IS NOT NULL AND proof_image != ''`,
+          [thirtyDaysAgo]
+        );
+        let totalJournalXp = 0;
+        try {
+          const [xpSum] = await db.execute('SELECT COALESCE(SUM(xp_amount), 0) as s FROM journal_xp_awards');
+          totalJournalXp = Number(xpSum && xpSum[0] ? xpSum[0].s : 0);
+        } catch (e) { /* table may not exist */ }
+
+        const summary = {
+          usersWithJournal: usersWithJournal && usersWithJournal[0] ? Number(usersWithJournal[0].c) : 0,
+          tasksLast7: tasks7 && tasks7[0] ? Number(tasks7[0].c) : 0,
+          tasksLast30: tasks30 && tasks30[0] ? Number(tasks30[0].c) : 0,
+          completedWithProofLast7: proof7 && proof7[0] ? Number(proof7[0].c) : 0,
+          completedWithProofLast30: proof30 && proof30[0] ? Number(proof30[0].c) : 0,
+          totalJournalXpAwarded: totalJournalXp
+        };
+
+        // Per-user progress (only users with journal activity)
+        const [allTaskAgg] = await db.execute(
+          `SELECT userId,
+            COUNT(*) as tasksTotal,
+            SUM(completed=1) as tasksCompleted,
+            SUM(CASE WHEN completed=1 AND proof_image IS NOT NULL AND proof_image != '' THEN 1 ELSE 0 END) as withProof,
+            MAX(date) as lastDate
+          FROM journal_tasks GROUP BY userId`
+        );
+        const taskByUser = {};
+        (allTaskAgg || []).forEach(r => {
+          taskByUser[r.userId] = {
+            tasksTotal: Number(r.tasksTotal),
+            tasksCompleted: Number(r.tasksCompleted),
+            withProof: Number(r.withProof),
+            lastDate: r.lastDate ? String(r.lastDate).slice(0, 10) : null
+          };
+        });
+
+        let xpByUser = {};
+        try {
+          const [xpAgg] = await db.execute('SELECT userId, SUM(xp_amount) as total FROM journal_xp_awards GROUP BY userId');
+          (xpAgg || []).forEach(r => { xpByUser[r.userId] = Number(r.total); });
+        } catch (e) { /* ignore */ }
+
+        const userIds = [...new Set([...Object.keys(taskByUser).map(Number), ...Object.keys(xpByUser).map(Number)])];
+        if (userIds.length === 0) {
+          await db.end();
+          return res.status(200).json({ summary, users: [] });
+        }
+
+        const placeholders = userIds.map(() => '?').join(',');
+        const [userRows] = await db.execute(
+          `SELECT id, email, username, xp, level FROM users WHERE id IN (${placeholders})`,
+          userIds
+        );
+        const users = (userRows || []).map(u => {
+          const tid = u.id;
+          const agg = taskByUser[tid] || { tasksTotal: 0, tasksCompleted: 0, withProof: 0, lastDate: null };
+          return {
+            id: u.id,
+            email: u.email,
+            username: u.username || u.email,
+            xp: u.xp || 0,
+            level: u.level || 1,
+            tasksTotal: agg.tasksTotal,
+            tasksCompleted: agg.tasksCompleted,
+            tasksWithProof: agg.withProof,
+            lastTaskDate: agg.lastDate,
+            journalXpEarned: xpByUser[tid] || 0
+          };
+        });
+
+        await db.end();
+        return res.status(200).json({ summary, users });
+      } catch (dbErr) {
+        console.error('Database error in journal-stats:', dbErr);
+        if (db && !db.ended) await db.end();
+        return res.status(500).json({ success: false, message: 'Failed to load journal stats' });
+      }
+    } catch (err) {
+      console.error('Error in journal-stats:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  }
+
   // Handle /api/admin/give-xp - Give XP points to a user
   if ((pathname.includes('/give-xp') || pathname.endsWith('/give-xp')) && req.method === 'POST') {
     try {

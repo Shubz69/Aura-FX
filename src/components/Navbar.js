@@ -124,9 +124,14 @@ const Navbar = () => {
                                             </>
                                         )}
                                         {(isAdmin(user) || isSuperAdmin(user)) && (
+                                            <>
+                                            <Link to="/admin/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                                Journal Progress
+                                            </Link>
                                             <Link to="/settings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                 <FaSlidersH className="dropdown-icon" /> Settings
                                             </Link>
+                                            </>
                                         )}
                                         <button onClick={() => { setDropdownOpen(false); logout(); }} className="dropdown-item">
                                             <FaSignOutAlt className="dropdown-icon" /> Logout
@@ -220,9 +225,14 @@ const Navbar = () => {
                             </>
                         )}
                         {(isAdmin(user) || isSuperAdmin(user)) && (
-                            <li><Link to="/settings" onClick={toggleMobileUserMenu}>
-                                <FaSlidersH className="dropdown-icon" /> Settings
-                            </Link></li>
+                            <>
+                                <li><Link to="/admin/journal" onClick={toggleMobileUserMenu}>
+                                    Journal Progress
+                                </Link></li>
+                                <li><Link to="/settings" onClick={toggleMobileUserMenu}>
+                                    <FaSlidersH className="dropdown-icon" /> Settings
+                                </Link></li>
+                            </>
                         )}
                         <li><button onClick={() => { toggleMobileUserMenu(); logout(); }}>
                             <FaSignOutAlt className="dropdown-icon" /> Logout

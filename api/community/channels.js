@@ -1,6 +1,6 @@
-const mysql = require('mysql2/promise');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
 
 const slugify = (value) => {
   if (!value) return '';
@@ -166,44 +166,10 @@ const ensureChannelSchema = async (db) => {
   }
 };
 
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    console.error('Missing MySQL environment variables for channels');
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000,
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    
-    // Test the connection
-    await connection.ping();
-    
-    console.log('Database connection successful for channels');
-    return connection;
-  } catch (error) {
-    console.error('Database connection error in channels:', error.message);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      errno: error.errno
-    });
-    return null;
+// Release pool connection when done (use instead of db.end())
+const releaseDb = (db) => {
+  if (db && typeof db.release === 'function') {
+    try { db.release(); } catch (_) {}
   }
 };
 
@@ -293,7 +259,7 @@ module.exports = async (req, res) => {
             'SELECT value FROM community_settings WHERE id = ?',
             ['channelOrder']
           );
-          if (db && !db.ended) await db.end();
+          releaseDb(db);
           if (rows && rows.length > 0) {
             try {
               const channelOrder = JSON.parse(rows[0].value);
@@ -305,7 +271,7 @@ module.exports = async (req, res) => {
           return res.status(200).json({ success: true, channelOrder: {} });
         } catch (dbError) {
           console.error('Database error fetching channel order:', dbError);
-          if (db && !db.ended) await db.end();
+          releaseDb(db);
           return res.status(500).json({ success: false, message: 'Database error' });
         }
       } catch (error) {
@@ -328,15 +294,15 @@ module.exports = async (req, res) => {
           );
           if (rows && rows.length > 0) {
             const order = JSON.parse(rows[0].value);
-            if (db && !db.ended) await db.end();
+            releaseDb(db);
             return res.status(200).json({ success: true, data: order });
           }
-          if (db && !db.ended) await db.end();
+          releaseDb(db);
           const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
           return res.status(200).json({ success: true, data: defaultOrder });
         } catch (dbError) {
           console.error('Database error fetching category order:', dbError);
-          if (db && !db.ended) await db.end();
+          releaseDb(db);
           return res.status(500).json({ success: false, message: 'Database error' });
         }
       } catch (error) {
@@ -611,7 +577,7 @@ module.exports = async (req, res) => {
           console.error('Database error fetching channels:', dbError);
         } finally {
           try {
-            await db.end();
+            releaseDb(db);
           } catch (endError) {
             console.log('Error closing channels DB connection:', endError.message);
           }
@@ -659,11 +625,11 @@ module.exports = async (req, res) => {
           ['channelOrder', JSON.stringify(channelOrder), JSON.stringify(channelOrder)]
         );
 
-        await db.end();
+        releaseDb(db);
         return res.status(200).json({ success: true, message: 'Channel order saved' });
       } catch (dbError) {
         console.error('Database error saving channel order:', dbError);
-        if (db && !db.ended) await db.end();
+        releaseDb(db);
         return res.status(500).json({ success: false, message: 'Database error' });
       }
     } catch (error) {
@@ -711,7 +677,7 @@ module.exports = async (req, res) => {
           ['category_order', JSON.stringify(order), JSON.stringify(order)]
         );
 
-        await db.end();
+        releaseDb(db);
         return res.status(200).json({
           success: true,
           message: 'Category order updated successfully',
@@ -719,7 +685,7 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error saving category order:', dbError);
-        if (db && !db.ended) await db.end();
+        releaseDb(db);
         return res.status(500).json({
           success: false,
           message: 'Failed to save category order'
@@ -870,7 +836,7 @@ module.exports = async (req, res) => {
         });
       } finally {
         try {
-          await db.end();
+          releaseDb(db);
         } catch (endError) {
           console.log('Error closing channels DB connection after create:', endError.message);
         }
@@ -919,7 +885,7 @@ module.exports = async (req, res) => {
 
         await db.execute('DELETE FROM messages WHERE channel_id = ?', [channelId]);
         const [result] = await db.execute('DELETE FROM channels WHERE id = ?', [channelId]);
-        await db.end();
+        releaseDb(db);
 
         if (result.affectedRows === 0) {
           return res.status(404).json({
@@ -934,7 +900,7 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error deleting channel:', dbError);
-        if (db && !db.ended) await db.end();
+        releaseDb(db);
         return res.status(500).json({
           success: false,
           message: 'Failed to delete channel'
@@ -1082,7 +1048,7 @@ module.exports = async (req, res) => {
         const permissionType = (updatedChannel.permission_type || 'read-write').toLowerCase();
         const locked = accessLevel === 'admin-only' || accessLevel === 'admin' || permissionType === 'read-only';
 
-        await db.end();
+        releaseDb(db);
 
         return res.status(200).json({
           success: true,
@@ -1099,7 +1065,7 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error updating channel:', dbError);
-        if (db && !db.ended) await db.end();
+        releaseDb(db);
         return res.status(500).json({
           success: false,
           message: 'Failed to update channel',

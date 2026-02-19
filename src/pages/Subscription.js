@@ -32,7 +32,7 @@ const PLANS = {
     },
     aura: {
         id: 'aura',
-        name: 'Aura FX',
+        name: 'AURA FX',
         badge: 'Standard',
         price: 99,
         currency: '£',
@@ -57,7 +57,7 @@ const PLANS = {
         currency: '£',
         period: '/month',
         features: [
-            'Everything included in Aura FX Standard',
+            'Everything included in AURA FX Standard',
             'Access to exclusive elite trader community',
             'Advanced proprietary trading strategies',
             'Direct communication channel with founders',
@@ -249,7 +249,7 @@ const Subscription = () => {
 
         if ((subscriptionStatus.status === 'canceled' || subscriptionStatus.cancelAtPeriodEnd) && subscriptionStatus.expiresAt) {
             const expiryDate = new Date(subscriptionStatus.expiresAt);
-            const targetName = subscriptionStatus.downgradeToPlanId === 'free' ? 'Free' : (subscriptionStatus.downgradeToPlanId === 'aura' ? 'Aura FX' : '');
+            const targetName = subscriptionStatus.downgradeToPlanId === 'free' ? 'Free' : (subscriptionStatus.downgradeToPlanId === 'aura' ? 'AURA FX' : '');
             return (
                 <div className="plan-renewal-info canceled">
                     Active until {expiryDate.toLocaleDateString('en-GB', { 
@@ -688,7 +688,7 @@ const Subscription = () => {
                                 </p>
                                 <ul className="downgrade-modal-list">
                                     <li><strong>End now</strong> – Your subscription ends immediately. No refund for the unused period. You will have access only to the plan you switch to.</li>
-                                    <li><strong>At end of period</strong> – Keep your current access until your subscription end date, then switch automatically to {downgradeTargetPlanId === 'free' ? 'Free' : 'Aura FX'}.</li>
+                                    <li><strong>At end of period</strong> – Keep your current access until your subscription end date, then switch automatically to {downgradeTargetPlanId === 'free' ? 'Free' : 'AURA FX'}.</li>
                                 </ul>
                                 {downgradeError && <div className="downgrade-modal-error" role="alert">{downgradeError}</div>}
                                 {downgradeSubmitting && <p className="downgrade-modal-message" style={{ marginBottom: 8 }}>Processing...</p>}

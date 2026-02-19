@@ -215,7 +215,7 @@ const Chatbot = () => {
             
             // Pricing
             if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription")) {
-                return "We offer Aura FX subscription at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for details. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Create an account</a> to get started!";
+                return "We offer AURA FX subscription at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for details. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Create an account</a> to get started!";
             }
             
             // Sign up/Login
@@ -262,7 +262,7 @@ const Chatbot = () => {
         
         // Pricing related queries
         if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription") || msg.includes("pay") || msg.includes("fee")) {
-            return "AURA FX offers two subscription plans: Aura FX at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for full details.";
+            return "AURA FX offers two subscription plans: AURA FX at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for full details.";
         }
         
         // Platform features
@@ -321,8 +321,8 @@ const Chatbot = () => {
             "How long is the mentorship program?",
         ],
         "Subscriptions": [
-            "What's included in the Aura FX subscription?",
-            "What's the difference between Aura FX and A7FX?",
+            "What's included in the AURA FX subscription?",
+            "What's the difference between AURA FX and A7FX?",
             "How much does A7FX Elite cost?",
             "Can I cancel my subscription anytime?",
             "What payment methods are accepted?",

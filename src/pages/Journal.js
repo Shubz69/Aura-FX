@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import '../styles/Journal.css';
-import { FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave, FaCamera } from 'react-icons/fa';
 
 const MOOD_OPTIONS = [
   { value: 'great', label: 'Great', emoji: '😊' },
@@ -57,8 +58,10 @@ export default function Journal() {
   const [dailyNotes, setDailyNotes] = useState('');
   const [dailyMood, setDailyMood] = useState(null);
   const [dailySaving, setDailySaving] = useState(false);
+  const [savedFeedback, setSavedFeedback] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
+  const [proofTaskId, setProofTaskId] = useState(null);
 
   const monthStart = getMonthStart(calendarMonth + '-01');
   const monthEnd = getMonthEnd(calendarMonth + '-01');
@@ -87,6 +90,19 @@ export default function Journal() {
     fetchMonthTasks();
   }, [fetchMonthTasks]);
 
+  useEffect(() => {
+    if (loading || !selectedDate) return;
+    Api.getJournalXpCheck(selectedDate)
+      .then((res) => {
+        const awarded = res.data?.awarded || [];
+        awarded.forEach(({ type, xp }) => {
+          const label = type === 'day' ? 'day' : type === 'week' ? 'week' : 'month';
+          toast.success(`+${xp} XP for ${label} completion!`, { icon: '⭐' });
+        });
+      })
+      .catch(() => {});
+  }, [loading, selectedDate]);
+
   const fetchDailyNote = useCallback(async (date) => {
     try {
       const res = await Api.getJournalDaily(date);
@@ -105,12 +121,16 @@ export default function Journal() {
 
   const saveDailyNote = useCallback(async (overrides = {}) => {
     setDailySaving(true);
+    setSavedFeedback(false);
     try {
-      await Api.updateJournalDaily({
+      const res = await Api.updateJournalDaily({
         date: selectedDate,
         notes: overrides.notes !== undefined ? overrides.notes : dailyNotes,
         mood: overrides.mood !== undefined ? overrides.mood : dailyMood,
       });
+      setSavedFeedback(true);
+      setTimeout(() => setSavedFeedback(false), 1800);
+      if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for saving notes!`, { icon: '⭐' });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save notes.');
     } finally {
@@ -167,6 +187,7 @@ export default function Journal() {
       if (task) {
         setMonthTasks((prev) => [...prev, task]);
         setNewTaskTitle('');
+        if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for adding a task!`, { icon: '⭐' });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add task.');
@@ -181,10 +202,36 @@ export default function Journal() {
       const updated = res.data?.task;
       if (updated) {
         setMonthTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+        if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for completing with proof!`, { icon: '⭐' });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update task.');
     }
+  };
+
+  const proofInputRef = useRef(null);
+  const handleProofClick = (taskId) => {
+    setProofTaskId(taskId);
+    proofInputRef.current?.click();
+  };
+  const handleAddProof = (e) => {
+    const file = e?.target?.files?.[0];
+    const taskId = proofTaskId;
+    setProofTaskId(null);
+    e.target.value = '';
+    if (!taskId || !file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      Api.updateJournalTask(taskId, { proofImage: dataUrl })
+        .then((res) => {
+          const updated = res.data?.task;
+          if (updated) setMonthTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+          if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for proof!`, { icon: '⭐' });
+        })
+        .catch(() => setError('Failed to attach proof.'));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDelete = async (id) => {
@@ -377,6 +424,9 @@ export default function Journal() {
             </div>
           </div>
 
+          <div className="journal-xp-info">
+            <strong>Earn XP:</strong> Add tasks (+5), save notes (+5), complete tasks with picture proof (+25). Day/Week/Month % XP (min 5 tasks) when you view the journal.
+          </div>
           <h3 className="journal-section-title">Tasks</h3>
           <form className="journal-add-form" onSubmit={handleAddTask}>
             <input
@@ -414,6 +464,12 @@ export default function Journal() {
                 ))}
               </div>
             </div>
+            {dailyNotes.trim() ? (
+              <div className="journal-note-display" aria-live="polite">
+                <div className="journal-note-display-label">Your saved note</div>
+                <div className="journal-note-display-content">{dailyNotes.trim()}</div>
+              </div>
+            ) : null}
             <textarea
               className="journal-notes-input"
               placeholder="Reflections, goals, or notes for this day..."
@@ -422,8 +478,8 @@ export default function Journal() {
               onBlur={saveDailyNote}
               rows={4}
             />
-            <button type="button" className="journal-save-notes-btn" onClick={saveDailyNote} disabled={dailySaving}>
-              {dailySaving ? 'Saving…' : <><FaSave /> Save notes</>}
+            <button type="button" className={`journal-save-notes-btn ${savedFeedback ? 'journal-save-notes-btn--saved' : ''}`} onClick={saveDailyNote} disabled={dailySaving}>
+              {dailySaving ? 'Saving…' : savedFeedback ? <><FaCheck /> Saved!</> : <><FaSave /> Save notes</>}
             </button>
           </section>
 
@@ -460,7 +516,15 @@ export default function Journal() {
                     ) : (
                       <>
                         <span className="journal-task-title" onClick={() => handleEditStart(task)} title="Click to edit">{task.title}</span>
+                        {task.proofImage ? (
+                          <span className="journal-task-proof-thumb" title="Proof attached">
+                            <img src={task.proofImage} alt="Proof" />
+                          </span>
+                        ) : null}
                         <div className="journal-task-actions">
+                          <button type="button" className="journal-task-proof-btn" onClick={() => handleProofClick(task.id)} title="Add picture proof to earn +25 XP when complete">
+                            <FaCamera /> Proof
+                          </button>
                           <button type="button" className="journal-task-edit-icon" onClick={(e) => { e.stopPropagation(); handleEditStart(task); }} aria-label="Edit task"><FaEdit /></button>
                           <button type="button" className="journal-task-delete" onClick={() => handleDelete(task.id)} aria-label="Delete task"><FaTrash /></button>
                         </div>
@@ -471,6 +535,13 @@ export default function Journal() {
               )}
             </ul>
           )}
+          <input
+            type="file"
+            ref={proofInputRef}
+            accept="image/*"
+            className="journal-proof-input-hidden"
+            onChange={handleAddProof}
+          />
         </main>
       </div>
     </div>

@@ -63,6 +63,19 @@ const AdminApi = {
                 'Accept': 'application/json'
             }
         });
+    },
+
+    getJournalStats: (userId = null) => {
+        const token = localStorage.getItem('token');
+        const url = userId
+            ? `${API_BASE_URL}/api/admin/journal-stats?userId=${userId}`
+            : `${API_BASE_URL}/api/admin/journal-stats`;
+        return axios.get(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
     }
 };
 

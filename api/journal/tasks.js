@@ -3,9 +3,10 @@
  * All endpoints require auth. Users can only access their own tasks.
  */
 
-const { executeQuery } = require('../db');
+const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
+const { XP, awardOnce } = require('./xp-helper');
 
 function getPathname(req) {
   if (!req.url) return '';
@@ -34,12 +35,14 @@ async function ensureTasksTable() {
       title VARCHAR(255) NOT NULL,
       completed TINYINT(1) DEFAULT 0,
       sortOrder INT DEFAULT 0,
+      proof_image MEDIUMTEXT DEFAULT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_journal_tasks_userId (userId),
       INDEX idx_journal_tasks_userId_date (userId, date)
     )
   `);
+  await addColumnIfNotExists('journal_tasks', 'proof_image', 'MEDIUMTEXT DEFAULT NULL');
 }
 
 function mapRow(row) {
@@ -51,6 +54,7 @@ function mapRow(row) {
     title: row.title,
     completed: Boolean(row.completed),
     sortOrder: row.sortOrder != null ? Number(row.sortOrder) : 0,
+    proofImage: row.proof_image || null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -132,8 +136,14 @@ module.exports = async (req, res) => {
       [id, userId, date, title, sortOrder]
     );
 
+    const xpResult = await awardOnce(userId, 'journal_add_task', XP.ADD_TASK, id, null);
+
     const [rows] = await executeQuery('SELECT * FROM journal_tasks WHERE id = ?', [id]);
-    return res.status(201).json({ success: true, task: mapRow(rows[0]) });
+    return res.status(201).json({
+      success: true,
+      task: mapRow(rows[0]),
+      xpAwarded: xpResult.awarded ? xpResult.xpAdded : null,
+    });
   }
 
   if ((req.method === 'PUT' || req.method === 'DELETE') && taskId) {
@@ -167,6 +177,11 @@ module.exports = async (req, res) => {
       updates.push('sortOrder = ?');
       params.push(Number(body.sortOrder));
     }
+    if (body.proofImage !== undefined) {
+      const proof = body.proofImage ? String(body.proofImage).trim().slice(0, 10485760) : null;
+      updates.push('proof_image = ?');
+      params.push(proof);
+    }
 
     if (updates.length === 0) {
       const [rows] = await executeQuery('SELECT * FROM journal_tasks WHERE id = ?', [taskId]);
@@ -180,7 +195,13 @@ module.exports = async (req, res) => {
     );
 
     const [rows] = await executeQuery('SELECT * FROM journal_tasks WHERE id = ?', [taskId]);
-    return res.status(200).json({ success: true, task: mapRow(rows[0]) });
+    const task = mapRow(rows[0]);
+    let xpAwarded = null;
+    if (task && task.completed && task.proofImage) {
+      const xpResult = await awardOnce(userId, 'journal_task_complete_proof', XP.COMPLETE_WITH_PROOF, taskId, null);
+      if (xpResult.awarded) xpAwarded = xpResult.xpAdded;
+    }
+    return res.status(200).json({ success: true, task, xpAwarded });
   }
 
   return res.status(405).json({ success: false, message: 'Method not allowed' });
