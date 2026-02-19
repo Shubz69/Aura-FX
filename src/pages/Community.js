@@ -18,6 +18,7 @@ import {
     isOnCooldown,
     XP_REWARDS
 } from '../utils/xpSystem';
+import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 
 // Icons
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft, FaDownload } from 'react-icons/fa';
@@ -1549,8 +1550,8 @@ const Community = () => {
             sender: {
                 id: userId,
                 username: storedUser?.username || storedUser?.name || 'User',
-                avatar: storedUser?.avatar || '/avatars/avatar_ai.png',
-                role: getCurrentUserRole()
+avatar: storedUser?.avatar || null,
+            role: getCurrentUserRole()
             },
             timestamp: new Date().toISOString(),
             file: null,
@@ -3000,7 +3001,7 @@ Let's build generational wealth together! 💰🚀`,
                     sender: {
                         id: 'system',
                         username: 'AURA FX',
-                        avatar: '/avatars/avatar_ai.png',
+                        avatar: null,
                         role: 'admin'
                     },
                     timestamp: new Date().toISOString(),
@@ -3034,7 +3035,7 @@ Check back regularly for:
 • Trading insights and market analysis
 • Community events and challenges
 • Course updates and new content`,
-            sender: { id: 'system', username: 'AURA FX', avatar: '/avatars/avatar_ai.png', role: 'admin' },
+            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -3066,7 +3067,7 @@ Earn XP by:
 • Sharing files and insights
 • Being active in discussions
 • Completing courses`,
-            sender: { id: 'system', username: 'AURA FX', avatar: '/avatars/avatar_ai.png', role: 'admin' },
+            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -3271,8 +3272,8 @@ Earn XP by:
             sender: {
                 id: userId,
                 username: storedUser?.username || storedUser?.name || 'User',
-                avatar: storedUser?.avatar || '/avatars/avatar_ai.png',
-                role: getCurrentUserRole()
+avatar: storedUser?.avatar || null,
+            role: getCurrentUserRole()
             },
             timestamp: new Date().toISOString(),
             file: selectedFile ? {
@@ -4902,15 +4903,11 @@ Earn XP by:
                         alignItems: 'center',
                         gap: '12px'
                     }}>
-                        {/* Avatar with image or initials */}
+                        {/* Avatar: real pic or purple placeholder */}
                         <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
-                            {storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' && !storedUser.avatar.includes('avatar_ai') ? (
+                            {hasRealAvatar(storedUser?.avatar) ? (
                                 <img 
-                                    src={storedUser.avatar.startsWith('data:image') 
-                                        ? storedUser.avatar 
-                                        : storedUser.avatar.startsWith('/')
-                                        ? storedUser.avatar
-                                        : `/avatars/${storedUser.avatar}`}
+                                    src={resolveAvatarUrl(storedUser.avatar)} 
                                     alt="Avatar"
                                     style={{
                                         width: '40px',
@@ -4921,40 +4918,19 @@ Earn XP by:
                                         boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)',
                                         display: 'block'
                                     }}
-                                    onError={(e) => {
-                                        // If image fails to load, show initials instead
-                                        e.target.style.display = 'none';
-                                        const initialsDiv = e.target.parentElement.querySelector('.avatar-initials');
-                                        if (initialsDiv) {
-                                            initialsDiv.style.display = 'flex';
-                                        }
-                                    }}
                                 />
-                            ) : null}
-                            <div 
-                                className="avatar-initials"
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '50%',
-                                    background: (storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' && !storedUser.avatar.includes('avatar_ai')) 
-                                        ? 'transparent' 
-                                        : 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
-                                    display: (storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' && !storedUser.avatar.includes('avatar_ai')) 
-                                        ? 'none' 
-                                        : 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '1rem',
-                                    fontWeight: 700,
-                                    color: 'white',
-                                    position: storedUser?.avatar && storedUser.avatar !== 'avatar_ai.png' ? 'absolute' : 'relative',
-                                    top: 0,
-                                    left: 0
-                                }}
-                            >
-                                {(storedUser?.username || storedUser?.name || 'U').substring(0, 2).toUpperCase()}
-                            </div>
+                            ) : (
+                                <div 
+                                    className="avatar-placeholder"
+                                    style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        border: '2px solid rgba(139, 92, 246, 0.5)',
+                                        boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)'
+                                    }}
+                                    aria-hidden
+                                />
+                            )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ 
@@ -5450,23 +5426,18 @@ Earn XP by:
                                                         e.currentTarget.style.opacity = '1';
                                                     }}
                                                 >
-                                                    {message.sender?.avatar && message.sender.avatar !== '/avatars/avatar_ai.png' ? (
+                                                    {hasRealAvatar(message.sender?.avatar) ? (
                                                         <img 
-                                                            src={message.sender.avatar} 
+                                                            src={resolveAvatarUrl(message.sender.avatar)} 
                                                             alt={message.sender?.username || 'User'}
                                                             style={{
                                                                 width: '100%',
                                                                 height: '100%',
                                                                 objectFit: 'cover'
                                                             }}
-                                                            onError={(e) => {
-                                                                // Fallback to initials if image fails to load
-                                                                e.target.style.display = 'none';
-                                                                e.target.parentElement.textContent = (message.sender?.username || 'U').substring(0, 2).toUpperCase();
-                                                            }}
                                                         />
                                                     ) : (
-                                                        <span>{(message.sender?.username || 'U').substring(0, 2).toUpperCase()}</span>
+                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
                                                     )}
                                                 </div>
                                             )}
@@ -6347,19 +6318,14 @@ Earn XP by:
                                                                     fontSize: '0.9rem',
                                                                     flexShrink: 0
                                                                 }}>
-                                                                    {user.avatar && user.avatar !== '/avatars/avatar_ai.png' ? (
+                                                                    {hasRealAvatar(user.avatar) ? (
                                                                         <img
-                                                                            src={user.avatar}
+                                                                            src={resolveAvatarUrl(user.avatar)}
                                                                             alt=""
                                                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                                            onError={(e) => {
-                                                                                e.target.style.display = 'none';
-                                                                                const el = e.target.parentElement;
-                                                                                if (el) el.textContent = (username || 'U').substring(0, 2).toUpperCase();
-                                                                            }}
                                                                         />
                                                                     ) : (
-                                                                        <span>{(username || 'U').substring(0, 2).toUpperCase()}</span>
+                                                                        <div className="avatar-placeholder" style={{ width: '100%', height: '100%' }} aria-hidden />
                                                                     )}
                                                                 </div>
                                                                 <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>

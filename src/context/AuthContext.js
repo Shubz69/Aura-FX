@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       username: data.username || data.name || '',
       email: data.email || '',
       name: data.name || data.username || '',
-      avatar: data.avatar || '/avatars/avatar_ai.png',
+      avatar: data.avatar || null,
       phone: data.phone || '',
       address: data.address || '',
       role: finalRole,

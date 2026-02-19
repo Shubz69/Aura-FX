@@ -387,7 +387,7 @@ module.exports = async (req, res) => {
           const username = row.username || row.name || (row.email ? row.email.split('@')[0] : 'Anonymous');
           
           // Get avatar from user table, fallback to default
-          const avatar = row.avatar || '/avatars/avatar_ai.png';
+          const avatar = row.avatar ?? null;
           
           // Get role from user table
           const role = row.role || 'USER';
@@ -528,7 +528,7 @@ module.exports = async (req, res) => {
                 createdAt: r.timestamp,
                 timestamp: r.timestamp,
                 file: r.file_data ? (typeof r.file_data === 'string' ? JSON.parse(r.file_data) : r.file_data) : null,
-                sender: { id: r.sender_id, username: uname, avatar: r.avatar || '/avatars/avatar_ai.png', role: r.role || 'USER' },
+                sender: { id: r.sender_id, username: uname, avatar: r.avatar ?? null, role: r.role || 'USER' },
                 sequence: r.id
               };
               return res.status(200).json(msg);
@@ -711,7 +711,7 @@ module.exports = async (req, res) => {
         
         // Get username and avatar from joined user table
         const senderUsername = newMessage.username || newMessage.name || (newMessage.email ? newMessage.email.split('@')[0] : 'Anonymous');
-        const senderAvatar = newMessage.avatar || '/avatars/avatar_ai.png';
+        const senderAvatar = newMessage.avatar ?? null;
         const senderRole = newMessage.role || 'USER';
         
         // Create notifications for @mentioned users (before releasing db)

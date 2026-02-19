@@ -225,7 +225,7 @@ const Login = () => {
                         username: response.username || email.split('@')[0] || 'user',
                         email: response.email || email,
                         name: response.name || '',
-                        avatar: response.avatar || 'avatar_ai.png',
+                        avatar: response.avatar || null,
                     }
                 );
                 

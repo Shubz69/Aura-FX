@@ -613,6 +613,15 @@ const Api = {
     getJournalXpCheck: (date) => {
         return axios.get(`${API_BASE_URL}/api/journal/xp-check`, { params: { date } });
     },
+    getJournalNotes: (date) => {
+        return axios.get(`${API_BASE_URL}/api/journal/notes`, { params: { date } });
+    },
+    addJournalNote: (date, content) => {
+        return axios.post(`${API_BASE_URL}/api/journal/notes`, { date, content });
+    },
+    deleteJournalNote: (id) => {
+        return axios.delete(`${API_BASE_URL}/api/journal/notes/${id}`);
+    },
     
     // Contact
     getBaseUrl: () => getApiBaseUrl(),

@@ -421,6 +421,14 @@
       "destination": "/api/journal/xp-check.js"
     },
     {
+      "source": "/api/journal/notes",
+      "destination": "/api/journal/notes.js"
+    },
+    {
+      "source": "/api/journal/notes/:id",
+      "destination": "/api/journal/notes.js"
+    },
+    {
       "source": "/api/market/watchlist",
       "destination": "/api/market/watchlist.js"
     },

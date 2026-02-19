@@ -16,6 +16,21 @@
   50% { opacity: 0.85; }
 }
 
+@keyframes journal-dayAppear {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes journal-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4); }
+  50% { box-shadow: 0 0 12px 2px rgba(255, 255, 255, 0.25); }
+}
+
+@keyframes journal-shine {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 #journal-top {
   scroll-margin-top: calc(70px + env(safe-area-inset-top, 0));
 }
@@ -75,85 +90,101 @@
 
 /* Calendar – enhanced look and motion */
 .journal-calendar {
-  background: linear-gradient(145deg, rgba(37, 37, 37, 0.98) 0%, rgba(28, 28, 28, 0.98) 100%);
-  border-radius: 20px;
-  padding: 20px;
+  background: linear-gradient(160deg, rgba(40, 42, 50, 0.98) 0%, rgba(24, 26, 32, 0.98) 100%);
+  border-radius: 24px;
+  padding: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   margin-bottom: 20px;
-  animation: journal-scaleIn 0.35s ease-out;
+  animation: journal-scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.journal-calendar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  pointer-events: none;
 }
 
 .journal-calendar-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .journal-calendar-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
   color: var(--primary, #fff);
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
 }
 
 .journal-calendar-btn:hover {
   background: rgba(255, 255, 255, 0.14);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .journal-calendar-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .journal-calendar-month {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--primary, #fff);
   letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .journal-calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .journal-calendar-wd {
-  font-size: 0.72rem;
-  color: var(--secondary, rgba(255, 255, 255, 0.55));
+  font-size: 0.7rem;
+  color: var(--secondary, rgba(255, 255, 255, 0.5));
   text-align: center;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .journal-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 
 .journal-calendar-day {
   aspect-ratio: 1;
-  max-width: 40px;
-  max-height: 40px;
+  max-width: 44px;
+  max-height: 44px;
   margin: 0 auto;
+  width: 100%;
   border: none;
-  border-radius: 12px;
-  background: transparent;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
   color: var(--primary, #fff);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -161,35 +192,47 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+  animation: journal-dayAppear 0.35s ease-out both;
 }
 
+.journal-calendar-grid .journal-calendar-day:nth-child(7n+1) { animation-delay: 0.02s; }
+.journal-calendar-grid .journal-calendar-day:nth-child(7n+2) { animation-delay: 0.04s; }
+.journal-calendar-grid .journal-calendar-day:nth-child(7n+3) { animation-delay: 0.06s; }
+.journal-calendar-grid .journal-calendar-day:nth-child(7n+4) { animation-delay: 0.08s; }
+.journal-calendar-grid .journal-calendar-day:nth-child(7n+5) { animation-delay: 0.1s; }
+.journal-calendar-grid .journal-calendar-day:nth-child(7n+6) { animation-delay: 0.12s; }
+.journal-calendar-grid .journal-calendar-day:nth-child(7n+7) { animation-delay: 0.14s; }
+
 .journal-calendar-day:hover {
-  background: rgba(255, 255, 255, 0.12);
-  transform: scale(1.08);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
 .journal-calendar-day--empty {
   pointer-events: none;
   opacity: 0;
+  animation: none;
 }
 
 .journal-calendar-day--today {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  animation: journal-glow 2.5s ease-in-out infinite;
 }
 
 .journal-calendar-day--selected {
   background: linear-gradient(135deg, var(--blue-primary, #1E90FF) 0%, #1a7ae0 100%);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(30, 144, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(30, 144, 255, 0.45);
+  transform: scale(1.05);
 }
 
 .journal-calendar-day--selected:hover {
   background: linear-gradient(135deg, var(--blue-secondary, #4169E1) 0%, #3558c7 100%);
-  transform: scale(1.06);
-  box-shadow: 0 6px 20px rgba(30, 144, 255, 0.35);
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(30, 144, 255, 0.4);
 }
 
 .journal-calendar-day-num {
@@ -198,7 +241,7 @@
 
 .journal-calendar-day-dot {
   position: absolute;
-  bottom: 2px;
+  bottom: 3px;
   font-size: 6px;
   display: flex;
   align-items: center;
@@ -390,8 +433,15 @@
   border-radius: 12px;
   margin-bottom: 8px;
   transition: background 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s;
-  animation: journal-fadeIn 0.3s ease-out;
+  animation: journal-fadeIn 0.35s ease-out both;
 }
+
+.journal-task-list .journal-task-item:nth-child(1) { animation-delay: 0.03s; }
+.journal-task-list .journal-task-item:nth-child(2) { animation-delay: 0.06s; }
+.journal-task-list .journal-task-item:nth-child(3) { animation-delay: 0.09s; }
+.journal-task-list .journal-task-item:nth-child(4) { animation-delay: 0.12s; }
+.journal-task-list .journal-task-item:nth-child(5) { animation-delay: 0.15s; }
+.journal-task-list .journal-task-item:nth-child(n+6) { animation-delay: 0.18s; }
 
 .journal-task-item:hover {
   background: rgba(255, 255, 255, 0.05);
@@ -594,6 +644,130 @@
 }
 .journal-xp-info strong {
   color: rgba(255, 255, 255, 0.9);
+}
+
+/* Notes section (under tasks) */
+.journal-notes-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  animation: journal-fadeIn 0.4s ease-out 0.1s both;
+}
+
+.journal-notes-hint {
+  font-size: 0.85rem;
+  color: var(--secondary, rgba(255, 255, 255, 0.6));
+  margin: -4px 0 14px 0;
+}
+
+.journal-notes-list {
+  list-style: none;
+  margin: 0 0 16px 0;
+  padding: 0;
+}
+
+.journal-note-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  animation: journal-fadeIn 0.3s ease-out;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.journal-note-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+}
+
+.journal-note-content {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--primary, #fff);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.journal-note-delete {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.journal-note-delete:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.journal-add-note-form {
+  display: flex;
+  gap: 12px;
+}
+
+.journal-add-note-input {
+  flex: 1;
+  background: var(--bg-light, #252525);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  color: var(--primary, #fff);
+  transition: border-color 0.2s;
+}
+
+.journal-add-note-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.journal-add-note-input:focus {
+  outline: none;
+  border-color: var(--blue-primary, #1E90FF);
+}
+
+.journal-add-note-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  background: rgba(30, 144, 255, 0.25);
+  border: 1px solid rgba(30, 144, 255, 0.4);
+  border-radius: 12px;
+  color: #93c5fd;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.journal-add-note-btn:hover:not(:disabled) {
+  background: rgba(30, 144, 255, 0.35);
+  border-color: var(--blue-primary, #1E90FF);
+  transform: scale(1.02);
+}
+
+.journal-add-note-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.journal-mood-saved {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #22c55e;
 }
 
 .journal-task-empty {

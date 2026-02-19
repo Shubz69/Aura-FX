@@ -329,17 +329,16 @@ module.exports = async (req, res) => {
               console.warn('Avatar data too long, truncating to 60KB');
               avatarValue = avatarValue.substring(0, 60000);
             }
-            // If it's not a base64 data URL and not a simple filename, default to avatar_ai.png
+            // If it's not a base64 data URL and not a simple filename, treat invalid as clear avatar
             if (avatarValue && !avatarValue.startsWith('data:') && !avatarValue.match(/^[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif|webp)$/)) {
-              // If it looks like it might be corrupted or invalid, use default
               if (avatarValue.length > 1000 && !avatarValue.includes('base64')) {
-                console.warn('Avatar value seems invalid, using default');
-                avatarValue = 'avatar_ai.png';
+                console.warn('Avatar value seems invalid, clearing');
+                avatarValue = null;
               }
             }
           }
           updates.push('avatar = ?');
-          values.push(avatarValue || 'avatar_ai.png');
+          values.push(avatarValue ?? null);
         }
 
         if (updates.length === 0) {
@@ -499,7 +498,7 @@ module.exports = async (req, res) => {
           username: user.username || user.name || 'User',
           name: user.name,
           bio: user.bio || '',
-          avatar: user.avatar || 'avatar_ai.png',
+          avatar: user.avatar ?? null,
           banner: (hasBanner && user.banner) ? user.banner : '',
           role: user.role || 'free',
           level: parseInt(user.level || 1),

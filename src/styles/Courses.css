@@ -1,6 +1,6 @@
 .pricing-info {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 16px;
 }
 
 .pricing-info p {
@@ -68,7 +68,7 @@
     text-align: center;
     color: #ffffff;
     font-size: 32px;
-    margin-bottom: 30px;
+    margin-bottom: 16px;
     font-family: var(--font-main);
     font-weight: 200;
     letter-spacing: 0.15em;
@@ -107,7 +107,7 @@
     background: #0a0a0a;
     overflow-x: hidden;
     overflow-y: visible; /* Let page-wrapper handle scroll - no nested scroll on mobile */
-    padding: 100px 20px 60px;
+    padding: 56px 20px 36px;
     color: #ffffff;
     box-sizing: border-box;
 }
@@ -129,7 +129,7 @@
 }
 
 .section-header {
-    margin-bottom: 30px;
+    margin-bottom: 16px;
     text-align: center;
     width: 100%;
 }
@@ -199,8 +199,8 @@
 
 .all-courses {
     text-align: center;
-    margin-bottom: 40px;
-    padding: 15px 30px;
+    margin-bottom: 20px;
+    padding: 12px 24px;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 50px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -230,10 +230,10 @@
 .courses-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 30px;
+    gap: 18px;
     width: 100%;
     max-width: 1200px;
-    margin: 40px auto 0;
+    margin: 18px auto 0;
     padding: 0 20px;
     position: relative;
     z-index: 2;
@@ -289,7 +289,7 @@
 }
 
 .course-info {
-    padding: 20px;
+    padding: 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -297,7 +297,7 @@
 
 .course-info h3 {
     font-size: 20px;
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     color: #ffffff;
     font-weight: 300;
     text-transform: uppercase;
@@ -306,7 +306,7 @@
 }
 
 .course-description {
-    margin: 0 0 20px;
+    margin: 0 0 10px;
     font-size: 14px;
     color: #ffffff;
     flex: 1;
@@ -412,7 +412,7 @@
 
 .courses-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 22px;
     z-index: 2;
     position: relative;
     padding-top: 0;
@@ -453,17 +453,17 @@
 .subscriptions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
+    gap: 16px;
     width: 100%;
     max-width: 1200px;
-    margin: 0 auto 20px;
+    margin: 0 auto 12px;
     padding: 0 20px;
     box-sizing: border-box;
 }
 
 /* Subscription Plan Cards */
 .subscription-plan-card {
-    padding: clamp(20px, 4vw, 32px);
+    padding: clamp(16px, 3vw, 24px);
     background: rgba(255, 255, 255, 0.05);
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -496,7 +496,7 @@
     color: #fff;
     font-size: clamp(22px, 4.5vw, 28px);
     font-weight: 700;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     line-height: 1.2;
 }
 
@@ -504,19 +504,19 @@
     font-size: clamp(32px, 7vw, 48px);
     font-weight: 700;
     color: #8B5CF6;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     line-height: 1;
 }
 
 .subscription-plan-period {
     color: rgba(255, 255, 255, 0.7);
     font-size: clamp(13px, 2.5vw, 16px);
-    margin-bottom: 24px;
+    margin-bottom: 14px;
 }
 
 /* Promotional Pricing Styles */
 .subscription-pricing-container {
-    margin-bottom: 24px;
+    margin-bottom: 14px;
 }
 
 .promotional-pricing {
@@ -574,14 +574,14 @@
     text-align: left;
     color: rgba(255, 255, 255, 0.9);
     font-size: clamp(13px, 2.5vw, 15px);
-    margin-bottom: 24px;
-    padding-left: 20px;
+    margin-bottom: 14px;
+    padding-left: 16px;
     list-style: none;
     flex: 1;
 }
 
 .subscription-plan-features li {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     line-height: 1.5;
 }
 
@@ -640,7 +640,7 @@
     }
     
     .courses-container {
-        padding: 160px 15px 30px;
+        padding: 100px 15px 24px;
     }
     
     .subscriptions-grid {
@@ -676,7 +676,7 @@
 
 @media (max-width: 768px) {
     .courses-container {
-        padding: 90px 15px 20px;
+        padding: 72px 15px 16px;
     }
     
     .courses-grid {
@@ -706,9 +706,9 @@
     }
     
     .courses-header {
-        margin-bottom: 30px;
-        padding-top: 20px;
-        margin-top: 10px;
+        margin-bottom: 20px;
+        padding-top: 16px;
+        margin-top: 8px;
     }
     
     .courses-header p {
@@ -736,7 +736,7 @@
 
 @media (max-width: 480px) {
     .courses-container {
-        padding: 72px 12px 15px;
+        padding: 60px 12px 12px;
     }
     
     .subscriptions-grid {
@@ -756,9 +756,9 @@
     }
     
     .courses-header {
-        padding-top: 15px;
-        margin-top: 10px;
-        margin-bottom: 24px;
+        padding-top: 12px;
+        margin-top: 8px;
+        margin-bottom: 18px;
     }
     
     .courses-header p {

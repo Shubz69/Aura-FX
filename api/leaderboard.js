@@ -571,7 +571,7 @@ module.exports = async (req, res) => {
       xp: parseFloat(user.period_xp) || 0,
       totalXP: parseFloat(user.total_xp) || 0,
       level: parseInt(user.level) || getLevelFromXP(parseFloat(user.total_xp) || 0),
-      avatar: user.avatar || 'avatar_ai.png',
+      avatar: user.avatar ?? null,
       role: user.role || 'free',
       // NOTE: is_demo is intentionally NOT included in public response
       strikes: 0

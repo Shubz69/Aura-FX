@@ -16,6 +16,7 @@ import {
     FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 import '../styles/ProfileModal.css';
 
 // Get or create portal root for modals
@@ -31,30 +32,17 @@ const getModalRoot = () => {
 };
 
 /**
- * Avatar component with robust fallback handling
- * Shows initials if image fails to load or is missing
+ * Avatar component: shows user image or clean purple transparent circle (no default PFP).
  */
 const AvatarWithFallback = ({ src, name, size = 130, tierColor, isOnline }) => {
     const [imageError, setImageError] = React.useState(false);
     const [imageLoaded, setImageLoaded] = React.useState(false);
     
-    // Reset error state when src changes
     React.useEffect(() => {
         setImageError(false);
         setImageLoaded(false);
     }, [src]);
     
-    // Get initials from name (up to 2 characters)
-    const getInitials = (name) => {
-        if (!name) return 'U';
-        const parts = name.trim().split(/[\s_-]+/);
-        if (parts.length >= 2) {
-            return (parts[0][0] + parts[1][0]).toUpperCase();
-        }
-        return name.substring(0, 2).toUpperCase();
-    };
-    
-    const initials = getInitials(name);
     const showImage = src && !imageError;
     
     return (
@@ -64,29 +52,22 @@ const AvatarWithFallback = ({ src, name, size = 130, tierColor, isOnline }) => {
             height: `${size}px`,
             flexShrink: 0
         }}>
-            {/* Fallback: Initials background - always rendered behind */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                background: `linear-gradient(135deg, ${tierColor}, ${tierColor}80)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: `${size * 0.35}px`,
-                fontWeight: 700,
-                color: 'white',
-                border: `5px solid ${tierColor}`,
-                boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
-                boxSizing: 'border-box'
-            }}>
-                {initials}
-            </div>
+            {/* No-avatar fallback: purple transparent circle */}
+            <div
+                className="avatar-placeholder"
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: `5px solid ${tierColor}`,
+                    boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
+                    boxSizing: 'border-box'
+                }}
+                aria-hidden
+            />
             
-            {/* Avatar image - layered on top if available and loads successfully */}
             {showImage && (
                 <img 
                     src={src} 
@@ -418,11 +399,6 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const friendBtn = getFriendButton();
 
     // Helper functions
-    const getAvatarPath = (avatarName) => {
-        if (avatarName?.startsWith('data:image') || avatarName?.startsWith('/')) return avatarName;
-        return avatarName ? `/avatars/${avatarName}` : '/avatars/avatar_ai.png';
-    };
-
     const formatLastSeen = (date) => {
         if (!date) return 'Never';
         const diffMs = Date.now() - date;
@@ -729,7 +705,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         height: '130px'
                     }}>
                         <AvatarWithFallback 
-                            src={profile.avatar ? getAvatarPath(profile.avatar) : null}
+                            src={hasRealAvatar(profile.avatar) ? resolveAvatarUrl(profile.avatar) : null}
                             name={profile.username || profile.name || 'User'}
                             size={130}
                             tierColor={tierColor}

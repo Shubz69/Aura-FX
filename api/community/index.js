@@ -189,7 +189,7 @@ async function handleGetUsers(req, res, requestId, logger, startTime) {
       username: row.username,
       email: row.email,
       name: row.name,
-      avatar: row.avatar || '/avatars/avatar_ai.png',
+      avatar: row.avatar ?? null,
       role: row.role,
       createdAt: row.created_at,
       lastSeen: row.last_seen

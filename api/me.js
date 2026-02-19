@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
         email: userRow.email,
         username: userRow.username || userRow.email?.split('@')[0] || '',
         name: userRow.name || userRow.username || '',
-        avatar: userRow.avatar || '/avatars/avatar_ai.png',
+        avatar: userRow.avatar ?? null,
         role: entitlements.role,
         level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
         xp: userRow.xp != null ? parseFloat(userRow.xp) : 0

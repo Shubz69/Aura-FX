@@ -7,14 +7,8 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Sidebar from '../components/Sidebar';
+import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 import '../styles/Friends.css';
-
-// Get avatar path helper
-function getAvatarPath(avatar) {
-  if (!avatar) return '/avatars/avatar_ai.png';
-  if (avatar.startsWith('data:') || avatar.startsWith('/')) return avatar;
-  return `/avatars/${avatar}`;
-}
 
 // Format relative time
 function formatRelativeTime(date) {
@@ -496,7 +490,11 @@ const Friends = () => {
                               {onlineFriends.map(friend => (
                                 <div key={friend.id} className="friend-card">
                                   <div className="friend-avatar">
-                                    <img src={getAvatarPath(friend.avatar)} alt={friend.username} />
+                                    {hasRealAvatar(friend.avatar) ? (
+                                      <img src={resolveAvatarUrl(friend.avatar)} alt={friend.username} />
+                                    ) : (
+                                      <div className="avatar-placeholder" aria-hidden />
+                                    )}
                                     <div className="online-indicator" />
                                   </div>
                                   <div className="friend-info">
@@ -548,7 +546,11 @@ const Friends = () => {
                               {offlineFriends.map(friend => (
                                 <div key={friend.id} className="friend-card offline">
                                   <div className="friend-avatar">
-                                    <img src={getAvatarPath(friend.avatar)} alt={friend.username} />
+                                    {hasRealAvatar(friend.avatar) ? (
+                                      <img src={resolveAvatarUrl(friend.avatar)} alt={friend.username} />
+                                    ) : (
+                                      <div className="avatar-placeholder" aria-hidden />
+                                    )}
                                     <div className="offline-indicator" />
                                   </div>
                                   <div className="friend-info">
@@ -602,7 +604,11 @@ const Friends = () => {
                       {incomingRequests.map(request => (
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
-                            <img src={getAvatarPath(request.avatar)} alt={request.username} />
+                            {hasRealAvatar(request.avatar) ? (
+                              <img src={resolveAvatarUrl(request.avatar)} alt={request.username} />
+                            ) : (
+                              <div className="avatar-placeholder" aria-hidden />
+                            )}
                           </div>
                           <div className="request-info">
                             <span className="request-name">{request.username}</span>
@@ -652,7 +658,11 @@ const Friends = () => {
                       {outgoingRequests.map(request => (
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
-                            <img src={getAvatarPath(request.avatar)} alt={request.username} />
+                            {hasRealAvatar(request.avatar) ? (
+                              <img src={resolveAvatarUrl(request.avatar)} alt={request.username} />
+                            ) : (
+                              <div className="avatar-placeholder" aria-hidden />
+                            )}
                           </div>
                           <div className="request-info">
                             <span className="request-name">{request.username}</span>
@@ -705,7 +715,11 @@ const Friends = () => {
                       {searchResults.map(user => (
                         <div key={user.id} className="search-result-card">
                           <div className="result-avatar">
-                            <img src={getAvatarPath(user.avatar)} alt={user.username} />
+                            {hasRealAvatar(user.avatar) ? (
+                              <img src={resolveAvatarUrl(user.avatar)} alt={user.username} />
+                            ) : (
+                              <div className="avatar-placeholder" aria-hidden />
+                            )}
                           </div>
                           <div className="result-info">
                             <span className="result-name">{user.username}</span>

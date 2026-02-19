@@ -147,7 +147,7 @@ const Register = () => {
                 phone: formData.phone.trim(),
                 password: formData.password,
                 name: (formData.name || '').trim(),
-                avatar: '/avatars/avatar_ai.png'
+                avatar: null
             };
             localStorage.setItem('newSignup', 'true');
             localStorage.setItem('pendingSubscription', 'true');

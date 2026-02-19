@@ -318,7 +318,7 @@ module.exports = async (req, res) => {
           username: row.username,
           email: row.email,
           name: row.name,
-          avatar: row.avatar || '/avatars/avatar_ai.png',
+          avatar: row.avatar ?? null,
           role: row.role,
           lastSeen: row.last_seen
         }));

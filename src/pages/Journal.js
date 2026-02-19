@@ -62,6 +62,9 @@ export default function Journal() {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
   const [proofTaskId, setProofTaskId] = useState(null);
+  const [dailyNotesList, setDailyNotesList] = useState([]);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [addingNote, setAddingNote] = useState(false);
 
   const monthStart = getMonthStart(calendarMonth + '-01');
   const monthEnd = getMonthEnd(calendarMonth + '-01');
@@ -118,6 +121,19 @@ export default function Journal() {
   useEffect(() => {
     fetchDailyNote(selectedDate);
   }, [selectedDate, fetchDailyNote]);
+
+  const fetchDailyNotesList = useCallback(async (date) => {
+    try {
+      const res = await Api.getJournalNotes(date);
+      setDailyNotesList(Array.isArray(res.data?.notes) ? res.data.notes : []);
+    } catch {
+      setDailyNotesList([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDailyNotesList(selectedDate);
+  }, [selectedDate, fetchDailyNotesList]);
 
   const saveDailyNote = useCallback(async (overrides = {}) => {
     setDailySaving(true);
@@ -269,6 +285,35 @@ export default function Journal() {
   const handleEditCancel = () => {
     setEditingTaskId(null);
     setEditTitle('');
+  };
+
+  const handleAddNote = async (e) => {
+    e.preventDefault();
+    const content = newNoteContent.trim();
+    if (!content || addingNote) return;
+    setAddingNote(true);
+    try {
+      const res = await Api.addJournalNote(selectedDate, content);
+      const note = res.data?.note;
+      if (note) {
+        setDailyNotesList((prev) => [...prev, note]);
+        setNewNoteContent('');
+        if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for saving a note!`, { icon: '⭐' });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add note.');
+    } finally {
+      setAddingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (id) => {
+    try {
+      await Api.deleteJournalNote(id);
+      setDailyNotesList((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete note.');
+    }
   };
 
   const calendarDays = (() => {
@@ -442,47 +487,6 @@ export default function Journal() {
             </button>
           </form>
 
-          <section className="journal-daily-section">
-            <h3 className="journal-section-title">Daily notes & mood</h3>
-            <div className="journal-mood-row">
-              <span className="journal-mood-label">Mood</span>
-              <div className="journal-mood-options">
-                {MOOD_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className={`journal-mood-btn ${dailyMood === opt.value ? 'journal-mood-btn--active' : ''}`}
-                    onClick={() => {
-                      const newMood = dailyMood === opt.value ? null : opt.value;
-                      setDailyMood(newMood);
-                      saveDailyNote({ mood: newMood });
-                    }}
-                    title={opt.label}
-                  >
-                    {opt.emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {dailyNotes.trim() ? (
-              <div className="journal-note-display" aria-live="polite">
-                <div className="journal-note-display-label">Your saved note</div>
-                <div className="journal-note-display-content">{dailyNotes.trim()}</div>
-              </div>
-            ) : null}
-            <textarea
-              className="journal-notes-input"
-              placeholder="Reflections, goals, or notes for this day..."
-              value={dailyNotes}
-              onChange={(e) => setDailyNotes(e.target.value)}
-              onBlur={saveDailyNote}
-              rows={4}
-            />
-            <button type="button" className={`journal-save-notes-btn ${savedFeedback ? 'journal-save-notes-btn--saved' : ''}`} onClick={saveDailyNote} disabled={dailySaving}>
-              {dailySaving ? 'Saving…' : savedFeedback ? <><FaCheck /> Saved!</> : <><FaSave /> Save notes</>}
-            </button>
-          </section>
-
           {loading ? (
             <div className="journal-loading">Loading…</div>
           ) : (
@@ -535,6 +539,61 @@ export default function Journal() {
               )}
             </ul>
           )}
+
+          <section className="journal-notes-section">
+            <h3 className="journal-section-title">Notes</h3>
+            <p className="journal-notes-hint">Save multiple notes for this day. They appear here under your tasks.</p>
+            {dailyNotesList.length > 0 && (
+              <ul className="journal-notes-list">
+                {dailyNotesList.map((note) => (
+                  <li key={note.id} className="journal-note-item">
+                    <span className="journal-note-content">{note.content}</span>
+                    <button type="button" className="journal-note-delete" onClick={() => handleDeleteNote(note.id)} aria-label="Delete note">
+                      <FaTrash />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form className="journal-add-note-form" onSubmit={handleAddNote}>
+              <input
+                type="text"
+                className="journal-add-note-input"
+                placeholder="Add a note..."
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                disabled={addingNote}
+              />
+              <button type="submit" className="journal-add-note-btn" disabled={addingNote || !newNoteContent.trim()}>
+                <FaPlus /> Add note
+              </button>
+            </form>
+          </section>
+
+          <section className="journal-daily-section">
+            <h3 className="journal-section-title">Mood</h3>
+            <div className="journal-mood-row">
+              <div className="journal-mood-options">
+                {MOOD_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`journal-mood-btn ${dailyMood === opt.value ? 'journal-mood-btn--active' : ''}`}
+                    onClick={() => {
+                      const newMood = dailyMood === opt.value ? null : opt.value;
+                      setDailyMood(newMood);
+                      saveDailyNote({ mood: newMood });
+                    }}
+                    title={opt.label}
+                  >
+                    {opt.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {savedFeedback && <span className="journal-mood-saved">Saved!</span>}
+          </section>
+
           <input
             type="file"
             ref={proofInputRef}

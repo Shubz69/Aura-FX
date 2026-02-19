@@ -16,7 +16,7 @@ const MAX_QUERY_TIMES = 100;
 
 // Connection error codes/messages that warrant pool reset (e.g. Vercel serverless + MySQL)
 const CONNECTION_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'PROTOCOL_CONNECTION_LOST', 'ER_CON_COUNT_ERROR']);
-const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT'];
+const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT', 'Pool is closed'];
 
 function isConnectionError(error) {
   if (!error) return false;
@@ -81,25 +81,28 @@ const getDbPool = () => {
  * }
  */
 const getDbConnection = async () => {
-  let p = getDbPool();
-  if (!p) return null;
   try {
+    let p = getDbPool();
+    if (!p) return null;
     let connection = await p.getConnection();
     try {
       await connection.ping();
       return connection;
     } catch (pingErr) {
-      connection.release();
-      if (!isConnectionError(pingErr)) throw pingErr;
-      await closePool();
-      pool = null;
-      p = getDbPool();
-      if (!p) return null;
+      try { connection.release(); } catch (_) {}
+      if (!isConnectionError(pingErr)) {
+        console.error('Error getting database connection:', pingErr.message);
+        return null;
+      }
+      // Retry once with same pool (do NOT close pool - would break other in-flight requests)
       connection = await p.getConnection();
       await connection.ping();
       return connection;
     }
   } catch (error) {
+    if (error && (error.message || '').includes('Pool is closed')) {
+      pool = null;
+    }
     console.error('Error getting database connection:', error.message);
     return null;
   }
@@ -157,9 +160,9 @@ const executeQuery = async (query, params = [], options = {}) => {
     console.error('Database query error:', JSON.stringify(errorInfo));
 
     if (!isRetry && isConnectionError(error)) {
-      console.warn('Connection error detected, resetting pool and retrying once');
-      await closePool();
-      pool = null;
+      if ((error.message || '').includes('Pool is closed')) {
+        pool = null;
+      }
       return executeQuery(query, params, { ...options, _connectionRetry: true });
     }
     throw error;

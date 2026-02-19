@@ -274,7 +274,7 @@ module.exports = async (req, res) => {
           username: userInfo.username,
           email: userInfo.email,
           name: userInfo.name,
-          avatar: userInfo.avatar || '/avatars/avatar_ai.png',
+          avatar: userInfo.avatar ?? null,
           role: userInfo.role || 'USER',
           mfaVerified: true
         });

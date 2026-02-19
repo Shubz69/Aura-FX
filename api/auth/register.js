@@ -181,14 +181,14 @@ module.exports = async (req, res) => {
       try {
         [result] = await db.execute(
           'INSERT INTO users (username, email, password, name, phone, avatar, role, muted, mfa_verified, dtype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [usernameLower, emailLower, hashedPassword, name || username, phoneClean, avatar || '/avatars/avatar_ai.png', 'USER', 0, 0, 'UserModel']
+          [usernameLower, emailLower, hashedPassword, name || username, phoneClean, avatar ?? null, 'USER', 0, 0, 'UserModel']
         );
       } catch (colErr) {
         if (colErr.code === 'ER_BAD_FIELD_ERROR' && colErr.message && colErr.message.includes('phone')) {
           await db.execute('ALTER TABLE users ADD COLUMN phone VARCHAR(50) DEFAULT NULL');
           [result] = await db.execute(
             'INSERT INTO users (username, email, password, name, phone, avatar, role, muted, mfa_verified, dtype) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [usernameLower, emailLower, hashedPassword, name || username, phoneClean, avatar || '/avatars/avatar_ai.png', 'USER', 0, 0, 'UserModel']
+            [usernameLower, emailLower, hashedPassword, name || username, phoneClean, avatar ?? null, 'USER', 0, 0, 'UserModel']
           );
         } else {
           throw colErr;
@@ -300,7 +300,7 @@ module.exports = async (req, res) => {
         email: emailLower,
         name: name || username,
         phone: phoneClean,
-        avatar: avatar || '/avatars/avatar_ai.png',
+        avatar: avatar ?? null,
         role: 'USER',
         token: token,
         status: 'SUCCESS'

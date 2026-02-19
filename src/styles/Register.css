@@ -12,6 +12,13 @@
     --font-secondary: 'Space Grotesk', sans-serif;
 }
 
+.register-container,
+.register-container *,
+.register-container *::before,
+.register-container *::after {
+  box-sizing: border-box;
+}
+
 .register-container {
   min-height: 100vh;
   min-height: 100dvh;
@@ -26,9 +33,11 @@
   touch-action: pan-y;
   font-family: var(--font-secondary);
   padding: 24px 20px 40px;
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
   padding-top: 80px;
   padding-bottom: calc(40px + env(safe-area-inset-bottom, 0));
-  box-sizing: border-box;
+  width: 100%;
 }
 
 /* Clean minimal background */
@@ -36,19 +45,19 @@
     display: none;
 }
 
-/* CLEAN MODERN FORM CONTAINER - no inner scroll, page scrolls naturally */
+/* CLEAN MODERN FORM CONTAINER - no inner scroll, never overflow viewport */
 .register-form-container {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 36px 40px;
     width: 100%;
-    max-width: 640px;
+    max-width: min(640px, calc(100vw - 40px));
     box-shadow: none;
     position: relative;
     z-index: 10;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-sizing: border-box;
+    min-width: 0;
 }
 
 /* Clean header */
@@ -129,6 +138,7 @@
 .form-input {
     width: 100%;
     max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -748,16 +758,18 @@
     }
 }
 
-/* Mobile - single column, compact */
+/* Mobile - single column, compact, never overflow */
 @media (max-width: 768px) {
     .register-container {
         padding: 16px 12px 32px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
         padding-top: 70px;
     }
     
     .register-form-container {
         padding: 28px 20px;
-        max-width: 100%;
+        max-width: min(100%, calc(100vw - 24px));
     }
     
     .form-header {
@@ -787,12 +799,14 @@
 @media (max-width: 480px) {
     .register-container {
         padding: 12px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
         padding-top: 72px;
     }
     
     .register-form-container {
         padding: 24px 18px;
-        max-width: 100%;
+        max-width: min(100%, calc(100vw - 24px));
         overflow-x: hidden;
     }
     

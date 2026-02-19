@@ -132,14 +132,14 @@ const Courses = () => {
 
             {/* SUBSCRIPTIONS SECTION */}
             <div style={{
-                marginTop: '40px',
-                marginBottom: '30px'
+                marginTop: '20px',
+                marginBottom: '18px'
             }}>
                 <h2 className="section-title subscriptions-title" style={{
                     color: '#ffffff',
                     fontSize: '36px',
                     fontWeight: 'bold',
-                    marginBottom: '12px',
+                    marginBottom: '8px',
                     textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
@@ -152,7 +152,7 @@ const Courses = () => {
                 <p className="section-description subscriptions-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
                     fontSize: '18px',
-                    marginBottom: '40px',
+                    marginBottom: '18px',
                     textAlign: 'center',
                     lineHeight: '1.6',
                     padding: '0 20px'
@@ -259,7 +259,7 @@ const Courses = () => {
                     textAlign: 'center',
                     color: 'rgba(255, 255, 255, 0.6)',
                     fontSize: 'clamp(12px, 2vw, 14px)',
-                    marginTop: '20px',
+                    marginTop: '12px',
                     padding: '0 20px'
                 }}>
                     Cancel anytime • No hidden fees • Switch plans anytime
@@ -268,14 +268,14 @@ const Courses = () => {
 
             {/* COURSES SECTION */}
             <div style={{
-                marginTop: '30px',
-                marginBottom: '40px'
+                marginTop: '18px',
+                marginBottom: '22px'
             }}>
                 <h2 className="section-title courses-section-title" style={{
                     color: '#ffffff',
                     fontSize: '36px',
                     fontWeight: 'bold',
-                    marginBottom: '12px',
+                    marginBottom: '8px',
                     textAlign: 'center',
                     background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                     WebkitBackgroundClip: 'text',
@@ -288,7 +288,7 @@ const Courses = () => {
                 <p className="section-description courses-section-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
                     fontSize: '18px',
-                    marginBottom: '40px',
+                    marginBottom: '18px',
                     textAlign: 'center',
                     lineHeight: '1.6',
                     padding: '0 20px'

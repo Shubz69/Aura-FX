@@ -44,13 +44,6 @@ function formatRelativeTime(date) {
   return then.toLocaleDateString();
 }
 
-// Get avatar path
-function getAvatarPath(avatar) {
-  if (!avatar) return '/avatars/avatar_ai.png';
-  if (avatar.startsWith('data:') || avatar.startsWith('/')) return avatar;
-  return `/avatars/${avatar}`;
-}
-
 const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCountChange }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);

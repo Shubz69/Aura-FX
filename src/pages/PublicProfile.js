@@ -14,6 +14,7 @@ import {
 } from '../utils/xpSystem';
 
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
+import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 
 const PublicProfile = () => {
     const { userId } = useParams();
@@ -61,16 +62,6 @@ const PublicProfile = () => {
         
         return () => clearInterval(refreshInterval);
     }, [userId]);
-
-    const getAvatarPath = (avatarName) => {
-        if (avatarName && avatarName.startsWith('data:image')) {
-            return avatarName;
-        }
-        if (avatarName && avatarName.startsWith('/')) {
-            return avatarName;
-        }
-        return avatarName ? `/avatars/${avatarName}` : '/avatars/avatar_ai.png';
-    };
 
     const goBack = () => {
         navigate(-1);
@@ -152,15 +143,15 @@ const PublicProfile = () => {
                     
                     {/* Avatar overlapping banner */}
                     <div className="profile-avatar-overlay">
-                        <img 
-                            src={getAvatarPath(profile.avatar)} 
-                            alt="Avatar" 
-                            className="profile-avatar-large"
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/avatars/avatar_ai.png';
-                            }}
-                        />
+                        {hasRealAvatar(profile.avatar) ? (
+                            <img 
+                                src={resolveAvatarUrl(profile.avatar)} 
+                                alt="Avatar" 
+                                className="profile-avatar-large"
+                            />
+                        ) : (
+                            <div className="avatar-placeholder profile-avatar-large" aria-hidden />
+                        )}
                     </div>
                 </div>
 

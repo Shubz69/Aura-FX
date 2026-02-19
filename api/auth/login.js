@@ -207,7 +207,7 @@ module.exports = async (req, res) => {
         username: user.username || user.email.split('@')[0],
         email: user.email,
         name: user.name || user.username,
-        avatar: user.avatar || '/avatars/avatar_ai.png',
+        avatar: user.avatar ?? null,
         role: apiRole,
         token: token,
         status: 'SUCCESS',

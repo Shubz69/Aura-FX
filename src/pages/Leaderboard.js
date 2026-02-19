@@ -2,33 +2,37 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
+import { hasRealAvatar, resolveAvatarUrl } from '../utils/avatar';
 
-// Avatar URL: show real profile picture when present, else fallback circle (DiceBear/initials)
-const getLeaderboardAvatarUrl = (user) => {
-    if (!user) return getInitialsAvatarDataUri('?');
-    const avatar = (user.avatar || '').trim();
-    const isDefault =
-        !avatar ||
-        avatar === 'avatar_ai.png' ||
-        avatar === 'default.png' ||
-        avatar.endsWith('/avatar_ai.png') ||
-        (avatar.startsWith('avatar_') && (avatar === 'avatar_ai.png' || /^avatar_(ai|money|tech|trading)\.png$/i.test(avatar)));
-    if (isDefault) {
-        const seed = encodeURIComponent(String(user.id || user.username || 'user'));
-        return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`;
+// Renders avatar: user image or purple placeholder; supports image load error.
+const LeaderboardAvatar = ({ user, className, emptyLabel = '?', noWrap }) => {
+    const [imgError, setImgError] = useState(false);
+    if (!user) {
+        if (noWrap) return <div className="empty-avatar-placeholder">{emptyLabel}</div>;
+        return (
+            <div className={className || 'podium-avatar empty'}>
+                <div className="empty-avatar-placeholder">{emptyLabel}</div>
+            </div>
+        );
     }
-    if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar;
-    if (avatar.startsWith('/')) return `${window.location.origin}${avatar}`;
-    return `${window.location.origin}/avatars/${avatar}`;
+    const showImg = hasRealAvatar(user.avatar) && !imgError;
+    const content = showImg ? (
+        <img
+            src={resolveAvatarUrl(user.avatar)}
+            alt={user.username}
+            onError={() => setImgError(true)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+        />
+    ) : (
+        <div className="avatar-placeholder" style={{ width: '100%', height: '100%', borderRadius: '50%' }} aria-hidden />
+    );
+    if (noWrap) return content;
+    return (
+        <div className={className || 'podium-avatar'} style={{ position: 'relative' }}>
+            {content}
+        </div>
+    );
 };
-
-// Fallback when image fails: initials in a circle (no external request)
-function getInitialsAvatarDataUri(user) {
-    const name = user ? (user.username || user.name || user.email || '?').toString().trim() : '?';
-    const initial = (name.charAt(0) || '?').toUpperCase();
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="rgba(255,255,255,0.2)"/><text x="24" y="24" dominant-baseline="central" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-family="system-ui,sans-serif" font-size="20" font-weight="600">${initial}</text></svg>`;
-    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
 
 const Leaderboard = () => {
     const containerRef = useRef(null);
@@ -182,22 +186,8 @@ const Leaderboard = () => {
             
             return (
                 <div className={`podium-place ${place}-place`}>
-                    <div className="podium-avatar">
-                        <img
-                            src={getLeaderboardAvatarUrl(user)}
-                            alt={user.username}
-                            onError={(e) => {
-                                const img = e.target;
-                                if (img.dataset.fallback === '1') {
-                                    img.src = getInitialsAvatarDataUri(user);
-                                    img.onerror = null;
-                                } else {
-                                    img.dataset.fallback = '1';
-                                    img.onerror = null;
-                                    img.src = getLeaderboardAvatarUrl({ ...user, avatar: null });
-                                }
-                            }}
-                        />
+                    <div className="podium-avatar" style={{ position: 'relative' }}>
+                        <LeaderboardAvatar user={user} noWrap />
                         {place === 'first' && <div className="crown">👑</div>}
                         {user.isDemo && <span className="demo-badge" title="Demo User">🤖</span>}
                     </div>
@@ -260,21 +250,7 @@ const Leaderboard = () => {
                                 </div>
                                 <div className="user-cell">
                                     <div className="user-avatar">
-                                        <img
-                                            src={getLeaderboardAvatarUrl(user)}
-                                            alt={user.username}
-                                            onError={(e) => {
-                                                const img = e.target;
-                                                if (img.dataset.fallback === '1') {
-                                                    img.src = getInitialsAvatarDataUri(user);
-                                                    img.onerror = null;
-                                                } else {
-                                                    img.dataset.fallback = '1';
-                                                    img.onerror = null;
-                                                    img.src = getLeaderboardAvatarUrl({ ...user, avatar: null });
-                                                }
-                                            }}
-                                        />
+                                        <LeaderboardAvatar user={user} noWrap />
                                         {user.isDemo && <span className="demo-indicator" title="Demo User">🤖</span>}
                                     </div>
                                     <div className="user-info">

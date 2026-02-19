@@ -1,4 +1,11 @@
 /* CLEAN MODERN LOGIN PAGE - BEAUTIFUL DESIGN */
+.login-container,
+.login-container *,
+.login-container *::before,
+.login-container *::after {
+    box-sizing: border-box;
+}
+
 :root {
     --primary: #ffffff;
     --secondary: rgba(255, 255, 255, 0.9);
@@ -24,8 +31,11 @@
     touch-action: pan-y;
     font-family: var(--font-secondary);
     padding: 20px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
     padding-top: 80px;
     padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+    width: 100%;
 }
 
 /* Subtle background pattern */
@@ -33,18 +43,20 @@
     display: none;
 }
 
-/* Clean modern form container */
+/* Clean modern form container - never overflow viewport */
 .login-form-container {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 48px 40px;
     width: 100%;
-    max-width: 420px;
+    max-width: min(420px, calc(100vw - 40px));
     box-shadow: none;
     position: relative;
     z-index: 10;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 /* Clean header */
@@ -76,6 +88,7 @@
 /* Beautiful modern form fields */
 .form-group {
     margin-bottom: 20px;
+    min-width: 0;
 }
 
 .form-label {
@@ -91,6 +104,8 @@
 
 .form-input {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
@@ -102,6 +117,7 @@
     transition: all 0.3s ease;
     box-shadow: none;
     backdrop-filter: blur(10px);
+    box-sizing: border-box;
 }
 
 .form-input:focus {
@@ -133,6 +149,8 @@
 /* Beautiful modern button */
 .login-button {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -149,6 +167,7 @@
     position: relative;
     overflow: hidden;
     margin-top: 8px;
+    box-sizing: border-box;
 }
 
 .login-button:hover {
@@ -327,16 +346,18 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Responsive design */
+/* Responsive design - keep content inside viewport on iPhone */
 @media (max-width: 768px) {
     .login-container {
-        padding: 15px;
+        padding: 16px;
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
         padding-top: 70px;
     }
     
     .login-form-container {
-        padding: 40px 32px;
-        max-width: 400px;
+        padding: 32px 24px;
+        max-width: min(400px, calc(100vw - 32px));
     }
     
     .login-title {
@@ -346,16 +367,26 @@
 
 @media (max-width: 480px) {
     .login-container {
-        padding: 10px;
+        padding: 12px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
         padding-top: 65px;
     }
     
     .login-form-container {
-        padding: 32px 24px;
-        max-width: 360px;
+        padding: 28px 20px;
+        max-width: min(360px, calc(100vw - 24px));
     }
     
     .login-title {
         font-size: 2rem;
+    }
+    
+    .form-input {
+        padding: 14px 16px;
+    }
+    
+    .login-button {
+        padding: 14px 20px;
     }
 }
