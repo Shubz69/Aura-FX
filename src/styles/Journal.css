@@ -38,13 +38,15 @@
   scroll-margin-top: calc(70px + env(safe-area-inset-top, 0));
 }
 
+/* Black background with stars – layout and elements unchanged */
 .journal-page {
   min-height: 100vh;
-  background: linear-gradient(165deg, #0f0f1a 0%, #1a1a2e 35%, #16213e 100%);
+  background: #0a0a0a;
   color: var(--primary, #fff);
   padding-top: 32px;
   padding-bottom: 48px;
   box-sizing: border-box;
+  position: relative;
 }
 
 .journal-page::before {
@@ -52,7 +54,20 @@
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(165deg, #0f0f1a 0%, #1a1a2e 35%, #16213e 100%);
+  background-color: #0a0a0a;
+  background-image:
+    radial-gradient(1px 1px at 10px 10px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 50px 25px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(0.8px 0.8px at 90px 60px, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 130px 15px, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(0.8px 0.8px at 25px 80px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 70px 95px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(0.8px 0.8px at 110px 110px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 150px 45px, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(0.8px 0.8px at 35px 130px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 95px 150px, rgba(255, 255, 255, 0.5), transparent);
+  background-size: 180px 180px;
+  background-repeat: repeat;
   pointer-events: none;
 }
 
