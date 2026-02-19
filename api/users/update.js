@@ -486,6 +486,43 @@ module.exports = async (req, res) => {
             // user_settings table may not exist; keep last_seen as-is
           }
         }
+
+        // Public profile: fetch journal/task stats (today, this week, this month) for real-time display
+        let journalStats = null;
+        if (isPublicProfile && db) {
+          try {
+            const [todayRows] = await db.execute(
+              'SELECT COUNT(*) as total, COALESCE(SUM(completed),0) as done FROM journal_tasks WHERE userId = ? AND date = CURDATE()',
+              [userId]
+            );
+            const todayTotal = Number(todayRows[0]?.total ?? 0);
+            const todayDone = Number(todayRows[0]?.done ?? 0);
+            const todayPct = todayTotal > 0 ? Math.round((todayDone / todayTotal) * 100) : null;
+
+            const [weekRows] = await db.execute(
+              `SELECT COUNT(*) as total, COALESCE(SUM(completed),0) as done FROM journal_tasks 
+               WHERE userId = ? AND date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) 
+               AND date <= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 6 DAY)`,
+              [userId]
+            );
+            const weekTotal = Number(weekRows[0]?.total ?? 0);
+            const weekDone = Number(weekRows[0]?.done ?? 0);
+            const weekPct = weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : null;
+
+            const [monthRows] = await db.execute(
+              `SELECT COUNT(*) as total, COALESCE(SUM(completed),0) as done FROM journal_tasks 
+               WHERE userId = ? AND date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND date <= LAST_DAY(CURDATE())`,
+              [userId]
+            );
+            const monthTotal = Number(monthRows[0]?.total ?? 0);
+            const monthDone = Number(monthRows[0]?.done ?? 0);
+            const monthPct = monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : null;
+
+            journalStats = { todayPct, weekPct, monthPct };
+          } catch (e) {
+            console.warn('Public profile journal stats failed:', e.message);
+          }
+        }
         
         // Close connection (using createConnection, not pool)
         if (db && typeof db.end === 'function' && !db.ended) {
@@ -514,6 +551,9 @@ module.exports = async (req, res) => {
             totalProfit: 0
           }
         };
+        if (journalStats) {
+          responseData.journalStats = journalStats;
+        }
         
         // Only include personal information if NOT a public profile request
         if (!isPublicProfile) {

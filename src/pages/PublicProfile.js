@@ -236,6 +236,29 @@ const PublicProfile = () => {
                                     </div>
                                 </div>
                             )}
+                            {/* Journal / Task stats – real-time (Today, This week, This month) */}
+                            {(profile.journalStats && (profile.journalStats.todayPct != null || profile.journalStats.weekPct != null || profile.journalStats.monthPct != null)) && (
+                                <div className="public-profile-stats-circles">
+                                    <div className="public-profile-stat-circle">
+                                        <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.todayPct != null ? profile.journalStats.todayPct : 0 }}>
+                                            <span className="public-profile-stat-circle-value">{profile.journalStats.todayPct != null ? `${profile.journalStats.todayPct}%` : '—'}</span>
+                                        </div>
+                                        <span className="public-profile-stat-circle-label">Today</span>
+                                    </div>
+                                    <div className="public-profile-stat-circle">
+                                        <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.weekPct != null ? profile.journalStats.weekPct : 0 }}>
+                                            <span className="public-profile-stat-circle-value">{profile.journalStats.weekPct != null ? `${profile.journalStats.weekPct}%` : '—'}</span>
+                                        </div>
+                                        <span className="public-profile-stat-circle-label">This week</span>
+                                    </div>
+                                    <div className="public-profile-stat-circle">
+                                        <div className="public-profile-stat-circle-ring" style={{ '--pct': profile.journalStats.monthPct != null ? profile.journalStats.monthPct : 0 }}>
+                                            <span className="public-profile-stat-circle-value">{profile.journalStats.monthPct != null ? `${profile.journalStats.monthPct}%` : '—'}</span>
+                                        </div>
+                                        <span className="public-profile-stat-circle-label">This month</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="info-section">
                                 <div className="info-row">
                                     <span className="info-label">Power Level:</span>

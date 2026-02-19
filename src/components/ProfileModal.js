@@ -784,6 +784,30 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     {/* Overview Tab */}
                     {activeTab === 'overview' && (
                         <div style={{ display: 'grid', gap: '12px' }}>
+                            {/* Journal / Task stats (Today, This week, This month) when viewing another user */}
+                            {profile.journalStats && (profile.journalStats.todayPct != null || profile.journalStats.weekPct != null || profile.journalStats.monthPct != null) && (
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                                    {[
+                                        { pct: profile.journalStats.todayPct, label: 'Today' },
+                                        { pct: profile.journalStats.weekPct, label: 'This week' },
+                                        { pct: profile.journalStats.monthPct, label: 'This month' }
+                                    ].map((item, i) => (
+                                        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{
+                                                width: 56, height: 56, borderRadius: '50%',
+                                                background: `conic-gradient(#8B5CF6 0deg, #22c55e ${(item.pct != null ? item.pct : 0) * 3.6}deg, rgba(255,255,255,0.08) ${(item.pct != null ? item.pct : 0) * 3.6}deg)`,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'
+                                            }}>
+                                                <div style={{ position: 'absolute', inset: 3, borderRadius: '50%', background: 'linear-gradient(145deg, rgba(22,22,38,0.98), rgba(30,30,46,0.95))', border: '1px solid rgba(139,92,246,0.2)' }} />
+                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
+                                                    {item.pct != null ? `${item.pct}%` : '—'}
+                                                </span>
+                                            </div>
+                                            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
                                 {[
                                     { icon: '⚡', label: 'Power Level', value: level, color: tierColor },

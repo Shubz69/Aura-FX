@@ -139,6 +139,62 @@
     color: #FF6B35;
 }
 
+/* Journal / Task stats – circular progress (Today, This week, This month) */
+.public-profile-stats-circles {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.public-profile-stat-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.public-profile-stat-circle-ring {
+    --pct: 0;
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #8B5CF6 0deg,
+        #22c55e calc(var(--pct) * 3.6deg),
+        rgba(255, 255, 255, 0.08) calc(var(--pct) * 3.6deg)
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.public-profile-stat-circle-ring::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(22, 22, 38, 0.98) 0%, rgba(30, 30, 46, 0.95) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.public-profile-stat-circle-value {
+    position: relative;
+    z-index: 1;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.public-profile-stat-circle-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+}
+
 /* Profile Header Info */
 .profile-header-info {
     padding: 0 40px 20px;
