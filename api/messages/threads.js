@@ -185,11 +185,23 @@ module.exports = async (req, res) => {
          FROM threads t 
          LEFT JOIN users u ON u.id = t.userId 
          WHERE t.adminId IS NULL 
-         ORDER BY t.lastMessageAt DESC 
+         ORDER BY COALESCE(t.lastMessageAt, t.createdAt) DESC 
          LIMIT 200`
       );
+      // Add admin unread count per thread (messages where recipientId = 'ADMIN' and readAt IS NULL)
+      const threadIds = (threads || []).map((t) => t.id).filter(Boolean);
+      let unreadMap = {};
+      if (threadIds.length > 0) {
+        const placeholders = threadIds.map(() => '?').join(',');
+        const [unreadRows] = await db.execute(
+          `SELECT threadId, COUNT(*) as c FROM thread_messages WHERE threadId IN (${placeholders}) AND recipientId = 'ADMIN' AND readAt IS NULL GROUP BY threadId`,
+          threadIds
+        );
+        (unreadRows || []).forEach((r) => { unreadMap[r.threadId] = r.c; });
+      }
+      const threadsWithUnread = (threads || []).map((t) => ({ ...t, adminUnreadCount: unreadMap[t.id] || 0 }));
       db.release && db.release();
-      return res.status(200).json({ success: true, threads: threads || [] });
+      return res.status(200).json({ success: true, threads: threadsWithUnread });
     }
 
     // Handle /api/messages/threads/:threadId/messages - Get messages for a thread
@@ -247,10 +259,13 @@ module.exports = async (req, res) => {
 
       const recipientId = isOwner ? 'ADMIN' : String(thread.userId);
 
-      await db.execute(
+      const [insertResult] = await db.execute(
         'INSERT INTO thread_messages (threadId, senderId, recipientId, body) VALUES (?, ?, ?, ?)',
         [threadId, senderId, recipientId, messageBody]
       );
+      const messageId = insertResult.insertId;
+      const [newMsgRows] = await db.execute('SELECT id, threadId, senderId, recipientId, body, createdAt, readAt FROM thread_messages WHERE id = ?', [messageId]);
+      const createdMessage = newMsgRows && newMsgRows[0] ? newMsgRows[0] : null;
 
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
 
@@ -301,7 +316,7 @@ module.exports = async (req, res) => {
       }
 
       db.release && db.release();
-      return res.status(200).json({ success: true, message: 'Message sent' });
+      return res.status(200).json({ success: true, message: 'Message sent', created: createdMessage });
     }
 
     // Handle /api/messages/threads/:threadId/read - Mark thread as read
@@ -309,11 +324,12 @@ module.exports = async (req, res) => {
     if (threadReadMatch && req.method === 'POST') {
       const threadId = parseInt(threadReadMatch[1]);
       const body = parseBody(req);
-      const userId = body.userId ?? null;
+      // When admin marks read: messages sent TO admin have recipientId = 'ADMIN'. When user marks read: recipientId = their userId.
+      const recipientId = isAdmin ? 'ADMIN' : String(decoded.id);
 
       await db.execute(
         'UPDATE thread_messages SET readAt = NOW() WHERE threadId = ? AND recipientId = ? AND readAt IS NULL',
-        [threadId, userId === null ? 'ADMIN' : String(userId)]
+        [threadId, recipientId]
       );
 
       db.release && db.release();

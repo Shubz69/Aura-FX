@@ -2,6 +2,19 @@
    AURA AI Premium - ChatGPT-Level UX
    ============================================================================ */
 
+/* Full-viewport dark layer: no white border on any device */
+.premium-ai-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  min-width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
 /* Base Layout */
 .premium-ai-page {
   display: flex;
@@ -15,6 +28,9 @@
   overflow: hidden;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -225,6 +241,8 @@
 .ai-empty-hint {
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 24px 0;
+  display: block;
 }
 
 /* Messages */
@@ -849,7 +867,7 @@
   .ai-chat-area {
     flex: 1;
     min-height: 0;
-    padding: 125px 12px 200px;
+    padding: 125px 16px 220px;
     overflow-y: auto !important;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch !important;
@@ -865,24 +883,40 @@
     font-size: 0.9rem;
   }
   
+  .ai-empty-state {
+    padding-bottom: 200px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
   .ai-empty-state h2 {
     font-size: 1.5rem;
   }
   
   .ai-capabilities {
     grid-template-columns: 1fr;
+    margin-bottom: 20px;
+  }
+  
+  .ai-empty-hint {
+    margin-bottom: 32px;
   }
   
   .quick-actions-container {
     bottom: 130px;
+    left: 0;
+    right: 0;
+    padding: 0 16px;
+    margin-top: 0;
   }
   
   .quick-actions {
-    gap: 6px;
+    gap: 8px;
+    justify-content: center;
   }
   
   .quick-action-chip {
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-size: 0.8rem;
   }
   
@@ -921,8 +955,24 @@
     display: none;
   }
   
+  .ai-empty-state {
+    padding-bottom: 220px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  .ai-empty-hint {
+    margin-bottom: 40px;
+  }
+  
+  .quick-actions-container {
+    bottom: 120px;
+    padding: 0 12px;
+  }
+  
   .quick-action-chip {
     flex: 1 1 calc(50% - 4px);
     text-align: center;
+    min-width: 0;
   }
 }

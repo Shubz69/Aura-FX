@@ -1,3 +1,16 @@
+/* Full-viewport dark layer: no white border on any device (same as other pages) */
+.leaderboard-container::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    min-width: 100vw;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #0a0a0a;
+    z-index: -1;
+    pointer-events: none;
+}
+
 .leaderboard-container {
     min-height: 100vh;
     background: #0a0a0a;
@@ -8,6 +21,8 @@
     -webkit-overflow-scrolling: touch;
     padding: 20px;
     box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Glitch Background Effect */
@@ -686,32 +701,14 @@
     }
 }
 
-/* Phones and small tablets: full-viewport dark background so no white border shows */
+/* Phones and small tablets: ensure container fills and no white shows */
 @media (max-width: 768px) {
     .leaderboard-container {
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
-        position: relative !important;
         background: #0a0a0a !important;
-    }
-    
-    /* Full-viewport dark layer so no white strip on right/bottom (fixed to viewport) */
-    .leaderboard-container::before {
-        content: '' !important;
-        position: fixed !important;
-        inset: 0 !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        min-width: 100vw !important;
-        min-height: 100vh !important;
-        min-height: 100dvh !important;
-        background: #0a0a0a !important;
-        z-index: -1 !important;
-        pointer-events: none !important;
     }
 }
 

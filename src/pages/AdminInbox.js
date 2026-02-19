@@ -35,7 +35,7 @@ const AdminInbox = () => {
     return users.find(u => u.id === selectedUserId) || null;
   }, [activeThread, selectedUserId, users]);
 
-  // Fetch all users and existing threads
+  // Fetch all users and existing threads (with unread counts); refresh list periodically so new messages show
   useEffect(() => {
     const role = (user?.role || '').toUpperCase();
     if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') return;
@@ -74,7 +74,15 @@ const AdminInbox = () => {
       }
     };
     load();
-    return () => { mounted = false; };
+    const refreshList = setInterval(() => {
+      if (!mounted) return;
+      Api.listThreads().then((threadsRes) => {
+        if (!mounted) return;
+        const threadsList = (threadsRes.data?.threads || []).filter(t => t.userId !== user?.id);
+        setThreads(threadsList);
+      }).catch(() => {});
+    }, 15000);
+    return () => { clearInterval(refreshList); mounted = false; };
   }, [user]);
 
   // When user selects someone from the list: ensure thread, then set active
@@ -105,34 +113,45 @@ const AdminInbox = () => {
     }
   };
 
-  // Load messages when active thread changes
+  // Load messages when active thread changes + poll so new user messages show up in time
   useEffect(() => {
     const role = (user?.role || '').toUpperCase();
     if ((role !== 'ADMIN' && role !== 'SUPER_ADMIN') || !activeThreadId) return;
     let mounted = true;
+    const loadMessages = async () => {
+      try {
+        const resp = await Api.getThreadMessages(activeThreadId, { limit: 50 });
+        if (!mounted) return;
+        setMessages(resp.data.messages || []);
+        await Api.markThreadRead(activeThreadId);
+        setThreads(prev => prev.map(t => t.id === activeThreadId ? { ...t, adminUnreadCount: 0 } : t));
+      } catch (e) {
+        if (mounted) console.error('Load messages failed', e);
+      }
+    };
     WebSocketService.connect({ userId: user.id, role: user.role }, async () => {
       WebSocketService.offThreadEvents();
       WebSocketService.joinThread(activeThreadId);
       WebSocketService.onThreadMessage(({ threadId, message, thread }) => {
         if (!mounted || threadId !== activeThreadId) return;
         setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message]);
-        if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? thread : t));
+        if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? { ...t, ...thread, adminUnreadCount: 0 } : t));
         scrollToBottom();
       });
       WebSocketService.onThreadRead(({ thread }) => {
         if (!mounted) return;
-        if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? thread : t));
+        if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? { ...t, ...thread } : t));
       });
-      try {
-        const resp = await Api.getThreadMessages(activeThreadId, { limit: 50 });
+      await loadMessages();
+    });
+    const pollInterval = setInterval(() => {
+      if (!mounted || !activeThreadId) return;
+      Api.getThreadMessages(activeThreadId, { limit: 50 }).then((resp) => {
         if (!mounted) return;
         setMessages(resp.data.messages || []);
-        await Api.markThreadRead(activeThreadId);
-      } catch (e) {
-        console.error('Load messages failed', e);
-      }
-    });
-    return () => { WebSocketService.offThreadEvents(); mounted = false; };
+      }).catch(() => {});
+    }, 8000);
+    return () => { clearInterval(pollInterval); WebSocketService.offThreadEvents(); mounted = false; };
   }, [user, activeThreadId]);
 
   const handleSend = async (e) => {
@@ -140,17 +159,25 @@ const AdminInbox = () => {
     const hasText = input.trim().length > 0;
     if (!hasText && !file) return;
     const body = hasText ? input.trim() : `[file] ${file?.name || ''}`;
-    const optimistic = { id: `tmp_${Date.now()}`, threadId: activeThreadId, senderId: String(user.id), recipientId: String(activeThread?.userId), body, createdAt: Date.now(), status: 'sending' };
+    const optimistic = { id: `tmp_${Date.now()}`, threadId: activeThreadId, senderId: String(user.id), recipientId: String(activeThread?.userId), body, createdAt: new Date().toISOString(), status: 'sending' };
     setMessages(prev => [...prev, optimistic]);
     setInput('');
     setFile(null);
-    try { if (hasText) await Api.sendThreadMessage(activeThreadId, body); } catch (e) { console.error('Send failed', e); }
+    try {
+      if (hasText) {
+        const resp = await Api.sendThreadMessage(activeThreadId, body);
+        const created = resp.data?.created;
+        if (created) {
+          setMessages(prev => prev.map(m => m.id === optimistic.id ? { ...created, senderId: String(created.senderId), createdAt: created.createdAt || created.created_at } : m));
+        }
+      }
+    } catch (e) { console.error('Send failed', e); }
   };
 
-  const formatTime = (ts) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (ts) => (ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
   const isOwn = (m) => String(m.senderId) === String(user?.id);
 
-  // Build inbox list: users with threads first (by lastMessageAt), then users without
+  // Build inbox list: users with threads first (by lastMessageAt), then users without; include unread count
   const inboxList = useMemo(() => {
     const q = (searchTerm || '').toLowerCase().trim();
     const match = (u) => {
@@ -162,11 +189,15 @@ const AdminInbox = () => {
     const withThreads = users.filter(u => {
       if (!match(u)) return false;
       return threads.some(t => t.userId === u.id);
-    }).map(u => ({
-      ...u,
-      thread: threads.find(t => t.userId === u.id),
-      lastMessageAt: threads.find(t => t.userId === u.id)?.lastMessageAt || 0
-    })).sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
+    }).map(u => {
+      const thread = threads.find(t => t.userId === u.id);
+      return {
+        ...u,
+        thread,
+        lastMessageAt: thread?.lastMessageAt || 0,
+        adminUnreadCount: thread?.adminUnreadCount ?? 0
+      };
+    }).sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
 
     const withoutThreads = users.filter(u => {
       if (!match(u)) return false;
@@ -208,6 +239,7 @@ const AdminInbox = () => {
               inboxList.map((u) => {
                 const thread = u.thread || threads.find(t => t.userId === u.id);
                 const isSelected = activeThreadId && thread?.id === activeThreadId || selectedUserId === u.id;
+                const unread = u.adminUnreadCount ?? thread?.adminUnreadCount ?? 0;
                 return (
                   <ListItemButton
                     key={u.id}
@@ -216,7 +248,16 @@ const AdminInbox = () => {
                     disabled={ensuringThread}
                   >
                     <ListItemText
-                      primary={displayName(u)}
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <span>{displayName(u)}</span>
+                          {unread > 0 && (
+                            <Box component="span" sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', borderRadius: 1, px: 0.75, py: 0, fontSize: '0.75rem', fontWeight: 600 }}>
+                              {unread > 99 ? '99+' : unread}
+                            </Box>
+                          )}
+                        </Box>
+                      }
                       secondary={thread?.lastMessageAt ? new Date(thread.lastMessageAt).toLocaleString() : 'No messages yet'}
                     />
                   </ListItemButton>
@@ -236,10 +277,10 @@ const AdminInbox = () => {
             ) : (
               <>
                 {messages.map(m => (
-                  <Box key={m.id} sx={{ display: 'flex', justifyContent: isOwn(m) ? 'flex-end' : 'flex-start', mb: 1 }}>
+                  <Box key={m.id || `msg-${m.createdAt}-${m.body?.slice(0, 10)}`} sx={{ display: 'flex', justifyContent: isOwn(m) ? 'flex-end' : 'flex-start', mb: 1 }}>
                     <Paper sx={{ p: 1.25, bgcolor: isOwn(m) ? '#fff' : 'rgba(255,255,255,0.08)', color: isOwn(m) ? '#000' : '#fff', maxWidth: '80%' }}>
                       <Typography variant="body1">{m.body}</Typography>
-                      <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', textAlign: 'right' }}>{formatTime(m.createdAt)}</Typography>
+                      <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', textAlign: 'right' }}>{formatTime(m.createdAt ?? m.created_at)}</Typography>
                     </Paper>
                   </Box>
                 ))}
