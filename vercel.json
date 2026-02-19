@@ -393,6 +393,14 @@
       "destination": "/api/messages/delete.js?messageId=:messageId"
     },
     {
+      "source": "/api/journal/trades",
+      "destination": "/api/journal/trades.js"
+    },
+    {
+      "source": "/api/journal/trades/:id",
+      "destination": "/api/journal/trades.js"
+    },
+    {
       "source": "/api/market/watchlist",
       "destination": "/api/market/watchlist.js"
     },

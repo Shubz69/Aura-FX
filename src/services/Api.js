@@ -577,6 +577,20 @@ const Api = {
             params: { timeframe }
         });
     },
+
+    // Journal (trading journal – per-user)
+    getJournalTrades: (params = {}) => {
+        return axios.get(`${API_BASE_URL}/api/journal/trades`, { params });
+    },
+    createJournalTrade: (body) => {
+        return axios.post(`${API_BASE_URL}/api/journal/trades`, body);
+    },
+    updateJournalTrade: (id, body) => {
+        return axios.put(`${API_BASE_URL}/api/journal/trades/${id}`, body);
+    },
+    deleteJournalTrade: (id) => {
+        return axios.delete(`${API_BASE_URL}/api/journal/trades/${id}`);
+    },
     
     // Contact
     getBaseUrl: () => getApiBaseUrl(),

@@ -99,6 +99,9 @@ const Navbar = () => {
                                         <Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                             <FaEnvelope className="dropdown-icon" /> Messages
                                         </Link>
+                                        <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <FaBook className="dropdown-icon" /> Journal
+                                        </Link>
                                         <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                             <FaUserCircle className="dropdown-icon" /> Profile
                                         </Link>
@@ -196,6 +199,9 @@ const Navbar = () => {
                     <ul className="mobile-user-links">
                         <li><Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} onClick={toggleMobileUserMenu}>
                             <FaEnvelope className="dropdown-icon" /> Messages
+                        </Link></li>
+                        <li><Link to="/journal" onClick={toggleMobileUserMenu}>
+                            <FaBook className="dropdown-icon" /> Journal
                         </Link></li>
                         <li><Link to="/profile" onClick={toggleMobileUserMenu}>
                             <FaUserCircle className="dropdown-icon" /> Profile
