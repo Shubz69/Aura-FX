@@ -145,7 +145,7 @@ const ChoosePlan = () => {
     <div className="courses-container">
       <CosmicBackground />
       <div className="courses-header">
-        <h1 className="courses-title">COURSES & SUBSCRIPTIONS</h1>
+        <h1 className="courses-title">Courses & subscriptions</h1>
         <p>Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs</p>
       </div>
 
@@ -165,7 +165,7 @@ const ChoosePlan = () => {
             padding: '0 20px'
           }}
         >
-          💎 SUBSCRIPTIONS
+          💎 Subscriptions
         </h2>
         <p
           className="section-description subscriptions-description"

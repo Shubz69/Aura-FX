@@ -50,7 +50,7 @@ const ResetPassword = () => {
       <CosmicBackground />
       <div className="login-form-container">
         <div className="form-header">
-          <h2 className="login-title">CHANGE PASSWORD</h2>
+          <h2 className="login-title">Change password</h2>
           <p className="login-subtitle">Enter and confirm your new password</p>
         </div>
         {error && <div className="error-message">{error}</div>}

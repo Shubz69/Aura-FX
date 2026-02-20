@@ -43,6 +43,32 @@ const convertToBase64 = (file) => {
     });
 };
 
+// Journal stats date helpers (match Journal page logic)
+const getMonthStart = (d) => {
+    const x = new Date(d);
+    x.setDate(1);
+    return x.toISOString().slice(0, 10);
+};
+const getMonthEnd = (d) => {
+    const x = new Date(d);
+    x.setMonth(x.getMonth() + 1);
+    x.setDate(0);
+    return x.toISOString().slice(0, 10);
+};
+const getWeekStart = (d) => {
+    const x = new Date(d);
+    const day = x.getDay();
+    const diff = x.getDate() - day + (day === 0 ? -6 : 1);
+    x.setDate(diff);
+    return x.toISOString().slice(0, 10);
+};
+const getWeekEnd = (d) => {
+    const start = new Date(getWeekStart(d));
+    start.setDate(start.getDate() + 6);
+    return start.toISOString().slice(0, 10);
+};
+const isSameDay = (a, b) => a && b && String(a).slice(0, 10) === String(b).slice(0, 10);
+
 const Profile = () => {
     const { user, setUser } = useAuth();
     const [activeTab, setActiveTab] = useState('overview');
@@ -78,6 +104,8 @@ const Profile = () => {
         winRate: 0,
         totalProfit: 0
     });
+    const [journalTasks, setJournalTasks] = useState([]);
+    const [journalStatsLoading, setJournalStatsLoading] = useState(true);
 
     // Function to update local storage with user profile data
     const updateLocalUserData = (data) => {
@@ -249,6 +277,29 @@ const Profile = () => {
             window.removeEventListener('levelUp', handleLevelUp);
         };
     }, [user]);
+
+    // Fetch journal tasks for Today / This week / This month stats (Journal tab)
+    useEffect(() => {
+        if (!user?.id) {
+            setJournalStatsLoading(false);
+            return;
+        }
+        const today = new Date().toISOString().slice(0, 10);
+        const weekStart = getWeekStart(today);
+        const weekEnd = getWeekEnd(today);
+        const monthStart = getMonthStart(today);
+        const monthEnd = getMonthEnd(today);
+        const fetchFrom = weekStart < monthStart ? weekStart : monthStart;
+        const fetchTo = weekEnd > monthEnd ? weekEnd : monthEnd;
+        setJournalStatsLoading(true);
+        Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo })
+            .then((res) => {
+                const list = res.data?.tasks ?? [];
+                setJournalTasks(Array.isArray(list) ? list : []);
+            })
+            .catch(() => setJournalTasks([]))
+            .finally(() => setJournalStatsLoading(false));
+    }, [user?.id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -513,6 +564,25 @@ const Profile = () => {
     const tierColor = getTierColor(formData.level || 1);
     const nextMilestone = getNextRankMilestone(formData.level || 1);
 
+    // Journal tab: Today / This week / This month completion %
+    const journalToday = new Date().toISOString().slice(0, 10);
+    const journalWeekStart = getWeekStart(journalToday);
+    const journalWeekEnd = getWeekEnd(journalToday);
+    const journalMonthStart = getMonthStart(journalToday);
+    const journalMonthEnd = getMonthEnd(journalToday);
+    const dayTasks = journalTasks.filter((t) => isSameDay(t.date, journalToday));
+    const weekTasks = journalTasks.filter((t) => t.date >= journalWeekStart && t.date <= journalWeekEnd);
+    const monthTasksForMonth = journalTasks.filter((t) => t.date >= journalMonthStart && t.date <= journalMonthEnd);
+    const dayTotal = dayTasks.length;
+    const dayDone = dayTasks.filter((t) => t.completed).length;
+    const journalDayPct = dayTotal ? Math.round((dayDone / dayTotal) * 100) : null;
+    const weekTotal = weekTasks.length;
+    const weekDone = weekTasks.filter((t) => t.completed).length;
+    const journalWeekPct = weekTotal ? Math.round((weekDone / weekTotal) * 100) : null;
+    const monthTotal = monthTasksForMonth.length;
+    const monthDone = monthTasksForMonth.filter((t) => t.completed).length;
+    const journalMonthPct = monthTotal ? Math.round((monthDone / monthTotal) * 100) : null;
+
     if (loading) {
         return (
             <div className="profile-container">
@@ -622,16 +692,16 @@ const Profile = () => {
                 {/* Level & XP Display */}
                 <div className="profile-level-section">
                     <div className="level-display">
-                        <span className="level-label">Power Level</span>
+                        <span className="level-label">Power level</span>
                         <span className="level-value">{formData.level || 1}</span>
                     </div>
                     <div className="xp-display">
-                        <span className="xp-label">Power Points</span>
+                        <span className="xp-label">Power points</span>
                         <span className="xp-value">{(formData.xp || 0).toLocaleString()}</span>
                     </div>
                     {nextMilestone && (
                         <div className="next-milestone">
-                            <span className="milestone-label">Next Rank:</span>
+                            <span className="milestone-label">Next rank:</span>
                             <span className="milestone-value">{nextMilestone.title} (Level {nextMilestone.level})</span>
                         </div>
                     )}
@@ -640,7 +710,7 @@ const Profile = () => {
                 {/* XP Progress Bar */}
                 <div className="xp-progress-container">
                     <div className="xp-progress-header">
-                        <span>Progress to Level {(formData.level || 1) + 1}</span>
+                        <span>Progress to level {(formData.level || 1) + 1}</span>
                         <span>{Math.round(xpProgress.percentage)}%</span>
                     </div>
                     <div className="xp-progress-bar">
@@ -663,7 +733,7 @@ const Profile = () => {
                 <div className="login-streak-section">
                     <div className="streak-icon">🔥</div>
                     <div className="streak-info">
-                        <span className="streak-label">Login Streak</span>
+                        <span className="streak-label">Login streak</span>
                         <span className="streak-value">{loginStreak}+ days</span>
                     </div>
                 </div>
@@ -694,6 +764,12 @@ const Profile = () => {
                     >
                         Achievements
                     </button>
+                    <button 
+                        className={`tab-btn ${activeTab === 'journal' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('journal')}
+                    >
+                        Journal
+                    </button>
                 </div>
 
                 {/* Tab Content */}
@@ -704,7 +780,7 @@ const Profile = () => {
                             
                             {/* Bio */}
                             <div className="form-group">
-                                <label htmlFor="profile-bio">Custom Bio</label>
+                                <label htmlFor="profile-bio">Custom bio</label>
                                 <textarea
                                     id="profile-bio"
                                     name="bio"
@@ -803,7 +879,7 @@ const Profile = () => {
                             )}
 
                             <button className="save-button" onClick={handleSaveChanges}>
-                                SAVE PROFILE
+                                Save profile
                             </button>
                         </div>
                     )}
@@ -846,7 +922,7 @@ const Profile = () => {
 
                     {activeTab === 'statistics' && (
                         <div className="tab-panel">
-                            <div className="section-title">Trading Statistics</div>
+                            <div className="section-title">Trading statistics</div>
                             <div className="stats-grid">
                                 <div className="stat-card">
                                     <div className="stat-icon">📊</div>
@@ -888,6 +964,40 @@ const Profile = () => {
                                     <div className="no-achievements-hint">Keep trading and engaging to unlock achievements!</div>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {activeTab === 'journal' && (
+                        <div className="tab-panel">
+                            <div className="section-title">Journal</div>
+                            {journalStatsLoading ? (
+                                <div className="profile-journal-loading">
+                                    <div className="loading-spinner"></div>
+                                    <span>Loading journal stats…</span>
+                                </div>
+                            ) : (
+                                <div className="profile-journal-stats">
+                                    <div className="profile-journal-stat-circle">
+                                        <div className="profile-journal-stat-ring" style={{ '--pct': journalDayPct != null ? journalDayPct : 0 }}>
+                                            <span className="profile-journal-stat-value">{journalDayPct != null ? `${journalDayPct}%` : '—'}</span>
+                                        </div>
+                                        <span className="profile-journal-stat-label">Today</span>
+                                    </div>
+                                    <div className="profile-journal-stat-circle">
+                                        <div className="profile-journal-stat-ring" style={{ '--pct': journalWeekPct != null ? journalWeekPct : 0 }}>
+                                            <span className="profile-journal-stat-value">{journalWeekPct != null ? `${journalWeekPct}%` : '—'}</span>
+                                        </div>
+                                        <span className="profile-journal-stat-label">This week</span>
+                                    </div>
+                                    <div className="profile-journal-stat-circle">
+                                        <div className="profile-journal-stat-ring" style={{ '--pct': journalMonthPct != null ? journalMonthPct : 0 }}>
+                                            <span className="profile-journal-stat-value">{journalMonthPct != null ? `${journalMonthPct}%` : '—'}</span>
+                                        </div>
+                                        <span className="profile-journal-stat-label">This month</span>
+                                    </div>
+                                </div>
+                            )}
+                            <p className="profile-journal-hint">Task completion from your Aura Journal. Add and complete tasks to improve your stats.</p>
                         </div>
                     )}
                 </div>

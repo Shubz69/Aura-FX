@@ -478,7 +478,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                 {/* Trading Identity */}
                 <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ color: '#C4B5FD', fontSize: '1rem', marginBottom: '15px', textTransform: 'uppercase' }}>
+                    <h3 style={{ color: '#C4B5FD', fontSize: '1rem', marginBottom: '15px', textTransform: 'none' }}>
                         <FaChartLine style={{ marginRight: '8px' }} />Trading Identity
                     </h3>
                     
@@ -548,7 +548,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                 {/* Privacy Settings */}
                 <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ color: '#C4B5FD', fontSize: '1rem', marginBottom: '15px', textTransform: 'uppercase' }}>
+                    <h3 style={{ color: '#C4B5FD', fontSize: '1rem', marginBottom: '15px', textTransform: 'none' }}>
                         <FaShieldAlt style={{ marginRight: '8px' }} />Privacy
                     </h3>
                     
@@ -721,7 +721,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         </div>
                         <div>
                             <div style={{ fontSize: '1.15rem', fontWeight: 700, color: tierColor, letterSpacing: '1px' }}>{rankTitle}</div>
-                            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{tierName}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'none' }}>{tierName}</div>
                         </div>
                     </div>
 
@@ -765,7 +765,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{
                             background: 'transparent', border: 'none', padding: '12px 16px',
                             color: activeTab === tab ? tierColor : 'rgba(255, 255, 255, 0.5)',
-                            fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase',
+                            fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', textTransform: 'none',
                             letterSpacing: '0.5px', position: 'relative', whiteSpace: 'nowrap'
                         }}>
                             {tab === 'identity' ? 'Trading Identity' : tab}
@@ -822,7 +822,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                     }}>
                                         <span style={{ fontSize: '1.5rem' }}>{stat.icon}</span>
                                         <div style={{ minWidth: 0 }}>
-                                            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{stat.label}</div>
+                                            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', textTransform: 'none', letterSpacing: '0.3px' }}>{stat.label}</div>
                                             <div style={{ fontSize: '1.2rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
                                         </div>
                                     </div>
@@ -835,7 +835,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                     padding: '16px 20px', background: `linear-gradient(135deg, ${tierColor}12, ${tierColor}06)`,
                                     border: `1px solid ${tierColor}40`, borderRadius: '12px', textAlign: 'center'
                                 }}>
-                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Next milestone</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', textTransform: 'none', letterSpacing: '0.5px' }}>Next milestone</div>
                                     <div style={{ fontSize: '1.35rem', fontWeight: 700, color: tierColor }}>{nextMilestone.title}</div>
                                     <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
                                         {nextMilestone.level - level} levels to go
@@ -919,7 +919,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 }}>
                                     <div style={{ fontSize: '2rem', marginBottom: '10px', color: stat.color }}>{stat.icon}</div>
                                     <div style={{ fontSize: '1.8rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
-                                    <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginTop: '5px' }}>{stat.label}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'none', marginTop: '5px' }}>{stat.label}</div>
                                 </div>
                             ))}
                         </div>
@@ -959,7 +959,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             background: `linear-gradient(135deg, ${tierColor} 0%, ${tierColor}cc 100%)`,
                             border: 'none', borderRadius: '14px', color: 'white', fontSize: '1rem',
                             fontWeight: 700, cursor: 'pointer', boxShadow: `0 8px 30px ${tierColor}50`,
-                            transition: 'all 0.3s', textTransform: 'uppercase', letterSpacing: '1px'
+                            transition: 'all 0.3s', textTransform: 'none', letterSpacing: '1px'
                         }}><FaUser /> View Full Profile</button>
                     </div>
                 )}

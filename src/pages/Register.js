@@ -207,7 +207,7 @@ const Register = () => {
             <CosmicBackground />
             <div className="register-form-container">
                 <div className="form-header">
-                    <h2 className="register-title">SIGN UP</h2>
+                    <h2 className="register-title">Sign up</h2>
                     <p className="register-subtitle">Create your account – verify email and phone</p>
                 </div>
                 {error ? <div className="error-message">{error}</div> : null}

@@ -189,20 +189,20 @@ const Leaderboard = () => {
         return (
             <div className="top10-list">
                 <h3 className="section-title">
-                    🏆 TOP 10 LEADERBOARD 
+                    🏆 Top 10 leaderboard 
                     <span className="timeframe-label">
-                        {selectedTimeframe === 'all-time' ? ' - All Time' : ` - ${getXpLabel()}`}
+                        {selectedTimeframe === 'all-time' ? ' - All time' : ` - ${getXpLabel()}`}
                     </span>
                 </h3>
                 <div className="leaderboard-table">
                     <div className="table-header">
-                        <div className="header-rank">RANK</div>
-                        <div className="header-user">USER</div>
-                        <div className="header-level">LEVEL</div>
+                        <div className="header-rank">Rank</div>
+                        <div className="header-user">User</div>
+                        <div className="header-level">Level</div>
                         <div className="header-xp">
-                            {selectedTimeframe === 'all-time' ? 'TOTAL XP' : `XP ${getXpLabel().toUpperCase()}`}
+                            {selectedTimeframe === 'all-time' ? 'Total XP' : `XP ${getXpLabel()}`}
                         </div>
-                        <div className="header-status">STATUS</div>
+                        <div className="header-status">Status</div>
                     </div>
                     {!hasData ? (
                         <div className="leaderboard-row empty-row">
@@ -268,7 +268,7 @@ const Leaderboard = () => {
             <div className="leaderboard-container" ref={containerRef}>
                 <CosmicBackground />
                 <div className="leaderboard-header">
-                    <h1 className="leaderboard-main-title">LEADERBOARD</h1>
+                    <h1 className="leaderboard-main-title">Leaderboard</h1>
                     <p className="leaderboard-subtitle">Compete with the best traders in the cyber realm</p>
                 </div>
                 <div className="error-message">
@@ -288,7 +288,7 @@ const Leaderboard = () => {
             <CosmicBackground />
             
             <div className="leaderboard-header">
-                <h1 className="leaderboard-main-title">LEADERBOARD</h1>
+                <h1 className="leaderboard-main-title">Leaderboard</h1>
                 <p className="leaderboard-subtitle">Compete with the best traders in the cyber realm</p>
                 
                 <div className="timeframe-selector">

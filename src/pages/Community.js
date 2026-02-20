@@ -4322,7 +4322,7 @@ avatar: storedUser?.avatar || null,
                                 fontSize: '0.75rem',
                                 fontWeight: 600,
                                 color: 'var(--text-muted)',
-                                textTransform: 'uppercase',
+                                textTransform: 'none',
                                 letterSpacing: '0.5px'
                             }}>
                                 Online Now
@@ -6180,7 +6180,7 @@ avatar: storedUser?.avatar || null,
                                                 fontWeight: 700,
                                                 color: '#b9bbbe',
                                                 letterSpacing: '0.02em',
-                                                textTransform: 'uppercase',
+                                                textTransform: 'none',
                                                 borderBottom: '1px solid rgba(0, 0, 0, 0.2)'
                                             }}>
                                                 Members
@@ -6482,7 +6482,7 @@ avatar: storedUser?.avatar || null,
 
                         <form onSubmit={handleCreateChannel} style={{ display: 'grid', gap: '12px', marginBottom: '20px' }}>
                             <div style={{ display: 'grid', gap: '8px' }}>
-                                <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af' }}>
+                                <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
                                     Channel Name
                                 </label>
                                 <input
@@ -6503,7 +6503,7 @@ avatar: storedUser?.avatar || null,
 
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <div style={{ flex: 1, display: 'grid', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af' }}>
+                                    <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
                                         Category
                                     </label>
                                     <select
@@ -6526,7 +6526,7 @@ avatar: storedUser?.avatar || null,
                                     </select>
                                 </div>
                                 <div style={{ flex: 1, display: 'grid', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af' }}>
+                                    <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
                                         Access
                                     </label>
                                     <select
@@ -6551,7 +6551,7 @@ avatar: storedUser?.avatar || null,
                             </div>
 
                             <div style={{ display: 'grid', gap: '8px' }}>
-                                <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af' }}>
+                                <label style={{ fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em', color: '#9ca3af' }}>
                                     Description
                                 </label>
                                 <textarea
@@ -6597,7 +6597,7 @@ avatar: storedUser?.avatar || null,
                             </button>
                         </form>
 
-                        <div style={{ marginBottom: '8px', color: '#9ca3af', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div style={{ marginBottom: '8px', color: '#9ca3af', fontSize: '0.75rem', textTransform: 'none', letterSpacing: '0.05em' }}>
                             Existing Channels
                         </div>
 

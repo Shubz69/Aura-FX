@@ -63,7 +63,7 @@ const Navbar = () => {
                 {user && <li><Link to="/community">Community</Link></li>}
                 <li><Link to="/courses">C & S</Link></li>
                 {!user && <li><Link to="/explore">Explore</Link></li>}
-                {!user && <li><Link to="/why-glitch">Why AURA FX</Link></li>}
+                {!user && <li><Link to="/why-glitch">Why Aura FX</Link></li>}
                 <li><Link to="/contact">Contact Us</Link></li>
                 {user && <li><Link to="/leaderboard">Leaderboard</Link></li>}
             </ul>

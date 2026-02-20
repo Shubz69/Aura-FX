@@ -57,7 +57,7 @@ const Home = () => {
                     <CosmicBackground />
                     {/* Main Loading Content - matches brand on top left */}
                     <div className="loading-content">
-                        <span className="loading-brand-text">AURA FX</span>
+                        <span className="loading-brand-text">Aura FX</span>
                         <div className="loading-subtitle">INITIALIZING SYSTEM...</div>
                         
                         <div className="loading-dots-container">
@@ -80,8 +80,8 @@ const Home = () => {
                             <A7Logo />
                             {/* Brand Name - Styled exactly as shown */}
                             <div className="brand-name-container">
-                                <h1 className="brand-name">AURA FX</h1>
-                                <p className="powered-by-glitch">powered by <strong>THE GLITCH</strong></p>
+                                <h1 className="brand-name">Aura FX</h1>
+                                <p className="powered-by-glitch">powered by <strong>The Glitch</strong></p>
                             </div>
                         </div>
 

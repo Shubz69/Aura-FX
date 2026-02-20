@@ -146,11 +146,11 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">AURA FX</h1>
+                <h1 className="brand-title">Aura FX</h1>
             </div>
             
             <div className="form-header">
-                <h2 className="login-title">RESET PASSWORD</h2>
+                <h2 className="login-title">Reset password</h2>
                 <p className="login-subtitle">Enter your email to receive reset instructions</p>
             </div>
             
@@ -193,11 +193,11 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">AURA FX</h1>
+                <h1 className="brand-title">Aura FX</h1>
             </div>
             
             <div className="form-header">
-                <h2 className="login-title">MFA VERIFICATION</h2>
+                <h2 className="login-title">MFA verification</h2>
                 <p className="login-subtitle">Enter the 6-digit MFA code sent to your email</p>
                 <p className="email-sent">Code sent to: {email}</p>
             </div>
@@ -241,11 +241,11 @@ const ForgotPassword = () => {
                 <div className="logo-icon">
                     <RiTerminalBoxFill />
                 </div>
-                <h1 className="brand-title">AURA FX</h1>
+                <h1 className="brand-title">Aura FX</h1>
             </div>
             
             <div className="form-header">
-                <h2 className="login-title">NEW PASSWORD</h2>
+                <h2 className="login-title">New password</h2>
                 <p className="login-subtitle">Enter your new password</p>
             </div>
             

@@ -760,6 +760,77 @@
     font-style: italic;
 }
 
+/* Journal tab – circular progress (Today / This week / This month) */
+.profile-journal-stats {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.profile-journal-stat-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-journal-stat-ring {
+    --pct: 0;
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #22c55e 0deg,
+        #8B5CF6 calc(var(--pct) * 3.6deg),
+        rgba(255, 255, 255, 0.08) calc(var(--pct) * 3.6deg)
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-journal-stat-ring::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(22, 22, 38, 0.98) 0%, rgba(30, 30, 46, 0.95) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.profile-journal-stat-value {
+    position: relative;
+    z-index: 1;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.profile-journal-stat-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+}
+
+.profile-journal-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.profile-journal-hint {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+    text-align: center;
+}
+
 .status-msg {
     text-align: center;
     margin-top: 20px;

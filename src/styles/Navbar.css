@@ -124,6 +124,7 @@ body.loading-active .navbar {
     color: #ffffff;
     font-weight: 500;
     font-family: var(--font-main);
+    text-transform: none;
     padding: 0.8rem 1rem;
     border-radius: 5px;
     transition: all 0.3s ease;

@@ -9,13 +9,13 @@ const Privacy = () => {
             <CosmicBackground />
             <div className="privacy-content">
                 <div className="privacy-header">
-                    <h1>PRIVACY POLICY</h1>
+                    <h1>Privacy policy</h1>
                     <p className="privacy-subtitle">Last Updated: January 2025</p>
                 </div>
 
                 <div className="privacy-body">
                     <section>
-                        <h2>1. INTRODUCTION</h2>
+                        <h2>1. Introduction</h2>
                         <p>
                             AURA FX ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we 
                             collect, use, disclose, and safeguard your information when you use our website and services.
@@ -23,8 +23,8 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>2. INFORMATION WE COLLECT</h2>
-                        <h3>2.1 Personal Information</h3>
+                        <h2>2. Information we collect</h2>
+                        <h3>2.1 Personal information</h3>
                         <p>We may collect personal information that you provide to us, including:</p>
                         <ul>
                             <li>Name and contact information (email address, phone number)</li>
@@ -33,7 +33,7 @@ const Privacy = () => {
                             <li>Profile information and preferences</li>
                         </ul>
 
-                        <h3>2.2 Automatically Collected Information</h3>
+                        <h3>2.2 Automatically collected information</h3>
                         <p>We may automatically collect certain information when you use our service, including:</p>
                         <ul>
                             <li>Device information (IP address, browser type, operating system)</li>
@@ -43,7 +43,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>3. HOW WE USE YOUR INFORMATION</h2>
+                        <h2>3. How we use your information</h2>
                         <p>We use the information we collect to:</p>
                         <ul>
                             <li>Provide, maintain, and improve our services</li>
@@ -57,7 +57,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>4. INFORMATION SHARING AND DISCLOSURE</h2>
+                        <h2>4. Information sharing and disclosure</h2>
                         <p>We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:</p>
                         <ul>
                             <li><strong>Service Providers:</strong> We may share information with third-party service providers who perform services on our behalf</li>
@@ -68,7 +68,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>5. DATA SECURITY</h2>
+                        <h2>5. Data security</h2>
                         <p>
                             We implement appropriate technical and organizational security measures to protect your personal information against 
                             unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the Internet or 
@@ -80,7 +80,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>6. COOKIES AND TRACKING TECHNOLOGIES</h2>
+                        <h2>6. Cookies and tracking technologies</h2>
                         <p>
                             We use cookies and similar tracking technologies to track activity on our service and hold certain information. 
                             You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
@@ -96,7 +96,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>7. YOUR RIGHTS</h2>
+                        <h2>7. Your rights</h2>
                         <p>Depending on your location, you may have the following rights regarding your personal information:</p>
                         <ul>
                             <li><strong>Access:</strong> Request access to your personal information</li>
@@ -110,7 +110,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>8. DATA RETENTION</h2>
+                        <h2>8. Data retention</h2>
                         <p>
                             We retain your personal information for as long as necessary to fulfill the purposes outlined in this Privacy Policy, 
                             unless a longer retention period is required or permitted by law.
@@ -118,7 +118,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>9. CHILDREN'S PRIVACY</h2>
+                        <h2>9. Children's privacy</h2>
                         <p>
                             Our service is not intended for individuals under the age of 18. We do not knowingly collect personal information 
                             from children under 18. If you are a parent or guardian and believe your child has provided us with personal information, 
@@ -127,7 +127,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>10. INTERNATIONAL DATA TRANSFERS</h2>
+                        <h2>10. International data transfers</h2>
                         <p>
                             Your information may be transferred to and maintained on computers located outside of your state, province, country, 
                             or other governmental jurisdiction where data protection laws may differ from those in your jurisdiction.
@@ -135,7 +135,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>11. CHANGES TO THIS PRIVACY POLICY</h2>
+                        <h2>11. Changes to this privacy policy</h2>
                         <p>
                             We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy 
                             on this page and updating the "Last Updated" date.
@@ -143,7 +143,7 @@ const Privacy = () => {
                     </section>
 
                     <section>
-                        <h2>12. CONTACT US</h2>
+                        <h2>12. Contact us</h2>
                         <p>
                             If you have any questions about this Privacy Policy, please contact us at:
                         </p>

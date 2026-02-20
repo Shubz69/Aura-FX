@@ -94,11 +94,12 @@
 
 .leaderboard-main-title {
     font-size: 4rem;
-    font-weight: 900;
+    font-weight: 200;
     color: #ffffff;
     letter-spacing: 8px;
     margin-top: 40px;
     margin-bottom: 20px;
+    text-transform: none;
 }
 
 .leaderboard-subtitle {

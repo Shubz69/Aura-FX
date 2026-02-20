@@ -275,10 +275,10 @@ const Login = () => {
                         <div className="logo-icon">
                             <RiTerminalBoxFill />
                         </div>
-                        <h1 className="brand-title">WHY AURA FX</h1>
+                        <h1 className="brand-title">Why Aura FX</h1>
                     </div>
                     
-                    <h2 className="mfa-title">MFA VERIFICATION</h2>
+                    <h2 className="mfa-title">MFA verification</h2>
                     <p className="mfa-info">Please enter the 6-digit code sent to your email.</p>
                     <p className="email-sent">Code sent to: {email}</p>
                     
@@ -339,7 +339,7 @@ const Login = () => {
             <div className="login-form-container">
                 
                 <div className="form-header">
-                    <h2 className="login-title">SIGN IN</h2>
+                    <h2 className="login-title">Sign in</h2>
                     <p className="login-subtitle">Access your trading account</p>
                 </div>
 

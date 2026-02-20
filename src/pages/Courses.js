@@ -101,7 +101,7 @@ const Courses = () => {
         <div className="courses-container">
             <CosmicBackground />
             <div className="courses-header">
-                <h1 className="courses-title">COURSES & SUBSCRIPTIONS</h1>
+                <h1 className="courses-title">Courses & subscriptions</h1>
                 <p>Master the Markets with Our Comprehensive, Expert-Led Trading Education Programs</p>
             </div>
             
@@ -147,7 +147,7 @@ const Courses = () => {
                     backgroundClip: 'text',
                     padding: '0 20px'
                 }}>
-                    💎 SUBSCRIPTIONS
+                    💎 Subscriptions
                 </h2>
                 <p className="section-description subscriptions-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
@@ -283,7 +283,7 @@ const Courses = () => {
                     backgroundClip: 'text',
                     padding: '0 20px'
                 }}>
-                    📚 COURSES
+                    📚 Courses
                 </h2>
                 <p className="section-description courses-section-description" style={{
                     color: 'rgba(255, 255, 255, 0.8)',
@@ -329,7 +329,7 @@ const Courses = () => {
                         ))
                     ) : (
                         <div className="no-courses">
-                            <h2>NO COURSES AVAILABLE</h2>
+                            <h2>No courses available</h2>
                             <p>Check back later for new course offerings.</p>
                         </div>
                     )}

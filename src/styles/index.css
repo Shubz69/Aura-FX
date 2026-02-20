@@ -138,15 +138,50 @@ html {
     min-height: 100%;
 }
 
-/* Site-wide font: same as navbar "AURA FX" logo (Space Grotesk) - every word on the site */
+/* Site-wide font: same as navbar "AURA FX" logo (Space Grotesk) - skinny weight to match logo */
 body,
 body * {
     font-family: 'Space Grotesk', sans-serif;
+    font-weight: 300;
 }
 /* Keep monospace for code blocks only */
 pre, code, .md-pre, .md-code,
 [class*="monospace"], [class*="code-block"] {
     font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
+}
+/* Site-wide: all titles first letter capital only, skinny font (match AURA FX logo) */
+h1, h2, h3, h4, h5, h6,
+.nav-links a, .leaderboard-main-title, .courses-title,
+.section-title, .journal-sidebar-title, .journal-section-title,
+.journal-stat-circle-label, .journal-progress-card-label,
+.profile-username, .subscriptions-title, .courses-section-title,
+.table-header > div, .header-rank, .header-user, .header-xp, .header-level, .header-status,
+.tab-btn, .section-title, .stat-label, .journey-label, .streak-label,
+.form-group label, .achievement-badge, .no-achievements-text,
+[class*="title"], [class*="section-title"], [class*="-label"]:not(.form-input),
+.profile-journal-stat-label, .milestone-title, .milestone-name,
+.save-button, .stat-card .stat-label, .journey-stat .journey-label,
+.footer h4, .contact-form label, .login-form label, .register-form label,
+.loading-text, .loading-progress, .no-achievements-hint,
+.streak-label, .streak-value, .role-value,
+/* Page-specific title classes */
+.home-hero-title, .home-section-title, .why-title, .contact-title,
+.courses-title, .leaderboard-main-title, .journal-main-title,
+.messages-title, .community-title, .chatbot-title, .premium-ai-title,
+.subscription-title, .privacy-title, .terms-title, .footer-brand {
+    text-transform: none !important;
+}
+/* All titles: skinny font like AURA FX logo */
+h1, h2, h3, h4, h5, h6,
+.section-title, .tab-btn, .leaderboard-main-title, .courses-title,
+.journal-main-title, .journal-sidebar-title, .journal-section-title,
+.home-hero-title, .home-section-title, .contact-title, .why-title,
+.messages-title, .community-title, .premium-ai-title, .subscription-title {
+    font-weight: 200;
+}
+/* Keep navbar logo "AURA FX" with skinny weight and brand caps */
+.logo {
+    font-weight: 200 !important;
 }
 
 html, body, #root {
@@ -415,8 +450,8 @@ input:focus, textarea:focus, select:focus {
     cursor: pointer;
     transition: all 0.3s ease;
     border-radius: 50px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    text-transform: none;
+    letter-spacing: 0.5px;
 }
 
 .btn:hover {

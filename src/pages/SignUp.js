@@ -180,7 +180,7 @@ function SignUp() {
             <CosmicBackground />
             <div className="login-form-container">
                 <div className="form-header">
-                    <h2 className="login-title">SIGN UP</h2>
+                    <h2 className="login-title">Sign up</h2>
                     <p className="login-subtitle">Create your account – verify email and phone</p>
                 </div>
                 {error && <div className="error-message">{error}</div>}

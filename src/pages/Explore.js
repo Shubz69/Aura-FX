@@ -170,7 +170,7 @@ const Explore = () => {
       <div className="explore-content-wrapper">
         {/* Header Section */}
         <header className="explore-header">
-          <h1 className="explore-main-title">EXPLORE</h1>
+          <h1 className="explore-main-title">Explore</h1>
         </header>
 
         {/* Main Content - Split Layout */}
@@ -236,7 +236,7 @@ const Explore = () => {
 
         {/* Courses Provided Section */}
         <div className="explore-courses-section">
-          <h2 className="explore-section-heading">COURSES PROVIDED</h2>
+          <h2 className="explore-section-heading">Courses provided</h2>
           <div className="explore-courses-grid">
             {staticCourses.map((course) => (
               <div key={course.id} className="explore-course-card explore-course-card-static">
@@ -260,7 +260,7 @@ const Explore = () => {
             <span className="explore-footer-text">Courses Provided</span>
             <span className="explore-footer-separator">•</span>
             <span className="explore-footer-powered">
-              powered by <strong>THE GLITCH</strong>
+              powered by <strong>The Glitch</strong>
             </span>
           </div>
         </div>

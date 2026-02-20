@@ -185,7 +185,7 @@
   text-align: center;
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .journal-calendar-grid {
@@ -411,6 +411,15 @@
   padding: 28px 32px 40px;
   min-width: 0;
   animation: journal-fadeIn 0.45s ease-out 0.05s both;
+  overflow-x: hidden;
+}
+.journal-main p,
+.journal-main .journal-xp-info,
+.journal-main .journal-notes-hint,
+.journal-main .journal-section-title {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .journal-main-header {
@@ -467,6 +476,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 14px 18px;
   background: rgba(22, 22, 38, 0.95);
   border: 1px solid rgba(139, 92, 246, 0.25);
@@ -474,6 +484,9 @@
   margin-bottom: 20px;
   color: var(--primary, #fff);
   font-size: 0.95rem;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .journal-completion-dismiss {
@@ -702,12 +715,16 @@
 
 .journal-task-title {
   flex: 1;
+  min-width: 0;
   font-size: 1rem;
   color: var(--primary, #fff);
   text-align: left;
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 4px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .journal-task-title:hover {
@@ -853,6 +870,10 @@
   padding: 10px 14px;
   margin-bottom: 14px;
   line-height: 1.4;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 .journal-xp-info strong {
   color: rgba(255, 255, 255, 0.9);
@@ -870,6 +891,10 @@
   font-size: 0.85rem;
   color: var(--secondary, rgba(255, 255, 255, 0.6));
   margin: -4px 0 14px 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .journal-notes-list {
@@ -889,6 +914,7 @@
   margin-bottom: 8px;
   animation: journal-fadeIn 0.3s ease-out;
   transition: background 0.2s, transform 0.15s;
+  min-width: 0;
 }
 
 .journal-note-item:hover {
@@ -898,10 +924,12 @@
 
 .journal-note-content {
   flex: 1;
+  min-width: 0;
   font-size: 0.95rem;
   color: var(--primary, #fff);
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .journal-note-delete {
@@ -1027,7 +1055,7 @@
 .journal-note-display-label {
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 10px;
@@ -1151,6 +1179,23 @@
   font-size: 0.9rem;
 }
 
+/* iPad and tablet: prevent text overflow and overlapping */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .journal-sidebar {
+    width: 260px;
+    padding: 20px 16px;
+  }
+
+  .journal-main {
+    padding: 24px 24px 36px;
+  }
+
+  .journal-xp-info,
+  .journal-notes-hint {
+    padding-right: 16px;
+  }
+}
+
 @media (max-width: 900px) {
   .journal-layout {
     flex-direction: column;
@@ -1195,6 +1240,14 @@
   .journal-progress-cards {
     grid-template-columns: 1fr;
   }
+
+  .journal-add-note-form {
+    flex-wrap: wrap;
+  }
+
+  .journal-add-note-input {
+    min-width: 0;
+  }
 }
 
 @media (max-width: 600px) {
@@ -1203,6 +1256,14 @@
   }
 
   .journal-add-btn {
+    justify-content: center;
+  }
+
+  .journal-add-note-form {
+    flex-direction: column;
+  }
+
+  .journal-add-note-btn {
     justify-content: center;
   }
 }

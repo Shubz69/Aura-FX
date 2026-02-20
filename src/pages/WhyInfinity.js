@@ -67,7 +67,7 @@ const WhyInfinity = () => {
             <div className="content-wrapper">
                 {/* Header Section */}
                 <header className="why-header">
-                    <h1 className="why-main-title">WHY AURA FX</h1>
+                    <h1 className="why-main-title">Why Aura FX</h1>
                     <MarketTicker 
                         compact={true}
                         showTabs={false}
@@ -255,7 +255,7 @@ const WhyInfinity = () => {
                             <div className="why-platform-icon">
                                 <FaChartLine />
                             </div>
-                            <h3>AURA FX</h3>
+                            <h3>Aura FX</h3>
                             <p>Focuses on decision-making, risk, and market understanding</p>
                             <p>Full transparency with real trades, real accounts, and live execution</p>
                             <p>Teaches frameworks adaptable across all market conditions</p>
