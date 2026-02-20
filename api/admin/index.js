@@ -1108,8 +1108,9 @@ module.exports = async (req, res) => {
           await db.end();
           return res.status(401).json({ success: false, message: 'User not found' });
         }
-        const role = (roleRows[0].role || '').toString().toLowerCase();
-        if (role !== 'admin' && role !== 'super_admin') {
+        const role = (roleRows[0].role || '').toString().toLowerCase().trim();
+        const allowedRoles = ['admin', 'super_admin', 'a7fx', 'elite'];
+        if (!allowedRoles.includes(role)) {
           await db.end();
           return res.status(403).json({ success: false, message: 'Admin only' });
         }
@@ -1153,6 +1154,10 @@ module.exports = async (req, res) => {
             'SELECT COUNT(*) as cnt FROM journal_daily WHERE userId = ? AND notes IS NOT NULL AND notes != ""',
             [userId]
           );
+          const [proofTasksRows] = await db.execute(
+            `SELECT id, date, title FROM journal_tasks WHERE userId = ? AND proof_image IS NOT NULL AND proof_image != '' ORDER BY date DESC, id`,
+            [userId]
+          );
           await db.end();
           return res.status(200).json({
             user: {
@@ -1167,6 +1172,11 @@ module.exports = async (req, res) => {
               total: Number(r.total),
               completed: Number(r.completed),
               withProof: Number(r.withProof)
+            })),
+            tasksWithProof: (proofTasksRows || []).map(r => ({
+              id: r.id,
+              date: r.date ? String(r.date).slice(0, 10) : null,
+              title: r.title || ''
             })),
             xpByType: (xpRows || []).map(r => ({ type: r.award_type, xp: Number(r.xp), count: Number(r.count) })),
             notesSaved: (notesRows && notesRows[0]) ? Number(notesRows[0].cnt) : 0
@@ -1270,6 +1280,51 @@ module.exports = async (req, res) => {
       }
     } catch (err) {
       console.error('Error in journal-stats:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  }
+
+  // Handle /api/admin/journal-proof?taskId=xxx - Get proof image for a task (admin only; for viewing user's folder)
+  if ((pathname.includes('/journal-proof') || pathname.endsWith('/journal-proof')) && req.method === 'GET') {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) return res.status(401).json({ success: false, message: 'Unauthorized' });
+      let requesterId = null;
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          requesterId = payload.id;
+        }
+      } catch (e) { /* ignore */ }
+      if (!requesterId) return res.status(401).json({ success: false, message: 'Invalid token' });
+      const db = await getDbConnection();
+      if (!db) return res.status(500).json({ success: false, message: 'Database connection error' });
+      try {
+        const [roleRows] = await db.execute('SELECT role FROM users WHERE id = ?', [requesterId]);
+        if (roleRows.length === 0) { await db.end(); return res.status(401).json({ success: false, message: 'User not found' }); }
+        const role = (roleRows[0].role || '').toString().toLowerCase().trim();
+        if (!['admin', 'super_admin', 'a7fx', 'elite'].includes(role)) {
+          await db.end();
+          return res.status(403).json({ success: false, message: 'Admin only' });
+        }
+        const taskId = req.query?.taskId ? String(req.query.taskId).trim() : null;
+        if (!taskId) {
+          await db.end();
+          return res.status(400).json({ success: false, message: 'taskId required' });
+        }
+        const [rows] = await db.execute('SELECT proof_image, userId FROM journal_tasks WHERE id = ?', [taskId]);
+        await db.end();
+        if (!rows || rows.length === 0) return res.status(404).json({ success: false, message: 'Task not found' });
+        const proof = rows[0].proof_image;
+        if (!proof) return res.status(404).json({ success: false, message: 'No proof image for this task' });
+        return res.status(200).json({ success: true, proofImage: proof, userId: rows[0].userId });
+      } catch (e) {
+        if (db && !db.ended) await db.end();
+        throw e;
+      }
+    } catch (err) {
+      console.error('Error in journal-proof:', err);
       return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }

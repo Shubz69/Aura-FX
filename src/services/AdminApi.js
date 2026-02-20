@@ -76,6 +76,16 @@ const AdminApi = {
                 'Accept': 'application/json'
             }
         });
+    },
+
+    getJournalProof: (taskId) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/admin/journal-proof?taskId=${encodeURIComponent(taskId)}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
     }
 };
 

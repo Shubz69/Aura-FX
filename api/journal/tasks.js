@@ -60,6 +60,30 @@ function mapRow(row) {
   };
 }
 
+/** Validate proof image: reject blank, fake, or invalid images. Ensures image is real and meets minimum size. */
+function validateProofImage(proof, taskTitle = '') {
+  if (!proof || typeof proof !== 'string') return { valid: true };
+  const s = proof.trim();
+  if (!s) return { valid: true };
+
+  if (!/^data:image\/(jpeg|jpg|png|gif|webp);base64,/i.test(s)) {
+    return { valid: false, message: 'Proof must be a valid image (JPEG, PNG, GIF, or WebP).' };
+  }
+  const base64 = s.replace(/^data:image\/[^;]+;base64,/, '');
+  if (base64.length < 500) {
+    return { valid: false, message: 'Image is too small or empty. Please upload a real screenshot or photo of your task.' };
+  }
+  try {
+    const buf = Buffer.from(base64, 'base64');
+    if (buf.length < 400) {
+      return { valid: false, message: 'Image file is too small. Use a real task screenshot.' };
+    }
+  } catch (e) {
+    return { valid: false, message: 'Invalid image data.' };
+  }
+  return { valid: true };
+}
+
 module.exports = async (req, res) => {
   const origin = req.headers.origin || '*';
   res.setHeader('Access-Control-Allow-Origin', origin);
@@ -178,7 +202,16 @@ module.exports = async (req, res) => {
       params.push(Number(body.sortOrder));
     }
     if (body.proofImage !== undefined) {
-      const proof = body.proofImage ? String(body.proofImage).trim().slice(0, 10485760) : null;
+      const rawProof = body.proofImage ? String(body.proofImage).trim() : null;
+      if (rawProof) {
+        const [rows] = await executeQuery('SELECT title FROM journal_tasks WHERE id = ? AND userId = ?', [taskId, userId]);
+        const taskTitle = (rows && rows[0] && rows[0].title) ? rows[0].title : '';
+        const validation = validateProofImage(rawProof, taskTitle);
+        if (!validation.valid) {
+          return res.status(400).json({ success: false, message: validation.message || 'Invalid proof image.' });
+        }
+      }
+      const proof = rawProof ? rawProof.slice(0, 10485760) : null;
       updates.push('proof_image = ?');
       params.push(proof);
     }

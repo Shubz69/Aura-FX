@@ -12,6 +12,9 @@ const AdminJournal = () => {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewingProofTaskId, setViewingProofTaskId] = useState(null);
+  const [proofImageUrl, setProofImageUrl] = useState(null);
 
   const fetchStats = useCallback(async () => {
     if (!user || !isAdmin(user)) return;
@@ -49,7 +52,24 @@ const AdminJournal = () => {
     }
   };
 
-  const closeDetail = () => setDetail(null);
+  const closeDetail = () => {
+    setDetail(null);
+    setViewingProofTaskId(null);
+    setProofImageUrl(null);
+  };
+
+  const viewProof = async (taskId) => {
+    if (viewingProofTaskId === taskId && proofImageUrl) return;
+    setViewingProofTaskId(taskId);
+    setProofImageUrl(null);
+    try {
+      const res = await AdminApi.getJournalProof(taskId);
+      const url = res.data?.proofImage;
+      if (url) setProofImageUrl(url);
+    } catch {
+      setProofImageUrl(null);
+    }
+  };
 
   if (!user || !isAdmin(user)) {
     return <h4 className="admin-journal-denied">Access Denied: Admins Only</h4>;
@@ -98,9 +118,32 @@ const AdminJournal = () => {
             )}
 
             <h3 className="admin-journal-table-title">Per-user progress</h3>
+            {users.length > 0 && (
+              <div className="admin-journal-search-wrap">
+                <input
+                  type="text"
+                  className="admin-journal-search"
+                  placeholder="Search by email or username…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search users"
+                />
+              </div>
+            )}
             {users.length === 0 ? (
               <p className="admin-journal-empty">No journal activity yet.</p>
-            ) : (
+            ) : (() => {
+              const q = (searchTerm || '').toLowerCase().trim();
+              const filtered = q
+                ? users.filter(
+                    (u) =>
+                      (u.email || '').toLowerCase().includes(q) ||
+                      (u.username || '').toLowerCase().includes(q)
+                  )
+                : users;
+              return filtered.length === 0 ? (
+                <p className="admin-journal-empty">No users match your search.</p>
+              ) : (
               <div className="admin-journal-table-wrap">
                 <table className="admin-journal-table">
                   <thead>
@@ -117,7 +160,7 @@ const AdminJournal = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((u) => (
+                    {filtered.map((u) => (
                       <tr key={u.id}>
                         <td>
                           <span className="admin-journal-user-email">{u.email}</span>
@@ -146,7 +189,8 @@ const AdminJournal = () => {
                   </tbody>
                 </table>
               </div>
-            )}
+              );
+            })()}
           </>
         )}
 
@@ -180,6 +224,32 @@ const AdminJournal = () => {
                   ))}
                   {(detail.tasksByDate || []).length === 0 && <p>No tasks.</p>}
                 </div>
+                <h4>Tasks with proof (user folder)</h4>
+                {(detail.tasksWithProof && detail.tasksWithProof.length > 0) ? (
+                  <ul className="admin-journal-proof-list">
+                    {detail.tasksWithProof.map((t) => (
+                      <li key={t.id} className="admin-journal-proof-item">
+                        <span>{t.date}</span>
+                        <span className="admin-journal-proof-title">{t.title}</span>
+                        <button type="button" className="admin-journal-view-btn" onClick={() => viewProof(t.id)}>
+                          View proof
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No tasks with proof.</p>
+                )}
+                {viewingProofTaskId && (
+                  <div className="admin-journal-proof-viewer">
+                    {proofImageUrl ? (
+                      <img src={proofImageUrl} alt="Task proof" className="admin-journal-proof-img" />
+                    ) : (
+                      <span>Loading…</span>
+                    )}
+                    <button type="button" className="admin-journal-view-btn" onClick={() => { setViewingProofTaskId(null); setProofImageUrl(null); }}>Close</button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
