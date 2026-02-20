@@ -36,6 +36,13 @@ body, html {
     width: 100%;
     max-width: 100vw;
     box-sizing: border-box;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+/* All text and titles in Space Grotesk (match navbar AURA FX); titles in all caps */
+.home-container,
+.home-container * {
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Central Glow Effect */
@@ -129,8 +136,9 @@ body.loading-active {
     font-size: 1.2rem;
     color: #ffffff;
     font-family: 'Space Grotesk', sans-serif;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.2em;
     margin-bottom: 2rem;
+    text-transform: uppercase;
 }
 
 .loading-dots-container {
@@ -269,7 +277,9 @@ body.loading-active {
 .powered-by-glitch strong {
     color: #8B5CF6;
     font-weight: 600;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.2em;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
 }
 
 @keyframes brandNameFadeIn {
@@ -302,9 +312,11 @@ body.loading-active {
     font-size: 1.3rem;
     font-weight: 300;
     color: #ffffff;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.2em;
     line-height: 1.6;
     margin-bottom: 2rem;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
 }
 
 /* Stock Ticker Banner */
@@ -474,11 +486,12 @@ body.loading-active {
 
 .feature-title {
     font-size: 1.3rem;
-    font-weight: 400;
+    font-weight: 200;
     color: #ffffff;
     margin-bottom: 1rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .feature-description {
@@ -486,6 +499,7 @@ body.loading-active {
     color: #ffffff;
     line-height: 1.6;
     font-weight: 300;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* CTA Section */
@@ -570,14 +584,16 @@ body.loading-active {
     color: #ffffff;
     margin-bottom: 0.5rem;
     letter-spacing: 0.05em;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .stat-label {
     font-size: 0.9rem;
     color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.2em;
     font-weight: 300;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Why Choose Section */
@@ -592,9 +608,10 @@ body.loading-active {
     font-size: 2.5rem;
     font-weight: 200;
     color: #ffffff;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     margin-bottom: 3rem;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .why-grid {
@@ -628,11 +645,12 @@ body.loading-active {
 
 .why-title {
     font-size: 1.2rem;
-    font-weight: 400;
+    font-weight: 200;
     color: #ffffff;
     margin-bottom: 0.8rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .why-text {
@@ -640,6 +658,7 @@ body.loading-active {
     color: #ffffff;
     line-height: 1.6;
     font-weight: 300;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Trade Multiple Markets - same section on mobile and laptop */
@@ -655,10 +674,11 @@ body.loading-active {
     font-size: 2rem;
     font-weight: 200;
     color: #ffffff;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     margin-bottom: 2rem;
     text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Laptop: 3-column grid */
@@ -709,8 +729,9 @@ body.loading-active {
     font-weight: 600;
     color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.2em;
     line-height: 1.2;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .trade-markets-section__card-desc {
@@ -719,6 +740,7 @@ body.loading-active {
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.9);
     line-height: 1.4;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Key Features Section */
@@ -776,11 +798,12 @@ body.loading-active {
 
 .feature-item-title {
     font-size: 1.2rem;
-    font-weight: 400;
+    font-weight: 200;
     color: #ffffff;
     margin-bottom: 0.5rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .feature-item-text {
@@ -788,6 +811,7 @@ body.loading-active {
     color: #ffffff;
     line-height: 1.6;
     font-weight: 300;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Responsive Design */

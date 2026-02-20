@@ -18,6 +18,12 @@
     max-height: calc(100dvh - 60px);
 }
 
+/* All text and titles in Space Grotesk (match navbar AURA FX); titles in all caps */
+.profile-container,
+.profile-container * {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
 .profile-content {
     width: 100%;
     max-width: 1200px;
@@ -55,6 +61,9 @@
     color: #C4B5FD;
     font-size: 1.2rem;
     font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
 }
 
 /* Profile Banner */
@@ -90,6 +99,9 @@
 .banner-upload-hint {
     color: rgba(255, 255, 255, 0.5);
     font-size: 0.9rem;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .banner-upload-btn {
@@ -160,7 +172,8 @@
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.15em;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .profile-avatar-color-swatches {
@@ -229,12 +242,13 @@
 
 .profile-username {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 200;
     color: white;
     margin: 0 0 8px 0;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.25em;
     text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .profile-rank {
@@ -242,13 +256,15 @@
     font-weight: 600;
     margin-bottom: 4px;
     text-shadow: 0 0 10px currentColor;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .profile-tier {
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 /* Level & XP Section */
@@ -276,7 +292,8 @@
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.15em;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .level-value {
@@ -306,6 +323,9 @@
     color: rgba(255, 255, 255, 0.6);
     display: block;
     margin-bottom: 5px;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
 }
 
 .milestone-value {
@@ -332,6 +352,9 @@
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .xp-progress-bar {
@@ -404,6 +427,8 @@
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 .streak-value {
@@ -433,9 +458,10 @@
     border-radius: 8px 8px 0 0;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.15em;
     white-space: nowrap;
     position: relative;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .tab-btn:hover {
@@ -480,12 +506,13 @@
 
 .section-title {
     font-size: 1.3rem;
-    font-weight: 700;
+    font-weight: 200;
     color: #C4B5FD;
     margin-bottom: 20px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.2em;
     min-width: 0;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Form Groups */
@@ -502,7 +529,8 @@
     font-weight: 600;
     font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.15em;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .form-input {
@@ -553,12 +581,17 @@
 .role-label {
     color: rgba(255, 255, 255, 0.8);
     font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .role-value {
     color: #4ADE80;
     font-weight: 700;
     text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.1em;
 }
 
 .save-button {
@@ -572,13 +605,14 @@
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.2em;
     box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
     width: 100%;
     max-width: 300px;
     margin: 20px auto 0;
     display: block;
     box-sizing: border-box;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .save-button:hover {
@@ -625,6 +659,8 @@
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 .journey-value {
@@ -647,6 +683,8 @@
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
     margin-bottom: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 .milestone-name {
@@ -654,6 +692,9 @@
     font-weight: 700;
     color: #C4B5FD;
     margin-bottom: 5px;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .milestone-level {
@@ -699,6 +740,8 @@
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 .stats-note {
@@ -729,6 +772,9 @@
     font-weight: 600;
     transition: all 0.3s ease;
     cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .achievement-badge:hover {
@@ -752,12 +798,16 @@
     font-size: 1.2rem;
     color: rgba(255, 255, 255, 0.6);
     margin-bottom: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
 }
 
 .no-achievements-hint {
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.4);
     font-style: italic;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Journal tab – circular progress (Today / This week / This month) */
@@ -813,6 +863,9 @@
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.6);
     text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .profile-journal-loading {
@@ -829,6 +882,7 @@
     color: rgba(255, 255, 255, 0.5);
     margin: 0;
     text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .status-msg {
@@ -840,6 +894,7 @@
     border: 1px solid rgba(34, 197, 94, 0.3);
     color: #4ADE80;
     font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Responsive Design - keep everything inside the box on iPhone */

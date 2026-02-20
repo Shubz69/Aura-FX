@@ -22,7 +22,13 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   z-index: 1;
-  font-family: var(--font-secondary);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* All text and titles in Space Grotesk (match navbar AURA FX); titles in all caps */
+.why-container,
+.why-container * {
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .content-wrapper {
@@ -44,8 +50,9 @@
   font-weight: 200;
   color: #ffffff;
   margin-bottom: 2rem;
-  letter-spacing: 0.15em;
-  font-family: var(--font-main);
+  letter-spacing: 0.25em;
+  font-family: 'Space Grotesk', sans-serif;
+  text-transform: uppercase;
 }
 
 .stock-ticker-compact {
@@ -71,7 +78,7 @@
   align-items: center;
   padding: 0.7rem 1.5rem;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  font-family: var(--font-secondary);
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .ticker-symbol {
@@ -175,8 +182,9 @@
   font-weight: 200;
   color: #ffffff;
   margin-bottom: 1.5rem;
-  letter-spacing: 0.1em;
-  font-family: var(--font-main);
+  letter-spacing: 0.2em;
+  font-family: 'Space Grotesk', sans-serif;
+  text-transform: uppercase;
 }
 
 .why-divider {
@@ -192,7 +200,7 @@
   color: #ffffff;
   margin-bottom: 1.5rem;
   font-weight: 300;
-  font-family: var(--font-secondary);
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .why-cta-button {
@@ -203,7 +211,7 @@
   border-radius: 8px;
   font-size: 1.1rem;
   font-weight: 300;
-  font-family: var(--font-main);
+  font-family: 'Space Grotesk', sans-serif;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -211,6 +219,8 @@
   transition: all 0.3s ease;
   margin-top: 2rem;
   box-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
 }
 
 .why-cta-button:hover {
@@ -269,17 +279,18 @@
 .why-feature-title {
   font-size: 1.3rem;
   margin-bottom: 1rem;
-  font-weight: 300;
-  font-family: var(--font-main);
+  font-weight: 200;
+  font-family: 'Space Grotesk', sans-serif;
   color: #ffffff;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .why-feature-text {
   color: #ffffff;
   line-height: 1.6;
   font-size: 0.95rem;
-  font-family: var(--font-secondary);
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: 300;
 }
 
@@ -309,10 +320,11 @@
   margin-bottom: 4rem;
   text-align: center;
   font-weight: 200;
-  font-family: var(--font-main);
+  font-family: 'Space Grotesk', sans-serif;
   color: #ffffff;
   position: relative;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .why-section-heading::after {
@@ -392,17 +404,18 @@
 .why-platform-feature h3 {
   font-size: 1.2rem;
   margin-bottom: 1rem;
-  font-family: var(--font-main);
+  font-family: 'Space Grotesk', sans-serif;
   color: #ffffff;
-  font-weight: 300;
-  letter-spacing: 0.1em;
+  font-weight: 200;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .why-platform-feature p {
   color: #ffffff;
   font-size: 0.95rem;
   line-height: 1.6;
-  font-family: var(--font-secondary);
+  font-family: 'Space Grotesk', sans-serif;
   flex-grow: 1;
   font-weight: 300;
 }

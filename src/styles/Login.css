@@ -29,13 +29,19 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    font-family: var(--font-secondary);
+    font-family: 'Space Grotesk', sans-serif;
     padding: 20px;
     padding-left: max(20px, env(safe-area-inset-left));
     padding-right: max(20px, env(safe-area-inset-right));
     padding-top: 80px;
     padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
     width: 100%;
+}
+
+/* All text and titles in Space Grotesk (match navbar AURA FX); titles in all caps */
+.login-container,
+.login-container * {
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Subtle background pattern */
@@ -70,18 +76,19 @@
     font-weight: 200;
     color: #ffffff;
     margin-bottom: 8px;
-    font-family: var(--font-main);
-    letter-spacing: 0.15em;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.25em;
     line-height: 1.1;
+    text-transform: uppercase;
 }
 
 .login-subtitle {
     color: #ffffff;
     font-size: 0.9rem;
     font-weight: 300;
-    font-family: var(--font-secondary);
+    font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.2em;
     margin-bottom: 24px;
 }
 
@@ -96,9 +103,9 @@
     color: #ffffff;
     font-size: 0.85rem;
     font-weight: 300;
-    font-family: var(--font-main);
+    font-family: 'Space Grotesk', sans-serif;
     margin-bottom: 8px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
 }
 
@@ -112,7 +119,7 @@
     padding: 16px 20px;
     color: #ffffff;
     font-size: 1rem;
-    font-family: var(--font-secondary);
+    font-family: 'Space Grotesk', sans-serif;
     font-weight: 300;
     transition: all 0.3s ease;
     box-shadow: none;
@@ -142,7 +149,7 @@
 
 .form-input::placeholder {
     color: rgba(255, 255, 255, 0.6);
-    font-family: var(--font-secondary);
+    font-family: 'Space Grotesk', sans-serif;
     font-weight: 400;
 }
 
@@ -158,9 +165,9 @@
     padding: 16px 24px;
     font-size: 1rem;
     font-weight: 300;
-    font-family: var(--font-main);
+    font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.2em;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: none;
@@ -189,9 +196,11 @@
     color: #ffffff;
     text-decoration: none;
     font-size: 0.9rem;
-    font-family: var(--font-secondary);
+    font-family: 'Space Grotesk', sans-serif;
     font-weight: 300;
     transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .forgot-password:hover {
@@ -210,7 +219,7 @@
 .register-link p {
     color: #ffffff;
     font-size: 0.9rem;
-    font-family: var(--font-secondary);
+    font-family: 'Space Grotesk', sans-serif;
     margin-bottom: 0;
     font-weight: 300;
 }
@@ -219,10 +228,12 @@
     color: #ffffff;
     text-decoration: none;
     font-weight: 300;
-    font-family: var(--font-main);
+    font-family: 'Space Grotesk', sans-serif;
     transition: all 0.3s ease;
     font-size: 0.9rem;
     margin-left: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .register-link a:hover {
@@ -258,6 +269,7 @@
     color: rgba(255, 255, 255, 0.6);
     margin-top: 8px;
     margin-bottom: 0;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Error message - Make it VERY visible */
@@ -270,7 +282,7 @@
     margin-bottom: 24px !important;
     margin-top: 16px !important;
     font-size: 16px !important;
-    font-family: var(--font-secondary) !important;
+    font-family: 'Space Grotesk', sans-serif !important;
     font-weight: 700 !important;
     text-align: center !important;
     box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
@@ -296,7 +308,7 @@
     margin-top: 20px !important;
     margin-bottom: 16px !important;
     font-size: 15px !important;
-    font-family: var(--font-secondary) !important;
+    font-family: 'Space Grotesk', sans-serif !important;
     font-weight: 700 !important;
     text-align: center !important;
     box-shadow: 0 6px 30px rgba(239, 68, 68, 0.5), 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
@@ -322,6 +334,39 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* MFA verification view - titles and buttons */
+.login-container .brand-title {
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 200;
+}
+
+.login-container .mfa-title {
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 200;
+    color: #ffffff;
+}
+
+.login-container .mfa-info {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.login-container .resend-btn,
+.login-container .back-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+}
+
+.login-container .form-group label {
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
 }
 
 /* Loading state */

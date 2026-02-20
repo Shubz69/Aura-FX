@@ -30,6 +30,12 @@
     font-family: 'Space Grotesk', sans-serif;
 }
 
+/* All text and titles in Space Grotesk; titles in all caps (match navbar AURA FX) */
+.leaderboard-container,
+.leaderboard-container * {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
 /* Glitch Background Effect */
 .glitch-bg {
     position: absolute;
@@ -99,13 +105,17 @@
     letter-spacing: 8px;
     margin-top: 40px;
     margin-bottom: 20px;
-    text-transform: none;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .leaderboard-subtitle {
     font-size: 1.2rem;
     color: #cccccc;
     margin-bottom: 30px;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.2em;
 }
 
 /* Timeframe Selector */
@@ -125,6 +135,9 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 600;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 .timeframe-btn:hover {
@@ -315,6 +328,10 @@
     font-size: 2rem;
     margin-bottom: 30px;
     color: #ffffff;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
+    font-weight: 200;
 }
 
 .leaderboard-table {
@@ -333,7 +350,8 @@
     font-weight: 700;
     color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.2em;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .leaderboard-row {
@@ -526,6 +544,10 @@
     font-size: 1.5rem;
     margin-bottom: 20px;
     color: #ffffff;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
+    font-weight: 200;
 }
 
 .xp-rules {
@@ -585,6 +607,10 @@
     font-size: 1.2rem;
     margin-bottom: 15px;
     text-align: center;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
+    font-weight: 200;
 }
 
 .xp-system-info ul {
@@ -636,6 +662,9 @@
 .loading-text {
     font-size: 1.2rem;
     color: #ffffff;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 /* Error Message */
@@ -650,6 +679,9 @@
 .error-message h2 {
     color: #ff0000;
     margin-bottom: 15px;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 .error-message button {
@@ -694,6 +726,9 @@
     font-weight: 700;
     color: var(--text-normal, #fff);
     margin-bottom: 10px;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.15em;
 }
 
 .podium-empty .empty-subtext {
@@ -1055,6 +1090,9 @@
     color: rgba(255, 255, 255, 0.6);
     font-weight: 400;
     margin-left: 10px;
+    text-transform: uppercase;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.1em;
 }
 
 .podium-xp-label {
@@ -1063,5 +1101,7 @@
     text-transform: uppercase;
     margin-top: -5px;
     margin-bottom: 5px;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.1em;
 }
 
