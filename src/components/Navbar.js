@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 import "../styles/UserDropdown.css";
-import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH } from 'react-icons/fa';
+import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH, FaChartLine } from 'react-icons/fa';
 import { isSuperAdmin, isAdmin, isPremium } from '../utils/roles';
 import A7Logo from './A7Logo';
 import { triggerNotification } from './NotificationSystem';
@@ -96,6 +96,9 @@ const Navbar = () => {
                                         style={dropdownPosition}
                                     >
                                         <p>{user.email}</p>
+                                        <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <FaChartLine className="dropdown-icon" /> Aura Analysis
+                                        </Link>
                                         <Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                             <FaEnvelope className="dropdown-icon" /> Messages
                                         </Link>
@@ -202,6 +205,9 @@ const Navbar = () => {
                     </button>
                     <div className="mobile-user-email">{user.email}</div>
                     <ul className="mobile-user-links">
+                        <li><Link to="/aura-analysis" onClick={toggleMobileUserMenu}>
+                            <FaChartLine className="dropdown-icon" /> Aura Analysis
+                        </Link></li>
                         <li><Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} onClick={toggleMobileUserMenu}>
                             <FaEnvelope className="dropdown-icon" /> Messages
                         </Link></li>

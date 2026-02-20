@@ -1,0 +1,54 @@
+/* Aura Analysis – same font as AURA FX */
+.aura-analysis-page {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #fff;
+  position: relative;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.aura-analysis-container {
+  padding: 80px 24px 48px;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.aura-analysis-title {
+  font-size: 2rem;
+  font-weight: 200;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.aura-analysis-sub {
+  font-size: 1rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 32px;
+}
+
+.aura-analysis-placeholder,
+.aura-analysis-incoming {
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.aura-analysis-incoming-text {
+  font-size: 1.1rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.aura-analysis-placeholder p {
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}

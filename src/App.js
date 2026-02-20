@@ -51,6 +51,7 @@ const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const PremiumAI = lazy(() => import('./pages/PremiumAI'));
 const Journal = lazy(() => import('./pages/Journal'));
+const AuraAnalysis = lazy(() => import('./pages/AuraAnalysis'));
 
 /** Prefetch common route chunks after initial load so navigation feels instant */
 function usePrefetchRoutes() {
@@ -190,6 +191,7 @@ function AppRoutes() {
                     {/* Authenticated routes (no subscription required) */}
                     <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                     <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
+                    <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>} />
                     <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
 
                     {/* Admin-only Routes */}
