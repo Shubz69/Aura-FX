@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuraConnection, useCanEnterAuraDashboard } from '../../context/AuraConnectionContext';
 import { isSuperAdmin } from '../../utils/roles';
 import CosmicBackground from '../../components/CosmicBackground';
+import AuraEnterTransition from '../../components/aura-analysis/AuraEnterTransition';
 import '../../styles/aura-analysis/ConnectionHub.css';
 
 const PLATFORM_ICONS = {
@@ -25,6 +26,7 @@ export default function ConnectionHub() {
   const canEnter = useCanEnterAuraDashboard(user);
   const superAdmin = user && isSuperAdmin(user);
   const [connecting, setConnecting] = useState(null);
+  const [transitioning, setTransitioning] = useState(false);
 
   const handleConnect = (platformId) => {
     setConnecting(platformId);
@@ -40,11 +42,19 @@ export default function ConnectionHub() {
 
   const handleEnterDashboard = () => {
     if (!canEnter) return;
-    navigate('/aura-analysis/dashboard/overview');
+    setTransitioning(true);
+  };
+
+  const handleTransitionComplete = () => {
+    setTransitioning(false);
+    navigate('/aura-analysis/dashboard/overview', { state: { fromTransition: true } });
   };
 
   return (
     <div className="connection-hub-page">
+      {transitioning && (
+        <AuraEnterTransition onComplete={handleTransitionComplete} />
+      )}
       <CosmicBackground />
       <div className="connection-hub-container">
         <header className="connection-hub-header">

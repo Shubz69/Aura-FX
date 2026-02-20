@@ -23,6 +23,7 @@
     "firebase": "^11.0.0",
     "firebase-admin": "^13.0.0",
     "formik": "^2.4.5",
+    "framer-motion": "^12.34.3",
     "jsonwebtoken": "^9.0.3",
     "jwt-decode": "^4.0.0",
     "luxon": "^3.7.2",
