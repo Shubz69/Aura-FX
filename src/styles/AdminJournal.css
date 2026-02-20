@@ -1,11 +1,15 @@
-/* Admin Journal – stats and per-user progress */
+/* Admin Journal – Space Grotesk (match navbar AURA FX); titles in capitals */
+.admin-journal-page,
+.admin-journal-page * {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
 .admin-journal-page {
   min-height: 100vh;
   background: #0a0a0a;
   color: #fff;
   position: relative;
   overflow-x: hidden;
-  font-family: 'Space Grotesk', sans-serif;
 }
 
 .admin-journal-container {
@@ -22,6 +26,7 @@
   color: var(--gold-primary, #c9a227);
   margin-bottom: 8px;
   text-align: center;
+  text-transform: uppercase;
 }
 
 .admin-journal-sub {
@@ -44,6 +49,7 @@
   color: #ef4444;
   text-align: center;
   padding: 48px 24px;
+  text-transform: uppercase;
 }
 
 .admin-journal-summary {
@@ -71,12 +77,14 @@
 .admin-journal-card-label {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
 }
 
 .admin-journal-table-title {
   font-size: 1.2rem;
   margin-bottom: 12px;
   color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
 }
 
 .admin-journal-table-wrap {
@@ -102,6 +110,7 @@
 .admin-journal-table th {
   color: rgba(255, 255, 255, 0.8);
   font-weight: 600;
+  text-transform: uppercase;
 }
 
 .admin-journal-table tbody tr:hover {
@@ -164,6 +173,7 @@
   margin: 0;
   font-size: 1.1rem;
   color: #fff;
+  text-transform: uppercase;
 }
 
 .admin-journal-modal-close {
@@ -189,6 +199,7 @@
   margin: 16px 0 8px 0;
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
 }
 .admin-journal-modal-body h4:first-child {
   margin-top: 0;

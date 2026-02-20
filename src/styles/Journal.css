@@ -38,7 +38,12 @@
   scroll-margin-top: calc(70px + env(safe-area-inset-top, 0));
 }
 
-/* Black background with stars – layout and elements unchanged */
+/* All text in Space Grotesk (match navbar AURA FX); titles in capitals */
+.journal-page,
+.journal-page * {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
 .journal-page {
   min-height: 100vh;
   background: #0a0a0a;
@@ -47,7 +52,6 @@
   padding-bottom: 48px;
   box-sizing: border-box;
   position: relative;
-  font-family: 'Space Grotesk', sans-serif;
 }
 
 .journal-page::before {
@@ -100,6 +104,7 @@
   margin: 0 0 4px 0;
   color: var(--primary, #fff);
   letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 
 .journal-sidebar-sub {
@@ -170,6 +175,7 @@
   color: var(--primary, #fff);
   letter-spacing: 0.02em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
 }
 
 .journal-calendar-weekdays {
@@ -185,7 +191,7 @@
   text-align: center;
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: none;
+  text-transform: uppercase;
 }
 
 .journal-calendar-grid {
@@ -298,6 +304,7 @@
   font-size: 0.7rem;
   color: var(--secondary, rgba(255, 255, 255, 0.6));
   margin-bottom: 2px;
+  text-transform: uppercase;
 }
 
 .journal-stat-mini-value {
@@ -330,6 +337,7 @@
   font-weight: 700;
   color: var(--primary, #fff);
   margin-bottom: 8px;
+  text-transform: uppercase;
 }
 
 .journal-streak-longest {
@@ -403,6 +411,7 @@
   font-size: 0.7rem;
   color: var(--secondary, rgba(255, 255, 255, 0.6));
   text-align: center;
+  text-transform: uppercase;
 }
 
 /* Main */
@@ -435,6 +444,7 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 
 .journal-main-meta {
@@ -460,6 +470,7 @@
   font-size: 0.9rem;
   color: var(--secondary, rgba(255, 255, 255, 0.8));
   margin-bottom: 8px;
+  text-transform: uppercase;
 }
 
 .journal-discipline-score .journal-progress-bar {
@@ -566,6 +577,7 @@
   font-size: 0.8rem;
   color: var(--secondary, rgba(255, 255, 255, 0.7));
   margin-bottom: 6px;
+  text-transform: uppercase;
 }
 
 .journal-progress-card-value {
@@ -1039,6 +1051,7 @@
   color: var(--primary, #fff);
   margin: 0 0 14px 0;
   letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 /* Saved note display – visible on screen after save */
@@ -1055,7 +1068,7 @@
 .journal-note-display-label {
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: none;
+  text-transform: uppercase;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 10px;
@@ -1078,6 +1091,7 @@
   font-size: 0.8rem;
   color: var(--secondary, rgba(255, 255, 255, 0.7));
   margin-bottom: 8px;
+  text-transform: uppercase;
 }
 
 .journal-mood-options {
