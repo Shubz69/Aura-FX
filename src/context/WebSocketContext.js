@@ -14,7 +14,8 @@ import { Client } from '@stomp/stompjs';
 import { useAuth } from './AuthContext';
 
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 16000];
-const MAX_ATTEMPTS = BACKOFF_MS.length;
+const isProduction = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
+const MAX_ATTEMPTS = isProduction ? 2 : BACKOFF_MS.length;
 
 function backoffWithJitter(baseMs) {
   const jitter = Math.random() * Math.min(500, baseMs * 0.25);
@@ -133,7 +134,7 @@ export const WebSocketProvider = ({ children }) => {
       debug: (str) => {
         if (process.env.NODE_ENV === 'development') console.log(`STOMP: ${str}`);
       },
-      reconnectDelay: 5000,
+      reconnectDelay: 0,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
     });
@@ -198,6 +199,7 @@ export const WebSocketProvider = ({ children }) => {
     }
 
     client.onStompError = (frame) => {
+      try { client.deactivate?.(); } catch (e) { /* ignore */ }
       connectingRef.current = false;
       clientRef.current = null;
       if (typeof window !== 'undefined') window.wsConnection = null;
@@ -208,6 +210,7 @@ export const WebSocketProvider = ({ children }) => {
     };
 
     client.onWebSocketError = () => {
+      try { client.deactivate?.(); } catch (e) { /* ignore */ }
       connectingRef.current = false;
       clientRef.current = null;
       if (typeof window !== 'undefined') window.wsConnection = null;

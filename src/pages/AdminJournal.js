@@ -22,7 +22,11 @@ const AdminJournal = () => {
       setSummary(res.data?.summary ?? null);
       setUsers(Array.isArray(res.data?.users) ? res.data.users : []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load journal stats.');
+      const status = err.response?.status;
+      const msg = err.response?.data?.message || err.response?.data?.error;
+      setError(status === 403
+        ? (msg || 'You don’t have permission to view journal stats.')
+        : (msg || 'Failed to load journal stats.'));
     } finally {
       setLoading(false);
     }
@@ -37,7 +41,11 @@ const AdminJournal = () => {
       const res = await AdminApi.getJournalStats(userId);
       setDetail(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load user detail.');
+      const status = err.response?.status;
+      const msg = err.response?.data?.message || err.response?.data?.error;
+      setError(status === 403
+        ? (msg || 'You don’t have permission to view this user.')
+        : (msg || 'Failed to load user detail.'));
     }
   };
 

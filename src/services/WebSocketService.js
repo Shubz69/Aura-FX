@@ -17,32 +17,41 @@ class WebSocketService {
     }
 
     connect(endpointOrConfig = null, callback = () => {}) {
-        const API_BASE_URL = (typeof window !== 'undefined' && window.location?.origin)
-            ? window.location.origin
-            : (process.env.REACT_APP_API_URL || '');
-        // If caller passes an object (e.g. { userId, role }), use default WS URL to avoid [object Object] in path
+        if (this.isConnected) {
+            callback();
+            return;
+        }
+
+        const isLocal = typeof window !== 'undefined' &&
+            /^localhost|127\.0\.0\.1$/.test(window.location?.hostname || '');
+        const wsBase = process.env.REACT_APP_INBOX_WS_URL ||
+            process.env.REACT_APP_WS_URL ||
+            (isLocal ? (window.location?.origin || process.env.REACT_APP_API_URL || '') : null);
         const wsEndpoint = (typeof endpointOrConfig === 'string' && endpointOrConfig)
             ? endpointOrConfig
-            : `${API_BASE_URL}/ws`;
-        if (this.isConnected) {
-            console.log('WebSocket already connected');
+            : wsBase ? `${wsBase.replace(/\/$/, '')}/ws` : null;
+
+        if (!wsEndpoint) {
+            if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+                console.info('Inbox WebSocket skipped: no REACT_APP_INBOX_WS_URL/REACT_APP_WS_URL; using REST + polling.');
+            }
             callback();
             return;
         }
 
         const socketFactory = () => new SockJS(wsEndpoint);
         this.stompClient = Stomp.over(socketFactory);
-        
-        // Disable debug logs
         this.stompClient.debug = () => {};
 
         this.stompClient.connect({}, () => {
-            console.log('WebSocket connected to:', wsEndpoint);
             this.isConnected = true;
             callback();
         }, (error) => {
-            console.error('WebSocket connection error:', error);
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('WebSocket connection error:', error?.message || error);
+            }
             this.isConnected = false;
+            callback();
             setTimeout(() => this.connect(endpointOrConfig, callback), 5000);
         });
     }

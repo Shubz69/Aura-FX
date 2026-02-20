@@ -166,12 +166,16 @@ axios.interceptors.response.use(
             }
         }
         if (error.response && error.response.status === 403) {
-            console.error('Access forbidden: Authentication failed or insufficient permissions');
-            
-            // Check token validity
-            if (!hasValidAuth()) {
-                console.log('Invalid token detected during request');
-                // Could trigger a logout or refresh token here
+            const reqUrl = resolveRequestUrl(error.config?.url) || '';
+            const fullUrl = (error.config?.baseURL || '') + (error.config?.url || '');
+            const isAdminEndpoint = /\/api\/admin\//i.test(reqUrl) || /\/api\/admin\//i.test(fullUrl) || /journal-stats/i.test(reqUrl) || /journal-stats/i.test(fullUrl);
+            if (!isAdminEndpoint) {
+                console.error('Access forbidden: Authentication failed or insufficient permissions');
+            }
+            if (!hasValidAuth() && !isAdminEndpoint) {
+                if (typeof console !== 'undefined' && console.log) {
+                    console.log('Invalid token detected during request');
+                }
             }
         }
         return Promise.reject(error);

@@ -43,6 +43,16 @@ const SupportInbox = () => {
   useEffect(() => {
     if (!threadId || !user) return;
     let mounted = true;
+    const loadMessages = async () => {
+      try {
+        const resp = await Api.getThreadMessages(threadId, { limit: 50 });
+        if (!mounted) return;
+        setMessages(resp.data.messages || []);
+        await Api.markThreadRead(threadId);
+      } catch (e) {
+        if (mounted) console.error('Load thread messages failed', e);
+      }
+    };
     WebSocketService.connect({ userId: user.id, role: user.role }, async () => {
       WebSocketService.offThreadEvents();
       WebSocketService.joinThread(threadId);
@@ -56,18 +66,16 @@ const SupportInbox = () => {
         scrollToBottom();
       });
       WebSocketService.onThreadRead(({ thread }) => { if (thread) setThread(thread); });
-
-      try {
-        const resp = await Api.getThreadMessages(threadId, { limit: 50 });
-        if (!mounted) return;
-        setMessages(resp.data.messages || []);
-        await Api.markThreadRead(threadId);
-      } catch (e) {
-        console.error('Load thread messages failed', e);
-      }
+      await loadMessages();
     });
-
+    const pollInterval = setInterval(() => {
+      if (!mounted || !threadId) return;
+      Api.getThreadMessages(threadId, { limit: 50 }).then((resp) => {
+        if (mounted) setMessages(resp.data.messages || []);
+      }).catch(() => {});
+    }, 8000);
     return () => {
+      clearInterval(pollInterval);
       WebSocketService.offThreadEvents();
       mounted = false;
     };
