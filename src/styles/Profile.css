@@ -437,6 +437,20 @@
     color: #FF6B6B;
 }
 
+/* Journal summary card – below login streak */
+.profile-journal-summary-card {
+    background: linear-gradient(160deg, rgba(30, 30, 46, 0.95) 0%, rgba(22, 22, 38, 0.98) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 40px rgba(139, 92, 246, 0.06);
+}
+
+.profile-journal-summary-card .section-title {
+    margin-bottom: 20px;
+}
+
 /* Profile Tabs */
 .profile-tabs {
     display: flex;

@@ -738,6 +738,39 @@ const Profile = () => {
                     </div>
                 </div>
 
+                {/* Journal summary – below login streak */}
+                <div className="profile-journal-summary-card">
+                    <div className="section-title">Journal</div>
+                    {journalStatsLoading ? (
+                        <div className="profile-journal-loading">
+                            <div className="loading-spinner"></div>
+                            <span>Loading journal stats…</span>
+                        </div>
+                    ) : (
+                        <div className="profile-journal-stats">
+                            <div className="profile-journal-stat-circle">
+                                <div className="profile-journal-stat-ring" style={{ '--pct': journalDayPct != null ? journalDayPct : 0 }}>
+                                    <span className="profile-journal-stat-value">{journalDayPct != null ? `${journalDayPct}%` : '—'}</span>
+                                </div>
+                                <span className="profile-journal-stat-label">Today</span>
+                            </div>
+                            <div className="profile-journal-stat-circle">
+                                <div className="profile-journal-stat-ring" style={{ '--pct': journalWeekPct != null ? journalWeekPct : 0 }}>
+                                    <span className="profile-journal-stat-value">{journalWeekPct != null ? `${journalWeekPct}%` : '—'}</span>
+                                </div>
+                                <span className="profile-journal-stat-label">This week</span>
+                            </div>
+                            <div className="profile-journal-stat-circle">
+                                <div className="profile-journal-stat-ring" style={{ '--pct': journalMonthPct != null ? journalMonthPct : 0 }}>
+                                    <span className="profile-journal-stat-value">{journalMonthPct != null ? `${journalMonthPct}%` : '—'}</span>
+                                </div>
+                                <span className="profile-journal-stat-label">This month</span>
+                            </div>
+                        </div>
+                    )}
+                    <p className="profile-journal-hint">Task completion from your Aura Journal. Add and complete tasks to improve your stats.</p>
+                </div>
+
                 {/* Navigation Tabs */}
                 <div className="profile-tabs">
                     <button 
@@ -763,12 +796,6 @@ const Profile = () => {
                         onClick={() => setActiveTab('achievements')}
                     >
                         Achievements
-                    </button>
-                    <button 
-                        className={`tab-btn ${activeTab === 'journal' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('journal')}
-                    >
-                        Journal
                     </button>
                 </div>
 
@@ -967,39 +994,6 @@ const Profile = () => {
                         </div>
                     )}
 
-                    {activeTab === 'journal' && (
-                        <div className="tab-panel">
-                            <div className="section-title">Journal</div>
-                            {journalStatsLoading ? (
-                                <div className="profile-journal-loading">
-                                    <div className="loading-spinner"></div>
-                                    <span>Loading journal stats…</span>
-                                </div>
-                            ) : (
-                                <div className="profile-journal-stats">
-                                    <div className="profile-journal-stat-circle">
-                                        <div className="profile-journal-stat-ring" style={{ '--pct': journalDayPct != null ? journalDayPct : 0 }}>
-                                            <span className="profile-journal-stat-value">{journalDayPct != null ? `${journalDayPct}%` : '—'}</span>
-                                        </div>
-                                        <span className="profile-journal-stat-label">Today</span>
-                                    </div>
-                                    <div className="profile-journal-stat-circle">
-                                        <div className="profile-journal-stat-ring" style={{ '--pct': journalWeekPct != null ? journalWeekPct : 0 }}>
-                                            <span className="profile-journal-stat-value">{journalWeekPct != null ? `${journalWeekPct}%` : '—'}</span>
-                                        </div>
-                                        <span className="profile-journal-stat-label">This week</span>
-                                    </div>
-                                    <div className="profile-journal-stat-circle">
-                                        <div className="profile-journal-stat-ring" style={{ '--pct': journalMonthPct != null ? journalMonthPct : 0 }}>
-                                            <span className="profile-journal-stat-value">{journalMonthPct != null ? `${journalMonthPct}%` : '—'}</span>
-                                        </div>
-                                        <span className="profile-journal-stat-label">This month</span>
-                                    </div>
-                                </div>
-                            )}
-                            <p className="profile-journal-hint">Task completion from your Aura Journal. Add and complete tasks to improve your stats.</p>
-                        </div>
-                    )}
                 </div>
 
                 {status && <p className="status-msg">{status}</p>}
