@@ -1,0 +1,71 @@
+.aura-tab-page {
+  animation: aura-tab-fade 0.2s ease-out;
+}
+
+@keyframes aura-tab-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.aura-tab-title {
+  font-size: 1.5rem;
+  font-weight: 200;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.aura-tab-sub {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 24px;
+}
+
+.aura-tab-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.aura-tab-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.aura-tab-card-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+.aura-tab-card-value {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.aura-tab-section {
+  margin-bottom: 32px;
+}
+
+.aura-tab-section h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 12px;
+  letter-spacing: 0.02em;
+}
+
+.aura-tab-placeholder {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}

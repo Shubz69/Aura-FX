@@ -1,12 +1,14 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import { AuraConnectionProvider } from './context/AuraConnectionContext';
 import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard, AuthenticatedGuard } from './components/RouteGuards';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
+import AuraDashboardGuard from './pages/aura-analysis/AuraDashboardGuard';
 import GDPRModal from './components/GDPRModal';
 import Footer from './components/Footer';
 import { ToastContainer } from "react-toastify";
@@ -52,6 +54,16 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const PremiumAI = lazy(() => import('./pages/PremiumAI'));
 const Journal = lazy(() => import('./pages/Journal'));
 const AuraAnalysis = lazy(() => import('./pages/AuraAnalysis'));
+const ConnectionHub = lazy(() => import('./pages/aura-analysis/ConnectionHub'));
+const AuraDashboardLayout = lazy(() => import('./pages/aura-analysis/AuraDashboardLayout'));
+const AuraOverview = lazy(() => import('./pages/aura-analysis/tabs/Overview'));
+const AuraPerformance = lazy(() => import('./pages/aura-analysis/tabs/PerformanceAnalytics'));
+const AuraRiskLab = lazy(() => import('./pages/aura-analysis/tabs/RiskLab'));
+const AuraEdgeAnalyzer = lazy(() => import('./pages/aura-analysis/tabs/EdgeAnalyzer'));
+const AuraExecutionLab = lazy(() => import('./pages/aura-analysis/tabs/ExecutionLab'));
+const AuraCalendar = lazy(() => import('./pages/aura-analysis/tabs/CalendarIntelligence'));
+const AuraPsychology = lazy(() => import('./pages/aura-analysis/tabs/PsychologyDiscipline'));
+const AuraGrowth = lazy(() => import('./pages/aura-analysis/tabs/GrowthEngine'));
 
 /** Prefetch common route chunks after initial load so navigation feels instant */
 function usePrefetchRoutes() {
@@ -191,7 +203,20 @@ function AppRoutes() {
                     {/* Authenticated routes (no subscription required) */}
                     <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                     <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
-                    <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>} />
+                    <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
+                        <Route index element={<ConnectionHub />} />
+                        <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
+                            <Route index element={<Navigate to="overview" replace />} />
+                            <Route path="overview" element={<AuraOverview />} />
+                            <Route path="performance" element={<AuraPerformance />} />
+                            <Route path="risk-lab" element={<AuraRiskLab />} />
+                            <Route path="edge-analyzer" element={<AuraEdgeAnalyzer />} />
+                            <Route path="execution-lab" element={<AuraExecutionLab />} />
+                            <Route path="calendar" element={<AuraCalendar />} />
+                            <Route path="psychology" element={<AuraPsychology />} />
+                            <Route path="growth" element={<AuraGrowth />} />
+                        </Route>
+                    </Route>
                     <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
 
                     {/* Admin-only Routes */}
@@ -225,7 +250,9 @@ function App() {
                 <SubscriptionProvider>
                     <EntitlementsProvider>
                         <WebSocketProvider>
-                            <AppRoutes />
+                            <AuraConnectionProvider>
+                                <AppRoutes />
+                            </AuraConnectionProvider>
                         </WebSocketProvider>
                     </EntitlementsProvider>
                 </SubscriptionProvider>
