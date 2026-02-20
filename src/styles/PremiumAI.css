@@ -1,11 +1,23 @@
 /* ============================================================================
    AURA AI Premium - ChatGPT-Level UX
+   Font: Space Grotesk (match navbar AURA FX)
    ============================================================================ */
 
 /* Single scroll: only .ai-chat-area scrolls when this page is active */
 body.premium-ai-page-active {
   overflow: hidden;
   height: 100%;
+}
+
+/* All text in Space Grotesk (match navbar AURA FX); code blocks keep monospace */
+.premium-ai-page,
+.premium-ai-page * {
+  font-family: 'Space Grotesk', sans-serif;
+}
+.message-text .md-code,
+.message-text .md-pre,
+.message-text .md-pre code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 /* Full-viewport dark layer: no white border on any device */
@@ -769,7 +781,7 @@ body.premium-ai-page-active {
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
-  align-items: stretch;
+  align-items: flex-end;
   min-width: 0;
   box-sizing: border-box;
 }
@@ -835,36 +847,41 @@ body.premium-ai-page-active {
 
 .composer-input-wrapper textarea {
   width: 100%;
-  padding: 12px 56px 12px 16px;
+  padding: 14px 18px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: 14px;
   color: #fff;
   font-size: 0.95rem;
-  font-family: inherit;
+  font-family: 'Space Grotesk', sans-serif;
   line-height: 1.5;
   resize: none;
-  min-height: 44px;
+  min-height: 48px;
   max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
-/* Send button inside input, vertically centred */
-.composer-send-inside {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
+.composer-input-wrapper textarea::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
-.composer-send-inside .send-btn,
-.composer-send-inside .composer-btn {
-  pointer-events: auto;
+/* Send button: right of input, aligned to bottom; no scrollbar in input */
+.composer-send-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 2px;
+}
+
+.composer-send-wrap .send-btn,
+.composer-send-wrap .composer-btn {
+  flex-shrink: 0;
 }
 
 .composer-input-wrapper textarea:focus {
@@ -891,25 +908,26 @@ body.premium-ai-page-active {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  min-height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   color: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
 }
 
 .send-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45);
 }
 
 .send-btn:active:not(:disabled) {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 .send-btn:disabled {
@@ -1032,12 +1050,14 @@ body.premium-ai-page-active {
   }
   
   .send-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
   
   .composer-input-wrapper textarea {
-    padding: 10px 52px 10px 14px;
+    padding: 10px 14px;
     font-size: 0.9rem;
     min-height: 40px;
   }

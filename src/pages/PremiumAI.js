@@ -853,23 +853,23 @@ const PremiumAI = () => {
               rows={1}
               className={isRecording ? 'recording' : ''}
             />
-            <div className="composer-send-inside">
-              {isStreaming ? (
-                <button type="button" className="composer-btn stop-btn" onClick={handleStopStreaming} title="Stop generating">
-                  <StopIcon />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="send-btn"
-                  onClick={handleSendMessage}
-                  disabled={isLoading || (!input.trim() && selectedImages.length === 0)}
-                  title="Send message"
-                >
-                  <SendIcon />
-                </button>
-              )}
-            </div>
+          </div>
+          <div className="composer-send-wrap">
+            {isStreaming ? (
+              <button type="button" className="composer-btn stop-btn" onClick={handleStopStreaming} title="Stop generating">
+                <StopIcon />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="send-btn"
+                onClick={handleSendMessage}
+                disabled={isLoading || (!input.trim() && selectedImages.length === 0)}
+                title="Send message"
+              >
+                <SendIcon />
+              </button>
+            )}
           </div>
         </div>
         
