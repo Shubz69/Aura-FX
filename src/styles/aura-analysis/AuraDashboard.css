@@ -61,7 +61,9 @@
 
 .aura-dashboard-tab.active {
   color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(167, 139, 250, 0.25);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  box-shadow: 0 0 20px rgba(167, 139, 250, 0.15);
 }
 
 .aura-dashboard-content {

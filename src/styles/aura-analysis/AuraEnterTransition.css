@@ -1,25 +1,51 @@
-/* GPU-friendly: transform + opacity only where possible */
+/* Galaxy transition – GPU-friendly, reduced-motion aware */
 .aura-enter-transition {
   position: fixed;
   inset: 0;
   z-index: 9999;
   pointer-events: auto;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: clamp(48px, 12vh, 120px);
   will-change: opacity;
 }
 
 .aura-enter-reduced {
-  background: radial-gradient(ellipse 80% 80% at 50% 50%, #0f0f1a 0%, #050508 100%);
+  justify-content: center;
+  padding-bottom: 0;
 }
 
+.aura-enter-reduced .aura-enter-loading-label {
+  margin-bottom: 16px;
+}
+
+/* Deep space – black, purple, green accents */
 .aura-enter-cosmic {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 120% 120% at 50% 50%, #1a0a2e 0%, #0d0620 40%, #050508 100%);
-  animation: aura-enter-cosmic-in 0.4s ease-out forwards;
+  background: radial-gradient(
+      ellipse 120% 120% at 70% 30%,
+      rgba(167, 139, 250, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 100% 100% at 30% 70%,
+      rgba(34, 197, 94, 0.08) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse 100% 100% at 50% 50%,
+      #0a0a0a 0%,
+      #050505 50%,
+      #000000 100%
+    );
+  animation: aura-galaxy-bg-in 0.6s ease-out forwards;
 }
 
-@keyframes aura-enter-cosmic-in {
+@keyframes aura-galaxy-bg-in {
   from {
     opacity: 0;
   }
@@ -35,58 +61,137 @@
   }
 }
 
-.aura-enter-floats {
+/* Starfield layer */
+.aura-enter-starfield {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(1.2px 1.2px at 20% 30%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 60% 70%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 80% 20%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 40% 80%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 90% 60%, rgba(200, 220, 255, 0.5), transparent),
+    radial-gradient(1.2px 1.2px at 10% 50%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 50% 15%, rgba(255, 255, 255, 0.5), transparent);
+  background-size: 200% 200%, 180% 180%, 220% 220%, 160% 160%, 190% 190%, 210% 210%, 170% 170%;
+  background-position: 0% 0%, 40% 60%, 80% 20%, 20% 80%, 60% 40%, 90% 50%, 30% 70%;
+  opacity: 0.7;
+  animation: aura-starfield-pulse 8s ease-in-out infinite;
+}
+
+@keyframes aura-starfield-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-enter-starfield {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* Galaxy of formulas – spiral cluster */
+.aura-enter-galaxy {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  perspective: 800px;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity, filter;
 }
 
-.aura-enter-float {
-  position: absolute;
-  font-size: clamp(0.65rem, 1.2vw, 0.95rem);
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  color: var(--float-color, #a78bfa);
-  text-shadow: 0 0 20px var(--float-color), 0 0 40px rgba(167, 139, 250, 0.3);
-  white-space: nowrap;
-  will-change: transform, opacity;
+.aura-enter-galaxy-spin {
+  animation: aura-galaxy-spin 32s linear infinite;
 }
 
-.aura-enter-glow {
-  filter: drop-shadow(0 0 6px var(--float-color)) drop-shadow(0 0 14px var(--float-color));
-}
-
-.aura-enter-portal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 120vmax;
-  height: 120vmax;
-  margin-left: -60vmax;
-  margin-top: -60vmax;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    rgba(139, 92, 246, 0.25) 0%,
-    rgba(59, 130, 246, 0.12) 30%,
-    rgba(34, 211, 238, 0.06) 50%,
-    transparent 70%
-  );
-  box-shadow:
-    0 0 0 2px rgba(167, 139, 250, 0.4),
-    0 0 60px 20px rgba(139, 92, 246, 0.2),
-    inset 0 0 80px rgba(59, 130, 246, 0.08);
-  will-change: transform, opacity;
+@keyframes aura-galaxy-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .aura-enter-float {
-    display: none;
+  .aura-enter-galaxy-spin {
+    animation: none;
   }
-  .aura-enter-portal {
-    display: none;
-  }
+}
+
+.aura-enter-galaxy-item {
+  position: absolute;
+  font-size: clamp(0.55rem, 1.1vw, 0.85rem);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: var(--galaxy-color, #a78bfa);
+  text-shadow: 0 0 14px var(--galaxy-color), 0 0 28px rgba(167, 139, 250, 0.2);
+  white-space: nowrap;
+  opacity: var(--galaxy-size, 0.85);
+  transform-origin: center center;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 0 5px var(--galaxy-color));
+}
+
+/* Loading section – modern bar */
+.aura-enter-loading-section {
+  position: relative;
+  z-index: 2;
+  width: min(90vw, 420px);
+  text-align: center;
+}
+
+.aura-enter-loading-label {
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 14px;
+}
+
+.aura-enter-loading-bar-wrap {
+  width: 100%;
+}
+
+.aura-enter-loading-bar-reduced {
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.aura-enter-loading-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.aura-enter-loading-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #6d28d9 0%,
+    #a78bfa 45%,
+    #22c55e 100%
+  );
+  box-shadow: 0 0 20px rgba(167, 139, 250, 0.5), 0 0 40px rgba(34, 197, 94, 0.25);
+  min-width: 0;
+  will-change: width;
+}
+
+.aura-enter-loading-pct {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 10px 0 0;
 }

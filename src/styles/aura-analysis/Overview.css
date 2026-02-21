@@ -1,0 +1,535 @@
+/* Overview – dark theme, purple/green, glass cards */
+.aura-overview-page {
+  min-height: 100%;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  padding-bottom: 32px;
+}
+
+.aura-overview-from-transition {
+  animation: aura-overview-enter 0.5s ease-out forwards;
+}
+
+.aura-overview-from-transition .aura-card {
+  animation: aura-card-enter 0.4s ease-out backwards;
+}
+
+.aura-overview-from-transition .aura-card:nth-child(1) { animation-delay: 0.05s; }
+.aura-overview-from-transition .aura-card:nth-child(2) { animation-delay: 0.1s; }
+.aura-overview-from-transition .aura-card:nth-child(3) { animation-delay: 0.15s; }
+.aura-overview-from-transition .aura-card:nth-child(4) { animation-delay: 0.2s; }
+.aura-overview-from-transition .aura-card:nth-child(5) { animation-delay: 0.1s; }
+.aura-overview-from-transition .aura-card:nth-child(6) { animation-delay: 0.15s; }
+.aura-overview-from-transition .aura-card:nth-child(7) { animation-delay: 0.2s; }
+.aura-overview-from-transition .aura-card:nth-child(8) { animation-delay: 0.08s; }
+.aura-overview-from-transition .aura-card:nth-child(9) { animation-delay: 0.13s; }
+.aura-overview-from-transition .aura-card:nth-child(10) { animation-delay: 0.18s; }
+.aura-overview-from-transition .aura-card:nth-child(11) { animation-delay: 0.23s; }
+.aura-overview-from-transition .aura-trade-log-card { animation-delay: 0.25s; }
+
+@keyframes aura-overview-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes aura-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-overview-from-transition,
+  .aura-overview-from-transition .aura-card {
+    animation: none;
+  }
+}
+
+.aura-overview-header {
+  margin-bottom: 24px;
+}
+
+.aura-overview-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  margin: 0 0 4px;
+}
+
+.aura-overview-sub {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+/* Grid */
+.aura-overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .aura-overview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .aura-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cards – glass */
+.aura-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.aura-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 12px;
+  letter-spacing: 0.02em;
+}
+
+.aura-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.aura-card-head .aura-card-title {
+  margin: 0;
+}
+
+.aura-card-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aura-date-range {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.aura-select {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+/* Summary card */
+.aura-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aura-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.aura-summary-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 90px;
+}
+
+.aura-summary-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.aura-summary-value.positive {
+  color: #22c55e;
+}
+
+.aura-summary-value.purple {
+  color: #a78bfa;
+}
+
+.aura-summary-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.aura-summary-badge.positive {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.aura-summary-meta {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-left: auto;
+}
+
+/* Calendar */
+.aura-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.aura-calendar-dow {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+}
+
+.aura-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+}
+
+.aura-calendar-day.green {
+  background: rgba(34, 197, 94, 0.25);
+  color: #4ade80;
+}
+
+.aura-calendar-day.purple {
+  background: rgba(167, 139, 250, 0.2);
+  color: #c4b5fd;
+}
+
+.aura-calendar-note {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+/* Key stats */
+.aura-key-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.aura-key-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.aura-key-stats-bar {
+  height: 4px;
+  background: rgba(167, 139, 250, 0.3);
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.aura-key-stats-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.aura-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.aura-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Charts placeholder */
+.aura-chart-placeholder {
+  position: relative;
+  height: 160px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.aura-equity-chart { height: 200px; }
+.aura-daily-chart { height: 140px; }
+
+.aura-chart-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #a78bfa 20%, #22c55e 80%, transparent);
+  border-radius: 2px;
+  box-shadow: 0 0 20px rgba(167, 139, 250, 0.4);
+}
+
+.aura-chart-y, .aura-chart-x {
+  position: absolute;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.aura-chart-y:first-of-type { top: 4px; right: 8px; }
+.aura-chart-y:last-of-type { bottom: 4px; right: 8px; }
+.aura-chart-x { bottom: 4px; }
+
+.aura-daily-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Sessions */
+.aura-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aura-session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.aura-session-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  min-width: 60px;
+}
+
+.aura-session-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.aura-session-value.positive {
+  color: #22c55e;
+}
+
+.aura-session-meta {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  width: 100%;
+  margin: 0 0 0 68px;
+}
+
+.aura-sessions-meta {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 12px 0 0;
+}
+
+/* Donut */
+.aura-donut-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 8px;
+}
+
+.aura-donut-sm {
+  width: 100px;
+  height: 100px;
+}
+
+.aura-donut {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    #a78bfa 0deg 68%,
+    #f87171 68% 100%
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #fff calc(100% - 12px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #fff calc(100% - 12px));
+}
+
+.aura-donut-segment {
+  display: none;
+}
+
+.aura-donut-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.aura-donut-legend {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  margin: 0;
+}
+
+.aura-donut-legend .win { color: #a78bfa; }
+.aura-donut-legend .loss { color: #f87171; }
+
+.aura-best-worst {
+  margin: 12px 0;
+}
+
+.aura-best-worst p {
+  font-size: 0.8rem;
+  margin: 4px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.aura-best-worst .label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.aura-risk-donut {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.aura-risk-legend {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 4px 0 0;
+}
+
+.aura-risk-pcts {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 2px 0 0;
+}
+
+/* Bar chart */
+.aura-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 80px;
+  margin-bottom: 8px;
+}
+
+.aura-bar {
+  flex: 1;
+  max-width: 40px;
+  background: linear-gradient(180deg, #a78bfa 0%, rgba(167, 139, 250, 0.4) 100%);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+}
+
+.aura-bar-labels {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Streaks */
+.aura-streaks-list p {
+  font-size: 0.85rem;
+  margin: 6px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.aura-streak-label {
+  color: rgba(255, 255, 255, 0.5);
+  margin-right: 8px;
+}
+
+/* Trade log */
+.aura-trade-log-card {
+  grid-column: 1 / -1;
+}
+
+.aura-trade-log-wrap {
+  overflow-x: auto;
+}
+
+.aura-trade-log {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.aura-trade-log th,
+.aura-trade-log td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.aura-trade-log th {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.aura-trade-log td {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.aura-trade-log .positive {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.aura-trade-log .negative {
+  color: #f87171;
+  font-weight: 500;
+}
+
+.aura-icon {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.aura-pct {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 4px;
+}
