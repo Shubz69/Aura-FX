@@ -2930,56 +2930,56 @@ avatar: storedUser?.avatar || null,
         const welcomeMessage = {
             id: 'welcome-message',
             channelId: selectedChannel.id,
-            content: `🎉 **WELCOME TO AURA FX COMMUNITY!** 🎉
+            content: `🎉 WELCOME TO AURA FX COMMUNITY! 🎉
 
 Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
 
-## 📋 **COMMUNITY RULES**
+## 📋 COMMUNITY RULES
 
-**1. Respect & Professionalism**
+1. Respect & Professionalism
    • Treat all members with respect and professionalism
    • No harassment, discrimination, or personal attacks
    • Maintain a positive and constructive environment
 
-**2. Trading & Investment Discussions**
+2. Trading & Investment Discussions
    • Share knowledge and insights, not financial advice
    • All trades are at your own risk - we are not financial advisors
    • Use proper risk management and never trade more than you can afford to lose
 
-**3. Content & Privacy**
+3. Content & Privacy
    • Keep conversations relevant to trading, wealth-building, and course topics
    • Do not share personal financial information (account numbers, passwords, etc.)
    • Respect intellectual property - do not share copyrighted course materials
 
-**4. Spam & Promotion**
+4. Spam & Promotion
    • No spam, self-promotion, or affiliate links without permission
    • Do not promote other trading services or products
    • Keep discussions focused on learning and community growth
 
-**5. Course Access**
+5. Course Access
    • Course-specific channels are for enrolled members only
    • Share insights and ask questions related to your enrolled courses
    • Complete courses in order for maximum learning effectiveness
 
-**6. Community Support**
+6. Community Support
    • Help fellow members when you can
    • Ask questions - we're all here to learn and grow together
    • Report any issues or concerns to staff members
 
-**7. Platform Usage**
+7. Platform Usage
    • Use appropriate language and avoid profanity
    • Keep messages clear and concise
    • Use channels for their intended purposes
 
-## 🚀 **GETTING STARTED**
+## 🚀 GETTING STARTED
 
-1. **Complete your profile** - Add your bio
-2. **Explore channels** - Check out different course and trading channels
-3. **Join discussions** - Start participating in conversations
-4. **Enroll in courses** - Begin your wealth-building journey
-5. **Earn XP** - Level up by being active in the community
+1. Complete your profile - Add your bio
+2. Explore channels - Check out different course and trading channels
+3. Join discussions - Start participating in conversations
+4. Enroll in courses - Begin your wealth-building journey
+5. Earn XP - Level up by being active in the community
 
-## 💎 **PREMIUM BENEFITS**
+## 💎 PREMIUM BENEFITS
 
 Premium members get access to:
 • Exclusive VIP channels and content
@@ -2988,14 +2988,14 @@ Premium members get access to:
 • Priority support from our team
 • Elite trader discussions
 
-## ⚡ **QUICK TIPS**
+## ⚡ QUICK TIPS
 
 • Earn XP by sending messages, sharing files, and being active
 • Level up to unlock new channels and features
 • Check the announcements channel regularly for updates
 • Connect with other traders in the general chat channels
 
-Remember: **Success in trading comes from discipline, education, and consistent action.** We're here to support you every step of the way!
+Remember: Success in trading comes from discipline, education, and consistent action. We're here to support you every step of the way!
 
 Click the ✅ below to acknowledge you've read and agree to follow these rules, and unlock access to all channels.
 
