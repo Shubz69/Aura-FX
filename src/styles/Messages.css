@@ -240,6 +240,29 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* WhatsApp-style date separator: Today / Yesterday / exact date */
+.messages-date-separator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 8px 0;
+}
+
+.messages-date-separator-label {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'Space Grotesk', sans-serif;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 .empty-messages-state {
     display: flex;
     flex-direction: column;

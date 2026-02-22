@@ -118,6 +118,37 @@ const Messages = () => {
         return date.toLocaleDateString();
     };
 
+    /** Returns "Today", "Yesterday", or exact date (e.g. "Feb 20, 2025") for date separators. */
+    const getDateLabel = (timestamp) => {
+        const d = new Date(timestamp);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const key = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        if (key(d) === key(today)) return 'Today';
+        if (key(d) === key(yesterday)) return 'Yesterday';
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    /** Group messages by calendar day (local date key) for date separators. */
+    const messagesWithDateGroups = React.useMemo(() => {
+        if (!messages.length) return [];
+        const groups = new Map(); // dateKey -> { label, messages }
+        for (const msg of messages) {
+            const ts = msg.timestamp ? new Date(msg.timestamp) : new Date();
+            const dateKey = `${ts.getFullYear()}-${ts.getMonth()}-${ts.getDate()}`;
+            if (!groups.has(dateKey)) {
+                groups.set(dateKey, { label: getDateLabel(msg.timestamp), messages: [] });
+            }
+            groups.get(dateKey).messages.push(msg);
+        }
+        const sortedKeys = [...groups.keys()].sort();
+        return sortedKeys.flatMap((dateKey) => {
+            const { label, messages: dayMessages } = groups.get(dateKey);
+            return [{ type: 'date', label, dateKey }, ...dayMessages.map((m) => ({ type: 'message', message: m }))];
+        });
+    }, [messages]);
+
     return (
         <>
             <CosmicBackground />
@@ -154,34 +185,40 @@ const Messages = () => {
                                 <p>Send a message to our admin team and we'll get back to you as soon as possible.</p>
                             </div>
                         ) : (
-                            messages.map((msg) => (
-                                <div
-                                    key={msg.id}
-                                    className={`message-bubble ${msg.sender === 'user' ? 'user-message' : 'admin-message'}`}
-                                >
-                                    <div className="message-header">
-                                        <div className="message-sender-wrapper">
-                                            <span className="message-sender">
-                                                {msg.sender === 'admin' ? (
-                                                    <>
-                                                        <FaShieldAlt className="sender-icon" />
-                                                        Admin
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span className="sender-you-icon">You</span>
-                                                    </>
-                                                )}
-                                            </span>
-                                            {msg.read && msg.sender === 'user' && (
-                                                <FaCheckCircle className="read-indicator" />
-                                            )}
-                                        </div>
-                                        <span className="message-time">{formatTime(msg.timestamp)}</span>
+                            messagesWithDateGroups.map((item, index) =>
+                                item.type === 'date' ? (
+                                    <div key={`date-${item.dateKey}`} className="messages-date-separator">
+                                        <span className="messages-date-separator-label">{item.label}</span>
                                     </div>
-                                    <div className="message-content">{msg.content}</div>
-                                </div>
-                            ))
+                                ) : (
+                                    <div
+                                        key={item.message.id}
+                                        className={`message-bubble ${item.message.sender === 'user' ? 'user-message' : 'admin-message'}`}
+                                    >
+                                        <div className="message-header">
+                                            <div className="message-sender-wrapper">
+                                                <span className="message-sender">
+                                                    {item.message.sender === 'admin' ? (
+                                                        <>
+                                                            <FaShieldAlt className="sender-icon" />
+                                                            Admin
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="sender-you-icon">You</span>
+                                                        </>
+                                                    )}
+                                                </span>
+                                                {item.message.read && item.message.sender === 'user' && (
+                                                    <FaCheckCircle className="read-indicator" />
+                                                )}
+                                            </div>
+                                            <span className="message-time">{formatTime(item.message.timestamp)}</span>
+                                        </div>
+                                        <div className="message-content">{item.message.content}</div>
+                                    </div>
+                                )
+                            )
                         )}
                         <div ref={messagesEndRef} />
                     </div>
