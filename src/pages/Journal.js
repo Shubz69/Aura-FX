@@ -328,14 +328,19 @@ export default function Journal() {
 
   const calendarDays = (() => {
     const year = parseInt(calendarMonth.split('-')[0], 10);
-    const month = parseInt(calendarMonth.split('-')[1], 10) - 1;
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
+    const month1Based = parseInt(calendarMonth.split('-')[1], 10);
+    const month0Based = month1Based - 1;
+    const first = new Date(year, month0Based, 1);
+    const last = new Date(year, month0Based + 1, 0);
+    const daysInMonth = last.getDate();
     const startPad = (first.getDay() + 6) % 7;
     const days = [];
     for (let i = 0; i < startPad; i++) days.push(null);
-    for (let d = 1; d <= last.getDate(); d++) {
-      days.push(new Date(year, month, d).toISOString().slice(0, 10));
+    const yyyy = String(year);
+    const mm = String(month1Based).padStart(2, '0');
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dd = String(d).padStart(2, '0');
+      days.push(`${yyyy}-${mm}-${dd}`);
     }
     return days;
   })();
@@ -403,7 +408,7 @@ export default function Journal() {
                     className={`journal-calendar-day ${isSelected ? 'journal-calendar-day--selected' : ''} ${isToday ? 'journal-calendar-day--today' : ''}`}
                     onClick={() => handleSelectDate(dateStr)}
                   >
-                    <span className="journal-calendar-day-num">{new Date(dateStr).getDate()}</span>
+                    <span className="journal-calendar-day-num">{parseInt(dateStr.slice(-2), 10)}</span>
                     {hasTasks && (
                       <span className="journal-calendar-day-dot" title={`${doneCount}/${totalCount} done`}>
                         {totalCount === doneCount && totalCount > 0 ? (

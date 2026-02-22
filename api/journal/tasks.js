@@ -72,6 +72,26 @@ async function ensureTasksTable() {
   await addColumnIfNotExists('journal_tasks', 'is_mandatory', 'TINYINT(1) DEFAULT 0');
   await addColumnIfNotExists('journal_tasks', 'mandatory_key', 'VARCHAR(64) DEFAULT NULL');
   await addColumnIfNotExists('journal_tasks', 'description', 'TEXT DEFAULT NULL');
+  try {
+    await executeQuery(`
+      DELETE t1 FROM journal_tasks t1
+      INNER JOIN journal_tasks t2
+        ON t1.userId = t2.userId AND t1.date = t2.date AND t1.mandatory_key = t2.mandatory_key
+        AND t1.mandatory_key IS NOT NULL AND t1.id > t2.id
+    `);
+  } catch (e) {
+    console.warn('Cleanup duplicate mandatory tasks on schema:', e.message);
+  }
+  try {
+    await executeQuery(`
+      ALTER TABLE journal_tasks ADD UNIQUE KEY unique_user_date_mandatory_key (userId, date, mandatory_key)
+    `);
+    console.log('Added unique key unique_user_date_mandatory_key on journal_tasks');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_KEYNAME' && e.code !== 'ER_MULTIPLE_PRI_KEY' && e.code !== 'ER_DUP_ENTRY') {
+      console.warn('journal_tasks unique key:', e.message);
+    }
+  }
 }
 
 function getMandatoryTemplatesForTier(tier) {
@@ -81,29 +101,76 @@ function getMandatoryTemplatesForTier(tier) {
   return MANDATORY_TASKS.FREE || [];
 }
 
-/** Ensure mandatory tasks exist for userId for every date in [dateFrom, dateTo]. */
+/** Return tasks with at most one mandatory task per (date, mandatoryKey). Keeps first occurrence. */
+function deduplicateMandatoryTasks(tasks) {
+  if (!Array.isArray(tasks) || tasks.length === 0) return tasks;
+  const seen = new Set();
+  return tasks.filter((t) => {
+    if (!t.isMandatory || !t.mandatoryKey) return true;
+    const key = `${String(t.date).slice(0, 10)}:${t.mandatoryKey}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/** Parse YYYY-MM-DD and iterate day-by-day without timezone shifts. */
+function getDateStringsBetween(dateFrom, dateTo) {
+  const [y1, m1, d1] = dateFrom.split('-').map(Number);
+  const [y2, m2, d2] = dateTo.split('-').map(Number);
+  const from = new Date(y1, m1 - 1, d1);
+  const to = new Date(y2, m2 - 1, d2);
+  const out = [];
+  const pad = (n) => String(n).padStart(2, '0');
+  for (let t = from.getTime(); t <= to.getTime(); t += 86400000) {
+    const d = new Date(t);
+    out.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+  }
+  return out;
+}
+
+/** Remove duplicate mandatory tasks for this user/range, keeping the row with smallest id per (date, mandatory_key). */
+async function removeDuplicateMandatoryTasks(userId, dateFrom, dateTo) {
+  try {
+    await executeQuery(
+      `DELETE t1 FROM journal_tasks t1
+       INNER JOIN journal_tasks t2
+         ON t1.userId = t2.userId AND t1.date = t2.date AND t1.mandatory_key = t2.mandatory_key
+         AND t1.mandatory_key IS NOT NULL AND t1.id > t2.id
+       WHERE t1.userId = ? AND t1.date >= ? AND t1.date <= ?`,
+      [userId, String(dateFrom).slice(0, 10), String(dateTo).slice(0, 10)]
+    );
+  } catch (e) {
+    console.warn('Remove duplicate mandatory tasks:', e.message);
+  }
+}
+
+/** Ensure mandatory tasks exist for userId for every date in [dateFrom, dateTo]. No duplicates. */
 async function ensureMandatoryTasksForRange(userId, dateFrom, dateTo, tier) {
   const templates = getMandatoryTemplatesForTier(tier);
   if (templates.length === 0) return;
-  const from = new Date(dateFrom);
-  const to = new Date(dateTo);
-  const dates = [];
-  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().slice(0, 10));
-  }
+  await removeDuplicateMandatoryTasks(userId, dateFrom, dateTo);
+  const dates = getDateStringsBetween(String(dateFrom).slice(0, 10), String(dateTo).slice(0, 10));
   for (const dateStr of dates) {
     for (const t of templates) {
       const [existing] = await executeQuery(
         'SELECT id FROM journal_tasks WHERE userId = ? AND date = ? AND mandatory_key = ? LIMIT 1',
         [userId, dateStr, t.key]
       );
-      if (existing && existing.length > 0) continue;
+      const rows = Array.isArray(existing) ? existing : (existing && existing[0]) ? [existing[0]] : [];
+      if (rows.length > 0) continue;
       const id = crypto.randomUUID();
-      await executeQuery(
-        `INSERT INTO journal_tasks (id, userId, date, title, completed, sortOrder, is_mandatory, mandatory_key, description)
-         VALUES (?, ?, ?, ?, 0, 0, 1, ?, ?)`,
-        [id, userId, dateStr, t.title, t.key, t.description || null]
-      );
+      try {
+        await executeQuery(
+          `INSERT INTO journal_tasks (id, userId, date, title, completed, sortOrder, is_mandatory, mandatory_key, description)
+           VALUES (?, ?, ?, ?, 0, 0, 1, ?, ?)`,
+          [id, userId, dateStr, t.title, t.key, t.description || null]
+        );
+      } catch (insertErr) {
+        if (insertErr.code !== 'ER_DUP_ENTRY' && insertErr.code !== 'ER_DUP_KEY') {
+          console.warn('Mandatory task insert failed:', insertErr.message);
+        }
+      }
     }
   }
 }
@@ -226,7 +293,8 @@ module.exports = async (req, res) => {
     sql += ' ORDER BY date ASC, is_mandatory DESC, sortOrder ASC, createdAt ASC';
 
     const [rows] = await executeQuery(sql, params);
-    const tasks = (rows || []).map(mapRow);
+    let tasks = (rows || []).map(mapRow);
+    tasks = deduplicateMandatoryTasks(tasks);
     return res.status(200).json({ success: true, tasks });
   }
 
