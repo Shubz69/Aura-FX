@@ -337,6 +337,10 @@
       "destination": "/api/cron/daily-journal-notifications.js"
     },
     {
+      "source": "/api/cron/journal-wellness-alerts",
+      "destination": "/api/cron/journal-wellness-alerts.js"
+    },
+    {
       "source": "/api/seed/demo-leaderboard",
       "destination": "/api/seed/demo-leaderboard.js"
     },
@@ -457,6 +461,10 @@
     {
       "path": "/api/cron/daily-journal-notifications",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/journal-wellness-alerts",
+      "schedule": "0 1 * * *"
     }
   ]
 }

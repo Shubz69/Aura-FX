@@ -163,6 +163,8 @@ export default function Journal() {
   }, [selectedDate, dailyNotes, dailyMood]);
 
   const dayTasks = monthTasks.filter((t) => isSameDay(t.date, selectedDate));
+  const dayMandatoryTasks = dayTasks.filter((t) => t.isMandatory);
+  const dayRegularTasks = dayTasks.filter((t) => !t.isMandatory);
   const weekTasks = monthTasks.filter((t) => t.date >= weekStart && t.date <= weekEnd);
   const monthTasksForMonth = monthTasks.filter((t) => t.date >= monthStart && t.date <= monthEnd);
 
@@ -528,6 +530,45 @@ export default function Journal() {
           <div className="journal-xp-info">
             <strong>Earn XP:</strong> Add tasks (+5), save notes (+5), complete tasks with picture proof (+25). Day/Week/Month % XP (min 5 tasks) when you view the journal.
           </div>
+
+          {dayMandatoryTasks.length > 0 && (
+            <>
+              <h3 className="journal-section-title">Mandatory Tasks</h3>
+              <p className="journal-mandatory-hint">Daily tasks for your subscription tier. Same percentage system—complete these and your own tasks to hit 100%.</p>
+              <ul className="journal-task-list journal-task-list-mandatory">
+                {dayMandatoryTasks.map((task) => (
+                  <li key={task.id} className={`journal-task-item ${task.completed ? 'journal-task-item--done' : ''} journal-task-item--mandatory`}>
+                    <button
+                      type="button"
+                      className="journal-task-check"
+                      onClick={() => handleToggle(task)}
+                      aria-label={task.completed ? 'Mark not done' : 'Mark done'}
+                    >
+                      {task.completed ? <FaCheck /> : <span className="journal-task-check-empty" />}
+                    </button>
+                    <div className="journal-task-mandatory-content">
+                      <span className="journal-task-title">{task.title}</span>
+                      {task.description && (
+                        <p className="journal-task-description">{task.description}</p>
+                      )}
+                      {task.completed && <span className="journal-task-xp">+5 XP</span>}
+                      {task.proofImage ? (
+                        <span className="journal-task-proof-thumb" title="Proof attached">
+                          <img src={task.proofImage} alt="Proof" />
+                        </span>
+                      ) : null}
+                      <div className="journal-task-actions">
+                        <button type="button" className="journal-task-proof-btn" onClick={() => handleProofClick(task.id)} title="Add picture proof to earn +25 XP when complete">
+                          <FaCamera /> Proof
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
           <h3 className="journal-section-title">Tasks</h3>
           <form className="journal-add-form" onSubmit={handleAddTask}>
             <input
@@ -547,10 +588,10 @@ export default function Journal() {
             <div className="journal-loading">Loading…</div>
           ) : (
             <ul className="journal-task-list">
-              {dayTasks.length === 0 ? (
+              {dayRegularTasks.length === 0 ? (
                 <li className="journal-task-empty">No tasks for this day. Add one above.</li>
               ) : (
-                dayTasks.map((task) => (
+                dayRegularTasks.map((task) => (
                   <li key={task.id} className={`journal-task-item ${task.completed ? 'journal-task-item--done' : ''}`}>
                     <button
                       type="button"

@@ -694,6 +694,54 @@
 .journal-task-list .journal-task-item:nth-child(5) { animation-delay: 0.15s; }
 .journal-task-list .journal-task-item:nth-child(n+6) { animation-delay: 0.18s; }
 
+/* Mandatory tasks section */
+.journal-mandatory-hint {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin: -4px 0 14px 0;
+  line-height: 1.45;
+}
+
+.journal-task-list-mandatory {
+  margin-bottom: 28px;
+}
+
+.journal-task-item--mandatory {
+  align-items: flex-start;
+}
+
+.journal-task-item--mandatory .journal-task-check {
+  margin-top: 2px;
+}
+
+.journal-task-mandatory-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.journal-task-item--mandatory .journal-task-title {
+  width: 100%;
+  flex: none;
+  cursor: default;
+}
+
+.journal-task-description {
+  width: 100%;
+  margin: 6px 0 0 0;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  font-weight: 200;
+}
+
+.journal-task-item--done .journal-task-description {
+  opacity: 0.7;
+}
+
 .journal-task-item:hover {
   background: rgba(139, 92, 246, 0.08);
   box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);

@@ -1,12 +1,38 @@
 /**
  * Journal Tasks API – per-user task journal (add tasks, tick done, calendar).
- * All endpoints require auth. Users can only access their own tasks.
+ * Mandatory tasks are subscription-tier daily tasks (FREE / PREMIUM / ELITE); same list and percentage system.
  */
 
 const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
+const { getTier } = require('../utils/entitlements');
 const crypto = require('crypto');
 const { XP, awardOnce } = require('./xp-helper');
+
+/** Mandatory tasks per tier: key, title, description. A7FX treated as ELITE. */
+const MANDATORY_TASKS = {
+  FREE: [
+    { key: 'free_plan', title: 'Plan Before You Trade', description: 'Write your daily bias and one clear reason why you expect price to move in that direction before placing any trade.' },
+    { key: 'free_risk', title: 'Risk With Discipline', description: 'Risk no more than 1–2% per trade and take a maximum of 3 trades.' },
+    { key: 'free_study', title: 'Complete 20 Minutes of Study', description: 'Study one trading concept daily and write 3 key points you learned.' },
+    { key: 'free_move', title: 'Move Your Body', description: 'Do at least 20 minutes of exercise (walk, gym, stretch) to improve focus and reduce stress.' },
+    { key: 'free_reflect', title: 'Reflect Before Bed', description: 'Write one mistake you made today (trading or life) and how you will improve tomorrow.' },
+  ],
+  PREMIUM: [
+    { key: 'premium_morning', title: 'Morning Focus Routine', description: 'Spend 10 minutes in silence (breathing or journaling) before checking charts to control emotional state.' },
+    { key: 'premium_session', title: 'Structured Session Plan', description: 'Write your London and New York session expectations before trading begins.' },
+    { key: 'premium_discipline', title: 'Execution Discipline Score', description: 'After trading, score your discipline out of 10 and explain why.' },
+    { key: 'premium_health', title: 'Health & Energy Control', description: 'Eat clean for the day and avoid junk or sugar before trading hours.' },
+    { key: 'premium_skill', title: 'Skill Compounding', description: 'Spend 30 minutes improving one skill daily (chart study, macro research, psychology, or reviewing old trades).' },
+  ],
+  ELITE: [
+    { key: 'elite_identity', title: 'Define Your Daily Identity', description: 'Write one sentence every morning: "Today I trade like a professional by ______." This rewires behaviour.' },
+    { key: 'elite_emotional', title: 'Emotional Awareness Tracking', description: 'After every win or loss, write how your confidence level changed (up, down, stable) and why.' },
+    { key: 'elite_deepwork', title: 'Deep Work Block', description: 'Complete one 60-minute distraction-free session focused only on market study or review. No phone. No notifications.' },
+    { key: 'elite_physical', title: 'Physical & Mental Optimisation', description: 'Train your body (gym or intense movement) and drink 2–3L of water to maintain cognitive performance.' },
+    { key: 'elite_ceo', title: 'End-of-Day CEO Review', description: 'Ask yourself: Did I act like a disciplined fund manager or an emotional retail trader today? Write a 3–5 sentence answer.' },
+  ],
+};
 
 function getPathname(req) {
   if (!req.url) return '';
@@ -43,6 +69,43 @@ async function ensureTasksTable() {
     )
   `);
   await addColumnIfNotExists('journal_tasks', 'proof_image', 'MEDIUMTEXT DEFAULT NULL');
+  await addColumnIfNotExists('journal_tasks', 'is_mandatory', 'TINYINT(1) DEFAULT 0');
+  await addColumnIfNotExists('journal_tasks', 'mandatory_key', 'VARCHAR(64) DEFAULT NULL');
+  await addColumnIfNotExists('journal_tasks', 'description', 'TEXT DEFAULT NULL');
+}
+
+function getMandatoryTemplatesForTier(tier) {
+  const t = (tier || 'FREE').toUpperCase();
+  if (t === 'A7FX' || t === 'ELITE') return MANDATORY_TASKS.ELITE || [];
+  if (t === 'PREMIUM') return MANDATORY_TASKS.PREMIUM || [];
+  return MANDATORY_TASKS.FREE || [];
+}
+
+/** Ensure mandatory tasks exist for userId for every date in [dateFrom, dateTo]. */
+async function ensureMandatoryTasksForRange(userId, dateFrom, dateTo, tier) {
+  const templates = getMandatoryTemplatesForTier(tier);
+  if (templates.length === 0) return;
+  const from = new Date(dateFrom);
+  const to = new Date(dateTo);
+  const dates = [];
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  for (const dateStr of dates) {
+    for (const t of templates) {
+      const [existing] = await executeQuery(
+        'SELECT id FROM journal_tasks WHERE userId = ? AND date = ? AND mandatory_key = ? LIMIT 1',
+        [userId, dateStr, t.key]
+      );
+      if (existing && existing.length > 0) continue;
+      const id = crypto.randomUUID();
+      await executeQuery(
+        `INSERT INTO journal_tasks (id, userId, date, title, completed, sortOrder, is_mandatory, mandatory_key, description)
+         VALUES (?, ?, ?, ?, 0, 0, 1, ?, ?)`,
+        [id, userId, dateStr, t.title, t.key, t.description || null]
+      );
+    }
+  }
 }
 
 function mapRow(row) {
@@ -55,6 +118,9 @@ function mapRow(row) {
     completed: Boolean(row.completed),
     sortOrder: row.sortOrder != null ? Number(row.sortOrder) : 0,
     proofImage: row.proof_image || null,
+    isMandatory: Boolean(row.is_mandatory),
+    mandatoryKey: row.mandatory_key || null,
+    description: row.description || null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -119,6 +185,27 @@ module.exports = async (req, res) => {
     const dateTo = url.searchParams.get('dateTo') || null;
     const date = url.searchParams.get('date') || null;
 
+    // Resolve range for mandatory tasks
+    let rangeFrom = dateFrom;
+    let rangeTo = dateTo;
+    if (date && !rangeFrom && !rangeTo) {
+      rangeFrom = date;
+      rangeTo = date;
+    }
+    if (rangeFrom && rangeTo) {
+      try {
+        const [userRows] = await executeQuery(
+          'SELECT subscription_plan, subscription_status, subscription_expiry, role, payment_failed, email FROM users WHERE id = ?',
+          [userId]
+        );
+        const userRow = userRows && userRows[0] ? userRows[0] : null;
+        const tier = getTier(userRow);
+        await ensureMandatoryTasksForRange(userId, rangeFrom, rangeTo, tier);
+      } catch (err) {
+        console.warn('Journal mandatory tasks ensure failed:', err.message);
+      }
+    }
+
     let sql = 'SELECT * FROM journal_tasks WHERE userId = ?';
     const params = [userId];
 
@@ -136,10 +223,10 @@ module.exports = async (req, res) => {
       params.push(dateTo);
     }
 
-    sql += ' ORDER BY date ASC, sortOrder ASC, createdAt ASC';
+    sql += ' ORDER BY date ASC, is_mandatory DESC, sortOrder ASC, createdAt ASC';
 
     const [rows] = await executeQuery(sql, params);
-    const tasks = rows.map(mapRow);
+    const tasks = (rows || []).map(mapRow);
     return res.status(200).json({ success: true, tasks });
   }
 
@@ -171,12 +258,16 @@ module.exports = async (req, res) => {
   }
 
   if ((req.method === 'PUT' || req.method === 'DELETE') && taskId) {
-    const [existing] = await executeQuery('SELECT id FROM journal_tasks WHERE id = ? AND userId = ?', [taskId, userId]);
-    if (existing.length === 0) {
+    const [existing] = await executeQuery('SELECT id, is_mandatory FROM journal_tasks WHERE id = ? AND userId = ?', [taskId, userId]);
+    if (!existing || existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Task not found' });
     }
+    const isMandatory = Boolean(existing[0].is_mandatory);
 
     if (req.method === 'DELETE') {
+      if (isMandatory) {
+        return res.status(403).json({ success: false, message: 'Mandatory tasks cannot be deleted.' });
+      }
       await executeQuery('DELETE FROM journal_tasks WHERE id = ? AND userId = ?', [taskId, userId]);
       return res.status(200).json({ success: true, deleted: true });
     }
@@ -189,7 +280,7 @@ module.exports = async (req, res) => {
       updates.push('completed = ?');
       params.push(body.completed ? 1 : 0);
     }
-    if (body.title !== undefined) {
+    if (body.title !== undefined && !isMandatory) {
       updates.push('title = ?');
       params.push(body.title ? String(body.title).trim().slice(0, 255) : '');
     }
