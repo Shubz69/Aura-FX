@@ -186,6 +186,11 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
       navigate('/journal');
       return;
     }
+    if (notification.type === 'FRIEND_REQUEST') {
+      onClose();
+      navigate('/friends');
+      return;
+    }
     // Handle message-type notifications (jump to message)
     if ((notification.type === 'MENTION' || notification.type === 'REPLY') && notification.messageId) {
       onClose();

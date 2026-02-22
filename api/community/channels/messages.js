@@ -509,6 +509,19 @@ module.exports = async (req, res) => {
           }
         } catch (e) { /* non-fatal */ }
 
+        // @everyone: only admins can use it
+        const contentLower = (content || '').toString().toLowerCase();
+        if (/@everyone\b/.test(contentLower) || /@all\b/.test(contentLower)) {
+          const senderRole = (userRows[0]?.role || decoded.role || '').toString().toUpperCase();
+          if (senderRole !== 'ADMIN' && senderRole !== 'SUPER_ADMIN') {
+            return res.status(403).json({
+              success: false,
+              errorCode: 'FORBIDDEN',
+              message: 'Only admins can use @everyone.'
+            });
+          }
+        }
+
         // Idempotent: if clientMessageId provided, return existing message to prevent duplicates
         if (clientMessageId && senderId) {
           try {
@@ -714,45 +727,68 @@ module.exports = async (req, res) => {
         const senderAvatar = newMessage.avatar ?? null;
         const senderRole = newMessage.role || 'USER';
         
-        // Create notifications for @mentioned users (before releasing db)
+        // Create notifications for @mentioned users and @everyone (before releasing db)
+        const channelName = channelRow?.name || (typeof channelId === 'string' ? channelId : `channel-${channelId}`);
+        const bodySnippet = messageContent.length > 80 ? messageContent.substring(0, 77) + '...' : messageContent;
+        const mentionTitle = 'You were mentioned';
+        const mentionBodyText = `${senderUsername} mentioned you in #${channelName}: ${bodySnippet}`;
+        const numericChannelId = (typeof channelId === 'number' && !isNaN(channelId)) ? channelId : (parseInt(channelId, 10));
+        const channelIdForDb = (typeof numericChannelId === 'number' && !isNaN(numericChannelId)) ? numericChannelId : null;
+        const notifMeta = { channelId: channelId, channelName: channelName };
+
         if (createNotification && messageContent) {
+          const userIdsToNotify = new Set();
+
+          // @username mentions
           const mentionRegex = /@([a-zA-Z0-9_]+)/g;
           const matches = [...messageContent.matchAll(mentionRegex)];
           const mentionedUsernames = [...new Set(matches.map(m => (m[1] || '').toLowerCase()).filter(Boolean))];
-          if (mentionedUsernames.length > 0) {
-            const userIdsToNotify = new Set();
-            try {
-              for (const uname of mentionedUsernames) {
-                if (uname === 'admin') {
-                  const [adminRows] = await db.execute(
-                    'SELECT id FROM users WHERE role IN (?, ?)',
-                    ['admin', 'super_admin']
-                  );
-                  (adminRows || []).forEach(r => { if (r.id && r.id !== senderId) userIdsToNotify.add(r.id); });
-                } else {
-                  const [userRows] = await db.execute(
-                    'SELECT id FROM users WHERE LOWER(TRIM(username)) = ? OR LOWER(TRIM(name)) = ? LIMIT 1',
-                    [uname, uname]
-                  );
-                  if (userRows && userRows[0] && userRows[0].id !== senderId) userIdsToNotify.add(userRows[0].id);
-                }
-              }
-              const channelLabel = typeof channelId === 'string' ? channelId : `channel-${channelId}`;
-              const bodySnippet = messageContent.length > 80 ? messageContent.substring(0, 77) + '...' : messageContent;
-              for (const targetUserId of userIdsToNotify) {
-                createNotification({
-                  userId: targetUserId,
-                  type: 'MENTION',
-                  title: 'You were mentioned',
-                  body: `${senderUsername} mentioned you in #${channelLabel}: ${bodySnippet}`,
-                  channelId: null,
-                  messageId: newMessage.id,
-                  fromUserId: senderId
-                }).catch(err => console.warn('Mention notification create failed:', err.message));
-              }
-            } catch (mentionErr) {
-              console.warn('Mention notification lookup failed:', mentionErr.message);
+          const isEveryoneMention = mentionedUsernames.some(u => u === 'everyone' || u === 'all');
+          for (const uname of mentionedUsernames) {
+            if (uname === 'everyone' || uname === 'all') continue; // handled below
+            if (uname === 'admin') {
+              const [adminRows] = await db.execute(
+                'SELECT id FROM users WHERE role IN (?, ?)',
+                ['admin', 'super_admin']
+              );
+              (adminRows || []).forEach(r => { if (r.id && r.id !== senderId) userIdsToNotify.add(r.id); });
+            } else {
+              const [uRows] = await db.execute(
+                'SELECT id FROM users WHERE LOWER(TRIM(username)) = ? OR LOWER(TRIM(name)) = ? LIMIT 1',
+                [uname, uname]
+              );
+              if (uRows && uRows[0] && uRows[0].id !== senderId) userIdsToNotify.add(uRows[0].id);
             }
+          }
+
+          // @everyone / @all: only admins can send; notify all users who can see the channel (cap to avoid overload)
+          if (isEveryoneMention) {
+            try {
+              const [allUserRows] = await db.execute(
+                'SELECT id FROM users WHERE id != ? ORDER BY id LIMIT 500',
+                [senderId]
+              );
+              (allUserRows || []).forEach(r => { if (r.id) userIdsToNotify.add(r.id); });
+            } catch (e) {
+              console.warn('@everyone notification lookup failed:', e.message);
+            }
+          }
+
+          try {
+            for (const targetUserId of userIdsToNotify) {
+              createNotification({
+                userId: targetUserId,
+                type: 'MENTION',
+                title: mentionTitle,
+                body: mentionBodyText,
+                channelId: channelIdForDb,
+                messageId: newMessage.id,
+                fromUserId: senderId,
+                meta: notifMeta
+              }).catch(err => console.warn('Mention notification create failed:', err.message));
+            }
+          } catch (mentionErr) {
+            console.warn('Mention notification create failed:', mentionErr.message);
           }
         }
         

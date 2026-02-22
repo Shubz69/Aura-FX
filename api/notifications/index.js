@@ -311,12 +311,14 @@ const handler = async (req, res) => {
       
       return res.status(200).json({
         success: true,
-        items: items.map(n => ({
+        items: items.map(n => {
+          const meta = n.meta != null ? (typeof n.meta === 'string' ? JSON.parse(n.meta) : n.meta) : null;
+          return {
           id: n.id,
           type: n.type,
           title: n.title,
           body: n.body,
-          channelId: n.channel_id,
+          channelId: (meta && meta.channelId != null) ? meta.channelId : n.channel_id,
           messageId: n.message_id,
           fromUserId: n.from_user_id,
           fromUsername: n.from_username,
@@ -328,8 +330,9 @@ const handler = async (req, res) => {
           readAt: n.read_at,
           scheduledForUTC: n.scheduled_for_utc ?? null,
           localDate: n.local_date ?? null,
-          meta: n.meta != null ? (typeof n.meta === 'string' ? JSON.parse(n.meta) : n.meta) : null
-        })),
+          meta: meta
+          };
+        }),
         nextCursor,
         hasMore,
         unreadCount,

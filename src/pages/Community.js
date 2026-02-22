@@ -1455,14 +1455,13 @@ const Community = () => {
         scrollToBottom();
     }, [messages]);
 
-    // Scroll to specific message when navigated from notification
+    // Scroll to specific message when navigated from notification (?jump= or ?message=)
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const messageId = params.get('message');
+        const messageId = params.get('message') || params.get('jump');
         
         if (messageId && messages.length > 0) {
             // Wait for messages to render, then scroll to the message
-            // Use requestAnimationFrame for immediate execution after render
             requestAnimationFrame(() => {
                 setTimeout(() => {
                     const messageElement = document.getElementById(`message-${messageId}`);
@@ -1477,12 +1476,11 @@ const Community = () => {
                                 messageElement.style.transition = '';
                             }, 300);
                         }, 2000);
-                        
-                        // Clean up URL parameter
-                        const newUrl = window.location.pathname;
+                        // Clean URL: keep channel path, remove jump/message params
+                        const newUrl = selectedChannel?.id ? `/community/${selectedChannel.id}` : window.location.pathname;
                         window.history.replaceState({}, '', newUrl);
                     }
-                }, 100); // Reduced from 500ms to 100ms for faster navigation
+                }, 100);
             });
         }
     }, [location.search, messages, selectedChannel]);
@@ -2568,9 +2566,12 @@ avatar: storedUser?.avatar || null,
     }, []);
 
     // Load channels on mount/auth change only - NOT on channel navigation (avoids reset/flash)
+    // Support ?channel= for notification deep link (e.g. /community?channel=general&jump=123)
     useEffect(() => {
-        refreshChannelList({ selectChannelId: channelIdParam || undefined });
-    }, [refreshChannelList]);
+        const params = new URLSearchParams(location.search);
+        const channelFromQuery = params.get('channel');
+        refreshChannelList({ selectChannelId: channelFromQuery || channelIdParam || undefined });
+    }, [refreshChannelList, location.search, channelIdParam]);
 
     // Periodically refresh channels so new ones appear for everyone
     useEffect(() => {
@@ -2716,8 +2717,11 @@ avatar: storedUser?.avatar || null,
     // Load messages when channel changes - optimized for instant display
     useEffect(() => {
         if (selectedChannel && selectedChannel.id) {
-            // Update URL without refetch (replace keeps history clean, no reset)
-            navigate(`/community/${selectedChannel.id}`, { replace: true });
+            // Preserve ?jump= / ?message= when navigating (notification deep link)
+            const params = new URLSearchParams(location.search);
+            const jump = params.get('jump') || params.get('message');
+            const path = `/community/${selectedChannel.id}`;
+            navigate(jump ? `${path}?jump=${encodeURIComponent(jump)}` : path, { replace: true });
             
             // Load cached messages first for instant display
             const cachedMessages = loadMessagesFromStorage(selectedChannel.id);
