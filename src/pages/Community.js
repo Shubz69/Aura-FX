@@ -3460,6 +3460,54 @@ avatar: storedUser?.avatar || null,
         }
     };
 
+    // Date label for separators: Today / Yesterday / formatted date
+    const getDateLabel = (timestamp) => {
+        if (!timestamp) return '';
+        const d = new Date(timestamp);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const key = (dt) => `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
+        if (key(d) === key(today)) return 'Today';
+        if (key(d) === key(yesterday)) return 'Yesterday';
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    // Time only (for hover on the right)
+    const formatTimeOnly = (timestamp) => {
+        if (!timestamp) return '';
+        try {
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) return '';
+            return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+        } catch {
+            return '';
+        }
+    };
+
+    // Group messages by date and interleave date separators (all channels)
+    const messagesWithDateGroups = useMemo(() => {
+        if (!messages || messages.length === 0) return [];
+        const groups = new Map();
+        for (const msg of messages) {
+            const ts = msg.timestamp || msg.createdAt || msg.created_at;
+            const dateKey = ts ? (() => {
+                const d = new Date(ts);
+                return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            })() : 'unknown';
+            if (!groups.has(dateKey)) groups.set(dateKey, { label: getDateLabel(ts), messages: [] });
+            groups.get(dateKey).messages.push(msg);
+        }
+        const sortedKeys = [...groups.keys()].sort();
+        return sortedKeys.flatMap((k) => {
+            const { label, messages: dayMsgs } = groups.get(k);
+            return [
+                { type: 'date', label, dateKey: k },
+                ...dayMsgs.map((m) => ({ type: 'message', message: m }))
+            ];
+        });
+    }, [messages]);
+
     // Format timestamp with timezone awareness
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return 'Unknown time';
@@ -5265,16 +5313,28 @@ avatar: storedUser?.avatar || null,
                                     )}
                                 </div>
                             ) : (
-                                messages.map((message, index) => {
-                                    // Check if this message is from the same sender as the previous one (grouping)
-                                    const prevMessage = index > 0 ? messages[index - 1] : null;
-                                    const isGrouped = prevMessage && 
+                                messagesWithDateGroups.map((item, index) => {
+                                    if (item.type === 'date') {
+                                        return (
+                                            <div key={`date-${item.dateKey}`} className="community-date-separator">
+                                                <span className="community-date-separator-label">{item.label}</span>
+                                            </div>
+                                        );
+                                    }
+                                    const message = item.message;
+                                    const prevMessage = (() => {
+                                        for (let i = index - 1; i >= 0; i--) {
+                                            const prev = messagesWithDateGroups[i];
+                                            if (prev && prev.type === 'message') return prev.message;
+                                        }
+                                        return null;
+                                    })();
+                                    const isGrouped = prevMessage &&
                                         prevMessage.sender?.username === message.sender?.username &&
                                         !message.isWelcomeMessage &&
                                         !prevMessage.isWelcomeMessage &&
-                                        // Group if messages are within 5 minutes
                                         (new Date(message.timestamp || message.created_at) - new Date(prevMessage.timestamp || prevMessage.created_at)) < 300000;
-                                    
+
                                     return (
                                         <div 
                                             key={message.id || index}
@@ -5421,7 +5481,7 @@ avatar: storedUser?.avatar || null,
                                             )}
                                             <div className="message-content">
                                                 {!isGrouped && (
-                                                    <div className="message-header-info" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '4px' }}>
+                                                    <div className="message-header-info community-message-header-with-time">
                                                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
                                                             <span 
                                                                 className="message-author"
@@ -5464,9 +5524,6 @@ avatar: storedUser?.avatar || null,
                                                             >
                                                                 {message.sender?.username || 'Unknown'}
                                                             </span>
-                                                            <span className="message-timestamp">
-                                                                {formatTimestamp(message.timestamp)}
-                                                            </span>
                                                             {message.edited && (
                                                                 <span style={{ 
                                                                     fontSize: '0.6875rem', 
@@ -5478,6 +5535,9 @@ avatar: storedUser?.avatar || null,
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        <span className="message-timestamp message-time-right" title={formatTimestamp(message.timestamp)}>
+                                                            {formatTimeOnly(message.timestamp || message.createdAt || message.created_at)}
+                                                        </span>
                                                         {/* Delete button - shown for message owner, admin, or moderator (not for deleted messages) */}
                                                         {!message.isDeleted && message.content !== '[deleted]' && canDeleteMessage(message) && (
                                                             <button

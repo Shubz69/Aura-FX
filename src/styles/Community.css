@@ -1062,6 +1062,33 @@ html.community-page-active {
     line-height: 1.2 !important; /* Tighter line height */
 }
 
+/* Community: time on the right, visible on hover only */
+.community-message-header-with-time {
+    width: 100%;
+    justify-content: space-between;
+}
+.message-time-right {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Date separators (Today / Yesterday / date) in the middle of the channel */
+.community-date-separator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 12px 0;
+    width: 100%;
+}
+.community-date-separator-label {
+    font-size: 0.75rem;
+    color: #72767D;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 4px;
+    background: rgba(114, 118, 125, 0.15);
+}
+
 .message-author {
     font-weight: 500;
     color: #FFFFFF;

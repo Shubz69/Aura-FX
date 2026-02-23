@@ -124,6 +124,22 @@ module.exports = async (req, res) => {
                 console.warn('Messages table already exists or error creating:', tableError.message);
             }
             
+            // Prevent duplicate: same user + same level already in levels channel
+            const likePattern = `%${String(username).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')} has reached Level ${Number(newLevel)}!%`;
+            const [existing] = await db.execute(
+                'SELECT id FROM messages WHERE channel_id = ? AND content LIKE ? LIMIT 1',
+                [channelId, likePattern]
+            );
+            if (existing && existing.length > 0) {
+                if (db && typeof db.release === 'function') db.release();
+                else if (db && typeof db.end === 'function') await db.end();
+                return res.status(200).json({
+                    success: true,
+                    message: 'Level-up already announced (duplicate skipped)',
+                    channelId: channelId
+                });
+            }
+
             // Insert the level-up message
             await db.execute(
                 `INSERT INTO messages (channel_id, sender_id, content, timestamp) 
