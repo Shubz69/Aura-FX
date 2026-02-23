@@ -4958,7 +4958,7 @@ avatar: storedUser?.avatar || null,
                         {/* Your profile picture */}
                         <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(139, 92, 246, 0.5)', boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)' }}>
                             {resolveAvatarUrl(storedUser?.avatar, window.location?.origin) ? (
-                                <img src={resolveAvatarUrl(storedUser?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                <img src={resolveAvatarUrl(storedUser?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
                             ) : (
                                 <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(storedUser?.id ?? storedUser?.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                             )}
@@ -5473,7 +5473,7 @@ avatar: storedUser?.avatar || null,
                                                     }}
                                                 >
                                                     {resolveAvatarUrl(message.sender?.avatar, window.location?.origin) ? (
-                                                        <img src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                                        <img src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
                                                     ) : (
                                                         <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(message.sender?.id ?? message.sender?.username ?? message.userId), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                                                     )}
@@ -5754,6 +5754,7 @@ avatar: storedUser?.avatar || null,
                                                     <img 
                                                         src={message.file.preview} 
                                                         alt={getDisplayFileName(message.file.name, message.file.type)}
+                                                        loading="lazy"
                                                         style={{
                                                             width: 'auto',
                                                             maxWidth: '180px',
@@ -6019,6 +6020,7 @@ avatar: storedUser?.avatar || null,
                                             <img 
                                                 src={filePreview} 
                                                 alt="preview"
+                                                loading="lazy"
                                                 style={{
                                                     width: '50px',
                                                     height: '50px',
@@ -6361,7 +6363,7 @@ avatar: storedUser?.avatar || null,
                                                                     flexShrink: 0
                                                                 }}>
                                                                     {resolveAvatarUrl(user?.avatar, window.location?.origin) ? (
-                                                                        <img src={resolveAvatarUrl(user.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '50%' }} />
+                                                                        <img src={resolveAvatarUrl(user.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '50%' }} loading="lazy" />
                                                                     ) : (
                                                                         <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(user?.id ?? user?.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                                                                     )}

@@ -366,6 +366,20 @@ html.community-page-active .page-wrapper {
   margin-bottom: 20px;
 }
 
+/* Speed: let browser skip painting off-screen content (site-wide) */
+.journal-page,
+.profile-container,
+.leaderboard-container,
+.courses-container,
+.explore-container,
+.my-courses-container,
+.home-container,
+.why-container,
+.contact-container {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 800px;
+}
+
 /* Specific page adjustments */
 .community-container,
 .home-container,
@@ -671,7 +685,8 @@ img, video, canvas {
     .leaderboard-container, .settings-container, .subscription-container,
     .terms-container, .privacy-container, .not-found-container, .payment-success-container,
     .my-courses-container, .admin-panel-container, .messages-page-container,
-    .public-profile-container, .verify-mfa-container {
+    .public-profile-container, .verify-mfa-container,
+    .journal-page {
         overflow-y: visible !important;
         overflow-x: hidden !important;
         touch-action: pan-y !important;

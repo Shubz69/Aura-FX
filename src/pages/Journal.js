@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
@@ -81,26 +81,38 @@ export default function Journal() {
   const fetchFrom = weekStart < monthStart ? weekStart : monthStart;
   const fetchTo = weekEnd > monthEnd ? weekEnd : monthEnd;
 
-  const fetchMonthTasks = useCallback(async () => {
+  /* Single parallel load: tasks + daily note + notes list (faster, one loading state, fewer glitches) */
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError(null);
-    try {
-      const res = await Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo });
-      const list = res.data?.tasks ?? [];
-      setMonthTasks(Array.isArray(list) ? list : []);
-    } catch (err) {
-      console.error('Journal fetch error:', err);
-      setError(err.response?.data?.message || 'Failed to load tasks.');
-      setMonthTasks([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchFrom, fetchTo]);
+    const load = async () => {
+      try {
+        const [tasksRes, dailyRes, notesRes] = await Promise.all([
+          Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo }),
+          Api.getJournalDaily(selectedDate),
+          Api.getJournalNotes(selectedDate),
+        ]);
+        if (cancelled) return;
+        setMonthTasks(Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : []);
+        setDailyNotes(dailyRes.data?.note?.notes ?? '');
+        setDailyMood(dailyRes.data?.note?.mood ?? null);
+        setDailyNotesList(Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : []);
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Journal fetch error:', err);
+          setError(err.response?.data?.message || 'Failed to load.');
+          setMonthTasks([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [fetchFrom, fetchTo, selectedDate]);
 
-  useEffect(() => {
-    fetchMonthTasks();
-  }, [fetchMonthTasks]);
-
+  /* XP check after load (non-blocking, avoids extra UI glitch) */
   useEffect(() => {
     if (loading || !selectedDate) return;
     Api.getJournalXpCheck(selectedDate)
@@ -113,35 +125,6 @@ export default function Journal() {
       })
       .catch(() => {});
   }, [loading, selectedDate]);
-
-  const fetchDailyNote = useCallback(async (date) => {
-    try {
-      const res = await Api.getJournalDaily(date);
-      const note = res.data?.note;
-      setDailyNotes(note?.notes ?? '');
-      setDailyMood(note?.mood ?? null);
-    } catch {
-      setDailyNotes('');
-      setDailyMood(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDailyNote(selectedDate);
-  }, [selectedDate, fetchDailyNote]);
-
-  const fetchDailyNotesList = useCallback(async (date) => {
-    try {
-      const res = await Api.getJournalNotes(date);
-      setDailyNotesList(Array.isArray(res.data?.notes) ? res.data.notes : []);
-    } catch {
-      setDailyNotesList([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDailyNotesList(selectedDate);
-  }, [selectedDate, fetchDailyNotesList]);
 
   const saveDailyNote = useCallback(async (overrides = {}) => {
     setDailySaving(true);
@@ -326,7 +309,7 @@ export default function Journal() {
     }
   };
 
-  const calendarDays = (() => {
+  const calendarDays = useMemo(() => {
     const year = parseInt(calendarMonth.split('-')[0], 10);
     const month1Based = parseInt(calendarMonth.split('-')[1], 10);
     const month0Based = month1Based - 1;
@@ -343,20 +326,24 @@ export default function Journal() {
       days.push(`${yyyy}-${mm}-${dd}`);
     }
     return days;
-  })();
+  }, [calendarMonth]);
 
-  const taskCountByDate = monthTasks.reduce((acc, t) => {
-    const d = String(t.date).slice(0, 10);
-    acc[d] = (acc[d] || 0) + 1;
-    return acc;
-  }, {});
+  const taskCountByDate = useMemo(() => {
+    return monthTasks.reduce((acc, t) => {
+      const d = String(t.date).slice(0, 10);
+      acc[d] = (acc[d] || 0) + 1;
+      return acc;
+    }, {});
+  }, [monthTasks]);
 
-  const completedCountByDate = monthTasks.reduce((acc, t) => {
-    if (!t.completed) return acc;
-    const d = String(t.date).slice(0, 10);
-    acc[d] = (acc[d] || 0) + 1;
-    return acc;
-  }, {});
+  const completedCountByDate = useMemo(() => {
+    return monthTasks.reduce((acc, t) => {
+      if (!t.completed) return acc;
+      const d = String(t.date).slice(0, 10);
+      acc[d] = (acc[d] || 0) + 1;
+      return acc;
+    }, {});
+  }, [monthTasks]);
 
   const label = isSameDay(selectedDate, today)
     ? 'Today'
@@ -559,7 +546,7 @@ export default function Journal() {
                       {task.completed && <span className="journal-task-xp">+5 XP</span>}
                       {task.proofImage ? (
                         <span className="journal-task-proof-thumb" title="Proof attached">
-                          <img src={task.proofImage} alt="Proof" />
+                          <img src={task.proofImage} alt="Proof" loading="lazy" />
                         </span>
                       ) : null}
                       <div className="journal-task-actions">
@@ -625,7 +612,7 @@ export default function Journal() {
                         {task.completed && <span className="journal-task-xp">+5 XP</span>}
                         {task.proofImage ? (
                           <span className="journal-task-proof-thumb" title="Proof attached">
-                            <img src={task.proofImage} alt="Proof" />
+                            <img src={task.proofImage} alt="Proof" loading="lazy" />
                           </span>
                         ) : null}
                         <div className="journal-task-actions">

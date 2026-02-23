@@ -597,7 +597,7 @@ const PremiumAI = () => {
           {msg.images?.length > 0 && (
             <div className="message-images">
               {msg.images.map((img, i) => (
-                <img key={i} src={img} alt="" className="message-image" onClick={() => window.open(img, '_blank')} />
+                <img key={i} src={img} alt="" className="message-image" loading="lazy" onClick={() => window.open(img, '_blank')} />
               ))}
             </div>
           )}
@@ -807,7 +807,7 @@ const PremiumAI = () => {
           <div className="image-preview-strip">
             {imagePreviews.map((preview, i) => (
               <div key={i} className="preview-thumb">
-                <img src={preview} alt="" />
+                <img src={preview} alt="" loading="lazy" />
                 <button className="remove-preview" onClick={() => removeImage(i)}>×</button>
               </div>
             ))}

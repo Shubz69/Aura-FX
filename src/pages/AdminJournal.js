@@ -243,7 +243,7 @@ const AdminJournal = () => {
                 {viewingProofTaskId && (
                   <div className="admin-journal-proof-viewer">
                     {proofImageUrl ? (
-                      <img src={proofImageUrl} alt="Task proof" className="admin-journal-proof-img" />
+                      <img src={proofImageUrl} alt="Task proof" className="admin-journal-proof-img" loading="lazy" />
                     ) : (
                       <span>Loading…</span>
                     )}

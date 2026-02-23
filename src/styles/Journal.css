@@ -53,6 +53,9 @@
   padding-bottom: 48px;
   box-sizing: border-box;
   position: relative;
+  /* Allow page-wrapper to be the scroll container on touch devices */
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .journal-page::before {
@@ -82,6 +85,8 @@
   max-width: 1200px;
   margin: 0 auto;
   min-height: calc(100vh - 64px);
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 /* Sidebar */
@@ -1340,5 +1345,17 @@
 
   .journal-add-note-btn {
     justify-content: center;
+  }
+}
+
+/* Touch devices: ensure journal doesn't trap scroll; page-wrapper stays the scroll container */
+@media (max-width: 1024px) {
+  .journal-page,
+  .journal-layout,
+  .journal-main {
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 }

@@ -491,7 +491,7 @@ const Friends = () => {
                                 <div key={friend.id} className="friend-card">
                                   <div className="friend-avatar">
                                     {resolveAvatarUrl(friend.avatar, baseUrl) ? (
-                                      <img src={resolveAvatarUrl(friend.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                                      <img src={resolveAvatarUrl(friend.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} loading="lazy" />
                                     ) : (
                                       <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(friend.id ?? friend.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                                     )}
@@ -547,7 +547,7 @@ const Friends = () => {
                                 <div key={friend.id} className="friend-card offline">
                                   <div className="friend-avatar">
                                     {resolveAvatarUrl(friend.avatar, baseUrl) ? (
-                                      <img src={resolveAvatarUrl(friend.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                                      <img src={resolveAvatarUrl(friend.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} loading="lazy" />
                                     ) : (
                                       <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(friend.id ?? friend.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                                     )}
@@ -605,7 +605,7 @@ const Friends = () => {
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
                             {resolveAvatarUrl(request.avatar, baseUrl) ? (
-                              <img src={resolveAvatarUrl(request.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                              <img src={resolveAvatarUrl(request.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} loading="lazy" />
                             ) : (
                               <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(request.requesterId ?? request.id ?? request.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                             )}
@@ -659,7 +659,7 @@ const Friends = () => {
                         <div key={request.id} className="request-card">
                           <div className="request-avatar">
                             {resolveAvatarUrl(request.avatar, baseUrl) ? (
-                              <img src={resolveAvatarUrl(request.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                              <img src={resolveAvatarUrl(request.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} loading="lazy" />
                             ) : (
                               <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(request.id ?? request.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                             )}
@@ -716,7 +716,7 @@ const Friends = () => {
                         <div key={user.id} className="search-result-card">
                           <div className="result-avatar">
                             {resolveAvatarUrl(user.avatar, baseUrl) ? (
-                              <img src={resolveAvatarUrl(user.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                              <img src={resolveAvatarUrl(user.avatar, baseUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} loading="lazy" />
                             ) : (
                               <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(user.id ?? user.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
                             )}

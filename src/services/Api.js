@@ -135,12 +135,37 @@ const shouldMakeRequest = (url) => {
     return hasValidAuth();
 };
 
-// Add global interceptor to include auth token
+// Lightweight GET cache (site-wide speed: avoid duplicate/repeated GETs)
+const GET_CACHE_TTL_MS = 18000; // 18s
+const GET_CACHE_SKIP_PATTERNS = /login|register|payment|stripe|password|forgot-password|auth\/login|auth\/register|auth\/forgot|auth\/phone-verification|auth\/verify-signup|auth\/send-signup/i;
+const getCacheStore = (() => {
+    const store = new Map();
+    return () => store;
+})();
+const getCacheKey = (config) => {
+    const base = config.baseURL || '';
+    const path = typeof config.url === 'string' ? config.url : (config.url || '');
+    const url = path.startsWith('http') ? path : (base.replace(/\/$/, '') + (path.startsWith('/') ? path : '/' + path));
+    const params = config.params ? JSON.stringify(config.params) : '';
+    return (config.method || 'get') + '|' + url + '|' + params;
+};
+const shouldCacheGet = (config) => {
+    const url = resolveRequestUrl(config.url) || (config.baseURL || '') + (config.url || '');
+    return config.method === 'get' && !config.skipCache && !GET_CACHE_SKIP_PATTERNS.test(url);
+};
+
 axios.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token && !config.skipAuthRefresh) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+        if (shouldCacheGet(config)) {
+            const key = getCacheKey(config);
+            const entry = getCacheStore().get(key);
+            if (entry && (Date.now() - entry.at) < GET_CACHE_TTL_MS) {
+                config.adapter = () => Promise.resolve(entry.response);
+            }
         }
         return config;
     },
@@ -149,9 +174,17 @@ axios.interceptors.request.use(
     }
 );
 
-// Add response interceptor to handle auth errors
+// Add response interceptor to handle auth errors and cache GET responses
 axios.interceptors.response.use(
     (response) => {
+        const config = response.config || {};
+        if (shouldCacheGet(config) && response.status >= 200 && response.status < 300) {
+            const key = getCacheKey(config);
+            getCacheStore().set(key, {
+                at: Date.now(),
+                response: { data: response.data, status: response.status, statusText: response.statusText, headers: response.headers, config }
+            });
+        }
         return response;
     },
     (error) => {

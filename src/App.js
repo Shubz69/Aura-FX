@@ -65,7 +65,7 @@ const AuraCalendar = lazy(() => import('./pages/aura-analysis/tabs/CalendarIntel
 const AuraPsychology = lazy(() => import('./pages/aura-analysis/tabs/PsychologyDiscipline'));
 const AuraGrowth = lazy(() => import('./pages/aura-analysis/tabs/GrowthEngine'));
 
-/** Prefetch common route chunks after initial load so navigation feels instant */
+/** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
     useEffect(() => {
         const prefetch = () => {
@@ -77,18 +77,25 @@ function usePrefetchRoutes() {
             import('./pages/SignUp');
             import('./pages/Leaderboard');
             import('./pages/Profile');
+            import('./pages/Journal');
+            import('./pages/Messages');
+            import('./pages/Community');
+            import('./pages/Subscription');
+            import('./pages/ChoosePlan');
+            import('./pages/PremiumAI');
+            import('./pages/PublicProfile');
         };
         if (typeof requestIdleCallback !== 'undefined') {
-            const id = requestIdleCallback(prefetch, { timeout: 4000 });
+            const id = requestIdleCallback(prefetch, { timeout: 3000 });
             return () => cancelIdleCallback(id);
         }
-        const t = setTimeout(prefetch, 2500);
+        const t = setTimeout(prefetch, 1500);
         return () => clearTimeout(t);
     }, []);
 }
 
-/** Lightweight fallback while a route chunk loads (keeps perceived load fast) */
-function PageLoadFallback() {
+/** Lightweight fallback while a route chunk loads (memoized to avoid re-renders) */
+const PageLoadFallback = React.memo(function PageLoadFallback() {
     return (
         <div style={{
             display: 'flex',
@@ -102,7 +109,7 @@ function PageLoadFallback() {
             <span>Loading…</span>
         </div>
     );
-}
+});
 
 function AppRoutes() {
     const { user, loading } = useAuth();

@@ -304,7 +304,7 @@ const Courses = () => {
                             <div className="course-card" key={course.id}>
                                 <div className="course-image">
                                     {course.imageUrl ? (
-                                        <img src={course.imageUrl} alt={course.title || 'Course'} />
+                                        <img src={course.imageUrl} alt={course.title || 'Course'} loading="lazy" />
                                     ) : (
                                         <div className="placeholder-image">{(course.title && course.title.length > 0) ? course.title.charAt(0).toUpperCase() : '?'}</div>
                                     )}

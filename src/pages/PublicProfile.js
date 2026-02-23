@@ -138,6 +138,7 @@ const PublicProfile = () => {
                             src={profile.banner.startsWith('data:image') ? profile.banner : profile.banner} 
                             alt="Banner" 
                             className="profile-banner"
+                            loading="lazy"
                         />
                     ) : (
                         <div className="profile-banner-placeholder">
@@ -153,6 +154,7 @@ const PublicProfile = () => {
                                 alt=""
                                 className="profile-avatar-large"
                                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
+                                loading="lazy"
                             />
                         ) : (
                             <div className="profile-avatar-large" aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(profile.id ?? profile.username), border: '4px solid rgba(139, 92, 246, 0.6)', boxSizing: 'border-box' }} />
