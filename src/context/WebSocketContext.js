@@ -231,18 +231,23 @@ export const WebSocketProvider = ({ children }) => {
     client.activate();
   }, [isAuthenticated, token]);
 
-  // Connect only when auth changes
+  // Connect only when auth changes; defer after first paint so initial load isn't blocked
   useEffect(() => {
     if (!ENABLED) return;
-    if (isAuthenticated && token) {
+    if (!isAuthenticated || !token) {
       disconnect();
-      reconnectAttemptRef.current = 0;
-      setReconnectBanner(false);
-      connect();
-    } else {
-      disconnect();
+      return () => disconnect();
     }
-    return () => disconnect();
+    disconnect();
+    reconnectAttemptRef.current = 0;
+    setReconnectBanner(false);
+    const id = requestAnimationFrame(() => {
+      connect();
+    });
+    return () => {
+      cancelAnimationFrame(id);
+      disconnect();
+    };
   }, [isAuthenticated, token, connect, disconnect]);
 
   const subscribeChannel = useCallback((channelId, onMessage) => {

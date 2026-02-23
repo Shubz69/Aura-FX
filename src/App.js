@@ -121,6 +121,26 @@ function AppRoutes() {
     const [showGDPR, setShowGDPR] = useState(false);
 
     usePrefetchRoutes();
+
+    // Touch-device safeguard: restore body scroll if it was left locked (e.g. after navigation or tab switch)
+    useEffect(() => {
+        const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+        if (!isTouch) return;
+        const restore = () => {
+            const onCommunity = location.pathname.startsWith('/community');
+            const locked = document.body.classList.contains('sidebar-open-mobile') || document.body.classList.contains('community-page-active');
+            if (!onCommunity && !locked && document.body.style.overflow === 'hidden') {
+                document.body.style.overflow = '';
+                document.body.classList.remove('loading-active');
+            }
+        };
+        window.addEventListener('pageshow', restore);
+        document.addEventListener('visibilitychange', restore);
+        return () => {
+            window.removeEventListener('pageshow', restore);
+            document.removeEventListener('visibilitychange', restore);
+        };
+    }, [location.pathname]);
     
     useEffect(() => {
         const accepted = localStorage.getItem("gdprAccepted");

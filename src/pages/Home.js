@@ -17,29 +17,36 @@ const Home = () => {
 
     // Loading effect
     useEffect(() => {
-        // Prevent scrolling during loading and add class
         if (isLoading) {
             document.body.style.overflow = 'hidden';
             document.body.classList.add('loading-active');
         } else {
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = '';
             document.body.classList.remove('loading-active');
         }
 
         const loadingTimer = setTimeout(() => {
             setIsLoading(false);
             setTimeout(() => {
-                document.body.style.overflow = 'auto';
+                document.body.style.overflow = '';
                 setShowContent(true);
-            }, 200); // Brief delay for smooth transition
-        }, 1500); // 1.5 second loading screen (1.5s faster)
+            }, 200);
+        }, 1500);
 
         return () => {
             clearTimeout(loadingTimer);
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = '';
             document.body.classList.remove('loading-active');
         };
     }, [isLoading]);
+
+    // Unmount safeguard: always restore body scroll when leaving Home (touch devices especially)
+    useEffect(() => {
+        return () => {
+            document.body.style.overflow = '';
+            document.body.classList.remove('loading-active');
+        };
+    }, []);
 
     const handleStartTrading = () => {
         if (isAuthenticated) {

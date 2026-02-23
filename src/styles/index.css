@@ -602,6 +602,28 @@ img, video, canvas {
     }
 }
 
+/* Touch devices only: ensure scroll container has height and can scroll (no zoom/refresh needed) */
+@media (pointer: coarse) {
+  html, body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 100dvh;
+    min-height: 100vh;
+  }
+  /* Only apply to page-wrapper when NOT on Community (Community uses internal scroll) */
+  body:not(.community-page-active) .page-wrapper {
+    -webkit-overflow-scrolling: touch !important;
+    overflow-y: auto !important;
+    min-height: 100dvh;
+    min-height: 100vh;
+  }
+  body.community-page-active,
+  body.sidebar-open-mobile {
+    overflow: hidden !important;
+  }
+}
+
 /* iPhone and iPad: allow document scroll; use dvh for correct mobile viewport */
 @media (max-width: 1024px) {
     html {
