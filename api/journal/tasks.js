@@ -101,17 +101,26 @@ function getMandatoryTemplatesForTier(tier) {
   return MANDATORY_TASKS.FREE || [];
 }
 
-/** Return tasks with at most one mandatory task per (date, mandatoryKey). Keeps first occurrence. */
+/** Return tasks with at most one mandatory task per (date, mandatoryKey). Keeps first occurrence. Excludes mandatory tasks on Saturday (rest day). */
 function deduplicateMandatoryTasks(tasks) {
   if (!Array.isArray(tasks) || tasks.length === 0) return tasks;
   const seen = new Set();
   return tasks.filter((t) => {
+    if (t.isMandatory && isSaturday(t.date)) return false;
     if (!t.isMandatory || !t.mandatoryKey) return true;
     const key = `${String(t.date).slice(0, 10)}:${t.mandatoryKey}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+/** True if dateStr (YYYY-MM-DD) is a Saturday. Saturday = rest day, no mandatory tasks. */
+function isSaturday(dateStr) {
+  const s = String(dateStr).slice(0, 10);
+  const [y, m, d] = s.split('-').map(Number);
+  const dayOfWeek = new Date(y, m - 1, d).getDay();
+  return dayOfWeek === 6;
 }
 
 /** Parse YYYY-MM-DD and iterate day-by-day without timezone shifts. */
@@ -152,6 +161,7 @@ async function ensureMandatoryTasksForRange(userId, dateFrom, dateTo, tier) {
   await removeDuplicateMandatoryTasks(userId, dateFrom, dateTo);
   const dates = getDateStringsBetween(String(dateFrom).slice(0, 10), String(dateTo).slice(0, 10));
   for (const dateStr of dates) {
+    if (isSaturday(dateStr)) continue;
     for (const t of templates) {
       const [existing] = await executeQuery(
         'SELECT id FROM journal_tasks WHERE userId = ? AND date = ? AND mandatory_key = ? LIMIT 1',
