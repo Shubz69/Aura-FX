@@ -81,34 +81,52 @@ export default function Journal() {
   const fetchFrom = weekStart < monthStart ? weekStart : monthStart;
   const fetchTo = weekEnd > monthEnd ? weekEnd : monthEnd;
 
-  /* Single parallel load: tasks + daily note + notes list (faster, one loading state, fewer glitches) */
+  /* Load tasks first so they appear immediately when changing month; daily/notes update in parallel */
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    const load = async () => {
-      try {
-        const [tasksRes, dailyRes, notesRes] = await Promise.all([
-          Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo }),
-          Api.getJournalDaily(selectedDate),
-          Api.getJournalNotes(selectedDate),
-        ]);
+    const tasksPromise = Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo });
+    const dailyPromise = Api.getJournalDaily(selectedDate);
+    const notesPromise = Api.getJournalNotes(selectedDate);
+
+    tasksPromise
+      .then((tasksRes) => {
         if (cancelled) return;
         setMonthTasks(Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : []);
-        setDailyNotes(dailyRes.data?.note?.notes ?? '');
-        setDailyMood(dailyRes.data?.note?.mood ?? null);
-        setDailyNotesList(Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : []);
-      } catch (err) {
+        setLoading(false);
+      })
+      .catch((err) => {
         if (!cancelled) {
-          console.error('Journal fetch error:', err);
-          setError(err.response?.data?.message || 'Failed to load.');
+          console.error('Journal tasks fetch error:', err);
+          setError(err.response?.data?.message || 'Failed to load tasks.');
           setMonthTasks([]);
+          setLoading(false);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    load();
+      });
+
+    dailyPromise
+      .then((res) => {
+        if (cancelled) return;
+        setDailyNotes(res.data?.note?.notes ?? '');
+        setDailyMood(res.data?.note?.mood ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDailyNotes('');
+          setDailyMood(null);
+        }
+      });
+
+    notesPromise
+      .then((res) => {
+        if (cancelled) return;
+        setDailyNotesList(Array.isArray(res.data?.notes) ? res.data.notes : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDailyNotesList([]);
+      });
+
     return () => { cancelled = true; };
   }, [fetchFrom, fetchTo, selectedDate]);
 
@@ -526,7 +544,7 @@ export default function Journal() {
           {dayMandatoryTasks.length > 0 && (
             <>
               <h3 className="journal-section-title">Mandatory Tasks</h3>
-              <p className="journal-mandatory-hint">Daily tasks for your subscription tier. Same percentage system—complete these and your own tasks to hit 100%.</p>
+              <p className="journal-mandatory-hint">Daily tasks for your subscription tier (every day except Saturday—rest day). Same percentage system—complete these and your own tasks to hit 100%.</p>
               <ul className="journal-task-list journal-task-list-mandatory">
                 {dayMandatoryTasks.map((task) => (
                   <li key={task.id} className={`journal-task-item ${task.completed ? 'journal-task-item--done' : ''} journal-task-item--mandatory`}>

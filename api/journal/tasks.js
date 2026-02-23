@@ -115,11 +115,11 @@ function deduplicateMandatoryTasks(tasks) {
   });
 }
 
-/** True if dateStr (YYYY-MM-DD) is a Saturday. Saturday = rest day, no mandatory tasks. */
+/** True if dateStr (YYYY-MM-DD) is a Saturday. Saturday = rest day, no mandatory tasks. Uses UTC so the same date is treated the same everywhere. */
 function isSaturday(dateStr) {
   const s = String(dateStr).slice(0, 10);
   const [y, m, d] = s.split('-').map(Number);
-  const dayOfWeek = new Date(y, m - 1, d).getDay();
+  const dayOfWeek = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   return dayOfWeek === 6;
 }
 
@@ -154,21 +154,46 @@ async function removeDuplicateMandatoryTasks(userId, dateFrom, dateTo) {
   }
 }
 
-/** Ensure mandatory tasks exist for userId for every date in [dateFrom, dateTo]. No duplicates. */
+/** Remove mandatory tasks that fall on Saturday (rest day) for this user/range. Keeps calendar consistent: tasks every day except Saturday. */
+async function removeMandatoryTasksOnSaturdays(userId, dateFrom, dateTo) {
+  const fromStr = String(dateFrom).slice(0, 10);
+  const toStr = String(dateTo).slice(0, 10);
+  const dates = getDateStringsBetween(fromStr, toStr);
+  const saturdays = dates.filter((d) => isSaturday(d));
+  if (saturdays.length === 0) return;
+  try {
+    const placeholders = saturdays.map(() => '?').join(', ');
+    await executeQuery(
+      `DELETE FROM journal_tasks WHERE userId = ? AND is_mandatory = 1 AND date IN (${placeholders})`,
+      [userId, ...saturdays]
+    );
+  } catch (e) {
+    console.warn('Remove mandatory tasks on Saturdays:', e.message);
+  }
+}
+
+/** Ensure mandatory tasks exist for userId for every date in [dateFrom, dateTo]. No duplicates. Saturday = rest day (no mandatory tasks). Optimized: one SELECT for range, then only INSERT missing. */
 async function ensureMandatoryTasksForRange(userId, dateFrom, dateTo, tier) {
   const templates = getMandatoryTemplatesForTier(tier);
   if (templates.length === 0) return;
   await removeDuplicateMandatoryTasks(userId, dateFrom, dateTo);
-  const dates = getDateStringsBetween(String(dateFrom).slice(0, 10), String(dateTo).slice(0, 10));
+  await removeMandatoryTasksOnSaturdays(userId, dateFrom, dateTo);
+  const fromStr = String(dateFrom).slice(0, 10);
+  const toStr = String(dateTo).slice(0, 10);
+  const [existingRows] = await executeQuery(
+    'SELECT date, mandatory_key FROM journal_tasks WHERE userId = ? AND date >= ? AND date <= ? AND mandatory_key IS NOT NULL',
+    [userId, fromStr, toStr]
+  );
+  const existingSet = new Set();
+  for (const row of existingRows || []) {
+    const d = row.date ? (row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date).slice(0, 10)) : '';
+    existingSet.add(`${d}:${row.mandatory_key || ''}`);
+  }
+  const dates = getDateStringsBetween(fromStr, toStr);
   for (const dateStr of dates) {
     if (isSaturday(dateStr)) continue;
     for (const t of templates) {
-      const [existing] = await executeQuery(
-        'SELECT id FROM journal_tasks WHERE userId = ? AND date = ? AND mandatory_key = ? LIMIT 1',
-        [userId, dateStr, t.key]
-      );
-      const rows = Array.isArray(existing) ? existing : (existing && existing[0]) ? [existing[0]] : [];
-      if (rows.length > 0) continue;
+      if (existingSet.has(`${dateStr}:${t.key}`)) continue;
       const id = crypto.randomUUID();
       try {
         await executeQuery(
@@ -176,6 +201,7 @@ async function ensureMandatoryTasksForRange(userId, dateFrom, dateTo, tier) {
            VALUES (?, ?, ?, ?, 0, 0, 1, ?, ?)`,
           [id, userId, dateStr, t.title, t.key, t.description || null]
         );
+        existingSet.add(`${dateStr}:${t.key}`);
       } catch (insertErr) {
         if (insertErr.code !== 'ER_DUP_ENTRY' && insertErr.code !== 'ER_DUP_KEY') {
           console.warn('Mandatory task insert failed:', insertErr.message);
