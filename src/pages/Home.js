@@ -15,7 +15,7 @@ const Home = () => {
     
     // Market ticker is now handled by the shared MarketTicker component
 
-    // Loading effect (scroll-lock: match commit b51a8b1)
+    // Loading effect (scroll-lock: match commit 63686fc)
     useEffect(() => {
         if (isLoading) {
             document.body.style.overflow = 'hidden';
