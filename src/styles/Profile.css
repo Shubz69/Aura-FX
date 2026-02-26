@@ -1,30 +1,15 @@
 /* Premium Gamified Profile Page Styles */
 
 .profile-container {
+    min-height: 100vh;
     width: 100%;
-    max-width: 100vw;
     position: relative;
     background: #0a0a0a;
     padding: 85px 15px 30px;
     font-family: 'Space Grotesk', sans-serif;
     overflow-x: hidden;
-    overflow-y: auto !important; /* desktop: profile container scrolls (e.g. from top-right dropdown) */
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-    box-sizing: border-box;
-    height: calc(100vh - 60px);
-    min-height: 200px;
-    max-height: calc(100dvh - 60px);
-}
-
-/* Mobile: let .page-wrapper be the only scroll container (no nested scroll - index.css also enforces this) */
-@media (max-width: 1024px) {
-    .profile-container {
-        overflow-y: visible !important;
-        height: auto !important;
-        min-height: 200px;
-        max-height: none !important;
-    }
 }
 
 /* All text and titles in Space Grotesk (match navbar AURA FX); titles in all caps */

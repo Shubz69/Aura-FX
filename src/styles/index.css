@@ -46,20 +46,13 @@
 /* Ensures document can scroll on touch devices; no global overflow: hidden on html/body */
 /* DO NOT add touch-action: none or overflow: hidden to body/html globally */
 
-/* Use dynamic viewport on mobile (fixes iOS Safari address bar) */
-@supports (height: 100dvh) {
-  html, body { min-height: 100dvh; }
-  .page-wrapper { min-height: 100dvh; }
-}
-
 html, body {
   height: auto;
   min-height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y pan-x;
-  overscroll-behavior-y: auto;
+  touch-action: pan-y;
 }
 
 /* iOS Safari: -webkit-fill-available for correct viewport */
@@ -320,20 +313,16 @@ footer {
   position: relative;
 }
 
-/* Scroll Fix for All Pages - primary scroll container on mobile (commit 63686fc) */
+/* Scroll Fix for All Pages */
 .page-wrapper {
   flex: 1;
-  min-height: 0; /* Allow flex shrink so overflow scroll works */
   min-height: 100vh;
-  padding-top: calc(60px + env(safe-area-inset-top, 0));
-  padding-bottom: env(safe-area-inset-bottom, 0);
-  overflow-y: scroll; /* scroll (not auto) improves touch scroll reliability on iOS */
+  padding-top: 60px;
+  padding-bottom: 0;
+  overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  overscroll-behavior-y: auto;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
 }
 
 /* Community page layout - Discord-like with internal scroll */
@@ -588,7 +577,6 @@ img, video, canvas {
     }
 }
 
-/* --- Mobile scroll: ONE scroll container only (.page-wrapper). No page-level overflow may override. --- */
 /* Prevent horizontal scroll on all devices */
 @media (max-width: 1024px) {
     body, html, #root, .app-container {
@@ -598,86 +586,61 @@ img, video, canvas {
         background: #0a0a0a !important;
     }
     
-    html, body, #root, .app-container, .page-wrapper, [class*="container"] {
-        max-width: 100vw !important;
+    * {
+        max-width: 100%;
     }
 }
 
-/* iPhone and iPad: single scroll container - ONLY .page-wrapper scrolls (no position:fixed on body) */
+/* iPhone and iPad: allow document scroll; avoid height: 100vh lock on #root */
 @media (max-width: 1024px) {
     html {
         background: #0a0a0a !important;
         -webkit-text-size-adjust: 100% !important;
+        -ms-text-size-adjust: 100% !important;
         text-size-adjust: 100% !important;
-        height: 100% !important;
+        height: auto !important;
         min-height: 100% !important;
         width: 100% !important;
         overflow-x: hidden !important;
-        overflow-y: hidden !important; /* no document scroll - .page-wrapper only */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     
     body {
         background: #0a0a0a !important;
         -webkit-font-smoothing: antialiased !important;
-        height: 100% !important;
-        min-height: 100% !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        height: auto !important;
+        min-height: 100vh !important;
         width: 100% !important;
         overflow-x: hidden !important;
-        overflow-y: hidden !important; /* no document scroll - .page-wrapper only */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+        position: relative !important;
     }
     
     #root {
         background: #0a0a0a !important;
-        height: 100% !important;
-        min-height: 0 !important;
+        min-height: 100vh !important;
+        height: auto !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100vw !important;
-        overflow: hidden !important;
+        overflow-x: hidden !important;
+        overflow: visible !important;
         position: relative !important;
     }
     
     .app-container {
         background: #0a0a0a !important;
-        flex: 1 !important;
-        min-height: 0 !important;
-        height: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
+        min-height: 100vh !important;
+        height: auto !important;
         width: 100% !important;
         max-width: 100vw !important;
-        overflow: hidden !important;
-    }
-    
-    /* Single scroll container: explicit height so iOS/Android compute scroll (Safari flex fix) */
-    .page-wrapper {
-        flex: 1 1 0 !important;
-        min-height: 0 !important;
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow-y: scroll !important;
         overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
-        overscroll-behavior-y: auto !important;
-        padding-bottom: env(safe-area-inset-bottom, 20px) !important;
-        position: relative !important;
-        z-index: 0 !important;
-        -webkit-transform: translateZ(0) !important;
-        transform: translateZ(0) !important;
-    }
-    
-    /* iPhone: force scroll container to viewport height so Safari definitely allows scroll */
-    @supports (-webkit-touch-callout: none) {
-        html, body { height: 100% !important; }
-        #root, .app-container { height: 100% !important; min-height: 100dvh !important; }
-        .page-wrapper {
-            height: 100% !important;
-            max-height: 100dvh !important;
-            min-height: 0 !important;
-        }
+        overflow: visible !important;
     }
     
     * {
@@ -686,34 +649,5 @@ img, video, canvas {
     
     [class*="container"], [class*="page"], [class*="main"] {
         background: #0a0a0a !important;
-    }
-    
-    /* Page containers: no nested scroll - ONLY .page-wrapper scrolls (high specificity so page CSS cannot override) */
-    #root .app-container .page-wrapper .home-container,
-    #root .app-container .page-wrapper .login-container,
-    #root .app-container .page-wrapper .register-container,
-    #root .app-container .page-wrapper .profile-container,
-    #root .app-container .page-wrapper .contact-container,
-    #root .app-container .page-wrapper .explore-container,
-    #root .app-container .page-wrapper .why-container,
-    #root .app-container .page-wrapper .courses-container,
-    #root .app-container .page-wrapper .leaderboard-container,
-    #root .app-container .page-wrapper .settings-container,
-    #root .app-container .page-wrapper .subscription-container,
-    #root .app-container .page-wrapper .terms-container,
-    #root .app-container .page-wrapper .privacy-container,
-    #root .app-container .page-wrapper .not-found-container,
-    #root .app-container .page-wrapper .payment-success-container,
-    #root .app-container .page-wrapper .my-courses-container,
-    #root .app-container .page-wrapper .admin-panel-container,
-    #root .app-container .page-wrapper .messages-page-container,
-    #root .app-container .page-wrapper .public-profile-container,
-    #root .app-container .page-wrapper .verify-mfa-container,
-    #root .app-container .page-wrapper .journal-page {
-        overflow-y: visible !important;
-        overflow-x: hidden !important;
-        touch-action: pan-y !important;
-        padding-bottom: env(safe-area-inset-bottom, 0) !important;
-        min-height: 0 !important;
     }
 }
