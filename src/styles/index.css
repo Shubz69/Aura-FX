@@ -587,8 +587,8 @@ img, video, canvas {
     }
 }
 
-/* Prevent horizontal scroll on all devices */
-@media (max-width: 1024px) {
+/* Prevent horizontal scroll: mobile viewport OR any touch device (all iPhones, Androids, iPads, tablets) */
+@media (max-width: 1024px), (pointer: coarse), (hover: none) {
     body, html, #root, .app-container {
         overflow-x: hidden !important;
         width: 100% !important;
@@ -602,8 +602,8 @@ img, video, canvas {
     }
 }
 
-/* iPhone and iPad: allow document scroll; use dvh for correct mobile viewport */
-@media (max-width: 1024px) {
+/* Same scroll system for all phones/tablets: .page-wrapper is single scroll container (max-width OR touch) */
+@media (max-width: 1024px), (pointer: coarse), (hover: none) {
     html {
         background: #0a0a0a !important;
         -webkit-text-size-adjust: 100% !important;
@@ -685,93 +685,10 @@ img, video, canvas {
     .leaderboard-container, .settings-container, .subscription-container,
     .terms-container, .privacy-container, .not-found-container, .payment-success-container,
     .my-courses-container, .admin-panel-container, .messages-page-container,
-    .public-profile-container, .verify-mfa-container,
-    .journal-page {
+    .public-profile-container, .verify-mfa-container {
         overflow-y: visible !important;
         overflow-x: hidden !important;
         touch-action: pan-y !important;
         padding-bottom: env(safe-area-inset-bottom, 0) !important;
     }
-}
-
-/* ========== TOUCH DEVICES ONLY: body scroll (phones, tablets, iPads) ========== */
-/* Must come after (max-width: 1024px) so it wins. Content flows in body so scroll never gets stuck. */
-@media (pointer: coarse) {
-  /* When NOT Community / NOT sidebar: do not trap scroll – #root and .page-wrapper overflow visible so body scrolls */
-  body:not(.community-page-active):not(.sidebar-open-mobile) #root,
-  body:not(.community-page-active):not(.sidebar-open-mobile) .app-container {
-    overflow: visible !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-    height: auto !important;
-    min-height: 100% !important;
-    flex: none !important;
-  }
-  body:not(.community-page-active):not(.sidebar-open-mobile) .page-wrapper {
-    overflow: visible !important;
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-    min-height: 0 !important;
-    flex: none !important;
-    height: auto !important;
-  }
-  /* Reinforce body scroll on touch (default body overflow-y: auto then applies) */
-  body:not(.community-page-active):not(.sidebar-open-mobile):not(.loading-active) {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y pan-x !important;
-    min-height: 100dvh !important;
-    min-height: 100vh !important;
-  }
-  /* Community / sidebar / Home loading: keep locked */
-  body.community-page-active,
-  html.community-page-active,
-  body.sidebar-open-mobile,
-  body.loading-active {
-    overflow: hidden !important;
-  }
-  body.community-page-active #root,
-  body.community-page-active .app-container {
-    overflow: hidden !important;
-  }
-}
-
-/* Same body-scroll fix for (hover: none) – catches touch devices that report pointer: fine (e.g. some tablets) */
-@media (hover: none) {
-  body:not(.community-page-active):not(.sidebar-open-mobile) #root,
-  body:not(.community-page-active):not(.sidebar-open-mobile) .app-container {
-    overflow: visible !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-    height: auto !important;
-    min-height: 100% !important;
-    flex: none !important;
-  }
-  body:not(.community-page-active):not(.sidebar-open-mobile) .page-wrapper {
-    overflow: visible !important;
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-    min-height: 0 !important;
-    flex: none !important;
-    height: auto !important;
-  }
-  body:not(.community-page-active):not(.sidebar-open-mobile):not(.loading-active) {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y pan-x !important;
-    min-height: 100dvh !important;
-    min-height: 100vh !important;
-  }
-  body.community-page-active,
-  html.community-page-active,
-  body.sidebar-open-mobile,
-  body.loading-active {
-    overflow: hidden !important;
-  }
-  body.community-page-active #root,
-  body.community-page-active .app-container {
-    overflow: hidden !important;
-  }
 }

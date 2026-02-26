@@ -15,38 +15,30 @@ const Home = () => {
     
     // Market ticker is now handled by the shared MarketTicker component
 
-    // Loading effect
+    // Loading effect (scroll-lock: match commit b51a8b1)
     useEffect(() => {
         if (isLoading) {
             document.body.style.overflow = 'hidden';
             document.body.classList.add('loading-active');
         } else {
-            document.body.style.overflow = '';
+            document.body.style.overflow = 'auto';
             document.body.classList.remove('loading-active');
         }
 
         const loadingTimer = setTimeout(() => {
             setIsLoading(false);
             setTimeout(() => {
-                document.body.style.overflow = '';
+                document.body.style.overflow = 'auto';
                 setShowContent(true);
             }, 200);
         }, 1500);
 
         return () => {
             clearTimeout(loadingTimer);
-            document.body.style.overflow = '';
+            document.body.style.overflow = 'auto';
             document.body.classList.remove('loading-active');
         };
     }, [isLoading]);
-
-    // Unmount safeguard: always restore body scroll when leaving Home (touch devices especially)
-    useEffect(() => {
-        return () => {
-            document.body.style.overflow = '';
-            document.body.classList.remove('loading-active');
-        };
-    }, []);
 
     const handleStartTrading = () => {
         if (isAuthenticated) {
