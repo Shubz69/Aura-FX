@@ -669,6 +669,17 @@ img, video, canvas {
         transform: translateZ(0) !important;
     }
     
+    /* iPhone: force scroll container to viewport height so Safari definitely allows scroll */
+    @supports (-webkit-touch-callout: none) {
+        html, body { height: 100% !important; }
+        #root, .app-container { height: 100% !important; min-height: 100dvh !important; }
+        .page-wrapper {
+            height: 100% !important;
+            max-height: 100dvh !important;
+            min-height: 0 !important;
+        }
+    }
+    
     * {
         box-sizing: border-box;
     }
