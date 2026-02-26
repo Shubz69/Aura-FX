@@ -650,4 +650,14 @@ img, video, canvas {
     [class*="container"], [class*="page"], [class*="main"] {
         background: #0a0a0a !important;
     }
+    
+    /* Same as responsive: Home and Journal use document scroll (no nested scroll) */
+    .home-container,
+    .journal-page,
+    .journal-layout {
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
 }
