@@ -8,14 +8,23 @@
     padding: 85px 15px 30px;
     font-family: 'Space Grotesk', sans-serif;
     overflow-x: hidden;
-    overflow-y: auto !important; /* so profile scrolls without zoom (e.g. from top-right dropdown); overrides index.css */
+    overflow-y: auto !important; /* desktop: profile container scrolls (e.g. from top-right dropdown) */
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
     box-sizing: border-box;
-    /* Fixed-height scroll container so profile always scrolls */
     height: calc(100vh - 60px);
     min-height: 200px;
     max-height: calc(100dvh - 60px);
+}
+
+/* Mobile: let .page-wrapper be the only scroll container (no nested scroll - index.css also enforces this) */
+@media (max-width: 1024px) {
+    .profile-container {
+        overflow-y: visible !important;
+        height: auto !important;
+        min-height: 200px;
+        max-height: none !important;
+    }
 }
 
 /* All text and titles in Space Grotesk (match navbar AURA FX); titles in all caps */
