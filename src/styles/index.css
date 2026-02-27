@@ -702,19 +702,21 @@ img, video, canvas {
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
     }
-    /* Home on iPhone/Android: full-page scroll – .page-wrapper scrolls (scrollbar full height), .home-container flows like Courses */
+    /* Home on iPhone: same as Explore/Leaderboard – .page-wrapper does not scroll, .home-container is the scroll container */
     .page-wrapper:has(.home-container) {
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
     }
     .page-wrapper .home-container {
-        height: auto !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        overflow: visible !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        min-height: 0 !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
     }
     /* Journal, Leaderboard: page container scrolls, not .page-wrapper. Courses (C&S): whole page scrolls via .page-wrapper */
     .page-wrapper:has(.journal-page),
@@ -738,11 +740,12 @@ img, video, canvas {
     }
 }
 
-/* All devices: Contact, Why Aura, Explore, Profile – same structure as Leaderboard, page container scrolls (Courses only in mobile/tablet breakpoints below) */
+/* All devices: Contact, Why Aura, Explore, Profile, Home – same structure as Leaderboard, page container scrolls */
 .page-wrapper:has(.contact-container),
 .page-wrapper:has(.why-container),
 .page-wrapper:has(.explore-container),
-.page-wrapper:has(.profile-container) {
+.page-wrapper:has(.profile-container),
+.page-wrapper:has(.home-container) {
     overflow: hidden !important;
     overflow-y: hidden !important;
     height: 100vh !important;
@@ -750,6 +753,16 @@ img, video, canvas {
     max-height: 100vh !important;
     max-height: 100dvh !important;
     min-height: 0 !important;
+}
+
+/* Home: inner container is the scroll area (same as Explore/Leaderboard) */
+.page-wrapper:has(.home-container) .home-container {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 /* iPad/tablet: Journal, Leaderboard, Home – page container scrolls. Courses (C&S): whole page scrolls via .page-wrapper */
