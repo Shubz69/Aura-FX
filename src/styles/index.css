@@ -702,19 +702,20 @@ img, video, canvas {
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
     }
-    /* Home on iPhone/Android: whole page scrolls (brand + content together), .page-wrapper is scroll container */
+    /* Home on iPhone/Android: same as Explore – .home-container is the scroll container, whole page content scrolls inside it */
     .page-wrapper:has(.home-container) {
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
     }
     .page-wrapper .home-container {
-        height: auto !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        overflow: visible !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
     }
     /* Journal, Leaderboard: page container scrolls, not .page-wrapper. Courses (C&S): whole page scrolls via .page-wrapper */
     .page-wrapper:has(.journal-page),

@@ -74,15 +74,15 @@
     box-sizing: border-box !important;
   }
 
-  /* Home on iPhone/iPad/Android: whole page scrolls – same structure as Courses, .page-wrapper scrolls, .home-container must not be scroll container */
+  /* Home on iPhone/iPad/Android: same as Explore – .home-container is the scroll container, whole page content scrolls inside it */
   .page-wrapper > .home-container {
-    height: auto !important;
+    flex: 1 1 auto !important;
     min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
     overflow-x: hidden !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
   }
 }
