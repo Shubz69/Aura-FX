@@ -739,6 +739,21 @@
     }
 }
 
+/* iPad and other tablets: same structure as Explore – one scroll container, fills viewport */
+@media (min-width: 768px) and (max-width: 1366px) {
+    .courses-container {
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y;
+    }
+}
+
 @media (max-width: 768px) {
     .courses-container {
         padding: 24px max(15px, env(safe-area-inset-left)) 20px max(15px, env(safe-area-inset-right));

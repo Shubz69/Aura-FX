@@ -788,10 +788,13 @@ img, video, canvas {
         max-height: 100dvh !important;
         min-height: 0 !important;
     }
+    /* C&S on iPad: same as .explore-container – explicit 100vh so scroll works like Explore */
     .page-wrapper .courses-container {
-        height: 100% !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
         min-height: 0 !important;
-        max-height: 100% !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
