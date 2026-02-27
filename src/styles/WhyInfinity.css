@@ -12,15 +12,20 @@
   --error: #ef4444;
 }
 
+/* Same scroll structure as Leaderboard: .why-container is the scroll container on all devices */
 .why-container {
   position: relative;
   min-height: 100vh;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   background: #0a0a0a;
   color: #ffffff;
   padding: 140px 20px 80px;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   z-index: 1;
   font-family: 'Space Grotesk', sans-serif;
 }
