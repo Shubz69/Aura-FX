@@ -653,15 +653,25 @@ img, video, canvas {
     }
 }
 
-/* iPhone only: .page-wrapper scrolls; Home must not be a separate scroll box so whole page (logo + all) scrolls */
+/* iPhone & Android: whole-page scroll – .page-wrapper scrolls everything (logo + all content), no inner scroll box */
 @media (max-width: 767px) {
     .page-wrapper {
         min-height: 100vh;
         min-height: 100dvh;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
     }
+    /* Home: no scroll in container so the whole page scrolls in .page-wrapper, not a specific area */
     .page-wrapper .home-container {
         overflow-y: visible !important;
         height: auto !important;
+        min-height: auto !important;
         max-height: none !important;
     }
 }
