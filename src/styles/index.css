@@ -702,7 +702,7 @@ img, video, canvas {
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
     }
-    /* Home on iPhone/Android: same as Explore – .home-container is the scroll container, whole page content scrolls inside it */
+    /* Home on iPhone/Android: same as iPad – .home-container is the scroll container, full page content scrolls inside it */
     .page-wrapper:has(.home-container) {
         overflow: hidden !important;
         overflow-y: hidden !important;
@@ -714,6 +714,7 @@ img, video, canvas {
         height: 100dvh !important;
         max-height: 100vh !important;
         max-height: 100dvh !important;
+        min-height: 0 !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
     }

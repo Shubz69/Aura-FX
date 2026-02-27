@@ -932,7 +932,7 @@
     }
 }
 
-/* iPhone / Android phones: same as Explore – .home-container is the scroll container, whole page content scrolls inside it */
+/* iPhone / Android phones: same as iPad – .home-container is the scroll container, full page content scrolls inside it */
 @media (max-width: 767px) {
     .home-container {
         padding-top: 70px;
@@ -942,6 +942,7 @@
         height: 100dvh !important;
         max-height: 100vh !important;
         max-height: 100dvh !important;
+        min-height: 0 !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
@@ -1283,7 +1284,7 @@
     }
 }
 
-/* Small Mobile (iPhone) – same as Explore, .home-container is the scroll container */
+/* Small Mobile (iPhone) – same as iPad, .home-container is the scroll container */
 @media (max-width: 480px) {
     .home-container {
         padding-top: 60px;
@@ -1293,6 +1294,7 @@
         height: 100dvh !important;
         max-height: 100vh !important;
         max-height: 100dvh !important;
+        min-height: 0 !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         max-width: 100vw !important;
