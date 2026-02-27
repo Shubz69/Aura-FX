@@ -653,17 +653,11 @@ img, video, canvas {
     }
 }
 
-/* iPhone only: one scroll container (.page-wrapper); full viewport height */
+/* iPhone only: full viewport height so home scrolls as "full page" (100dvh = real viewport) */
 @media (max-width: 767px) {
     .page-wrapper {
         min-height: 100vh;
         min-height: 100dvh;
-    }
-    /* Home: whole page scrolls – no inner scroll on home-container */
-    .page-wrapper .home-container {
-        overflow-y: visible !important;
-        height: auto !important;
-        max-height: none !important;
     }
 }
 
