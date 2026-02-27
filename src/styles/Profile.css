@@ -1006,3 +1006,32 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* iPhone / phones: same as Journal – explicit 100vh, .profile-container is the scroll container */
+@media (max-width: 767px) {
+    .profile-container {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y;
+    }
+}
+
+/* iPad and other tablets: same as Journal – one scroll container, fills viewport */
+@media (min-width: 768px) and (max-width: 1366px) {
+    .profile-container {
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y;
+    }
+}
