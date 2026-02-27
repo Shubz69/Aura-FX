@@ -74,7 +74,7 @@
     box-sizing: border-box !important;
   }
 
-  /* Home on iPhone/iPad: same scroll as iPad – .home-container is the scroll container, full page scrolls inside it */
+  /* Home on iPad (768–1024): .home-container is the scroll container. iPhone (≤767): .page-wrapper scrolls, full page */
   .page-wrapper > .home-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -86,5 +86,22 @@
     touch-action: pan-y !important;
     width: 100% !important;
     box-sizing: border-box !important;
+  }
+
+  /* iPhone only: Home full-page scroll – .page-wrapper scrolls, .home-container must not be scroll container */
+  @media (max-width: 767px) {
+    .page-wrapper:has(.home-container) {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-y !important;
+    }
+    .page-wrapper > .home-container {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+      overflow-x: hidden !important;
+    }
   }
 }
