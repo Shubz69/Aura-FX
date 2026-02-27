@@ -1,0 +1,64 @@
+/* MOBILE HEIGHT CONSTRAINT — loaded last in App.js so this wins over any other CSS */
+@media (max-width: 1024px) {
+  html,
+  body {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+  }
+  #root {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #root > .app-container,
+  body > #root > .app-container,
+  .app-container {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+  }
+  #root > .app-container > main.page-wrapper,
+  main.page-wrapper,
+  .page-wrapper {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+  body.community-page-active .page-wrapper,
+  html.community-page-active .page-wrapper {
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+  }
+
+  /* Journal (iPhone + iPad): .page-wrapper scrolls; .journal-page must not be scroll container */
+  #root > .app-container > main.page-wrapper > .journal-page,
+  .page-wrapper > .journal-page {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+
+  /* Contact (C&S) on iPhone: .contact-container is the scroll container, same as Leaderboard */
+  .page-wrapper > .contact-container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+}
