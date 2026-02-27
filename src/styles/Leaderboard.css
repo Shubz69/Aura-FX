@@ -1050,6 +1050,16 @@
     }
 }
 
+/* iPad and other tablets (portrait + landscape): let the main page scroll, not a fixed-height inner box */
+@media (min-width: 768px) and (max-width: 1366px) {
+    .leaderboard-container {
+        /* Do not clamp height on tablets – allow content to grow and let page scroll */
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+}
+
 /* Demo User Styles */
 .demo-badge,
 .demo-indicator {
