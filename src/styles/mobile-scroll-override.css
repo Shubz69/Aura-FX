@@ -73,4 +73,16 @@
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
+
+  /* Home on iPhone/iPad/Android: whole page scrolls – same structure as Courses, .page-wrapper scrolls, .home-container must not be scroll container */
+  .page-wrapper > .home-container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
 }
