@@ -1050,13 +1050,16 @@
     }
 }
 
-/* iPad and other tablets (portrait + landscape): let the main page scroll, not a fixed-height inner box */
+/* iPad and other tablets (portrait + landscape): same as iPhone – one scroll container, fills viewport */
 @media (min-width: 768px) and (max-width: 1366px) {
     .leaderboard-container {
-        /* Do not clamp height on tablets – allow content to grow and let page scroll */
-        height: auto !important;
-        max-height: none !important;
-        overflow-y: visible !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y;
     }
 }
 
