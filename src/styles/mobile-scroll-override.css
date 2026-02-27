@@ -33,6 +33,30 @@
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
   }
+  /* Contact, Explore, Leaderboard: wrapper must NOT scroll – inner container scrolls */
+  .page-wrapper:has(.contact-container),
+  .page-wrapper:has(.explore-container),
+  .page-wrapper:has(.leaderboard-container) {
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+  }
+  /* Home on mobile: whole page scrolls via .page-wrapper (like Courses) so scrollbar is full viewport height */
+  .page-wrapper:has(.home-container) {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+  .page-wrapper > .home-container {
+    height: auto !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
   body.community-page-active .page-wrapper,
   html.community-page-active .page-wrapper {
     overflow: hidden !important;
@@ -71,20 +95,6 @@
     overflow-x: hidden !important;
     width: 100% !important;
     max-width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Home on iPhone/iPad: same as Explore/Contact – .home-container is the scroll container, full page scrolls inside it */
-  .page-wrapper > .home-container {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-    width: 100% !important;
     box-sizing: border-box !important;
   }
 }
