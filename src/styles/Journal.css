@@ -45,6 +45,7 @@
   font-weight: 200;
 }
 
+/* Same scroll structure as Leaderboard: .journal-page is the scroll container */
 .journal-page {
   min-height: 100vh;
   background: #0a0a0a;
@@ -53,9 +54,12 @@
   padding-bottom: 48px;
   box-sizing: border-box;
   position: relative;
-  /* Allow page-wrapper to be the scroll container on touch devices */
   overflow-x: hidden;
-  overflow-y: visible;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .journal-page::before {
@@ -1348,14 +1352,41 @@
   }
 }
 
-/* Touch devices: ensure journal doesn't trap scroll; page-wrapper stays the scroll container */
-@media (max-width: 1024px) {
-  .journal-page,
+/* Phones: .journal-page is the only scroll container, fills .page-wrapper (same idea as Leaderboard) */
+@media (max-width: 767px) {
+  .journal-page {
+    padding: 12px !important;
+    padding-top: 32px !important;
+    padding-bottom: 48px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y;
+  }
   .journal-layout,
   .journal-main {
     overflow-y: visible !important;
     overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* iPad and tablets: .journal-page is the only scroll container, fills .page-wrapper */
+@media (min-width: 768px) and (max-width: 1366px) {
+  .journal-page {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y;
+  }
+  .journal-layout,
+  .journal-main {
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
   }
 }

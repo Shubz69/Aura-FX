@@ -653,26 +653,82 @@ img, video, canvas {
     }
 }
 
-/* iPhone & Android: whole-page scroll – .page-wrapper scrolls everything (logo + all content), no inner scroll box */
+/* iPhone & Android: single scroll container – lock viewport, only .page-wrapper scrolls (whole page) */
 @media (max-width: 767px) {
+    /* Lock viewport so body does NOT scroll; only .page-wrapper scrolls */
+    html {
+        height: 100vh !important;
+        height: 100dvh !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
+    body {
+        height: 100vh !important;
+        height: 100dvh !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+    }
+    #root {
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .app-container {
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 auto !important;
+    }
+    /* .page-wrapper = only scroll container; takes space below navbar, scrolls whole page */
     .page-wrapper {
-        min-height: 100vh;
-        min-height: 100dvh;
-        height: 100vh;
-        height: 100dvh;
-        max-height: 100vh;
-        max-height: 100dvh;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
     }
-    /* Home: no scroll in container so the whole page scrolls in .page-wrapper, not a specific area */
+    /* Home: no inner scroll box – content flows so .page-wrapper scrolls everything */
     .page-wrapper .home-container {
         overflow-y: visible !important;
+        overflow-x: hidden !important;
         height: auto !important;
         min-height: auto !important;
         max-height: none !important;
+    }
+    /* Journal & Leaderboard: page container scrolls, not .page-wrapper (same structure) */
+    .page-wrapper:has(.journal-page),
+    .page-wrapper:has(.leaderboard-container) {
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+    }
+}
+
+/* iPad/tablet: Journal & Leaderboard – page container is the scroll area, .page-wrapper does not scroll */
+@media (min-width: 768px) and (max-width: 1366px) {
+    .page-wrapper:has(.journal-page),
+    .page-wrapper:has(.leaderboard-container) {
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        min-height: 0 !important;
     }
 }
 
