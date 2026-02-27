@@ -652,3 +652,24 @@ img, video, canvas {
         background: #0a0a0a !important;
     }
 }
+
+/* iPhone only: full viewport height so home scrolls as "full page" (100dvh = real viewport) */
+@media (max-width: 767px) {
+    .page-wrapper {
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+}
+
+/* iPad only: hide scrollbar so nothing shows – scroll still works */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .page-wrapper {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .page-wrapper::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+}
