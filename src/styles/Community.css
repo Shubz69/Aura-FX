@@ -633,10 +633,39 @@ html.community-page-active {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         background: var(--bg-tertiary) !important;
+        min-width: 0 !important;
         /* Enable smooth touch scrolling on mobile */
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior: contain !important;
+    }
+    /* iPad/tablet: prevent message text overlapping */
+    .message-item {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+    .message-content {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+    .message-header-info,
+    .community-message-header-with-time {
+        min-width: 0 !important;
+        flex-wrap: wrap !important;
+    }
+    .message-author {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+    .message-text {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
     }
     
     .no-channel-selected {
@@ -646,6 +675,44 @@ html.community-page-active {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
+    }
+}
+
+/* iPad / tablet: extra overlap prevention for chat messages */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .chat-messages {
+        overflow-x: hidden !important;
+        min-width: 0 !important;
+    }
+    .message-item {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+    .message-content {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+    .message-header-info,
+    .community-message-header-with-time {
+        min-width: 0 !important;
+        flex-wrap: wrap !important;
+    }
+    .message-author {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+    .message-time-right {
+        flex-shrink: 0 !important;
+    }
+    .message-text {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
     }
 }
 
@@ -1138,6 +1205,8 @@ html.community-page-active {
     border: none !important;
     box-shadow: none !important;
     overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
 }
 
 /* Extra tight spacing for grouped messages - messages should touch */

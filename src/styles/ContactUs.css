@@ -502,18 +502,22 @@
     }
 }
 
-/* iPhone and small mobile devices - grey boxes stay inside the container */
+/* iPhone and small mobile devices - .contact-container is the scroll container (fixed height so iOS can scroll) */
 @media (max-width: 480px) {
     .contact-container {
         padding-top: 70px !important;
         padding-bottom: 20px !important;
         padding-left: max(12px, env(safe-area-inset-left)) !important;
         padding-right: max(12px, env(safe-area-inset-right)) !important;
-        min-height: 100vh !important;
-        height: auto !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        min-height: 0 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
         position: relative !important;
     }
     
