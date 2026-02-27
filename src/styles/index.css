@@ -653,11 +653,16 @@ img, video, canvas {
     }
 }
 
-/* iPhone only: full viewport height so home scrolls as "full page" (100dvh = real viewport) */
+/* iPhone only: .page-wrapper scrolls; Home must not be a separate scroll box so whole page (logo + all) scrolls */
 @media (max-width: 767px) {
     .page-wrapper {
         min-height: 100vh;
         min-height: 100dvh;
+    }
+    .page-wrapper .home-container {
+        overflow-y: visible !important;
+        height: auto !important;
+        max-height: none !important;
     }
 }
 
