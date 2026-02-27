@@ -716,22 +716,25 @@ img, video, canvas {
         overflow: visible !important;
         overflow-x: hidden !important;
     }
-    /* Journal, Leaderboard, Courses (C&S): page container scrolls, not .page-wrapper (same structure) */
+    /* Journal, Leaderboard: page container scrolls, not .page-wrapper. Courses (C&S): whole page scrolls via .page-wrapper */
     .page-wrapper:has(.journal-page),
-    .page-wrapper:has(.leaderboard-container),
-    .page-wrapper:has(.courses-container) {
+    .page-wrapper:has(.leaderboard-container) {
         overflow: hidden !important;
         overflow-y: hidden !important;
     }
-    .page-wrapper .courses-container {
+    /* C&S on iPhone/Android: whole page scrolls (title + subscriptions + courses), .page-wrapper is scroll container */
+    .page-wrapper:has(.courses-container) {
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: 100vh !important;
-        max-height: 100dvh !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+    }
+    .page-wrapper .courses-container {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-x: hidden !important;
     }
 }
 
@@ -749,12 +752,11 @@ img, video, canvas {
     min-height: 0 !important;
 }
 
-/* iPad/tablet: Journal, Leaderboard, Home, Courses (C&S) – page container is the scroll area, .page-wrapper does not scroll */
+/* iPad/tablet: Journal, Leaderboard, Home – page container scrolls. Courses (C&S): whole page scrolls via .page-wrapper */
 @media (min-width: 768px) and (max-width: 1366px) {
     .page-wrapper:has(.journal-page),
     .page-wrapper:has(.leaderboard-container),
-    .page-wrapper:has(.home-container),
-    .page-wrapper:has(.courses-container) {
+    .page-wrapper:has(.home-container) {
         overflow: hidden !important;
         overflow-y: hidden !important;
         height: 100vh !important;
@@ -762,6 +764,19 @@ img, video, canvas {
         max-height: 100vh !important;
         max-height: 100dvh !important;
         min-height: 0 !important;
+    }
+    .page-wrapper:has(.courses-container) {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+    }
+    .page-wrapper .courses-container {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-x: hidden !important;
     }
 }
 

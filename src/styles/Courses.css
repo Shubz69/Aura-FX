@@ -697,19 +697,13 @@
     
     .courses-container {
         padding: 28px 15px 24px;
-    }
-    
-    /* Same scroll structure as Leaderboard on tablet: .courses-container is the scroll container */
-    .courses-container {
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: 100vh !important;
-        max-height: 100dvh !important;
-        min-height: 0 !important;
-        overflow-y: auto !important;
+        /* Whole page scrolls on tablet/phone – container flows, .page-wrapper scrolls */
+        height: auto !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        max-height: none !important;
+        overflow: visible !important;
         overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y;
     }
     
     .subscriptions-grid {
