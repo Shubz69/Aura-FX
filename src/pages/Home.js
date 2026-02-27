@@ -15,30 +15,17 @@ const Home = () => {
     
     // Market ticker is now handled by the shared MarketTicker component
 
-    // Loading effect
+    // Loading effect - do NOT touch document/body scroll, let CSS + page-wrapper/home-container handle it
     useEffect(() => {
-        if (isLoading) {
-            document.body.style.overflow = 'hidden';
-            document.body.classList.add('loading-active');
-        } else {
-            document.body.style.overflow = 'auto';
-            document.body.classList.remove('loading-active');
-        }
-
         const loadingTimer = setTimeout(() => {
             setIsLoading(false);
-            setTimeout(() => {
-                document.body.style.overflow = 'auto';
-                setShowContent(true);
-            }, 500);
+            setShowContent(true);
         }, 3000);
 
         return () => {
             clearTimeout(loadingTimer);
-            document.body.style.overflow = 'auto';
-            document.body.classList.remove('loading-active');
         };
-    }, [isLoading]);
+    }, []);
 
     const handleStartTrading = () => {
         if (isAuthenticated) {
