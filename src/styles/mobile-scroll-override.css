@@ -50,7 +50,7 @@
     touch-action: pan-y !important;
   }
 
-  /* Contact (C&S) on iPhone: .contact-container is the scroll container, same as Leaderboard */
+  /* Contact on iPhone: .contact-container is the scroll container, same as Leaderboard */
   .page-wrapper > .contact-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -60,5 +60,20 @@
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
+  }
+
+  /* Courses (C&S) on iPhone/iPad/Android: .courses-container is the scroll container, same as Leaderboard */
+  .page-wrapper > .courses-container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 }

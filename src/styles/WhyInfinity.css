@@ -494,7 +494,11 @@
   }
   
   .content-wrapper {
-    padding: 0 1.25rem;
+    padding: 0 max(1.25rem, env(safe-area-inset-left)) 0 max(1.25rem, env(safe-area-inset-right));
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .why-main-title {
@@ -509,17 +513,28 @@
   .why-features-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    margin: 0 auto;
   }
   
-  /* Force comparison section to single column so words aren't cut off */
+  /* Force comparison section to single column; center boxes on phones */
   .why-vs-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
     max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
   }
   
   .why-additional-features {
-    padding: 3rem 1.25rem;
+    padding: 3rem max(1.25rem, env(safe-area-inset-left)) 3rem max(1.25rem, env(safe-area-inset-right));
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .why-section-heading {
@@ -530,6 +545,11 @@
   
   .why-platform-feature {
     padding: 1.5rem 1.25rem;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .why-platform-feature h3 {
@@ -550,11 +570,15 @@
 
 @media (max-width: 576px) {
   .why-container {
-    padding: 80px 12px 60px;
+    padding: 80px max(12px, env(safe-area-inset-left)) 60px max(12px, env(safe-area-inset-right));
   }
   
   .content-wrapper {
-    padding: 0 1rem;
+    padding: 0 max(1rem, env(safe-area-inset-left)) 0 max(1rem, env(safe-area-inset-right));
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .why-main-title {
@@ -575,7 +599,12 @@
   }
   
   .why-additional-features {
-    padding: 2.5rem 1rem;
+    padding: 2.5rem max(1rem, env(safe-area-inset-left)) 2.5rem max(1rem, env(safe-area-inset-right));
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .why-section-heading {
