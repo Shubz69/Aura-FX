@@ -697,13 +697,14 @@
     
     .courses-container {
         padding: 28px 15px 24px;
-        /* Whole page scrolls on tablet/phone – container flows, .page-wrapper scrolls */
-        height: auto !important;
-        min-height: 100vh !important;
-        min-height: 100dvh !important;
-        max-height: none !important;
-        overflow: visible !important;
+        /* Same as Explore: inner container is the scroll area (wrapper fixed, .courses-container scrolls) */
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y;
     }
     
     .subscriptions-grid {
