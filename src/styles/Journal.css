@@ -1281,6 +1281,71 @@
   }
 }
 
+/* iPad only (768–1024): bigger calendar so numbers fit in day cells */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .journal-sidebar {
+    width: 300px;
+    padding: 20px 18px;
+  }
+
+  .journal-calendar {
+    padding: 20px 18px;
+    max-width: 100%;
+  }
+
+  .journal-calendar-nav {
+    margin-bottom: 16px;
+  }
+
+  .journal-calendar-month {
+    font-size: 1.25rem;
+  }
+
+  .journal-calendar-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+  }
+
+  .journal-calendar-weekdays {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .journal-calendar-wd {
+    font-size: 0.75rem;
+  }
+
+  .journal-calendar-grid {
+    gap: 8px;
+  }
+
+  .journal-calendar-day {
+    max-width: 36px;
+    max-height: 36px;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 1rem;
+    border-radius: 12px;
+  }
+
+  .journal-calendar-day-num {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .journal-calendar-day-dot {
+    bottom: 2px;
+    font-size: 6px;
+  }
+
+  .journal-stats-sidebar,
+  .journal-streak-card,
+  .journal-stats-circles {
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 900px) {
   .journal-layout {
     flex-direction: column;
