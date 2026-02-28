@@ -702,22 +702,7 @@ img, video, canvas {
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
     }
-    /* Home on iPhone: same as Explore/Leaderboard – .page-wrapper does not scroll, .home-container is the scroll container */
-    .page-wrapper:has(.home-container) {
-        overflow: hidden !important;
-        overflow-y: hidden !important;
-    }
-    .page-wrapper .home-container {
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: 100vh !important;
-        max-height: 100dvh !important;
-        min-height: 0 !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
-    }
+    /* Home on iPhone: full-page scroll via .page-wrapper (set in mobile-scroll-override) – no inner scroll here */
     /* Journal, Leaderboard, C&S: inner container scrolls (same as Explore) */
     .page-wrapper:has(.journal-page),
     .page-wrapper:has(.leaderboard-container),
