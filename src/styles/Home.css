@@ -932,10 +932,10 @@
     }
 }
 
-/* iPhone: reset scroll to match Explore – .home-container = scroll container, full width/height, scroll on right */
+/* iPhone: reset scroll to match Explore – .home-container = ONLY scroll container, whole page scrolls in one go */
 @media (max-width: 767px) {
     .home-container {
-        /* Same as .explore-container on iPhone */
+        /* Same as .explore-container on iPhone – single scroll container for entire page */
         position: relative;
         min-height: 0;
         width: 100% !important;
@@ -951,7 +951,6 @@
         box-sizing: border-box !important;
         /* Navbar clearance (top only; no side padding so scroll stays on right) */
         padding: calc(70px + env(safe-area-inset-top, 0)) 0 0 0 !important;
-        /* Hide scrollbar so it doesn’t overlap content (scroll still works) */
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
     }
@@ -960,22 +959,24 @@
         width: 0 !important;
         height: 0 !important;
     }
+    /* Critical: .home-content and .home-main-content must NOT scroll – size to content so only .home-container scrolls */
     .home-content,
     .home-main-content {
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
         overflow-x: hidden !important;
         overflow-y: visible !important;
     }
-    
     .home-content {
         gap: 2rem;
         padding: 1.5rem max(1rem, env(safe-area-inset-left)) 1.5rem max(1rem, env(safe-area-inset-right));
-        min-height: auto;
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
         box-sizing: border-box;
     }
-    
     .home-main-content {
         width: 100%;
         max-width: 100%;
@@ -1295,10 +1296,10 @@
     }
 }
 
-/* Small Mobile (iPhone) – same as Explore, .home-container is the scroll container */
+/* Small Mobile (iPhone) – same as Explore/Leaderboard: .home-container is the only scroll container */
 @media (max-width: 480px) {
     .home-container {
-        padding-top: 60px;
+        padding-top: calc(60px + env(safe-area-inset-top, 0)) !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         height: 100vh !important;
@@ -1311,13 +1312,20 @@
         max-width: 100vw !important;
         box-sizing: border-box;
     }
-    
+    /* Same as Explore: no inner scroll – content flows, only .home-container scrolls */
+    .home-content,
+    .home-main-content {
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
     .home-content {
         gap: 2rem;
         padding: 1rem max(0.75rem, env(safe-area-inset-left)) 1rem max(0.75rem, env(safe-area-inset-right));
         margin: 0 auto;
     }
-    
     .home-main-content {
         padding-left: max(0.75rem, env(safe-area-inset-left));
         padding-right: max(0.75rem, env(safe-area-inset-right));
