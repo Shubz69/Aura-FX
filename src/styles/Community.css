@@ -3173,12 +3173,18 @@ html.community-page-active {
     }
 
     /* iPad: desktop-style message layout – no overlapping (author + time on one line, text below) */
+    .chat-messages {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
     .message-item {
         display: flex !important;
         flex-direction: row !important;
         align-items: flex-start !important;
         padding: 0.0625rem 16px 0.0625rem 72px !important;
         min-height: auto !important;
+        flex-shrink: 0 !important;
         margin: 0 !important;
         position: relative !important;
         width: 100% !important;
@@ -3207,7 +3213,8 @@ html.community-page-active {
         flex-direction: column !important;
         align-items: flex-start !important;
         min-width: 0 !important;
-        flex: 1 !important;
+        flex: 1 1 auto !important;
+        flex-shrink: 0 !important;
         margin-left: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
@@ -3489,6 +3496,7 @@ html.community-page-active {
         flex-direction: row !important;
         align-items: flex-start !important;
         min-height: auto !important;
+        flex-shrink: 0 !important;
         margin: 0 !important;
         position: relative !important;
     }
