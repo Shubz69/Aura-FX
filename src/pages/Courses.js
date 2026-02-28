@@ -187,7 +187,9 @@ const Courses = () => {
                                     const data = await Api.selectFreePlan();
                                     if (data && data.success) {
                                         await refreshEntitlements();
-                                        navigate('/community');
+                                        // Let React commit the new entitlements so CommunityGuard sees canAccessCommunity
+                                        await new Promise((r) => setTimeout(r, 80));
+                                        navigate('/community', { replace: true });
                                         return;
                                     }
                                     setFreePlanError('Could not activate Free plan. Please try again.');
