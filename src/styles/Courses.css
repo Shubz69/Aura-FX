@@ -739,7 +739,7 @@
     }
 }
 
-/* iPad and other tablets: same structure as Explore – one scroll container, fills viewport */
+/* iPad and other tablets: same structure as Explore/Leaderboard/Home – one scroll container, fills viewport */
 @media (min-width: 768px) and (max-width: 1366px) {
     .courses-container {
         height: 100vh !important;
@@ -751,6 +751,82 @@
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y;
+    }
+    /* No inner scroll – only .courses-container scrolls (same as Home/Explore/Leaderboard) */
+    .courses-content,
+    .courses-header,
+    .courses-subscriptions-section {
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+    }
+}
+
+/* iPad (768px–1024px) – no visible scrollbar; scroll still works (same as Home) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .courses-container {
+        padding-top: 85px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .courses-container::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+}
+
+/* iPhone: single full-page scroll like Explore/Leaderboard/Home – .courses-container is the ONLY scroll container */
+@media (max-width: 767px) {
+    .courses-container {
+        position: relative;
+        min-height: 0;
+        width: 100% !important;
+        max-width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        box-sizing: border-box !important;
+        padding: calc(70px + env(safe-area-inset-top, 0)) 0 max(32px, env(safe-area-inset-bottom, 0)) 0 !important;
+        padding-left: max(15px, env(safe-area-inset-left)) !important;
+        padding-right: max(15px, env(safe-area-inset-right)) !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    .courses-container::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    /* No inner scroll – content flows so only .courses-container scrolls */
+    .courses-content,
+    .courses-header,
+    .courses-subscriptions-section {
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+    }
+    .courses-content {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .courses-header {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 }
 
@@ -848,21 +924,40 @@
     }
 }
 
+/* Small mobile (480px): same single full-page scroll as Explore/Leaderboard/Home */
 @media (max-width: 480px) {
     .courses-container {
-        padding: 20px max(12px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-bottom, 24px)) max(12px, env(safe-area-inset-right));
-        width: 100% !important;
+        padding-top: calc(60px + env(safe-area-inset-top, 0)) !important;
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        min-height: 0 !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
         max-width: 100vw !important;
-        min-width: 0;
         box-sizing: border-box;
     }
-    
+    .courses-content,
+    .courses-header,
+    .courses-subscriptions-section {
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
     .courses-content {
         width: 100%;
         max-width: 100%;
         min-width: 0;
     }
-    
+
     .subscriptions-grid {
         grid-template-columns: 1fr !important;
         gap: 4px !important;
