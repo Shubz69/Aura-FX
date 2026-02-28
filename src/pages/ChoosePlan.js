@@ -59,9 +59,9 @@ const ChoosePlan = () => {
         localStorage.removeItem('community_channels_cache');
       }
       await refreshEntitlements();
-      // Let React commit the new entitlements so CommunityGuard sees canAccessCommunity
-      await new Promise((r) => setTimeout(r, 80));
-      navigate('/community', { replace: true });
+      // Full-page redirect so the app loads with fresh /api/me and guard sees canAccessCommunity
+      window.location.href = `${window.location.origin}/community`;
+      return;
     } catch (err) {
       setError(err?.message || 'Something went wrong. Please try again.');
     } finally {

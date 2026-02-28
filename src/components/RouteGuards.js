@@ -4,7 +4,7 @@
  * FREE users can enter Community (see only allowlist channels); upgrade prompts only when accessing locked feature.
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
@@ -52,8 +52,16 @@ const LoadingSpinner = () => (
  */
 export const CommunityGuard = ({ children }) => {
   const { user, token, loading: authLoading } = useAuth();
-  const { entitlements, loading: entLoading } = useEntitlements();
+  const { entitlements, loading: entLoading, refresh } = useEntitlements();
   const location = useLocation();
+  const refreshedOnceForCommunity = useRef(false);
+
+  useEffect(() => {
+    if (!entitlements || entitlements.canAccessCommunity !== false) return;
+    if (refreshedOnceForCommunity.current) return;
+    refreshedOnceForCommunity.current = true;
+    refresh();
+  }, [entitlements, refresh]);
 
   if (!user || !token) {
     return <Navigate to="/signup" state={{ from: location, redirectAfter: '/choose-plan' }} replace />;
@@ -62,6 +70,9 @@ export const CommunityGuard = ({ children }) => {
     return <LoadingSpinner />;
   }
   if (entitlements && entitlements.canAccessCommunity === false) {
+    if (!refreshedOnceForCommunity.current) {
+      return <LoadingSpinner />;
+    }
     return <Navigate to="/choose-plan" replace />;
   }
   return children;
