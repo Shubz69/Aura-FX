@@ -85,26 +85,6 @@
   }
 }
 
-/* iPhone only: Home – full-page scroll (wrapper scrolls, content flows) so scrollbar is full viewport height */
-@media (max-width: 767px) {
-  .page-wrapper:has(.home-container) {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-  }
-  .page-wrapper > .home-container {
-    height: auto !important;
-    min-height: 100vh !important;
-    min-height: 100dvh !important;
-    max-height: none !important;
-    overflow: visible !important;
-    overflow-x: hidden !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-}
-
 /* iPad (768–1024): C&S – same scroll structure as Explore (explicit 100vh so scroll works) */
 @media (min-width: 768px) and (max-width: 1024px) {
   .page-wrapper:has(.courses-container) {
