@@ -932,28 +932,33 @@
     }
 }
 
-/* iPhone: same scroll system as Explore – .home-container is the scroll container (100vh, overflow-y auto) */
+/* iPhone: reset scroll to match Explore – .home-container = scroll container, full width/height, scroll on right */
 @media (max-width: 767px) {
     .home-container {
-        padding-top: 70px;
-        width: 100%;
-        max-width: 100vw;
+        /* Same as .explore-container on iPhone */
+        position: relative;
+        min-height: 0;
+        width: 100% !important;
+        max-width: 100vw !important;
         height: 100vh !important;
         height: 100dvh !important;
         max-height: 100vh !important;
-        min-height: 0 !important;
+        max-height: 100dvh !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        box-sizing: border-box;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+        box-sizing: border-box !important;
+        /* Navbar clearance (top only; no side padding so scroll stays on right) */
+        padding: calc(70px + env(safe-area-inset-top, 0)) 0 0 0 !important;
+        /* Hide scrollbar so it doesn’t overlap content (scroll still works) */
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
     }
     .home-container::-webkit-scrollbar {
-        display: none;
-        width: 0;
-        height: 0;
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
     }
     .home-content,
     .home-main-content {
