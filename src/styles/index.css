@@ -739,7 +739,7 @@ img, video, canvas {
     min-height: 0 !important;
 }
 
-/* Home: inner container is the scroll area (same as Explore) */
+/* Home: inner container is the scroll area (same as Explore) – overridden for iPhone below */
 .page-wrapper:has(.home-container) .home-container {
     height: 100% !important;
     min-height: 0 !important;
@@ -747,6 +747,23 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+}
+
+/* iPhone only: Home full-page scroll – wrapper scrolls, .home-container flows (scrollbar full viewport) */
+@media (max-width: 767px) {
+    .page-wrapper:has(.home-container) {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+    }
+    .page-wrapper:has(.home-container) .home-container {
+        height: auto !important;
+        min-height: 100vh !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-x: hidden !important;
+    }
 }
 
 /* C&S: inner container is the scroll area (same as Explore) */
