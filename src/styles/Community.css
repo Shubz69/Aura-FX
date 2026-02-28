@@ -678,6 +678,45 @@ html.community-page-active {
     }
 }
 
+/* iPad only (768–1024): single full-page scroll like Home/Explore/Leaderboard – one scrollbar for whole page */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .community-container {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: calc(100vh - 60px) !important;
+        max-height: calc(100vh - 60px) !important;
+        min-height: 0 !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .community-container::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+    .community-sidebar {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+    .chat-main {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .chat-messages {
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+    }
+}
+
 /* iPad / tablet: extra overlap prevention for chat messages */
 @media (min-width: 769px) and (max-width: 1024px) {
     .chat-messages {
