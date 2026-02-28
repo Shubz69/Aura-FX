@@ -3171,6 +3171,90 @@ html.community-page-active {
         max-width: 160px !important;
         max-height: 160px !important;
     }
+
+    /* iPad: desktop-style message layout – no overlapping (author + time on one line, text below) */
+    .message-item {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-start !important;
+        padding: 0.0625rem 16px 0.0625rem 72px !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .message-avatar,
+    .message-avatar-text {
+        position: absolute !important;
+        left: 16px !important;
+        top: 0.125rem !important;
+        width: 40px !important;
+        height: 40px !important;
+        flex-shrink: 0 !important;
+    }
+    .message-item.grouped .message-avatar,
+    .message-item.grouped .message-avatar-text {
+        display: none !important;
+    }
+    .message-item.grouped .message-content {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    .message-content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        min-width: 0 !important;
+        flex: 1 !important;
+        margin-left: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+    .message-header-info,
+    .community-message-header-with-time {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: baseline !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 6px !important;
+        margin-bottom: 2px !important;
+        margin-top: 0 !important;
+    }
+    .message-author,
+    .message-username {
+        flex-shrink: 0 !important;
+        font-size: 0.9375rem !important;
+        font-weight: 500 !important;
+        color: #ffffff !important;
+        line-height: 1.375 !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
+    .message-time-right {
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+        font-size: 0.6875rem !important;
+        color: #72767D !important;
+    }
+    .message-text {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-top: 2px !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        white-space: pre-wrap !important;
+    }
 }
 
 /* iPhone Specific Fixes (max-width: 480px) - 1px same-user, 2px different-user, smaller images */
