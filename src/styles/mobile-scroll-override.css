@@ -33,17 +33,22 @@
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
   }
-  /* Contact, Explore, Leaderboard, C&S, Home: wrapper must NOT scroll – inner container scrolls (same as Explore) */
+  /* Contact, Explore, Leaderboard, C&S, Home, Login, Register: wrapper must NOT scroll – inner container scrolls (same as Explore) */
   .page-wrapper:has(.contact-container),
   .page-wrapper:has(.explore-container),
   .page-wrapper:has(.leaderboard-container),
   .page-wrapper:has(.courses-container),
-  .page-wrapper:has(.home-container) {
+  .page-wrapper:has(.home-container),
+  .page-wrapper:has(.login-container),
+  .page-wrapper:has(.register-container) {
     overflow: hidden !important;
     overflow-y: hidden !important;
   }
+  .page-wrapper > .explore-container,
   .page-wrapper > .courses-container,
-  .page-wrapper > .home-container {
+  .page-wrapper > .home-container,
+  .page-wrapper > .login-container,
+  .page-wrapper > .register-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: 100% !important;
@@ -85,9 +90,12 @@
   }
 }
 
-/* iPad (768–1024): C&S – same scroll structure as Explore (explicit 100vh so scroll works) */
+/* iPad (768–1024): Explore, C&S, Login, Register – same scroll structure (explicit 100vh so scroll works) */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .page-wrapper:has(.courses-container) {
+  .page-wrapper:has(.explore-container),
+  .page-wrapper:has(.courses-container),
+  .page-wrapper:has(.login-container),
+  .page-wrapper:has(.register-container) {
     overflow: hidden !important;
     overflow-y: hidden !important;
     height: 100vh !important;
@@ -96,7 +104,10 @@
     max-height: 100dvh !important;
     min-height: 0 !important;
   }
-  .page-wrapper > .courses-container {
+  .page-wrapper > .explore-container,
+  .page-wrapper > .courses-container,
+  .page-wrapper > .login-container,
+  .page-wrapper > .register-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: 100vh !important;
