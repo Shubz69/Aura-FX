@@ -947,6 +947,13 @@
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         box-sizing: border-box;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .home-container::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
     }
     .home-content,
     .home-main-content {
