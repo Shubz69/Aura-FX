@@ -15,16 +15,15 @@ const MOOD_OPTIONS = [
 ];
 
 function getMonthStart(d) {
-  const x = new Date(d);
-  x.setDate(1);
-  return x.toISOString().slice(0, 10);
+  const [y, m] = d.slice(0, 10).split('-').map(Number);
+  const x = new Date(y, m - 1, 1);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-01`;
 }
 
 function getMonthEnd(d) {
-  const x = new Date(d);
-  x.setMonth(x.getMonth() + 1);
-  x.setDate(0);
-  return x.toISOString().slice(0, 10);
+  const [y, m] = d.slice(0, 10).split('-').map(Number);
+  const last = new Date(y, m, 0);
+  return `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}-${String(last.getDate()).padStart(2, '0')}`;
 }
 
 function getWeekStart(d) {
@@ -328,20 +327,20 @@ export default function Journal() {
   };
 
   const calendarDays = useMemo(() => {
-    const year = parseInt(calendarMonth.split('-')[0], 10);
-    const month1Based = parseInt(calendarMonth.split('-')[1], 10);
+    const parts = String(calendarMonth).split('-');
+    const year = Math.max(1, parseInt(parts[0], 10) || new Date().getFullYear());
+    const month1Based = Math.max(1, Math.min(12, parseInt(parts[1], 10) || 1));
     const month0Based = month1Based - 1;
     const first = new Date(year, month0Based, 1);
     const last = new Date(year, month0Based + 1, 0);
     const daysInMonth = last.getDate();
     const startPad = (first.getDay() + 6) % 7;
+    const yyyy = String(first.getFullYear());
+    const mm = String(first.getMonth() + 1).padStart(2, '0');
     const days = [];
     for (let i = 0; i < startPad; i++) days.push(null);
-    const yyyy = String(year);
-    const mm = String(month1Based).padStart(2, '0');
     for (let d = 1; d <= daysInMonth; d++) {
-      const dd = String(d).padStart(2, '0');
-      days.push(`${yyyy}-${mm}-${dd}`);
+      days.push(`${yyyy}-${mm}-${String(d).padStart(2, '0')}`);
     }
     return days;
   }, [calendarMonth]);
