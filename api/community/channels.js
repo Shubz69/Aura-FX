@@ -293,12 +293,12 @@ module.exports = async (req, res) => {
             ['category_order']
           );
           if (rows && rows.length > 0) {
-            const order = JSON.parse(rows[0].value);
+            const order = JSON.parse(rows[0].value).filter((c) => (c || '').toLowerCase() !== 'trading');
             releaseDb(db);
             return res.status(200).json({ success: true, data: order });
           }
           releaseDb(db);
-          const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
+          const defaultOrder = ['announcements', 'staff', 'courses', 'general', 'support', 'premium', 'a7fx'];
           return res.status(200).json({ success: true, data: defaultOrder });
         } catch (dbError) {
           console.error('Database error fetching category order:', dbError);
@@ -461,25 +461,6 @@ module.exports = async (req, res) => {
             await safeInsertChannel('levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open');
             await safeInsertChannel('general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open');
 
-            // TRADING CHANNELS - Open access for all users to see and post
-            const tradingChannels = [
-              { id: 'forex', name: 'forex', category: 'trading', description: 'Forex trading discussions', accessLevel: 'open' },
-              { id: 'crypto', name: 'crypto', category: 'trading', description: 'Cryptocurrency trading discussions', accessLevel: 'open' },
-              { id: 'stocks', name: 'stocks', category: 'trading', description: 'Stock market discussions', accessLevel: 'open' },
-              { id: 'indices', name: 'indices', category: 'trading', description: 'Indices trading discussions', accessLevel: 'open' },
-              { id: 'day-trading', name: 'day-trading', category: 'trading', description: 'Day trading strategies and discussions', accessLevel: 'open' },
-              { id: 'swing-trading', name: 'swing-trading', category: 'trading', description: 'Swing trading discussions', accessLevel: 'open' },
-              { id: 'commodities', name: 'commodities', category: 'trading', description: 'Commodities and metals trading insights', accessLevel: 'open' },
-              { id: 'futures', name: 'futures', category: 'trading', description: 'Futures market strategies and setups', accessLevel: 'open' },
-              { id: 'options', name: 'options', category: 'trading', description: 'Options trading strategies and education', accessLevel: 'open' },
-              { id: 'prop-trading', name: 'prop-trading', category: 'trading', description: 'Prop firm challenges and funded account tips', accessLevel: 'open' },
-              { id: 'market-analysis', name: 'market-analysis', category: 'trading', description: 'Daily market analysis and trade ideas', accessLevel: 'open' }
-            ];
-            
-            for (const channel of tradingChannels) {
-              await safeInsertChannel(channel.id, channel.name, channel.category, channel.description, channel.accessLevel);
-            }
-            
             // Re-fetch channels after inserting/updating
             [rows] = await db.execute('SELECT * FROM channels ORDER BY COALESCE(category, \'general\'), name');
           } catch (insertError) {
@@ -487,8 +468,9 @@ module.exports = async (req, res) => {
           }
           
           if (rows && rows.length > 0) {
-            // Return ALL channels, not just trading ones
-            const allChannels = rows
+            // Exclude trading category – that section is removed from community
+            const rowsWithoutTrading = rows.filter((row) => (row.category || '').toLowerCase() !== 'trading');
+            const allChannels = rowsWithoutTrading
               .map(row => {
                 // Create a proper displayName from the name
                 const displayName = row.name
@@ -498,7 +480,6 @@ module.exports = async (req, res) => {
                 
                 // Determine access level and lock status
                 const isGeneral = row.category === 'general' || row.name === 'general' || row.id === 'general';
-                const isTrading = row.category === 'trading';
                 const accessLevel = row.access_level || (isGeneral ? 'open' : 'admin-only');
                 const locked = accessLevel === 'admin-only' || accessLevel === 'admin';
                 
@@ -506,7 +487,7 @@ module.exports = async (req, res) => {
                   id: row.id,
                   name: row.name,
                   displayName: displayName,
-                  category: row.category || (isGeneral ? 'general' : 'trading'),
+                  category: row.category || 'general',
                   description: row.description,
                   accessLevel: accessLevel,
                   permissionType: row.permission_type || 'read-write',
@@ -564,7 +545,8 @@ module.exports = async (req, res) => {
                   db.execute('SELECT value FROM community_settings WHERE id = ?', ['category_order']),
                   db.execute('SELECT value FROM community_settings WHERE id = ?', ['channelOrder'])
                 ]);
-                const categoryOrder = (catRows && catRows[0] && catRows[0].value) ? JSON.parse(catRows[0].value) : ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
+                const rawOrder = (catRows && catRows[0] && catRows[0].value) ? JSON.parse(catRows[0].value) : ['announcements', 'staff', 'courses', 'general', 'support', 'premium', 'a7fx'];
+                const categoryOrder = rawOrder.filter((c) => (c || '').toLowerCase() !== 'trading');
                 const channelOrder = (chanRows && chanRows[0] && chanRows[0].value) ? JSON.parse(chanRows[0].value) : {};
                 return res.status(200).json({ success: true, channels: visibleOnly, categoryOrder, channelOrder });
               } catch (bootstrapErr) {

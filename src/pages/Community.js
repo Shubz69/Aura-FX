@@ -520,7 +520,7 @@ const Community = () => {
     const [paymentFailed, setPaymentFailed] = useState(false);
     const [showChannelManager, setShowChannelManager] = useState(false);
     const [newChannelName, setNewChannelName] = useState('');
-    const [newChannelCategory, setNewChannelCategory] = useState('trading');
+    const [newChannelCategory, setNewChannelCategory] = useState('general');
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
@@ -542,14 +542,14 @@ const Community = () => {
             try {
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    return parsed;
+                    return parsed.filter((c) => (c || '').toLowerCase() !== 'trading');
                 }
             } catch (e) {
                 // Invalid JSON, use default
             }
         }
-        // Default order - will be replaced by backend data (courses removed)
-        return ['announcements', 'staff', 'trading', 'general', 'support', 'premium', 'a7fx'];
+        // Default order - will be replaced by backend data (trading section removed)
+        return ['announcements', 'staff', 'general', 'support', 'premium', 'a7fx'];
     });
     
     const categoryOrder = categoryOrderState;
@@ -570,7 +570,7 @@ const Community = () => {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && Array.isArray(data.data)) {
-                        setCategoryOrderState(data.data);
+                        setCategoryOrderState(data.data.filter((c) => (c || '').toLowerCase() !== 'trading'));
                     }
                 } else if (response.status === 401) {
                     return;
@@ -792,7 +792,7 @@ const Community = () => {
             if (data?.success && Array.isArray(data.channels)) {
                 channelsFromServer = data.channels;
                 if (Array.isArray(data.categoryOrder) && data.categoryOrder.length > 0) {
-                    setCategoryOrderState(data.categoryOrder);
+                    setCategoryOrderState(data.categoryOrder.filter((c) => (c || '').toLowerCase() !== 'trading'));
                 }
                 if (data.channelOrder && typeof data.channelOrder === 'object') {
                     setChannelOrder(data.channelOrder);
@@ -6583,7 +6583,6 @@ avatar: storedUser?.avatar || null,
                                             color: 'white'
                                         }}
                                     >
-                                        <option value="trading">Trading</option>
                                         <option value="general">General</option>
                                         <option value="support">Support</option>
                                         <option value="premium">Premium</option>
@@ -7079,7 +7078,6 @@ avatar: storedUser?.avatar || null,
                                 }}
                             >
                                 <option value="general">General</option>
-                                <option value="trading">Trading</option>
                                 <option value="premium">Premium</option>
                                 <option value="a7fx">A7FX</option>
                                 <option value="announcements">Announcements</option>
