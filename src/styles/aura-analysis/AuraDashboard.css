@@ -1,73 +1,219 @@
+/* ============================================================
+   AuraDashboardLayout.css  |  AURA FX — Complete Layout Fix
+   Replace your existing dashboard layout CSS with this
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+/* ── Global reset to kill white flash ────────────────────── */
+html, body, #root {
+  background: #0a0a0a !important;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Dashboard shell ──────────────────────────────────────── */
 .aura-dashboard {
   min-height: 100vh;
+  width: 100%;
   background: #0a0a0a;
   color: #fff;
   font-family: 'Space Grotesk', sans-serif;
   padding-top: 0;
+  overflow-x: hidden;
 }
 
+/* ══════════════════════════════════════════════════════════
+   TAB BAR WRAPPER — sticky, full bleed, no white sides
+   ══════════════════════════════════════════════════════════ */
 .aura-dashboard-tabs-wrap {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: rgba(10, 10, 10, 0.95);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
+  z-index: 100;
+  /* Full-bleed dark background — no white gaps */
+  width: 100%;
+  background: rgba(10, 10, 10, 0.97);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  /* Subtle top shimmer */
+  box-shadow: 0 1px 0 rgba(139, 92, 246, 0.15), 0 4px 24px rgba(0,0,0,0.4);
 }
 
+/* ── Inner constrained row ────────────────────────────────── */
 .aura-dashboard-tabs-inner {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 8px;
+  /* NO flex-wrap here — tabs scroll horizontally instead */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
+.aura-dashboard-tabs-inner::-webkit-scrollbar { display: none; }
+
+/* ── Back link ────────────────────────────────────────────── */
 .aura-dashboard-back {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
   text-decoration: none;
-  padding: 12px 0;
-  margin-right: 8px;
+  padding: 14px 0;
+  margin-right: 4px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.2s;
 }
 
-.aura-dashboard-back:hover {
-  color: #fff;
-}
+.aura-dashboard-back:hover { color: rgba(255,255,255,0.85); }
 
+/* ── Tab group ────────────────────────────────────────────── */
 .aura-dashboard-tabs {
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  padding: 8px 0;
+  gap: 2px;
+  /* Single row, scrolls with parent */
+  flex-wrap: nowrap;
+  padding: 10px 0;
+  flex-shrink: 0;
 }
 
+/* ── Individual tab ───────────────────────────────────────── */
 .aura-dashboard-tab {
-  padding: 8px 14px;
-  font-size: 0.85rem;
+  padding: 7px 14px;
+  font-size: 0.78rem;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Space Grotesk', sans-serif;
+  color: rgba(255, 255, 255, 0.55);
   text-decoration: none;
-  border-radius: 8px;
-  transition: color 0.2s, background 0.2s;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.22s, background 0.22s, border-color 0.22s, box-shadow 0.22s;
+  position: relative;
 }
 
 .aura-dashboard-tab:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.05);
 }
 
+/* Active tab — purple glass pill */
 .aura-dashboard-tab.active {
-  color: #fff;
-  background: rgba(167, 139, 250, 0.25);
-  border: 1px solid rgba(167, 139, 250, 0.4);
-  box-shadow: 0 0 20px rgba(167, 139, 250, 0.15);
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.18);
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow:
+    0 0 16px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  font-weight: 500;
 }
 
+/* Active tab bottom glow line */
+.aura-dashboard-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -11px; left: 20%; right: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(139,92,246,0.9), rgba(99,179,237,0.7));
+  border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CONTENT AREA — constrained width, dark bg fills full width
+   ══════════════════════════════════════════════════════════ */
 .aura-dashboard-content {
+  /* Constrain readable width */
   max-width: 1400px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 24px 24px 48px;
+  box-sizing: border-box;
+  width: 100%;
+  /* Ensure transparent — parent .aura-dashboard provides bg */
+  background: transparent;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE — ≤ 768px
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  .aura-dashboard-tabs-inner {
+    padding: 0 12px;
+    gap: 4px;
+  }
+
+  .aura-dashboard-tabs {
+    gap: 2px;
+    padding: 8px 0;
+  }
+
+  .aura-dashboard-tab {
+    font-size: 0.72rem;
+    padding: 6px 11px;
+    border-radius: 6px;
+  }
+
+  .aura-dashboard-back {
+    font-size: 0.7rem;
+    padding: 12px 0;
+  }
+
+  .aura-dashboard-content {
+    padding: 16px 12px 32px;
+  }
+
+  /* Tab bar fade hint — shows more tabs exist */
+  .aura-dashboard-tabs-wrap {
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0%, #000 88%, transparent 100%);
+  }
+}
+
+@media (max-width: 480px) {
+
+  .aura-dashboard-tabs-inner {
+    padding: 0 8px;
+  }
+
+  .aura-dashboard-tab {
+    font-size: 0.68rem;
+    padding: 5px 9px;
+  }
+
+  .aura-dashboard-tab.active::after {
+    display: none; /* too tight on very small screens */
+  }
+
+  .aura-dashboard-content {
+    padding: 12px 8px 28px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   GLOBAL DARK SCROLLBAR — matches purple theme
+   ══════════════════════════════════════════════════════════ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.22) transparent;
+}
+
+*::-webkit-scrollbar        { width: 4px; height: 4px; }
+*::-webkit-scrollbar-track  { background: transparent; }
+*::-webkit-scrollbar-thumb  {
+  background: rgba(139, 92, 246, 0.25);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
 }

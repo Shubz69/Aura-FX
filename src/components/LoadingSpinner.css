@@ -1,11 +1,15 @@
-/* Loading Screen Styles - Dark Theme Matching Website */
+/* ============================================================
+   LOADING SCREEN - AURA FX PREMIUM EDITION
+   Dark theme with purple accent glow matching website
+   ============================================================ */
+
 .loading-screen {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    background: #0a0a0a !important; /* Match website dark background */
+    background: var(--bg, #0a0a0a) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -15,7 +19,40 @@
     padding: 0 !important;
 }
 
-/* Animated background with binary digits - white/light theme */
+/* ===== Central Glow Effect (from home.css) ===== */
+.loading-screen::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(139, 92, 246, 0.12) 0%,
+        rgba(99, 179, 237, 0.08) 35%,
+        rgba(255, 255, 255, 0.02) 60%,
+        transparent 100%
+    );
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+    animation: loadingGlowPulse 5s ease-in-out infinite;
+}
+
+@keyframes loadingGlowPulse {
+    0%, 100% { 
+        opacity: 0.7; 
+        transform: translate(-50%, -50%) scale(1); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1.08); 
+    }
+}
+
+/* ===== Animated Binary Background ===== */
 .loading-background {
     position: absolute !important;
     top: 0 !important;
@@ -25,7 +62,7 @@
     overflow: hidden !important;
     background: radial-gradient(
         circle at center,
-        rgba(255, 255, 255, 0.03) 0%,
+        rgba(139, 92, 246, 0.03) 0%,
         transparent 70%
     ) !important;
     z-index: 1 !important;
@@ -33,34 +70,35 @@
 
 .binary-digit {
     position: absolute;
-    color: rgba(255, 255, 255, 0.15); /* White with low opacity for subtle effect */
+    color: rgba(139, 92, 246, 0.2); /* Purple tint instead of white */
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 400;
     animation: binary-fall linear infinite;
     user-select: none;
     pointer-events: none;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
 }
 
 @keyframes binary-fall {
     0% {
-        transform: translateY(-100px);
+        transform: translateY(-100px) rotate(0deg);
         opacity: 0;
     }
     10% {
-        opacity: 0.15;
+        opacity: 0.25;
     }
     90% {
-        opacity: 0.15;
+        opacity: 0.25;
     }
     100% {
-        transform: translateY(100vh);
+        transform: translateY(100vh) rotate(360deg);
         opacity: 0;
     }
 }
 
-/* Main content - improved center section */
+/* ===== Main Content - Centered ===== */
 .loading-content {
     text-align: center !important;
     z-index: 100000 !important;
@@ -70,70 +108,108 @@
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    gap: 1.5rem !important;
+    gap: 2rem !important;
+    animation: contentAppear 1s ease-out;
 }
 
-.loading-title {
-    font-size: 4.5rem;
-    font-weight: 700;
-    color: #ffffff; /* Pure white to match website */
-    text-shadow: 
-        0 0 20px rgba(255, 255, 255, 0.5),
-        0 0 40px rgba(255, 255, 255, 0.3),
-        0 0 60px rgba(255, 255, 255, 0.1);
-    margin: 0;
-    letter-spacing: 0.15em;
-    animation: title-glow 2.5s ease-in-out infinite alternate;
-    font-family: 'Space Grotesk', sans-serif;
+@keyframes contentAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ===== Brand Name with Purple Gradient ===== */
+.loading-brand {
+    font-size: 5rem;
+    font-weight: 200;
+    letter-spacing: 0.28em;
+    color: var(--text, #ffffff);
     text-transform: uppercase;
+    margin: 0;
     line-height: 1.1;
+    text-shadow: 
+        0 0 60px rgba(139, 92, 246, 0.5),
+        0 0 120px rgba(99, 179, 237, 0.3);
+    animation: brandPulse 2.5s ease-in-out infinite alternate;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
-@keyframes title-glow {
+@keyframes brandPulse {
     0% {
         text-shadow: 
-            0 0 20px rgba(255, 255, 255, 0.5),
-            0 0 40px rgba(255, 255, 255, 0.3),
-            0 0 60px rgba(255, 255, 255, 0.1);
+            0 0 60px rgba(139, 92, 246, 0.5),
+            0 0 120px rgba(99, 179, 237, 0.3);
         opacity: 0.95;
+        transform: scale(1);
     }
     100% {
         text-shadow: 
-            0 0 30px rgba(255, 255, 255, 0.7),
-            0 0 60px rgba(255, 255, 255, 0.4),
-            0 0 90px rgba(255, 255, 255, 0.2);
+            0 0 80px rgba(139, 92, 246, 0.8),
+            0 0 160px rgba(99, 179, 237, 0.5);
         opacity: 1;
+        transform: scale(1.02);
     }
 }
 
+/* ===== Animated Title with Gradient ===== */
+.loading-title {
+    font-size: 3rem;
+    font-weight: 200;
+    color: var(--text, #ffffff);
+    margin: 0;
+    letter-spacing: 0.25em;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    line-height: 1.2;
+    background: linear-gradient(270deg, #ffffff 0%, #c4b5fd 30%, #93c5fd 55%, #c4b5fd 75%, #ffffff 100%);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* ===== Subtitle ===== */
 .loading-subtitle {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.7); /* White with opacity */
+    color: var(--text-muted, rgba(255, 255, 255, 0.55));
     margin: 0;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.35em;
     font-weight: 300;
-    animation: subtitle-pulse 3s ease-in-out infinite;
+    animation: subtitlePulse 3s ease-in-out infinite;
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
 }
 
-@keyframes subtitle-pulse {
+@keyframes subtitlePulse {
     0%, 100% {
         opacity: 0.6;
+        transform: translateY(0);
     }
     50% {
-        opacity: 0.9;
+        opacity: 1;
+        transform: translateY(-2px);
     }
 }
 
-/* Loading progress - improved design */
+/* ===== Loading Progress Section ===== */
 .loading-progress {
-    margin: 0;
+    margin: 1rem 0 0;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .loading-text {
@@ -142,61 +218,89 @@
     margin: 0;
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 400;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
 }
 
 .loading-percentage {
-    color: #ffffff;
+    color: var(--accent-solid, #8B5CF6);
     font-weight: 600;
-    animation: percentage-flicker 1.5s ease-in-out infinite;
+    animation: percentageGlow 1.5s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
-@keyframes percentage-flicker {
+@keyframes percentageGlow {
     0%, 100% {
         opacity: 1;
+        text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
     }
     50% {
-        opacity: 0.7;
+        opacity: 0.8;
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
     }
 }
 
+/* ===== Premium Loading Bar with Purple Gradient ===== */
 .loading-bar {
-    width: 320px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.1); /* White with low opacity */
-    border-radius: 2px;
+    width: 360px;
+    height: 4px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 4px;
     overflow: hidden;
     margin: 0;
     position: relative;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
 }
 
 .loading-bar-fill {
     height: 100%;
-    width: 63%;
+    width: 70%;
     background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0.9) 0%, 
-        rgba(255, 255, 255, 1) 50%, 
-        rgba(255, 255, 255, 0.9) 100%);
-    border-radius: 2px;
-    animation: loading-progress 2s ease-in-out infinite;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+        rgba(139, 92, 246, 0.8) 0%,
+        rgba(99, 179, 237, 0.9) 50%,
+        rgba(139, 92, 246, 0.8) 100%);
+    border-radius: 4px;
+    animation: loadingProgress 2s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes loading-progress {
+/* Shimmer effect on loading bar */
+.loading-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    100% { left: 100%; }
+}
+
+@keyframes loadingProgress {
     0% {
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+        width: 30%;
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
     }
     50% {
-        box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+        width: 80%;
+        box-shadow: 0 0 30px rgba(139, 92, 246, 1);
     }
     100% {
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+        width: 30%;
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
     }
 }
 
-/* Pulsing rings - improved design */
+/* ===== Animated Rings - Purple Accent ===== */
 .loading-rings {
     position: absolute !important;
     top: 50% !important;
@@ -210,69 +314,193 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border: 1px solid rgba(255, 255, 255, 0.2); /* White with opacity */
+    border: 1px solid transparent;
     border-radius: 50%;
-    animation: ring-pulse 3s ease-in-out infinite;
+    animation: ringPulse 4s ease-in-out infinite;
+    background: radial-gradient(circle at 30% 30%, 
+        rgba(139, 92, 246, 0.1),
+        transparent 70%);
 }
 
 .ring-1 {
-    width: 200px;
-    height: 200px;
+    width: 250px;
+    height: 250px;
     animation-delay: 0s;
-    border-color: rgba(255, 255, 255, 0.25);
+    border-image: linear-gradient(45deg, rgba(139, 92, 246, 0.3), rgba(99, 179, 237, 0.3)) 1;
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
 }
 
 .ring-2 {
-    width: 280px;
-    height: 280px;
+    width: 350px;
+    height: 350px;
     animation-delay: 1s;
-    border-color: rgba(255, 255, 255, 0.15);
+    border-image: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 179, 237, 0.2)) 1;
+    box-shadow: 0 0 40px rgba(99, 179, 237, 0.2);
 }
 
 .ring-3 {
-    width: 360px;
-    height: 360px;
+    width: 450px;
+    height: 450px;
     animation-delay: 2s;
-    border-color: rgba(255, 255, 255, 0.1);
+    border-image: linear-gradient(225deg, rgba(139, 92, 246, 0.15), rgba(99, 179, 237, 0.15)) 1;
+    box-shadow: 0 0 50px rgba(139, 92, 246, 0.15);
 }
 
-@keyframes ring-pulse {
+@keyframes ringPulse {
     0%, 100% {
         transform: translate(-50%, -50%) scale(1);
         opacity: 0.3;
+        border-width: 1px;
     }
     50% {
-        transform: translate(-50%, -50%) scale(1.05);
-        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1.08);
+        opacity: 0.6;
+        border-width: 2px;
     }
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+/* ===== Floating Dots (from home.css) ===== */
+.loading-dots-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.loading-dot {
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, var(--accent-solid, #8B5CF6), var(--accent-blue-solid, #3B82F6));
+    border-radius: 50%;
+    animation: dotPulse 1.4s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+}
+
+.loading-dot:nth-child(1) { animation-delay: 0s; }
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+    0%, 100% { 
+        opacity: 0.4; 
+        transform: scale(0.8); 
+        box-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.3); 
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.9);
+    }
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 1024px) {
+    .loading-brand {
+        font-size: 4rem;
+    }
+    
     .loading-title {
         font-size: 2.5rem;
     }
     
+    .ring-1 { width: 200px; height: 200px; }
+    .ring-2 { width: 280px; height: 280px; }
+    .ring-3 { width: 360px; height: 360px; }
+}
+
+@media (max-width: 768px) {
+    .loading-brand {
+        font-size: 3rem;
+        letter-spacing: 0.2em;
+    }
+    
+    .loading-title {
+        font-size: 2rem;
+        letter-spacing: 0.15em;
+    }
+    
     .loading-subtitle {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
+        letter-spacing: 0.2em;
     }
     
     .loading-bar {
-        width: 260px;
-    }
-    
-    .ring-1 {
-        width: 160px;
-        height: 160px;
-    }
-    
-    .ring-2 {
-        width: 220px;
-        height: 220px;
-    }
-    
-    .ring-3 {
         width: 280px;
-        height: 280px;
+    }
+    
+    .ring-1 { width: 160px; height: 160px; }
+    .ring-2 { width: 220px; height: 220px; }
+    .ring-3 { width: 280px; height: 280px; }
+}
+
+@media (max-width: 480px) {
+    .loading-brand {
+        font-size: 2.2rem;
+        letter-spacing: 0.15em;
+    }
+    
+    .loading-title {
+        font-size: 1.5rem;
+        letter-spacing: 0.12em;
+    }
+    
+    .loading-subtitle {
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+    }
+    
+    .loading-bar {
+        width: 240px;
+    }
+    
+    .ring-1 { width: 120px; height: 120px; }
+    .ring-2 { width: 160px; height: 160px; }
+    .ring-3 { width: 200px; height: 200px; }
+}
+
+/* ===== Fade Out Animation (when loading completes) ===== */
+.loading-screen.fade-out {
+    animation: fadeOut 0.8s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* ===== Particle Effects (Optional Premium Addition) ===== */
+.loading-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 50%;
+    animation: particleFloat 15s linear infinite;
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translateY(100vh) scale(1);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.5;
+    }
+    90% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(-100vh) scale(0);
+        opacity: 0;
     }
 }

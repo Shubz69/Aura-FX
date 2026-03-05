@@ -1,197 +1,281 @@
-/* Galaxy transition – GPU-friendly, reduced-motion aware */
+/* ============================================================
+   AuraEnterTransition.css  |  Matched to AURA FX Theme
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+/* ── Variables (mirror home.css) ─────────────────────────── */
+:root {
+  --aura-bg:          #0a0a0a;
+  --aura-border:      rgba(255, 255, 255, 0.08);
+  --aura-accent:      rgba(139, 92, 246, 0.55);
+  --aura-accent-blue: rgba(99, 179, 237, 0.45);
+  --aura-text:        #ffffff;
+  --aura-text-muted:  rgba(255, 255, 255, 0.55);
+  --aura-up:          #10b981;
+  --aura-radius:      10px;
+  --aura-transition:  0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Overlay shell ────────────────────────────────────────── */
 .aura-enter-transition {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  pointer-events: auto;
-  overflow: hidden;
+  z-index: 99999;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: clamp(48px, 12vh, 120px);
-  will-change: opacity;
-}
-
-.aura-enter-reduced {
   justify-content: center;
-  padding-bottom: 0;
+  background: var(--aura-bg);
+  font-family: 'Space Grotesk', sans-serif;
+  overflow: hidden;
 }
 
-.aura-enter-reduced .aura-enter-loading-label {
-  margin-bottom: 16px;
+/* ── Reduced-motion variant ───────────────────────────────── */
+.aura-enter-reduced {
+  background: var(--aura-bg);
 }
 
-/* Deep space – black, purple, green accents */
+/* ── Cosmic background — radial pulse matching .central-glow  */
 .aura-enter-cosmic {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 900px;
+  height: 900px;
   background: radial-gradient(
-      ellipse 120% 120% at 70% 30%,
-      rgba(167, 139, 250, 0.15) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse 100% 100% at 30% 70%,
-      rgba(34, 197, 94, 0.08) 0%,
-      transparent 45%
-    ),
-    radial-gradient(
-      ellipse 100% 100% at 50% 50%,
-      #0a0a0a 0%,
-      #050505 50%,
-      #000000 100%
-    );
-  animation: aura-galaxy-bg-in 0.6s ease-out forwards;
+    ellipse at center,
+    rgba(139, 92, 246, 0.09) 0%,
+    rgba(99, 179, 237, 0.05) 35%,
+    rgba(255, 255, 255, 0.018) 60%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  animation: auraCosmicPulse 5s ease-in-out infinite;
 }
 
-@keyframes aura-galaxy-bg-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes auraCosmicPulse {
+  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .aura-enter-cosmic {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-/* Starfield layer */
+/* ── Starfield — subtle scattered dots ───────────────────── */
 .aura-enter-starfield {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(1.2px 1.2px at 20% 30%, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(1px 1px at 60% 70%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1.5px 1.5px at 80% 20%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1px 1px at 40% 80%, rgba(255, 255, 255, 0.8), transparent),
-    radial-gradient(1px 1px at 90% 60%, rgba(200, 220, 255, 0.5), transparent),
-    radial-gradient(1.2px 1.2px at 10% 50%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1px 1px at 50% 15%, rgba(255, 255, 255, 0.5), transparent);
-  background-size: 200% 200%, 180% 180%, 220% 220%, 160% 160%, 190% 190%, 210% 210%, 170% 170%;
-  background-position: 0% 0%, 40% 60%, 80% 20%, 20% 80%, 60% 40%, 90% 50%, 30% 70%;
-  opacity: 0.7;
-  animation: aura-starfield-pulse 8s ease-in-out infinite;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 12%  18%, rgba(255,255,255,0.18) 0%, transparent 100%),
+    radial-gradient(1px 1px at 28%  72%, rgba(139,92,246,0.25)  0%, transparent 100%),
+    radial-gradient(1px 1px at 45%  35%, rgba(255,255,255,0.12) 0%, transparent 100%),
+    radial-gradient(1px 1px at 62%  88%, rgba(99,179,237,0.2)   0%, transparent 100%),
+    radial-gradient(1px 1px at 75%  22%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88%  55%, rgba(139,92,246,0.18)  0%, transparent 100%),
+    radial-gradient(1px 1px at 5%   60%, rgba(255,255,255,0.1)  0%, transparent 100%),
+    radial-gradient(1px 1px at 92%  10%, rgba(99,179,237,0.15)  0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 35% 50%, rgba(255,255,255,0.08) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 55% 15%, rgba(139,92,246,0.14) 0%, transparent 100%);
+  animation: auraStarDrift 18s ease-in-out infinite alternate;
 }
 
-@keyframes aura-starfield-pulse {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 0.85;
-  }
+@keyframes auraStarDrift {
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-8px); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .aura-enter-starfield {
-    animation: none;
-    opacity: 0.7;
-  }
-}
-
-/* Galaxy of formulas – spiral cluster */
+/* ── Galaxy container ─────────────────────────────────────── */
 .aura-enter-galaxy {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: 50% 50%;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transform-origin: center center;
   will-change: transform, opacity, filter;
 }
 
+/* CSS spin used during loading phase */
 .aura-enter-galaxy-spin {
-  animation: aura-galaxy-spin 32s linear infinite;
+  animation: auraGalaxySpin 28s linear infinite;
 }
 
-@keyframes aura-galaxy-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes auraGalaxySpin {
+  from { rotate: 0deg; }
+  to   { rotate: 360deg; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .aura-enter-galaxy-spin {
-    animation: none;
-  }
-}
-
+/* ── Galaxy items — matches GALAXY_ITEMS text tokens ─────── */
 .aura-enter-galaxy-item {
   position: absolute;
-  font-size: clamp(0.55rem, 1.1vw, 0.85rem);
+  transform: translate(-50%, -50%);
+  color: var(--galaxy-color, rgba(167, 139, 250, 0.75));
+  font-size: calc(var(--galaxy-size, 1) * 0.72rem);
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: 300;
-  letter-spacing: 0.04em;
-  color: var(--galaxy-color, #a78bfa);
-  text-shadow: 0 0 14px var(--galaxy-color), 0 0 28px rgba(167, 139, 250, 0.2);
+  letter-spacing: 0.06em;
   white-space: nowrap;
-  opacity: var(--galaxy-size, 0.85);
-  transform-origin: center center;
-  will-change: transform, opacity;
-  filter: drop-shadow(0 0 5px var(--galaxy-color));
+  pointer-events: none;
+  user-select: none;
+  /* Soft glow matching site accent */
+  text-shadow:
+    0 0 8px  rgba(139, 92, 246, 0.4),
+    0 0 20px rgba(99, 179, 237, 0.15);
+  will-change: opacity, transform;
 }
 
-/* Loading section – modern bar */
+/* ── Loading section wrapper ──────────────────────────────── */
 .aura-enter-loading-section {
   position: relative;
-  z-index: 2;
-  width: min(90vw, 420px);
-  text-align: center;
-}
-
-.aura-enter-loading-label {
-  font-size: 0.8rem;
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 14px;
-}
-
-.aura-enter-loading-bar-wrap {
-  width: 100%;
-}
-
-.aura-enter-loading-bar-reduced {
-  max-width: 320px;
-  margin: 0 auto;
-}
-
-.aura-enter-loading-track {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  /* Frosted card — mirrors .feature-card glass */
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--aura-radius);
+  padding: 2.25rem 3rem;
+  backdrop-filter: blur(16px);
+  /* Top shimmer line — from .feature-card::before */
+  position: relative;
   overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.aura-enter-loading-fill {
-  height: 100%;
-  border-radius: 999px;
+.aura-enter-loading-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
   background: linear-gradient(
     90deg,
-    #6d28d9 0%,
-    #a78bfa 45%,
-    #22c55e 100%
+    transparent,
+    rgba(139, 92, 246, 0.55),
+    rgba(99, 179, 237, 0.4),
+    transparent
   );
-  box-shadow: 0 0 20px rgba(167, 139, 250, 0.5), 0 0 40px rgba(34, 197, 94, 0.25);
-  min-width: 0;
-  will-change: width;
 }
 
+/* Inner glow overlay */
+.aura-enter-loading-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* ── Label — mirrors .loading-subtitle / .powered-by-glitch ─ */
+.aura-enter-loading-label {
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: var(--aura-text-muted);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+  animation: auraLabelFade 0.8s ease-out both;
+}
+
+@keyframes auraLabelFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Bar wrap ─────────────────────────────────────────────── */
+.aura-enter-loading-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Reduced-motion inline bar */
+.aura-enter-loading-bar-reduced {
+  width: 260px;
+}
+
+/* ── Track — mirrors .stat-trend ─────────────────────────── */
+.aura-enter-loading-track {
+  width: 260px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Fill — mirrors .stat-trend-fill ─────────────────────── */
+.aura-enter-loading-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(
+    90deg,
+    rgba(139, 92, 246, 0.85),
+    rgba(99, 179, 237, 0.75)
+  );
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.55);
+  position: relative;
+  transition: width 0.12s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Shimmer sweep — mirrors @keyframes trendShimmer */
+.aura-enter-loading-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.38),
+    transparent
+  );
+  animation: auraBarShimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes auraBarShimmer {
+  0%   { left: -60%; opacity: 0; }
+  40%  { opacity: 1; }
+  100% { left: 120%; opacity: 0; }
+}
+
+/* ── Percentage counter ───────────────────────────────────── */
 .aura-enter-loading-pct {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 10px 0 0;
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: var(--aura-text-muted);
+  letter-spacing: 0.18em;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  /* Gradient text — mirrors .stat-number */
+  background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+}
+
+/* ── Responsive tweaks ────────────────────────────────────── */
+@media (max-width: 480px) {
+  .aura-enter-cosmic { width: 500px; height: 500px; }
+  .aura-enter-loading-section { padding: 1.75rem 2rem; }
+  .aura-enter-loading-track,
+  .aura-enter-loading-bar-reduced { width: 200px; }
+  .aura-enter-galaxy-item { font-size: calc(var(--galaxy-size, 1) * 0.62rem); }
+}
+
+@media (max-width: 374px) {
+  .aura-enter-loading-track,
+  .aura-enter-loading-bar-reduced { width: 160px; }
+  .aura-enter-loading-section { padding: 1.5rem 1.5rem; }
 }

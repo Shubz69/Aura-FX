@@ -152,94 +152,87 @@ function AppRoutes() {
             {showGDPR && <GDPRModal onAgree={handleAgreeGDPR} />}
 
             <Navbar />
+            
+            {/* Main content area - page-wrapper now only contains the route content */}
             <main className="page-wrapper">
                 <Suspense fallback={<PageLoadFallback />}>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/signup" element={<SignUp />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/courses" element={<Courses />} />
-                    <Route path="/my-courses" element={<MyCourses />} />
-                    <Route path="/explore" element={<Explore />} />
-                    <Route path="/why-glitch" element={<WhyInfinity />} />
-                    <Route path="/contact" element={<ContactUs />} />
-                    <Route path="/profile" element={<AuthenticatedGuard><Profile /></AuthenticatedGuard>} />
-                    <Route path="/profile/edit-name" element={<AuthenticatedGuard><EditName /></AuthenticatedGuard>} />
-                    <Route path="/profile/edit-email" element={<AuthenticatedGuard><EditEmail /></AuthenticatedGuard>} />
-                    <Route path="/profile/edit-address" element={<AuthenticatedGuard><EditAddress /></AuthenticatedGuard>} />
-                    <Route path="/profile/edit-phone" element={<AuthenticatedGuard><EditPhone /></AuthenticatedGuard>} />
-                    <Route path="/profile/edit-password" element={<AuthenticatedGuard><EditPassword /></AuthenticatedGuard>} />
-                    <Route path="/profile/:userId" element={<PublicProfile />} />
-                    <Route path="/public-profile/:userId" element={<PublicProfile />} />
-                    <Route path="/payment-success" element={<PaymentSuccess />} />
-                    <Route path="/verify-mfa" element={<VerifyMFA />} />
-                    {/* Choose plan - required after signup/login until plan selected; redirects to /community if already has access */}
-                    <Route path="/choose-plan" element={<ChoosePlan />} />
-                    {/* Subscription page - redirects paid users to /community */}
-                    <Route path="/subscription" element={
-                        <SubscriptionPageGuard>
-                            <Subscription />
-                        </SubscriptionPageGuard>
-                    } />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/privacy" element={<Privacy />} />
-
-                    {/* COMMUNITY ROUTES - STRICT ACCESS CONTROL */}
-                    {/* Requires active paid subscription (AURA FX £99 or A7FX Elite £250) */}
-                    <Route path="/community" element={
-                        <CommunityGuard>
-                            <Community />
-                        </CommunityGuard>
-                    } />
-                    <Route path="/community/:channelId" element={
-                        <CommunityGuard>
-                            <Community />
-                        </CommunityGuard>
-                    } />
-                    
-                    {/* Premium AI - requires canAccessAI (PREMIUM/ELITE/ADMIN) */}
-                    <Route path="/premium-ai" element={
-                        <PremiumAIGuard>
-                            <PremiumAI />
-                        </PremiumAIGuard>
-                    } />
-                    
-                    {/* Authenticated routes (no subscription required) */}
-                    <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
-                    <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
-                    <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
-                        <Route index element={<ConnectionHub />} />
-                        <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
-                            <Route index element={<Navigate to="overview" replace />} />
-                            <Route path="overview" element={<AuraOverview />} />
-                            <Route path="performance" element={<AuraPerformance />} />
-                            <Route path="risk-lab" element={<AuraRiskLab />} />
-                            <Route path="edge-analyzer" element={<AuraEdgeAnalyzer />} />
-                            <Route path="execution-lab" element={<AuraExecutionLab />} />
-                            <Route path="calendar" element={<AuraCalendar />} />
-                            <Route path="psychology" element={<AuraPsychology />} />
-                            <Route path="growth" element={<AuraGrowth />} />
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/signup" element={<SignUp />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/courses" element={<Courses />} />
+                        <Route path="/my-courses" element={<MyCourses />} />
+                        <Route path="/explore" element={<Explore />} />
+                        <Route path="/why-glitch" element={<WhyInfinity />} />
+                        <Route path="/contact" element={<ContactUs />} />
+                        <Route path="/profile" element={<AuthenticatedGuard><Profile /></AuthenticatedGuard>} />
+                        <Route path="/profile/edit-name" element={<AuthenticatedGuard><EditName /></AuthenticatedGuard>} />
+                        <Route path="/profile/edit-email" element={<AuthenticatedGuard><EditEmail /></AuthenticatedGuard>} />
+                        <Route path="/profile/edit-address" element={<AuthenticatedGuard><EditAddress /></AuthenticatedGuard>} />
+                        <Route path="/profile/edit-phone" element={<AuthenticatedGuard><EditPhone /></AuthenticatedGuard>} />
+                        <Route path="/profile/edit-password" element={<AuthenticatedGuard><EditPassword /></AuthenticatedGuard>} />
+                        <Route path="/profile/:userId" element={<PublicProfile />} />
+                        <Route path="/public-profile/:userId" element={<PublicProfile />} />
+                        <Route path="/payment-success" element={<PaymentSuccess />} />
+                        <Route path="/verify-mfa" element={<VerifyMFA />} />
+                        <Route path="/choose-plan" element={<ChoosePlan />} />
+                        <Route path="/subscription" element={
+                            <SubscriptionPageGuard>
+                                <Subscription />
+                            </SubscriptionPageGuard>
+                        } />
+                        <Route path="/terms" element={<Terms />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/community" element={
+                            <CommunityGuard>
+                                <Community />
+                            </CommunityGuard>
+                        } />
+                        <Route path="/community/:channelId" element={
+                            <CommunityGuard>
+                                <Community />
+                            </CommunityGuard>
+                        } />
+                        <Route path="/premium-ai" element={
+                            <PremiumAIGuard>
+                                <PremiumAI />
+                            </PremiumAIGuard>
+                        } />
+                        <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
+                        <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
+                        <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
+                            <Route index element={<ConnectionHub />} />
+                            <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
+                                <Route index element={<Navigate to="overview" replace />} />
+                                <Route path="overview" element={<AuraOverview />} />
+                                <Route path="performance" element={<AuraPerformance />} />
+                                <Route path="risk-lab" element={<AuraRiskLab />} />
+                                <Route path="edge-analyzer" element={<AuraEdgeAnalyzer />} />
+                                <Route path="execution-lab" element={<AuraExecutionLab />} />
+                                <Route path="calendar" element={<AuraCalendar />} />
+                                <Route path="psychology" element={<AuraPsychology />} />
+                                <Route path="growth" element={<AuraGrowth />} />
+                            </Route>
                         </Route>
-                    </Route>
-                    <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
-
-                    {/* Admin-only Routes */}
-                    <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
-                    <Route path="/admin/inbox" element={<AdminGuard><AdminInbox /></AdminGuard>} />
-                    <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
-                    <Route path="/admin/users" element={<AdminGuard><AdminUserList /></AdminGuard>} />
-                    <Route path="/admin/journal" element={<AdminGuard><AdminJournal /></AdminGuard>} />
-                    <Route path="/admin/tools" element={<AdminGuard><AdminPanel /></AdminGuard>} />
-                    <Route path="/settings" element={<AdminGuard><Settings /></AdminGuard>} />
-
-                    <Route path="*" element={<NotFound />} />
-                </Routes>
+                        <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
+                        <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
+                        <Route path="/admin/inbox" element={<AdminGuard><AdminInbox /></AdminGuard>} />
+                        <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
+                        <Route path="/admin/users" element={<AdminGuard><AdminUserList /></AdminGuard>} />
+                        <Route path="/admin/journal" element={<AdminGuard><AdminJournal /></AdminGuard>} />
+                        <Route path="/admin/tools" element={<AdminGuard><AdminPanel /></AdminGuard>} />
+                        <Route path="/settings" element={<AdminGuard><Settings /></AdminGuard>} />
+                        <Route path="*" element={<NotFound />} />
+                    </Routes>
                 </Suspense>
             </main>
+
+            {/* Footer moved OUTSIDE page-wrapper - now it's a sibling */}
             <Footer />
+
             {showChatbot && (
                 <Suspense fallback={null}>
                     <Chatbot />

@@ -1,71 +1,209 @@
+/* ============================================================
+   AuraTabSection.css  |  AURA FX — Polished Dark Luxury
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+/* ── Tab page shell — full width, no side gaps ────────────── */
 .aura-tab-page {
-  animation: aura-tab-fade 0.2s ease-out;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #fff;
+  animation: aura-tab-fade 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 0 0 40px;
 }
 
 @keyframes aura-tab-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Tab title — matches .aura-overview-title ─────────────── */
 .aura-tab-title {
-  font-size: 1.5rem;
-  font-weight: 200;
-  letter-spacing: 0.1em;
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  margin: 0 0 8px;
-  color: #fff;
+  margin: 0 0 4px;
+  /* Same gradient as overview title */
+  background: linear-gradient(125deg, #ffffff 40%, #c4b5fd 80%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+/* ── Sub label ────────────────────────────────────────────── */
 .aura-tab-sub {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 24px;
-}
-
-.aura-tab-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-}
-
-.aura-tab-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.aura-tab-card-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 4px;
+  margin: 0 0 24px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
 }
 
-.aura-tab-card-value {
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: #fff;
+/* ── Header divider line — matches overview header ────────── */
+.aura-tab-page > .aura-tab-title,
+.aura-tab-page > .aura-tab-sub {
+  display: block;
 }
 
+/* Subtle underline separator after sub title — mirrors header border */
+.aura-tab-sub {
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.aura-tab-sub::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0;
+  width: 80px; height: 1px;
+  background: linear-gradient(90deg, rgba(139,92,246,0.8), transparent);
+}
+
+/* ── Section wrapper ──────────────────────────────────────── */
 .aura-tab-section {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .aura-tab-section h3 {
-  font-size: 1rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
   margin: 0 0 12px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
 }
 
-.aura-tab-placeholder {
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+/* ── Card grid ────────────────────────────────────────────── */
+.aura-tab-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Stat card — matches .aura-card glass style ───────────── */
+.aura-tab-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.9rem;
+  padding: 16px 18px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.28s cubic-bezier(0.22,1,0.36,1),
+              background   0.28s cubic-bezier(0.22,1,0.36,1),
+              box-shadow   0.28s cubic-bezier(0.22,1,0.36,1),
+              transform    0.28s cubic-bezier(0.22,1,0.36,1);
+  box-sizing: border-box;
+}
+
+/* Top shimmer line */
+.aura-tab-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(139,92,246,0.5) 40%,
+    rgba(99,179,237,0.4) 70%,
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.28s;
+}
+
+/* Inner radial glow */
+.aura-tab-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top left, rgba(139,92,246,0.05) 0%, transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s;
+}
+
+.aura-tab-card:hover {
+  background: rgba(255,255,255,0.055);
+  border-color: rgba(139,92,246,0.28);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(139,92,246,0.07);
+  transform: translateY(-2px);
+}
+
+.aura-tab-card:hover::before { opacity: 1; }
+.aura-tab-card:hover::after  { opacity: 1; }
+
+/* ── Card label ───────────────────────────────────────────── */
+.aura-tab-card-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+/* ── Card value — matches .stat-number gradient ───────────── */
+.aura-tab-card-value {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+  display: block;
+  /* Gradient shimmer on big numbers */
+  background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(139,92,246,0.22));
+}
+
+/* ── Placeholder / empty state ────────────────────────────── */
+.aura-tab-placeholder {
+  padding: 28px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(139,92,246,0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.28s, background 0.28s;
+}
+
+.aura-tab-placeholder:hover {
+  border-color: rgba(139,92,246,0.4);
+  background: rgba(139,92,246,0.03);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .aura-tab-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .aura-tab-title { font-size: 1.35rem; }
+}
+
+@media (max-width: 480px) {
+  .aura-tab-grid { grid-template-columns: 1fr; }
+  .aura-tab-card { padding: 14px; }
+  .aura-tab-card-value { font-size: 1.15rem; }
 }

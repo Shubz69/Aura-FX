@@ -28,7 +28,7 @@ const AdminJournal = () => {
       const status = err.response?.status;
       const msg = err.response?.data?.message || err.response?.data?.error;
       setError(status === 403
-        ? (msg || 'You don’t have permission to view journal stats.')
+        ? (msg || 'You don\'t have permission to view journal stats.')
         : (msg || 'Failed to load journal stats.'));
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ const AdminJournal = () => {
       const status = err.response?.status;
       const msg = err.response?.data?.message || err.response?.data?.error;
       setError(status === 403
-        ? (msg || 'You don’t have permission to view this user.')
+        ? (msg || 'You don\'t have permission to view this user.')
         : (msg || 'Failed to load user detail.'));
     }
   };
@@ -79,45 +79,61 @@ const AdminJournal = () => {
     <div className="admin-journal-page">
       <CosmicBackground />
       <div className="admin-journal-container">
-        <h2 className="admin-journal-title">Aura Journal – Admin</h2>
-        <p className="admin-journal-sub">Track user progress: tasks, proof, and XP.</p>
+
+        {/* ── Page Header ── */}
+        <div className="admin-journal-header">
+          <h2 className="admin-journal-title">Aura Journal</h2>
+          <p className="admin-journal-sub">Track user progress — tasks, proof &amp; XP</p>
+          <div className="admin-journal-header-line">
+            <div className="admin-journal-header-dot" />
+          </div>
+        </div>
 
         {loading ? (
-          <p className="admin-journal-loading">Loading journal stats...</p>
+          <p className="admin-journal-loading">Loading journal stats…</p>
         ) : error ? (
           <p className="admin-journal-error">{error}</p>
         ) : (
           <>
+            {/* ── Summary Cards ── */}
             {summary && (
               <div className="admin-journal-summary">
                 <div className="admin-journal-card">
                   <span className="admin-journal-card-value">{summary.usersWithJournal}</span>
                   <span className="admin-journal-card-label">Users with journal</span>
+                  <span className="admin-journal-card-bar"><span className="admin-journal-card-bar-fill" /></span>
                 </div>
                 <div className="admin-journal-card">
                   <span className="admin-journal-card-value">{summary.tasksLast7}</span>
                   <span className="admin-journal-card-label">Tasks (last 7 days)</span>
+                  <span className="admin-journal-card-bar"><span className="admin-journal-card-bar-fill" style={{ width: '55%' }} /></span>
                 </div>
                 <div className="admin-journal-card">
                   <span className="admin-journal-card-value">{summary.tasksLast30}</span>
                   <span className="admin-journal-card-label">Tasks (last 30 days)</span>
+                  <span className="admin-journal-card-bar"><span className="admin-journal-card-bar-fill" style={{ width: '80%' }} /></span>
                 </div>
                 <div className="admin-journal-card">
                   <span className="admin-journal-card-value">{summary.completedWithProofLast7}</span>
                   <span className="admin-journal-card-label">Completed with proof (7d)</span>
+                  <span className="admin-journal-card-bar"><span className="admin-journal-card-bar-fill" style={{ width: '45%' }} /></span>
                 </div>
                 <div className="admin-journal-card">
                   <span className="admin-journal-card-value">{summary.completedWithProofLast30}</span>
                   <span className="admin-journal-card-label">Completed with proof (30d)</span>
+                  <span className="admin-journal-card-bar"><span className="admin-journal-card-bar-fill" style={{ width: '70%' }} /></span>
                 </div>
                 <div className="admin-journal-card">
                   <span className="admin-journal-card-value">{summary.totalJournalXpAwarded}</span>
                   <span className="admin-journal-card-label">Total journal XP awarded</span>
+                  <span className="admin-journal-card-bar"><span className="admin-journal-card-bar-fill" style={{ width: '90%' }} /></span>
                 </div>
               </div>
             )}
 
+            {/* ── Per-user Table ── */}
             <h3 className="admin-journal-table-title">Per-user progress</h3>
+
             {users.length > 0 && (
               <div className="admin-journal-search-wrap">
                 <input
@@ -130,6 +146,7 @@ const AdminJournal = () => {
                 />
               </div>
             )}
+
             {users.length === 0 ? (
               <p className="admin-journal-empty">No journal activity yet.</p>
             ) : (() => {
@@ -144,67 +161,80 @@ const AdminJournal = () => {
               return filtered.length === 0 ? (
                 <p className="admin-journal-empty">No users match your search.</p>
               ) : (
-              <div className="admin-journal-table-wrap">
-                <table className="admin-journal-table">
-                  <thead>
-                    <tr>
-                      <th>User</th>
-                      <th>Level</th>
-                      <th>Total XP</th>
-                      <th>Tasks</th>
-                      <th>Completed</th>
-                      <th>With proof</th>
-                      <th>Journal XP</th>
-                      <th>Last task</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((u) => (
-                      <tr key={u.id}>
-                        <td>
-                          <span className="admin-journal-user-email">{u.email}</span>
-                          {u.username && u.username !== u.email && (
-                            <span className="admin-journal-username"> ({u.username})</span>
-                          )}
-                        </td>
-                        <td>{u.level ?? 1}</td>
-                        <td>{Number(u.xp ?? 0).toLocaleString()}</td>
-                        <td>{u.tasksTotal ?? 0}</td>
-                        <td>{u.tasksCompleted ?? 0}</td>
-                        <td>{u.tasksWithProof ?? 0}</td>
-                        <td>{Number(u.journalXpEarned ?? 0).toLocaleString()}</td>
-                        <td>{u.lastTaskDate || '–'}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="admin-journal-view-btn"
-                            onClick={() => openUserDetail(u.id)}
-                          >
-                            View
-                          </button>
-                        </td>
+                <div className="admin-journal-table-wrap">
+                  <table className="admin-journal-table">
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Level</th>
+                        <th>Total XP</th>
+                        <th>Tasks</th>
+                        <th>Completed</th>
+                        <th>With proof</th>
+                        <th>Journal XP</th>
+                        <th>Last task</th>
+                        <th></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {filtered.map((u) => (
+                        <tr key={u.id}>
+                          <td>
+                            <span className="admin-journal-user-email">{u.email}</span>
+                            {u.username && u.username !== u.email && (
+                              <span className="admin-journal-username">({u.username})</span>
+                            )}
+                          </td>
+                          <td>{u.level ?? 1}</td>
+                          <td>{Number(u.xp ?? 0).toLocaleString()}</td>
+                          <td>{u.tasksTotal ?? 0}</td>
+                          <td>{u.tasksCompleted ?? 0}</td>
+                          <td>{u.tasksWithProof ?? 0}</td>
+                          <td>{Number(u.journalXpEarned ?? 0).toLocaleString()}</td>
+                          <td>{u.lastTaskDate || '–'}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="admin-journal-view-btn"
+                              onClick={() => openUserDetail(u.id)}
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               );
             })()}
           </>
         )}
 
+        {/* ── Detail Modal ── */}
         {detail && (
           <div className="admin-journal-modal" role="dialog" aria-modal="true">
             <div className="admin-journal-modal-inner">
+
               <div className="admin-journal-modal-header">
-                <h3>{detail.user?.email} – Journal detail</h3>
-                <button type="button" className="admin-journal-modal-close" onClick={closeDetail} aria-label="Close">&#215;</button>
+                <h3>{detail.user?.email} — Journal detail</h3>
+                <button
+                  type="button"
+                  className="admin-journal-modal-close"
+                  onClick={closeDetail}
+                  aria-label="Close"
+                >
+                  &#215;
+                </button>
               </div>
+
               <div className="admin-journal-modal-body">
                 <p>
-                  <strong>Level:</strong> {detail.user?.level} | <strong>XP:</strong> {Number(detail.user?.xp ?? 0).toLocaleString()} | <strong>Notes saved:</strong> {detail.notesSaved ?? 0}
+                  <strong>Level:</strong> {detail.user?.level}&nbsp;
+                  <strong>XP:</strong> {Number(detail.user?.xp ?? 0).toLocaleString()}&nbsp;
+                  <strong>Notes saved:</strong> {detail.notesSaved ?? 0}
                 </p>
+
                 <h4>XP by type</h4>
                 <ul className="admin-journal-xp-list">
                   {(detail.xpByType || []).map((x, i) => (
@@ -212,6 +242,7 @@ const AdminJournal = () => {
                   ))}
                   {(detail.xpByType || []).length === 0 && <li>No journal XP yet.</li>}
                 </ul>
+
                 <h4>Tasks by date (last 90 days)</h4>
                 <div className="admin-journal-by-date">
                   {(detail.tasksByDate || []).slice(0, 30).map((d, i) => (
@@ -219,41 +250,61 @@ const AdminJournal = () => {
                       <span>{d.date}</span>
                       <span>Tasks: {d.total}</span>
                       <span>Done: {d.completed}</span>
-                      <span>With proof: {d.withProof}</span>
+                      <span>Proof: {d.withProof}</span>
                     </div>
                   ))}
-                  {(detail.tasksByDate || []).length === 0 && <p>No tasks.</p>}
+                  {(detail.tasksByDate || []).length === 0 && (
+                    <p className="admin-journal-empty" style={{ padding: '16px' }}>No tasks.</p>
+                  )}
                 </div>
-                <h4>Tasks with proof (user folder)</h4>
+
+                <h4>Tasks with proof</h4>
                 {(detail.tasksWithProof && detail.tasksWithProof.length > 0) ? (
                   <ul className="admin-journal-proof-list">
                     {detail.tasksWithProof.map((t) => (
                       <li key={t.id} className="admin-journal-proof-item">
                         <span>{t.date}</span>
                         <span className="admin-journal-proof-title">{t.title}</span>
-                        <button type="button" className="admin-journal-view-btn" onClick={() => viewProof(t.id)}>
+                        <button
+                          type="button"
+                          className="admin-journal-view-btn"
+                          onClick={() => viewProof(t.id)}
+                        >
                           View proof
                         </button>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p>No tasks with proof.</p>
+                  <p className="admin-journal-empty" style={{ padding: '12px 0' }}>No tasks with proof.</p>
                 )}
+
                 {viewingProofTaskId && (
                   <div className="admin-journal-proof-viewer">
                     {proofImageUrl ? (
-                      <img src={proofImageUrl} alt="Task proof" className="admin-journal-proof-img" loading="lazy" />
+                      <img
+                        src={proofImageUrl}
+                        alt="Task proof"
+                        className="admin-journal-proof-img"
+                        loading="lazy"
+                      />
                     ) : (
                       <span>Loading…</span>
                     )}
-                    <button type="button" className="admin-journal-view-btn" onClick={() => { setViewingProofTaskId(null); setProofImageUrl(null); }}>Close</button>
+                    <button
+                      type="button"
+                      className="admin-journal-view-btn"
+                      onClick={() => { setViewingProofTaskId(null); setProofImageUrl(null); }}
+                    >
+                      Close proof
+                    </button>
                   </div>
                 )}
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

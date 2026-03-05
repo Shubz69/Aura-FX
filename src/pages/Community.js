@@ -240,20 +240,14 @@ const Community = () => {
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [profileModalData, setProfileModalData] = useState(null);
     
-    // Avoid overlapping fetches and request storms (ERR_INSUFFICIENT_RESOURCES)
-    const fetchLatestUserDataInFlightRef = useRef(false);
-    const fetchLatestUserDataFailureCountRef = useRef(0);
-
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
-        if (fetchLatestUserDataInFlightRef.current) return null;
-
-        fetchLatestUserDataInFlightRef.current = true;
+        
         try {
             const API_BASE_URL = window.location.origin;
             const token = localStorage.getItem('token');
-
+            
             const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
                 method: 'GET',
                 headers: {
@@ -261,11 +255,10 @@ const Community = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
+            
             if (response.ok) {
-                fetchLatestUserDataFailureCountRef.current = 0;
                 const userData = await response.json();
-
+                
                 // Update localStorage with latest data
                 const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
                 const updatedUser = {
@@ -275,39 +268,33 @@ const Community = () => {
                     level: parseInt(userData.level || 1)
                 };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
-
+                
                 // Update state only if values actually changed
                 setStoredUser(prev => {
                     if (!prev) return updatedUser;
-
+                    
                     const xpChanged = Math.abs(parseFloat(prev.xp || 0) - parseFloat(userData.xp || 0)) > 0.01;
                     const levelChanged = parseInt(prev.level || 1) !== parseInt(userData.level || 1);
-
+                    
                     if (xpChanged || levelChanged) {
                         return updatedUser;
                     }
                     return prev; // Return same reference if no change
                 });
-
+                
                 const newLevel = parseInt(userData.level || 1);
                 setUserLevel(prevLevel => {
                     return prevLevel !== newLevel ? newLevel : prevLevel;
                 });
-
+                
                 return updatedUser;
             } else {
-                fetchLatestUserDataFailureCountRef.current += 1;
+                console.warn('Failed to fetch latest user data:', response.status);
             }
         } catch (error) {
-            fetchLatestUserDataFailureCountRef.current += 1;
-            // Log only occasionally to avoid console flood when network is failing
-            if (fetchLatestUserDataFailureCountRef.current <= 2) {
-                console.warn('Error fetching latest user data (polling will back off):', error?.message || error);
-            }
-        } finally {
-            fetchLatestUserDataInFlightRef.current = false;
+            console.error('Error fetching latest user data:', error);
         }
-
+        
         return null;
     }, []);
 
@@ -330,17 +317,16 @@ const Community = () => {
         
         window.addEventListener('xpUpdated', handleXPUpdate);
         
-        // Fetch latest user data from API periodically; 30s interval to avoid ERR_INSUFFICIENT_RESOURCES / request storm
-        const XP_POLL_MS = 30 * 1000;
+        // Fetch latest user data from API periodically (every 5 seconds for live updates)
         let xpCheckInterval;
         if (userId) {
             // Initial fetch on mount
             fetchLatestUserData(userId);
-
-            // Then check every 30s (in-flight guard inside fetchLatestUserData prevents overlapping requests)
+            
+            // Then check periodically
             xpCheckInterval = setInterval(() => {
                 fetchLatestUserData(userId);
-            }, XP_POLL_MS);
+            }, 5000); // Check every 5 seconds for live updates
         } else {
             // Fallback to localStorage check if userId not available yet
             xpCheckInterval = setInterval(() => {
@@ -534,7 +520,7 @@ const Community = () => {
     const [paymentFailed, setPaymentFailed] = useState(false);
     const [showChannelManager, setShowChannelManager] = useState(false);
     const [newChannelName, setNewChannelName] = useState('');
-    const [newChannelCategory, setNewChannelCategory] = useState('general');
+    const [newChannelCategory, setNewChannelCategory] = useState('trading');
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
@@ -556,14 +542,14 @@ const Community = () => {
             try {
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    return parsed.filter((c) => (c || '').toLowerCase() !== 'trading');
+                    return parsed;
                 }
             } catch (e) {
                 // Invalid JSON, use default
             }
         }
-        // Default order - will be replaced by backend data (trading section removed)
-        return ['announcements', 'staff', 'general', 'support', 'premium', 'a7fx'];
+        // Default order - will be replaced by backend data (courses removed)
+        return ['announcements', 'staff', 'trading', 'general', 'support', 'premium', 'a7fx'];
     });
     
     const categoryOrder = categoryOrderState;
@@ -584,7 +570,7 @@ const Community = () => {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && Array.isArray(data.data)) {
-                        setCategoryOrderState(data.data.filter((c) => (c || '').toLowerCase() !== 'trading'));
+                        setCategoryOrderState(data.data);
                     }
                 } else if (response.status === 401) {
                     return;
@@ -806,7 +792,7 @@ const Community = () => {
             if (data?.success && Array.isArray(data.channels)) {
                 channelsFromServer = data.channels;
                 if (Array.isArray(data.categoryOrder) && data.categoryOrder.length > 0) {
-                    setCategoryOrderState(data.categoryOrder.filter((c) => (c || '').toLowerCase() !== 'trading'));
+                    setCategoryOrderState(data.categoryOrder);
                 }
                 if (data.channelOrder && typeof data.channelOrder === 'object') {
                     setChannelOrder(data.channelOrder);
@@ -6597,6 +6583,7 @@ avatar: storedUser?.avatar || null,
                                             color: 'white'
                                         }}
                                     >
+                                        <option value="trading">Trading</option>
                                         <option value="general">General</option>
                                         <option value="support">Support</option>
                                         <option value="premium">Premium</option>
@@ -7092,6 +7079,7 @@ avatar: storedUser?.avatar || null,
                                 }}
                             >
                                 <option value="general">General</option>
+                                <option value="trading">Trading</option>
                                 <option value="premium">Premium</option>
                                 <option value="a7fx">A7FX</option>
                                 <option value="announcements">Announcements</option>

@@ -27,7 +27,6 @@ const Explore = () => {
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
 
-  // Fetch courses from API
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -60,7 +59,6 @@ const Explore = () => {
     fetchCourses();
   }, []);
 
-  // Static courses from THE GLITCH
   const staticCourses = [
     {
       id: 'ecommerce',
@@ -168,12 +166,16 @@ const Explore = () => {
       <CosmicBackground />
       
       <div className="explore-content-wrapper">
-        {/* Header Section */}
+
+        {/* ── Header ── */}
         <header className="explore-header">
           <h1 className="explore-main-title">Explore</h1>
+          <div className="explore-header-line">
+            <span className="explore-header-dot" />
+          </div>
         </header>
 
-        {/* Main Content - Split Layout */}
+        {/* ── Main Content — Split ── */}
         <div className="explore-main-content">
           <div className="explore-text-section">
             <h2 className="explore-subtitle">Discover AURA FX</h2>
@@ -198,22 +200,21 @@ const Explore = () => {
                 <div className="explore-feature-icon">
                   {feature.icon}
                 </div>
-                <h3 className="explore-feature-title">{feature.title}</h3>
-                <p className="explore-feature-text">
-                  {feature.description}
-                </p>
+                <div>
+                  <h3 className="explore-feature-title">{feature.title}</h3>
+                  <p className="explore-feature-text">{feature.description}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Site Pages Section */}
+        {/* ── Navigate Section ── */}
         <div className="explore-pages-section">
           <h2 className="explore-section-heading">Navigate Our Platform</h2>
           <p className="explore-section-description">
             Explore the different sections of AURA FX to find exactly what you need for your trading journey.
           </p>
-          
           <div className="explore-pages-grid">
             {sitePages.map((page, index) => (
               <div 
@@ -234,9 +235,12 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* Courses Provided Section */}
+        {/* ── Courses Section ── */}
         <div className="explore-courses-section">
-          <h2 className="explore-section-heading">Courses provided</h2>
+          <h2 className="explore-section-heading">Courses Provided</h2>
+          <p className="explore-section-description">
+            Curated tracks across every major wealth-building discipline.
+          </p>
           <div className="explore-courses-grid">
             {staticCourses.map((course) => (
               <div key={course.id} className="explore-course-card explore-course-card-static">
@@ -254,7 +258,7 @@ const Explore = () => {
           </div>
         </div>
 
-        {/* Footer Section */}
+        {/* ── Footer ── */}
         <div className="explore-footer">
           <div className="explore-footer-content">
             <span className="explore-footer-text">Courses Provided</span>
@@ -264,6 +268,7 @@ const Explore = () => {
             </span>
           </div>
         </div>
+
       </div>
     </div>
   );

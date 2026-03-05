@@ -16,6 +16,7 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
+
 const resolveApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location?.origin) {
         return window.location.origin;
@@ -23,7 +24,6 @@ const resolveApiBaseUrl = () => {
     return process.env.REACT_APP_API_URL || '';
 };
 
-// Full IANA timezone list for daily journal notification (08:00 local)
 const getIANATimezones = () => {
     try {
         if (typeof Intl !== 'undefined' && Intl.supportedValuesOf && typeof Intl.supportedValuesOf('timeZone') !== 'undefined') {
@@ -33,7 +33,6 @@ const getIANATimezones = () => {
     return ['Europe/London', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Tokyo', 'Australia/Sydney', 'UTC'];
 };
 
-// Helper function to convert file to base64
 const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -43,53 +42,53 @@ const convertToBase64 = (file) => {
     });
 };
 
-// Journal stats date helpers (match Journal page logic)
-const getMonthStart = (d) => {
-    const x = new Date(d);
-    x.setDate(1);
-    return x.toISOString().slice(0, 10);
-};
-const getMonthEnd = (d) => {
-    const x = new Date(d);
-    x.setMonth(x.getMonth() + 1);
-    x.setDate(0);
-    return x.toISOString().slice(0, 10);
-};
-const getWeekStart = (d) => {
-    const x = new Date(d);
-    const day = x.getDay();
-    const diff = x.getDate() - day + (day === 0 ? -6 : 1);
-    x.setDate(diff);
-    return x.toISOString().slice(0, 10);
-};
-const getWeekEnd = (d) => {
-    const start = new Date(getWeekStart(d));
-    start.setDate(start.getDate() + 6);
-    return start.toISOString().slice(0, 10);
-};
+const getMonthStart = (d) => { const x = new Date(d); x.setDate(1); return x.toISOString().slice(0, 10); };
+const getMonthEnd = (d) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); x.setDate(0); return x.toISOString().slice(0, 10); };
+const getWeekStart = (d) => { const x = new Date(d); const day = x.getDay(); const diff = x.getDate() - day + (day === 0 ? -6 : 1); x.setDate(diff); return x.toISOString().slice(0, 10); };
+const getWeekEnd = (d) => { const start = new Date(getWeekStart(d)); start.setDate(start.getDate() + 6); return start.toISOString().slice(0, 10); };
 const isSameDay = (a, b) => a && b && String(a).slice(0, 10) === String(b).slice(0, 10);
+
+/* ─── Mini SVG ring component ─── */
+const RingProgress = ({ pct, color, value, label, size = 80 }) => {
+    const r = (size / 2) - 6;
+    const circ = 2 * Math.PI * r;
+    const offset = circ - (pct / 100) * circ;
+    return (
+        <div className="pf-ring-item">
+            <div className="pf-ring-wrapper" style={{ width: size, height: size }}>
+                <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+                    <circle
+                        cx={size/2} cy={size/2} r={r}
+                        fill="none" stroke={color} strokeWidth="5"
+                        strokeLinecap="round"
+                        strokeDasharray={circ}
+                        strokeDashoffset={offset}
+                        style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.22,1,0.36,1)' }}
+                    />
+                </svg>
+                <div className="pf-ring-center">
+                    <span className="pf-ring-value">{value}</span>
+                </div>
+            </div>
+            <span className="pf-ring-label">{label}</span>
+        </div>
+    );
+};
 
 const Profile = () => {
     const { user, setUser } = useAuth();
     const [activeTab, setActiveTab] = useState('overview');
     const [status, setStatus] = useState("");
     const [formData, setFormData] = useState({
-        username: "",
-        email: "",
-        phone: "",
-        address: "",
-        avatar: "",
-        name: "",
-        bio: "",
-        banner: "",
-        level: 1,
-        xp: 0,
-        timezone: ""
+        username: "", email: "", phone: "", address: "",
+        avatar: "", name: "", bio: "", banner: "",
+        level: 1, xp: 0, timezone: ""
     });
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [bannerPreview, setBannerPreview] = useState(null);
-    const fileInputRef = React.useRef(null);
-    const bannerInputRef = React.useRef(null);
+    const fileInputRef = useRef(null);
+    const bannerInputRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [editedUserData, setEditedUserData] = useState({});
     const [userRole, setUserRole] = useState("");
@@ -99,36 +98,23 @@ const Profile = () => {
     const [usernameCooldownInfo, setUsernameCooldownInfo] = useState(null);
     const [loginStreak, setLoginStreak] = useState(0);
     const [achievements, setAchievements] = useState([]);
-    const [tradingStats, setTradingStats] = useState({
-        totalTrades: 0,
-        winRate: 0,
-        totalProfit: 0
-    });
+    const [tradingStats, setTradingStats] = useState({ totalTrades: 0, winRate: 0, totalProfit: 0 });
     const [journalTasks, setJournalTasks] = useState([]);
     const [journalStatsLoading, setJournalStatsLoading] = useState(true);
 
-    // Function to update local storage with user profile data
     const updateLocalUserData = (data) => {
         const currentUser = JSON.parse(localStorage.getItem('userData') || '{}');
-        const updatedUser = { ...currentUser, ...data };
-        localStorage.setItem('userData', JSON.stringify(updatedUser));
+        localStorage.setItem('userData', JSON.stringify({ ...currentUser, ...data }));
     };
 
-    // Load user data from local storage on initial render
     useEffect(() => {
         const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
-        if (storedUserData) {
-            setFormData(prev => ({
-                ...prev,
-                ...storedUserData
-            }));
-        }
+        if (storedUserData) setFormData(prev => ({ ...prev, ...storedUserData }));
     }, []);
 
     useEffect(() => {
         const loadProfile = async () => {
             if (!user?.id) return;
-
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             const authData = {
                 username: user.username || storedUser.username || "",
@@ -143,29 +129,21 @@ const Profile = () => {
                 xp: storedUser.xp || user.xp || 0,
                 timezone: user.timezone || storedUser.timezone || ""
             };
-
             setFormData(prev => ({ ...prev, ...authData }));
-            if (authData.avatar && authData.avatar.startsWith('data:image')) setAvatarPreview(authData.avatar);
-            if (authData.banner && authData.banner.startsWith('data:image')) setBannerPreview(authData.banner);
+            if (authData.avatar?.startsWith('data:image')) setAvatarPreview(authData.avatar);
+            if (authData.banner?.startsWith('data:image')) setBannerPreview(authData.banner);
             setUserRole(user.role || "");
             setLoginStreak(storedUser.login_streak ?? user.login_streak ?? 0);
             setLoading(false);
-
             const token = localStorage.getItem("token");
             if (!token) return;
-
             const baseUrl = resolveApiBaseUrl();
             const headers = { Authorization: `Bearer ${token}` };
-
             const [settingsRes, userRes] = await Promise.all([
                 axios.get(`${baseUrl}/api/users/settings`, { headers }).catch(() => ({ data: null })),
                 axios.get(`${baseUrl}/api/users/${user.id}`, { headers }).catch(() => ({ status: 0, data: null }))
             ]);
-
-            if (settingsRes?.data?.timezone != null) {
-                setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
-            }
-
+            if (settingsRes?.data?.timezone != null) setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
             if (userRes?.status === 200 && userRes.data) {
                 const userData = userRes.data;
                 const backendData = {
@@ -185,12 +163,11 @@ const Profile = () => {
                     setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
                 }
                 setFormData(prev => ({ ...prev, ...backendData }));
-                if (backendData.avatar && backendData.avatar.startsWith('data:image')) setAvatarPreview(backendData.avatar);
-                if (backendData.banner && backendData.banner.startsWith('data:image')) setBannerPreview(backendData.banner);
+                if (backendData.avatar?.startsWith('data:image')) setAvatarPreview(backendData.avatar);
+                if (backendData.banner?.startsWith('data:image')) setBannerPreview(backendData.banner);
                 setLoginStreak(userData.login_streak ?? 0);
                 setAchievements(userData.achievements || []);
                 updateLocalUserData(backendData);
-
                 const currentUserId = user?.id || userData.id;
                 const lastCheckKey = `daily_login_check_${currentUserId}`;
                 const lastCheckDate = localStorage.getItem(lastCheckKey);
@@ -204,11 +181,7 @@ const Profile = () => {
                             localStorage.setItem(lastCheckKey, today);
                             setLoginStreak(loginResponse.data.streak ?? userData.login_streak ?? 0);
                             if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
-                                setFormData(prev => ({
-                                    ...prev,
-                                    xp: loginResponse.data.newXP,
-                                    level: loginResponse.data.newLevel ?? prev.level
-                                }));
+                                setFormData(prev => ({ ...prev, xp: loginResponse.data.newXP, level: loginResponse.data.newLevel ?? prev.level }));
                             }
                         } else {
                             setLoginStreak(userData.login_streak ?? 0);
@@ -217,60 +190,31 @@ const Profile = () => {
                 }
             }
         };
-
         loadProfile();
-        
-        // Listen for XP update events from Community page
         const handleXPUpdate = (event) => {
             const { newXP, newLevel } = event.detail;
-            setFormData(prev => ({
-                ...prev,
-                xp: newXP,
-                level: newLevel
-            }));
-            // Keep localStorage in sync so sidebar and other tabs show correct level
+            setFormData(prev => ({ ...prev, xp: newXP, level: newLevel }));
             try {
                 const u = JSON.parse(localStorage.getItem('user') || '{}');
-                if (u.id) {
-                    localStorage.setItem('user', JSON.stringify({ ...u, xp: newXP, level: newLevel }));
-                }
+                if (u.id) localStorage.setItem('user', JSON.stringify({ ...u, xp: newXP, level: newLevel }));
             } catch (_) {}
         };
-        
-        // Listen for level-up events
-        const handleLevelUp = (event) => {
-            const { newLevel } = event.detail;
-            // Could show a toast notification here
-            console.log(`🎉 Level Up! You reached level ${newLevel}!`);
-        };
-        
+        const handleLevelUp = (event) => { console.log(`🎉 Level Up! You reached level ${event.detail.newLevel}!`); };
         window.addEventListener('xpUpdated', handleXPUpdate);
         window.addEventListener('levelUp', handleLevelUp);
-        
-        // Set up interval to refresh XP from localStorage every 1 second (for real-time updates)
         const xpRefreshInterval = setInterval(() => {
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             if (storedUser.xp !== undefined && storedUser.level !== undefined) {
                 const currentXP = parseFloat(storedUser.xp || 0);
                 const currentLevel = parseInt(storedUser.level || 1);
-                
                 setFormData(prev => {
-                    // Only update if values actually changed to trigger re-render
-                    const xpChanged = Math.abs(parseFloat(prev.xp || 0) - currentXP) > 0.01;
-                    const levelChanged = parseInt(prev.level || 1) !== currentLevel;
-                    
-                    if (xpChanged || levelChanged) {
-                        return {
-                            ...prev,
-                            xp: currentXP,
-                            level: currentLevel
-                        };
+                    if (Math.abs(parseFloat(prev.xp || 0) - currentXP) > 0.01 || parseInt(prev.level || 1) !== currentLevel) {
+                        return { ...prev, xp: currentXP, level: currentLevel };
                     }
                     return prev;
                 });
             }
-        }, 1000); // Check every second for real-time updates
-        
+        }, 1000);
         return () => {
             clearInterval(xpRefreshInterval);
             window.removeEventListener('xpUpdated', handleXPUpdate);
@@ -278,400 +222,215 @@ const Profile = () => {
         };
     }, [user]);
 
-    // Fetch journal tasks for Today / This week / This month stats (Journal tab)
     useEffect(() => {
-        if (!user?.id) {
-            setJournalStatsLoading(false);
-            return;
-        }
+        if (!user?.id) { setJournalStatsLoading(false); return; }
         const today = new Date().toISOString().slice(0, 10);
-        const weekStart = getWeekStart(today);
-        const weekEnd = getWeekEnd(today);
-        const monthStart = getMonthStart(today);
-        const monthEnd = getMonthEnd(today);
+        const weekStart = getWeekStart(today); const weekEnd = getWeekEnd(today);
+        const monthStart = getMonthStart(today); const monthEnd = getMonthEnd(today);
         const fetchFrom = weekStart < monthStart ? weekStart : monthStart;
         const fetchTo = weekEnd > monthEnd ? weekEnd : monthEnd;
         setJournalStatsLoading(true);
         Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo })
-            .then((res) => {
-                const list = res.data?.tasks ?? [];
-                setJournalTasks(Array.isArray(list) ? list : []);
-            })
+            .then((res) => { const list = res.data?.tasks ?? []; setJournalTasks(Array.isArray(list) ? list : []); })
             .catch(() => setJournalTasks([]))
             .finally(() => setJournalStatsLoading(false));
     }, [user?.id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        setEditedUserData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
+        setEditedUserData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        if (file.size > 5 * 1024 * 1024) {
-            setStatus("Avatar image must be less than 5MB");
-            return;
-        }
-
+        if (file.size > 5 * 1024 * 1024) { setStatus("Avatar image must be less than 5MB"); return; }
         try {
-            // Optimize image quality for clarity
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
-            
             img.onload = () => {
-                // Set canvas size to maintain quality (max 512x512 for optimal clarity)
                 const maxSize = 512;
-                let width = img.width;
-                let height = img.height;
-                
-                if (width > height) {
-                    if (width > maxSize) {
-                        height = (height * maxSize) / width;
-                        width = maxSize;
-                    }
-                } else {
-                    if (height > maxSize) {
-                        width = (width * maxSize) / height;
-                        height = maxSize;
-                    }
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                
-                // Use high-quality rendering
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
+                let { width, height } = img;
+                if (width > height) { if (width > maxSize) { height = (height * maxSize) / width; width = maxSize; } }
+                else { if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; } }
+                canvas.width = width; canvas.height = height;
+                ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
-                
-                // Convert to base64 with high quality
                 const base64 = canvas.toDataURL('image/png', 1.0);
                 setAvatarPreview(base64);
-                setFormData(prev => ({
-                    ...prev,
-                    avatar: base64
-                }));
-                setEditedUserData(prev => ({
-                    ...prev,
-                    avatar: base64
-                }));
+                setFormData(prev => ({ ...prev, avatar: base64 }));
+                setEditedUserData(prev => ({ ...prev, avatar: base64 }));
             };
-            
             img.onerror = () => {
-                // Fallback to original method if canvas fails
                 convertToBase64(file).then(base64 => {
                     setAvatarPreview(base64);
-                    setFormData(prev => ({
-                        ...prev,
-                        avatar: base64
-                    }));
-                    setEditedUserData(prev => ({
-                        ...prev,
-                        avatar: base64
-                    }));
+                    setFormData(prev => ({ ...prev, avatar: base64 }));
+                    setEditedUserData(prev => ({ ...prev, avatar: base64 }));
                 });
             };
-            
             img.src = URL.createObjectURL(file);
-        } catch (error) {
-            console.error("Error converting avatar:", error);
-            setStatus("Failed to process avatar image");
-        }
+        } catch (error) { setStatus("Failed to process avatar image"); }
     };
 
     const handleBannerChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        if (file.size > 10 * 1024 * 1024) {
-            setStatus("Banner image must be less than 10MB");
-            return;
-        }
-
+        if (file.size > 10 * 1024 * 1024) { setStatus("Banner image must be less than 10MB"); return; }
         try {
-            // Optimize banner image quality for clarity
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
-            
             img.onload = () => {
-                // Set canvas size for banner (max 1920x600 for optimal clarity)
-                const maxWidth = 1920;
-                const maxHeight = 600;
-                let width = img.width;
-                let height = img.height;
-                
-                if (width > maxWidth) {
-                    height = (height * maxWidth) / width;
-                    width = maxWidth;
-                }
-                if (height > maxHeight) {
-                    width = (width * maxHeight) / height;
-                    height = maxHeight;
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                
-                // Use high-quality rendering
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
+                let { width, height } = img;
+                const maxWidth = 1920, maxHeight = 600;
+                if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
+                if (height > maxHeight) { width = (width * maxHeight) / height; height = maxHeight; }
+                canvas.width = width; canvas.height = height;
+                ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
-                
-                // Convert to base64 with high quality
                 const base64 = canvas.toDataURL('image/png', 0.95);
                 setBannerPreview(base64);
-                setFormData(prev => ({
-                    ...prev,
-                    banner: base64
-                }));
-                setEditedUserData(prev => ({
-                    ...prev,
-                    banner: base64
-                }));
+                setFormData(prev => ({ ...prev, banner: base64 }));
+                setEditedUserData(prev => ({ ...prev, banner: base64 }));
             };
-            
             img.onerror = () => {
-                // Fallback to original method if canvas fails
                 convertToBase64(file).then(base64 => {
                     setBannerPreview(base64);
-                    setFormData(prev => ({
-                        ...prev,
-                        banner: base64
-                    }));
-                    setEditedUserData(prev => ({
-                        ...prev,
-                        banner: base64
-                    }));
+                    setFormData(prev => ({ ...prev, banner: base64 }));
+                    setEditedUserData(prev => ({ ...prev, banner: base64 }));
                 });
             };
-            
             img.src = URL.createObjectURL(file);
-        } catch (error) {
-            console.error("Error converting banner:", error);
-            setStatus("Failed to process banner image");
-        }
+        } catch (error) { setStatus("Failed to process banner image"); }
     };
 
     const handleSaveChanges = async () => {
-        if (!user?.id) {
-            setStatus("You must be logged in to save changes");
-            return;
-        }
-
+        if (!user?.id) { setStatus("You must be logged in to save changes"); return; }
         setStatus("Saving...");
-
         try {
             const token = localStorage.getItem("token");
-            if (!token) {
-                setStatus("Authentication required");
-                return;
-            }
-
-            // Validate username if changed
+            if (!token) { setStatus("Authentication required"); return; }
             if (editedUserData.username && editedUserData.username !== user.username) {
                 const validation = validateUsername(editedUserData.username);
-                if (!validation.isValid) {
-                    setUsernameValidationError(validation.error);
-                    setStatus("Username validation failed");
-                    return;
-                }
-
+                if (!validation.isValid) { setUsernameValidationError(validation.error); setStatus("Username validation failed"); return; }
                 const cooldownCheck = canChangeUsername(lastUsernameChange);
-                if (!cooldownCheck.canChange) {
-                    setUsernameValidationError(getCooldownMessage(lastUsernameChange));
-                    setStatus("Username change on cooldown");
-                    return;
-                }
+                if (!cooldownCheck.canChange) { setUsernameValidationError(getCooldownMessage(lastUsernameChange)); setStatus("Username change on cooldown"); return; }
             }
-
-            const dataToSave = {
-                ...editedUserData,
-                id: user.id
-            };
-
-            // Also update localStorage 'user' object
+            const dataToSave = { ...editedUserData, id: user.id };
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-            const updatedStoredUser = { ...storedUser, ...dataToSave };
-            localStorage.setItem('user', JSON.stringify(updatedStoredUser));
-
-            setStatus("Saving...");
-
+            localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
             const response = await axios.put(
-                `${resolveApiBaseUrl()}/api/users/${user.id}/update`,
-                dataToSave,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+                `${resolveApiBaseUrl()}/api/users/${user.id}/update`, dataToSave,
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
             );
-
             if (response.status === 200) {
                 const serverData = response.data;
-                
-                // Update form data with server response
-                setFormData(prev => ({
-                    ...prev,
-                    ...serverData
-                }));
-
-                // Update auth context
-                if (setUser) {
-                    setUser(prev => ({
-                        ...prev,
-                        ...serverData
-                    }));
-                }
-
-                // Update localStorage 'user' object
-                if (serverData) {
-                    const updatedUser = { ...updatedStoredUser, ...serverData };
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
-                }
-                
+                setFormData(prev => ({ ...prev, ...serverData }));
+                if (setUser) setUser(prev => ({ ...prev, ...serverData }));
+                if (serverData) localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave, ...serverData }));
                 setStatus("Profile updated successfully!");
                 setEditedUserData({});
-                
-                // Clear status after 3 seconds
-                setTimeout(() => {
-                    setStatus("");
-                }, 3000);
-            } else {
-                setStatus("Failed to update profile");
-            }
-        } catch (error) {
-            console.error("Error saving profile:", error);
-            setStatus(error.response?.data?.message || "Failed to update profile");
-        }
+                setTimeout(() => setStatus(""), 3000);
+            } else { setStatus("Failed to update profile"); }
+        } catch (error) { setStatus(error.response?.data?.message || "Failed to update profile"); }
     };
 
-    // Calculate XP progress
+    // XP calculations
     const xpProgress = getXPProgress(formData.xp || 0, formData.level || 1);
     const rankTitle = getRankTitle(formData.level || 1);
     const tierName = getTierName(formData.level || 1);
     const tierColor = getTierColor(formData.level || 1);
     const nextMilestone = getNextRankMilestone(formData.level || 1);
 
-    // Journal tab: Today / This week / This month completion %
+    // Journal stats
     const journalToday = new Date().toISOString().slice(0, 10);
-    const journalWeekStart = getWeekStart(journalToday);
-    const journalWeekEnd = getWeekEnd(journalToday);
-    const journalMonthStart = getMonthStart(journalToday);
-    const journalMonthEnd = getMonthEnd(journalToday);
-    const dayTasks = journalTasks.filter((t) => isSameDay(t.date, journalToday));
-    const weekTasks = journalTasks.filter((t) => t.date >= journalWeekStart && t.date <= journalWeekEnd);
-    const monthTasksForMonth = journalTasks.filter((t) => t.date >= journalMonthStart && t.date <= journalMonthEnd);
-    const dayTotal = dayTasks.length;
-    const dayDone = dayTasks.filter((t) => t.completed).length;
-    const journalDayPct = dayTotal ? Math.round((dayDone / dayTotal) * 100) : null;
-    const weekTotal = weekTasks.length;
-    const weekDone = weekTasks.filter((t) => t.completed).length;
-    const journalWeekPct = weekTotal ? Math.round((weekDone / weekTotal) * 100) : null;
-    const monthTotal = monthTasksForMonth.length;
-    const monthDone = monthTasksForMonth.filter((t) => t.completed).length;
-    const journalMonthPct = monthTotal ? Math.round((monthDone / monthTotal) * 100) : null;
+    const journalWeekStart = getWeekStart(journalToday); const journalWeekEnd = getWeekEnd(journalToday);
+    const journalMonthStart = getMonthStart(journalToday); const journalMonthEnd = getMonthEnd(journalToday);
+    const dayTasks = journalTasks.filter(t => isSameDay(t.date, journalToday));
+    const weekTasks = journalTasks.filter(t => t.date >= journalWeekStart && t.date <= journalWeekEnd);
+    const monthTasksForMonth = journalTasks.filter(t => t.date >= journalMonthStart && t.date <= journalMonthEnd);
+    const dayTotal = dayTasks.length; const dayDone = dayTasks.filter(t => t.completed).length;
+    const journalDayPct = dayTotal ? Math.round((dayDone / dayTotal) * 100) : 0;
+    const weekTotal = weekTasks.length; const weekDone = weekTasks.filter(t => t.completed).length;
+    const journalWeekPct = weekTotal ? Math.round((weekDone / weekTotal) * 100) : 0;
+    const monthTotal = monthTasksForMonth.length; const monthDone = monthTasksForMonth.filter(t => t.completed).length;
+    const journalMonthPct = monthTotal ? Math.round((monthDone / monthTotal) * 100) : 0;
+
+    const hasAvatar = avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')));
+    const xpPct = Math.max(0, Math.min(100, xpProgress.percentage));
 
     if (loading) {
         return (
-            <div className="profile-container">
+            <div className="pf-container">
                 <CosmicBackground />
-                <div className="loading-screen">
-                    <div className="loading-spinner"></div>
-                    <div className="loading-text">Loading Profile...</div>
+                <div className="pf-loading">
+                    <div className="pf-spinner"></div>
+                    <span className="pf-loading-text">Loading Profile</span>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="profile-container">
+        <div className="pf-container">
             <CosmicBackground />
-            <div className="profile-content">
-                {/* Profile Banner */}
-                <div className="profile-banner-container">
+
+            {/* Ambient glow orbs */}
+            <div className="pf-ambient" aria-hidden="true">
+                <div className="pf-orb pf-orb-1"></div>
+                <div className="pf-orb pf-orb-2"></div>
+            </div>
+
+            <div className="pf-content">
+
+                {/* ── BANNER ── */}
+                <div className="pf-banner-wrap">
                     {bannerPreview || formData.banner ? (
-                        <img 
-                            src={bannerPreview || formData.banner} 
-                            alt="Banner" 
-                            className="profile-banner"
-                            style={{
-                                imageRendering: 'high-quality'
-                            }}
-                            loading="eager"
-                        />
+                        <img src={bannerPreview || formData.banner} alt="Banner" className="pf-banner-img" />
                     ) : (
-                        <div className="profile-banner-placeholder">
-                            <div className="banner-upload-hint">Click to upload banner</div>
+                        <div className="pf-banner-placeholder">
+                            <span className="pf-banner-hint">Upload Banner</span>
                         </div>
                     )}
-                    <input
-                        type="file"
-                        ref={bannerInputRef}
-                        accept="image/*"
-                        onChange={handleBannerChange}
-                        style={{ display: 'none' }}
-                    />
-                    <button 
-                        className="banner-upload-btn"
-                        onClick={() => bannerInputRef.current?.click()}
-                    >
-                        📷
+                    <input type="file" ref={bannerInputRef} accept="image/*" onChange={handleBannerChange} style={{ display: 'none' }} />
+                    <button className="pf-banner-btn" onClick={() => bannerInputRef.current?.click()}>
+                        <span>📷</span> Change Banner
                     </button>
                 </div>
 
-                {/* Profile Avatar & Header */}
-                <div className="profile-header-section">
-                    <div className="profile-avatar-wrapper">
-                        <div style={{ position: 'relative', flexShrink: 0, width: 150, height: 150 }}>
-                            {(avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')))) ? (
-                                <img
-                                    src={avatarPreview || formData.avatar}
-                                    alt="Profile"
-                                    className="profile-avatar profile-avatar-img"
-                                />
-                            ) : (
-                                <div aria-hidden className="profile-avatar" style={{ width: 150, height: 150, borderRadius: '50%', background: getPlaceholderColor(user?.id ?? formData.username), border: '5px solid rgba(139, 92, 246, 0.6)', boxSizing: 'border-box' }} />
-                            )}
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                accept="image/*"
-                                onChange={handleAvatarChange}
-                                style={{ display: 'none' }}
-                            />
-                            <button
-                                className="avatar-upload-btn"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                📷
-                            </button>
+                {/* ── HEADER CARD ── */}
+                <div className="pf-header-card">
+
+                    {/* Avatar */}
+                    <div className="pf-avatar-col">
+                        <div className="pf-avatar-ring">
+                            <div className="pf-avatar-inner">
+                                {hasAvatar ? (
+                                    <img src={avatarPreview || formData.avatar} alt="Avatar" className="pf-avatar-img" />
+                                ) : (
+                                    <div className="pf-avatar-placeholder" style={{ background: getPlaceholderColor(user?.id ?? formData.username) }} />
+                                )}
+                            </div>
+                            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
+                            <button className="pf-avatar-edit-btn" onClick={() => fileInputRef.current?.click()} title="Change avatar">✏️</button>
                         </div>
-                        {!(avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')))) && (
-                            <div className="profile-avatar-color-picker">
-                                <span className="profile-avatar-color-label">Pick a colour (no photo):</span>
-                                <div className="profile-avatar-color-swatches">
+
+                        {/* Color swatches — only shown when no image */}
+                        {!hasAvatar && (
+                            <div className="pf-swatch-picker">
+                                <span className="pf-swatch-label">Ring Colour</span>
+                                <div className="pf-swatches">
                                     {PLACEHOLDER_COLORS.map((color) => (
                                         <button
                                             key={color}
-                                            type="button"
-                                            className="profile-avatar-swatch"
+                                            className="pf-swatch"
                                             style={{ background: color }}
                                             title={color}
                                             onClick={() => {
                                                 savePlaceholderColor(user?.id ?? formData.username, color);
-                                                setStatus('Colour saved. It will show wherever your profile is seen.');
+                                                setStatus('Colour saved.');
                                                 setTimeout(() => setStatus(''), 2000);
                                             }}
                                         />
@@ -680,151 +439,173 @@ const Profile = () => {
                             </div>
                         )}
                     </div>
-                    <div className="profile-header-info">
-                        <h1 className="profile-username">{formData.username || 'User'}</h1>
-                        <div className="profile-rank" style={{ color: tierColor }}>
-                            {rankTitle}
+
+                    {/* Info */}
+                    <div className="pf-header-info">
+                        <h1 className="pf-username">{formData.username || 'Trader'}</h1>
+                        <div className="pf-rank-pill" style={{ '--tier-color': tierColor }}>
+                            <span className="pf-rank-dot" style={{ background: tierColor }}></span>
+                            <span className="pf-rank-text">{rankTitle}</span>
                         </div>
-                        <div className="profile-tier">{tierName}</div>
+                        <span className="pf-tier-label">{tierName}</span>
+                    </div>
+
+                    {/* Quick stats — desktop only */}
+                    <div className="pf-header-quick-stats">
+                        <div className="pf-qstat">
+                            <span className="pf-qstat-num">{formData.level || 1}</span>
+                            <span className="pf-qstat-lbl">Level</span>
+                        </div>
+                        <div className="pf-qstat">
+                            <span className="pf-qstat-num">{((formData.xp || 0) / 1000).toFixed(1)}K</span>
+                            <span className="pf-qstat-lbl">Total XP</span>
+                        </div>
+                        <div className="pf-qstat">
+                            <span className="pf-qstat-num">🔥{loginStreak}</span>
+                            <span className="pf-qstat-lbl">Streak</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Level & XP Display */}
-                <div className="profile-level-section">
-                    <div className="level-display">
-                        <span className="level-label">Power level</span>
-                        <span className="level-value">{formData.level || 1}</span>
-                    </div>
-                    <div className="xp-display">
-                        <span className="xp-label">Power points</span>
-                        <span className="xp-value">{(formData.xp || 0).toLocaleString()}</span>
-                    </div>
-                    {nextMilestone && (
-                        <div className="next-milestone">
-                            <span className="milestone-label">Next rank:</span>
-                            <span className="milestone-value">{nextMilestone.title} (Level {nextMilestone.level})</span>
+                {/* ── XP PROGRESS ── */}
+                <div className="pf-xp-card">
+                    <div className="pf-xp-header">
+                        <div>
+                            <p className="pf-xp-eyebrow">XP Progress · Level {formData.level || 1}</p>
+                            <p className="pf-xp-count">{(formData.xp || 0).toLocaleString()} XP</p>
                         </div>
-                    )}
-                </div>
-
-                {/* XP Progress Bar */}
-                <div className="xp-progress-container">
-                    <div className="xp-progress-header">
-                        <span>Progress to level {(formData.level || 1) + 1}</span>
-                        <span>{Math.round(xpProgress.percentage)}%</span>
+                        {nextMilestone && (
+                            <div className="pf-xp-milestone">
+                                <span className="pf-xp-milestone-lbl">Next Rank</span>
+                                <span className="pf-xp-milestone-val">{nextMilestone.title} · Lv {nextMilestone.level}</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="xp-progress-bar">
-                        <div 
-                            className="xp-progress-fill"
-                            key={`xp-${formData.xp}-${formData.level}`} // Force re-render on XP change
-                            style={{ 
-                                width: `${Math.max(0, Math.min(100, xpProgress.percentage))}%`,
-                                background: `linear-gradient(90deg, ${tierColor} 0%, ${tierColor}dd 100%)`,
-                                transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                    <div className="pf-xp-track">
+                        <div
+                            className="pf-xp-fill"
+                            key={`xp-${formData.xp}-${formData.level}`}
+                            style={{
+                                width: `${xpPct}%`,
+                                background: `linear-gradient(90deg, rgba(139,92,246,0.9), rgba(99,179,237,0.8))`
                             }}
-                        ></div>
+                        />
                     </div>
-                    <div className="xp-progress-text">
-                        {Math.round(xpProgress.current).toLocaleString()} / {Math.round(xpProgress.needed).toLocaleString()} XP
-                    </div>
-                </div>
-
-                {/* Login Streak */}
-                <div className="login-streak-section">
-                    <div className="streak-icon">🔥</div>
-                    <div className="streak-info">
-                        <span className="streak-label">Login streak</span>
-                        <span className="streak-value">{loginStreak}+ days</span>
+                    <div className="pf-xp-sub">
+                        {Math.round(xpProgress.current).toLocaleString()} / {Math.round(xpProgress.needed).toLocaleString()} XP &nbsp;·&nbsp; {Math.round(xpPct)}%
                     </div>
                 </div>
 
-                {/* Journal summary – below login streak */}
-                <div className="profile-journal-summary-card">
-                    <div className="section-title">Journal</div>
+                {/* ── STREAK + MINI STATS ── */}
+                <div className="pf-row-2">
+                    <div className="pf-streak-card">
+                        <span className="pf-streak-flame">🔥</span>
+                        <div className="pf-streak-info">
+                            <span className="pf-streak-lbl">Login Streak</span>
+                            <span className="pf-streak-val">{loginStreak}</span>
+                            <span className="pf-streak-unit">Days</span>
+                        </div>
+                    </div>
+                    <div className="pf-mini-stats">
+                        <div className="pf-mini-stat">
+                            <span className="pf-mini-icon">📈</span>
+                            <span className="pf-mini-val">{formData.level || 1}</span>
+                            <span className="pf-mini-lbl">Level</span>
+                        </div>
+                        <div className="pf-mini-stat">
+                            <span className="pf-mini-icon">⭐</span>
+                            <span className="pf-mini-val">{((formData.xp || 0) / 1000).toFixed(1)}K</span>
+                            <span className="pf-mini-lbl">XP Total</span>
+                        </div>
+                        <div className="pf-mini-stat">
+                            <span className="pf-mini-icon">🏆</span>
+                            <span className="pf-mini-val">{achievements.length}</span>
+                            <span className="pf-mini-lbl">Badges</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── JOURNAL SUMMARY ── */}
+                <div className="pf-journal-card">
+                    <p className="pf-section-label">Journal · Completion</p>
                     {journalStatsLoading ? (
-                        <div className="profile-journal-loading">
-                            <div className="loading-spinner"></div>
-                            <span>Loading journal stats…</span>
+                        <div className="pf-journal-loading">
+                            <div className="pf-spinner pf-spinner-sm"></div>
+                            <span>Loading stats…</span>
                         </div>
                     ) : (
-                        <div className="profile-journal-stats">
-                            <div className="profile-journal-stat-circle">
-                                <div className="profile-journal-stat-ring" style={{ '--pct': journalDayPct != null ? journalDayPct : 0 }}>
-                                    <span className="profile-journal-stat-value">{journalDayPct != null ? `${journalDayPct}%` : '—'}</span>
-                                </div>
-                                <span className="profile-journal-stat-label">Today</span>
+                        <>
+                            <div className="pf-rings-row">
+                                <RingProgress pct={journalDayPct} color="rgba(16,185,129,0.85)"
+                                    value={dayTotal ? `${journalDayPct}%` : '—'} label="Today" />
+                                <RingProgress pct={journalWeekPct} color="rgba(139,92,246,0.85)"
+                                    value={weekTotal ? `${journalWeekPct}%` : '—'} label="This Week" />
+                                <RingProgress pct={journalMonthPct} color="rgba(99,179,237,0.85)"
+                                    value={monthTotal ? `${journalMonthPct}%` : '—'} label="This Month" />
                             </div>
-                            <div className="profile-journal-stat-circle">
-                                <div className="profile-journal-stat-ring" style={{ '--pct': journalWeekPct != null ? journalWeekPct : 0 }}>
-                                    <span className="profile-journal-stat-value">{journalWeekPct != null ? `${journalWeekPct}%` : '—'}</span>
-                                </div>
-                                <span className="profile-journal-stat-label">This week</span>
-                            </div>
-                            <div className="profile-journal-stat-circle">
-                                <div className="profile-journal-stat-ring" style={{ '--pct': journalMonthPct != null ? journalMonthPct : 0 }}>
-                                    <span className="profile-journal-stat-value">{journalMonthPct != null ? `${journalMonthPct}%` : '—'}</span>
-                                </div>
-                                <span className="profile-journal-stat-label">This month</span>
-                            </div>
-                        </div>
+                            <p className="pf-journal-hint">Task completion from your Aura Journal. Add and complete tasks to improve your stats.</p>
+                        </>
                     )}
-                    <p className="profile-journal-hint">Task completion from your Aura Journal. Add and complete tasks to improve your stats.</p>
                 </div>
 
-                {/* Navigation Tabs */}
-                <div className="profile-tabs">
-                    <button 
-                        className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('overview')}
-                    >
-                        Overview
-                    </button>
-                    <button 
-                        className={`tab-btn ${activeTab === 'journey' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('journey')}
-                    >
-                        Journey
-                    </button>
-                    <button 
-                        className={`tab-btn ${activeTab === 'statistics' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('statistics')}
-                    >
-                        Statistics
-                    </button>
-                    <button 
-                        className={`tab-btn ${activeTab === 'achievements' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('achievements')}
-                    >
-                        Achievements
-                    </button>
+                {/* ── TABS ── */}
+                <div className="pf-tabs">
+                    {['overview', 'journey', 'statistics', 'achievements'].map(tab => (
+                        <button
+                            key={tab}
+                            className={`pf-tab-btn${activeTab === tab ? ' active' : ''}`}
+                            onClick={() => setActiveTab(tab)}
+                        >
+                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Tab Content */}
-                <div className="profile-tab-content">
+                {/* ── TAB PANEL ── */}
+                <div className="pf-tab-panel">
+
+                    {/* ── OVERVIEW ── */}
                     {activeTab === 'overview' && (
-                        <div className="tab-panel">
-                            <div className="section-title">Information</div>
-                            
-                            {/* Bio */}
-                            <div className="form-group">
-                                <label htmlFor="profile-bio">Custom bio</label>
-                                <textarea
-                                    id="profile-bio"
-                                    name="bio"
-                                    value={formData.bio || ''}
-                                    onChange={handleChange}
-                                    placeholder="Tell us about your trading journey..."
-                                    rows="3"
-                                    className="form-input"
-                                />
+                        <div className="pf-panel">
+                            <p className="pf-section-label">Account Settings</p>
+
+                            {userRole && (
+                                <div className="pf-role-row">
+                                    <span className="pf-role-lbl">Role</span>
+                                    <span className="pf-role-val">{userRole}</span>
+                                </div>
+                            )}
+
+                            <div className="pf-form-row-2">
+                                <div className="pf-form-group">
+                                    <label className="pf-label">Username</label>
+                                    <input className="pf-input" type="text" name="username"
+                                        value={formData.username || ''} onChange={handleChange} />
+                                    {usernameValidationError && <span className="pf-error">{usernameValidationError}</span>}
+                                </div>
+                                <div className="pf-form-group">
+                                    <label className="pf-label">Full Name</label>
+                                    <input className="pf-input" type="text" name="name"
+                                        value={formData.name || ''} onChange={handleChange} />
+                                </div>
                             </div>
 
-                            {/* Timezone (IANA) – daily journal notification at 08:00 local */}
-                            <div className="form-group">
-                                <label htmlFor="profile-timezone">Timezone (for daily journal reminder)</label>
-                                <select
-                                    id="profile-timezone"
-                                    name="timezone"
+                            <div className="pf-form-group">
+                                <label className="pf-label">Email</label>
+                                <input className="pf-input pf-input-disabled" type="email" name="email"
+                                    value={formData.email || ''} onChange={handleChange} disabled />
+                            </div>
+
+                            <div className="pf-form-group">
+                                <label className="pf-label">Bio</label>
+                                <textarea className="pf-input pf-textarea" name="bio" rows="3"
+                                    value={formData.bio || ''} onChange={handleChange}
+                                    placeholder="Tell us about your trading journey…" />
+                            </div>
+
+                            <div className="pf-form-group">
+                                <label className="pf-label">Timezone <span className="pf-label-hint">· daily journal reminder at 08:00</span></label>
+                                <select className="pf-input" name="timezone"
                                     value={formData.timezone || ''}
                                     onChange={async (e) => {
                                         const val = e.target.value || '';
@@ -832,8 +613,7 @@ const Profile = () => {
                                         try {
                                             const token = localStorage.getItem('token');
                                             if (token) {
-                                                await axios.put(
-                                                    `${resolveApiBaseUrl()}/api/users/settings`,
+                                                await axios.put(`${resolveApiBaseUrl()}/api/users/settings`,
                                                     { timezone: val || null },
                                                     { headers: { Authorization: `Bearer ${token}` } }
                                                 );
@@ -843,161 +623,121 @@ const Profile = () => {
                                                 }
                                             }
                                         } catch (_) {}
-                                    }}
-                                    className="form-input"
-                                >
+                                    }}>
                                     <option value="">Auto (browser)</option>
                                     {getIANATimezones().map(tz => (
                                         <option key={tz} value={tz}>{tz}</option>
                                     ))}
                                 </select>
-                                <small className="form-hint">Daily journal notification at 08:00 in this timezone.</small>
                             </div>
 
-                            {/* Username */}
-                            <div className="form-group">
-                                <label htmlFor="profile-username">Username</label>
-                                <input
-                                    id="profile-username"
-                                    type="text"
-                                    name="username"
-                                    value={formData.username || ''}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                />
-                                {usernameValidationError && (
-                                    <div className="error-message">{usernameValidationError}</div>
-                                )}
-                            </div>
+                            <button className="pf-save-btn" onClick={handleSaveChanges}>Save Profile</button>
+                        </div>
+                    )}
 
-                            {/* Email */}
-                            <div className="form-group">
-                                <label htmlFor="profile-email">Email</label>
-                                <input
-                                    id="profile-email"
-                                    type="email"
-                                    name="email"
-                                    value={formData.email || ''}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    disabled
-                                />
+                    {/* ── JOURNEY ── */}
+                    {activeTab === 'journey' && (
+                        <div className="pf-panel">
+                            <p className="pf-section-label">Hero's Journey</p>
+                            <div className="pf-journey-grid">
+                                <div className="pf-journey-stat">
+                                    <span className="pf-journey-icon">📈</span>
+                                    <div className="pf-journey-info">
+                                        <span className="pf-journey-lbl">Current Level</span>
+                                        <span className="pf-journey-val">{formData.level || 1}</span>
+                                    </div>
+                                </div>
+                                <div className="pf-journey-stat">
+                                    <span className="pf-journey-icon">🎯</span>
+                                    <div className="pf-journey-info">
+                                        <span className="pf-journey-lbl">Total XP</span>
+                                        <span className="pf-journey-val">{(formData.xp || 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                <div className="pf-journey-stat">
+                                    <span className="pf-journey-icon">🏆</span>
+                                    <div className="pf-journey-info">
+                                        <span className="pf-journey-lbl">Rank</span>
+                                        <span className="pf-journey-val">{rankTitle}</span>
+                                    </div>
+                                </div>
+                                <div className="pf-journey-stat">
+                                    <span className="pf-journey-icon">🔥</span>
+                                    <div className="pf-journey-info">
+                                        <span className="pf-journey-lbl">Login Streak</span>
+                                        <span className="pf-journey-val">{loginStreak} days</span>
+                                    </div>
+                                </div>
                             </div>
-
-                            {/* Name */}
-                            <div className="form-group">
-                                <label htmlFor="profile-name">Full Name</label>
-                                <input
-                                    id="profile-name"
-                                    type="text"
-                                    name="name"
-                                    value={formData.name || ''}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                />
-                            </div>
-
-                            {/* Role */}
-                            {userRole && (
-                                <div className="role-display">
-                                    <span className="role-label">Role:</span>
-                                    <span className="role-value">{userRole}</span>
+                            {nextMilestone && (
+                                <div className="pf-milestone-card">
+                                    <span className="pf-milestone-eyebrow">Next Milestone</span>
+                                    <span className="pf-milestone-name">{nextMilestone.title}</span>
+                                    <span className="pf-milestone-level">Level {nextMilestone.level}</span>
                                 </div>
                             )}
-
-                            <button className="save-button" onClick={handleSaveChanges}>
-                                Save profile
-                            </button>
                         </div>
                     )}
 
-                    {activeTab === 'journey' && (
-                        <div className="tab-panel">
-                            <div className="section-title">Hero's Journey</div>
-                            <div className="journey-content">
-                                <div className="journey-stat">
-                                    <div className="journey-icon">📈</div>
-                                    <div className="journey-info">
-                                        <div className="journey-label">Current Level</div>
-                                        <div className="journey-value">{formData.level || 1}</div>
-                                    </div>
-                                </div>
-                                <div className="journey-stat">
-                                    <div className="journey-icon">🎯</div>
-                                    <div className="journey-info">
-                                        <div className="journey-label">Total XP</div>
-                                        <div className="journey-value">{(formData.xp || 0).toLocaleString()}</div>
-                                    </div>
-                                </div>
-                                <div className="journey-stat">
-                                    <div className="journey-icon">🏆</div>
-                                    <div className="journey-info">
-                                        <div className="journey-label">Rank</div>
-                                        <div className="journey-value">{rankTitle}</div>
-                                    </div>
-                                </div>
-                                {nextMilestone && (
-                                    <div className="milestone-card">
-                                        <div className="milestone-title">Next Milestone</div>
-                                        <div className="milestone-name">{nextMilestone.title}</div>
-                                        <div className="milestone-level">Level {nextMilestone.level}</div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
+                    {/* ── STATISTICS ── */}
                     {activeTab === 'statistics' && (
-                        <div className="tab-panel">
-                            <div className="section-title">Trading statistics</div>
-                            <div className="stats-grid">
-                                <div className="stat-card">
-                                    <div className="stat-icon">📊</div>
-                                    <div className="stat-value">{tradingStats.totalTrades}</div>
-                                    <div className="stat-label">Total Trades</div>
+                        <div className="pf-panel">
+                            <p className="pf-section-label">Trading Statistics</p>
+                            <div className="pf-stats-grid">
+                                <div className="pf-stat-card">
+                                    <span className="pf-stat-icon">📊</span>
+                                    <span className="pf-stat-val">{tradingStats.totalTrades}</span>
+                                    <span className="pf-stat-lbl">Total Trades</span>
                                 </div>
-                                <div className="stat-card">
-                                    <div className="stat-icon">✅</div>
-                                    <div className="stat-value">{tradingStats.winRate}%</div>
-                                    <div className="stat-label">Win Rate</div>
+                                <div className="pf-stat-card">
+                                    <span className="pf-stat-icon">✅</span>
+                                    <span className="pf-stat-val">{tradingStats.winRate}%</span>
+                                    <span className="pf-stat-lbl">Win Rate</span>
                                 </div>
-                                <div className="stat-card">
-                                    <div className="stat-icon">💰</div>
-                                    <div className="stat-value">${tradingStats.totalProfit.toLocaleString()}</div>
-                                    <div className="stat-label">Total Profit</div>
+                                <div className="pf-stat-card">
+                                    <span className="pf-stat-icon">💰</span>
+                                    <span className="pf-stat-val">${tradingStats.totalProfit.toLocaleString()}</span>
+                                    <span className="pf-stat-lbl">Total Profit</span>
                                 </div>
                             </div>
-                            <div className="stats-note">
+                            <div className="pf-stats-note">
                                 Trading statistics will be available when you connect your trading account.
                             </div>
                         </div>
                     )}
 
+                    {/* ── ACHIEVEMENTS ── */}
                     {activeTab === 'achievements' && (
-                        <div className="tab-panel">
-                            <div className="section-title">Achievements</div>
+                        <div className="pf-panel">
+                            <p className="pf-section-label">Achievements · {achievements.length} Unlocked</p>
                             {achievements.length > 0 ? (
-                                <div className="achievements-grid">
+                                <div className="pf-achievements-grid">
                                     {achievements.map((achievement, index) => (
-                                        <div key={index} className="achievement-badge">
-                                            {achievement}
+                                        <div key={index} className="pf-badge">
+                                            <span className="pf-badge-icon">🏅</span>
+                                            <span className="pf-badge-name">{achievement}</span>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="no-achievements">
-                                    <div className="no-achievements-icon">🏅</div>
-                                    <div className="no-achievements-text">No achievements yet</div>
-                                    <div className="no-achievements-hint">Keep trading and engaging to unlock achievements!</div>
+                                <div className="pf-no-achievements">
+                                    <span className="pf-no-ach-icon">🏅</span>
+                                    <p className="pf-no-ach-title">No achievements yet</p>
+                                    <p className="pf-no-ach-hint">Keep trading and engaging to unlock achievements!</p>
                                 </div>
                             )}
                         </div>
                     )}
-
                 </div>
 
-                {status && <p className="status-msg">{status}</p>}
-            </div>
+                {/* ── STATUS MSG ── */}
+                {status && (
+                    <div className={`pf-status${status.toLowerCase().includes('fail') || status.toLowerCase().includes('error') ? ' pf-status-err' : ''}`}>
+                        {status}
+                    </div>
+                )}
+
+            </div>{/* /pf-content */}
         </div>
     );
 };

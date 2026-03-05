@@ -10,7 +10,6 @@ const AdminMessages = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Check if user is admin (flexible check for different role formats)
         const userRole = user?.role?.toLowerCase() || '';
         const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
         
@@ -36,7 +35,6 @@ const AdminMessages = () => {
         fetchMessages();
     }, [user]);
 
-    // Check if user is admin (flexible check for different role formats)
     const userRole = user?.role?.toLowerCase() || '';
     const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
     
@@ -53,7 +51,6 @@ const AdminMessages = () => {
 
     return (
         <div className="admin-messages-container">
-            
             <div className="admin-messages-content">
                 <div className="admin-header">
                     <h1 className="glitch-title">CONTACT SUBMISSIONS</h1>
@@ -82,15 +79,20 @@ const AdminMessages = () => {
                 ) : (
                     <div className="messages-section">
                         <div className="messages-header">
-                            <h3>📨 User Messages ({messages.length})</h3>
+                            <h3>
+                                User Messages
+                                <span className="message-count">{messages.length}</span>
+                            </h3>
                         </div>
                         <div className="messages-grid">
-                            {messages.map((msg) => (
-                                <div key={msg.id || `${msg.email}-${msg.timestamp}`} className="message-card">
+                            {messages.map((msg, index) => (
+                                <div key={msg.id || `${msg.email}-${msg.timestamp}-${index}`} className="message-card">
                                     <div className="message-header">
                                         <div className="user-info">
                                             <div className="user-avatar">
-                                                <span className="avatar-letter">{msg.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                                                <span className="avatar-letter">
+                                                    {msg.name?.charAt(0)?.toUpperCase() || 'U'}
+                                                </span>
                                             </div>
                                             <div className="user-details">
                                                 <div className="user-name">{msg.name || 'Anonymous'}</div>
@@ -99,7 +101,8 @@ const AdminMessages = () => {
                                         </div>
                                         <div className="message-time">
                                             <span className="time-icon">🕒</span>
-                                            {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A'}
+                                            {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 
+                                             msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A'}
                                         </div>
                                     </div>
                                     <div className="message-content">

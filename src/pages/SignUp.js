@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import "../styles/Login.css";
+import "../styles/SignUp.css";
 import CosmicBackground from '../components/CosmicBackground';
 import { useAuth } from "../context/AuthContext";
 import Api from '../services/Api';

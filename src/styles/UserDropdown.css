@@ -1,8 +1,34 @@
+/* ============================================================
+   USER PROFILE DROPDOWN — AURA FX  |  Matched to Home Theme
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+/* ── CSS Variables (mirrored from home.css) ───────────────── */
+:root {
+    --bg:          #0a0a0a;
+    --bg-card:     rgba(255,255,255,0.03);
+    --bg-card-h:   rgba(255,255,255,0.055);
+    --border:      rgba(255,255,255,0.08);
+    --border-h:    rgba(255,255,255,0.22);
+    --text:        #ffffff;
+    --text-muted:  rgba(255,255,255,0.55);
+    --accent:      rgba(139,92,246,0.55);
+    --accent-solid: #8b5cf6;
+    --accent-blue: rgba(99,179,237,0.45);
+    --accent-blue-solid: #63b3ed;
+    --radius:      10px;
+    --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Wrapper ──────────────────────────────────────────────── */
 .user-profile {
     position: relative;
     display: inline-block;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
+/* ── Overlay ──────────────────────────────────────────────── */
 .user-dropdown-overlay {
     position: fixed;
     inset: 0;
@@ -11,37 +37,103 @@
     cursor: default;
 }
 
+/* ── Trigger Icon ─────────────────────────────────────────── */
 .user-icon {
     cursor: pointer;
-    font-size: 24px;
-    color: rgba(255, 255, 255, 0.9);
-    transition: all 0.3s ease;
+    font-size: 22px;
+    color: rgba(255,255,255,0.75);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Shimmer line on top */
+.user-icon::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(99,179,237,0.4), transparent);
+    opacity: 0;
+    transition: opacity var(--transition);
 }
 
 .user-icon:hover {
-    color: rgba(255, 255, 255, 1);
+    color: #ffffff;
+    border-color: rgba(139,92,246,0.45);
+    background: rgba(139,92,246,0.1);
+    box-shadow: 0 0 18px rgba(139,92,246,0.25);
 }
 
+.user-icon:hover::before {
+    opacity: 1;
+}
+
+/* ── Dropdown Panel ───────────────────────────────────────── */
 .user-dropdown {
     position: fixed;
-    top: calc(55px + env(safe-area-inset-top, 0) + 8px);
+    top: calc(55px + env(safe-area-inset-top, 0) + 10px);
     right: 16px;
-    width: 240px;
-    background: rgba(28, 28, 28, 0.95); /* 60% darker grey background */
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
+    width: 260px;
+    font-family: 'Space Grotesk', sans-serif;
+
+    /* Glassmorphism — matches feature cards */
+    background: rgba(14, 14, 14, 0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(139,92,246,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     overflow: hidden;
     z-index: 10002;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    animation: dropdownAppear 0.3s ease;
-    transform-origin: top center;
+
+    animation: dropdownAppear 0.32s cubic-bezier(0.4,0,0.2,1) both;
+    transform-origin: top right;
+}
+
+/* Top accent shimmer line — matches feature-card::before */
+.user-dropdown::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(139,92,246,0.7) 35%,
+        rgba(99,179,237,0.55) 65%,
+        transparent 100%
+    );
+    z-index: 1;
+}
+
+/* Subtle inner purple glow at top — matches feature-card::after */
+.user-dropdown::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 120px;
+    background: radial-gradient(ellipse at top center, rgba(139,92,246,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 @keyframes dropdownAppear {
     from {
         opacity: 0;
-        transform: translateY(-10px) scale(0.95);
+        transform: translateY(-12px) scale(0.96);
     }
     to {
         opacity: 1;
@@ -49,152 +141,266 @@
     }
 }
 
-.user-dropdown p {
-    margin: 0;
-    padding: 15px;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: center;
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* ── User Info Header ─────────────────────────────────────── */
+.user-dropdown-header {
+    position: relative;
+    z-index: 2;
+    padding: 18px 18px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
 }
 
-.user-dropdown a, .user-dropdown button {
+.user-dropdown p {
+    margin: 0;
+    padding: 16px 18px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    text-align: center;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+    z-index: 2;
+}
+
+/* ── Avatar Image ─────────────────────────────────────────── */
+.avatar-img {
+    display: block;
+    margin: 0 auto;
+    border: 1.5px solid rgba(139,92,246,0.4);
+    box-shadow: 0 0 16px rgba(139,92,246,0.2);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.avatar-img:hover {
+    border-color: rgba(139,92,246,0.7);
+    box-shadow: 0 0 24px rgba(139,92,246,0.35);
+}
+
+/* ── Avatar Dropdown Select ───────────────────────────────── */
+.avatar-dropdown {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-top: 8px;
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.8);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    z-index: 2;
+}
+
+.avatar-dropdown:hover,
+.avatar-dropdown:focus {
+    border-color: rgba(139,92,246,0.4);
+    background: rgba(139,92,246,0.08);
+}
+
+/* ── Menu Items Container ─────────────────────────────────── */
+.user-dropdown-menu {
+    padding: 6px 0;
+    position: relative;
+    z-index: 2;
+}
+
+/* ── Links & Buttons ──────────────────────────────────────── */
+.user-dropdown a,
+.user-dropdown button {
     display: flex;
     align-items: center;
-    padding: 12px 15px;
-    color: rgba(255, 255, 255, 0.9);
+    gap: 0;
+    padding: 11px 18px;
+    color: rgba(255,255,255,0.75);
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: all var(--transition);
     border: none;
     background: none;
     width: 100%;
     text-align: left;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
     font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     position: relative;
     overflow: hidden;
 }
 
-.user-dropdown a:hover, .user-dropdown button:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 1);
-}
-
-.user-dropdown a::before, .user-dropdown button::before {
+/* Left accent bar — matches stat-item::before pattern */
+.user-dropdown a::before,
+.user-dropdown button::before {
     content: '';
     position: absolute;
     left: 0;
-    top: 0;
-    height: 100%;
-    width: 3px;
-    background: rgba(255, 255, 255, 0.3);
-    transform: scaleY(0);
-    transition: transform 0.2s ease;
+    top: 12%;
+    bottom: 12%;
+    width: 2px;
+    background: linear-gradient(
+        180deg,
+        rgba(139,92,246,0) 0%,
+        rgba(139,92,246,0.9) 50%,
+        rgba(99,179,237,0.6) 100%
+    );
+    border-radius: 2px;
+    opacity: 0;
+    transform: scaleY(0.4);
+    transition: opacity var(--transition), transform var(--transition);
 }
 
-.user-dropdown a:hover::before, .user-dropdown button:hover::before {
+/* Hover background glow */
+.user-dropdown a:hover,
+.user-dropdown button:hover {
+    background: rgba(139,92,246,0.07);
+    color: #ffffff;
+    padding-left: 22px;
+}
+
+.user-dropdown a:hover::before,
+.user-dropdown button:hover::before {
+    opacity: 1;
     transform: scaleY(1);
 }
 
-.dropdown-icon {
-    margin-right: 10px;
-    font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.9);
+/* Danger / logout variant */
+.user-dropdown button.danger,
+.user-dropdown a.danger {
+    color: rgba(239, 68, 68, 0.75);
 }
 
+.user-dropdown button.danger::before,
+.user-dropdown a.danger::before {
+    background: linear-gradient(180deg, rgba(239,68,68,0) 0%, rgba(239,68,68,0.9) 50%, rgba(239,68,68,0.4) 100%);
+}
+
+.user-dropdown button.danger:hover,
+.user-dropdown a.danger:hover {
+    background: rgba(239,68,68,0.07);
+    color: #f87171;
+}
+
+/* ── Dropdown Icon ────────────────────────────────────────── */
+.dropdown-icon {
+    margin-right: 12px;
+    font-size: 1rem;
+    color: rgba(139,92,246,0.8);
+    flex-shrink: 0;
+    transition: color var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: rgba(139,92,246,0.08);
+    border: 1px solid rgba(139,92,246,0.15);
+}
+
+.user-dropdown a:hover .dropdown-icon,
+.user-dropdown button:hover .dropdown-icon {
+    color: #a78bfa;
+    background: rgba(139,92,246,0.15);
+    border-color: rgba(139,92,246,0.35);
+}
+
+.dropdown-icon.danger-icon {
+    color: rgba(239,68,68,0.75);
+    background: rgba(239,68,68,0.07);
+    border-color: rgba(239,68,68,0.15);
+}
+
+/* ── Badge ────────────────────────────────────────────────── */
 .dropdown-item {
     display: flex;
     align-items: center;
-    position: relative;
+    width: 100%;
 }
 
 .dropdown-badge {
     position: absolute;
-    right: 15px;
-    background: #ff4444;
+    right: 16px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.9), rgba(99,179,237,0.8));
     color: white;
     border-radius: 50%;
     width: 18px;
     height: 18px;
-    font-size: 0.7rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.65rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    animation: pulse 2s infinite;
+    font-weight: 700;
+    letter-spacing: 0;
+    box-shadow: 0 0 10px rgba(139,92,246,0.5);
+    animation: badgePulse 2.4s ease-in-out infinite;
 }
 
-/* Responsive */
+@keyframes badgePulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(139,92,246,0.4); transform: scale(1); }
+    50%       { box-shadow: 0 0 16px rgba(139,92,246,0.7); transform: scale(1.1); }
+}
+
+/* ── Divider ──────────────────────────────────────────────── */
+.dropdown-divider {
+    height: 1px;
+    margin: 4px 14px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+    border: none;
+    position: relative;
+    z-index: 2;
+}
+
+/* ── Staggered Fade-In Animations ────────────────────────── */
+.user-dropdown a,
+.user-dropdown button {
+    animation: fadeInItem 0.35s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+@keyframes fadeInItem {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.user-dropdown a:nth-child(1), .user-dropdown button:nth-child(1) { animation-delay: 0.04s; }
+.user-dropdown a:nth-child(2), .user-dropdown button:nth-child(2) { animation-delay: 0.09s; }
+.user-dropdown a:nth-child(3), .user-dropdown button:nth-child(3) { animation-delay: 0.14s; }
+.user-dropdown a:nth-child(4), .user-dropdown button:nth-child(4) { animation-delay: 0.19s; }
+.user-dropdown a:nth-child(5), .user-dropdown button:nth-child(5) { animation-delay: 0.24s; }
+.user-dropdown a:nth-child(6), .user-dropdown button:nth-child(6) { animation-delay: 0.29s; }
+
+/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
     .user-dropdown {
-        top: calc(58px + env(safe-area-inset-top, 0) + 8px);
+        top: calc(58px + env(safe-area-inset-top, 0) + 10px);
         right: 12px;
         width: calc(100vw - 24px);
         max-width: 280px;
     }
-    
-    .user-dropdown a, .user-dropdown button {
-        padding: 10px 15px;
-        font-size: 0.9rem;
+
+    .user-dropdown a,
+    .user-dropdown button {
+        padding: 12px 16px;
+        font-size: 0.8rem;
     }
-}
 
-/* Animation for dropdown items */
-.user-dropdown a, .user-dropdown button {
-    animation: fadeInItem 0.3s ease;
-    animation-fill-mode: both;
-}
-
-@keyframes fadeInItem {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
+    .user-dropdown a:hover,
+    .user-dropdown button:hover {
+        padding-left: 20px;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Apply staggered delay to items */
-.user-dropdown a:nth-child(2), .user-dropdown button:nth-child(2) {
-    animation-delay: 0.05s;
-}
-
-.user-dropdown a:nth-child(3), .user-dropdown button:nth-child(3) {
-    animation-delay: 0.1s;
-}
-
-.user-dropdown a:nth-child(4), .user-dropdown button:nth-child(4) {
-    animation-delay: 0.15s;
-}
-
-.user-dropdown a:nth-child(5), .user-dropdown button:nth-child(5) {
-    animation-delay: 0.2s;
-}
-
-.user-dropdown a:nth-child(6), .user-dropdown button:nth-child(6) {
-    animation-delay: 0.25s;
-}
-
-.avatar-img {
-    display: block;
-    margin: 0 auto;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.avatar-dropdown {
-    width: 100%;
-    padding: 8px;
-    border-radius: 6px;
-    border: none;
-    margin-top: 8px;
-    background-color: rgba(28, 28, 28, 0.8); /* 60% darker grey background */
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: bold;
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }

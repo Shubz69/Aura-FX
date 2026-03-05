@@ -1,65 +1,170 @@
+/* ============================================================
+   GDPR MODAL — AURA FX  |  Theme-Aligned
+   ============================================================ */
+
+/* ── Backdrop ─────────────────────────────────────────────── */
 .gdpr-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100000; /* Above loading screen (99999) */
-    backdrop-filter: blur(5px);
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: gdprBackdropIn 0.35s ease both;
 }
 
+@keyframes gdprBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal Card ───────────────────────────────────────────── */
 .gdpr-modal {
-    background: linear-gradient(135deg, rgba(26, 15, 46, 0.98), rgba(37, 26, 58, 0.98));
-    color: white;
-    padding: 2.5rem;
-    border-radius: 16px;
-    width: 500px;
-    max-width: 90%;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.3),
-        0 0 60px rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    font-family: 'Space Grotesk', sans-serif;
+  width: 500px;
+  max-width: 92%;
+  padding: 2.5rem;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+
+  /* Same layered background as settings-container */
+  background:
+    radial-gradient(ellipse 65% 45% at 25% 0%,  rgba(139,92,246,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 10%,  rgba(99,179,237,0.08) 0%, transparent 55%),
+    rgba(14, 15, 20, 0.97);
+
+  border-radius: 22px;
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(139, 92, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+
+  animation: gdprModalIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes gdprModalIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* Top shimmer line */
+.gdpr-modal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(139, 92, 246, 0.65),
+    rgba(99, 179, 237, 0.45),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Hairline gradient border inset */
+.gdpr-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.28) 0%,
+    rgba(99, 179, 237, 0.1) 50%,
+    transparent 75%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:         linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Heading ──────────────────────────────────────────────── */
 .gdpr-modal h2 {
-    margin-bottom: 1.25rem;
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 1.5rem;
-    font-weight: 700;
-    text-align: center;
+  margin: 0 0 1.25rem 0;
+  font-size: 1.45rem;
+  font-weight: 200;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  background: linear-gradient(125deg, #ffffff 20%, #c4b5fd 60%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 18px rgba(139, 92, 246, 0.38));
 }
 
+/* ── Body Text ────────────────────────────────────────────── */
 .gdpr-modal p {
-    margin-bottom: 1rem;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.95rem;
+  margin-bottom: 1rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.88rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
 }
 
+/* ── Divider ──────────────────────────────────────────────── */
+.gdpr-modal hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(139, 92, 246, 0.25),
+    rgba(99, 179, 237, 0.15),
+    transparent
+  );
+  margin: 1.25rem 0;
+}
+
+/* ── Accept / Primary Button ──────────────────────────────── */
 .gdpr-modal button {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
-    color: white;
-    padding: 12px 32px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 1rem;
-    transition: all 0.3s ease;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1rem;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.95rem 2rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.85) 0%, rgba(99,179,237,0.75) 100%);
+  box-shadow: 0 0 28px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine overlay */
+.gdpr-modal button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.28s ease;
 }
 
 .gdpr-modal button:hover {
-    background: linear-gradient(135deg, #9f70f8, #7c7ff3);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 0 44px rgba(139,92,246,0.52), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.gdpr-modal button:hover::before { opacity: 1; }
+
+.gdpr-modal button:active {
+  transform: translateY(0);
+  box-shadow: 0 0 20px rgba(139,92,246,0.3);
 }

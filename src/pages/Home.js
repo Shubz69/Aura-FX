@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 import { useAuth } from "../context/AuthContext";
@@ -7,24 +7,69 @@ import A7Logo from "../components/A7Logo";
 import MarketTicker from "../components/MarketTicker";
 import { FaUsers, FaTrophy, FaGraduationCap, FaRocket, FaShieldAlt, FaClock, FaCoins, FaChartBar, FaChartLine, FaGlobe } from 'react-icons/fa';
 
+// Animated counter hook
+const useCountUp = (target, duration = 2000, start = false) => {
+    const [count, setCount] = useState(0);
+    useEffect(() => {
+        if (!start) return;
+        let startTime = null;
+        const isFloat = String(target).includes('.');
+        const numericTarget = parseFloat(String(target).replace(/[^0-9.]/g, ''));
+        const suffix = String(target).replace(/[0-9.]/g, '');
+        const animate = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = eased * numericTarget;
+            setCount(isFloat ? current.toFixed(1) + suffix : Math.floor(current) + suffix);
+            if (progress < 1) requestAnimationFrame(animate);
+        };
+        requestAnimationFrame(animate);
+    }, [start, target, duration]);
+    return count;
+};
+
+const StatItem = ({ number, label, fill = '75%' }) => {
+    const ref = useRef(null);
+    const [visible, setVisible] = useState(false);
+    const animated = useCountUp(number, 1800, visible);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+            { threshold: 0.25 }
+        );
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div
+            className={`stat-item${visible ? ' stat-visible' : ''}`}
+            ref={ref}
+            style={{ '--fill': fill }}
+        >
+            <div className="stat-number">{visible ? animated : '0'}</div>
+            <div className="stat-label">{label}</div>
+            <span className="stat-trend">
+                <span className="stat-trend-fill" />
+            </span>
+        </div>
+    );
+};
+
 const Home = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const [showContent, setShowContent] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    
-    // Market ticker is now handled by the shared MarketTicker component
 
-    // Loading effect - do NOT touch document/body scroll, let CSS + page-wrapper/home-container handle it
     useEffect(() => {
         const loadingTimer = setTimeout(() => {
             setIsLoading(false);
             setShowContent(true);
         }, 3000);
-
-        return () => {
-            clearTimeout(loadingTimer);
-        };
+        return () => { clearTimeout(loadingTimer); };
     }, []);
 
     const handleStartTrading = () => {
@@ -37,15 +82,12 @@ const Home = () => {
 
     return (
         <>
-            {/* Loading Screen */}
             {isLoading && (
                 <div className="loading-screen">
                     <CosmicBackground />
-                    {/* Main Loading Content - matches brand on top left */}
                     <div className="loading-content">
                         <span className="loading-brand-text">Aura FX</span>
                         <div className="loading-subtitle">INITIALIZING SYSTEM...</div>
-                        
                         <div className="loading-dots-container">
                             <span className="loading-dot"></span>
                             <span className="loading-dot"></span>
@@ -58,29 +100,39 @@ const Home = () => {
             <div className="home-container">
                 <CosmicBackground />
                 <div className="central-glow"></div>
-            
+
                 {showContent && (
                     <div className="home-content">
-                        {/* Logo at Top Center */}
+                        {/* Hero Section */}
                         <div className="home-logo-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
                             <A7Logo />
-                            {/* Brand Name - Styled exactly as shown */}
                             <div className="brand-name-container">
                                 <h1 className="brand-name">Aura FX</h1>
                                 <p className="powered-by-glitch">powered by <strong>The Glitch</strong></p>
                             </div>
-                        </div>
 
-                        {/* Main Content Section */}
-                        <div className="home-main-content">
-                            <div className="content-intro">
+                            {/* Hero tagline + CTA — moved here from bottom */}
+                            <div className="content-intro hero-intro">
                                 <p className="intro-text">
                                     Transform Your Trading Career with Elite Education and Proven Strategies
                                 </p>
                             </div>
 
+                            <div className="home-cta-section hero-cta">
+                                <button className="home-cta-button" onClick={handleStartTrading}>
+                                    Get Started
+                                </button>
+                                <button className="home-secondary-button" onClick={() => navigate("/explore")}>
+                                    Explore Features
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Main Content Section */}
+                        <div className="home-main-content">
+
                             {/* Live Market Ticker */}
-                            <MarketTicker 
+                            <MarketTicker
                                 compact={true}
                                 showTabs={false}
                                 showViewAll={true}
@@ -122,22 +174,10 @@ const Home = () => {
                             {/* Stats Section */}
                             <div className="stats-section">
                                 <div className="stats-grid">
-                                    <div className="stat-item">
-                                        <div className="stat-number">24.7%</div>
-                                        <div className="stat-label">Average ROI</div>
-                                    </div>
-                                    <div className="stat-item">
-                                        <div className="stat-number">1,200+</div>
-                                        <div className="stat-label">Active Traders</div>
-                                    </div>
-                                    <div className="stat-item">
-                                        <div className="stat-number">85%</div>
-                                        <div className="stat-label">Success Rate</div>
-                                    </div>
-                                    <div className="stat-item">
-                                        <div className="stat-number">50+</div>
-                                        <div className="stat-label">Expert Courses</div>
-                                    </div>
+                                    <StatItem number="24.7%" label="Average ROI"     fill="82%" />
+                                    <StatItem number="1,200+" label="Active Traders" fill="90%" />
+                                    <StatItem number="85%"   label="Success Rate"   fill="85%" />
+                                    <StatItem number="50+"   label="Expert Courses" fill="60%" />
                                 </div>
                             </div>
 
@@ -168,7 +208,7 @@ const Home = () => {
                                 </div>
                             </div>
 
-                            {/* Trade Multiple Markets - same content on mobile and laptop */}
+                            {/* Trade Multiple Markets */}
                             <div className="trade-markets-section">
                                 <h2 className="trade-markets-section__title">Trade Multiple Markets</h2>
                                 <div className="trade-markets-section__grid">
@@ -252,15 +292,6 @@ const Home = () => {
                                 </div>
                             </div>
 
-                            {/* CTA Section */}
-                            <div className="home-cta-section">
-                                <button className="home-cta-button" onClick={handleStartTrading}>
-                                    Get Started
-                                </button>
-                                <button className="home-secondary-button" onClick={() => navigate("/explore")}>
-                                    Explore Features
-                                </button>
-                            </div>
                         </div>
                     </div>
                 )}

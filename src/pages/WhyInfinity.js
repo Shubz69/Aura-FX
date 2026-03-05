@@ -3,10 +3,70 @@ import { useNavigate } from "react-router-dom";
 import "../styles/WhyInfinity.css";
 import CosmicBackground from "../components/CosmicBackground";
 import MarketTicker from "../components/MarketTicker";
-import { FaChartLine, FaGraduationCap, FaArrowRight, FaUsers, FaLock, FaRocket, FaChartPie } from "react-icons/fa";
+import { FaChartLine, FaGraduationCap, FaArrowRight, FaUsers, FaLock, FaRocket, FaChartPie, FaTimesCircle, FaCheckCircle } from "react-icons/fa";
 import { BiCodeAlt } from 'react-icons/bi';
 import { RiStockLine } from 'react-icons/ri';
 
+/* ── VS comparison data ────────────────────────────────────── */
+const typicalItems = [
+    "Signals without reasoning, context, or risk guidance",
+    "Showcases wins, quietly deletes losses",
+    "One-dimensional strategies with no adaptability",
+    "Recycled YouTube & Twitter content",
+    "No real-time execution or transparency",
+    "No structured education or progression path",
+    "Zero institutional risk management framework",
+    "Fragmented tools scattered across platforms",
+    "No accountability or verified results",
+];
+
+const auraItems = [
+    "Decision-making, risk, and deep market understanding",
+    "Full transparency — real trades, real accounts, live execution",
+    "Frameworks adaptable across all market conditions",
+    "Technical, fundamental, macro, and geopolitical coverage",
+    "Live on Twitch — unfiltered, unedited market execution",
+    "Multi-level structured education across all asset classes",
+    "Risk-first institutional trading principles at every level",
+    "AI intelligence, analysis, education & community — one platform",
+    "Professional moderation, structure, and full accountability",
+];
+
+/* ── VS Card Component ─────────────────────────────────────── */
+const VSCard = ({ type, items }) => {
+    const isTypical = type === "typical";
+    return (
+        <div className={`vs-card vs-card--${type}`}>
+            {/* Header */}
+            <div className="vs-card__header">
+                <div className="vs-card__icon">
+                    {isTypical ? <FaTimesCircle /> : <FaCheckCircle />}
+                </div>
+                <div>
+                    <div className="vs-card__title">
+                        {isTypical ? "Typical Community" : "AURA FX"}
+                    </div>
+                    <div className="vs-card__label">
+                        {isTypical ? "What you usually get" : "The standard we hold ourselves to"}
+                    </div>
+                </div>
+            </div>
+            {/* List */}
+            <ul className="vs-list">
+                {items.map((text, i) => (
+                    <li key={i} className="vs-list__item">
+                        <span className="vs-list__bullet">
+                            {isTypical ? "✕" : "✓"}
+                        </span>
+                        {text}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+/* ── Main Component ────────────────────────────────────────── */
 const WhyInfinity = () => {
     const navigate = useNavigate();
     const [visibleSections, setVisibleSections] = useState({
@@ -19,8 +79,6 @@ const WhyInfinity = () => {
         additionalFeatures: null,
     });
 
-    // Market ticker is now handled by the shared MarketTicker component
-    
     // Scroll animations
     useEffect(() => {
         const observerCallback = (entries) => {
@@ -230,44 +288,27 @@ const WhyInfinity = () => {
                     </div>
                 </div>
 
-                {/* AURA FX vs Typical Trading Communities Section */}
-                <div className="why-additional-features fade-in-up">
+                {/* ── AURA FX vs Typical Trading Communities ─────────────── */}
+                <div className="why-additional-features fade-in-up vs-section-wrapper">
                     <h2 className="why-section-heading">AURA FX vs Typical Trading Communities</h2>
-                    
-                    <div className="why-features-grid why-vs-grid">
-                        <div className="why-platform-feature">
-                            <div className="why-platform-icon">
-                                <FaUsers />
-                            </div>
-                            <h3>Typical Trading Communities</h3>
-                            <p>Focus on signals and entries without explaining reasoning</p>
-                            <p>Emphasise wins while hiding losses or risk</p>
-                            <p>Teach one-dimensional strategies with no adaptability</p>
-                            <p>Rely on recycled YouTube/Twitter content</p>
-                            <p>Little to no real-time execution or transparency</p>
-                            <p>No structured education or progression path</p>
-                            <p>No institutional risk management framework</p>
-                            <p>Fragmented tools spread across multiple platforms</p>
-                            <p>No accountability or verification of results</p>
+
+                    <div className="vs-grid">
+                        {/* Left — Typical */}
+                        <VSCard type="typical" items={typicalItems} />
+
+                        {/* Centre — VS badge */}
+                        <div className="vs-divider">
+                            <div className="vs-line" />
+                            <div className="vs-badge">VS</div>
+                            <div className="vs-line" />
                         </div>
-                        
-                        <div className="why-platform-feature">
-                            <div className="why-platform-icon">
-                                <FaChartLine />
-                            </div>
-                            <h3>Aura FX</h3>
-                            <p>Focuses on decision-making, risk, and market understanding</p>
-                            <p>Full transparency with real trades, real accounts, and live execution</p>
-                            <p>Teaches frameworks adaptable across all market conditions</p>
-                            <p>Covers technical, fundamental, macro, and geopolitical drivers</p>
-                            <p>Operates live on Twitch with unfiltered market execution</p>
-                            <p>Provides structured multi-level education across all asset classes</p>
-                            <p>Built around risk-first institutional trading principles</p>
-                            <p>Integrates AI intelligence, analysis, education, and community in one platform</p>
-                            <p>Maintains professional moderation, structure, and accountability</p>
-                        </div>
+
+                        {/* Right — AURA FX */}
+                        <VSCard type="aura" items={auraItems} />
                     </div>
                 </div>
+                {/* ─────────────────────────────────────────────────────────── */}
+
             </div>
         </div>
     );

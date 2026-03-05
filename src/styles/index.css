@@ -1,4 +1,5 @@
 /* ========== VARIABLES (From Landing Page) ========== */
+
 :root {
     /* White/Cosmic Colors */
     --primary: #ffffff;      /* White */
@@ -889,4 +890,117 @@ img, video, canvas {
         width: 0;
         height: 0;
     }
+}
+
+/* ============================================================
+   FOOTER VISIBILITY FIX
+   Paste these rules at the very BOTTOM of your index.css
+   They override the overflow:hidden / max-height:100vh locks
+   that were clipping the footer on screens below 486px.
+   ============================================================ */
+
+/* ── 1. The footer itself must never be clipped or collapsed ── */
+footer.footer,
+.footer {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  /* Remove any inherited height constraints */
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  /* Full width always */
+  width: 100% !important;
+  max-width: 100% !important;
+  /* Sit above background layers */
+  position: relative !important;
+  z-index: 10 !important;
+  flex-shrink: 0 !important; /* never shrink inside flex column */
+}
+
+/* ── 2. The .page-wrapper is overflow:hidden + max-height:100vh on mobile.
+        This means the footer (which is a SIBLING of .page-wrapper, not a
+        child) is fine — BUT if your footer is INSIDE .page-wrapper you
+        must make the wrapper scrollable to expose the footer.
+        Check your App.js / layout and move <Footer /> OUTSIDE .page-wrapper.
+        
+        If you cannot move it, the wrapper needs enough height to show it: ── */
+
+/* Make .page-wrapper tall enough to include the footer when footer is inside it */
+.page-wrapper {
+  /* Allow the wrapper to grow beyond 100vh so footer is reachable by scrolling */
+  min-height: 100vh !important;
+  /* Do NOT lock max-height when footer needs to be visible */
+}
+
+/* ── 3. Override the aggressive mobile locks only for pages that need footer ──
+        The :has() selectors in index.css set max-height:100vh on .page-wrapper.
+        We lift that restriction so the footer can be scrolled into view. ── */
+
+/* All pages — ensure .page-wrapper can scroll to reveal footer */
+.page-wrapper:has(.home-container),
+.page-wrapper:has(.contact-container),
+.page-wrapper:has(.why-container),
+.page-wrapper:has(.explore-container),
+.page-wrapper:has(.profile-container),
+.page-wrapper:has(.courses-container),
+.page-wrapper:has(.login-container),
+.page-wrapper:has(.register-container) {
+  max-height: none !important; /* lift the 100vh ceiling */
+  overflow-y: auto !important;  /* scrollable, not clipped */
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* ── 4. On mobile (≤767px) the html+body are overflow:hidden.
+        This means the ONLY scroll container is .page-wrapper.
+        So the footer MUST be inside .page-wrapper (not a sibling)
+        OR you move the scroll lock to a different element. ── */
+
+@media (max-width: 767px) {
+  /* Allow footer to be visible and scrollable inside the locked layout */
+  footer.footer,
+  .footer {
+    position: relative !important;
+    z-index: 10 !important;
+    flex-shrink: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* If footer is a direct child of #root or .app-container,
+     those containers must not clip it */
+  #root,
+  .app-container {
+    /* Keep flex column so footer stacks below content */
+    display: flex !important;
+    flex-direction: column !important;
+    /* But DO NOT clip children — let .page-wrapper handle scroll */
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* The actual scroll lock stays on .page-wrapper only */
+  .page-wrapper {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    /* No max-height — footer sibling needs space */
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  footer.footer,
+  .footer {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+  }
 }
