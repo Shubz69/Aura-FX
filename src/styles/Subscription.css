@@ -145,7 +145,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 650px; /* Fixed height for consistency */
+  min-height: 570px; /* Fixed height for consistency */
 }
 
 .subscription-plan-card:hover {

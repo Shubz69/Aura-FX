@@ -4179,23 +4179,9 @@ avatar: storedUser?.avatar || null,
                     className="mobile-sidebar-toggle"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     aria-label="Toggle channels"
-                    style={{
-                        position: 'fixed',
-                        top: '80px',
-                        left: '12px',
-                        zIndex: 1002,
-                        background: 'rgba(43, 45, 49, 0.95)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px',
-                        padding: '10px 12px',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                        transition: 'all 0.2s ease'
-                    }}
+                   style={{
+    display: 'none'
+}}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'rgba(43, 45, 49, 1)';
                     }}
@@ -5606,103 +5592,153 @@ avatar: storedUser?.avatar || null,
                                                         </button>
                                                     </div>
                                                 )}
-                                            <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
-                                                {/* Deleted message */}
-                                                {message.isDeleted || message.content === '[deleted]' ? (
-                                                    <span style={{ 
-                                                        color: '#72767D', 
-                                                        fontStyle: 'italic',
-                                                        opacity: 0.7
-                                                    }}>
-                                                        [message deleted]
-                                                    </span>
-                                                ) : message.isWelcomeMessage ? (
-                                                    message.content.split('\n').map((line, idx) => {
-                                                        const trimmedLine = line.trim();
-                                                        // Format markdown-style headers
-                                                        if (trimmedLine.startsWith('## ')) {
-                                                            return <h3 key={idx} style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '16px', marginBottom: '10px', color: 'var(--primary)' }}>{trimmedLine.substring(3)}</h3>;
-                                                        }
-                                                        // Format bold text (lines that start and end with **)
-                                                        if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && trimmedLine.length > 4) {
-                                                            return <div key={idx} style={{ fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>{trimmedLine.replace(/\*\*/g, '')}</div>;
-                                                        }
-                                                        // Empty lines
-                                                        if (trimmedLine === '') {
-                                                            return <br key={idx} />;
-                                                        }
-                                                        // Regular text lines
-                                                        return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
-                                                    })
-                                                ) : (
-                                                    (() => {
-                                                        // Parse message content for GIFs and images; render **bold** as bold (no asterisks shown)
-                                                        let content = message.content || '';
-                                                        // Remove file references: [File: ...], [FILE: ...], etc.
-                                                        content = content.replace(/\[File:[^\]]*\]/gi, '').replace(/\[FILE:[^\]]*\]/gi, '').trim();
-                                                        
-                                                        // If message has a file attachment, don't show content if it's empty or only file references
-                                                        if (message.file && !content) {
-                                                            return null; // Don't render empty content when file is present
-                                                        }
-                                                        
-                                                        if (!content) return null;
-                                                        
-                                                        // Helper: render text with **segments** as bold (asterisks not shown)
-                                                        const renderTextWithBold = (text) => {
-                                                            const segs = text.split(/\*\*([^*]+)\*\*/g);
-                                                            return segs.map((seg, i) => i % 2 === 1 ? <strong key={i}>{seg}</strong> : <span key={i}>{seg}</span>);
-                                                        };
-                                                        
-                                                        // Check for markdown image syntax: ![alt](url)
-                                                        const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-                                                        const parts = [];
-                                                        let lastIndex = 0;
-                                                        let match;
-                                                        let keyCounter = 0;
-                                                        
-                                                        while ((match = imageRegex.exec(content)) !== null) {
-                                                            // Add text before image (with bold rendering)
-                                                            if (match.index > lastIndex) {
-                                                                const slice = content.substring(lastIndex, match.index);
-                                                                parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBold(slice)}</span>);
-                                                            }
-                                                            const imageUrl = match[2];
-                                                            const imageAlt = match[1] || 'GIF';
-                                                            parts.push(
-                                                                <img
-                                                                    key={`img-${keyCounter++}`}
-                                                                    src={imageUrl}
-                                                                    alt={imageAlt}
-                                                                    style={{
-                                                                        maxWidth: '180px',
-                                                                        maxHeight: '180px',
-                                                                        borderRadius: '8px',
-                                                                        marginTop: '6px',
-                                                                        display: 'block',
-                                                                        cursor: 'pointer',
-                                                                        objectFit: 'contain'
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        if (imageUrl) {
-                                                                            window.open(imageUrl, '_blank');
-                                                                        }
-                                                                    }}
-                                                                />
-                                                            );
-                                                            lastIndex = match.index + match[0].length;
-                                                        }
-                                                        
-                                                        // Add remaining text (with bold rendering)
-                                                        if (lastIndex < content.length) {
-                                                            const slice = content.substring(lastIndex);
-                                                            parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBold(slice)}</span>);
-                                                        }
-                                                        
-                                                        return parts.length > 0 ? parts : renderTextWithBold(content);
-                                                    })()
-                                                )}
-                                            </div>
+                                           <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
+    {/* Deleted message */}
+    {message.isDeleted || message.content === '[deleted]' ? (
+        <span style={{ 
+            color: '#72767D', 
+            fontStyle: 'italic',
+            opacity: 0.7
+        }}>
+            [message deleted]
+        </span>
+    ) : message.isWelcomeMessage ? (
+        message.content.split('\n').map((line, idx) => {
+            const trimmedLine = line.trim();
+            // Format markdown-style headers
+            if (trimmedLine.startsWith('## ')) {
+                return <h3 key={idx} style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '16px', marginBottom: '10px', color: 'var(--primary)' }}>{trimmedLine.substring(3)}</h3>;
+            }
+            // Format bold text (lines that start and end with **)
+            if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && trimmedLine.length > 4) {
+                return <div key={idx} style={{ fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>{trimmedLine.replace(/\*\*/g, '')}</div>;
+            }
+            // Empty lines
+            if (trimmedLine === '') {
+                return <br key={idx} />;
+            }
+            // Regular text lines
+            return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
+        })
+    ) : (
+        (() => {
+            // Parse message content for GIFs and images; render **bold** as bold (no asterisks shown)
+            let content = message.content || '';
+            // Remove file references: [File: ...], [FILE: ...], etc.
+            content = content.replace(/\[File:[^\]]*\]/gi, '').replace(/\[FILE:[^\]]*\]/gi, '').trim();
+            
+            // If message has a file attachment, don't show content if it's empty or only file references
+            if (message.file && !content) {
+                return null; // Don't render empty content when file is present
+            }
+            
+            if (!content) return null;
+            
+            // URL regex pattern
+            const urlPattern = /(https?:\/\/[^\s]+)/g;
+            
+            // Helper: render text with **segments** as bold AND convert URLs to links
+            const renderTextWithBoldAndLinks = (text) => {
+                // First split by URLs
+                const urlParts = text.split(urlPattern);
+                const urlMatches = text.match(urlPattern) || [];
+                
+                return urlParts.reduce((acc, part, index) => {
+                    // Add text part with bold rendering
+                    if (part) {
+                        const boldParts = part.split(/\*\*([^*]+)\*\*/g);
+                        const boldElements = boldParts.map((boldPart, i) => {
+                            if (i % 2 === 1) {
+                                return <strong key={`bold-${i}`}>{boldPart}</strong>;
+                            }
+                            return boldPart;
+                        });
+                        acc.push(<span key={`text-${index}`}>{boldElements}</span>);
+                    }
+                    
+                    // Add URL part as clickable link
+                    if (urlMatches[index]) {
+                        const url = urlMatches[index];
+                        acc.push(
+                            <a 
+                                key={`link-${index}`}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                    color: '#a78bfa',
+                                    textDecoration: 'none',
+                                    borderBottom: '1px solid rgba(167,139,250,0.45)',
+                                    cursor: 'pointer'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.color = '#c4b5fd';
+                                    e.target.style.borderBottomColor = 'rgba(196,181,253,0.85)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.color = '#a78bfa';
+                                    e.target.style.borderBottomColor = 'rgba(167,139,250,0.45)';
+                                }}
+                            >
+                                {url}
+                            </a>
+                        );
+                    }
+                    
+                    return acc;
+                }, []);
+            };
+            
+            // Check for markdown image syntax: ![alt](url)
+            const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+            const parts = [];
+            let lastIndex = 0;
+            let match;
+            let keyCounter = 0;
+            
+            while ((match = imageRegex.exec(content)) !== null) {
+                // Add text before image (with link detection)
+                if (match.index > lastIndex) {
+                    const slice = content.substring(lastIndex, match.index);
+                    parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBoldAndLinks(slice)}</span>);
+                }
+                const imageUrl = match[2];
+                const imageAlt = match[1] || 'GIF';
+                parts.push(
+                    <img
+                        key={`img-${keyCounter++}`}
+                        src={imageUrl}
+                        alt={imageAlt}
+                        style={{
+                            maxWidth: '180px',
+                            maxHeight: '180px',
+                            borderRadius: '8px',
+                            marginTop: '6px',
+                            display: 'block',
+                            cursor: 'pointer',
+                            objectFit: 'contain'
+                        }}
+                        onClick={() => {
+                            if (imageUrl) {
+                                window.open(imageUrl, '_blank');
+                            }
+                        }}
+                    />
+                );
+                lastIndex = match.index + match[0].length;
+            }
+            
+            // Add remaining text (with link detection)
+            if (lastIndex < content.length) {
+                const slice = content.substring(lastIndex);
+                parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBoldAndLinks(slice)}</span>);
+            }
+            
+            return parts.length > 0 ? parts : renderTextWithBoldAndLinks(content);
+        })()
+    )}
+</div>
                                             
                                             {message.isWelcomeMessage && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
                                                 <div style={{

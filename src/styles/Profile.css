@@ -235,22 +235,17 @@
 }
 
 /* Animated conic ring */
+/* Clean static ring — no animation */
 .pf-avatar-ring {
     position: relative;
     width: 118px; height: 118px;
     border-radius: 50%;
-    background: conic-gradient(
-        rgba(139,92,246,0.9) 0deg,
-        rgba(99,179,237,0.7) 120deg,
-        rgba(167,139,250,0.85) 240deg,
-        rgba(139,92,246,0.9) 360deg
-    );
-    padding: 2px;
-    animation: ringHue 8s linear infinite;
-    box-shadow: 0 0 28px rgba(139,92,246,0.3);
+    border: 3px solid rgba(139,92,246,0.7);
+    box-shadow: 0 0 0 1px rgba(139,92,246,0.15), 0 4px 20px rgba(0,0,0,0.5);
+    padding: 0;
+    background: transparent;
 }
 
-@keyframes ringHue { to { filter: hue-rotate(360deg); } }
 
 .pf-avatar-inner {
     width: 100%; height: 100%;

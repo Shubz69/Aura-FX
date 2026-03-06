@@ -1,6 +1,11 @@
 /* =============================================================================
    AURA JOURNAL – Premium Fintech Redesign
    Matches AURA FX home.css: Space Grotesk, deep black, purple/blue accents
+   
+   UPDATES:
+   ✦ Reflection notes: edit + delete buttons
+   ✦ Task proof: multiple photo uploads with tap-to-view lightbox
+   ✦ Calendar: fully responsive (iPad Pro fix)
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -48,6 +53,22 @@
 @keyframes glowPulse {
   0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
   50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.06); }
+}
+
+/* ── Lightbox animations ─────────────────────────────────────── */
+@keyframes journal-lightboxIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes journal-lightboxImgIn {
+  from { opacity: 0; transform: scale(0.88) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes journal-lightboxOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 /* ── CSS Variables ───────────────────────────────────────────── */
@@ -168,6 +189,7 @@
   animation: journal-fadeInLeft 0.5s ease-out both;
   position: relative;
   z-index: 2;
+  overflow-x: hidden;
 }
 
 /* Subtle accent line along top of sidebar */
@@ -192,7 +214,6 @@
   color: var(--text);
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  /* Purple→blue shimmer identical to brand-name */
   background: linear-gradient(125deg, #fff 25%, #c4b5fd 60%, #93c5fd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -208,81 +229,11 @@
   text-transform: uppercase;
 }
 
-/* ── Calendar ────────────────────────────────────────────────── */
-/* =============================================================================
-   AURA JOURNAL – Improved Calendar (Drop-in replacement)
-   Maintains: Space Grotesk, deep black, purple/blue accent system
-   Enhancements: glassmorphic depth, richer day states, subtle micro-interactions,
-   animated "orbit" ring on today, multi-dot entry system, month-slide transition
-   ============================================================================= */
+/* ════════════════════════════════════════════════════════════
+   CALENDAR – Fully Responsive (iPad Pro Fix)
+   ════════════════════════════════════════════════════════════ */
 
-/* ── Calendar container ──────────────────────────────────────────────────── */
-.journal-calendar {
-  background: rgba(255,255,255,0.022);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 20px;
-  padding: 24px 20px 20px;
-  margin-bottom: 18px;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 0 0 1px rgba(139,92,246,0.06) inset,
-    0 24px 60px rgba(0,0,0,0.45),
-    0 2px 8px rgba(0,0,0,0.3);
-  animation: journal-scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
-  transition: box-shadow 0.35s ease, border-color 0.35s ease;
-}
-
-.journal-calendar:hover {
-  border-color: rgba(139,92,246,0.18);
-  box-shadow:
-    0 0 0 1px rgba(139,92,246,0.12) inset,
-    0 32px 72px rgba(0,0,0,0.55),
-    0 0 40px rgba(139,92,246,0.06);
-}
-
-/* Top shimmer line */
-.journal-calendar::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(139,92,246,0.7) 30%,
-    rgba(99,179,237,0.55) 65%,
-    transparent 100%
-  );
-  pointer-events: none;
-}
-
-/* Subtle corner glow */
-.journal-calendar::after {
-  content: '';
-  position: absolute;
-  top: -40px; right: -40px;
-  width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
-  pointer-events: none;
-  border-radius: 50%;
-}
-
-/* Diagonal texture */
-.journal-calendar-texture {
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent, transparent 18px,
-    rgba(255,255,255,0.008) 18px, rgba(255,255,255,0.008) 19px
-  );
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-/* ── Month slide animation ───────────────────────────────────────────────── */
+/* ── Calendar animations ─────────────────────────────────────── */
 @keyframes cal-slideInRight {
   from { opacity: 0; transform: translateX(18px); }
   to   { opacity: 1; transform: translateX(0); }
@@ -307,7 +258,77 @@
   from { transform: scale(0) translateY(2px); opacity: 0; }
   to   { transform: scale(1) translateY(0);   opacity: 1; }
 }
+@keyframes cal-selectedSheen {
+  0%        { left: -100%; right: 100%; }
+  40%, 100% { left: 100%; right: -100%; }
+}
 
+/* ── Calendar container ──────────────────────────────────────── */
+.journal-calendar {
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 24px clamp(10px, 3.5%, 20px) 20px;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.06) inset,
+    0 24px 60px rgba(0,0,0,0.45),
+    0 2px 8px rgba(0,0,0,0.3);
+  animation: journal-scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.journal-calendar:hover {
+  border-color: rgba(139,92,246,0.18);
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.12) inset,
+    0 32px 72px rgba(0,0,0,0.55),
+    0 0 40px rgba(139,92,246,0.06);
+}
+
+.journal-calendar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(139,92,246,0.7) 30%,
+    rgba(99,179,237,0.55) 65%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.journal-calendar::after {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.journal-calendar-texture {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent, transparent 18px,
+    rgba(255,255,255,0.008) 18px, rgba(255,255,255,0.008) 19px
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Slide animations */
 .journal-calendar--slide-right .journal-calendar-grid,
 .journal-calendar--slide-right .journal-calendar-weekdays {
   animation: cal-slideInRight 0.3s cubic-bezier(0.22,1,0.36,1) both;
@@ -317,7 +338,7 @@
   animation: cal-slideInLeft 0.3s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-/* ── Nav header ─────────────────────────────────────────────────────────── */
+/* ── Nav header ──────────────────────────────────────────────── */
 .journal-calendar-nav {
   display: flex;
   align-items: center;
@@ -328,8 +349,8 @@
 }
 
 .journal-calendar-btn {
-  width: 34px;
-  height: 34px;
+  width: clamp(28px, 5vw, 34px);
+  height: clamp(28px, 5vw, 34px);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
   background: rgba(255,255,255,0.03);
@@ -342,6 +363,7 @@
   transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .journal-calendar-btn::after {
@@ -363,11 +385,11 @@
 .journal-calendar-btn:hover::after { opacity: 1; }
 .journal-calendar-btn:active { transform: scale(0.93); }
 
-/* Month label with gradient text */
+/* Month label */
 .journal-calendar-month {
-  font-size: 0.78rem;
+  font-size: clamp(0.65rem, 1.8vw, 0.78rem);
   font-weight: 400;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   background: linear-gradient(125deg, #fff 25%, #c4b5fd 60%, #93c5fd 100%);
   -webkit-background-clip: text;
@@ -378,54 +400,57 @@
   user-select: none;
 }
 
-/* ── Weekday labels ─────────────────────────────────────────────────────── */
+/* ── Weekday labels ──────────────────────────────────────────── */
 .journal-calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: clamp(2px, 0.8%, 5px);
   margin-bottom: 8px;
   position: relative;
   z-index: 1;
+  width: 100%;
 }
 
 .journal-calendar-wd {
-  font-size: 0.58rem;
+  font-size: clamp(0.48rem, 1.2vw, 0.58rem);
   font-weight: 600;
   color: rgba(255,255,255,0.28);
   text-align: center;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   padding-bottom: 6px;
   border-bottom: 1px solid rgba(255,255,255,0.04);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-/* Highlight weekend columns */
 .journal-calendar-wd:first-child,
 .journal-calendar-wd:last-child {
   color: rgba(139,92,246,0.45);
 }
 
-/* ── Grid ───────────────────────────────────────────────────────────────── */
+/* ── Grid ────────────────────────────────────────────────────── */
 .journal-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: clamp(2px, 0.8%, 5px);
   position: relative;
   z-index: 1;
+  width: 100%;
 }
 
-/* ── Day cell base ──────────────────────────────────────────────────────── */
+/* ── Day cell ────────────────────────────────────────────────── */
 .journal-calendar-day {
-  aspect-ratio: 1;
-  max-width: 36px;
-  max-height: 36px;
+  aspect-ratio: 1 / 1;
   width: 100%;
-  margin: 0 auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: clamp(6px, 1.5vw, 10px);
   background: transparent;
   color: rgba(255,255,255,0.62);
-  font-size: 0.75rem;
+  font-size: clamp(0.6rem, 1.5vw, 0.75rem);
   font-weight: 300;
   cursor: pointer;
   display: flex;
@@ -436,6 +461,7 @@
   transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
   animation: journal-dayAppear 0.28s ease-out both;
   user-select: none;
+  box-sizing: border-box;
 }
 
 /* Stagger */
@@ -447,7 +473,6 @@
 .journal-calendar-grid .journal-calendar-day:nth-child(7n+6) { animation-delay: 0.12s; }
 .journal-calendar-grid .journal-calendar-day:nth-child(7n)   { animation-delay: 0.14s; }
 
-/* Hover state */
 .journal-calendar-day:hover {
   background: rgba(139,92,246,0.1);
   border-color: rgba(139,92,246,0.28);
@@ -456,14 +481,12 @@
   box-shadow: 0 4px 16px rgba(139,92,246,0.15);
 }
 
-/* ── Empty cell ─────────────────────────────────────────────────────────── */
 .journal-calendar-day--empty {
   pointer-events: none;
   opacity: 0;
   animation: none;
 }
 
-/* ── Past day (subtle fade) ─────────────────────────────────────────────── */
 .journal-calendar-day--past {
   color: rgba(255,255,255,0.3);
 }
@@ -471,7 +494,7 @@
   color: rgba(255,255,255,0.55);
 }
 
-/* ── Today – animated orbit ring ────────────────────────────────────────── */
+/* Today */
 .journal-calendar-day--today {
   color: #c4b5fd;
   font-weight: 500;
@@ -480,12 +503,11 @@
              journal-dayAppear 0.28s ease-out both;
 }
 
-/* Orbit ring pseudo */
 .journal-calendar-day--today::before {
   content: '';
   position: absolute;
-  inset: -3px;
-  border-radius: 13px;
+  inset: -2px;
+  border-radius: clamp(8px, 2vw, 13px);
   border: 1px solid transparent;
   background:
     linear-gradient(#0a0a0a, #0a0a0a) padding-box,
@@ -500,13 +522,7 @@
   pointer-events: none;
 }
 
-/* Remove conflicting journal-glowPulse from today so our new anim takes over */
-.journal-calendar-day--today.journal-calendar-day--today {
-  animation: cal-todayPulse 3s ease-in-out infinite,
-             journal-dayAppear 0.28s ease-out both;
-}
-
-/* ── Selected day ───────────────────────────────────────────────────────── */
+/* Selected */
 .journal-calendar-day--selected {
   background: linear-gradient(135deg,
     rgba(139,92,246,0.9) 0%,
@@ -525,7 +541,6 @@
     inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
-/* Sheen overlay on selected */
 .journal-calendar-day--selected::after {
   content: '';
   position: absolute;
@@ -539,16 +554,12 @@
   border-radius: inherit;
   animation: cal-selectedSheen 3s ease-in-out infinite;
 }
-@keyframes cal-selectedSheen {
-  0%   { left: -100%; right: 100%; }
-  40%, 100% { left: 100%; right: -100%; }
-}
 
 .journal-calendar-day--selected:hover {
   transform: scale(1.12);
 }
 
-/* ── Today + Selected combined ──────────────────────────────────────────── */
+/* Today + Selected */
 .journal-calendar-day--today.journal-calendar-day--selected {
   background: linear-gradient(135deg,
     rgba(139,92,246,0.95) 0%,
@@ -557,8 +568,8 @@
   animation: cal-selectedGlow 2.5s ease-in-out infinite;
 }
 .journal-calendar-day--today.journal-calendar-day--selected::before {
-  inset: -4px;
-  border-radius: 14px;
+  inset: -3px;
+  border-radius: clamp(9px, 2vw, 14px);
   background:
     linear-gradient(#0a0a0a, #0a0a0a) padding-box,
     conic-gradient(
@@ -571,14 +582,13 @@
   animation: cal-orbitSpin 3s linear infinite;
 }
 
-/* ── Day number text ────────────────────────────────────────────────────── */
 .journal-calendar-day-num {
   line-height: 1;
   position: relative;
   z-index: 1;
 }
 
-/* ── Entry indicator dots ───────────────────────────────────────────────── */
+/* Entry dots */
 .journal-calendar-day-dot {
   position: absolute;
   bottom: 3px;
@@ -589,10 +599,8 @@
   z-index: 2;
 }
 
-/* Single dot for done */
 .journal-dot-done {
-  width: 4px;
-  height: 4px;
+  width: 4px; height: 4px;
   border-radius: 50%;
   background: #10b981;
   box-shadow: 0 0 5px rgba(16,185,129,0.7);
@@ -600,20 +608,16 @@
   display: block;
 }
 
-/* Dot for pending / has-entry */
 .journal-dot-pending {
-  width: 4px;
-  height: 4px;
+  width: 4px; height: 4px;
   border-radius: 50%;
   background: rgba(255,255,255,0.25);
   animation: cal-dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
   display: block;
 }
 
-/* Optional: accent dot (mood logged, etc.) */
 .journal-dot-mood {
-  width: 4px;
-  height: 4px;
+  width: 4px; height: 4px;
   border-radius: 50%;
   background: rgba(139,92,246,0.75);
   box-shadow: 0 0 5px rgba(139,92,246,0.5);
@@ -621,8 +625,6 @@
   display: block;
 }
 
-/* ── "Today" micro-label ─────────────────────────────────────────────────── */
-/* Tiny "TODAY" label above the day number for extra clarity */
 .journal-calendar-day--today .journal-calendar-day-num::before {
   content: '·';
   position: absolute;
@@ -635,8 +637,7 @@
   pointer-events: none;
 }
 
-/* ── Week row hover highlight ────────────────────────────────────────────── */
-/* Faint row highlight when hovering a day */
+/* Week row hover highlight */
 .journal-calendar-day:not(.journal-calendar-day--empty):hover::before {
   content: '';
   position: absolute;
@@ -648,7 +649,7 @@
   z-index: 0;
 }
 
-/* ── Bottom month summary strip ─────────────────────────────────────────── */
+/* ── Calendar Footer ─────────────────────────────────────────── */
 .journal-calendar-footer {
   margin-top: 14px;
   padding-top: 12px;
@@ -700,28 +701,6 @@
   color: #c4b5fd;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .journal-calendar { max-width: 340px; margin-left: auto; margin-right: auto; }
-}
-
-@media (max-width: 767px) {
-  .journal-calendar {
-    width: 100%;
-    max-width: 320px;
-    padding: 18px 14px 16px;
-  }
-  .journal-calendar-day {
-    max-width: 32px;
-    max-height: 32px;
-    font-size: 0.7rem;
-    border-radius: 8px;
-  }
-  .journal-calendar-day--today::before {
-    inset: -2px;
-    border-radius: 10px;
-  }
-}
 /* ── Streak Card ─────────────────────────────────────────────── */
 .journal-streak-card {
   background: rgba(255,255,255,0.025);
@@ -949,7 +928,6 @@
   backdrop-filter: blur(12px);
   overflow: hidden;
   transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
-  /* Left accent bar */
   border-left: 2px solid transparent;
   animation: journal-fadeIn 0.45s ease-out both;
 }
@@ -958,7 +936,6 @@
 .journal-progress-card:nth-child(2) { animation-delay: 0.12s; }
 .journal-progress-card:nth-child(3) { animation-delay: 0.18s; }
 
-/* Animated left glow bar */
 .journal-progress-card::before {
   content: '';
   position: absolute;
@@ -970,7 +947,6 @@
   transition: all var(--transition);
 }
 
-/* Diagonal texture */
 .journal-progress-card::after {
   content: '';
   position: absolute;
@@ -1042,7 +1018,6 @@
   animation: journal-progressReveal 1.2s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-/* Shimmer sweep on fill bar */
 .journal-progress-fill::after {
   content: '';
   position: absolute;
@@ -1249,7 +1224,6 @@
   overflow: hidden;
 }
 
-/* Stagger */
 .journal-task-list .journal-task-item:nth-child(1) { animation-delay: 0.04s; }
 .journal-task-list .journal-task-item:nth-child(2) { animation-delay: 0.08s; }
 .journal-task-list .journal-task-item:nth-child(3) { animation-delay: 0.12s; }
@@ -1516,25 +1490,333 @@
   color: var(--text);
 }
 
-.journal-task-proof-thumb {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  margin-left: 4px;
-}
+/* ══════════════════════════════════════════════════════════════
+   TASK PROOF – MULTI-PHOTO SYSTEM
+   ══════════════════════════════════════════════════════════════ */
 
-.journal-task-proof-thumb img {
-  width: 26px;
-  height: 26px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-}
-
+/* Hidden file input */
 .journal-proof-input-hidden {
   position: absolute;
   width: 0; height: 0;
   opacity: 0;
+  pointer-events: none;
+}
+
+/* Photo strip – wraps below the task row */
+.journal-proof-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  width: 100%;
+}
+
+/* Individual photo thumbnail */
+.journal-proof-thumb {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  transition: all var(--transition);
+  cursor: pointer;         /* tap to open lightbox */
+}
+
+.journal-proof-thumb:hover {
+  border-color: rgba(139,92,246,0.55);
+  transform: scale(1.06);
+  box-shadow: 0 4px 18px rgba(139,92,246,0.3);
+}
+
+.journal-proof-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;   /* click handled by wrapper */
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Hover overlay hint */
+.journal-proof-thumb::after {
+  content: '⤢';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: rgba(0,0,0,0.55);
+  color: rgba(255,255,255,0.9);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: inherit;
+}
+
+.journal-proof-thumb:hover::after {
+  opacity: 1;
+}
+
+/* Remove single photo button (×) */
+.journal-proof-thumb-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(239,68,68,0.85);
+  border: none;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 3;
+}
+
+.journal-proof-thumb:hover .journal-proof-thumb-remove {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Add more photos button (+ tile in the strip) */
+.journal-proof-add-more {
+  width: 52px;
+  height: 52px;
+  border-radius: 9px;
+  border: 1px dashed rgba(139,92,246,0.4);
+  background: rgba(139,92,246,0.05);
+  color: rgba(139,92,246,0.7);
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+
+.journal-proof-add-more:hover {
+  background: rgba(139,92,246,0.12);
+  border-color: rgba(139,92,246,0.7);
+  color: #c4b5fd;
+  transform: scale(1.06);
+  box-shadow: 0 0 16px rgba(139,92,246,0.25);
+}
+
+/* Photo count badge shown on the proof button */
+.journal-proof-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.85), rgba(99,179,237,0.75));
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  margin-left: 3px;
+  letter-spacing: 0;
+  box-shadow: 0 0 8px rgba(139,92,246,0.4);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PHOTO LIGHTBOX
+   ══════════════════════════════════════════════════════════════ */
+
+/* Backdrop */
+.journal-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: journal-lightboxIn 0.22s ease-out both;
+  touch-action: none;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.journal-lightbox.journal-lightbox--closing {
+  animation: journal-lightboxOut 0.2s ease-in forwards;
+}
+
+/* Close button */
+.journal-lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.8);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 3;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.journal-lightbox-close:hover {
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.4);
+  color: #fca5a5;
+  transform: scale(1.08);
+}
+
+/* Prev / Next arrows */
+.journal-lightbox-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.75);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 3;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.journal-lightbox-arrow:hover {
+  background: rgba(139,92,246,0.15);
+  border-color: rgba(139,92,246,0.45);
+  color: #c4b5fd;
+  box-shadow: 0 0 20px rgba(139,92,246,0.25);
+}
+
+.journal-lightbox-arrow--prev { left: 16px; }
+.journal-lightbox-arrow--next { right: 16px; }
+
+.journal-lightbox-arrow:disabled {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Image wrapper */
+.journal-lightbox-img-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(100vw - 140px);
+  max-height: calc(100vh - 100px);
+  animation: journal-lightboxImgIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.journal-lightbox-img-wrap img {
+  max-width: 100%;
+  max-height: calc(100vh - 100px);
+  width: auto;
+  height: auto;
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.2),
+    0 32px 80px rgba(0,0,0,0.7),
+    0 0 60px rgba(139,92,246,0.1);
+  object-fit: contain;
+  display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Counter "2 / 5" */
+.journal-lightbox-counter {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  white-space: nowrap;
+}
+
+/* Thumbnail strip at bottom of lightbox */
+.journal-lightbox-thumbs {
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  max-width: calc(100vw - 40px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.journal-lightbox-thumbs::-webkit-scrollbar { display: none; }
+
+.journal-lightbox-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  opacity: 0.55;
+}
+
+.journal-lightbox-thumb:hover { opacity: 0.9; }
+
+.journal-lightbox-thumb--active {
+  opacity: 1;
+  border-color: rgba(139,92,246,0.7);
+  box-shadow: 0 0 10px rgba(139,92,246,0.45);
+  transform: scale(1.1);
+}
+
+.journal-lightbox-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
   pointer-events: none;
 }
 
@@ -1551,7 +1833,9 @@
   border-radius: var(--radius);
 }
 
-/* ── Reflection / Notes Section ──────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   REFLECTION / NOTES SECTION
+   ════════════════════════════════════════════════════════════ */
 .journal-notes-section {
   margin-top: 32px;
   padding-top: 28px;
@@ -1592,11 +1876,12 @@
   padding: 0;
 }
 
+/* Note item – flex row with full controls */
 .journal-note-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 15px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-left: 2px solid rgba(139,92,246,0.45);
@@ -1622,27 +1907,115 @@
   color: var(--text);
   white-space: pre-wrap;
   word-break: break-word;
-  line-height: 1.5;
+  line-height: 1.55;
+  padding-top: 2px;
 }
 
-.journal-note-delete {
+/* Edit inline textarea */
+.journal-note-edit-input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(139,92,246,0.05);
+  border: 1px solid rgba(139,92,246,0.35);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  font-weight: 300;
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  resize: vertical;
+  min-height: 58px;
+  line-height: 1.55;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  box-sizing: border-box;
+}
+
+.journal-note-edit-input:focus {
+  outline: none;
+  border-color: rgba(139,92,246,0.6);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+  background: rgba(139,92,246,0.07);
+}
+
+/* Note action buttons group */
+.journal-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+/* Shared icon button base */
+.journal-note-action-btn {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.78rem;
   transition: all var(--transition);
+  font-family: 'Space Grotesk', sans-serif;
+  line-height: 1;
+}
+
+/* Edit button */
+.journal-note-edit-btn {
+  color: var(--text-muted);
+}
+
+.journal-note-edit-btn:hover {
+  color: #c4b5fd;
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.3);
+}
+
+/* Delete / cancel button */
+.journal-note-delete {
+  color: var(--text-muted);
 }
 
 .journal-note-delete:hover {
   color: var(--down);
   background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+}
+
+/* Save button (shown in edit mode) */
+.journal-note-save-btn {
+  padding: 0 10px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.8), rgba(99,179,237,0.7));
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition);
+  font-family: 'Space Grotesk', sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 0 14px rgba(139,92,246,0.3);
+}
+
+.journal-note-save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(139,92,246,0.45);
+}
+
+.journal-note-save-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ── Add Note Form ───────────────────────────────────────────── */
@@ -1700,7 +2073,6 @@
 
 .journal-add-note-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Keep purple style even when extra class added */
 .journal-add-note-btn-purple {
   background: linear-gradient(135deg, rgba(139,92,246,0.85) 0%, rgba(99,179,237,0.75) 100%) !important;
   border: none !important;
@@ -1896,11 +2268,23 @@
    RESPONSIVE
    ════════════════════════════════════════════════════════════ */
 
-/* iPad Pro / large tablet */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .journal-sidebar { width: 268px; padding: 22px 18px; }
-  .journal-main    { padding: 26px 26px 40px; }
+/* iPad Pro (769–1366px) */
+@media (min-width: 769px) and (max-width: 1366px) {
+  .journal-sidebar {
+    width: 268px;
+    padding: 22px 16px;
+    overflow-x: hidden;
+  }
+  .journal-calendar {
+    padding: 20px clamp(8px, 2.5%, 16px) 18px;
+  }
+  .journal-main { padding: 26px 26px 40px; }
   .journal-progress-cards { grid-template-columns: 1fr 1fr; }
+}
+
+/* iPad Pro 12.9″ landscape */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .journal-sidebar { width: 280px; }
 }
 
 @media (min-width: 768px) and (max-width: 1366px) {
@@ -1916,7 +2300,7 @@
   .journal-main { overflow-y: visible !important; overflow-x: hidden !important; }
 }
 
-/* Stacked layout < 900 */
+/* Stacked ≤ 900px */
 @media (max-width: 900px) {
   .journal-layout { flex-direction: column; }
   .journal-sidebar {
@@ -1924,8 +2308,15 @@
     border-right: none;
     border-bottom: 1px solid var(--border);
     padding: 22px 18px;
+    overflow-x: hidden;
   }
-  .journal-calendar,
+  .journal-calendar {
+    width: 100%;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px clamp(12px, 4%, 20px) 18px;
+  }
   .journal-stats-sidebar,
   .journal-streak-card,
   .journal-stats-circles {
@@ -1936,6 +2327,13 @@
   .journal-main { padding: 24px 22px 36px; }
   .journal-progress-cards { grid-template-columns: 1fr; }
   .journal-add-note-form { flex-wrap: wrap; }
+
+  /* Lightbox arrows tighter on tablet */
+  .journal-lightbox-arrow--prev { left: 8px; }
+  .journal-lightbox-arrow--next { right: 8px; }
+  .journal-lightbox-img-wrap {
+    max-width: calc(100vw - 100px);
+  }
 }
 
 @media (max-width: 600px) {
@@ -1945,6 +2343,7 @@
   .journal-add-note-btn  { justify-content: center; }
 }
 
+/* Mobile ≤ 767px */
 @media (max-width: 767px) {
   .journal-page {
     padding: 12px !important;
@@ -1967,13 +2366,24 @@
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(16px, env(safe-area-inset-right));
     box-sizing: border-box;
+    overflow-x: hidden;
   }
   .journal-sidebar-header {
     text-align: center;
     width: 100%;
     max-width: 340px;
   }
-  .journal-calendar,
+  .journal-calendar {
+    max-width: 340px;
+    padding: 18px clamp(10px, 4%, 16px) 16px;
+  }
+  .journal-calendar-day {
+    border-radius: 7px;
+  }
+  .journal-calendar-day--today::before {
+    inset: -2px;
+    border-radius: 9px;
+  }
   .journal-stats-sidebar,
   .journal-streak-card,
   .journal-stats-circles {
@@ -1984,4 +2394,599 @@
   }
   .journal-main-title { font-size: 1.55rem; }
   .journal-progress-card-value { font-size: 1.9rem; }
+
+  /* Lightbox full screen on mobile */
+  .journal-lightbox { padding: 8px; }
+  .journal-lightbox-img-wrap {
+    max-width: 100vw;
+    max-height: calc(100vh - 120px);
+  }
+  .journal-lightbox-img-wrap img {
+    border-radius: 10px;
+    max-height: calc(100vh - 120px);
+  }
+  .journal-lightbox-arrow { width: 36px; height: 36px; font-size: 0.9rem; }
+  .journal-lightbox-arrow--prev { left: 4px; }
+  .journal-lightbox-arrow--next { right: 4px; }
+  .journal-lightbox-close { top: 10px; right: 10px; width: 36px; height: 36px; }
+
+  /* Proof thumbs smaller on mobile */
+  .journal-proof-thumb,
+  .journal-proof-add-more { width: 44px; height: 44px; }
+}
+/* =============================================================================
+   AURA JOURNAL – Task Card Grid System
+   Replace the long horizontal task list with a compact, scannable card grid.
+   Add/replace these rules at the bottom of your Journal.css file.
+   ============================================================================= */
+
+/* ── Animations specific to cards ───────────────────────────── */
+@keyframes card-popIn {
+  from { opacity: 0; transform: scale(0.9) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+@keyframes card-shimmer {
+  0%   { left: -80%; }
+  100% { left: 120%; }
+}
+
+@keyframes card-checkBounce {
+  0%   { transform: scale(0.5);  opacity: 0; }
+  60%  { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes card-doneStrike {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TASK GRID — replaces .journal-task-list vertical stack
+   ══════════════════════════════════════════════════════════════ */
+.journal-task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  align-items: start;       /* cards don't stretch to match tallest */
+}
+
+/* Mandatory task list — same grid */
+.journal-task-list-mandatory {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+  align-items: start;
+}
+
+/* ── Empty state spans full grid ─────────────────────────────── */
+.journal-task-list .journal-task-empty {
+  grid-column: 1 / -1;
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TASK CARD — the individual card replacing the wide list row
+   ══════════════════════════════════════════════════════════════ */
+.journal-task-item {
+  /* Reset flex layout from old row style */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: rgba(255,255,255,0.028);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  margin-bottom: 0;         /* gap handles spacing now */
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+  animation: card-popIn 0.32s cubic-bezier(0.34,1.56,0.64,1) both;
+  cursor: default;
+}
+
+/* Stagger pop-in */
+.journal-task-list .journal-task-item:nth-child(1)  { animation-delay: 0.03s; }
+.journal-task-list .journal-task-item:nth-child(2)  { animation-delay: 0.07s; }
+.journal-task-list .journal-task-item:nth-child(3)  { animation-delay: 0.11s; }
+.journal-task-list .journal-task-item:nth-child(4)  { animation-delay: 0.15s; }
+.journal-task-list .journal-task-item:nth-child(5)  { animation-delay: 0.18s; }
+.journal-task-list .journal-task-item:nth-child(6)  { animation-delay: 0.21s; }
+.journal-task-list .journal-task-item:nth-child(7)  { animation-delay: 0.24s; }
+.journal-task-list .journal-task-item:nth-child(8)  { animation-delay: 0.27s; }
+.journal-task-list .journal-task-item:nth-child(n+9){ animation-delay: 0.30s; }
+
+/* Top shimmer line on each card */
+.journal-task-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(139,92,246,0.5) 40%,
+    rgba(99,179,237,0.35) 70%,
+    transparent
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.journal-task-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139,92,246,0.3);
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(139,92,246,0.08);
+}
+
+.journal-task-item:hover::before { opacity: 1; }
+
+/* Completed card — subtle green tint */
+.journal-task-item--done {
+  opacity: 1;                          /* override old 0.72 */
+  background: rgba(16,185,129,0.04);
+  border-color: rgba(16,185,129,0.18);
+}
+
+.journal-task-item--done:hover {
+  border-color: rgba(16,185,129,0.35);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.3), 0 0 16px rgba(16,185,129,0.08);
+}
+
+/* Mandatory card — amber left stripe */
+.journal-task-item--mandatory {
+  align-items: stretch;
+  border-left: 2px solid rgba(245,158,11,0.45);
+}
+
+.journal-task-item--mandatory:hover {
+  border-left-color: rgba(245,158,11,0.75);
+}
+
+/* ── Card top area: checkbox + XP badge ─────────────────────── */
+.journal-task-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px 6px;
+}
+
+/* ── Checkbox — now in card header ──────────────────────────── */
+.journal-task-check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--up);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  z-index: 1;
+}
+
+.journal-task-item--done .journal-task-check {
+  background: rgba(16,185,129,0.15);
+  border-color: rgba(16,185,129,0.65);
+  box-shadow: 0 0 10px rgba(16,185,129,0.25);
+}
+
+.journal-task-item--done .journal-task-check svg {
+  animation: card-checkBounce 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.journal-task-check:hover {
+  border-color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.05);
+  transform: scale(1.1);
+}
+
+/* ── XP badge in top-right ───────────────────────────────────── */
+.journal-task-xp {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--up);
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.28);
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+/* ── Card body: task title ───────────────────────────────────── */
+.journal-task-card-body {
+  padding: 2px 12px 10px;
+  flex: 1;
+}
+
+.journal-task-title {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  letter-spacing: 0.01em;
+  position: relative;
+}
+
+.journal-task-title:hover { color: #c4b5fd; }
+
+/* Strike-through animation on done */
+.journal-task-item--done .journal-task-title {
+  color: var(--text-muted);
+  text-decoration: none;             /* remove old text-decoration */
+  position: relative;
+}
+
+.journal-task-item--done .journal-task-title::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  height: 1px;
+  background: rgba(255,255,255,0.35);
+  animation: card-doneStrike 0.4s ease-out both;
+  width: 100%;
+}
+
+/* Task description (mandatory tasks) */
+.journal-task-description {
+  margin: 5px 0 0 0;
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.journal-task-item--done .journal-task-description { opacity: 0.55; }
+
+/* ── Card footer: actions ────────────────────────────────────── */
+.journal-task-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid rgba(255,255,255,0.045);
+}
+
+/* Overrides for icon buttons inside cards */
+.journal-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.journal-task-edit-icon,
+.journal-task-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  transition: all 0.2s ease;
+}
+
+.journal-task-edit-icon { color: var(--text-muted); }
+.journal-task-edit-icon:hover {
+  color: #c4b5fd;
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.3);
+}
+
+.journal-task-delete { color: var(--text-muted); }
+.journal-task-delete:hover {
+  color: var(--down);
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+}
+
+/* Proof button — compact in card */
+.journal-task-proof-btn {
+  padding: 4px 9px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 400;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.journal-task-proof-btn:hover {
+  background: rgba(139,92,246,0.1);
+  border-color: rgba(139,92,246,0.38);
+  color: #c4b5fd;
+}
+
+/* ── Inline edit mode inside card ────────────────────────────── */
+.journal-task-edit-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  flex: 1;
+}
+
+.journal-task-edit-input {
+  width: 100%;
+  background: rgba(139,92,246,0.06);
+  border: 1px solid rgba(139,92,246,0.35);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  box-sizing: border-box;
+}
+
+.journal-task-edit-input:focus {
+  outline: none;
+  border-color: rgba(139,92,246,0.6);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+}
+
+.journal-task-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.journal-task-edit-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  border-radius: 7px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.8), rgba(99,179,237,0.7));
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.journal-task-edit-btn:hover { box-shadow: 0 4px 14px rgba(139,92,246,0.35); transform: translateY(-1px); }
+
+.journal-task-edit-btn--cancel {
+  background: rgba(255,255,255,0.07);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.journal-task-edit-btn--cancel:hover { background: rgba(255,255,255,0.12); box-shadow: none; transform: none; }
+
+/* ── Proof photo strip — spans full card width ────────────────── */
+.journal-proof-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.journal-proof-thumb {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.journal-proof-thumb:hover {
+  border-color: rgba(139,92,246,0.6);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(139,92,246,0.3);
+}
+
+.journal-proof-thumb::after {
+  content: '⤢';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: rgba(0,0,0,0.55);
+  color: rgba(255,255,255,0.9);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: inherit;
+}
+
+.journal-proof-thumb:hover::after { opacity: 1; }
+
+.journal-proof-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.journal-proof-thumb-remove {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: rgba(239,68,68,0.9);
+  border: none;
+  color: #fff;
+  font-size: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 3;
+}
+
+.journal-proof-thumb:hover .journal-proof-thumb-remove {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.journal-proof-add-more {
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  border: 1px dashed rgba(139,92,246,0.4);
+  background: rgba(139,92,246,0.05);
+  color: rgba(139,92,246,0.7);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.journal-proof-add-more:hover {
+  background: rgba(139,92,246,0.12);
+  border-color: rgba(139,92,246,0.7);
+  color: #c4b5fd;
+  transform: scale(1.08);
+}
+
+.journal-proof-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.85), rgba(99,179,237,0.75));
+  color: #fff;
+  font-size: 0.56rem;
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+  margin-left: 2px;
+  letter-spacing: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MANDATORY TASK CARD — adjusted inner layout
+   ══════════════════════════════════════════════════════════════ */
+.journal-task-item--mandatory .journal-task-mandatory-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.journal-task-item--mandatory .journal-task-title {
+  width: 100%;
+  cursor: default;
+}
+
+.journal-task-item--mandatory .journal-task-actions {
+  margin-top: 4px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE GRID BREAKPOINTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Wide desktop → 4 columns (default above) */
+
+/* Medium desktop / iPad landscape (1025–1280px) → 3 columns */
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .journal-task-list,
+  .journal-task-list-mandatory {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* iPad Pro portrait / small laptop (769–1024px) → 3 columns */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .journal-task-list,
+  .journal-task-list-mandatory {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+  }
+}
+
+/* Stacked layout (≤ 900px) → 2 columns */
+@media (max-width: 900px) {
+  .journal-task-list,
+  .journal-task-list-mandatory {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+  }
+}
+
+/* Mobile (≤ 520px) → 2 tight columns */
+@media (max-width: 520px) {
+  .journal-task-list,
+  .journal-task-list-mandatory {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+  }
+  .journal-task-card-top { padding: 10px 10px 5px; }
+  .journal-task-card-body { padding: 2px 10px 8px; }
+  .journal-task-card-footer { padding: 7px 8px 8px; }
+  .journal-task-title { font-size: 0.78rem; }
+}
+
+/* Very small (≤ 360px) → 1 column */
+@media (max-width: 360px) {
+  .journal-task-list,
+  .journal-task-list-mandatory {
+    grid-template-columns: 1fr;
+  }
 }

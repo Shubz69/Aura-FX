@@ -13,13 +13,12 @@ import {
     FaTimes, FaCog, FaUserPlus, FaUser, FaCrown, FaCheckCircle, FaFire, 
     FaGem, FaStar, FaTrophy, FaChartLine, FaClock, FaShieldAlt, FaRobot,
     FaLock, FaUnlock, FaUserCheck, FaUserTimes, FaHourglass, FaComments,
-    FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward
+    FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward, FaBan
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { resolveAvatarUrl, getPlaceholderColor } from '../utils/avatar';
 import '../styles/ProfileModal.css';
 
-// Get or create portal root for modals
 const getModalRoot = () => {
     let modalRoot = document.getElementById('profile-modal-root');
     if (!modalRoot) {
@@ -31,70 +30,51 @@ const getModalRoot = () => {
     return modalRoot;
 };
 
-/**
- * Avatar: show profile picture when available; tier border + online indicator.
- */
-const AvatarWithFallback = ({ size = 130, tierColor, isOnline, avatar, userId }) => {
+const AvatarWithFallback = ({ size = 120, tierColor, isOnline, avatar, userId }) => {
     const avatarSrc = resolveAvatarUrl(avatar, typeof window !== 'undefined' ? window.location?.origin : '');
     const placeholderColor = getPlaceholderColor(userId);
     return (
-        <div style={{
-            position: 'relative',
-            width: `${size}px`,
-            height: `${size}px`,
-            flexShrink: 0
-        }}>
-            <div
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    background: avatarSrc ? 'transparent' : placeholderColor,
-                    border: `5px solid ${tierColor}`,
-                    boxShadow: `0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px ${tierColor}40`,
-                    boxSizing: 'border-box',
-                    overflow: 'hidden'
-                }}
-            >
+        <div style={{ position: 'relative', width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
+            {/* Clean solid border ring — no animation */}
+            <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                border: `3px solid ${tierColor}`,
+                boxShadow: `0 0 0 1px ${tierColor}30, 0 4px 20px rgba(0,0,0,0.5)`,
+                overflow: 'hidden',
+                background: '#0f0f18'
+            }}>
                 {avatarSrc ? (
                     <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
                 ) : (
-                    <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: placeholderColor }} />
+                    <div style={{ width: '100%', height: '100%', background: placeholderColor }} />
                 )}
             </div>
+            {/* Online dot */}
             <div style={{
-                position: 'absolute',
-                bottom: `${size * 0.06}px`,
-                right: `${size * 0.06}px`,
-                width: `${size * 0.22}px`,
-                height: `${size * 0.22}px`,
-                borderRadius: '50%',
-                background: isOnline ? '#23A55A' : '#72767D',
-                border: '4px solid rgba(30, 30, 46, 0.95)',
-                boxShadow: isOnline ? '0 0 12px #23A55A' : 'none',
-                zIndex: 5
+                position: 'absolute', bottom: `${size * 0.05}px`, right: `${size * 0.05}px`,
+                width: `${size * 0.18}px`, height: `${size * 0.18}px`, borderRadius: '50%',
+                background: isOnline ? '#23A55A' : '#4a4a5a',
+                border: '3px solid #0a0a12',
+                boxShadow: isOnline ? '0 0 10px #23A55A88' : 'none', zIndex: 5,
+                transition: 'all 0.3s ease'
             }} />
         </div>
     );
 };
 
-// All possible achievements with unlock conditions
 const ALL_ACHIEVEMENTS = [
     { id: 'first_steps', name: 'First Steps', icon: '🔰', description: 'Reach Level 5', unlockLevel: 5 },
-    { id: 'communicator', name: 'Active Communicator', icon: '💬', description: 'Reach Level 10', unlockLevel: 10 },
-    { id: 'dedicated', name: 'Dedicated Trader', icon: '📈', description: 'Reach Level 15', unlockLevel: 15 },
+    { id: 'communicator', name: 'Communicator', icon: '💬', description: 'Reach Level 10', unlockLevel: 10 },
+    { id: 'dedicated', name: 'Dedicated', icon: '📈', description: 'Reach Level 15', unlockLevel: 15 },
     { id: 'rising_star', name: 'Rising Star', icon: '⭐', description: 'Reach Level 20', unlockLevel: 20 },
-    { id: 'level_25', name: 'Level 25 Club', icon: '🔥', description: 'Reach Level 25', unlockLevel: 25 },
+    { id: 'level_25', name: 'Level 25', icon: '🔥', description: 'Reach Level 25', unlockLevel: 25 },
     { id: 'half_century', name: 'Half Century', icon: '🎯', description: 'Reach Level 50', unlockLevel: 50 },
-    { id: 'veteran', name: 'Veteran Status', icon: '👑', description: 'Reach Level 75', unlockLevel: 75 },
-    { id: 'legend', name: 'Infinity Legend', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
-    { id: 'streak_7', name: 'Week Warrior', icon: '🗓️', description: '7 day login streak', unlockStreak: 7 },
-    { id: 'streak_30', name: 'Monthly Master', icon: '📅', description: '30 day login streak', unlockStreak: 30 },
-    { id: 'ai_user', name: 'AI Explorer', icon: '🤖', description: 'Use AI Chat 10 times', unlockAiChats: 10 },
-    { id: 'social', name: 'Social Butterfly', icon: '🦋', description: 'Send 100 messages', unlockMessages: 100 }
+    { id: 'veteran', name: 'Veteran', icon: '👑', description: 'Reach Level 75', unlockLevel: 75 },
+    { id: 'legend', name: 'Legend', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
+    { id: 'streak_7', name: 'Week Warrior', icon: '🗓️', description: '7 day streak', unlockStreak: 7 },
+    { id: 'streak_30', name: 'Monthly Master', icon: '📅', description: '30 day streak', unlockStreak: 30 },
+    { id: 'ai_user', name: 'AI Explorer', icon: '🤖', description: 'Use AI 10 times', unlockAiChats: 10 },
+    { id: 'social', name: 'Social', icon: '🦋', description: 'Send 100 messages', unlockMessages: 100 }
 ];
 
 const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, currentUserId }) => {
@@ -111,132 +91,70 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const [showSettings, setShowSettings] = useState(false);
     const [settingsLoading, setSettingsLoading] = useState(false);
     const [xpAnimated, setXpAnimated] = useState(0);
+    const [mounted, setMounted] = useState(false);
 
-    // Get stored user for current user check
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     const isOwnProfile = userId === storedUser.id || userId === currentUserId;
     const token = localStorage.getItem('token');
-
-    // Skip API for system/bot user (avoids 400 on /api/users/public-profile/system)
     const isSystemUser = userId && String(userId).toLowerCase() === 'system';
 
-    // Fetch profile data
     const fetchProfile = useCallback(async () => {
         if (!userId || isSystemUser) return;
         try {
             setLoading(true);
-            const baseUrl = window.location.origin;
-            const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
-            
+            const response = await fetch(`${window.location.origin}/api/users/public-profile/${userId}`);
             if (response.ok) {
                 const data = await response.json();
                 setProfile(data);
-                
                 if (data.last_seen) {
                     const lastSeenDate = new Date(data.last_seen);
-                    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-                    setIsOnline(lastSeenDate >= fiveMinutesAgo);
+                    setIsOnline(lastSeenDate >= new Date(Date.now() - 5 * 60 * 1000));
                     setLastSeen(lastSeenDate);
                 }
             }
-        } catch (err) {
-            console.error("Error fetching profile:", err);
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { console.error("Error fetching profile:", err); }
+        finally { setLoading(false); }
     }, [userId, isSystemUser]);
 
-    // Fetch settings and stats (for own profile)
     const fetchSettings = useCallback(async () => {
         if (!isOwnProfile) return;
-        
-        // Default settings
-        const defaultSettings = {
-            preferred_markets: ['forex', 'gold'],
-            trading_sessions: ['london', 'newyork'],
-            risk_profile: 'moderate',
-            show_online_status: true,
-            show_trading_stats: true,
-            show_achievements: true
-        };
-        
-        // Load from localStorage first
+        const defaultSettings = { preferred_markets: ['forex', 'gold'], trading_sessions: ['london', 'newyork'], risk_profile: 'moderate', show_online_status: true, show_trading_stats: true, show_achievements: true };
         try {
             const stored = JSON.parse(localStorage.getItem('user_settings') || '{}');
-            if (Object.keys(stored).length > 0) {
-                setSettings({ ...defaultSettings, ...stored });
-            } else {
-                setSettings(defaultSettings);
-            }
-        } catch (e) {
-            setSettings(defaultSettings);
-        }
-        
-        // Then try to fetch from API
+            setSettings(Object.keys(stored).length > 0 ? { ...defaultSettings, ...stored } : defaultSettings);
+        } catch (e) { setSettings(defaultSettings); }
         if (!token) return;
-        
         try {
-            const response = await fetch(`${window.location.origin}/api/users/settings`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetch(`${window.location.origin}/api/users/settings`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 const data = await response.json();
-                if (data.settings) {
-                    setSettings(prev => ({ ...prev, ...data.settings }));
-                    // Save to localStorage
-                    try {
-                        localStorage.setItem('user_settings', JSON.stringify(data.settings));
-                    } catch (e) {}
-                }
-                if (data.stats) {
-                    setStats(data.stats);
-                }
+                if (data.settings) { setSettings(prev => ({ ...prev, ...data.settings })); try { localStorage.setItem('user_settings', JSON.stringify(data.settings)); } catch (e) {} }
+                if (data.stats) setStats(data.stats);
             }
-        } catch (err) {
-            console.error("Error fetching settings:", err);
-            // Keep localStorage settings
-        }
+        } catch (err) { console.error("Error fetching settings:", err); }
     }, [isOwnProfile, token]);
 
-    // Check friend status (uses api/friends for notification support)
     const checkFriendStatus = useCallback(async () => {
         if (isOwnProfile || !token || !userId || isSystemUser) return;
         try {
-            const response = await fetch(`${window.location.origin}/api/friends/status/${userId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetch(`${window.location.origin}/api/friends/status/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 const data = await response.json();
                 const s = (data.status || 'NONE').toLowerCase();
                 setFriendStatus(s === 'friends' ? 'accepted' : s);
                 setFriendRequestId(data.requestId || null);
-            } else {
-                setFriendStatus('none');
-                setFriendRequestId(null);
-            }
-        } catch (err) {
-            console.error("Error checking friend status:", err);
-            setFriendStatus('none');
-            setFriendRequestId(null);
-        }
+            } else { setFriendStatus('none'); setFriendRequestId(null); }
+        } catch (err) { setFriendStatus('none'); setFriendRequestId(null); }
     }, [isOwnProfile, token, userId, isSystemUser]);
 
-    // Initialize
     useEffect(() => {
         if (isOpen && userId) {
-            if (isSystemUser) {
-                setProfile(userData || { username: 'AURA FX', id: 'system' });
-                setLoading(false);
-                return;
-            }
-            if (!userData) fetchProfile();
-            else {
+            setMounted(false);
+            setTimeout(() => setMounted(true), 50);
+            if (isSystemUser) { setProfile(userData || { username: 'AURA FX', id: 'system' }); setLoading(false); return; }
+            if (!userData) fetchProfile(); else {
                 setProfile(userData);
-                if (userData.last_seen) {
-                    const lastSeenDate = new Date(userData.last_seen);
-                    setIsOnline(lastSeenDate >= new Date(Date.now() - 5 * 60 * 1000));
-                    setLastSeen(lastSeenDate);
-                }
+                if (userData.last_seen) { const d = new Date(userData.last_seen); setIsOnline(d >= new Date(Date.now() - 5 * 60 * 1000)); setLastSeen(d); }
                 setLoading(false);
             }
             fetchSettings();
@@ -244,141 +162,69 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         }
     }, [isOpen, userId, userData, isSystemUser, fetchProfile, fetchSettings, checkFriendStatus]);
 
-    // Animate XP bar
     useEffect(() => {
         if (profile && isOpen) {
             const xpProgress = getXPProgress(profile.xp || 0, profile.level || 1);
             setXpAnimated(0);
-            const timer = setTimeout(() => setXpAnimated(xpProgress.percentage), 100);
+            const timer = setTimeout(() => setXpAnimated(xpProgress.percentage), 200);
             return () => clearTimeout(timer);
         }
     }, [profile, isOpen]);
 
     if (!isOpen) return null;
 
-    // Friend action handlers (uses api/friends - creates notifications for recipient)
     const handleFriendAction = async (action) => {
-        if (!token) {
-            toast.error('Please log in to manage friends');
-            return;
-        }
-        
+        if (!token) { toast.error('Please log in to manage friends'); return; }
         setFriendLoading(true);
         try {
-            let endpoint = '';
-            let method = 'POST';
-            let body = {};
-            
+            let endpoint = '', method = 'POST', body = {};
             switch (action) {
-                case 'add':
-                    endpoint = '/api/friends/request';
-                    body = { receiverUserId: userId };
-                    break;
-                case 'accept':
-                    endpoint = '/api/friends/accept';
-                    body = { requestId: friendRequestId };
-                    break;
-                case 'reject':
-                    endpoint = '/api/friends/decline';
-                    body = { requestId: friendRequestId };
-                    break;
-                case 'remove':
-                    endpoint = '/api/friends/remove';
-                    method = 'DELETE';
-                    body = { friendUserId: userId };
-                    break;
-                default:
-                    return;
+                case 'add': endpoint = '/api/friends/request'; body = { receiverUserId: userId }; break;
+                case 'cancel': endpoint = '/api/friends/cancel'; body = { requestId: friendRequestId }; break;
+                case 'accept': endpoint = '/api/friends/accept'; body = { requestId: friendRequestId }; break;
+                case 'reject': endpoint = '/api/friends/decline'; body = { requestId: friendRequestId }; break;
+                case 'remove': endpoint = '/api/friends/remove'; method = 'DELETE'; body = { friendUserId: userId }; break;
+                default: return;
             }
-
             const response = await fetch(`${window.location.origin}${endpoint}`, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: method !== 'DELETE' ? JSON.stringify(body) : JSON.stringify(body)
+                method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(body)
             });
-
             const data = await response.json();
-            
             if (data.success) {
                 const s = (data.status || 'none').toLowerCase();
                 setFriendStatus(s === 'friends' ? 'accepted' : s);
                 setFriendRequestId(data.request?.id || data.requestId || null);
                 toast.success(data.message);
                 checkFriendStatus();
-            } else {
-                toast.error(data.message || 'Action failed');
-            }
-        } catch (err) {
-            toast.error('Failed to complete action');
-        } finally {
-            setFriendLoading(false);
-        }
+            } else { toast.error(data.message || 'Action failed'); }
+        } catch (err) { toast.error('Failed to complete action'); }
+        finally { setFriendLoading(false); }
     };
 
-    // Settings update handler
     const handleSettingsUpdate = async (updates) => {
-        // Optimistic update - update UI immediately
         setSettings(prev => ({ ...prev, ...updates }));
-        
-        // Save to localStorage as fallback
-        try {
-            const stored = JSON.parse(localStorage.getItem('user_settings') || '{}');
-            localStorage.setItem('user_settings', JSON.stringify({ ...stored, ...updates }));
-        } catch (e) {}
-        
-        if (!token) {
-            toast.success('Settings saved locally');
-            return;
-        }
-        
+        try { const stored = JSON.parse(localStorage.getItem('user_settings') || '{}'); localStorage.setItem('user_settings', JSON.stringify({ ...stored, ...updates })); } catch (e) {}
+        if (!token) { toast.success('Settings saved locally'); return; }
         setSettingsLoading(true);
         try {
-            const response = await fetch(`${window.location.origin}/api/users/settings`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(updates)
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    toast.success('Settings saved');
-                }
-            } else {
-                // Still show success since we saved locally
-                toast.success('Settings saved locally');
-            }
-        } catch (err) {
-            // Still show success since we saved locally
-            toast.success('Settings saved locally');
-        } finally {
-            setSettingsLoading(false);
-        }
+            const response = await fetch(`${window.location.origin}/api/users/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(updates) });
+            if (response.ok) { const data = await response.json(); if (data.success) toast.success('Settings saved'); } else { toast.success('Settings saved locally'); }
+        } catch (err) { toast.success('Settings saved locally'); }
+        finally { setSettingsLoading(false); }
     };
 
-    // Get friend button config
     const getFriendButton = () => {
         switch (friendStatus) {
-            case 'accepted':
-                return { icon: <FaUserCheck />, text: 'Friends', color: '#23A55A', action: 'remove' };
-            case 'pending_sent':
-                return { icon: <FaHourglass />, text: 'Pending', color: '#F0B232', action: null };
-            case 'pending_received':
-                return { icon: <FaUserPlus />, text: 'Accept', color: '#5865F2', action: 'accept' };
-            default:
-                return { icon: <FaUserPlus />, text: 'Add Friend', color: '#23A55A', action: 'add' };
+            case 'accepted': return { icon: <FaUserCheck />, text: 'Friends', color: '#23A55A', action: 'remove', subtext: 'Click to remove' };
+            case 'pending_sent': return { icon: <FaHourglass />, text: 'Pending', color: '#F0B232', action: 'cancel', subtext: 'Click to cancel' };
+            case 'pending_received': return { icon: <FaUserPlus />, text: 'Accept', color: '#8b5cf6', action: 'accept', subtext: 'Accept request' };
+            default: return { icon: <FaUserPlus />, text: 'Add Friend', color: '#8b5cf6', action: 'add', subtext: 'Send request' };
         }
     };
 
     const friendBtn = getFriendButton();
 
-    // Helper functions
     const formatLastSeen = (date) => {
         if (!date) return 'Never';
         const diffMs = Date.now() - date;
@@ -389,58 +235,40 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         return `${Math.floor(diffMins / 1440)}d ago`;
     };
 
-    // Level-based banner gradient
     const getBannerGradient = (level) => {
-        if (level >= 100) return 'linear-gradient(135deg, #FFD700 0%, #FFA500 30%, #FF6B35 60%, #E91E63 100%)';
-        if (level >= 75) return 'linear-gradient(135deg, #00D4FF 0%, #5865F2 50%, #9B59B6 100%)';
-        if (level >= 50) return 'linear-gradient(135deg, #9B59B6 0%, #8B5CF6 50%, #A78BFA 100%)';
-        if (level >= 25) return 'linear-gradient(135deg, #00B894 0%, #00CEC9 50%, #81ECEC 100%)';
-        if (level >= 10) return 'linear-gradient(135deg, #6C5CE7 0%, #A29BFE 100%)';
-        return 'linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(167, 139, 250, 0.3) 100%)';
+        if (level >= 100) return 'linear-gradient(135deg, #1a0a00 0%, #2d1500 40%, #1a0010 100%)';
+        if (level >= 75) return 'linear-gradient(135deg, #000d1a 0%, #001428 40%, #0a0020 100%)';
+        if (level >= 50) return 'linear-gradient(135deg, #0d0020 0%, #140030 40%, #0a0020 100%)';
+        if (level >= 25) return 'linear-gradient(135deg, #001a15 0%, #002820 40%, #001a15 100%)';
+        if (level >= 10) return 'linear-gradient(135deg, #0a0018 0%, #120025 40%, #0a0018 100%)';
+        return 'linear-gradient(135deg, #0a0a18 0%, #0f0f20 100%)';
     };
 
-    // Get unlocked achievements
+    const getBannerAccent = (level) => {
+        if (level >= 100) return '#FFD700';
+        if (level >= 75) return '#63b3ed';
+        if (level >= 50) return '#8b5cf6';
+        if (level >= 25) return '#10b981';
+        if (level >= 10) return '#8b5cf6';
+        return '#8b5cf6';
+    };
+
     const getAchievements = (level, streak = 0, aiChats = 0, messages = 0) => {
         return ALL_ACHIEVEMENTS.map(a => ({
-            ...a,
-            unlocked: (a.unlockLevel && level >= a.unlockLevel) ||
-                      (a.unlockStreak && streak >= a.unlockStreak) ||
-                      (a.unlockAiChats && aiChats >= a.unlockAiChats) ||
-                      (a.unlockMessages && messages >= a.unlockMessages)
+            ...a, unlocked: (a.unlockLevel && level >= a.unlockLevel) || (a.unlockStreak && streak >= a.unlockStreak) || (a.unlockAiChats && aiChats >= a.unlockAiChats) || (a.unlockMessages && messages >= a.unlockMessages)
         }));
     };
 
+    const TABS = ['overview', 'identity', 'statistics', 'achievements'];
+
     if (loading || !profile) {
         return createPortal(
-            <div className="profile-modal-overlay" style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.9)',
-                backdropFilter: 'blur(10px)',
-                zIndex: 99999,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px',
-                pointerEvents: 'auto'
-            }} onClick={onClose}>
-                <div className="profile-modal-content" style={{
-                    background: 'linear-gradient(135deg, rgba(30, 30, 46, 0.98) 0%, rgba(20, 20, 35, 0.99) 100%)',
-                    borderRadius: '20px',
-                    padding: '40px',
-                    maxWidth: '400px',
-                    width: '100%',
-                    textAlign: 'center',
-                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.7)'
-                }} onClick={(e) => e.stopPropagation()}>
-                    <div className="loading-spinner"></div>
-                    <div className="loading-text">Loading profile...</div>
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(16px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }} onClick={onClose}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }} onClick={e => e.stopPropagation()}>
+                    <div className="pf-spinner" />
+                    <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.38em', fontFamily: "'Space Grotesk', sans-serif" }}>Loading profile</span>
                 </div>
-            </div>,
-            getModalRoot()
+            </div>, getModalRoot()
         );
     }
 
@@ -455,89 +283,56 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const xpForNext = getXPForNextLevel(level);
     const achievements = getAchievements(level, loginStreak, stats?.ai_chats_count || 0, stats?.community_messages || 0);
     const unlockedCount = achievements.filter(a => a.unlocked).length;
+    const bannerAccent = getBannerAccent(level);
 
-    // Settings Modal
     const SettingsModal = () => (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.9)', zIndex: 10001, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', padding: '20px'
-        }} onClick={() => setShowSettings(false)}>
-            <div style={{
-                background: 'linear-gradient(135deg, rgba(30, 30, 46, 0.98) 0%, rgba(20, 20, 35, 0.99) 100%)',
-                borderRadius: '20px', maxWidth: '600px', width: '100%', maxHeight: '80vh',
-                overflow: 'auto', padding: '30px', border: '1px solid rgba(139, 92, 246, 0.3)'
-            }} onClick={(e) => e.stopPropagation()}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>⚙️ Settings</h2>
-                    <button onClick={() => setShowSettings(false)} style={{
-                        background: 'rgba(255,0,0,0.2)', border: 'none', color: 'white',
-                        width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer'
-                    }}><FaTimes /></button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(20px)', zIndex: 100001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', pointerEvents: 'auto' }} onClick={() => setShowSettings(false)}>
+            <div style={{ background: 'linear-gradient(145deg, rgba(14,14,22,0.99) 0%, rgba(10,10,18,0.99) 100%)', borderRadius: '20px', maxWidth: '560px', width: '100%', maxHeight: '85vh', overflow: 'auto', padding: '32px', border: '1px solid rgba(139,92,246,0.2)', boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(139,92,246,0.08)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                {/* Top shimmer */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.7), rgba(99,179,237,0.5), transparent)', borderRadius: '20px 20px 0 0' }} />
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                    <div>
+                        <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.4em', marginBottom: '4px', fontFamily: "'Space Grotesk', sans-serif" }}>Configuration</div>
+                        <h2 style={{ color: 'white', margin: 0, fontSize: '1.3rem', fontWeight: 200, letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Settings</h2>
+                    </div>
+                    <button onClick={() => setShowSettings(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', width: '36px', height: '36px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', fontFamily: "'Space Grotesk', sans-serif" }}><FaTimes /></button>
                 </div>
 
                 {/* Trading Identity */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ color: '#C4B5FD', fontSize: '1rem', marginBottom: '15px', textTransform: 'none' }}>
-                        <FaChartLine style={{ marginRight: '8px' }} />Trading Identity
-                    </h3>
-                    
-                    <div style={{ display: 'grid', gap: '15px' }}>
+                <div style={{ marginBottom: '28px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(139,92,246,0.12)' }}>
+                        <FaChartLine style={{ color: tierColor, fontSize: '0.85rem' }} />
+                        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>Trading Identity</span>
+                    </div>
+                    <div style={{ display: 'grid', gap: '16px' }}>
                         <div>
-                            <label style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', display: 'block', marginBottom: '8px' }}>
-                                Preferred Markets
-                            </label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            <label style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif" }}>Preferred Markets</label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
                                 {['forex', 'gold', 'crypto', 'indices', 'stocks', 'oil'].map(market => (
                                     <button key={market} onClick={() => {
                                         const current = settings?.preferred_markets || [];
-                                        const updated = current.includes(market) 
-                                            ? current.filter(m => m !== market)
-                                            : [...current, market];
+                                        const updated = current.includes(market) ? current.filter(m => m !== market) : [...current, market];
                                         handleSettingsUpdate({ preferred_markets: updated });
-                                    }} style={{
-                                        padding: '8px 16px', borderRadius: '20px', cursor: 'pointer',
-                                        background: settings?.preferred_markets?.includes(market) ? tierColor : 'rgba(255,255,255,0.1)',
-                                        border: 'none', color: 'white', fontSize: '0.85rem', fontWeight: 600,
-                                        textTransform: 'capitalize', transition: 'all 0.2s'
-                                    }}>{market}</button>
+                                    }} style={{ padding: '7px 14px', borderRadius: '99px', cursor: 'pointer', background: settings?.preferred_markets?.includes(market) ? `${tierColor}22` : 'rgba(255,255,255,0.04)', border: `1px solid ${settings?.preferred_markets?.includes(market) ? tierColor + '60' : 'rgba(255,255,255,0.08)'}`, color: settings?.preferred_markets?.includes(market) ? tierColor : 'rgba(255,255,255,0.45)', fontSize: '0.72rem', fontWeight: 500, textTransform: 'capitalize', transition: 'all 0.22s', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{market}</button>
                                 ))}
                             </div>
                         </div>
-
                         <div>
-                            <label style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', display: 'block', marginBottom: '8px' }}>
-                                Trading Sessions
-                            </label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            <label style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif" }}>Trading Sessions</label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
                                 {['asian', 'london', 'newyork', 'sydney'].map(session => (
                                     <button key={session} onClick={() => {
                                         const current = settings?.trading_sessions || [];
-                                        const updated = current.includes(session) 
-                                            ? current.filter(s => s !== session)
-                                            : [...current, session];
+                                        const updated = current.includes(session) ? current.filter(s => s !== session) : [...current, session];
                                         handleSettingsUpdate({ trading_sessions: updated });
-                                    }} style={{
-                                        padding: '8px 16px', borderRadius: '20px', cursor: 'pointer',
-                                        background: settings?.trading_sessions?.includes(session) ? '#5865F2' : 'rgba(255,255,255,0.1)',
-                                        border: 'none', color: 'white', fontSize: '0.85rem', fontWeight: 600,
-                                        textTransform: 'capitalize', transition: 'all 0.2s'
-                                    }}>{session}</button>
+                                    }} style={{ padding: '7px 14px', borderRadius: '99px', cursor: 'pointer', background: settings?.trading_sessions?.includes(session) ? 'rgba(99,179,237,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${settings?.trading_sessions?.includes(session) ? 'rgba(99,179,237,0.5)' : 'rgba(255,255,255,0.08)'}`, color: settings?.trading_sessions?.includes(session) ? '#63b3ed' : 'rgba(255,255,255,0.45)', fontSize: '0.72rem', fontWeight: 500, textTransform: 'capitalize', transition: 'all 0.22s', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{session}</button>
                                 ))}
                             </div>
                         </div>
-
                         <div>
-                            <label style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', display: 'block', marginBottom: '8px' }}>
-                                Risk Profile
-                            </label>
-                            <select value={settings?.risk_profile || 'moderate'} onChange={(e) => 
-                                handleSettingsUpdate({ risk_profile: e.target.value })
-                            } style={{
-                                width: '100%', padding: '12px', borderRadius: '10px', cursor: 'pointer',
-                                background: 'rgba(20, 20, 35, 0.8)', border: '1px solid rgba(139, 92, 246, 0.3)',
-                                color: 'white', fontSize: '1rem'
-                            }}>
+                            <label style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif" }}>Risk Profile</label>
+                            <select value={settings?.risk_profile || 'moderate'} onChange={e => handleSettingsUpdate({ risk_profile: e.target.value })} style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', cursor: 'pointer', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', color: 'white', fontSize: '0.86rem', fontFamily: "'Space Grotesk', sans-serif", outline: 'none', transition: 'border-color 0.2s' }}>
                                 <option value="conservative">🛡️ Conservative</option>
                                 <option value="moderate">⚖️ Moderate</option>
                                 <option value="aggressive">🔥 Aggressive</option>
@@ -546,450 +341,328 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     </div>
                 </div>
 
-                {/* Privacy Settings */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ color: '#C4B5FD', fontSize: '1rem', marginBottom: '15px', textTransform: 'none' }}>
-                        <FaShieldAlt style={{ marginRight: '8px' }} />Privacy
-                    </h3>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {[
-                            { key: 'show_online_status', label: 'Show Online Status' },
-                            { key: 'show_trading_stats', label: 'Show Trading Stats' },
-                            { key: 'show_achievements', label: 'Show Achievements' }
-                        ].map(({ key, label }) => (
-                            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                                <input type="checkbox" checked={settings?.[key] !== false}
-                                    onChange={(e) => handleSettingsUpdate({ [key]: e.target.checked })}
-                                    style={{ width: '20px', height: '20px', accentColor: tierColor }}
-                                />
-                                <span style={{ color: 'white', fontSize: '0.95rem' }}>{label}</span>
+                {/* Privacy */}
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(139,92,246,0.12)' }}>
+                        <FaShieldAlt style={{ color: '#63b3ed', fontSize: '0.85rem' }} />
+                        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>Privacy</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {[{ key: 'show_online_status', label: 'Show Online Status' }, { key: 'show_trading_stats', label: 'Show Trading Stats' }, { key: 'show_achievements', label: 'Show Achievements' }].map(({ key, label }) => (
+                            <label key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', cursor: 'pointer', padding: '12px 14px', background: 'rgba(255,255,255,0.025)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', fontFamily: "'Space Grotesk', sans-serif" }}>{label}</span>
+                                <div onClick={() => handleSettingsUpdate({ [key]: !(settings?.[key] !== false) })} style={{ width: '42px', height: '22px', borderRadius: '99px', background: settings?.[key] !== false ? `${tierColor}` : 'rgba(255,255,255,0.08)', border: `1px solid ${settings?.[key] !== false ? tierColor : 'rgba(255,255,255,0.12)'}`, position: 'relative', cursor: 'pointer', transition: 'all 0.3s', flexShrink: 0 }}>
+                                    <div style={{ position: 'absolute', top: '2px', left: settings?.[key] !== false ? '22px' : '2px', width: '16px', height: '16px', borderRadius: '50%', background: 'white', transition: 'left 0.3s', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }} />
+                                </div>
                             </label>
                         ))}
                     </div>
                 </div>
-
-                {settingsLoading && (
-                    <div style={{ textAlign: 'center', padding: '10px', color: '#C4B5FD' }}>Saving...</div>
-                )}
+                {settingsLoading && <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(139,92,246,0.7)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Saving…</div>}
             </div>
         </div>
     );
 
-    // Modal content JSX
     const modalContent = (
-        <div className="profile-modal-overlay" style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.92)',
-            backdropFilter: 'blur(12px)',
-            zIndex: 99999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            pointerEvents: 'auto',
-            overflowY: 'auto'
+        <div style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.88)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px', pointerEvents: 'auto', overflowY: 'auto'
         }} onClick={onClose}>
-            <div className="profile-modal-content" style={{
-                background: 'linear-gradient(135deg, rgba(30, 30, 46, 0.98) 0%, rgba(20, 20, 35, 0.99) 100%)',
-                borderRadius: '24px',
-                boxShadow: `0 25px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px ${tierColor}40`,
-                maxWidth: '900px',
-                width: '100%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                position: 'relative',
-                margin: 'auto'
-            }} onClick={(e) => e.stopPropagation()}>
-                
-                {/* Action Buttons - safe area aware on iPhone via CSS class */}
-                <div className="profile-modal-actions" style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '8px', zIndex: 10 }}>
+
+            <div style={{
+                background: 'linear-gradient(145deg, rgba(12,12,20,0.99) 0%, rgba(8,8,16,0.99) 100%)',
+                borderRadius: '22px',
+                border: `1px solid rgba(139,92,246,0.18)`,
+                boxShadow: `0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(139,92,246,0.06), 0 0 60px ${tierColor}12`,
+                maxWidth: '860px', width: '100%', maxHeight: '92vh',
+                overflowY: 'auto', overflowX: 'hidden',
+                position: 'relative', margin: 'auto',
+                opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.98)',
+                transition: 'opacity 0.35s cubic-bezier(0.22,1,0.36,1), transform 0.35s cubic-bezier(0.22,1,0.36,1)'
+            }} onClick={e => e.stopPropagation()}>
+
+                {/* Top shimmer line */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}80, rgba(99,179,237,0.5), transparent)`, borderRadius: '22px 22px 0 0', zIndex: 10 }} />
+
+                {/* Action Buttons */}
+                <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
                     {isOwnProfile && (
                         <button onClick={() => setShowSettings(true)} title="Settings" style={{
-                            background: 'rgba(0, 0, 0, 0.7)', border: '1px solid rgba(255, 255, 255, 0.2)',
-                            color: 'white', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s'
+                            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                            color: 'rgba(255,255,255,0.55)', width: '38px', height: '38px', borderRadius: '10px',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'all 0.22s', backdropFilter: 'blur(8px)', fontSize: '0.85rem'
                         }}><FaCog /></button>
                     )}
-                    
                     {!isOwnProfile && (
-                        <button onClick={() => friendBtn.action && handleFriendAction(friendBtn.action)}
-                            disabled={friendLoading || !friendBtn.action} title={friendBtn.text} style={{
-                            background: `${friendBtn.color}40`, border: `1px solid ${friendBtn.color}`,
-                            color: 'white', padding: '8px 16px', borderRadius: '20px', cursor: friendBtn.action ? 'pointer' : 'default',
-                            display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600,
-                            opacity: friendLoading ? 0.6 : 1, transition: 'all 0.3s'
-                        }}>
-                            {friendLoading ? <span className="loading-spinner" style={{ width: '16px', height: '16px' }} /> : friendBtn.icon}
+                        <button
+                            onClick={() => friendBtn.action && handleFriendAction(friendBtn.action)}
+                            disabled={friendLoading}
+                            title={friendBtn.subtext}
+                            style={{
+                                background: `${friendBtn.color}14`, border: `1px solid ${friendBtn.color}40`,
+                                color: friendBtn.color, padding: '0 16px', height: '38px', borderRadius: '10px',
+                                cursor: friendBtn.action ? 'pointer' : 'default', display: 'flex', alignItems: 'center',
+                                gap: '8px', fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.14em',
+                                textTransform: 'uppercase', opacity: friendLoading ? 0.6 : 1, transition: 'all 0.22s',
+                                backdropFilter: 'blur(8px)', fontFamily: "'Space Grotesk', sans-serif"
+                            }}>
+                            {friendLoading ? <div className="pf-spinner pf-spinner-sm" /> : friendBtn.icon}
                             {friendBtn.text}
                         </button>
                     )}
-                    
                     <button onClick={onClose} title="Close" style={{
-                        background: 'rgba(0, 0, 0, 0.7)', border: '1px solid rgba(255, 255, 255, 0.2)',
-                        color: 'white', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'rgba(255,255,255,0.55)', width: '38px', height: '38px', borderRadius: '10px',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.22s', backdropFilter: 'blur(8px)', fontSize: '0.85rem'
                     }}><FaTimes /></button>
                 </div>
 
-                {/* Profile Header Section - Banner + Avatar */}
-                <div style={{
-                    position: 'relative', 
-                    width: '100%', 
-                    paddingBottom: '70px', /* Space for avatar overhang */
-                    marginBottom: '0'
-                }}>
-                    {/* Level-Based Banner - NO overflow:hidden to allow avatar to extend */}
-                    <div style={{
-                        position: 'relative', 
-                        width: '100%', 
-                        height: '180px',
-                        background: getBannerGradient(level),
-                        borderRadius: '24px 24px 0 0' /* Match modal corners */
-                    }}>
-                        {/* Animated particles effect for high levels */}
-                        {level >= 50 && (
-                            <div style={{
-                                position: 'absolute', inset: 0, 
-                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-                                animation: 'shimmer 3s infinite linear', opacity: 0.5,
-                                borderRadius: '24px 24px 0 0'
-                            }} />
-                        )}
-                        
-                        {/* Level indicator on banner */}
-                        <div style={{
-                            position: 'absolute', top: '15px', left: '15px', padding: '8px 16px',
-                            background: 'rgba(0,0,0,0.5)', borderRadius: '20px', backdropFilter: 'blur(10px)',
-                            display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2
-                        }}>
-                            <span style={{ fontSize: '1.5rem' }}>
-                                {level >= 75 ? '👑' : level >= 50 ? '💎' : level >= 25 ? '🔥' : '⭐'}
-                            </span>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>Level {level}</span>
-                        </div>
-                    </div>
+                {/* ─── BANNER ─────────────────────────────────────────── */}
+                <div style={{ position: 'relative', width: '100%', height: '170px', background: getBannerGradient(level), borderRadius: '22px 22px 0 0', overflow: 'hidden', flexShrink: 0 }}>
+                    {/* Diagonal grid */}
+                    <div style={{ position: 'absolute', inset: 0, backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 26px, ${bannerAccent}08 26px, ${bannerAccent}08 27px)`, pointerEvents: 'none' }} />
+                    {/* Radial glow center */}
+                    <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 80% at 30% 50%, ${bannerAccent}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
+                    {/* Shimmer */}
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)', animation: 'xpShimmer 4s ease-in-out infinite' }} />
 
-                    {/* Avatar - Positioned outside banner to avoid clipping */}
-                    <div style={{ 
-                        position: 'absolute', 
-                        bottom: '0', 
-                        left: '40px', 
-                        zIndex: 10,
-                        width: '130px',
-                        height: '130px'
-                    }}>
-                        <AvatarWithFallback 
-                            size={130}
-                            tierColor={tierColor}
-                            isOnline={isOnline}
-                            avatar={profile?.avatar}
-                            userId={profile?.id ?? profile?.username}
-                        />
-                    </div>
-                </div>
-
-                {/* Profile Header */}
-                <div style={{ padding: '0 40px 16px', marginTop: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'white', margin: 0 }}>
-                            {profile.username || profile.name || 'User'}
-                        </h1>
-                        {(profile.role === 'admin' || profile.role === 'super_admin') && <FaCrown style={{ color: '#FFD700', fontSize: '1.4rem' }} />}
-                        {profile.subscription_status === 'active' && <FaCheckCircle style={{ color: '#5865F2', fontSize: '1.2rem' }} />}
-                    </div>
-
-                    {/* Rank Banner */}
-                    <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '12px 20px',
-                        background: `linear-gradient(135deg, ${tierColor}30, ${tierColor}10)`,
-                        border: `2px solid ${tierColor}60`, borderRadius: '14px', marginBottom: '10px'
-                    }}>
-                        <div style={{
-                            width: '36px', height: '36px', borderRadius: '10px', background: tierColor,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: `0 4px 15px ${tierColor}50`
-                        }}>
-                            {level >= 75 ? <FaCrown style={{ color: 'white' }} /> :
-                             level >= 50 ? <FaGem style={{ color: 'white' }} /> :
-                             level >= 25 ? <FaTrophy style={{ color: 'white' }} /> : <FaStar style={{ color: 'white' }} />}
-                        </div>
+                    {/* Level badge */}
+                    <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', alignItems: 'center', gap: '9px', padding: '8px 16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', borderRadius: '10px', border: `1px solid ${bannerAccent}30`, zIndex: 2 }}>
+                        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{level >= 75 ? '👑' : level >= 50 ? '💎' : level >= 25 ? '🔥' : '⭐'}</span>
                         <div>
-                            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: tierColor, letterSpacing: '1px' }}>{rankTitle}</div>
-                            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'none' }}>{tierName}</div>
+                            <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.3em', fontFamily: "'Space Grotesk', sans-serif" }}>Power Level</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 300, color: 'white', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>{level}</div>
                         </div>
                     </div>
 
-                    {/* Animated XP Progress Bar */}
-                    <div style={{ marginTop: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: 600 }}>
-                                Level {level} → Level {level + 1}
-                            </span>
-                            <span style={{ color: tierColor, fontSize: '0.9rem', fontWeight: 700 }}>
-                                {(xpProgress.current || 0).toLocaleString()} / {(xpProgress.needed || 0).toLocaleString()} XP
-                            </span>
+                    {/* Online status badge */}
+                    {!isOwnProfile && (
+                        <div style={{ position: 'absolute', top: '16px', right: '100px', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)', borderRadius: '99px', border: `1px solid ${isOnline ? '#23A55A40' : 'rgba(255,255,255,0.08)'}` }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isOnline ? '#23A55A' : '#4a4a5a', boxShadow: isOnline ? '0 0 8px #23A55A' : 'none' }} />
+                            <span style={{ fontSize: '0.6rem', color: isOnline ? '#23A55A' : 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.2em', fontFamily: "'Space Grotesk', sans-serif" }}>{isOnline ? 'Online' : lastSeen ? formatLastSeen(lastSeen) : 'Offline'}</span>
                         </div>
-                        <div style={{
-                            width: '100%', height: '12px', background: 'rgba(30, 30, 46, 0.8)',
-                            borderRadius: '10px', overflow: 'hidden', position: 'relative'
-                        }}>
-                            <div style={{
-                                height: '100%', width: `${xpAnimated}%`,
-                                background: `linear-gradient(90deg, ${tierColor} 0%, ${tierColor}dd 50%, ${tierColor} 100%)`,
-                                borderRadius: '10px', transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                boxShadow: `0 0 20px ${tierColor}60`, position: 'relative'
-                            }}>
-                                {/* Shimmer effect */}
-                                <div style={{
-                                    position: 'absolute', inset: 0,
-                                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-                                    animation: 'shimmer 2s infinite'
-                                }} />
-                            </div>
+                    )}
+                </div>
+
+                {/* ─── AVATAR OVERLAP STRIP ────────────────────────────── */}
+                {/* Avatar sits half-over the banner via negative margin on its wrapper */}
+                <div style={{ padding: '0 32px', display: 'flex', alignItems: 'flex-end', gap: '0', marginTop: '-56px', position: 'relative', zIndex: 5 }}>
+                    <AvatarWithFallback size={112} tierColor={tierColor} isOnline={isOnline} avatar={profile?.avatar} userId={profile?.id ?? profile?.username} />
+                </div>
+
+                {/* ─── USERNAME + RANK (fully below banner) ────────────── */}
+                <div style={{ padding: '14px 32px 0', display: 'flex', alignItems: 'center', gap: '22px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '180px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '7px', flexWrap: 'wrap' }}>
+                            <h1 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.9rem)', fontWeight: 200, color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif", textShadow: `0 0 40px ${tierColor}30` }}>
+                                {profile.username || profile.name || 'User'}
+                            </h1>
+                            {(profile.role === 'admin' || profile.role === 'super_admin') && <FaCrown style={{ color: '#FFD700', fontSize: '1.1rem', filter: 'drop-shadow(0 0 8px #FFD70060)' }} />}
+                            {profile.subscription_status === 'active' && <FaCheckCircle style={{ color: '#8b5cf6', fontSize: '1rem' }} />}
                         </div>
-                        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', marginTop: '6px', textAlign: 'right' }}>
-                            {((xpProgress.needed || 0) - (xpProgress.current || 0)).toLocaleString()} XP to next level
+                        {/* Rank pill */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', background: `${tierColor}12`, border: `1px solid ${tierColor}30`, borderRadius: '99px' }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: tierColor, animation: 'dotPulse 2s ease-in-out infinite alternate' }} />
+                            <span style={{ fontSize: '0.65rem', fontWeight: 500, color: tierColor, textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif" }}>{rankTitle}</span>
+                            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: "'Space Grotesk', sans-serif" }}>· {tierName}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div style={{ display: 'flex', gap: '4px', padding: '0 40px', borderBottom: '2px solid rgba(139, 92, 246, 0.2)', marginBottom: '16px', overflowX: 'auto' }}>
-                    {['overview', 'identity', 'statistics', 'achievements'].map(tab => (
+                {/* ─── XP BAR ─────────────────────────────────────────── */}
+                <div style={{ padding: '4px 32px 20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', fontFamily: "'Space Grotesk', sans-serif" }}>Lv {level} → Lv {level + 1}</span>
+                        <span style={{ fontSize: '0.65rem', color: tierColor, fontWeight: 500, letterSpacing: '0.06em', fontFamily: "'Space Grotesk', sans-serif" }}>{(xpProgress.current || 0).toLocaleString()} / {(xpProgress.needed || 0).toLocaleString()} XP</span>
+                    </div>
+                    <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${xpAnimated}%`, background: `linear-gradient(90deg, ${tierColor} 0%, ${tierColor}cc 100%)`, borderRadius: '99px', boxShadow: `0 0 12px ${tierColor}60`, transition: 'width 1.5s cubic-bezier(0.4,0,0.2,1)', position: 'relative' }}>
+                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)', animation: 'xpShimmer 2.5s ease-in-out infinite' }} />
+                        </div>
+                    </div>
+                    <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', marginTop: '5px', textAlign: 'right', letterSpacing: '0.18em', fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {((xpProgress.needed || 0) - (xpProgress.current || 0)).toLocaleString()} XP remaining
+                    </div>
+                </div>
+
+                {/* Thin divider */}
+                <div style={{ height: '1px', margin: '0 32px', background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.2), transparent)' }} />
+
+                {/* ─── TABS ───────────────────────────────────────────── */}
+                <div style={{ display: 'flex', gap: '2px', padding: '0 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', scrollbarWidth: 'none', marginTop: '4px' }}>
+                    {TABS.map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                            background: 'transparent', border: 'none', padding: '12px 16px',
-                            color: activeTab === tab ? tierColor : 'rgba(255, 255, 255, 0.5)',
-                            fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', textTransform: 'none',
-                            letterSpacing: '0.5px', position: 'relative', whiteSpace: 'nowrap'
+                            background: 'transparent', border: 'none', padding: '12px 16px', whiteSpace: 'nowrap',
+                            color: activeTab === tab ? tierColor : 'rgba(255,255,255,0.35)',
+                            fontSize: '0.65rem', fontWeight: 500, cursor: 'pointer',
+                            textTransform: 'uppercase', letterSpacing: '0.24em', position: 'relative',
+                            transition: 'color 0.22s', fontFamily: "'Space Grotesk', sans-serif",
+                            borderBottom: activeTab === tab ? `2px solid ${tierColor}` : '2px solid transparent',
+                            marginBottom: '-1px'
                         }}>
                             {tab === 'identity' ? 'Trading Identity' : tab}
-                            {activeTab === tab && (
-                                <div style={{
-                                    position: 'absolute', bottom: '-2px', left: 0, right: 0, height: '3px',
-                                    background: tierColor, borderRadius: '2px 2px 0 0'
-                                }} />
-                            )}
                         </button>
                     ))}
                 </div>
 
-                {/* Tab Content */}
-                <div style={{ padding: '0 40px 32px', minHeight: '220px' }}>
-                    {/* Overview Tab */}
+                {/* ─── TAB CONTENT ────────────────────────────────────── */}
+                <div style={{ padding: '24px 32px 28px', minHeight: '240px' }}>
+
+                    {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
-                        <div style={{ display: 'grid', gap: '12px' }}>
-                            {/* Journal / Task stats (Today, This week, This month) when viewing another user */}
-                            {profile.journalStats && (profile.journalStats.todayPct != null || profile.journalStats.weekPct != null || profile.journalStats.monthPct != null) && (
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                                    {[
-                                        { pct: profile.journalStats.todayPct, label: 'Today' },
-                                        { pct: profile.journalStats.weekPct, label: 'This week' },
-                                        { pct: profile.journalStats.monthPct, label: 'This month' }
-                                    ].map((item, i) => (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Journal stats rings */}
+                            {profile.journalStats && (
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '28px', flexWrap: 'wrap', padding: '20px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    {[{ pct: profile.journalStats.todayPct, label: 'Today' }, { pct: profile.journalStats.weekPct, label: 'This Week' }, { pct: profile.journalStats.monthPct, label: 'This Month' }].map((item, i) => (
                                         <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{
-                                                width: 56, height: 56, borderRadius: '50%',
-                                                background: `conic-gradient(#8B5CF6 0deg, #22c55e ${(item.pct != null ? item.pct : 0) * 3.6}deg, rgba(255,255,255,0.08) ${(item.pct != null ? item.pct : 0) * 3.6}deg)`,
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'
-                                            }}>
-                                                <div style={{ position: 'absolute', inset: 3, borderRadius: '50%', background: 'linear-gradient(145deg, rgba(22,22,38,0.98), rgba(30,30,46,0.95))', border: '1px solid rgba(139,92,246,0.2)' }} />
-                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
-                                                    {item.pct != null ? `${item.pct}%` : '—'}
-                                                </span>
+                                            <div style={{ width: 54, height: 54, borderRadius: '50%', background: `conic-gradient(${tierColor} 0deg, #10b981 ${(item.pct ?? 0) * 3.6}deg, rgba(255,255,255,0.05) ${(item.pct ?? 0) * 3.6}deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                                                <div style={{ position: 'absolute', inset: 4, borderRadius: '50%', background: '#0a0a12' }} />
+                                                <span style={{ position: 'relative', zIndex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : '—'}</span>
                                             </div>
-                                            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>{item.label}</span>
+                                            <span style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif" }}>{item.label}</span>
                                         </div>
                                     ))}
                                 </div>
                             )}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
+
+                            {/* Stat cards grid */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
                                 {[
                                     { icon: '⚡', label: 'Power Level', value: level, color: tierColor },
                                     { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
-                                    { icon: '🔥', label: 'Discipline Streak', value: `${loginStreak} day${loginStreak !== 1 ? 's' : ''}`, color: '#FF6B35' },
-                                    { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#5865F2' }
+                                    { icon: '🔥', label: 'Streak', value: `${loginStreak}d`, color: '#f59e0b' },
+                                    { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#8b5cf6' }
                                 ].map((stat, i) => (
-                                    <div key={i} style={{
-                                        padding: '14px 16px', background: 'rgba(139, 92, 246, 0.08)',
-                                        border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '12px',
-                                        display: 'flex', alignItems: 'center', gap: '12px'
-                                    }}>
-                                        <span style={{ fontSize: '1.5rem' }}>{stat.icon}</span>
-                                        <div style={{ minWidth: 0 }}>
-                                            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', textTransform: 'none', letterSpacing: '0.3px' }}>{stat.label}</div>
-                                            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
+                                    <div key={i} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', overflow: 'hidden', transition: 'border-color 0.22s' }}>
+                                        <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: '2px', background: `linear-gradient(180deg, transparent, ${stat.color}80, transparent)`, borderRadius: '2px' }} />
+                                        <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{stat.icon}</span>
+                                        <div>
+                                            <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: '3px', fontFamily: "'Space Grotesk', sans-serif" }}>{stat.label}</div>
+                                            <div style={{ fontSize: '1.15rem', fontWeight: 300, color: stat.color, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 8px ${stat.color}40)` }}>{stat.value}</div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            
+
                             {/* Next Milestone */}
                             {nextMilestone && (
-                                <div style={{
-                                    padding: '16px 20px', background: `linear-gradient(135deg, ${tierColor}12, ${tierColor}06)`,
-                                    border: `1px solid ${tierColor}40`, borderRadius: '12px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', textTransform: 'none', letterSpacing: '0.5px' }}>Next milestone</div>
-                                    <div style={{ fontSize: '1.35rem', fontWeight: 700, color: tierColor }}>{nextMilestone.title}</div>
-                                    <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
-                                        {nextMilestone.level - level} levels to go
+                                <div style={{ padding: '18px 22px', background: `${tierColor}08`, border: `1px solid ${tierColor}20`, borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}60, transparent)` }} />
+                                    <div style={{ fontSize: '1.8rem' }}>🏆</div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', marginBottom: '3px', fontFamily: "'Space Grotesk', sans-serif" }}>Next Milestone</div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 300, color: tierColor, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>{nextMilestone.title}</div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '1.4rem', fontWeight: 200, color: 'rgba(255,255,255,0.6)', fontFamily: "'Space Grotesk', sans-serif" }}>{nextMilestone.level - level}</div>
+                                        <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.2em', fontFamily: "'Space Grotesk', sans-serif" }}>levels</div>
                                     </div>
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {/* Trading Identity Tab */}
+                    {/* TRADING IDENTITY TAB */}
                     {activeTab === 'identity' && (
-                        <div style={{ display: 'grid', gap: '25px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                                <div style={{ padding: '25px', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '16px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                                        <FaChartLine style={{ color: tierColor, fontSize: '1.2rem' }} />
-                                        <span style={{ color: 'white', fontWeight: 700 }}>Preferred Markets</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                            {[
+                                { icon: <FaChartLine />, color: tierColor, label: 'Preferred Markets', content: (settings?.preferred_markets || ['forex', 'gold']).map((m, i) => <span key={i} style={{ padding: '5px 12px', background: `${tierColor}18`, border: `1px solid ${tierColor}40`, borderRadius: '99px', color: tierColor, fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{m}</span>) },
+                                { icon: <FaClock />, color: '#63b3ed', label: 'Trading Sessions', content: (settings?.trading_sessions || ['london', 'newyork']).map((s, i) => <span key={i} style={{ padding: '5px 12px', background: 'rgba(99,179,237,0.1)', border: '1px solid rgba(99,179,237,0.3)', borderRadius: '99px', color: '#63b3ed', fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{s}</span>) },
+                                { icon: <FaShieldAlt />, color: '#10b981', label: 'Risk Profile', content: [<span key="r" style={{ fontSize: '1.1rem', color: '#10b981', fontWeight: 300, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{settings?.risk_profile === 'conservative' ? '🛡️ ' : settings?.risk_profile === 'aggressive' ? '🔥 ' : '⚖️ '}{settings?.risk_profile || 'Moderate'}</span>] },
+                                { icon: <FaRobot />, color: '#a78bfa', label: 'AI Usage', content: [<span key="ai" style={{ fontSize: '1.1rem', color: '#a78bfa', fontWeight: 300, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif" }}>{stats?.ai_chats_count || 0} conversations</span>] }
+                            ].map((card, i) => (
+                                <div key={i} style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '2px', background: `linear-gradient(180deg, transparent, ${card.color}60, transparent)` }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                                        <span style={{ color: card.color, fontSize: '0.85rem' }}>{card.icon}</span>
+                                        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.28em', fontFamily: "'Space Grotesk', sans-serif" }}>{card.label}</span>
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                        {(settings?.preferred_markets || ['forex', 'gold']).map((market, i) => (
-                                            <span key={i} style={{
-                                                padding: '6px 14px', background: tierColor, borderRadius: '15px',
-                                                color: 'white', fontSize: '0.85rem', fontWeight: 600, textTransform: 'capitalize'
-                                            }}>{market}</span>
-                                        ))}
-                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>{card.content}</div>
                                 </div>
-
-                                <div style={{ padding: '25px', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '16px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                                        <FaClock style={{ color: '#5865F2', fontSize: '1.2rem' }} />
-                                        <span style={{ color: 'white', fontWeight: 700 }}>Trading Sessions</span>
-                                    </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                        {(settings?.trading_sessions || ['london', 'newyork']).map((session, i) => (
-                                            <span key={i} style={{
-                                                padding: '6px 14px', background: '#5865F2', borderRadius: '15px',
-                                                color: 'white', fontSize: '0.85rem', fontWeight: 600, textTransform: 'capitalize'
-                                            }}>{session}</span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: '25px', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '16px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                                        <FaShieldAlt style={{ color: '#00B894', fontSize: '1.2rem' }} />
-                                        <span style={{ color: 'white', fontWeight: 700 }}>Risk Profile</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#00B894', textTransform: 'capitalize' }}>
-                                        {settings?.risk_profile === 'conservative' ? '🛡️' : settings?.risk_profile === 'aggressive' ? '🔥' : '⚖️'} {settings?.risk_profile || 'Moderate'}
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: '25px', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '16px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                                        <FaRobot style={{ color: '#FF6B35', fontSize: '1.2rem' }} />
-                                        <span style={{ color: 'white', fontWeight: 700 }}>AI Usage</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#FF6B35' }}>
-                                        {stats?.ai_chats_count || 0} Conversations
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     )}
 
-                    {/* Statistics Tab */}
+                    {/* STATISTICS TAB */}
                     {activeTab === 'statistics' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
                             {[
-                                { icon: <FaRobot />, label: 'AI Chats', value: stats?.ai_chats_count || 0, color: '#FF6B35' },
-                                { icon: <FaComments />, label: 'Messages Sent', value: stats?.community_messages || 0, color: '#5865F2' },
-                                { icon: <FaGraduationCap />, label: 'Courses Done', value: stats?.courses_completed || 0, color: '#00B894' },
-                                { icon: <FaFire />, label: 'Longest Discipline Streak', value: `${stats?.longest_streak || loginStreak} days`, color: '#FF6B35' },
-                                { icon: <FaCalendarCheck />, label: 'Login Days', value: stats?.total_login_days || 0, color: '#9B59B6' },
+                                { icon: <FaRobot />, label: 'AI Chats', value: stats?.ai_chats_count || 0, color: '#a78bfa' },
+                                { icon: <FaComments />, label: 'Messages', value: stats?.community_messages || 0, color: '#63b3ed' },
+                                { icon: <FaGraduationCap />, label: 'Courses', value: stats?.courses_completed || 0, color: '#10b981' },
+                                { icon: <FaFire />, label: 'Best Streak', value: `${stats?.longest_streak || loginStreak}d`, color: '#f59e0b' },
+                                { icon: <FaCalendarCheck />, label: 'Login Days', value: stats?.total_login_days || 0, color: '#8b5cf6' },
                                 { icon: <FaBolt />, label: 'Monthly XP', value: (stats?.current_month_xp || xp).toLocaleString(), color: '#FFD700' }
                             ].map((stat, i) => (
-                                <div key={i} style={{
-                                    padding: '25px', background: 'rgba(139, 92, 246, 0.08)',
-                                    border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '16px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '2rem', marginBottom: '10px', color: stat.color }}>{stat.icon}</div>
-                                    <div style={{ fontSize: '1.8rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
-                                    <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', textTransform: 'none', marginTop: '5px' }}>{stat.label}</div>
+                                <div key={i} style={{ padding: '20px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', textAlign: 'center', position: 'relative', overflow: 'hidden', transition: 'all 0.22s' }}>
+                                    <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: '2px', background: `linear-gradient(180deg, transparent, ${stat.color}60, transparent)` }} />
+                                    <div style={{ fontSize: '1.4rem', marginBottom: '10px', color: stat.color }}>{stat.icon}</div>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 300, color: stat.color, marginBottom: '5px', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 8px ${stat.color}30)` }}>{stat.value}</div>
+                                    <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif" }}>{stat.label}</div>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    {/* Achievements Tab */}
+                    {/* ACHIEVEMENTS TAB */}
                     {activeTab === 'achievements' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '15px' }}>
-                            {achievements.map((achievement, i) => (
-                                <div key={i} title={achievement.description} style={{
-                                    padding: '20px', textAlign: 'center', borderRadius: '16px', cursor: 'pointer',
-                                    background: achievement.unlocked ? `linear-gradient(135deg, ${tierColor}20, ${tierColor}10)` : 'rgba(50,50,70,0.3)',
-                                    border: `1px solid ${achievement.unlocked ? tierColor + '50' : 'rgba(100,100,120,0.3)'}`,
-                                    opacity: achievement.unlocked ? 1 : 0.5, transition: 'all 0.3s',
-                                    transform: achievement.unlocked ? 'scale(1)' : 'scale(0.95)'
-                                }}>
-                                    <div style={{ fontSize: '2.5rem', marginBottom: '10px', filter: achievement.unlocked ? 'none' : 'grayscale(100%)' }}>
-                                        {achievement.unlocked ? achievement.icon : <FaLock style={{ color: 'rgba(255,255,255,0.3)' }} />}
-                                    </div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: achievement.unlocked ? tierColor : 'rgba(255,255,255,0.4)' }}>
-                                        {achievement.name}
-                                    </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '5px' }}>
-                                        {achievement.description}
-                                    </div>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>{unlockedCount} / {ALL_ACHIEVEMENTS.length} unlocked</span>
+                                <div style={{ height: '3px', width: '80px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${(unlockedCount / ALL_ACHIEVEMENTS.length) * 100}%`, background: `linear-gradient(90deg, ${tierColor}, ${tierColor}80)`, borderRadius: '99px', transition: 'width 1s ease' }} />
                                 </div>
-                            ))}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '9px' }}>
+                                {achievements.map((achievement, i) => (
+                                    <div key={i} title={achievement.description} style={{ padding: '16px 10px', textAlign: 'center', borderRadius: '14px', position: 'relative', overflow: 'hidden', background: achievement.unlocked ? `${tierColor}0a` : 'rgba(255,255,255,0.015)', border: `1px solid ${achievement.unlocked ? tierColor + '30' : 'rgba(255,255,255,0.05)'}`, opacity: achievement.unlocked ? 1 : 0.5, transition: 'all 0.3s', cursor: 'pointer' }}>
+                                        {achievement.unlocked && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}70, transparent)` }} />}
+                                        <div style={{ fontSize: '2rem', marginBottom: '8px', filter: achievement.unlocked ? 'none' : 'grayscale(100%)' }}>
+                                            {achievement.unlocked ? achievement.icon : '🔒'}
+                                        </div>
+                                        <div style={{ fontSize: '0.6rem', fontWeight: 500, color: achievement.unlocked ? tierColor : 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', lineHeight: 1.3, marginBottom: '4px', fontFamily: "'Space Grotesk', sans-serif" }}>{achievement.name}</div>
+                                        <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.25)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '0.04em' }}>{achievement.description}</div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* View Full Profile Button */}
+                {/* ─── FOOTER ─────────────────────────────────────────── */}
                 {onViewProfile && (
-                    <div style={{ padding: '20px 40px 30px', borderTop: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', justifyContent: 'center' }}>
-                        <button onClick={onViewProfile} style={{
-                            display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 40px',
-                            background: `linear-gradient(135deg, ${tierColor} 0%, ${tierColor}cc 100%)`,
-                            border: 'none', borderRadius: '14px', color: 'white', fontSize: '1rem',
-                            fontWeight: 700, cursor: 'pointer', boxShadow: `0 8px 30px ${tierColor}50`,
-                            transition: 'all 0.3s', textTransform: 'none', letterSpacing: '1px'
-                        }}><FaUser /> View Full Profile</button>
+                    <div style={{ padding: '16px 32px 28px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'center' }}>
+                        <button onClick={onViewProfile} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 32px', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.5)', borderRadius: '10px', color: '#c4b5fd', fontSize: '0.7rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.22s', textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif", boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}>
+                            <FaUser style={{ fontSize: '0.75rem' }} /> View Full Profile
+                        </button>
                     </div>
                 )}
+
+                {/* Global styles */}
+                <style>{`
+                    @keyframes dotPulse { 0% { opacity:.6; transform:scale(1); } 100% { opacity:1; transform:scale(1.3); box-shadow: 0 0 6px currentColor; } }
+                    @keyframes xpShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+                    #profile-modal-root button:hover { opacity: 0.9; }
+                    #profile-modal-root ::-webkit-scrollbar { width: 4px; }
+                    #profile-modal-root ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+                    #profile-modal-root ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 99px; }
+                    @media (max-width: 480px) {
+                        .pm-actions { top: max(12px, env(safe-area-inset-top, 12px)) !important; right: max(12px, env(safe-area-inset-right, 12px)) !important; }
+                    }
+                `}</style>
             </div>
 
-            {/* Settings Modal */}
             {showSettings && <SettingsModal />}
-
-            <style>{`
-                @keyframes shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; transform: scale(1); }
-                    50% { opacity: 0.7; transform: scale(1.1); }
-                }
-                
-                /* iPhone: position close/settings buttons below safe area */
-                @media (max-width: 480px) {
-                    .profile-modal-actions {
-                        top: max(15px, env(safe-area-inset-top, 15px)) !important;
-                        right: max(15px, env(safe-area-inset-right, 15px)) !important;
-                    }
-                }
-            `}</style>
         </div>
     );
-    
-    // Render via portal to escape any parent overflow:hidden
+
     return createPortal(modalContent, getModalRoot());
 };
 

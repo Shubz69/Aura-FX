@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import "../styles/Footer.css";
 
 const Footer = React.memo(function Footer() {
@@ -49,11 +50,11 @@ const Footer = React.memo(function Footer() {
         <div className="footer-column">
           <h4 className="footer-column-heading">Platform</h4>
           <ul className="footer-links">
-            <li><a href="#">Home</a></li>
-            <li><a href="#">Features</a></li>
-            <li><a href="#">Pricing</a></li>
-            <li><a href="#">Community</a></li>
-            <li><a href="#">Contact</a></li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/courses">C&S</Link></li>
+            <li><Link to="/explore">Explore</Link></li>
+            <li><Link to="/why-glitch">Why Aura FX</Link></li>
+            <li><Link to="/contact">Contact</Link></li>
           </ul>
         </div>
 

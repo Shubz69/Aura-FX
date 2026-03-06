@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
-/* Enhanced design matching AURA FX home theme */
 import '../styles/Journal.css';
-import { FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave, FaCamera, FaFire, FaBolt } from 'react-icons/fa';
+import {
+  FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave,
+  FaCamera, FaFire, FaBolt, FaTimes, FaChevronLeft, FaChevronRight,
+} from 'react-icons/fa';
 
 const MOOD_OPTIONS = [
   { value: 'great', label: 'Great', emoji: '😊' },
@@ -19,13 +21,11 @@ function getMonthStart(d) {
   const x = new Date(y, m - 1, 1);
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-01`;
 }
-
 function getMonthEnd(d) {
   const [y, m] = d.slice(0, 10).split('-').map(Number);
   const last = new Date(y, m, 0);
   return `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}-${String(last.getDate()).padStart(2, '0')}`;
 }
-
 function getWeekStart(d) {
   const x = new Date(d);
   const day = x.getDay();
@@ -33,13 +33,11 @@ function getWeekStart(d) {
   x.setDate(diff);
   return x.toISOString().slice(0, 10);
 }
-
 function getWeekEnd(d) {
   const start = new Date(getWeekStart(d));
   start.setDate(start.getDate() + 6);
   return start.toISOString().slice(0, 10);
 }
-
 function isSameDay(a, b) {
   return a && b && String(a).slice(0, 10) === String(b).slice(0, 10);
 }
@@ -50,9 +48,88 @@ const MONTH_NAMES = [
 ];
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+/* ══════════════════════════════════════════════════════════════
+   PHOTO LIGHTBOX
+   ══════════════════════════════════════════════════════════════ */
+function PhotoLightbox({ photos, startIndex = 0, onClose }) {
+  const [current, setCurrent] = useState(startIndex);
+  const [closing, setClosing] = useState(false);
+
+  const close = useCallback(() => {
+    setClosing(true);
+    setTimeout(onClose, 180);
+  }, [onClose]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape')     close();
+      if (e.key === 'ArrowRight') setCurrent((c) => Math.min(c + 1, photos.length - 1));
+      if (e.key === 'ArrowLeft')  setCurrent((c) => Math.max(c - 1, 0));
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [close, photos.length]);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  return (
+    <div
+      className={`journal-lightbox${closing ? ' journal-lightbox--closing' : ''}`}
+      onClick={(e) => { if (e.target === e.currentTarget) close(); }}
+    >
+      <button className="journal-lightbox-close" onClick={close} title="Close (Esc)" type="button">
+        <FaTimes />
+      </button>
+      <button
+        className="journal-lightbox-arrow journal-lightbox-arrow--prev"
+        onClick={() => setCurrent((c) => c - 1)}
+        disabled={current === 0}
+        type="button"
+      >
+        <FaChevronLeft />
+      </button>
+      <div className="journal-lightbox-img-wrap" key={current}>
+        <img src={photos[current]} alt={`Proof ${current + 1}`} draggable={false} />
+      </div>
+      <button
+        className="journal-lightbox-arrow journal-lightbox-arrow--next"
+        onClick={() => setCurrent((c) => c + 1)}
+        disabled={current === photos.length - 1}
+        type="button"
+      >
+        <FaChevronRight />
+      </button>
+      {photos.length > 1 && (
+        <div className="journal-lightbox-counter">{current + 1} / {photos.length}</div>
+      )}
+      {photos.length > 1 && (
+        <div className="journal-lightbox-thumbs">
+          {photos.map((src, i) => (
+            <div
+              key={i}
+              className={`journal-lightbox-thumb${i === current ? ' journal-lightbox-thumb--active' : ''}`}
+              onClick={() => setCurrent(i)}
+            >
+              <img src={src} alt={`thumb ${i + 1}`} draggable={false} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN JOURNAL COMPONENT
+   ══════════════════════════════════════════════════════════════ */
 export default function Journal() {
   const { user: authUser } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
+
   const [selectedDate, setSelectedDate]   = useState(today);
   const [calendarMonth, setCalendarMonth] = useState(today.slice(0, 7));
   const [monthTasks, setMonthTasks]       = useState([]);
@@ -66,11 +143,22 @@ export default function Journal() {
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editTitle, setEditTitle]         = useState('');
-  const [proofTaskId, setProofTaskId]     = useState(null);
   const [dailyNotesList, setDailyNotesList]   = useState([]);
   const [newNoteContent, setNewNoteContent]   = useState('');
   const [addingNote, setAddingNote]           = useState(false);
   const [completionBannerDismissed, setCompletionBannerDismissed] = useState(false);
+
+  // Multi-photo proof: { [taskId]: string[] }
+  const [proofPhotos, setProofPhotos]     = useState({});
+  const proofInputRef                     = useRef(null);
+  const pendingProofTaskId                = useRef(null);
+
+  // Lightbox
+  const [lightbox, setLightbox] = useState(null);
+
+  // Note editing
+  const [editingNoteId, setEditingNoteId]     = useState(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
 
   useEffect(() => { setCompletionBannerDismissed(false); }, [selectedDate]);
 
@@ -87,38 +175,34 @@ export default function Journal() {
     setLoading(true);
     setError(null);
 
-    const tasksPromise = Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo });
-    const dailyPromise = Api.getJournalDaily(selectedDate);
-    const notesPromise = Api.getJournalNotes(selectedDate);
-
-    tasksPromise
-      .then((res) => {
-        if (cancelled) return;
-        setMonthTasks(Array.isArray(res.data?.tasks) ? res.data.tasks : []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.response?.data?.message || 'Failed to load tasks.');
-          setMonthTasks([]);
-          setLoading(false);
+    Promise.all([
+      Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo }),
+      Api.getJournalDaily(selectedDate),
+      Api.getJournalNotes(selectedDate),
+    ]).then(([tasksRes, dailyRes, notesRes]) => {
+      if (cancelled) return;
+      const tasks = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
+      setMonthTasks(tasks);
+      const restoredPhotos = {};
+      tasks.forEach((t) => {
+        if (Array.isArray(t.proofImages) && t.proofImages.length > 0) {
+          restoredPhotos[t.id] = t.proofImages;
+        } else if (t.proofImage) {
+          restoredPhotos[t.id] = [t.proofImage];
         }
       });
-
-    dailyPromise
-      .then((res) => {
-        if (cancelled) return;
-        setDailyNotes(res.data?.note?.notes ?? '');
-        setDailyMood(res.data?.note?.mood ?? null);
-      })
-      .catch(() => { if (!cancelled) { setDailyNotes(''); setDailyMood(null); } });
-
-    notesPromise
-      .then((res) => {
-        if (cancelled) return;
-        setDailyNotesList(Array.isArray(res.data?.notes) ? res.data.notes : []);
-      })
-      .catch(() => { if (!cancelled) setDailyNotesList([]); });
+      setProofPhotos(restoredPhotos);
+      setLoading(false);
+      setDailyNotes(dailyRes.data?.note?.notes ?? '');
+      setDailyMood(dailyRes.data?.note?.mood ?? null);
+      setDailyNotesList(Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : []);
+    }).catch((err) => {
+      if (!cancelled) {
+        setError(err.response?.data?.message || 'Failed to load tasks.');
+        setMonthTasks([]);
+        setLoading(false);
+      }
+    });
 
     return () => { cancelled = true; };
   }, [fetchFrom, fetchTo, selectedDate]);
@@ -128,10 +212,9 @@ export default function Journal() {
     if (loading || !selectedDate) return;
     Api.getJournalXpCheck(selectedDate)
       .then((res) => {
-        const awarded = res.data?.awarded || [];
-        awarded.forEach(({ type, xp }) => {
-          const label = type === 'day' ? 'day' : type === 'week' ? 'week' : 'month';
-          toast.success(`+${xp} XP for ${label} completion!`, { icon: '⭐' });
+        (res.data?.awarded || []).forEach(({ type, xp }) => {
+          const lbl = type === 'day' ? 'day' : type === 'week' ? 'week' : 'month';
+          toast.success(`+${xp} XP for ${lbl} completion!`, { icon: '⭐' });
         });
       })
       .catch(() => {});
@@ -158,20 +241,18 @@ export default function Journal() {
   }, [selectedDate, dailyNotes, dailyMood]);
 
   /* ── Derived task lists ──────────────────────────────── */
-  const dayTasks          = monthTasks.filter((t) => isSameDay(t.date, selectedDate));
-  const dayMandatoryTasks = dayTasks.filter((t) => t.isMandatory);
-  const dayRegularTasks   = dayTasks.filter((t) => !t.isMandatory);
-  const weekTasks         = monthTasks.filter((t) => t.date >= weekStart && t.date <= weekEnd);
+  const dayTasks           = monthTasks.filter((t) => isSameDay(t.date, selectedDate));
+  const dayMandatoryTasks  = dayTasks.filter((t) => t.isMandatory);
+  const dayRegularTasks    = dayTasks.filter((t) => !t.isMandatory);
+  const weekTasks          = monthTasks.filter((t) => t.date >= weekStart && t.date <= weekEnd);
   const monthTasksForMonth = monthTasks.filter((t) => t.date >= monthStart && t.date <= monthEnd);
 
-  const dayTotal  = dayTasks.length;
-  const dayDone   = dayTasks.filter((t) => t.completed).length;
-  const dayPct    = dayTotal  ? Math.round((dayDone  / dayTotal)  * 100) : null;
-
-  const weekTotal = weekTasks.length;
-  const weekDone  = weekTasks.filter((t) => t.completed).length;
-  const weekPct   = weekTotal ? Math.round((weekDone / weekTotal) * 100) : null;
-
+  const dayTotal   = dayTasks.length;
+  const dayDone    = dayTasks.filter((t) => t.completed).length;
+  const dayPct     = dayTotal  ? Math.round((dayDone  / dayTotal)  * 100) : null;
+  const weekTotal  = weekTasks.length;
+  const weekDone   = weekTasks.filter((t) => t.completed).length;
+  const weekPct    = weekTotal ? Math.round((weekDone / weekTotal) * 100) : null;
   const monthTotal = monthTasksForMonth.length;
   const monthDone  = monthTasksForMonth.filter((t) => t.completed).length;
   const monthPct   = monthTotal ? Math.round((monthDone / monthTotal) * 100) : null;
@@ -179,19 +260,16 @@ export default function Journal() {
   /* ── Calendar navigation ─────────────────────────────── */
   const handlePrevMonth = () => {
     const [y, m] = calendarMonth.split('-').map(Number);
-    const newMonth = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
-    setCalendarMonth(newMonth);
-    if (selectedDate.slice(0, 7) !== newMonth) setSelectedDate(newMonth + '-01');
+    const nm = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+    setCalendarMonth(nm);
+    if (selectedDate.slice(0, 7) !== nm) setSelectedDate(nm + '-01');
   };
-
   const handleNextMonth = () => {
     const [y, m] = calendarMonth.split('-').map(Number);
-    const newMonth = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
-    setCalendarMonth(newMonth);
-    if (selectedDate.slice(0, 7) !== newMonth) setSelectedDate(newMonth + '-01');
+    const nm = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+    setCalendarMonth(nm);
+    if (selectedDate.slice(0, 7) !== nm) setSelectedDate(nm + '-01');
   };
-
-  const handleSelectDate = (dateStr) => setSelectedDate(dateStr);
 
   /* ── Task CRUD ───────────────────────────────────────── */
   const handleAddTask = async (e) => {
@@ -227,36 +305,11 @@ export default function Journal() {
     }
   };
 
-  const proofInputRef = useRef(null);
-
-  const handleProofClick = (taskId) => {
-    setProofTaskId(taskId);
-    proofInputRef.current?.click();
-  };
-
-  const handleAddProof = (e) => {
-    const file   = e?.target?.files?.[0];
-    const taskId = proofTaskId;
-    setProofTaskId(null);
-    e.target.value = '';
-    if (!taskId || !file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      Api.updateJournalTask(taskId, { proofImage: reader.result })
-        .then((res) => {
-          const updated = res.data?.task;
-          if (updated) setMonthTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-          if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for proof!`, { icon: '⭐' });
-        })
-        .catch(() => setError('Failed to attach proof.'));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleDelete = async (id) => {
     try {
       await Api.deleteJournalTask(id);
       setMonthTasks((prev) => prev.filter((t) => t.id !== id));
+      setProofPhotos((prev) => { const n = { ...prev }; delete n[id]; return n; });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete task.');
     }
@@ -264,8 +317,7 @@ export default function Journal() {
 
   const handleEditStart  = (task) => { setEditingTaskId(task.id); setEditTitle(task.title); };
   const handleEditCancel = ()     => { setEditingTaskId(null); setEditTitle(''); };
-
-  const handleEditSave = async () => {
+  const handleEditSave   = async () => {
     if (!editingTaskId || !editTitle.trim()) { setEditingTaskId(null); return; }
     try {
       const res = await Api.updateJournalTask(editingTaskId, { title: editTitle.trim() });
@@ -276,6 +328,50 @@ export default function Journal() {
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update task.');
     }
+  };
+
+  /* ── Multi-photo proof ───────────────────────────────── */
+  const handleProofClick = (taskId) => {
+    pendingProofTaskId.current = taskId;
+    proofInputRef.current?.click();
+  };
+
+  const handleProofFilesChange = (e) => {
+    const files  = Array.from(e.target.files || []);
+    const taskId = pendingProofTaskId.current;
+    pendingProofTaskId.current = null;
+    e.target.value = '';
+    if (!taskId || !files.length) return;
+    const valid = files.filter((f) => f.type.startsWith('image/'));
+    if (!valid.length) return;
+
+    Promise.all(
+      valid.map((file) => new Promise((res) => {
+        const r = new FileReader();
+        r.onload = (ev) => res(ev.target.result);
+        r.readAsDataURL(file);
+      }))
+    ).then((newUrls) => {
+      setProofPhotos((prev) => {
+        const merged = [...(prev[taskId] || []), ...newUrls];
+        Api.updateJournalTask(taskId, { proofImages: merged, proofImage: merged[0] })
+          .then((res) => {
+            const updated = res.data?.task;
+            if (updated) setMonthTasks((p) => p.map((t) => (t.id === taskId ? updated : t)));
+            if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for proof!`, { icon: '⭐' });
+          })
+          .catch(() => setError('Failed to attach proof.'));
+        return { ...prev, [taskId]: merged };
+      });
+    });
+  };
+
+  const handleRemoveProofPhoto = (taskId, idx) => {
+    setProofPhotos((prev) => {
+      const updated = (prev[taskId] || []).filter((_, i) => i !== idx);
+      Api.updateJournalTask(taskId, { proofImages: updated, proofImage: updated[0] || null }).catch(() => {});
+      return { ...prev, [taskId]: updated };
+    });
   };
 
   /* ── Notes CRUD ──────────────────────────────────────── */
@@ -308,18 +404,38 @@ export default function Journal() {
     }
   };
 
+  const handleNoteEditStart  = (note) => { setEditingNoteId(note.id); setEditingNoteText(note.content); };
+  const handleNoteEditCancel = ()      => { setEditingNoteId(null); setEditingNoteText(''); };
+  const handleNoteEditSave   = async (noteId) => {
+    const text = editingNoteText.trim();
+    if (!text) { handleNoteEditCancel(); return; }
+    try {
+      const res = await Api.updateJournalNote(noteId, text);
+      const updated = res.data?.note;
+      setDailyNotesList((prev) =>
+        prev.map((n) => (n.id === noteId ? (updated || { ...n, content: text }) : n))
+      );
+    } catch {
+      setDailyNotesList((prev) =>
+        prev.map((n) => (n.id === noteId ? { ...n, content: text } : n))
+      );
+    } finally {
+      setEditingNoteId(null);
+      setEditingNoteText('');
+    }
+  };
+
   /* ── Calendar grid ───────────────────────────────────── */
   const calendarDays = useMemo(() => {
-    const parts     = String(calendarMonth).split('-');
-    const year      = Math.max(1, parseInt(parts[0], 10) || new Date().getFullYear());
-    const month1    = Math.max(1, Math.min(12, parseInt(parts[1], 10) || 1));
-    const month0    = month1 - 1;
-    const first     = new Date(year, month0, 1);
-    const last      = new Date(year, month0 + 1, 0);
-    const startPad  = (first.getDay() + 6) % 7;
-    const yyyy      = String(first.getFullYear());
-    const mm        = String(first.getMonth() + 1).padStart(2, '0');
-    const days      = [];
+    const parts    = String(calendarMonth).split('-');
+    const year     = Math.max(1, parseInt(parts[0], 10) || new Date().getFullYear());
+    const month1   = Math.max(1, Math.min(12, parseInt(parts[1], 10) || 1));
+    const first    = new Date(year, month1 - 1, 1);
+    const last     = new Date(year, month1, 0);
+    const startPad = (first.getDay() + 6) % 7;
+    const yyyy     = String(first.getFullYear());
+    const mm       = String(first.getMonth() + 1).padStart(2, '0');
+    const days     = [];
     for (let i = 0; i < startPad; i++) days.push(null);
     for (let d = 1; d <= last.getDate(); d++) days.push(`${yyyy}-${mm}-${String(d).padStart(2, '0')}`);
     return days;
@@ -327,23 +443,19 @@ export default function Journal() {
 
   const taskCountByDate = useMemo(() =>
     monthTasks.reduce((acc, t) => {
-      const d = String(t.date).slice(0, 10);
-      acc[d] = (acc[d] || 0) + 1;
-      return acc;
+      const d = String(t.date).slice(0, 10); acc[d] = (acc[d] || 0) + 1; return acc;
     }, {}), [monthTasks]);
 
   const completedCountByDate = useMemo(() =>
     monthTasks.reduce((acc, t) => {
       if (!t.completed) return acc;
-      const d = String(t.date).slice(0, 10);
-      acc[d] = (acc[d] || 0) + 1;
-      return acc;
+      const d = String(t.date).slice(0, 10); acc[d] = (acc[d] || 0) + 1; return acc;
     }, {}), [monthTasks]);
 
-  /* ── Streak helpers ──────────────────────────────────── */
+  /* ── Streak / score ──────────────────────────────────── */
   const streak = authUser?.login_streak
     ?? (typeof localStorage !== 'undefined'
-      ? (JSON.parse(localStorage.getItem('user') || '{}').login_streak)
+      ? JSON.parse(localStorage.getItem('user') || '{}').login_streak
       : 0)
     ?? 0;
 
@@ -351,13 +463,137 @@ export default function Journal() {
     ? Math.min(100, Math.round((dayPct + weekPct + monthPct) / 3))
     : (dayPct ?? 0);
 
-  /* ── Date label ──────────────────────────────────────── */
   const label = isSameDay(selectedDate, today)
     ? 'Today'
-    : (() => {
-        const d = new Date(selectedDate + 'T12:00:00');
-        return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-      })();
+    : (() => { const d = new Date(selectedDate + 'T12:00:00'); return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; })();
+
+  /* ── Proof strip renderer ────────────────────────────── */
+  const renderProofStrip = (taskId) => {
+    const photos = proofPhotos[taskId] || [];
+    if (!photos.length) return null;
+    return (
+      <div className="journal-proof-strip">
+        {photos.map((src, i) => (
+          <div key={i} className="journal-proof-thumb"
+            onClick={() => setLightbox({ photos, index: i })} title="Tap to view">
+            <img src={src} alt={`Proof ${i + 1}`} loading="lazy" />
+            <button type="button" className="journal-proof-thumb-remove"
+              onClick={(e) => { e.stopPropagation(); handleRemoveProofPhoto(taskId, i); }} title="Remove">✕</button>
+          </div>
+        ))}
+        <button type="button" className="journal-proof-add-more"
+          onClick={() => handleProofClick(taskId)} title="Add more photos">+</button>
+      </div>
+    );
+  };
+
+  const renderProofBtn = (taskId) => {
+    const count = (proofPhotos[taskId] || []).length;
+    return (
+      <button type="button" className="journal-task-proof-btn"
+        onClick={() => handleProofClick(taskId)} title="Add picture proof (+25 XP)">
+        <FaCamera />
+        {count === 0 ? ' Proof' : ' More'}
+        {count > 0 && <span className="journal-proof-count-badge">{count}</span>}
+      </button>
+    );
+  };
+
+  /* ── Task card renderer ──────────────────────────────── */
+  const renderTaskCard = (task) => {
+    const isEditing = editingTaskId === task.id;
+    const isDone    = task.completed;
+    const isMand    = task.isMandatory;
+
+    return (
+      <li
+        key={task.id}
+        className={[
+          'journal-task-item',
+          isDone ? 'journal-task-item--done' : '',
+          isMand ? 'journal-task-item--mandatory' : '',
+        ].filter(Boolean).join(' ')}
+      >
+        {isEditing ? (
+          /* ── Inline edit mode ── */
+          <div className="journal-task-edit-wrap">
+            <input
+              type="text"
+              className="journal-task-edit-input"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter')  handleEditSave();
+                if (e.key === 'Escape') handleEditCancel();
+              }}
+              autoFocus
+            />
+            <div className="journal-task-edit-actions">
+              <button type="button" className="journal-task-edit-btn" onClick={handleEditSave}>
+                <FaSave /> Save
+              </button>
+              <button type="button" className="journal-task-edit-btn journal-task-edit-btn--cancel" onClick={handleEditCancel}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ── Card top: checkbox + XP badge ── */}
+            <div className="journal-task-card-top">
+              <button
+                type="button"
+                className="journal-task-check"
+                onClick={() => handleToggle(task)}
+                aria-label={isDone ? 'Mark not done' : 'Mark done'}
+              >
+                {isDone ? <FaCheck /> : <span className="journal-task-check-empty" />}
+              </button>
+              {isDone && <span className="journal-task-xp">+5 XP</span>}
+            </div>
+
+            {/* ── Card body: title + optional description ── */}
+            <div className="journal-task-card-body">
+              <span
+                className="journal-task-title"
+                onClick={() => !isMand && handleEditStart(task)}
+                title={isMand ? task.title : 'Click to edit'}
+              >
+                {task.title}
+              </span>
+              {task.description && (
+                <p className="journal-task-description">{task.description}</p>
+              )}
+            </div>
+
+            {/* ── Card footer: actions ── */}
+            <div className="journal-task-card-footer">
+              <div className="journal-task-actions">
+                {renderProofBtn(task.id)}
+                {!isMand && (
+                  <button type="button" className="journal-task-edit-icon"
+                    onClick={(e) => { e.stopPropagation(); handleEditStart(task); }}
+                    aria-label="Edit task">
+                    <FaEdit />
+                  </button>
+                )}
+                {!isMand && (
+                  <button type="button" className="journal-task-delete"
+                    onClick={() => handleDelete(task.id)}
+                    aria-label="Delete task">
+                    <FaTrash />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ── Proof photo strip ── */}
+            {renderProofStrip(task.id)}
+          </>
+        )}
+      </li>
+    );
+  };
 
   /* ════════════════════════════════════════════════════════
      RENDER
@@ -382,29 +618,21 @@ export default function Journal() {
               </span>
               <button type="button" className="journal-calendar-btn" onClick={handleNextMonth} aria-label="Next month">›</button>
             </div>
-
             <div className="journal-calendar-weekdays">
-              {DAY_NAMES.map((d) => (
-                <span key={d} className="journal-calendar-wd">{d}</span>
-              ))}
+              {DAY_NAMES.map((d) => <span key={d} className="journal-calendar-wd">{d}</span>)}
             </div>
-
             <div className="journal-calendar-grid">
               {calendarDays.map((dateStr, i) => {
-                if (!dateStr) {
-                  return <div key={`empty-${i}`} className="journal-calendar-day journal-calendar-day--empty" />;
-                }
-                const hasTasks    = taskCountByDate[dateStr];
-                const doneCount   = completedCountByDate[dateStr] || 0;
-                const totalCount  = taskCountByDate[dateStr]      || 0;
-                const isSelected  = isSameDay(dateStr, selectedDate);
-                const isToday     = isSameDay(dateStr, today);
+                if (!dateStr) return <div key={`e-${i}`} className="journal-calendar-day journal-calendar-day--empty" />;
+                const hasTasks   = taskCountByDate[dateStr];
+                const doneCount  = completedCountByDate[dateStr] || 0;
+                const totalCount = taskCountByDate[dateStr]      || 0;
+                const isSelected = isSameDay(dateStr, selectedDate);
+                const isToday    = isSameDay(dateStr, today);
                 return (
-                  <button
-                    key={dateStr}
-                    type="button"
+                  <button key={dateStr} type="button"
                     className={`journal-calendar-day${isSelected ? ' journal-calendar-day--selected' : ''}${isToday ? ' journal-calendar-day--today' : ''}`}
-                    onClick={() => handleSelectDate(dateStr)}
+                    onClick={() => setSelectedDate(dateStr)}
                   >
                     <span className="journal-calendar-day-num">{parseInt(dateStr.slice(-2), 10)}</span>
                     {hasTasks && (
@@ -420,38 +648,30 @@ export default function Journal() {
             </div>
           </div>
 
-          {/* Streak card */}
+          {/* Streak */}
           <div className="journal-streak-card">
             <span className="journal-streak-flame"><FaFire /></span>
             <div className="journal-streak-title">{streak} Day Discipline Streak</div>
-            <div className="journal-streak-longest">
-              Longest Streak: <span className="journal-streak-longest-value">{streak} Days</span>
-            </div>
-            <div className="journal-streak-consistency">
-              Consistency Score: {Math.min(100, Math.round((streak / 21) * 100))}%
-            </div>
+            <div className="journal-streak-longest">Longest Streak: <span className="journal-streak-longest-value">{streak} Days</span></div>
+            <div className="journal-streak-consistency">Consistency Score: {Math.min(100, Math.round((streak / 21) * 100))}%</div>
           </div>
 
-          {/* Circular progress rings */}
+          {/* Circles */}
           <div className="journal-stats-circles">
-            {[
-              { pct: dayPct,   label: 'Today'      },
-              { pct: weekPct,  label: 'This Week'  },
-              { pct: monthPct, label: 'This Month' },
-            ].map(({ pct, label: lbl }) => (
-              <div key={lbl} className="journal-stat-circle">
-                <div className="journal-stat-circle-ring" style={{ '--pct': pct ?? 0 }}>
-                  <span className="journal-stat-circle-value">{pct != null ? `${pct}%` : '—'}</span>
+            {[{ pct: dayPct, label: 'Today' }, { pct: weekPct, label: 'This Week' }, { pct: monthPct, label: 'This Month' }]
+              .map(({ pct, label: lbl }) => (
+                <div key={lbl} className="journal-stat-circle">
+                  <div className="journal-stat-circle-ring" style={{ '--pct': pct ?? 0 }}>
+                    <span className="journal-stat-circle-value">{pct != null ? `${pct}%` : '—'}</span>
+                  </div>
+                  <span className="journal-stat-circle-label">{lbl}</span>
                 </div>
-                <span className="journal-stat-circle-label">{lbl}</span>
-              </div>
-            ))}
+              ))}
           </div>
         </aside>
 
         {/* ══════════ MAIN ══════════ */}
         <main className="journal-main">
-
           {error && <div className="journal-error" role="alert">{error}</div>}
 
           {/* Header */}
@@ -461,25 +681,18 @@ export default function Journal() {
               {dayTotal > 0 ? (
                 <span className="journal-main-percent">
                   {dayDone}/{dayTotal} tasks
-                  {dayPct != null && (
-                    <>:{' '}
-                      {dayPct >= 100
-                        ? <strong className="journal-percent-done">{dayPct}% complete</strong>
-                        : <strong>{dayPct}%</strong>
-                      }{' '}done
-                    </>
-                  )}
+                  {dayPct != null && (<>{': '}{dayPct >= 100
+                    ? <strong className="journal-percent-done">{dayPct}% complete</strong>
+                    : <strong>{dayPct}%</strong>}{' '}done</>)}
                 </span>
-              ) : (
-                <span>No tasks yet</span>
-              )}
+              ) : <span>No tasks yet</span>}
             </div>
           </div>
 
           {/* Progress cards */}
           <div className="journal-progress-cards">
             {[
-              { label: isSameDay(selectedDate, today) ? 'Today' : 'Selected day', pct: dayPct  },
+              { label: isSameDay(selectedDate, today) ? 'Today' : 'Selected day', pct: dayPct },
               { label: 'This week',  pct: weekPct  },
               { label: 'This month', pct: monthPct },
             ].map(({ label: lbl, pct }) => (
@@ -516,58 +729,16 @@ export default function Journal() {
                 Same percentage system — complete these and your own tasks to hit 100%.
               </p>
               <ul className="journal-task-list journal-task-list-mandatory">
-                {dayMandatoryTasks.map((task) => (
-                  <li
-                    key={task.id}
-                    className={`journal-task-item journal-task-item--mandatory${task.completed ? ' journal-task-item--done' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="journal-task-check"
-                      onClick={() => handleToggle(task)}
-                      aria-label={task.completed ? 'Mark not done' : 'Mark done'}
-                    >
-                      {task.completed ? <FaCheck /> : <span className="journal-task-check-empty" />}
-                    </button>
-
-                    <div className="journal-task-mandatory-content">
-                      <span className="journal-task-title">{task.title}</span>
-                      {task.description && <p className="journal-task-description">{task.description}</p>}
-                      {task.completed && <span className="journal-task-xp">+5 XP</span>}
-                      {task.proofImage && (
-                        <span className="journal-task-proof-thumb" title="Proof attached">
-                          <img src={task.proofImage} alt="Proof" loading="lazy" />
-                        </span>
-                      )}
-                      <div className="journal-task-actions">
-                        <button
-                          type="button"
-                          className="journal-task-proof-btn"
-                          onClick={() => handleProofClick(task.id)}
-                          title="Add picture proof to earn +25 XP when complete"
-                        >
-                          <FaCamera /> Proof
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                ))}
+                {dayMandatoryTasks.map(renderTaskCard)}
               </ul>
             </>
           )}
 
           {/* ── Regular tasks ── */}
           <h3 className="journal-section-title">Tasks</h3>
-
           <form className="journal-add-form" onSubmit={handleAddTask}>
-            <input
-              type="text"
-              className="journal-add-input"
-              placeholder="Add a new task..."
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              disabled={adding}
-            />
+            <input type="text" className="journal-add-input" placeholder="Add a new task..."
+              value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} disabled={adding} />
             <button type="submit" className="journal-add-btn" disabled={adding || !newTaskTitle.trim()}>
               <FaPlus /> Add
             </button>
@@ -577,69 +748,10 @@ export default function Journal() {
             <div className="journal-loading">Loading…</div>
           ) : (
             <ul className="journal-task-list">
-              {dayRegularTasks.length === 0 ? (
-                <li className="journal-task-empty">No tasks for this day. Add one above.</li>
-              ) : (
-                dayRegularTasks.map((task) => (
-                  <li
-                    key={task.id}
-                    className={`journal-task-item${task.completed ? ' journal-task-item--done' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="journal-task-check"
-                      onClick={() => handleToggle(task)}
-                      aria-label={task.completed ? 'Mark not done' : 'Mark done'}
-                    >
-                      {task.completed ? <FaCheck /> : <span className="journal-task-check-empty" />}
-                    </button>
-
-                    {editingTaskId === task.id ? (
-                      <div className="journal-task-edit-wrap">
-                        <input
-                          type="text"
-                          className="journal-task-edit-input"
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter')  handleEditSave();
-                            if (e.key === 'Escape') handleEditCancel();
-                          }}
-                          autoFocus
-                        />
-                        <button type="button" className="journal-task-edit-btn" onClick={handleEditSave} aria-label="Save"><FaSave /></button>
-                        <button type="button" className="journal-task-edit-btn journal-task-edit-btn--cancel" onClick={handleEditCancel}>Cancel</button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="journal-task-title" onClick={() => handleEditStart(task)} title="Click to edit">{task.title}</span>
-                        {task.completed && <span className="journal-task-xp">+5 XP</span>}
-                        {task.proofImage && (
-                          <span className="journal-task-proof-thumb" title="Proof attached">
-                            <img src={task.proofImage} alt="Proof" loading="lazy" />
-                          </span>
-                        )}
-                        <div className="journal-task-actions">
-                          <button
-                            type="button"
-                            className="journal-task-proof-btn"
-                            onClick={() => handleProofClick(task.id)}
-                            title="Add picture proof to earn +25 XP when complete"
-                          >
-                            <FaCamera /> Proof
-                          </button>
-                          <button type="button" className="journal-task-edit-icon" onClick={(e) => { e.stopPropagation(); handleEditStart(task); }} aria-label="Edit task">
-                            <FaEdit />
-                          </button>
-                          <button type="button" className="journal-task-delete" onClick={() => handleDelete(task.id)} aria-label="Delete task">
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                ))
-              )}
+              {dayRegularTasks.length === 0
+                ? <li className="journal-task-empty">No tasks for this day. Add one above.</li>
+                : dayRegularTasks.map(renderTaskCard)
+              }
             </ul>
           )}
 
@@ -647,7 +759,8 @@ export default function Journal() {
           {dayPct >= 100 && dayTotal > 0 && !completionBannerDismissed && (
             <div className="journal-completion-banner">
               ✦ All tasks completed — outstanding work.
-              <button type="button" className="journal-completion-dismiss" aria-label="Dismiss" onClick={() => setCompletionBannerDismissed(true)}>✕</button>
+              <button type="button" className="journal-completion-dismiss"
+                onClick={() => setCompletionBannerDismissed(true)}>✕</button>
             </div>
           )}
 
@@ -657,31 +770,51 @@ export default function Journal() {
               <FaBolt className="journal-reflection-icon" /> Reflection
             </h3>
             <p className="journal-reflection-prompt">What did you improve today?</p>
-            <p className="journal-notes-hint">Save multiple notes for this day. They appear here under your tasks.</p>
+            <p className="journal-notes-hint">Save multiple notes. Click the edit icon to update any note.</p>
 
             {dailyNotesList.length > 0 && (
               <ul className="journal-notes-list">
                 {dailyNotesList.map((note) => (
                   <li key={note.id} className="journal-note-item">
-                    <span className="journal-note-content">{note.content}</span>
-                    <button type="button" className="journal-note-delete" onClick={() => handleDeleteNote(note.id)} aria-label="Delete note">
-                      <FaTrash />
-                    </button>
+                    {editingNoteId === note.id ? (
+                      <>
+                        <textarea className="journal-note-edit-input" value={editingNoteText}
+                          onChange={(e) => setEditingNoteText(e.target.value)} autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleNoteEditSave(note.id);
+                            if (e.key === 'Escape') handleNoteEditCancel();
+                          }} />
+                        <div className="journal-note-actions">
+                          <button type="button" className="journal-note-save-btn"
+                            onClick={() => handleNoteEditSave(note.id)}
+                            disabled={!editingNoteText.trim()} title="Save (Ctrl+Enter)">
+                            <FaSave /> Save
+                          </button>
+                          <button type="button" className="journal-note-action-btn journal-note-delete"
+                            onClick={handleNoteEditCancel} title="Cancel"><FaTimes /></button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <span className="journal-note-content">{note.content}</span>
+                        <div className="journal-note-actions">
+                          <button type="button" className="journal-note-action-btn journal-note-edit-btn"
+                            onClick={() => handleNoteEditStart(note)} title="Edit note" aria-label="Edit note"><FaEdit /></button>
+                          <button type="button" className="journal-note-action-btn journal-note-delete"
+                            onClick={() => handleDeleteNote(note.id)} title="Delete note" aria-label="Delete note"><FaTrash /></button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
 
             <form className="journal-add-note-form" onSubmit={handleAddNote}>
-              <input
-                type="text"
-                className="journal-add-note-input"
-                placeholder="Add a reflection note..."
-                value={newNoteContent}
-                onChange={(e) => setNewNoteContent(e.target.value)}
-                disabled={addingNote}
-              />
-              <button type="submit" className="journal-add-note-btn journal-add-note-btn-purple" disabled={addingNote || !newNoteContent.trim()}>
+              <input type="text" className="journal-add-note-input" placeholder="Add a reflection note..."
+                value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} disabled={addingNote} />
+              <button type="submit" className="journal-add-note-btn journal-add-note-btn-purple"
+                disabled={addingNote || !newNoteContent.trim()}>
                 <FaPlus /> Add Note
               </button>
             </form>
@@ -693,17 +826,10 @@ export default function Journal() {
             <div className="journal-mood-row">
               <div className="journal-mood-options">
                 {MOOD_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
+                  <button key={opt.value} type="button"
                     className={`journal-mood-btn${dailyMood === opt.value ? ' journal-mood-btn--active' : ''}`}
-                    onClick={() => {
-                      const newMood = dailyMood === opt.value ? null : opt.value;
-                      setDailyMood(newMood);
-                      saveDailyNote({ mood: newMood });
-                    }}
-                    title={opt.label}
-                  >
+                    onClick={() => { const m = dailyMood === opt.value ? null : opt.value; setDailyMood(m); saveDailyNote({ mood: m }); }}
+                    title={opt.label}>
                     {opt.emoji}
                   </button>
                 ))}
@@ -712,17 +838,16 @@ export default function Journal() {
             {savedFeedback && <span className="journal-mood-saved">Saved ✓</span>}
           </section>
 
-          {/* Hidden proof file input */}
-          <input
-            type="file"
-            ref={proofInputRef}
-            accept="image/*"
-            className="journal-proof-input-hidden"
-            onChange={handleAddProof}
-          />
-
+          {/* Hidden multi-file proof input */}
+          <input type="file" ref={proofInputRef} accept="image/*" multiple
+            className="journal-proof-input-hidden" onChange={handleProofFilesChange} />
         </main>
       </div>
+
+      {/* Global photo lightbox */}
+      {lightbox && (
+        <PhotoLightbox photos={lightbox.photos} startIndex={lightbox.index} onClose={() => setLightbox(null)} />
+      )}
     </div>
   );
 }
