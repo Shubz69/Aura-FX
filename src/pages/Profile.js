@@ -376,161 +376,194 @@ const Profile = () => {
         }
     };
 
-    const handleBannerChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) { 
+        setStatus("Banner image must be less than 10MB"); 
+        return; 
+    }
+    
+    try {
+        // Convert to base64
+        const base64 = await convertToBase64(file);
         
-        if (file.size > 10 * 1024 * 1024) { 
-            setStatus("Banner image must be less than 10MB"); 
-            return; 
-        }
+        // Create an image to resize
+        const img = new Image();
+        img.src = base64;
         
-        try {
-            // Convert to base64
-            const base64 = await convertToBase64(file);
-            
-            // Create an image to resize
-            const img = new Image();
-            img.src = base64;
-            
-            await new Promise((resolve) => {
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    let { width, height } = img;
-                    const maxWidth = 1920, maxHeight = 600;
-                    
-                    if (width > maxWidth) { 
-                        height = (height * maxWidth) / width; 
-                        width = maxWidth; 
-                    }
-                    if (height > maxHeight) { 
-                        width = (width * maxHeight) / height; 
-                        height = maxHeight; 
-                    }
-                    
-                    canvas.width = width; 
-                    canvas.height = height;
-                    ctx.imageSmoothingEnabled = true; 
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    const resizedBase64 = canvas.toDataURL('image/png', 0.95);
-                    
-                    setBannerPreview(resizedBase64);
-                    setFormData(prev => ({ ...prev, banner: resizedBase64 }));
-                    setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
-                    
-                    resolve();
-                };
-            });
-            
-            setStatus("Banner ready to save. Click 'Save Profile' to update.");
-        } catch (error) { 
-            console.error('Banner processing error:', error);
-            setStatus("Failed to process banner image"); 
-        }
-    };
+        await new Promise((resolve) => {
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // More aggressive resizing for banner
+                let { width, height } = img;
+                const maxWidth = 1200; // Reduced from 1920
+                const maxHeight = 400;  // Reduced from 600
+                
+                if (width > maxWidth) { 
+                    height = (height * maxWidth) / width; 
+                    width = maxWidth; 
+                }
+                if (height > maxHeight) { 
+                    width = (width * maxHeight) / height; 
+                    height = maxHeight; 
+                }
+                
+                canvas.width = Math.round(width); 
+                canvas.height = Math.round(height);
+                ctx.imageSmoothingEnabled = true; 
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Use lower quality for banner (0.8 instead of 0.95)
+                const resizedBase64 = canvas.toDataURL('image/jpeg', 0.7); // Use JPEG for smaller size
+                
+                console.log('Banner size after compression:', Math.round(resizedBase64.length / 1024), 'KB');
+                
+                setBannerPreview(resizedBase64);
+                setFormData(prev => ({ ...prev, banner: resizedBase64 }));
+                setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
+                
+                resolve();
+            };
+        });
+        
+        setStatus("Banner ready to save. Click 'Save Profile' to update.");
+    } catch (error) { 
+        console.error('Banner processing error:', error);
+        setStatus("Failed to process banner image"); 
+    }
+};
 
-    const handleSaveChanges = async () => {
-        if (!user?.id) { 
-            setStatus("You must be logged in to save changes"); 
+   const handleSaveChanges = async () => {
+    if (!user?.id) { 
+        setStatus("You must be logged in to save changes"); 
+        return; 
+    }
+    
+    setStatus("Saving...");
+    
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) { 
+            setStatus("Authentication required"); 
             return; 
         }
         
-        setStatus("Saving...");
-        
-        try {
-            const token = localStorage.getItem("token");
-            if (!token) { 
-                setStatus("Authentication required"); 
+        // Validate username if changed
+        if (editedUserData.username && editedUserData.username !== user.username) {
+            const validation = validateUsername(editedUserData.username);
+            if (!validation.isValid) { 
+                setUsernameValidationError(validation.error); 
+                setStatus("Username validation failed"); 
                 return; 
             }
             
-            // Validate username if changed
-            if (editedUserData.username && editedUserData.username !== user.username) {
-                const validation = validateUsername(editedUserData.username);
-                if (!validation.isValid) { 
-                    setUsernameValidationError(validation.error); 
-                    setStatus("Username validation failed"); 
-                    return; 
-                }
-                
-                const cooldownCheck = canChangeUsername(lastUsernameChange);
-                if (!cooldownCheck.canChange) { 
-                    setUsernameValidationError(getCooldownMessage(lastUsernameChange)); 
-                    setStatus("Username change on cooldown"); 
-                    return; 
-                }
+            const cooldownCheck = canChangeUsername(lastUsernameChange);
+            if (!cooldownCheck.canChange) { 
+                setUsernameValidationError(getCooldownMessage(lastUsernameChange)); 
+                setStatus("Username change on cooldown"); 
+                return; 
+            }
+        }
+        
+        // Prepare data to save
+        const dataToSave = { 
+            ...editedUserData, 
+            id: user.id 
+        };
+        
+        // Log the size of image data for debugging
+        if (dataToSave.banner) {
+            console.log('Banner data size:', Math.round(dataToSave.banner.length / 1024), 'KB');
+            console.log('Banner data starts with:', dataToSave.banner.substring(0, 50));
+        }
+        if (dataToSave.avatar) {
+            console.log('Avatar data size:', Math.round(dataToSave.avatar.length / 1024), 'KB');
+        }
+        
+        console.log('Saving profile data keys:', Object.keys(dataToSave));
+        
+        // Update localStorage immediately for instant UI feedback
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = { ...storedUser, ...dataToSave };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // Send to server
+        const response = await axios.put(
+            `${resolveApiBaseUrl()}/api/users/${user.id}`, 
+            dataToSave,
+            { 
+                headers: { 
+                    Authorization: `Bearer ${token}`, 
+                    'Content-Type': 'application/json' 
+                } 
+            }
+        );
+        
+        if (response.status === 200) {
+            const serverData = response.data;
+            
+            // Update form data with server response
+            setFormData(prev => ({ ...prev, ...serverData }));
+            
+            // Update auth context
+            if (setUser) {
+                setUser(prev => ({ ...prev, ...serverData }));
             }
             
-            // Prepare data to save
-            const dataToSave = { 
-                ...editedUserData, 
-                id: user.id 
-            };
+            // Update localStorage with server data
+            const finalUser = { ...updatedUser, ...serverData };
+            localStorage.setItem('user', JSON.stringify(finalUser));
             
-            console.log('Saving profile data:', dataToSave);
+            setStatus("Profile updated successfully!");
+            setEditedUserData({});
             
-            // Update localStorage immediately for instant UI feedback
-            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-            const updatedUser = { ...storedUser, ...dataToSave };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            
-            // Send to server
-            const response = await axios.put(
-                `${resolveApiBaseUrl()}/api/users/${user.id}`, 
-                dataToSave,
-                { 
-                    headers: { 
-                        Authorization: `Bearer ${token}`, 
-                        'Content-Type': 'application/json' 
-                    } 
-                }
-            );
-            
-            if (response.status === 200) {
-                const serverData = response.data;
-                
-                // Update form data with server response
-                setFormData(prev => ({ ...prev, ...serverData }));
-                
-                // Update auth context
-                if (setUser) {
-                    setUser(prev => ({ ...prev, ...serverData }));
-                }
-                
-                // Update localStorage with server data
-                const finalUser = { ...updatedUser, ...serverData };
-                localStorage.setItem('user', JSON.stringify(finalUser));
-                
-                setStatus("Profile updated successfully!");
-                setEditedUserData({});
-                
-                setTimeout(() => setStatus(""), 3000);
-            } else { 
-                setStatus("Failed to update profile"); 
-            }
-        } catch (error) { 
-            console.error('Save error:', error);
+            setTimeout(() => setStatus(""), 3000);
+        } else { 
+            setStatus("Failed to update profile"); 
+        }
+    } catch (error) { 
+        console.error('Save error:', error);
+        
+        // Log detailed error information
+        if (error.response) {
+            console.error('Error response status:', error.response.status);
+            console.error('Error response data:', error.response.data);
+            console.error('Error response headers:', error.response.headers);
             
             // Provide more specific error message
-            if (error.response?.data?.message) {
+            if (error.response.data?.message) {
                 setStatus(error.response.data.message);
-            } else if (error.response?.status === 413) {
+            } else if (error.response.status === 413) {
                 setStatus("Images too large. Please try smaller images.");
+            } else if (error.response.status === 400) {
+                setStatus("Bad request. The server rejected the data. Check console for details.");
             } else {
-                setStatus(error.response?.data?.message || "Failed to update profile");
+                setStatus(`Error ${error.response.status}: Failed to update profile`);
             }
-            
-            // Revert localStorage changes on error
-            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-            const originalUser = { ...storedUser };
-            delete originalUser[Object.keys(editedUserData)[0]]; // Remove the changed field
-            localStorage.setItem('user', JSON.stringify(originalUser));
+        } else if (error.request) {
+            console.error('No response received:', error.request);
+            setStatus("No response from server. Please check your connection.");
+        } else {
+            setStatus(error.message || "Failed to update profile");
         }
-    };
+        
+        // Revert localStorage changes on error
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const originalUser = { ...storedUser };
+        // Remove only the changed fields
+        Object.keys(editedUserData).forEach(key => {
+            delete originalUser[key];
+        });
+        // Merge back with original stored user
+        const revertedUser = { ...storedUser, ...originalUser };
+        localStorage.setItem('user', JSON.stringify(revertedUser));
+    }
+};
 
     // XP calculations
     const xpProgress = getXPProgress(formData.xp || 0, formData.level || 1);
