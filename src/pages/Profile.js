@@ -157,33 +157,54 @@ const Profile = () => {
                     setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
                 }
                 
-                if (userRes?.status === 200 && userRes.data) {
-                    const userData = userRes.data;
-                    
-                    // IMPORTANT: Handle avatar and banner URLs properly
-                    // If the backend returns URLs, we need to ensure they're displayed
-                    const backendAvatar = userData.avatar || authData.avatar;
-                    const backendBanner = userData.banner || authData.banner;
-                    
-                    const backendData = {
-                        username: userData.username || authData.username,
-                        email: userData.email || authData.email,
-                        phone: userData.phone || authData.phone,
-                        address: userData.address || authData.address,
-                        avatar: backendAvatar,
-                        name: userData.name || authData.name,
-                        bio: userData.bio || authData.bio || "",
-                        banner: backendBanner,
-                        level: storedUser.level ?? userData.level ?? authData.level,
-                        xp: storedUser.xp ?? userData.xp ?? authData.xp
-                    };
-                    
+      if (userRes?.status === 200 && userRes.data) {
+    const userData = userRes.data;
+    
+    // 🔍 ADD THESE DEBUG LOGS HERE
+    console.log('🔍 Raw userData from server:', {
+        banner: userData.banner,
+        avatar: userData.avatar,
+        hasBanner: !!userData.banner,
+        bannerType: userData.banner ? typeof userData.banner : 'none',
+        bannerPreview: userData.banner ? userData.banner.substring(0, 50) + '...' : null
+    });
+    
+    // IMPORTANT: Handle avatar and banner URLs properly
+    // If the backend returns URLs, we need to ensure they're displayed
+    const backendAvatar = userData.avatar || authData.avatar;
+    const backendBanner = userData.banner || authData.banner;
+    
+    // 🔍 ADD THESE DEBUG LOGS HERE
+    console.log('🔄 After merge:', {
+        backendBanner: backendBanner ? 'exists' : 'missing',
+        finalBanner: backendBanner ? backendBanner.substring(0, 50) + '...' : null
+    });
+    
+    const backendData = {
+        username: userData.username || authData.username,
+        email: userData.email || authData.email,
+        phone: userData.phone || authData.phone,
+        address: userData.address || authData.address,
+        avatar: backendAvatar,
+        name: userData.name || authData.name,
+        bio: userData.bio || authData.bio || "",
+        banner: backendBanner,
+        level: storedUser.level ?? userData.level ?? authData.level,
+        xp: storedUser.xp ?? userData.xp ?? authData.xp
+    };
+    
+    // 🔍 ADD THIS DEBUG LOG HERE
+    console.log('📦 Final backendData:', {
+        bannerPresent: !!backendData.banner,
+        bannerLength: backendData.banner?.length
+    });
                     if (userData.last_username_change) {
                         setLastUsernameChange(userData.last_username_change);
                         setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
                     }
                     
                     setFormData(prev => ({ ...prev, ...backendData }));
+                    
                     
                     // Set previews if they're base64 images
                     if (backendAvatar?.startsWith('data:image')) setAvatarPreview(backendAvatar);
@@ -620,34 +641,44 @@ const handleSaveChanges = async () => {
 
             <div className="pf-content">
 
-                {/* ── BANNER ── */}
-                <div className="pf-banner-wrap">
-                    {bannerPreview || formData.banner ? (
-                        <img 
-                            src={bannerPreview || formData.banner} 
-                            alt="Banner" 
-                            className="pf-banner-img" 
-                            onError={(e) => {
-                                console.error('Banner failed to load');
-                                e.target.style.display = 'none';
-                            }}
-                        />
-                    ) : (
-                        <div className="pf-banner-placeholder">
-                            <span className="pf-banner-hint">Upload Banner</span>
-                        </div>
-                    )}
-                    <input 
-                        type="file" 
-                        ref={bannerInputRef} 
-                        accept="image/*" 
-                        onChange={handleBannerChange} 
-                        style={{ display: 'none' }} 
-                    />
-                    <button className="pf-banner-btn" onClick={() => bannerInputRef.current?.click()}>
-                        <span>📷</span> Change Banner
-                    </button>
-                </div>
+              {/* ── BANNER ── */}
+<div className="pf-banner-wrap">
+    {bannerPreview || formData.banner ? (
+        <>
+            {console.log('🎨 Rendering banner:', {
+                fromPreview: !!bannerPreview,
+                fromFormData: !!formData.banner,
+                previewLength: bannerPreview?.length,
+                formDataLength: formData.banner?.length,
+                bannerStart: (bannerPreview || formData.banner)?.substring(0, 50) + '...'
+            })}
+            <img 
+                src={bannerPreview || formData.banner} 
+                alt="Banner" 
+                className="pf-banner-img" 
+                onError={(e) => {
+                    console.error('❌ Banner failed to load:', e.target.src.substring(0, 100));
+                    e.target.style.display = 'none';
+                }}
+                onLoad={() => console.log('✅ Banner loaded successfully')}
+            />
+        </>
+    ) : (
+        <div className="pf-banner-placeholder">
+            <span className="pf-banner-hint">Upload Banner</span>
+        </div>
+    )}
+    <input 
+        type="file" 
+        ref={bannerInputRef} 
+        accept="image/*" 
+        onChange={handleBannerChange} 
+        style={{ display: 'none' }} 
+    />
+    <button className="pf-banner-btn" onClick={() => bannerInputRef.current?.click()}>
+        <span>📷</span> Change Banner
+    </button>
+</div>
 
                 {/* ── HEADER CARD ── */}
                 <div className="pf-header-card">
