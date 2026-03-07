@@ -191,12 +191,19 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 body: JSON.stringify(body)
             });
             const data = await response.json();
-            if (data.success) {
-                const s = (data.status || 'none').toLowerCase();
-                setFriendStatus(s === 'friends' ? 'accepted' : s);
-                setFriendRequestId(data.request?.id || data.requestId || null);
-                toast.success(data.message);
-                checkFriendStatus();
+      // AFTER:
+if (data.success) {
+    if (action === 'cancel' || action === 'reject' || action === 'remove') {
+        setFriendStatus('none');
+        setFriendRequestId(null);           // ✅ hard reset — no stale ID
+    } else if (action === 'add') {
+        setFriendStatus('pending_sent');
+        setFriendRequestId(data.request?.id || data.requestId || null);
+    } else if (action === 'accept') {
+        setFriendStatus('accepted');
+        setFriendRequestId(null);
+    }
+    toast.success(data.message);
             } else { toast.error(data.message || 'Action failed'); }
         } catch (err) { toast.error('Failed to complete action'); }
         finally { setFriendLoading(false); }
