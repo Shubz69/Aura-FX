@@ -157,28 +157,30 @@ const Profile = () => {
                     setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
                 }
                 
-      if (userRes?.status === 200 && userRes.data) {
+ if (userRes?.status === 200 && userRes.data) {
     const userData = userRes.data;
     
-    // 🔍 ADD THESE DEBUG LOGS HERE
+    // 🔍 DEBUG LOG
     console.log('🔍 Raw userData from server:', {
         banner: userData.banner,
-        avatar: userData.avatar,
-        hasBanner: !!userData.banner,
-        bannerType: userData.banner ? typeof userData.banner : 'none',
-        bannerPreview: userData.banner ? userData.banner.substring(0, 50) + '...' : null
+        hasBanner: !!userData.banner
     });
     
-    // IMPORTANT: Handle avatar and banner URLs properly
-    // If the backend returns URLs, we need to ensure they're displayed
+    // IMPORTANT: If server returns empty banner, use the one from localStorage
+    const serverBanner = userData.banner || '';
+    const localBanner = storedUser.banner || formData.banner || '';
+    
+    // Use server banner if available, otherwise keep the local one
+    const finalBanner = serverBanner || localBanner;
+    
+    console.log('📌 Banner decision:', {
+        serverBanner: serverBanner ? 'exists' : 'missing',
+        localBanner: localBanner ? 'exists' : 'missing',
+        using: finalBanner ? 'local' : 'none'
+    });
+    
     const backendAvatar = userData.avatar || authData.avatar;
-    const backendBanner = userData.banner || authData.banner;
-    
-    // 🔍 ADD THESE DEBUG LOGS HERE
-    console.log('🔄 After merge:', {
-        backendBanner: backendBanner ? 'exists' : 'missing',
-        finalBanner: backendBanner ? backendBanner.substring(0, 50) + '...' : null
-    });
+    const backendBanner = finalBanner;
     
     const backendData = {
         username: userData.username || authData.username,
@@ -193,71 +195,71 @@ const Profile = () => {
         xp: storedUser.xp ?? userData.xp ?? authData.xp
     };
     
-    // 🔍 ADD THIS DEBUG LOG HERE
+    // 🔍 DEBUG LOG
     console.log('📦 Final backendData:', {
         bannerPresent: !!backendData.banner,
         bannerLength: backendData.banner?.length
     });
-                    if (userData.last_username_change) {
-                        setLastUsernameChange(userData.last_username_change);
-                        setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
-                    }
+    
+    if (userData.last_username_change) {
+        setLastUsernameChange(userData.last_username_change);
+        setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
+    }
+    
+    setFormData(prev => ({ ...prev, ...backendData }));
+    
+    // Set previews if they're base64 images
+    if (backendAvatar?.startsWith('data:image')) setAvatarPreview(backendAvatar);
+    if (backendBanner?.startsWith('data:image')) setBannerPreview(backendBanner);
+    
+    setLoginStreak(userData.login_streak ?? 0);
+    setAchievements(userData.achievements || []);
+    
+    // Update local storage
+    updateLocalUserData(backendData);
+    
+    // Update the main user object in localStorage
+    const updatedUser = { ...storedUser, ...backendData };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    // Daily login check
+    const currentUserId = user?.id || userData.id;
+    const lastCheckKey = `daily_login_check_${currentUserId}`;
+    const lastCheckDate = localStorage.getItem(lastCheckKey);
+    const today = new Date().toDateString();
+    
+    if (currentUserId && lastCheckDate !== today) {
+        try {
+            const loginResponse = await Promise.race([
+                Api.checkDailyLogin(currentUserId),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+            ]);
+            
+            if (loginResponse?.data?.success) {
+                localStorage.setItem(lastCheckKey, today);
+                setLoginStreak(loginResponse.data.streak ?? userData.login_streak ?? 0);
+                
+                if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        xp: loginResponse.data.newXP, 
+                        level: loginResponse.data.newLevel ?? prev.level 
+                    }));
                     
-                    setFormData(prev => ({ ...prev, ...backendData }));
-                    
-                    
-                    // Set previews if they're base64 images
-                    if (backendAvatar?.startsWith('data:image')) setAvatarPreview(backendAvatar);
-                    if (backendBanner?.startsWith('data:image')) setBannerPreview(backendBanner);
-                    
-                    setLoginStreak(userData.login_streak ?? 0);
-                    setAchievements(userData.achievements || []);
-                    
-                    // Update local storage
-                    updateLocalUserData(backendData);
-                    
-                    // Update the main user object in localStorage
-                    const updatedUser = { ...storedUser, ...backendData };
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
-                    
-                    // Daily login check
-                    const currentUserId = user?.id || userData.id;
-                    const lastCheckKey = `daily_login_check_${currentUserId}`;
-                    const lastCheckDate = localStorage.getItem(lastCheckKey);
-                    const today = new Date().toDateString();
-                    
-                    if (currentUserId && lastCheckDate !== today) {
-                        try {
-                            const loginResponse = await Promise.race([
-                                Api.checkDailyLogin(currentUserId),
-                                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-                            ]);
-                            
-                            if (loginResponse?.data?.success) {
-                                localStorage.setItem(lastCheckKey, today);
-                                setLoginStreak(loginResponse.data.streak ?? userData.login_streak ?? 0);
-                                
-                                if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
-                                    setFormData(prev => ({ 
-                                        ...prev, 
-                                        xp: loginResponse.data.newXP, 
-                                        level: loginResponse.data.newLevel ?? prev.level 
-                                    }));
-                                    
-                                    // Update localStorage with new XP
-                                    const updatedUserWithXP = { 
-                                        ...updatedUser, 
-                                        xp: loginResponse.data.newXP, 
-                                        level: loginResponse.data.newLevel ?? updatedUser.level 
-                                    };
-                                    localStorage.setItem('user', JSON.stringify(updatedUserWithXP));
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Daily login check failed:', error);
-                        }
-                    }
+                    // Update localStorage with new XP
+                    const updatedUserWithXP = { 
+                        ...updatedUser, 
+                        xp: loginResponse.data.newXP, 
+                        level: loginResponse.data.newLevel ?? updatedUser.level 
+                    };
+                    localStorage.setItem('user', JSON.stringify(updatedUserWithXP));
                 }
+            }
+        } catch (error) {
+            console.error('Daily login check failed:', error);
+        }
+    }
+}
             } catch (error) {
                 console.error('Error loading profile data:', error);
             }
@@ -525,28 +527,32 @@ const handleSaveChanges = async () => {
             }
         );
         
-        if (response.status === 200) {
-            const serverData = response.data;
-            
-            // Update form data with server response
-            setFormData(prev => ({ ...prev, ...serverData }));
-            
-            // Update auth context
-            if (setUser) {
-                setUser(prev => ({ ...prev, ...serverData }));
-            }
-            
-            // Update localStorage with server data
-            const finalUser = { ...storedUser, ...dataToSave, ...serverData };
-            localStorage.setItem('user', JSON.stringify(finalUser));
-            
-            setStatus("Profile updated successfully!");
-            setEditedUserData({});
-            
-            setTimeout(() => setStatus(""), 3000);
-        } else { 
-            setStatus("Failed to update profile"); 
-        }
+     if (response.status === 200) {
+    const serverData = response.data;
+    
+    // Update form data with server response
+    setFormData(prev => ({ ...prev, ...serverData }));
+    
+    // IMPORTANT: Save banner to localStorage
+    const updatedStoredUser = { 
+        ...storedUser, 
+        ...dataToSave, 
+        ...serverData,
+        banner: dataToSave.banner || serverData.banner || storedUser.banner 
+    };
+    localStorage.setItem('user', JSON.stringify(updatedStoredUser));
+    
+    // Update auth context
+    if (setUser) {
+        setUser(updatedStoredUser);
+    }
+    
+    setStatus("Profile updated successfully!");
+    setEditedUserData({});
+    setTimeout(() => setStatus(""), 3000);  // <-- Move this inside
+} else { 
+    setStatus("Failed to update profile"); 
+}
     } catch (error) { 
         console.error('Save error:', error);
         
