@@ -115,6 +115,7 @@ const Profile = () => {
     useEffect(() => {
         const loadProfile = async () => {
             if (!user?.id) return;
+            
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             const authData = {
                 username: user.username || storedUser.username || "",
@@ -129,79 +130,140 @@ const Profile = () => {
                 xp: storedUser.xp || user.xp || 0,
                 timezone: user.timezone || storedUser.timezone || ""
             };
+            
             setFormData(prev => ({ ...prev, ...authData }));
+            
             if (authData.avatar?.startsWith('data:image')) setAvatarPreview(authData.avatar);
             if (authData.banner?.startsWith('data:image')) setBannerPreview(authData.banner);
+            
             setUserRole(user.role || "");
             setLoginStreak(storedUser.login_streak ?? user.login_streak ?? 0);
+            
             setLoading(false);
+            
             const token = localStorage.getItem("token");
             if (!token) return;
+            
             const baseUrl = resolveApiBaseUrl();
             const headers = { Authorization: `Bearer ${token}` };
-            const [settingsRes, userRes] = await Promise.all([
-                axios.get(`${baseUrl}/api/users/settings`, { headers }).catch(() => ({ data: null })),
-                axios.get(`${baseUrl}/api/users/${user.id}`, { headers }).catch(() => ({ status: 0, data: null }))
-            ]);
-            if (settingsRes?.data?.timezone != null) setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
-            if (userRes?.status === 200 && userRes.data) {
-                const userData = userRes.data;
-                const backendData = {
-                    username: userData.username || authData.username,
-                    email: userData.email || authData.email,
-                    phone: userData.phone || authData.phone,
-                    address: userData.address || authData.address,
-                    avatar: userData.avatar || authData.avatar,
-                    name: userData.name || authData.name,
-                    bio: userData.bio || authData.bio || "",
-                    banner: userData.banner || authData.banner || "",
-                    level: storedUser.level ?? userData.level ?? authData.level,
-                    xp: storedUser.xp ?? userData.xp ?? authData.xp
-                };
-                if (userData.last_username_change) {
-                    setLastUsernameChange(userData.last_username_change);
-                    setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
+            
+            try {
+                const [settingsRes, userRes] = await Promise.all([
+                    axios.get(`${baseUrl}/api/users/settings`, { headers }).catch(() => ({ data: null })),
+                    axios.get(`${baseUrl}/api/users/${user.id}`, { headers }).catch(() => ({ status: 0, data: null }))
+                ]);
+                
+                if (settingsRes?.data?.timezone != null) {
+                    setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
                 }
-                setFormData(prev => ({ ...prev, ...backendData }));
-                if (backendData.avatar?.startsWith('data:image')) setAvatarPreview(backendData.avatar);
-                if (backendData.banner?.startsWith('data:image')) setBannerPreview(backendData.banner);
-                setLoginStreak(userData.login_streak ?? 0);
-                setAchievements(userData.achievements || []);
-                updateLocalUserData(backendData);
-                const currentUserId = user?.id || userData.id;
-                const lastCheckKey = `daily_login_check_${currentUserId}`;
-                const lastCheckDate = localStorage.getItem(lastCheckKey);
-                const today = new Date().toDateString();
-                if (currentUserId && lastCheckDate !== today) {
-                    Promise.race([
-                        Api.checkDailyLogin(currentUserId),
-                        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), 3000))
-                    ]).then((loginResponse) => {
-                        if (loginResponse?.data?.success) {
-                            localStorage.setItem(lastCheckKey, today);
-                            setLoginStreak(loginResponse.data.streak ?? userData.login_streak ?? 0);
-                            if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
-                                setFormData(prev => ({ ...prev, xp: loginResponse.data.newXP, level: loginResponse.data.newLevel ?? prev.level }));
+                
+                if (userRes?.status === 200 && userRes.data) {
+                    const userData = userRes.data;
+                    
+                    // IMPORTANT: Handle avatar and banner URLs properly
+                    // If the backend returns URLs, we need to ensure they're displayed
+                    const backendAvatar = userData.avatar || authData.avatar;
+                    const backendBanner = userData.banner || authData.banner;
+                    
+                    const backendData = {
+                        username: userData.username || authData.username,
+                        email: userData.email || authData.email,
+                        phone: userData.phone || authData.phone,
+                        address: userData.address || authData.address,
+                        avatar: backendAvatar,
+                        name: userData.name || authData.name,
+                        bio: userData.bio || authData.bio || "",
+                        banner: backendBanner,
+                        level: storedUser.level ?? userData.level ?? authData.level,
+                        xp: storedUser.xp ?? userData.xp ?? authData.xp
+                    };
+                    
+                    if (userData.last_username_change) {
+                        setLastUsernameChange(userData.last_username_change);
+                        setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
+                    }
+                    
+                    setFormData(prev => ({ ...prev, ...backendData }));
+                    
+                    // Set previews if they're base64 images
+                    if (backendAvatar?.startsWith('data:image')) setAvatarPreview(backendAvatar);
+                    if (backendBanner?.startsWith('data:image')) setBannerPreview(backendBanner);
+                    
+                    setLoginStreak(userData.login_streak ?? 0);
+                    setAchievements(userData.achievements || []);
+                    
+                    // Update local storage
+                    updateLocalUserData(backendData);
+                    
+                    // Update the main user object in localStorage
+                    const updatedUser = { ...storedUser, ...backendData };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    
+                    // Daily login check
+                    const currentUserId = user?.id || userData.id;
+                    const lastCheckKey = `daily_login_check_${currentUserId}`;
+                    const lastCheckDate = localStorage.getItem(lastCheckKey);
+                    const today = new Date().toDateString();
+                    
+                    if (currentUserId && lastCheckDate !== today) {
+                        try {
+                            const loginResponse = await Promise.race([
+                                Api.checkDailyLogin(currentUserId),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+                            ]);
+                            
+                            if (loginResponse?.data?.success) {
+                                localStorage.setItem(lastCheckKey, today);
+                                setLoginStreak(loginResponse.data.streak ?? userData.login_streak ?? 0);
+                                
+                                if (loginResponse.data.xpAwarded && !loginResponse.data.alreadyLoggedIn && loginResponse.data.xpAwarded > 0) {
+                                    setFormData(prev => ({ 
+                                        ...prev, 
+                                        xp: loginResponse.data.newXP, 
+                                        level: loginResponse.data.newLevel ?? prev.level 
+                                    }));
+                                    
+                                    // Update localStorage with new XP
+                                    const updatedUserWithXP = { 
+                                        ...updatedUser, 
+                                        xp: loginResponse.data.newXP, 
+                                        level: loginResponse.data.newLevel ?? updatedUser.level 
+                                    };
+                                    localStorage.setItem('user', JSON.stringify(updatedUserWithXP));
+                                }
                             }
-                        } else {
-                            setLoginStreak(userData.login_streak ?? 0);
+                        } catch (error) {
+                            console.error('Daily login check failed:', error);
                         }
-                    }).catch(() => setLoginStreak(userData.login_streak ?? 0));
+                    }
                 }
+            } catch (error) {
+                console.error('Error loading profile data:', error);
             }
         };
+        
         loadProfile();
+        
+        // XP update event listeners
         const handleXPUpdate = (event) => {
             const { newXP, newLevel } = event.detail;
             setFormData(prev => ({ ...prev, xp: newXP, level: newLevel }));
             try {
                 const u = JSON.parse(localStorage.getItem('user') || '{}');
-                if (u.id) localStorage.setItem('user', JSON.stringify({ ...u, xp: newXP, level: newLevel }));
+                if (u.id) {
+                    const updatedUser = { ...u, xp: newXP, level: newLevel };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
             } catch (_) {}
         };
-        const handleLevelUp = (event) => { console.log(`🎉 Level Up! You reached level ${event.detail.newLevel}!`); };
+        
+        const handleLevelUp = (event) => { 
+            console.log(`🎉 Level Up! You reached level ${event.detail.newLevel}!`); 
+        };
+        
         window.addEventListener('xpUpdated', handleXPUpdate);
         window.addEventListener('levelUp', handleLevelUp);
+        
         const xpRefreshInterval = setInterval(() => {
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             if (storedUser.xp !== undefined && storedUser.level !== undefined) {
@@ -215,6 +277,7 @@ const Profile = () => {
                 });
             }
         }, 1000);
+        
         return () => {
             clearInterval(xpRefreshInterval);
             window.removeEventListener('xpUpdated', handleXPUpdate);
@@ -223,15 +286,26 @@ const Profile = () => {
     }, [user]);
 
     useEffect(() => {
-        if (!user?.id) { setJournalStatsLoading(false); return; }
+        if (!user?.id) { 
+            setJournalStatsLoading(false); 
+            return; 
+        }
+        
         const today = new Date().toISOString().slice(0, 10);
-        const weekStart = getWeekStart(today); const weekEnd = getWeekEnd(today);
-        const monthStart = getMonthStart(today); const monthEnd = getMonthEnd(today);
+        const weekStart = getWeekStart(today); 
+        const weekEnd = getWeekEnd(today);
+        const monthStart = getMonthStart(today); 
+        const monthEnd = getMonthEnd(today);
         const fetchFrom = weekStart < monthStart ? weekStart : monthStart;
         const fetchTo = weekEnd > monthEnd ? weekEnd : monthEnd;
+        
         setJournalStatsLoading(true);
+        
         Api.getJournalTasks({ dateFrom: fetchFrom, dateTo: fetchTo })
-            .then((res) => { const list = res.data?.tasks ?? []; setJournalTasks(Array.isArray(list) ? list : []); })
+            .then((res) => { 
+                const list = res.data?.tasks ?? []; 
+                setJournalTasks(Array.isArray(list) ? list : []); 
+            })
             .catch(() => setJournalTasks([]))
             .finally(() => setJournalStatsLoading(false));
     }, [user?.id]);
@@ -245,96 +319,217 @@ const Profile = () => {
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 5 * 1024 * 1024) { setStatus("Avatar image must be less than 5MB"); return; }
+        
+        if (file.size > 5 * 1024 * 1024) { 
+            setStatus("Avatar image must be less than 5MB"); 
+            return; 
+        }
+        
         try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            // Convert to base64
+            const base64 = await convertToBase64(file);
+            
+            // Create an image to resize
             const img = new Image();
-            img.onload = () => {
-                const maxSize = 512;
-                let { width, height } = img;
-                if (width > height) { if (width > maxSize) { height = (height * maxSize) / width; width = maxSize; } }
-                else { if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; } }
-                canvas.width = width; canvas.height = height;
-                ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(img, 0, 0, width, height);
-                const base64 = canvas.toDataURL('image/png', 1.0);
-                setAvatarPreview(base64);
-                setFormData(prev => ({ ...prev, avatar: base64 }));
-                setEditedUserData(prev => ({ ...prev, avatar: base64 }));
-            };
-            img.onerror = () => {
-                convertToBase64(file).then(base64 => {
-                    setAvatarPreview(base64);
-                    setFormData(prev => ({ ...prev, avatar: base64 }));
-                    setEditedUserData(prev => ({ ...prev, avatar: base64 }));
-                });
-            };
-            img.src = URL.createObjectURL(file);
-        } catch (error) { setStatus("Failed to process avatar image"); }
+            img.src = base64;
+            
+            await new Promise((resolve) => {
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const maxSize = 512;
+                    let { width, height } = img;
+                    
+                    if (width > height) { 
+                        if (width > maxSize) { 
+                            height = (height * maxSize) / width; 
+                            width = maxSize; 
+                        } 
+                    } else { 
+                        if (height > maxSize) { 
+                            width = (width * maxSize) / height; 
+                            height = maxSize; 
+                        } 
+                    }
+                    
+                    canvas.width = width; 
+                    canvas.height = height;
+                    ctx.imageSmoothingEnabled = true; 
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const resizedBase64 = canvas.toDataURL('image/png', 1.0);
+                    
+                    setAvatarPreview(resizedBase64);
+                    setFormData(prev => ({ ...prev, avatar: resizedBase64 }));
+                    setEditedUserData(prev => ({ ...prev, avatar: resizedBase64 }));
+                    
+                    resolve();
+                };
+            });
+            
+            setStatus("Avatar ready to save. Click 'Save Profile' to update.");
+        } catch (error) { 
+            console.error('Avatar processing error:', error);
+            setStatus("Failed to process avatar image"); 
+        }
     };
 
     const handleBannerChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 10 * 1024 * 1024) { setStatus("Banner image must be less than 10MB"); return; }
+        
+        if (file.size > 10 * 1024 * 1024) { 
+            setStatus("Banner image must be less than 10MB"); 
+            return; 
+        }
+        
         try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            // Convert to base64
+            const base64 = await convertToBase64(file);
+            
+            // Create an image to resize
             const img = new Image();
-            img.onload = () => {
-                let { width, height } = img;
-                const maxWidth = 1920, maxHeight = 600;
-                if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
-                if (height > maxHeight) { width = (width * maxHeight) / height; height = maxHeight; }
-                canvas.width = width; canvas.height = height;
-                ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(img, 0, 0, width, height);
-                const base64 = canvas.toDataURL('image/png', 0.95);
-                setBannerPreview(base64);
-                setFormData(prev => ({ ...prev, banner: base64 }));
-                setEditedUserData(prev => ({ ...prev, banner: base64 }));
-            };
-            img.onerror = () => {
-                convertToBase64(file).then(base64 => {
-                    setBannerPreview(base64);
-                    setFormData(prev => ({ ...prev, banner: base64 }));
-                    setEditedUserData(prev => ({ ...prev, banner: base64 }));
-                });
-            };
-            img.src = URL.createObjectURL(file);
-        } catch (error) { setStatus("Failed to process banner image"); }
+            img.src = base64;
+            
+            await new Promise((resolve) => {
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    let { width, height } = img;
+                    const maxWidth = 1920, maxHeight = 600;
+                    
+                    if (width > maxWidth) { 
+                        height = (height * maxWidth) / width; 
+                        width = maxWidth; 
+                    }
+                    if (height > maxHeight) { 
+                        width = (width * maxHeight) / height; 
+                        height = maxHeight; 
+                    }
+                    
+                    canvas.width = width; 
+                    canvas.height = height;
+                    ctx.imageSmoothingEnabled = true; 
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const resizedBase64 = canvas.toDataURL('image/png', 0.95);
+                    
+                    setBannerPreview(resizedBase64);
+                    setFormData(prev => ({ ...prev, banner: resizedBase64 }));
+                    setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
+                    
+                    resolve();
+                };
+            });
+            
+            setStatus("Banner ready to save. Click 'Save Profile' to update.");
+        } catch (error) { 
+            console.error('Banner processing error:', error);
+            setStatus("Failed to process banner image"); 
+        }
     };
 
     const handleSaveChanges = async () => {
-        if (!user?.id) { setStatus("You must be logged in to save changes"); return; }
+        if (!user?.id) { 
+            setStatus("You must be logged in to save changes"); 
+            return; 
+        }
+        
         setStatus("Saving...");
+        
         try {
             const token = localStorage.getItem("token");
-            if (!token) { setStatus("Authentication required"); return; }
+            if (!token) { 
+                setStatus("Authentication required"); 
+                return; 
+            }
+            
+            // Validate username if changed
             if (editedUserData.username && editedUserData.username !== user.username) {
                 const validation = validateUsername(editedUserData.username);
-                if (!validation.isValid) { setUsernameValidationError(validation.error); setStatus("Username validation failed"); return; }
+                if (!validation.isValid) { 
+                    setUsernameValidationError(validation.error); 
+                    setStatus("Username validation failed"); 
+                    return; 
+                }
+                
                 const cooldownCheck = canChangeUsername(lastUsernameChange);
-                if (!cooldownCheck.canChange) { setUsernameValidationError(getCooldownMessage(lastUsernameChange)); setStatus("Username change on cooldown"); return; }
+                if (!cooldownCheck.canChange) { 
+                    setUsernameValidationError(getCooldownMessage(lastUsernameChange)); 
+                    setStatus("Username change on cooldown"); 
+                    return; 
+                }
             }
-            const dataToSave = { ...editedUserData, id: user.id };
+            
+            // Prepare data to save
+            const dataToSave = { 
+                ...editedUserData, 
+                id: user.id 
+            };
+            
+            console.log('Saving profile data:', dataToSave);
+            
+            // Update localStorage immediately for instant UI feedback
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
+            const updatedUser = { ...storedUser, ...dataToSave };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            
+            // Send to server
             const response = await axios.put(
-                `${resolveApiBaseUrl()}/api/users/${user.id}/update`, dataToSave,
-                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+                `${resolveApiBaseUrl()}/api/users/${user.id}`, 
+                dataToSave,
+                { 
+                    headers: { 
+                        Authorization: `Bearer ${token}`, 
+                        'Content-Type': 'application/json' 
+                    } 
+                }
             );
+            
             if (response.status === 200) {
                 const serverData = response.data;
+                
+                // Update form data with server response
                 setFormData(prev => ({ ...prev, ...serverData }));
-                if (setUser) setUser(prev => ({ ...prev, ...serverData }));
-                if (serverData) localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave, ...serverData }));
+                
+                // Update auth context
+                if (setUser) {
+                    setUser(prev => ({ ...prev, ...serverData }));
+                }
+                
+                // Update localStorage with server data
+                const finalUser = { ...updatedUser, ...serverData };
+                localStorage.setItem('user', JSON.stringify(finalUser));
+                
                 setStatus("Profile updated successfully!");
                 setEditedUserData({});
+                
                 setTimeout(() => setStatus(""), 3000);
-            } else { setStatus("Failed to update profile"); }
-        } catch (error) { setStatus(error.response?.data?.message || "Failed to update profile"); }
+            } else { 
+                setStatus("Failed to update profile"); 
+            }
+        } catch (error) { 
+            console.error('Save error:', error);
+            
+            // Provide more specific error message
+            if (error.response?.data?.message) {
+                setStatus(error.response.data.message);
+            } else if (error.response?.status === 413) {
+                setStatus("Images too large. Please try smaller images.");
+            } else {
+                setStatus(error.response?.data?.message || "Failed to update profile");
+            }
+            
+            // Revert localStorage changes on error
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const originalUser = { ...storedUser };
+            delete originalUser[Object.keys(editedUserData)[0]]; // Remove the changed field
+            localStorage.setItem('user', JSON.stringify(originalUser));
+        }
     };
 
     // XP calculations
@@ -346,16 +541,25 @@ const Profile = () => {
 
     // Journal stats
     const journalToday = new Date().toISOString().slice(0, 10);
-    const journalWeekStart = getWeekStart(journalToday); const journalWeekEnd = getWeekEnd(journalToday);
-    const journalMonthStart = getMonthStart(journalToday); const journalMonthEnd = getMonthEnd(journalToday);
+    const journalWeekStart = getWeekStart(journalToday); 
+    const journalWeekEnd = getWeekEnd(journalToday);
+    const journalMonthStart = getMonthStart(journalToday); 
+    const journalMonthEnd = getMonthEnd(journalToday);
+    
     const dayTasks = journalTasks.filter(t => isSameDay(t.date, journalToday));
     const weekTasks = journalTasks.filter(t => t.date >= journalWeekStart && t.date <= journalWeekEnd);
     const monthTasksForMonth = journalTasks.filter(t => t.date >= journalMonthStart && t.date <= journalMonthEnd);
-    const dayTotal = dayTasks.length; const dayDone = dayTasks.filter(t => t.completed).length;
+    
+    const dayTotal = dayTasks.length; 
+    const dayDone = dayTasks.filter(t => t.completed).length;
     const journalDayPct = dayTotal ? Math.round((dayDone / dayTotal) * 100) : 0;
-    const weekTotal = weekTasks.length; const weekDone = weekTasks.filter(t => t.completed).length;
+    
+    const weekTotal = weekTasks.length; 
+    const weekDone = weekTasks.filter(t => t.completed).length;
     const journalWeekPct = weekTotal ? Math.round((weekDone / weekTotal) * 100) : 0;
-    const monthTotal = monthTasksForMonth.length; const monthDone = monthTasksForMonth.filter(t => t.completed).length;
+    
+    const monthTotal = monthTasksForMonth.length; 
+    const monthDone = monthTasksForMonth.filter(t => t.completed).length;
     const journalMonthPct = monthTotal ? Math.round((monthDone / monthTotal) * 100) : 0;
 
     const hasAvatar = avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')));
@@ -388,13 +592,27 @@ const Profile = () => {
                 {/* ── BANNER ── */}
                 <div className="pf-banner-wrap">
                     {bannerPreview || formData.banner ? (
-                        <img src={bannerPreview || formData.banner} alt="Banner" className="pf-banner-img" />
+                        <img 
+                            src={bannerPreview || formData.banner} 
+                            alt="Banner" 
+                            className="pf-banner-img" 
+                            onError={(e) => {
+                                console.error('Banner failed to load');
+                                e.target.style.display = 'none';
+                            }}
+                        />
                     ) : (
                         <div className="pf-banner-placeholder">
                             <span className="pf-banner-hint">Upload Banner</span>
                         </div>
                     )}
-                    <input type="file" ref={bannerInputRef} accept="image/*" onChange={handleBannerChange} style={{ display: 'none' }} />
+                    <input 
+                        type="file" 
+                        ref={bannerInputRef} 
+                        accept="image/*" 
+                        onChange={handleBannerChange} 
+                        style={{ display: 'none' }} 
+                    />
                     <button className="pf-banner-btn" onClick={() => bannerInputRef.current?.click()}>
                         <span>📷</span> Change Banner
                     </button>
@@ -408,12 +626,28 @@ const Profile = () => {
                         <div className="pf-avatar-ring">
                             <div className="pf-avatar-inner">
                                 {hasAvatar ? (
-                                    <img src={avatarPreview || formData.avatar} alt="Avatar" className="pf-avatar-img" />
+                                    <img 
+                                        src={avatarPreview || formData.avatar} 
+                                        alt="Avatar" 
+                                        className="pf-avatar-img"
+                                        onError={(e) => {
+                                            console.error('Avatar failed to load');
+                                            e.target.style.display = 'none';
+                                            // Show placeholder on error
+                                            e.target.parentNode.innerHTML = `<div class="pf-avatar-placeholder" style="background: ${getPlaceholderColor(user?.id ?? formData.username)}"></div>`;
+                                        }}
+                                    />
                                 ) : (
                                     <div className="pf-avatar-placeholder" style={{ background: getPlaceholderColor(user?.id ?? formData.username) }} />
                                 )}
                             </div>
-                            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                accept="image/*" 
+                                onChange={handleAvatarChange} 
+                                style={{ display: 'none' }} 
+                            />
                             <button className="pf-avatar-edit-btn" onClick={() => fileInputRef.current?.click()} title="Change avatar">✏️</button>
                         </div>
 
@@ -610,6 +844,8 @@ const Profile = () => {
                                     onChange={async (e) => {
                                         const val = e.target.value || '';
                                         setFormData(prev => ({ ...prev, timezone: val }));
+                                        setEditedUserData(prev => ({ ...prev, timezone: val }));
+                                        
                                         try {
                                             const token = localStorage.getItem('token');
                                             if (token) {
@@ -617,12 +853,22 @@ const Profile = () => {
                                                     { timezone: val || null },
                                                     { headers: { Authorization: `Bearer ${token}` } }
                                                 );
+                                                
+                                                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                                                const updatedUser = { ...storedUser, timezone: val || null };
+                                                localStorage.setItem('user', JSON.stringify(updatedUser));
+                                                
                                                 if (setUser) {
-                                                    const u = JSON.parse(localStorage.getItem('user') || '{}');
-                                                    setUser({ ...u, timezone: val || null });
+                                                    setUser(updatedUser);
                                                 }
+                                                
+                                                setStatus("Timezone updated");
+                                                setTimeout(() => setStatus(""), 2000);
                                             }
-                                        } catch (_) {}
+                                        } catch (error) {
+                                            console.error('Timezone update error:', error);
+                                            setStatus("Failed to update timezone");
+                                        }
                                     }}>
                                     <option value="">Auto (browser)</option>
                                     {getIANATimezones().map(tz => (
