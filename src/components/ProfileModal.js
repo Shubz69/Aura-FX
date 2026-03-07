@@ -13,7 +13,8 @@ import {
     FaTimes, FaCog, FaUserPlus, FaUser, FaCrown, FaCheckCircle, FaFire, 
     FaGem, FaStar, FaTrophy, FaChartLine, FaClock, FaShieldAlt, FaRobot,
     FaLock, FaUnlock, FaUserCheck, FaUserTimes, FaHourglass, FaComments,
-    FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward, FaBan
+    FaGraduationCap, FaCalendarCheck, FaBolt, FaMedal, FaAward, FaBan,
+    FaQuoteRight, FaPen
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { resolveAvatarUrl, getPlaceholderColor } from '../utils/avatar';
@@ -35,7 +36,6 @@ const AvatarWithFallback = ({ size = 120, tierColor, isOnline, avatar, userId })
     const placeholderColor = getPlaceholderColor(userId);
     return (
         <div style={{ position: 'relative', width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
-            {/* Clean solid border ring — no animation */}
             <div style={{
                 position: 'absolute', inset: 0, borderRadius: '50%',
                 border: `3px solid ${tierColor}`,
@@ -284,6 +284,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const achievements = getAchievements(level, loginStreak, stats?.ai_chats_count || 0, stats?.community_messages || 0);
     const unlockedCount = achievements.filter(a => a.unlocked).length;
     const bannerAccent = getBannerAccent(level);
+    const bio = profile.bio || ''; // Get bio from profile data
 
     const SettingsModal = () => (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(20px)', zIndex: 100001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', pointerEvents: 'auto' }} onClick={() => setShowSettings(false)}>
@@ -370,7 +371,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px', pointerEvents: 'auto', overflowY: 'auto'
+            padding: '16px', pointerEvents: 'auto', overflowY: 'auto'
         }} onClick={onClose}>
 
             <div style={{
@@ -378,7 +379,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 borderRadius: '22px',
                 border: `1px solid rgba(139,92,246,0.18)`,
                 boxShadow: `0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(139,92,246,0.06), 0 0 60px ${tierColor}12`,
-                maxWidth: '860px', width: '100%', maxHeight: '92vh',
+                maxWidth: '860px', width: '100%',
+                maxHeight: 'calc(100vh - 32px)',
                 overflowY: 'auto', overflowX: 'hidden',
                 position: 'relative', margin: 'auto',
                 opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.98)',
@@ -388,43 +390,70 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 {/* Top shimmer line */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}80, rgba(99,179,237,0.5), transparent)`, borderRadius: '22px 22px 0 0', zIndex: 10 }} />
 
-                {/* Action Buttons */}
+                {/* Action Buttons — all icon-only, uniform 38×38 squares */}
                 <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
                     {isOwnProfile && (
                         <button onClick={() => setShowSettings(true)} title="Settings" style={{
                             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
                             color: 'rgba(255,255,255,0.55)', width: '38px', height: '38px', borderRadius: '10px',
                             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            transition: 'all 0.22s', backdropFilter: 'blur(8px)', fontSize: '0.85rem'
+                            transition: 'all 0.22s', backdropFilter: 'blur(8px)', fontSize: '0.85rem', flexShrink: 0
                         }}><FaCog /></button>
                     )}
                     {!isOwnProfile && (
                         <button
                             onClick={() => friendBtn.action && handleFriendAction(friendBtn.action)}
                             disabled={friendLoading}
-                            title={friendBtn.subtext}
+                            title={`${friendBtn.text} — ${friendBtn.subtext}`}
                             style={{
-                                background: `${friendBtn.color}14`, border: `1px solid ${friendBtn.color}40`,
-                                color: friendBtn.color, padding: '0 16px', height: '38px', borderRadius: '10px',
-                                cursor: friendBtn.action ? 'pointer' : 'default', display: 'flex', alignItems: 'center',
-                                gap: '8px', fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.14em',
-                                textTransform: 'uppercase', opacity: friendLoading ? 0.6 : 1, transition: 'all 0.22s',
-                                backdropFilter: 'blur(8px)', fontFamily: "'Space Grotesk', sans-serif"
+                                background: `${friendBtn.color}14`,
+                                border: `1px solid ${friendBtn.color}50`,
+                                color: friendBtn.color,
+                                width: '38px', height: '38px', borderRadius: '10px',
+                                cursor: friendBtn.action ? 'pointer' : 'default',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '0.95rem',
+                                opacity: friendLoading ? 0.6 : 1,
+                                transition: 'all 0.22s',
+                                backdropFilter: 'blur(8px)',
+                                flexShrink: 0,
+                                boxShadow: `0 0 12px ${friendBtn.color}20`
                             }}>
-                            {friendLoading ? <div className="pf-spinner pf-spinner-sm" /> : friendBtn.icon}
-                            {friendBtn.text}
+                            {friendLoading
+                                ? <div className="pf-spinner pf-spinner-sm" />
+                                : friendBtn.icon}
                         </button>
                     )}
                     <button onClick={onClose} title="Close" style={{
                         background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
                         color: 'rgba(255,255,255,0.55)', width: '38px', height: '38px', borderRadius: '10px',
                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.22s', backdropFilter: 'blur(8px)', fontSize: '0.85rem'
+                        transition: 'all 0.22s', backdropFilter: 'blur(8px)', fontSize: '0.85rem', flexShrink: 0
                     }}><FaTimes /></button>
                 </div>
 
                 {/* ─── BANNER ─────────────────────────────────────────── */}
-                <div style={{ position: 'relative', width: '100%', height: '170px', background: getBannerGradient(level), borderRadius: '22px 22px 0 0', overflow: 'hidden', flexShrink: 0 }}>
+                <div style={{
+                    position: 'relative', width: '100%',
+                    height: 'clamp(120px, 20vw, 170px)',
+                    background: getBannerGradient(level), borderRadius: '22px 22px 0 0', overflow: 'hidden', flexShrink: 0
+                }}>
+                    {profile.banner && (
+                        <img 
+                            src={profile.banner} 
+                            alt="Banner" 
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                opacity: 0.4
+                            }}
+                            onError={(e) => e.target.style.display = 'none'}
+                        />
+                    )}
                     {/* Diagonal grid */}
                     <div style={{ position: 'absolute', inset: 0, backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 26px, ${bannerAccent}08 26px, ${bannerAccent}08 27px)`, pointerEvents: 'none' }} />
                     {/* Radial glow center */}
@@ -451,16 +480,22 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 </div>
 
                 {/* ─── AVATAR OVERLAP STRIP ────────────────────────────── */}
-                {/* Avatar sits half-over the banner via negative margin on its wrapper */}
-                <div style={{ padding: '0 32px', display: 'flex', alignItems: 'flex-end', gap: '0', marginTop: '-56px', position: 'relative', zIndex: 5 }}>
-                    <AvatarWithFallback size={112} tierColor={tierColor} isOnline={isOnline} avatar={profile?.avatar} userId={profile?.id ?? profile?.username} />
+                <div style={{
+                    padding: '0 clamp(16px, 4vw, 32px)',
+                    display: 'flex', alignItems: 'flex-end', gap: '0',
+                    marginTop: '-52px', position: 'relative', zIndex: 5
+                }}>
+                    <AvatarWithFallback
+                        size={typeof window !== 'undefined' && window.innerWidth < 480 ? 84 : 112}
+                        tierColor={tierColor} isOnline={isOnline} avatar={profile?.avatar} userId={profile?.id ?? profile?.username}
+                    />
                 </div>
 
-                {/* ─── USERNAME + RANK (fully below banner) ────────────── */}
-                <div style={{ padding: '14px 32px 0', display: 'flex', alignItems: 'center', gap: '22px', flexWrap: 'wrap' }}>
+                {/* ─── USERNAME + RANK ────────────────────────────────── */}
+                <div style={{ padding: '14px clamp(16px, 4vw, 32px) 0', display: 'flex', alignItems: 'center', gap: '22px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '180px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '7px', flexWrap: 'wrap' }}>
-                            <h1 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.9rem)', fontWeight: 200, color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif", textShadow: `0 0 40px ${tierColor}30` }}>
+                            <h1 style={{ fontSize: 'clamp(1.1rem, 4vw, 1.9rem)', fontWeight: 200, color: 'white', margin: 0, textTransform: 'uppercase', letterSpacing: '0.22em', fontFamily: "'Space Grotesk', sans-serif", textShadow: `0 0 40px ${tierColor}30` }}>
                                 {profile.username || profile.name || 'User'}
                             </h1>
                             {(profile.role === 'admin' || profile.role === 'super_admin') && <FaCrown style={{ color: '#FFD700', fontSize: '1.1rem', filter: 'drop-shadow(0 0 8px #FFD70060)' }} />}
@@ -475,8 +510,83 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     </div>
                 </div>
 
+                {/* ─── BIO SECTION ───────────────────────────────────── */}
+                {bio && (
+                    <div style={{ 
+                        padding: '12px clamp(16px, 4vw, 32px) 8px',
+                        marginTop: '4px'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '12px',
+                            padding: '16px 20px',
+                            background: 'linear-gradient(135deg, rgba(139,92,246,0.05) 0%, rgba(99,179,237,0.02) 100%)',
+                            border: '1px solid rgba(139,92,246,0.15)',
+                            borderRadius: '14px',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}>
+                            {/* Decorative quote mark */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-10px',
+                                right: '10px',
+                                fontSize: '6rem',
+                                color: `${tierColor}10`,
+                                fontFamily: 'Georgia, serif',
+                                pointerEvents: 'none',
+                                userSelect: 'none'
+                            }}>
+                                &ldquo;
+                            </div>
+                            
+                            {/* Quote icon */}
+                            <div style={{
+                                flexShrink: 0,
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                background: `${tierColor}15`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: tierColor,
+                                fontSize: '0.9rem',
+                                border: `1px solid ${tierColor}30`
+                            }}>
+                                <FaQuoteRight />
+                            </div>
+                            
+                            {/* Bio text */}
+                            <div style={{
+                                flex: 1,
+                                fontSize: '0.9rem',
+                                lineHeight: '1.6',
+                                color: 'rgba(255,255,255,0.75)',
+                                fontFamily: "'Space Grotesk', sans-serif",
+                                fontStyle: 'italic',
+                                letterSpacing: '0.02em',
+                                wordBreak: 'break-word'
+                            }}>
+                                {bio}
+                            </div>
+                            
+                            {/* Decorative gradient line */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: '10%',
+                                right: '10%',
+                                height: '1px',
+                                background: `linear-gradient(90deg, transparent, ${tierColor}40, transparent)`
+                            }} />
+                        </div>
+                    </div>
+                )}
+
                 {/* ─── XP BAR ─────────────────────────────────────────── */}
-                <div style={{ padding: '4px 32px 20px' }}>
+                <div style={{ padding: bio ? '8px clamp(16px, 4vw, 32px) 20px' : '4px clamp(16px, 4vw, 32px) 20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.28em', fontFamily: "'Space Grotesk', sans-serif" }}>Lv {level} → Lv {level + 1}</span>
                         <span style={{ fontSize: '0.65rem', color: tierColor, fontWeight: 500, letterSpacing: '0.06em', fontFamily: "'Space Grotesk', sans-serif" }}>{(xpProgress.current || 0).toLocaleString()} / {(xpProgress.needed || 0).toLocaleString()} XP</span>
@@ -492,31 +602,31 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 </div>
 
                 {/* Thin divider */}
-                <div style={{ height: '1px', margin: '0 32px', background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.2), transparent)' }} />
+                <div style={{ height: '1px', margin: '0 clamp(16px, 4vw, 32px)', background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.2), transparent)' }} />
 
                 {/* ─── TABS ───────────────────────────────────────────── */}
-                <div style={{ display: 'flex', gap: '2px', padding: '0 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', scrollbarWidth: 'none', marginTop: '4px' }}>
+                <div style={{ display: 'flex', gap: '2px', padding: '0 clamp(16px, 4vw, 32px)', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', scrollbarWidth: 'none', marginTop: '4px' }}>
                     {TABS.map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                            background: 'transparent', border: 'none', padding: '12px 16px', whiteSpace: 'nowrap',
+                            background: 'transparent', border: 'none', padding: 'clamp(10px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', whiteSpace: 'nowrap',
                             color: activeTab === tab ? tierColor : 'rgba(255,255,255,0.35)',
-                            fontSize: '0.65rem', fontWeight: 500, cursor: 'pointer',
-                            textTransform: 'uppercase', letterSpacing: '0.24em', position: 'relative',
+                            fontSize: 'clamp(0.58rem, 1.5vw, 0.65rem)', fontWeight: 500, cursor: 'pointer',
+                            textTransform: 'uppercase', letterSpacing: '0.2em', position: 'relative',
                             transition: 'color 0.22s', fontFamily: "'Space Grotesk', sans-serif",
                             borderBottom: activeTab === tab ? `2px solid ${tierColor}` : '2px solid transparent',
-                            marginBottom: '-1px'
+                            marginBottom: '-1px', flexShrink: 0
                         }}>
-                            {tab === 'identity' ? 'Trading Identity' : tab}
+                            {tab === 'identity' ? 'Trading' : tab}
                         </button>
                     ))}
                 </div>
 
                 {/* ─── TAB CONTENT ────────────────────────────────────── */}
-                <div style={{ padding: '24px 32px 28px', minHeight: '240px' }}>
+                <div style={{ padding: 'clamp(16px, 3vw, 24px) clamp(16px, 4vw, 32px) clamp(20px, 4vw, 32px)', minHeight: '220px' }}>
 
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             {/* Journal stats rings */}
                             {profile.journalStats && (
                                 <div style={{ display: 'flex', justifyContent: 'center', gap: '28px', flexWrap: 'wrap', padding: '20px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -533,7 +643,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             )}
 
                             {/* Stat cards grid */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
                                 {[
                                     { icon: '⚡', label: 'Power Level', value: level, color: tierColor },
                                     { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
@@ -571,7 +681,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                     {/* TRADING IDENTITY TAB */}
                     {activeTab === 'identity' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
                             {[
                                 { icon: <FaChartLine />, color: tierColor, label: 'Preferred Markets', content: (settings?.preferred_markets || ['forex', 'gold']).map((m, i) => <span key={i} style={{ padding: '5px 12px', background: `${tierColor}18`, border: `1px solid ${tierColor}40`, borderRadius: '99px', color: tierColor, fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{m}</span>) },
                                 { icon: <FaClock />, color: '#63b3ed', label: 'Trading Sessions', content: (settings?.trading_sessions || ['london', 'newyork']).map((s, i) => <span key={i} style={{ padding: '5px 12px', background: 'rgba(99,179,237,0.1)', border: '1px solid rgba(99,179,237,0.3)', borderRadius: '99px', color: '#63b3ed', fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{s}</span>) },
@@ -592,7 +702,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                     {/* STATISTICS TAB */}
                     {activeTab === 'statistics' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                             {[
                                 { icon: <FaRobot />, label: 'AI Chats', value: stats?.ai_chats_count || 0, color: '#a78bfa' },
                                 { icon: <FaComments />, label: 'Messages', value: stats?.community_messages || 0, color: '#63b3ed' },
@@ -620,7 +730,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                     <div style={{ height: '100%', width: `${(unlockedCount / ALL_ACHIEVEMENTS.length) * 100}%`, background: `linear-gradient(90deg, ${tierColor}, ${tierColor}80)`, borderRadius: '99px', transition: 'width 1s ease' }} />
                                 </div>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '9px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '9px' }}>
                                 {achievements.map((achievement, i) => (
                                     <div key={i} title={achievement.description} style={{ padding: '16px 10px', textAlign: 'center', borderRadius: '14px', position: 'relative', overflow: 'hidden', background: achievement.unlocked ? `${tierColor}0a` : 'rgba(255,255,255,0.015)', border: `1px solid ${achievement.unlocked ? tierColor + '30' : 'rgba(255,255,255,0.05)'}`, opacity: achievement.unlocked ? 1 : 0.5, transition: 'all 0.3s', cursor: 'pointer' }}>
                                         {achievement.unlocked && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}70, transparent)` }} />}
@@ -636,15 +746,6 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     )}
                 </div>
 
-                {/* ─── FOOTER ─────────────────────────────────────────── */}
-                {onViewProfile && (
-                    <div style={{ padding: '16px 32px 28px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'center' }}>
-                        <button onClick={onViewProfile} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 32px', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.5)', borderRadius: '10px', color: '#c4b5fd', fontSize: '0.7rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.22s', textTransform: 'uppercase', letterSpacing: '0.24em', fontFamily: "'Space Grotesk', sans-serif", boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}>
-                            <FaUser style={{ fontSize: '0.75rem' }} /> View Full Profile
-                        </button>
-                    </div>
-                )}
-
                 {/* Global styles */}
                 <style>{`
                     @keyframes dotPulse { 0% { opacity:.6; transform:scale(1); } 100% { opacity:1; transform:scale(1.3); box-shadow: 0 0 6px currentColor; } }
@@ -653,8 +754,15 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     #profile-modal-root ::-webkit-scrollbar { width: 4px; }
                     #profile-modal-root ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
                     #profile-modal-root ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 99px; }
+
+                    /* ── Mobile: ≤ 480px ─────────────────────────────── */
                     @media (max-width: 480px) {
                         .pm-actions { top: max(12px, env(safe-area-inset-top, 12px)) !important; right: max(12px, env(safe-area-inset-right, 12px)) !important; }
+                    }
+
+                    /* ── Small mobile: ≤ 360px ───────────────────────── */
+                    @media (max-width: 360px) {
+                        #profile-modal-root h1 { font-size: 1rem !important; letter-spacing: 0.12em !important; }
                     }
                 `}</style>
             </div>
