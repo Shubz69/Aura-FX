@@ -8,6 +8,7 @@ import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 import axios from 'axios';
 import { triggerNotification } from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
+import { FaBook, FaCheck, FaCalendarAlt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
@@ -371,6 +372,14 @@ const Community = () => {
         const saved = localStorage.getItem('collapsedCategories');
         return saved ? JSON.parse(saved) : {};
     });
+    // Mini Journal Modal states
+const [showJournalModal, setShowJournalModal] = useState(false);
+const [journalModalClosing, setJournalModalClosing] = useState(false);
+const [journalTasks, setJournalTasks] = useState([]);
+const [journalNotes, setJournalNotes] = useState([]);
+const [journalSelectedDate, setJournalSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+const [journalCalendarMonth, setJournalCalendarMonth] = useState(new Date().toISOString().slice(0, 7));
+const [journalLoading, setJournalLoading] = useState(false);
     const [draggedCategory, setDraggedCategory] = useState(null);
     const [draggedChannel, setDraggedChannel] = useState(null);
     const [dragOverChannel, setDragOverChannel] = useState(null); // Channel being dragged over
@@ -486,6 +495,7 @@ const Community = () => {
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
     const isSendingGifRef = useRef(false);
+    
 
     // Close context menu when clicking outside
     useEffect(() => {
@@ -631,6 +641,476 @@ const Community = () => {
             window.removeEventListener('focus', handleFocus);
         };
     }, [apiBase]);
+
+// Toggle task completion in mini modal
+const handleMiniTaskToggle = useCallback(async (task) => {
+    try {
+        const res = await Api.updateJournalTask(task.id, { completed: !task.completed });
+        const updated = res.data?.task;
+        if (updated) {
+            setJournalTasks(prev => 
+                prev.map(t => t.id === task.id ? updated : t)
+            );
+            if (res.data?.xpAwarded) {
+                toast.success(`+${res.data.xpAwarded} XP!`, { icon: '⭐' });
+            }
+        }
+    } catch (err) {
+        console.error('Error toggling task:', err);
+    }
+}, []);
+
+// Fetch mini journal data for modal - with debounce to prevent multiple calls
+const fetchMiniJournalData = useCallback(async () => {
+    if (!isAuthenticated || !userId || !showJournalModal) return;
+    
+    setJournalLoading(true);
+    try {
+        // Get tasks for selected date
+        const tasksRes = await Api.getJournalTasks({ 
+            dateFrom: journalSelectedDate, 
+            dateTo: journalSelectedDate 
+        });
+        const tasksData = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
+        
+        // Get notes for selected date
+        const notesRes = await Api.getJournalNotes(journalSelectedDate);
+        const notesData = Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : [];
+        
+        // Only update if data actually changed
+        setJournalTasks(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(tasksData)) return prev;
+            return tasksData;
+        });
+        
+        setJournalNotes(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(notesData)) return prev;
+            return notesData;
+        });
+        
+    } catch (error) {
+        console.error('Error fetching mini journal data:', error);
+    } finally {
+        setJournalLoading(false);
+    }
+}, [isAuthenticated, userId, journalSelectedDate, showJournalModal]);
+// SIMPLE fetch for mini journal data - SHOW CACHED DATA FIRST, NO BLINKING
+useEffect(() => {
+    let timeoutId = null;
+    
+    if (showJournalModal && isAuthenticated && userId) {
+        // Check if we already have data for this date
+        const hasDataForDate = journalTasks.length > 0 && 
+            journalTasks.every(t => t.date === journalSelectedDate);
+        
+        // If we already have data for this date, don't fetch
+        if (hasDataForDate) {
+            return;
+        }
+        
+        // Set loading state only when switching to a new date without data
+        setJournalLoading(true);
+        
+        // Clear any existing timeout
+        if (timeoutId) clearTimeout(timeoutId);
+        
+        // Single timeout - 300ms debounce
+        timeoutId = setTimeout(async () => {
+            try {
+                // Get tasks for selected date
+                const tasksRes = await Api.getJournalTasks({ 
+                    dateFrom: journalSelectedDate, 
+                    dateTo: journalSelectedDate 
+                });
+                const tasksData = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
+                
+                // Get notes for selected date
+                const notesRes = await Api.getJournalNotes(journalSelectedDate);
+                const notesData = Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : [];
+                
+                // Update state - this will trigger exactly one re-render
+                setJournalTasks(tasksData);
+                setJournalNotes(notesData);
+                
+            } catch (error) {
+                console.error('Error fetching mini journal data:', error);
+            } finally {
+                setJournalLoading(false);
+            }
+        }, 300);
+    }
+    
+    return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+    };
+}, [showJournalModal, journalSelectedDate, isAuthenticated, userId]); // Only these dependencies
+
+// Initialize journal data when modal first opens - PRELOAD FOR INSTANT DISPLAY
+useEffect(() => {
+    if (showJournalModal && isAuthenticated && userId && journalTasks.length === 0) {
+        // Don't show loading on first open - fetch immediately
+        const initData = async () => {
+            try {
+                const tasksRes = await Api.getJournalTasks({ 
+                    dateFrom: journalSelectedDate, 
+                    dateTo: journalSelectedDate 
+                });
+                const tasksData = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
+                
+                const notesRes = await Api.getJournalNotes(journalSelectedDate);
+                const notesData = Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : [];
+                
+                setJournalTasks(tasksData);
+                setJournalNotes(notesData);
+            } catch (error) {
+                console.error('Error initializing journal:', error);
+            }
+        };
+        
+        initData();
+    }
+}, [showJournalModal]); // Only run when modal opens
+
+// Mini Journal Modal Component - ULTRA STABLE (ZERO BLINKING)
+const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDate, setSelectedDate, calendarMonth, setCalendarMonth, onTaskToggle, loading }) => {
+    // ALL HOOKS MUST BE CALLED FIRST - IN THE SAME ORDER EVERY TIME
+    const [closing, setClosing] = useState(false);
+    const navigate = useNavigate();
+    
+    // Refs - all declared at the top
+    const timeoutRef = useRef(null);
+    const isOpenRef = useRef(isOpen);
+    const localTasksRef = useRef(tasks);
+    const localNotesRef = useRef(notes);
+    const localSelectedDateRef = useRef(selectedDate);
+    const localCalendarMonthRef = useRef(calendarMonth);
+    const renderCountRef = useRef(0);
+    
+    // Force update function - use sparingly
+    const [, forceUpdate] = useState({});
+    
+    // ALL useMemo hooks MUST be declared before any conditional returns
+    const calendarDays = useMemo(() => {
+        if (!calendarMonth) return [];
+        try {
+            const parts = String(calendarMonth).split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const first = new Date(year, month - 1, 1);
+            const last = new Date(year, month, 0);
+            const startPad = (first.getDay() + 6) % 7;
+            const days = [];
+            for (let i = 0; i < startPad; i++) days.push(null);
+            for (let d = 1; d <= last.getDate(); d++) {
+                days.push(`${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+            }
+            return days;
+        } catch (e) {
+            return [];
+        }
+    }, [calendarMonth]);
+    
+    const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+    
+    const stats = useMemo(() => {
+        const taskCount = tasks?.length || 0;
+        const completedCount = tasks?.filter(t => t.completed).length || 0;
+        const notesCount = notes?.length || 0;
+        const completionPct = taskCount ? Math.round((completedCount / taskCount) * 100) : 0;
+        return { taskCount, completedCount, notesCount, completionPct };
+    }, [tasks, notes]);
+    
+    const taskDates = useMemo(() => {
+        return new Set(tasks?.filter(t => t.date).map(t => t.date) || []);
+    }, [tasks]);
+    
+    // Update refs when props change
+    useEffect(() => {
+        localTasksRef.current = tasks;
+        localNotesRef.current = notes;
+        localSelectedDateRef.current = selectedDate;
+        localCalendarMonthRef.current = calendarMonth;
+    }, [tasks, notes, selectedDate, calendarMonth]);
+    
+    // Update isOpen ref
+    useEffect(() => {
+        isOpenRef.current = isOpen;
+    }, [isOpen]);
+    
+    // Clean up timeouts
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+    
+    // ALL useCallbacks declared here
+    const handleClose = useCallback(() => {
+        if (closing) return;
+        
+        setClosing(true);
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+            setClosing(false);
+            onClose();
+            timeoutRef.current = null;
+        }, 150);
+    }, [closing, onClose]);
+    
+    const handlePrevMonth = useCallback(() => {
+        if (!calendarMonth) return;
+        const [y, m] = calendarMonth.split('-').map(Number);
+        const nm = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+        setCalendarMonth(nm);
+    }, [calendarMonth, setCalendarMonth]);
+    
+    const handleNextMonth = useCallback(() => {
+        if (!calendarMonth) return;
+        const [y, m] = calendarMonth.split('-').map(Number);
+        const nm = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+        setCalendarMonth(nm);
+    }, [calendarMonth, setCalendarMonth]);
+    
+    const handleGoToJournal = useCallback(() => {
+        handleClose();
+        timeoutRef.current = setTimeout(() => navigate('/journal'), 150);
+    }, [handleClose, navigate]);
+    
+    const handleTaskToggleWrapper = useCallback((task) => {
+        onTaskToggle(task);
+    }, [onTaskToggle]);
+    
+    const handleDateSelect = useCallback((date) => {
+        setSelectedDate(date);
+    }, [setSelectedDate]);
+    
+    // Escape key handler
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') handleClose();
+        };
+        
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [isOpen, handleClose]);
+    
+    // NOW we can have conditional returns - AFTER all hooks and useMemo
+    if (!isOpen && !closing) return null;
+    
+    // Track renders for debugging (remove in production)
+    renderCountRef.current++;
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`Modal render: ${renderCountRef.current}, loading: ${loading}`);
+    }
+    
+    return (
+        <div 
+            className={`journal-modal-overlay ${closing ? 'closing' : ''}`}
+            onClick={handleClose}
+            style={{ 
+                pointerEvents: 'auto',
+                transition: 'opacity 0.15s ease',
+                willChange: 'opacity',
+                backfaceVisibility: 'hidden'
+            }}
+        >
+            <div 
+                className="journal-modal-content"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    transform: closing ? 'scale(0.95)' : 'scale(1)',
+                    opacity: closing ? 0 : 1,
+                    transition: 'transform 0.15s ease, opacity 0.15s ease',
+                    willChange: 'transform, opacity',
+                    backfaceVisibility: 'hidden'
+                }}
+            >
+                {/* Header */}
+                <div className="journal-modal-header">
+                    <h3>Quick Journal</h3>
+                    <button className="journal-modal-close" onClick={handleClose}>×</button>
+                </div>
+                
+                {/* Scrollable Body */}
+                <div className="journal-modal-body">
+                    {/* Stats Bar */}
+                    <div className="mini-stats-bar">
+                        <div className="mini-stat-item">
+                            <span className="mini-stat-label">Tasks</span>
+                            <span className="mini-stat-value">
+                                {stats.completedCount}/{stats.taskCount}
+                            </span>
+                        </div>
+                        <div className="mini-stat-item">
+                            <span className="mini-stat-label">Notes</span>
+                            <span className="mini-stat-value">{stats.notesCount}</span>
+                        </div>
+                        <div className="mini-stat-item">
+                            <span className="mini-stat-label">Progress</span>
+                            <span className="mini-stat-value completed">
+                                {stats.completionPct}%
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {/* Calendar */}
+                    <div className="mini-calendar">
+                        <div className="mini-calendar-header">
+                            <button 
+                                className="mini-calendar-nav-btn"
+                                onClick={handlePrevMonth}
+                                type="button"
+                            >
+                                ‹
+                            </button>
+                            <h4>
+                                {calendarMonth ? new Date(calendarMonth + '-01').toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    year: 'numeric' 
+                                }) : '—'}
+                            </h4>
+                            <button 
+                                className="mini-calendar-nav-btn"
+                                onClick={handleNextMonth}
+                                type="button"
+                            >
+                                ›
+                            </button>
+                        </div>
+                        
+                        <div className="mini-calendar-weekdays">
+                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(day => (
+                                <div key={day} className="mini-calendar-weekday">{day}</div>
+                            ))}
+                        </div>
+                        
+                        <div className="mini-calendar-grid">
+                            {calendarDays.map((date, i) => {
+                                if (!date) {
+                                    return <div key={`empty-${i}`} className="mini-calendar-day empty" />;
+                                }
+                                const isSelected = date === selectedDate;
+                                const isToday = date === today;
+                                const hasTasks = taskDates.has(date);
+                                
+                                return (
+                                    <button
+                                        key={date}
+                                        className={`mini-calendar-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${hasTasks ? 'has-tasks' : ''}`}
+                                        onClick={() => handleDateSelect(date)}
+                                        type="button"
+                                    >
+                                        {parseInt(date.slice(-2), 10)}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    
+                    {/* Tasks */}
+                    <h4 className="jmodal-section-label">TODAY'S TASKS</h4>
+                    <div className="tasks-container" style={{ minHeight: '200px' }}>
+                        {loading && (!tasks || tasks.length === 0) ? (
+                            <div className="jmodal-skeleton">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="skeleton-task-item">
+                                        <div className="skeleton-checkbox"></div>
+                                        <div className="skeleton-text"></div>
+                                        <div className="skeleton-xp"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : !tasks || tasks.length === 0 ? (
+                            <div className="jmodal-empty">No tasks for today</div>
+                        ) : (
+                            tasks.slice(0, 5).map(task => (
+                                <div key={task.id} className="mini-task-item">
+                                    <button
+                                        className={`mini-task-checkbox ${task.completed ? 'checked' : ''}`}
+                                        onClick={() => handleTaskToggleWrapper(task)}
+                                        type="button"
+                                    >
+                                        {task.completed && <FaCheck />}
+                                    </button>
+                                    <span className={`mini-task-title ${task.completed ? 'completed' : ''}`}>
+                                        {task.title}
+                                    </span>
+                                    {!task.completed && (
+                                        <span className="mini-task-xp">+5</span>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    
+                    {/* Notes */}
+                    <h4 className="jmodal-section-label">RECENT NOTES</h4>
+                    <div className="notes-container" style={{ minHeight: '100px' }}>
+                        {loading && (!notes || notes.length === 0) ? (
+                            <div className="jmodal-skeleton">
+                                {[1, 2].map(i => (
+                                    <div key={i} className="skeleton-note-item">
+                                        <div className="skeleton-note-line"></div>
+                                        <div className="skeleton-note-line-short"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : !notes || notes.length === 0 ? (
+                            <div className="jmodal-empty">No notes for today</div>
+                        ) : (
+                            notes.slice(0, 3).map(note => (
+                                <div key={note.id} className="mini-note-item">
+                                    <p>{note.content?.length > 60 ? note.content.substring(0, 60) + '...' : note.content}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+                
+                {/* Footer */}
+                <div className="journal-modal-footer">
+                    <button
+                        className="go-to-journal-btn"
+                        onClick={handleGoToJournal}
+                        type="button"
+                    >
+                        Go to Full Journal →
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}, (prevProps, nextProps) => {
+    // STRICT comparison - ONLY re-render if absolutely necessary
+    if (prevProps.isOpen !== nextProps.isOpen) return false;
+    if (prevProps.selectedDate !== nextProps.selectedDate) return false;
+    if (prevProps.calendarMonth !== nextProps.calendarMonth) return false;
+    
+    // For tasks and notes, do deep comparison only if they changed significantly
+    if (prevProps.tasks?.length !== nextProps.tasks?.length) return false;
+    if (prevProps.notes?.length !== nextProps.notes?.length) return false;
+    
+    // Check if any task completed status changed
+    if (prevProps.tasks && nextProps.tasks) {
+        for (let i = 0; i < Math.min(prevProps.tasks.length, nextProps.tasks.length); i++) {
+            if (prevProps.tasks[i]?.completed !== nextProps.tasks[i]?.completed) {
+                return false;
+            }
+            if (prevProps.tasks[i]?.id !== nextProps.tasks[i]?.id) {
+                return false;
+            }
+        }
+    }
+    
+    // If we get here, assume nothing important changed
+    return true;
+});
 
     // Save category order to backend
     const saveCategoryOrder = async (newOrder) => {
@@ -1118,7 +1598,97 @@ const Community = () => {
         if (/^[a-f0-9-]{20,}$/i.test(name.replace(/\.[^.]+$/, ''))) return 'File' + (ext ? ` (.${ext})` : '');
         return name.length > 40 ? name.slice(0, 37) + '...' : name;
     };
+const renderMessageContent = (content, messageFile) => {
+    console.log('Rendering message:', { content, hasFile: !!messageFile });
+    if (!content) return null;
     
+    // If this message has a file attachment, we need to remove or neutralize the [FILE: ...] tags
+    if (messageFile) {
+        // First, remove any [FILE: ...] or [file: ...] tags from the content
+        // This prevents them from being displayed as clickable text
+        let cleanContent = content.replace(/\[FILE:[^\]]*\]/gi, '').replace(/\[file:[^\]]*\]/gi, '').trim();
+        
+        // If after removing file tags there's no content left, show nothing
+        // The file attachment UI will handle displaying the file
+        if (!cleanContent) {
+            return null;
+        }
+        
+        // Handle **bold** text in the remaining content
+        const boldParts = cleanContent.split(/\*\*([^*]+)\*\*/g);
+        return (
+            <span style={{ pointerEvents: 'none' }}> {/* This prevents clicks on the text */}
+                {boldParts.map((part, i) => {
+                    if (i % 2 === 1) {
+                        return <strong key={i}>{part}</strong>;
+                    }
+                    return part;
+                })}
+            </span>
+        );
+    }
+    
+    // URL regex pattern - matches http://, https://, and www. URLs
+    const urlPattern = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
+    
+    // Split content by URLs
+    const parts = content.split(urlPattern);
+    const matches = content.match(urlPattern) || [];
+    
+    return parts.reduce((acc, part, index) => {
+        // Add text part
+        if (part) {
+            // Handle **bold** text
+            const boldParts = part.split(/\*\*([^*]+)\*\*/g);
+            const boldElements = boldParts.map((boldPart, i) => {
+                if (i % 2 === 1) {
+                    return <strong key={`bold-${i}`}>{boldPart}</strong>;
+                }
+                return boldPart;
+            });
+            acc.push(<span key={`text-${index}`}>{boldElements}</span>);
+        }
+        
+        // Add URL as clickable link
+        if (matches[index]) {
+            const url = matches[index];
+            const fullUrl = url.startsWith('www.') ? `http://${url}` : url;
+            acc.push(
+                <a 
+                    key={`link-${index}`}
+                    href={fullUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
+                        e.preventDefault(); // Prevent default behavior
+                        window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                    }}
+                    style={{
+                        color: '#a78bfa',
+                        textDecoration: 'none',
+                        borderBottom: '1px solid rgba(167,139,250,0.45)',
+                        cursor: 'pointer',
+                        wordBreak: 'break-all',
+                        display: 'inline-block'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.target.style.color = '#c4b5fd';
+                        e.target.style.borderBottomColor = 'rgba(196,181,253,0.85)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.color = '#a78bfa';
+                        e.target.style.borderBottomColor = 'rgba(167,139,250,0.45)';
+                    }}
+                >
+                    {url}
+                </a>
+            );
+        }
+        
+        return acc;
+    }, []);
+};
     // ***** XP SYSTEM FUNCTIONS *****
     // XP system utilities are imported at the top of the file
     
@@ -3104,361 +3674,454 @@ Earn XP by:
         setNewMessage('');
     };
 
-    // Open/view file first (new tab). Does not download.
-    const handleFileClick = (file) => {
-        if (!file) return;
-        if (!file.preview) {
-            alert(`File "${file.name}" cannot be opened. The file data was not saved when the message was sent.`);
+   // Open/view file first (new tab). Does not download.
+const handleFileClick = (file) => {
+    if (!file) return;
+    
+    // If no preview data, try to construct from filename or show error
+    if (!file.preview) {
+        // Try to see if this is a URL
+        if (file.name && (file.name.startsWith('http://') || file.name.startsWith('https://'))) {
+            window.open(file.name, '_blank', 'noopener,noreferrer');
             return;
         }
-        const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-        const newWindow = window.open();
-        if (!newWindow) return;
-        if (file.type && file.type.startsWith('image/')) {
-            newWindow.document.write(`
-                <html>
-                    <head><title>${esc(file.name)}</title>
+        
+        alert(`File "${file.name}" cannot be opened. The file data was not saved when the message was sent.`);
+        return;
+    }
+    
+    const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    
+    // Open in new window/tab
+    const newWindow = window.open();
+    if (!newWindow) {
+        // If popup blocked, try direct download
+        handleFileDownload(null, file);
+        return;
+    }
+    
+    // Handle different file types
+    if (file.type && file.type.startsWith('image/')) {
+        // Images
+        newWindow.document.write(`
+            <html>
+                <head>
+                    <title>${esc(file.name)}</title>
                     <style>
                         body { margin: 0; padding: 20px; background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
                         img { max-width: 100%; max-height: 100vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-                    </style></head>
-                    <body><img src="${file.preview}" alt="${esc(file.name)}" /></body>
+                    </style>
+                </head>
+                <body><img src="${file.preview}" alt="${esc(file.name)}" /></body>
+            </html>
+        `);
+        return;
+    }
+    
+    // PDF files
+    if (file.type && (file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf'))) {
+        // For PDFs, we can embed them
+        newWindow.document.write(`
+            <html>
+                <head>
+                    <title>${esc(file.name)}</title>
+                    <style>
+                        body { margin: 0; padding: 20px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; }
+                        .container { max-width: 100%; height: 100vh; margin: 0; padding: 0; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <iframe src="${file.preview}" title="${esc(file.name)}"></iframe>
+                    </div>
+                </body>
+            </html>
+        `);
+        return;
+    }
+    
+    // Text files
+    if (file.type && (file.type.includes('text') || file.name.toLowerCase().endsWith('.txt') || 
+        file.name.toLowerCase().endsWith('.md') || file.name.toLowerCase().endsWith('.json'))) {
+        try {
+            // Decode base64 to text
+            const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
+            const text = atob(base64Data);
+            const escapedText = esc(text).replace(/\n/g, '<br>');
+            
+            newWindow.document.write(`
+                <html>
+                    <head>
+                        <title>${esc(file.name)}</title>
+                        <style>
+                            body { margin: 0; padding: 20px; background: #1a1a1a; color: #fff; font-family: monospace; white-space: pre-wrap; }
+                            pre { margin: 0; padding: 20px; background: #2a2a2a; border-radius: 8px; overflow: auto; }
+                        </style>
+                    </head>
+                    <body><pre>${escapedText}</pre></body>
                 </html>
             `);
-            return;
-        }
-        if (file.type && (file.type.includes('pdf') || file.type.includes('text') || file.type === 'application/pdf')) {
+        } catch (e) {
+            // If decoding fails, offer download
             newWindow.document.write(`
                 <html>
                     <head><title>${esc(file.name)}</title>
                     <style>
-                        body { margin: 0; padding: 20px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; }
-                        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-                        iframe { width: 100%; height: 80vh; border: none; border-radius: 8px; }
+                        body { margin: 0; padding: 24px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                        .card { background: #2a2a2a; padding: 24px; border-radius: 12px; text-align: center; max-width: 360px; }
+                        h2 { margin: 0 0 8px; font-size: 1rem; word-break: break-all; }
+                        p { margin: 0 0 16px; color: #999; font-size: 0.875rem; }
+                        a { display: inline-block; padding: 10px 20px; background: #5865f2; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
+                        a:hover { background: #4752c4; }
                     </style></head>
-                    <body><div class="container"><h2>${esc(file.name)}</h2><iframe src="${file.preview}" title="${esc(file.name)}"></iframe></div></body>
+                    <body>
+                        <div class="card">
+                            <h2>${esc(file.name)}</h2>
+                            <p>This file cannot be previewed in the browser.</p>
+                            <a href="#" id="dl">Download</a>
+                        </div>
+                    </body>
                 </html>
             `);
-            return;
+            
+            const blob = (() => {
+                try {
+                    const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
+                    const byteCharacters = atob(base64Data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    return new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
+                } catch (e) { return null; }
+            })();
+            
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                newWindow.document.getElementById('dl').href = url;
+                newWindow.document.getElementById('dl').download = getFileName(file.name);
+            }
         }
-        newWindow.document.write(`
-            <html>
-                <head><title>${esc(file.name)}</title>
+        return;
+    }
+    
+    // For other file types (ODP, PPTX, DOCX, etc.), show download page
+    newWindow.document.write(`
+        <html>
+            <head>
+                <title>${esc(file.name)}</title>
                 <style>
                     body { margin: 0; padding: 24px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
                     .card { background: #2a2a2a; padding: 24px; border-radius: 12px; text-align: center; max-width: 360px; }
                     h2 { margin: 0 0 8px; font-size: 1rem; word-break: break-all; }
                     p { margin: 0 0 16px; color: #999; font-size: 0.875rem; }
-                    a { display: inline-block; padding: 10px 20px; background: #5865f2; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
-                    a:hover { background: #4752c4; }
-                </style></head>
-                <body><div class="card"><h2>${esc(file.name)}</h2><p>This file cannot be previewed in the browser.</p><a href="#" id="dl">Download</a></div></body>
+                    .file-icon { font-size: 48px; margin-bottom: 16px; }
+                    .download-btn { display: inline-block; padding: 10px 20px; background: #5865f2; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
+                    .download-btn:hover { background: #4752c4; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <div class="file-icon">📄</div>
+                    <h2>${esc(file.name)}</h2>
+                    <p>This file type cannot be previewed in the browser.</p>
+                    <a href="#" class="download-btn" id="dl">Download File</a>
+                </div>
+            </body>
+        </html>
+    `);
+    
+    // Create blob for download
+    try {
+        const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+        const blob = new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        newWindow.document.getElementById('dl').href = url;
+        newWindow.document.getElementById('dl').download = getFileName(file.name);
+    } catch (e) {
+        console.error('Error creating download blob:', e);
+        newWindow.document.write(`
+            <html>
+                <body>
+                    <div style="padding: 20px; text-align: center;">
+                        <h2>Error loading file</h2>
+                        <p>The file data appears to be corrupted.</p>
+                    </div>
+                </body>
             </html>
         `);
-        const blob = (() => {
-            try {
-                const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
-                const byteCharacters = atob(base64Data);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                return new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
-            } catch (e) { return null; }
-        })();
-        if (blob) {
-            const url = URL.createObjectURL(blob);
-            newWindow.document.getElementById('dl').href = url;
-            newWindow.document.getElementById('dl').download = getFileName(file.name);
-        }
-    };
+    }
+};
 
-    // Download file (explicit action). Used by Download button.
-    const handleFileDownload = (e, file) => {
+   // Download file (explicit action). Used by Download button.
+const handleFileDownload = (e, file) => {
+    if (e) {
         e.preventDefault();
         e.stopPropagation();
-        if (!file || !file.preview) {
-            alert(`File "${(file && file.name) || 'Unknown'}" cannot be downloaded. File data is not available.`);
-            return;
-        }
-        try {
-            const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-            const blob = new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = getFileName(file.name);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Error downloading file:', error);
-            toast.error('Download failed.');
-        }
-    };
+    }
+    
+    if (!file || !file.preview) {
+        alert(`File "${(file && file.name) || 'Unknown'}" cannot be downloaded. File data is not available.`);
+        return;
+    }
+    
+    try {
+        const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+        const blob = new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = getFileName(file.name);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        toast.error('Download failed. The file data may be corrupted.');
+    }
+};
 
     // Handle send message (or update if editing)
-    const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
-        if (selectedChannel.canWrite === false) {
-            return;
-        }
+    // Handle send message (or update if editing)
+const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
+    if (selectedChannel.canWrite === false) {
+        return;
+    }
 
-        // If editing a message, handle update instead
-        if (editingMessageId) {
-            const message = messages.find(m => m.id === editingMessageId);
-            if (message && String(message.userId) === String(userId)) {
-                try {
-                    // Update message content
-                    const updatedContent = newMessage.trim();
-                    setMessages(prev => {
-                        const updated = prev.map(msg => 
-                            msg.id === editingMessageId 
-                                ? { ...msg, content: updatedContent, edited: true }
-                                : msg
-                        );
-                        saveMessagesToStorage(selectedChannel.id, updated);
-                        return updated;
-                    });
-                    
-                    // TODO: Send update to backend API
-                    // For now, just update locally
-                    
-                    handleCancelEdit();
-                    return;
-                } catch (error) {
-                    console.error('Error editing message:', error);
-                    alert('Failed to edit message. Please try again.');
-                    return;
-                }
+    // If editing a message, handle update instead
+    if (editingMessageId) {
+        const message = messages.find(m => m.id === editingMessageId);
+        if (message && String(message.userId) === String(userId)) {
+            try {
+                // Update message content
+                const updatedContent = newMessage.trim();
+                setMessages(prev => {
+                    const updated = prev.map(msg => 
+                        msg.id === editingMessageId 
+                            ? { ...msg, content: updatedContent, edited: true }
+                            : msg
+                    );
+                    saveMessagesToStorage(selectedChannel.id, updated);
+                    return updated;
+                });
+                
+                // TODO: Send update to backend API
+                // For now, just update locally
+                
+                handleCancelEdit();
+                return;
+            } catch (error) {
+                console.error('Error editing message:', error);
+                alert('Failed to edit message. Please try again.');
+                return;
             }
         }
+    }
 
-        const messageContent = newMessage.trim();
-        const senderUsername = storedUser?.username || storedUser?.name || 'User';
+    const messageContent = newMessage.trim();
+    const senderUsername = storedUser?.username || storedUser?.name || 'User';
 
-        // Prepare message data - include file metadata if file exists
-        const clientMessageId = typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const messageToSend = {
-            channelId: selectedChannel.id,
-            content: messageContent || '', // Empty if no text, file will be shown separately
-            userId,
-            username: senderUsername,
-            clientMessageId
-        };
-        
-        // Add file metadata if file exists
-        if (selectedFile) {
-            messageToSend.file = {
-                name: selectedFile.name,
-                type: selectedFile.type,
-                size: selectedFile.size
-            };
-            // Include preview only if it's an image (for preview display)
-            // Non-image files will use preview data for download but won't show preview UI
-            if (filePreview && selectedFile.type && selectedFile.type.startsWith('image/')) {
-                messageToSend.file.preview = filePreview;
-            }
-        }
-
-        // Optimistic update - add message to UI immediately
-        const optimisticMessage = {
-            id: clientMessageId,
-            channelId: selectedChannel.id,
-            content: messageContent,
-            sender: {
-                id: userId,
-                username: storedUser?.username || storedUser?.name || 'User',
-avatar: storedUser?.avatar || null,
-            role: getCurrentUserRole()
-            },
-            timestamp: new Date().toISOString(),
-            file: selectedFile ? {
-                name: selectedFile.name,
-                type: selectedFile.type,
-                size: selectedFile.size,
-                // Only include preview for images (for preview display)
-                preview: (filePreview && selectedFile.type && selectedFile.type.startsWith('image/')) ? filePreview : null
-            } : null,
-            userId,
-            username: senderUsername
-        };
-        
-        // Add message to state immediately for instant UI feedback
-        // Use functional update to ensure we have the latest messages
-        setMessages(prev => {
-            const updated = [...prev, optimisticMessage];
-            saveMessagesToStorage(selectedChannel.id, updated);
-            return updated;
+    // Prepare message data - include file metadata if file exists
+    const clientMessageId = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    
+    const messageToSend = {
+        channelId: selectedChannel.id,
+        content: messageContent || '', // Empty if no text, file will be shown separately
+        userId,
+        username: senderUsername,
+        clientMessageId
+    };
+    
+    // IMPORTANT: For file attachments, we need to save the file data properly
+    if (selectedFile) {
+        // Read the file as data URL to save the content
+        const fileData = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(selectedFile);
         });
         
-        // Clear inputs immediately
-        setNewMessage('');
-        setEditingMessageId(null);
-        setEditingMessageContent('');
-        removeSelectedFile();
-        
-        // Scroll to bottom immediately to show new message (instant for sent messages)
-        scrollToBottomInstant();
+        messageToSend.file = {
+            name: selectedFile.name,
+            type: selectedFile.type,
+            size: selectedFile.size,
+            preview: fileData // Save the actual file data for ALL file types
+        };
+    }
 
-        try {
-            // Send via API only - API persists and broadcasts via Pusher + WebSocket (no client-side broadcast to avoid duplicates)
-            Api.sendMessage(selectedChannel.id, messageToSend)
-                .then(response => {
-                    if (response && response.data) {
-                        // Replace optimistic with server response; remove any duplicate (poll/Pusher may have added it)
-                        const serverMessage = response.data;
-                        const clientId = optimisticMessage.id;
-                        const serverId = serverMessage.id;
-                        setMessages(prev => {
-                            const withoutDuplicates = prev.filter(m => {
-                                const id = String(m.id || '');
-                                if (id === String(serverId)) return false;
-                                if (id === String(clientId)) return false;
-                                if (m.clientMessageId === messageToSend.clientMessageId) return false;
-                                return true;
-                            });
-                            const final = [...withoutDuplicates, serverMessage].sort((a, b) =>
-                                new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
-                            saveMessagesToStorage(selectedChannel.id, final);
-                            return final;
+    // Optimistic update - add message to UI immediately
+    const optimisticMessage = {
+        id: clientMessageId,
+        channelId: selectedChannel.id,
+        content: messageContent,
+        sender: {
+            id: userId,
+            username: storedUser?.username || storedUser?.name || 'User',
+            avatar: storedUser?.avatar || null,
+            role: getCurrentUserRole()
+        },
+        timestamp: new Date().toISOString(),
+        file: selectedFile ? {
+            name: selectedFile.name,
+            type: selectedFile.type,
+            size: selectedFile.size,
+            preview: filePreview || (selectedFile ? await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(selectedFile);
+            }) : null)
+        } : null,
+        userId,
+        username: senderUsername
+    };
+    
+    // Add message to state immediately for instant UI feedback
+    setMessages(prev => {
+        const updated = [...prev, optimisticMessage];
+        saveMessagesToStorage(selectedChannel.id, updated);
+        return updated;
+    });
+    
+    // Clear inputs immediately
+    setNewMessage('');
+    setEditingMessageId(null);
+    setEditingMessageContent('');
+    removeSelectedFile();
+    
+    // Scroll to bottom immediately to show new message
+    scrollToBottomInstant();
+
+    try {
+        // Send via API
+        Api.sendMessage(selectedChannel.id, messageToSend)
+            .then(response => {
+                if (response && response.data) {
+                    const serverMessage = response.data;
+                    const clientId = optimisticMessage.id;
+                    const serverId = serverMessage.id;
+                    setMessages(prev => {
+                        const withoutDuplicates = prev.filter(m => {
+                            const id = String(m.id || '');
+                            if (id === String(serverId)) return false;
+                            if (id === String(clientId)) return false;
+                            if (m.clientMessageId === messageToSend.clientMessageId) return false;
+                            return true;
+                        });
+                        const final = [...withoutDuplicates, serverMessage].sort((a, b) =>
+                            new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
+                        saveMessagesToStorage(selectedChannel.id, final);
+                        return final;
+                    });
+                }
+            })
+            .catch(error => {
+                const msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
+                if (process.env.NODE_ENV === 'development') console.error('Error saving message to API:', error);
+                toast.error(msg);
+            });
+        
+        // Check for @mentions and send notifications
+        const mentionRegex = /@(\w+)/g;
+        const mentions = messageContent.match(mentionRegex);
+        if (mentions) {
+            // Handle mentions asynchronously
+            (async () => {
+                try {
+                    let usersForMentions = allUsers;
+                    if (usersForMentions.length === 0) {
+                        const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
+                        usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+                        setAllUsers(usersForMentions);
+                    }
+                        
+                    const mentionedUsernames = [...new Set(mentions.map(m => m.substring(1).toLowerCase()))];
+                    const hasAdminMention = mentionedUsernames.includes('admin');
+                    
+                    if (hasAdminMention) {
+                        const adminUsers = usersForMentions.filter(u => {
+                            const role = (u.role || '').toLowerCase();
+                            return role === 'admin' || role === 'super_admin';
+                        });
+                        
+                        adminUsers.forEach(adminUser => {
+                            triggerNotification(
+                                'mention',
+                                `@admin mention in #${selectedChannel.name}`,
+                                `${senderUsername} mentioned @admin: ${messageContent}`,
+                                `/community`,
+                                adminUser.id
+                            );
                         });
                     }
-                })
-                .catch(error => {
-                    const msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
-                    if (process.env.NODE_ENV === 'development') console.error('Error saving message to API:', error);
-                    toast.error(msg);
-                });
-            
-            // Check for @mentions and send notifications (don't wait for API response)
-            const mentionRegex = /@(\w+)/g;
-            const mentions = messageContent.match(mentionRegex);
-            if (mentions) {
-                // Handle mentions asynchronously (don't block message sending)
-                (async () => {
-                    try {
-                        // Use cached allUsers or fetch if needed
-                        let usersForMentions = allUsers;
-                        if (usersForMentions.length === 0) {
-                            const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
-                            usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
-                            setAllUsers(usersForMentions);
+                    
+                    mentionedUsernames.forEach(mentionedUsername => {
+                        if (mentionedUsername === 'admin') return;
+                        
+                        const mentionedUser = usersForMentions.find(u => {
+                            const uUsername = (u.username || u.name || '').toLowerCase();
+                            return uUsername === mentionedUsername;
+                        });
+                        
+                        if (mentionedUser && String(mentionedUser.id) !== String(userId)) {
+                            triggerNotification(
+                                'mention',
+                                `You were mentioned in #${selectedChannel.name}`,
+                                `${senderUsername} mentioned you: ${messageContent}`,
+                                `/community`,
+                                mentionedUser.id
+                            );
                         }
-                            
-                            // Get unique mentioned usernames
-                            const mentionedUsernames = [...new Set(mentions.map(m => m.substring(1).toLowerCase()))];
-                            
-                            // Check for @admin mention
-                            const hasAdminMention = mentionedUsernames.includes('admin');
-                            
-                            if (hasAdminMention) {
-                                // Notify all admins
-                                const adminUsers = usersForMentions.filter(u => {
-                                    const role = (u.role || '').toLowerCase();
-                                    return role === 'admin' || role === 'super_admin';
-                                });
-                                
-                                adminUsers.forEach(adminUser => {
-                                    // Send notification to all admins (including current user if they're an admin)
-                                    // Update channel badge for admin (only if not viewing this channel)
-                                    if (String(selectedChannel.id) !== String(selectedChannel?.id)) {
-                                        // This will be handled by WebSocket for other users
-                                    }
-                                    
-                                    // Send notification
-                                    triggerNotification(
-                                        'mention',
-                                        `@admin mention in #${selectedChannel.name}`,
-                                        `${senderUsername} mentioned @admin: ${messageContent}`,
-                                        `/community`,
-                                        adminUser.id
-                                    );
-                                    
-                                    // Update channel badge for admin (if not viewing this channel)
-                                    // Note: This will be handled per-user via WebSocket or localStorage
-                                    // For now, we'll update it for all admins via the notification system
-                                });
-                            }
-                            
-                            // Handle regular user mentions
-                            mentionedUsernames.forEach(mentionedUsername => {
-                                if (mentionedUsername === 'admin') return; // Already handled above
-                                
-                                // Find the user by username (case-insensitive)
-                                const mentionedUser = usersForMentions.find(u => {
-                                    const uUsername = (u.username || u.name || '').toLowerCase();
-                                    return uUsername === mentionedUsername;
-                                });
-                                
-                                // Only send notification if:
-                                // 1. User exists
-                                // 2. It's not the current user (don't notify yourself)
-                                if (mentionedUser && String(mentionedUser.id) !== String(userId)) {
-                                    // Update badge for mentioned user (if not viewing this channel)
-                                    if (String(selectedChannel.id) !== String(selectedChannel?.id)) {
-                                        // This will be handled by WebSocket for other users
-                                    }
-                                    
-                                    triggerNotification(
-                                        'mention',
-                                        `You were mentioned in #${selectedChannel.name}`,
-                                        `${senderUsername} mentioned you: ${messageContent}`,
-                                        `/community`,
-                                        mentionedUser.id // Pass the mentioned user's ID
-                                    );
-                                }
-                            });
-                    } catch (error) {
-                        console.error('Error fetching users for mentions:', error);
-                        // Silently fail - don't break message sending if user lookup fails
-                    }
-                })();
-            }
+                    });
+                } catch (error) {
+                    console.error('Error fetching users for mentions:', error);
+                }
+            })();
+        }
+        
+        // Award XP for sending message
+        const earnedXP = calculateMessageXP(messageContent, !!selectedFile);
+        console.log(`🎯 Awarding ${earnedXP} XP for message`);
+        const xpResult = await awardXP(earnedXP);
+        if (xpResult) {
+            console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
             
-            // ***** AWARD XP FOR SENDING MESSAGE *****
-            const earnedXP = calculateMessageXP(messageContent, !!selectedFile);
-            console.log(`🎯 Awarding ${earnedXP} XP for message`);
-            const xpResult = await awardXP(earnedXP);
-            if (xpResult) {
-                console.log(`✅ XP Awarded: +${earnedXP} XP | Total: ${xpResult.newXP} XP | Level: ${xpResult.newLevel}`);
-                
-                // Trigger a custom event so profile page can listen for XP updates
-                window.dispatchEvent(new CustomEvent('xpUpdated', {
+            window.dispatchEvent(new CustomEvent('xpUpdated', {
+                detail: {
+                    earnedXP: earnedXP,
+                    newXP: xpResult.newXP,
+                    newLevel: xpResult.newLevel,
+                    leveledUp: xpResult.leveledUp
+                }
+            }));
+            
+            if (xpResult.leveledUp) {
+                console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
+                window.dispatchEvent(new CustomEvent('levelUp', {
                     detail: {
-                        earnedXP: earnedXP,
-                        newXP: xpResult.newXP,
                         newLevel: xpResult.newLevel,
-                        leveledUp: xpResult.leveledUp
+                        newXP: xpResult.newXP
                     }
                 }));
-                
-                if (xpResult.leveledUp) {
-                    // Show level-up notification
-                    console.log(`🎉 LEVEL UP! You reached level ${xpResult.newLevel}!`);
-                    // Trigger level-up event
-                    window.dispatchEvent(new CustomEvent('levelUp', {
-                        detail: {
-                            newLevel: xpResult.newLevel,
-                            newXP: xpResult.newXP
-                        }
-                    }));
-                }
-            } else {
-                console.error('❌ Failed to award XP');
             }
-        } catch (error) {
-            console.error('Error sending message:', error);
-            // On error, remove optimistic message and show error
-            persistMessagesList(selectedChannel.id, messages);
-            alert('Failed to send message. Please try again.');
+        } else {
+            console.error('❌ Failed to award XP');
         }
-    };
+    } catch (error) {
+        console.error('Error sending message:', error);
+        persistMessagesList(selectedChannel.id, messages);
+        alert('Failed to send message. Please try again.');
+    }
+};
 
     // Date label for separators: Today / Yesterday / formatted date
     const getDateLabel = (timestamp) => {
@@ -3905,7 +4568,7 @@ avatar: storedUser?.avatar || null,
             </div>
         );
     }
-    
+
     return (
         <div 
             className="community-container" 
@@ -5592,7 +6255,7 @@ avatar: storedUser?.avatar || null,
                                                         </button>
                                                     </div>
                                                 )}
-                                           <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
+                                        <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
     {/* Deleted message */}
     {message.isDeleted || message.content === '[deleted]' ? (
         <span style={{ 
@@ -5621,122 +6284,7 @@ avatar: storedUser?.avatar || null,
             return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
         })
     ) : (
-        (() => {
-            // Parse message content for GIFs and images; render **bold** as bold (no asterisks shown)
-            let content = message.content || '';
-            // Remove file references: [File: ...], [FILE: ...], etc.
-            content = content.replace(/\[File:[^\]]*\]/gi, '').replace(/\[FILE:[^\]]*\]/gi, '').trim();
-            
-            // If message has a file attachment, don't show content if it's empty or only file references
-            if (message.file && !content) {
-                return null; // Don't render empty content when file is present
-            }
-            
-            if (!content) return null;
-            
-            // URL regex pattern
-            const urlPattern = /(https?:\/\/[^\s]+)/g;
-            
-            // Helper: render text with **segments** as bold AND convert URLs to links
-            const renderTextWithBoldAndLinks = (text) => {
-                // First split by URLs
-                const urlParts = text.split(urlPattern);
-                const urlMatches = text.match(urlPattern) || [];
-                
-                return urlParts.reduce((acc, part, index) => {
-                    // Add text part with bold rendering
-                    if (part) {
-                        const boldParts = part.split(/\*\*([^*]+)\*\*/g);
-                        const boldElements = boldParts.map((boldPart, i) => {
-                            if (i % 2 === 1) {
-                                return <strong key={`bold-${i}`}>{boldPart}</strong>;
-                            }
-                            return boldPart;
-                        });
-                        acc.push(<span key={`text-${index}`}>{boldElements}</span>);
-                    }
-                    
-                    // Add URL part as clickable link
-                    if (urlMatches[index]) {
-                        const url = urlMatches[index];
-                        acc.push(
-                            <a 
-                                key={`link-${index}`}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                style={{
-                                    color: '#a78bfa',
-                                    textDecoration: 'none',
-                                    borderBottom: '1px solid rgba(167,139,250,0.45)',
-                                    cursor: 'pointer'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.color = '#c4b5fd';
-                                    e.target.style.borderBottomColor = 'rgba(196,181,253,0.85)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.color = '#a78bfa';
-                                    e.target.style.borderBottomColor = 'rgba(167,139,250,0.45)';
-                                }}
-                            >
-                                {url}
-                            </a>
-                        );
-                    }
-                    
-                    return acc;
-                }, []);
-            };
-            
-            // Check for markdown image syntax: ![alt](url)
-            const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-            const parts = [];
-            let lastIndex = 0;
-            let match;
-            let keyCounter = 0;
-            
-            while ((match = imageRegex.exec(content)) !== null) {
-                // Add text before image (with link detection)
-                if (match.index > lastIndex) {
-                    const slice = content.substring(lastIndex, match.index);
-                    parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBoldAndLinks(slice)}</span>);
-                }
-                const imageUrl = match[2];
-                const imageAlt = match[1] || 'GIF';
-                parts.push(
-                    <img
-                        key={`img-${keyCounter++}`}
-                        src={imageUrl}
-                        alt={imageAlt}
-                        style={{
-                            maxWidth: '180px',
-                            maxHeight: '180px',
-                            borderRadius: '8px',
-                            marginTop: '6px',
-                            display: 'block',
-                            cursor: 'pointer',
-                            objectFit: 'contain'
-                        }}
-                        onClick={() => {
-                            if (imageUrl) {
-                                window.open(imageUrl, '_blank');
-                            }
-                        }}
-                    />
-                );
-                lastIndex = match.index + match[0].length;
-            }
-            
-            // Add remaining text (with link detection)
-            if (lastIndex < content.length) {
-                const slice = content.substring(lastIndex);
-                parts.push(<span key={`text-${keyCounter++}`}>{renderTextWithBoldAndLinks(slice)}</span>);
-            }
-            
-            return parts.length > 0 ? parts : renderTextWithBoldAndLinks(content);
-        })()
+        renderMessageContent(message.content, message.file)
     )}
 </div>
                                             
@@ -6019,488 +6567,491 @@ avatar: storedUser?.avatar || null,
                             </div>
                         )}
                         
-                        {/* Chat Input */}
-                        <div className="chat-input-container">
-                            <div className="connection-status">
-                                <span className={`status-dot ${
-                                    connectionStatus === 'connected' ? 'connected' : 
-                                    connectionStatus === 'server-issue' || connectionStatus === 'wifi-issue' ? 'error' : 
-                                    'connecting'
-                                }`}></span>
-                                <span style={{ 
-                                    color: connectionStatus === 'connected' ? 'var(--accent-green)' : 
-                                           connectionStatus === 'server-issue' || connectionStatus === 'wifi-issue' ? '#EF4444' : 
-                                           '#F59E0B',
-                                    fontWeight: 600
-                                }}>
-                                    {connectionStatus === 'connected' ? 'Connected' : 
-                                     connectionStatus === 'server-issue' ? 'Connection Issues' :
-                                     connectionStatus === 'wifi-issue' ? 'Cannot Connect' :
-                                     'Connecting...'}
-                                </span>
-                            </div>
-                            
-                            {/* File Preview */}
-                            {selectedFile && (
-                                <div className="file-preview" style={{
-                                    marginBottom: '12px',
-                                    padding: '12px',
-                                    background: 'var(--bg-elevated)',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        {filePreview && (
-                                            <img 
-                                                src={filePreview} 
-                                                alt="preview"
-                                                loading="lazy"
-                                                style={{
-                                                    width: '50px',
-                                                    height: '50px',
-                                                    borderRadius: '4px',
-                                                    objectFit: 'cover'
-                                                }}
-                                            />
-                                        )}
-                                        <div>
-                                            <div style={{ fontWeight: 600 }}>{selectedFile.name}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                                {(selectedFile.size / 1024).toFixed(2)} KB
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={removeSelectedFile}
+                       {/* Chat Input */}
+<div className="chat-input-container">
+    <div className="connection-status">
+        <span className={`status-dot ${
+            connectionStatus === 'connected' ? 'connected' : 
+            connectionStatus === 'server-issue' || connectionStatus === 'wifi-issue' ? 'error' : 
+            'connecting'
+        }`}></span>
+        <span style={{ 
+            color: connectionStatus === 'connected' ? 'var(--accent-green)' : 
+                   connectionStatus === 'server-issue' || connectionStatus === 'wifi-issue' ? '#EF4444' : 
+                   '#F59E0B',
+            fontWeight: 600
+        }}>
+            {connectionStatus === 'connected' ? 'Connected' : 
+             connectionStatus === 'server-issue' ? 'Connection Issues' :
+             connectionStatus === 'wifi-issue' ? 'Cannot Connect' :
+             'Connecting...'}
+        </span>
+    </div>
+    
+    {/* File Preview */}
+    {selectedFile && (
+        <div className="file-preview" style={{
+            marginBottom: '12px',
+            padding: '12px',
+            background: 'var(--bg-elevated)',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {filePreview && (
+                    <img 
+                        src={filePreview} 
+                        alt="preview"
+                        loading="lazy"
+                        style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '4px',
+                            objectFit: 'cover'
+                        }}
+                    />
+                )}
+                <div>
+                    <div style={{ fontWeight: 600 }}>{selectedFile.name}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {(selectedFile.size / 1024).toFixed(2)} KB
+                    </div>
+                </div>
+            </div>
+            <button 
+                onClick={removeSelectedFile}
+                style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    fontSize: '1.2rem'
+                }}
+            >
+                <FaTimes />
+            </button>
+        </div>
+    )}
+    
+    {selectedChannel && selectedChannel.canWrite === false && (
+        <div className="chat-input-locked" style={{
+            padding: '12px 16px',
+            marginBottom: '12px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            color: 'var(--text-muted)',
+            fontSize: '0.875rem'
+        }}>
+            {['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
+                ? 'This channel is read-only. Only admins can post here.'
+                : 'This channel is read-only. Upgrade to post here.'}
+        </div>
+    )}
+    <form className="chat-form" onSubmit={handleSendMessage}>
+        {editingMessageId && (
+            <div style={{
+                padding: '12px 16px',
+                background: 'linear-gradient(135deg, rgba(88, 101, 242, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                border: '1px solid rgba(88, 101, 242, 0.3)',
+                borderRadius: '8px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '0.875rem',
+                boxShadow: '0 2px 8px rgba(88, 101, 242, 0.1)',
+                backdropFilter: 'blur(10px)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        background: 'rgba(88, 101, 242, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--accent-blue)'
+                    }}>
+                        <FaEdit size={14} />
+                    </div>
+                    <div>
+                        <div style={{ 
+                            color: 'var(--accent-blue)', 
+                            fontWeight: 600,
+                            fontSize: '0.875rem'
+                        }}>
+                            Editing message
+                        </div>
+                        <div style={{ 
+                            color: 'var(--text-muted)', 
+                            fontSize: '0.75rem',
+                            marginTop: '2px'
+                        }}>
+                            Make your changes and click Save
+                        </div>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: 'var(--text-normal)',
+                        cursor: 'pointer',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    }}
+                >
+                    Cancel
+                </button>
+            </div>
+        )}
+        <div className="chat-input-wrapper" style={{ position: 'relative' }}>
+            <textarea
+                id="community-message-input"
+                name="message"
+                ref={messageInputRef}
+                className="chat-input"
+                value={newMessage}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    setNewMessage(value);
+                    
+                    // Check for @mention
+                    const cursorPos = e.target.selectionStart;
+                    const textBeforeCursor = value.substring(0, cursorPos);
+                    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+                    
+                    if (lastAtIndex !== -1) {
+                        const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+                        // Check if we're still in a word (no space after @)
+                        if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+                            const query = textAfterAt.toLowerCase();
+                            setMentionQuery(query);
+                            setMentionAutocomplete({
+                                show: true,
+                                query: query,
+                                position: { x: 0, y: 0 } // Will be calculated
+                            });
+                        } else {
+                            setMentionAutocomplete(null);
+                        }
+                    } else {
+                        setMentionAutocomplete(null);
+                    }
+                    
+                    // Auto-resize textarea
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 400)}px`;
+                }}
+                onPaste={handlePaste}
+                onKeyDown={(e) => {
+                    // Handle autocomplete selection
+                    if (mentionAutocomplete?.show) {
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Tab') {
+                            e.preventDefault();
+                            // Autocomplete selection will be handled by the dropdown
+                            return;
+                        }
+                        if (e.key === 'Escape') {
+                            setMentionAutocomplete(null);
+                            return;
+                        }
+                    }
+                    
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
+                    }
+                    if (e.key === 'Escape' && editingMessageId) {
+                        handleCancelEdit();
+                    }
+                }}
+                placeholder={
+                    editingMessageId
+                        ? 'Edit your message...'
+                        : selectedChannel?.canWrite !== false
+                            ? `Message #${selectedChannel?.name || ''}`
+                            : ['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
+                                ? 'Read-only. Only admins can post here.'
+                                : 'Read-only channel. Upgrade to post here.'
+                }
+                disabled={selectedChannel?.canWrite === false}
+                rows="3"
+                style={{ 
+                    paddingRight: '120px',
+                    minHeight: '60px',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    fontSize: '0.9375rem',
+                    lineHeight: '1.6'
+                }}
+            />
+            
+            {/* @Mention Autocomplete Dropdown */}
+            {mentionAutocomplete?.show && (
+                <div className="mention-autocomplete" style={{
+                    position: 'absolute',
+                    bottom: '100%',
+                    left: 0,
+                    marginBottom: '12px',
+                    minWidth: '380px',
+                    maxWidth: 'min(420px, 100vw - 24px)',
+                    width: 'max-content',
+                    background: '#2f3136',
+                    border: '1px solid rgba(0, 0, 0, 0.3)',
+                    borderRadius: '12px',
+                    maxHeight: '380px',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    zIndex: 3000,
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)'
+                }}>
+                    <div style={{
+                        padding: '12px 16px 10px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        color: '#b9bbbe',
+                        letterSpacing: '0.02em',
+                        textTransform: 'none',
+                        borderBottom: '1px solid rgba(0, 0, 0, 0.2)'
+                    }}>
+                        Members
+                    </div>
+                    <div style={{ padding: '8px 0' }}>
+                    {(() => {
+                        const query = mentionQuery.toLowerCase();
+                        const filteredUsers = allUsers.filter(u => {
+                            const username = (u.username || u.name || '').toLowerCase();
+                            return username.includes(query) && String(u.id) !== String(userId);
+                        }).slice(0, 15);
+                        const showAdmin = query === '' || 'admin'.includes(query);
+                        return (
+                            <>
+                                {showAdmin && (
+                                    <div
+                                        className="mention-item"
+                                        onClick={() => {
+                                            const cursorPos = messageInputRef.current?.selectionStart ?? 0;
+                                            const textBeforeCursor = newMessage.substring(0, cursorPos);
+                                            const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+                                            const newText = newMessage.substring(0, lastAtIndex + 1) + 'admin ' + newMessage.substring(cursorPos);
+                                            setNewMessage(newText);
+                                            setMentionAutocomplete(null);
+                                            setTimeout(() => {
+                                                if (messageInputRef.current) {
+                                                    messageInputRef.current.focus();
+                                                    messageInputRef.current.setSelectionRange(lastAtIndex + 6, lastAtIndex + 6);
+                                                }
+                                            }, 0);
+                                        }}
                                         style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            color: 'var(--text-muted)',
+                                            padding: '12px 16px',
                                             cursor: 'pointer',
-                                            padding: '8px',
-                                            fontSize: '1.2rem'
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '14px',
+                                            background: query === '' ? 'rgba(88, 101, 242, 0.25)' : 'transparent'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = 'rgba(88, 101, 242, 0.25)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = query === '' ? 'rgba(88, 101, 242, 0.25)' : 'transparent';
                                         }}
                                     >
-                                        <FaTimes />
-                                    </button>
-                                </div>
-                            )}
-                            
-                            {selectedChannel && selectedChannel.canWrite === false && (
-                                <div className="chat-input-locked" style={{
-                                    padding: '12px 16px',
-                                    marginBottom: '12px',
-                                    background: 'rgba(239, 68, 68, 0.1)',
-                                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                                    borderRadius: '8px',
-                                    color: 'var(--text-muted)',
-                                    fontSize: '0.875rem'
-                                }}>
-                                    {['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
-                                        ? 'This channel is read-only. Only admins can post here.'
-                                        : 'This channel is read-only. Upgrade to post here.'}
-                                </div>
-                            )}
-                            <form className="chat-form" onSubmit={handleSendMessage}>
-                                {editingMessageId && (
-                                    <div style={{
-                                        padding: '12px 16px',
-                                        background: 'linear-gradient(135deg, rgba(88, 101, 242, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                                        border: '1px solid rgba(88, 101, 242, 0.3)',
-                                        borderRadius: '8px',
-                                        marginBottom: '12px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        fontSize: '0.875rem',
-                                        boxShadow: '0 2px 8px rgba(88, 101, 242, 0.1)',
-                                        backdropFilter: 'blur(10px)'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <div style={{
-                                                width: '32px',
-                                                height: '32px',
-                                                borderRadius: '6px',
-                                                background: 'rgba(88, 101, 242, 0.2)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: 'var(--accent-blue)'
-                                            }}>
-                                                <FaEdit size={14} />
-                                            </div>
-                                            <div>
-                                                <div style={{ 
-                                                    color: 'var(--accent-blue)', 
-                                                    fontWeight: 600,
-                                                    fontSize: '0.875rem'
-                                                }}>
-                                                    Editing message
-                                                </div>
-                                                <div style={{ 
-                                                    color: 'var(--text-muted)', 
-                                                    fontSize: '0.75rem',
-                                                    marginTop: '2px'
-                                                }}>
-                                                    Make your changes and click Save
-                                                </div>
-                                            </div>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            background: 'linear-gradient(135deg, #5865F2 0%, #4752c4 100%)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'white',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.9rem',
+                                            flexShrink: 0
+                                        }}>A</div>
+                                        <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                                            <div style={{ fontWeight: 600, color: '#fff', fontSize: '1rem' }}>@admin</div>
+                                            <div style={{ fontSize: '0.8125rem', color: '#b9bbbe', marginTop: '2px' }}>Notify all admins</div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleCancelEdit}
-                                            style={{
-                                                background: 'rgba(255, 255, 255, 0.05)',
-                                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                color: 'var(--text-normal)',
-                                                cursor: 'pointer',
-                                                padding: '6px 12px',
-                                                borderRadius: '6px',
-                                                fontSize: '0.8125rem',
-                                                fontWeight: 500,
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                                            }}
-                                        >
-                                            Cancel
-                                        </button>
                                     </div>
                                 )}
-                                <div className="chat-input-wrapper" style={{ position: 'relative' }}>
-                                    <textarea
-                                        id="community-message-input"
-                                        name="message"
-                                        ref={messageInputRef}
-                                        className="chat-input"
-                                        value={newMessage}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            setNewMessage(value);
-                                            
-                                            // Check for @mention
-                                            const cursorPos = e.target.selectionStart;
-                                            const textBeforeCursor = value.substring(0, cursorPos);
+                                {filteredUsers.map(user => {
+                                    const displayName = user.name || user.username || 'User';
+                                    const username = user.username || user.name || 'user';
+                                    return (
+                                    <div
+                                        key={user.id}
+                                        className="mention-item"
+                                        onClick={() => {
+                                            const cursorPos = messageInputRef.current?.selectionStart ?? 0;
+                                            const textBeforeCursor = newMessage.substring(0, cursorPos);
                                             const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-                                            
-                                            if (lastAtIndex !== -1) {
-                                                const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
-                                                // Check if we're still in a word (no space after @)
-                                                if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
-                                                    const query = textAfterAt.toLowerCase();
-                                                    setMentionQuery(query);
-                                                    setMentionAutocomplete({
-                                                        show: true,
-                                                        query: query,
-                                                        position: { x: 0, y: 0 } // Will be calculated
-                                                    });
-                                                } else {
-                                                    setMentionAutocomplete(null);
+                                            const newText = newMessage.substring(0, lastAtIndex + 1) + username + ' ' + newMessage.substring(cursorPos);
+                                            setNewMessage(newText);
+                                            setMentionAutocomplete(null);
+                                            setTimeout(() => {
+                                                if (messageInputRef.current) {
+                                                    messageInputRef.current.focus();
+                                                    messageInputRef.current.setSelectionRange(lastAtIndex + username.length + 2, lastAtIndex + username.length + 2);
                                                 }
-                                            } else {
-                                                setMentionAutocomplete(null);
-                                            }
-                                            
-                                            // Auto-resize textarea
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 400)}px`;
+                                            }, 0);
                                         }}
-                                        onPaste={handlePaste}
-                                        onKeyDown={(e) => {
-                                            // Handle autocomplete selection
-                                            if (mentionAutocomplete?.show) {
-                                                if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Tab') {
-                                                    e.preventDefault();
-                                                    // Autocomplete selection will be handled by the dropdown
-                                                    return;
-                                                }
-                                                if (e.key === 'Escape') {
-                                                    setMentionAutocomplete(null);
-                                                    return;
-                                                }
-                                            }
-                                            
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleSendMessage(e);
-                                            }
-                                            if (e.key === 'Escape' && editingMessageId) {
-                                                handleCancelEdit();
-                                            }
+                                        style={{
+                                            padding: '12px 16px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '14px',
+                                            background: 'transparent'
                                         }}
-                                        placeholder={
-                                            editingMessageId
-                                                ? 'Edit your message...'
-                                                : selectedChannel?.canWrite !== false
-                                                    ? `Message #${selectedChannel?.name || ''}`
-                                                    : ['welcome', 'announcements', 'levels', 'notifications'].includes((selectedChannel?.name || selectedChannel?.id || '').toLowerCase())
-                                                        ? 'Read-only. Only admins can post here.'
-                                                        : 'Read-only channel. Upgrade to post here.'
-                                        }
-                                        disabled={selectedChannel?.canWrite === false}
-                                        rows="3"
-                                        style={{ 
-                                            paddingRight: '120px',
-                                            minHeight: '60px',
-                                            maxHeight: '400px',
-                                            overflowY: 'auto',
-                                            fontSize: '0.9375rem',
-                                            lineHeight: '1.6'
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = 'rgba(88, 101, 242, 0.2)';
                                         }}
-                                    />
-                                    
-                                    {/* @Mention Autocomplete Dropdown - Discord-style: big, above input, in front of messages */}
-                                    {mentionAutocomplete?.show && (
-                                        <div className="mention-autocomplete" style={{
-                                            position: 'absolute',
-                                            bottom: '100%',
-                                            left: 0,
-                                            marginBottom: '12px',
-                                            minWidth: '380px',
-                                            maxWidth: 'min(420px, 100vw - 24px)',
-                                            width: 'max-content',
-                                            background: '#2f3136',
-                                            border: '1px solid rgba(0, 0, 0, 0.3)',
-                                            borderRadius: '12px',
-                                            maxHeight: '380px',
-                                            overflowY: 'auto',
-                                            overflowX: 'hidden',
-                                            zIndex: 3000,
-                                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)'
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = 'transparent';
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            overflow: 'hidden',
+                                            background: 'linear-gradient(135deg, #5865F2, #4752c4)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'white',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.9rem',
+                                            flexShrink: 0
                                         }}>
+                                            {resolveAvatarUrl(user?.avatar, window.location?.origin) ? (
+                                                <img src={resolveAvatarUrl(user.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '50%' }} loading="lazy" />
+                                            ) : (
+                                                <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(user?.id ?? user?.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
+                                            )}
+                                        </div>
+                                        <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                                             <div style={{
-                                                padding: '12px 16px 10px',
-                                                fontSize: '0.7rem',
-                                                fontWeight: 700,
-                                                color: '#b9bbbe',
-                                                letterSpacing: '0.02em',
-                                                textTransform: 'none',
-                                                borderBottom: '1px solid rgba(0, 0, 0, 0.2)'
+                                                fontWeight: 600,
+                                                color: '#fff',
+                                                fontSize: '1rem',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
                                             }}>
-                                                Members
+                                                {displayName !== username ? displayName : `@${username}`}
                                             </div>
-                                            <div style={{ padding: '8px 0' }}>
-                                            {(() => {
-                                                const query = mentionQuery.toLowerCase();
-                                                const filteredUsers = allUsers.filter(u => {
-                                                    const username = (u.username || u.name || '').toLowerCase();
-                                                    return username.includes(query) && String(u.id) !== String(userId);
-                                                }).slice(0, 15);
-                                                const showAdmin = query === '' || 'admin'.includes(query);
-                                                return (
-                                                    <>
-                                                        {showAdmin && (
-                                                            <div
-                                                                className="mention-item"
-                                                                onClick={() => {
-                                                                    const cursorPos = messageInputRef.current?.selectionStart ?? 0;
-                                                                    const textBeforeCursor = newMessage.substring(0, cursorPos);
-                                                                    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-                                                                    const newText = newMessage.substring(0, lastAtIndex + 1) + 'admin ' + newMessage.substring(cursorPos);
-                                                                    setNewMessage(newText);
-                                                                    setMentionAutocomplete(null);
-                                                                    setTimeout(() => {
-                                                                        if (messageInputRef.current) {
-                                                                            messageInputRef.current.focus();
-                                                                            messageInputRef.current.setSelectionRange(lastAtIndex + 6, lastAtIndex + 6);
-                                                                        }
-                                                                    }, 0);
-                                                                }}
-                                                                style={{
-                                                                    padding: '12px 16px',
-                                                                    cursor: 'pointer',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '14px',
-                                                                    background: query === '' ? 'rgba(88, 101, 242, 0.25)' : 'transparent'
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    e.currentTarget.style.background = 'rgba(88, 101, 242, 0.25)';
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.background = query === '' ? 'rgba(88, 101, 242, 0.25)' : 'transparent';
-                                                                }}
-                                                            >
-                                                                <div style={{
-                                                                    width: '40px',
-                                                                    height: '40px',
-                                                                    borderRadius: '50%',
-                                                                    background: 'linear-gradient(135deg, #5865F2 0%, #4752c4 100%)',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                    color: 'white',
-                                                                    fontWeight: 'bold',
-                                                                    fontSize: '0.9rem',
-                                                                    flexShrink: 0
-                                                                }}>A</div>
-                                                                <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                                                                    <div style={{ fontWeight: 600, color: '#fff', fontSize: '1rem' }}>@admin</div>
-                                                                    <div style={{ fontSize: '0.8125rem', color: '#b9bbbe', marginTop: '2px' }}>Notify all admins</div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {filteredUsers.map(user => {
-                                                            const displayName = user.name || user.username || 'User';
-                                                            const username = user.username || user.name || 'user';
-                                                            return (
-                                                            <div
-                                                                key={user.id}
-                                                                className="mention-item"
-                                                                onClick={() => {
-                                                                    const cursorPos = messageInputRef.current?.selectionStart ?? 0;
-                                                                    const textBeforeCursor = newMessage.substring(0, cursorPos);
-                                                                    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-                                                                    const newText = newMessage.substring(0, lastAtIndex + 1) + username + ' ' + newMessage.substring(cursorPos);
-                                                                    setNewMessage(newText);
-                                                                    setMentionAutocomplete(null);
-                                                                    setTimeout(() => {
-                                                                        if (messageInputRef.current) {
-                                                                            messageInputRef.current.focus();
-                                                                            messageInputRef.current.setSelectionRange(lastAtIndex + username.length + 2, lastAtIndex + username.length + 2);
-                                                                        }
-                                                                    }, 0);
-                                                                }}
-                                                                style={{
-                                                                    padding: '12px 16px',
-                                                                    cursor: 'pointer',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '14px',
-                                                                    background: 'transparent'
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    e.currentTarget.style.background = 'rgba(88, 101, 242, 0.2)';
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.background = 'transparent';
-                                                                }}
-                                                            >
-                                                                <div style={{
-                                                                    width: '40px',
-                                                                    height: '40px',
-                                                                    borderRadius: '50%',
-                                                                    overflow: 'hidden',
-                                                                    background: 'linear-gradient(135deg, #5865F2, #4752c4)',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                    color: 'white',
-                                                                    fontWeight: 'bold',
-                                                                    fontSize: '0.9rem',
-                                                                    flexShrink: 0
-                                                                }}>
-                                                                    {resolveAvatarUrl(user?.avatar, window.location?.origin) ? (
-                                                                        <img src={resolveAvatarUrl(user.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '50%' }} loading="lazy" />
-                                                                    ) : (
-                                                                        <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(user?.id ?? user?.username), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
-                                                                    )}
-                                                                </div>
-                                                                <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                                                                    <div style={{
-                                                                        fontWeight: 600,
-                                                                        color: '#fff',
-                                                                        fontSize: '1rem',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {displayName !== username ? displayName : `@${username}`}
-                                                                    </div>
-                                                                    <div style={{
-                                                                        fontSize: '0.8125rem',
-                                                                        color: '#b9bbbe',
-                                                                        marginTop: '2px',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {displayName !== username ? `@${username}` : (user.role === 'admin' || user.role === 'super_admin' ? 'Admin' : user.role || 'Member')}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );})}
-                                                        {filteredUsers.length === 0 && !showAdmin && (
-                                                            <div style={{
-                                                                padding: '20px 14px',
-                                                                textAlign: 'center',
-                                                                color: '#b9bbbe',
-                                                                fontSize: '0.875rem'
-                                                            }}>
-                                                                No users found
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                );
-                                            })()}
+                                            <div style={{
+                                                fontSize: '0.8125rem',
+                                                color: '#b9bbbe',
+                                                marginTop: '2px',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
+                                            }}>
+                                                {displayName !== username ? `@${username}` : (user.role === 'admin' || user.role === 'super_admin' ? 'Admin' : user.role || 'Member')}
                                             </div>
                                         </div>
-                                    )}
-                                    
-                                    <div className="chat-input-buttons">
-                                        {/* File Upload Button */}
-                                        <button
-                                            type="button"
-                                            className="chat-input-btn"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={selectedChannel?.canWrite === false}
-                                        >
-                                            <FaPaperclip />
-                                        </button>
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            style={{ display: 'none' }}
-                                            onChange={handleFileSelect}
-                                            accept="image/*,.pdf,.doc,.docx,.txt"
-                                        />
-                                        
-                                        {/* Emoji Button */}
-                                        <button
-                                            type="button"
-                                            className="chat-input-btn"
-                                            onClick={() => {
-                                                setShowEmojiPicker(!showEmojiPicker);
-                                                setShowGifPicker(false);
-                                            }}
-                                            disabled={selectedChannel?.canWrite === false}
-                                        >
-                                            <FaSmile />
-                                        </button>
-                                        
-                                        {/* GIF Button */}
-                                        <button
-                                            type="button"
-                                            className="chat-input-btn"
-                                            onClick={() => {
-                                                setShowGifPicker(!showGifPicker);
-                                                setShowEmojiPicker(false);
-                                            }}
-                                            disabled={selectedChannel?.canWrite === false}
-                                        >
-                                            <FaImage />
-                                        </button>
                                     </div>
-                                </div>
-                                
-                                <button 
-                                    type="submit" 
-                                    className="send-btn"
-                                    disabled={(!newMessage.trim() && !selectedFile) || selectedChannel?.canWrite === false}
-                                >
-                                    <FaPaperPlane />
-                                    <span>{editingMessageId ? 'Save' : 'Send'}</span>
-                                </button>
-                            </form>
-                        </div>
+                                );})}
+                                {filteredUsers.length === 0 && !showAdmin && (
+                                    <div style={{
+                                        padding: '20px 14px',
+                                        textAlign: 'center',
+                                        color: '#b9bbbe',
+                                        fontSize: '0.875rem'
+                                    }}>
+                                        No users found
+                                    </div>
+                                )}
+                            </>
+                        );
+                    })()}
+                    </div>
+                </div>
+            )}
+            
+            <div className="chat-input-buttons">
+                {/* File Upload Button */}
+                <button
+                    type="button"
+                    className="chat-input-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={selectedChannel?.canWrite === false}
+                >
+                    <FaPaperclip />
+                </button>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                    accept="image/*,.pdf,.doc,.docx,.txt"
+                />
+                
+                {/* Emoji Button */}
+                <button
+                    type="button"
+                    className="chat-input-btn"
+                    onClick={() => {
+                        setShowEmojiPicker(!showEmojiPicker);
+                        setShowGifPicker(false);
+                    }}
+                    disabled={selectedChannel?.canWrite === false}
+                >
+                    <FaSmile />
+                </button>
+                
+                {/* GIF Button */}
+                <button
+                    type="button"
+                    className="chat-input-btn"
+                    onClick={() => {
+                        setShowGifPicker(!showGifPicker);
+                        setShowEmojiPicker(false);
+                    }}
+                    disabled={selectedChannel?.canWrite === false}
+                >
+                    <FaImage />
+                </button>
+                
+                {/* Send Button (now inside the wrapper) */}
+                <button 
+                    type="submit" 
+                    className="chat-input-btn"
+                    disabled={(!newMessage.trim() && !selectedFile) || selectedChannel?.canWrite === false}
+                    title="Send message"
+                >
+                    <FaPaperPlane />
+                </button>
+            </div>
+        </div>
+        
+        {/* Remove the old send-btn outside the wrapper */}
+    </form>
+</div>
                             </>
                         )}
                     </>
@@ -8080,6 +8631,28 @@ avatar: storedUser?.avatar || null,
                     navigate('/profile');
                 }}
             />
+            {/* Floating Journal Button */}
+<button
+    className="journal-floating-btn"
+    onClick={() => setShowJournalModal(true)}
+    title="Quick Journal"
+>
+    <FaBook />
+</button>
+
+{/* Mini Journal Modal */}
+<MiniJournalModal
+    isOpen={showJournalModal}
+    onClose={() => setShowJournalModal(false)}
+    tasks={journalTasks}
+    notes={journalNotes}
+    selectedDate={journalSelectedDate}
+    setSelectedDate={setJournalSelectedDate}
+    calendarMonth={journalCalendarMonth}
+    setCalendarMonth={setJournalCalendarMonth}
+    onTaskToggle={handleMiniTaskToggle}
+    loading={journalLoading}
+/>
         </div>
     );
 };
