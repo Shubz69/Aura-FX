@@ -438,7 +438,7 @@ const handleBannerChange = async (e) => {
     }
 };
 
-   const handleSaveChanges = async () => {
+const handleSaveChanges = async () => {
     if (!user?.id) { 
         setStatus("You must be logged in to save changes"); 
         return; 
@@ -470,27 +470,27 @@ const handleBannerChange = async (e) => {
             }
         }
         
-        // Prepare data to save
-        const dataToSave = { 
-            ...editedUserData, 
-            id: user.id 
+        // Get the current user data from localStorage
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        // Merge the edited data with the existing user data
+        const dataToSave = {
+            id: user.id,
+            username: formData.username || storedUser.username || '',
+            email: formData.email || storedUser.email || '',
+            phone: formData.phone || storedUser.phone || '',
+            address: formData.address || storedUser.address || '',
+            name: formData.name || storedUser.name || '',
+            bio: formData.bio || storedUser.bio || '',
+            avatar: formData.avatar || storedUser.avatar || '',
+            banner: formData.banner || storedUser.banner || '',
+            timezone: formData.timezone || storedUser.timezone || '',
         };
         
-        // Log the size of image data for debugging
-        if (dataToSave.banner) {
-            console.log('Banner data size:', Math.round(dataToSave.banner.length / 1024), 'KB');
-            console.log('Banner data starts with:', dataToSave.banner.substring(0, 50));
-        }
-        if (dataToSave.avatar) {
-            console.log('Avatar data size:', Math.round(dataToSave.avatar.length / 1024), 'KB');
-        }
-        
-        console.log('Saving profile data keys:', Object.keys(dataToSave));
+        console.log('Sending complete profile data. Keys:', Object.keys(dataToSave));
         
         // Update localStorage immediately for instant UI feedback
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const updatedUser = { ...storedUser, ...dataToSave };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
         
         // Send to server
         const response = await axios.put(
@@ -516,7 +516,7 @@ const handleBannerChange = async (e) => {
             }
             
             // Update localStorage with server data
-            const finalUser = { ...updatedUser, ...serverData };
+            const finalUser = { ...storedUser, ...dataToSave, ...serverData };
             localStorage.setItem('user', JSON.stringify(finalUser));
             
             setStatus("Profile updated successfully!");
@@ -533,15 +533,13 @@ const handleBannerChange = async (e) => {
         if (error.response) {
             console.error('Error response status:', error.response.status);
             console.error('Error response data:', error.response.data);
-            console.error('Error response headers:', error.response.headers);
             
-            // Provide more specific error message
             if (error.response.data?.message) {
                 setStatus(error.response.data.message);
             } else if (error.response.status === 413) {
                 setStatus("Images too large. Please try smaller images.");
             } else if (error.response.status === 400) {
-                setStatus("Bad request. The server rejected the data. Check console for details.");
+                setStatus("Bad request. The server rejected the data.");
             } else {
                 setStatus(`Error ${error.response.status}: Failed to update profile`);
             }
@@ -552,7 +550,7 @@ const handleBannerChange = async (e) => {
             setStatus(error.message || "Failed to update profile");
         }
         
-        // Revert localStorage changes on error
+        // REVERT: This needs to be INSIDE the catch block
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const originalUser = { ...storedUser };
         // Remove only the changed fields
