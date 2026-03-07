@@ -409,34 +409,60 @@ module.exports = async (req, res) => {
         });
       }
       
-      // Check existing pending request (either direction)
-      const existingResult = await executeQuery(`
-        SELECT id, requester_id, receiver_id, status 
-        FROM friend_requests 
-        WHERE ((requester_id = ? AND receiver_id = ?) OR (requester_id = ? AND receiver_id = ?))
-          AND status = 'PENDING'
-      `, [userId, receiverId, receiverId, userId]);
-      
-      const existing = getRows(existingResult)[0];
-      if (existing) {
-        if (existing.requester_id === userId) {
-          return res.status(400).json({
-            success: false,
-            errorCode: 'REQUEST_EXISTS',
-            message: 'Friend request already sent',
-            requestId: existing.id,
-            status: 'PENDING'
-          });
-        } else {
-          // They already sent us a request - could auto-accept or prompt
-          return res.status(400).json({
-            success: false,
-            errorCode: 'REQUEST_PENDING_FROM_USER',
-            message: 'This user has already sent you a friend request. Accept it instead!',
-            requestId: existing.id
-          });
-        }
-      }
+     // Check existing request (either direction) — ANY status
+const existingResult = await executeQuery(`
+  SELECT id, requester_id, receiver_id, status 
+  FROM friend_requests 
+  WHERE (requester_id = ? AND receiver_id = ?) OR (requester_id = ? AND receiver_id = ?)
+  ORDER BY created_at DESC
+  LIMIT 1
+`, [userId, receiverId, receiverId, userId]);
+
+const existing = getRows(existingResult)[0];
+
+if (existing) {
+  // ✅ Allow re-send if previously cancelled or declined
+  if (existing.status === 'CANCELLED' || existing.status === 'DECLINED') {
+    await executeQuery(
+      'UPDATE friend_requests SET status = ?, requester_id = ?, receiver_id = ?, updated_at = NOW() WHERE id = ?',
+      ['PENDING', userId, receiverId, existing.id]
+    );
+    return res.status(200).json({
+      success: true,
+      message: 'Friend request sent',
+      request: { id: existing.id, receiverId, status: 'PENDING' },
+      requestId
+    });
+  }
+
+  if (existing.status === 'ACCEPTED') {
+    return res.status(400).json({
+      success: false,
+      errorCode: 'ALREADY_FRIENDS',
+      message: 'Already friends with this user',
+      requestId
+    });
+  }
+
+  if (existing.status === 'PENDING') {
+    if (existing.requester_id === userId) {
+      return res.status(400).json({
+        success: false,
+        errorCode: 'REQUEST_EXISTS',
+        message: 'Friend request already sent',
+        requestId: existing.id,
+        status: 'PENDING'
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        errorCode: 'REQUEST_PENDING_FROM_USER',
+        message: 'This user already sent you a request. Accept it instead!',
+        requestId: existing.id
+      });
+    }
+  }
+}
       
       // Create request
       const newRequestId = generateUUID();
