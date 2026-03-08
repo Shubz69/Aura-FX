@@ -102,13 +102,18 @@ const Profile = () => {
     const [journalTasks, setJournalTasks] = useState([]);
     const [journalStatsLoading, setJournalStatsLoading] = useState(true);
 
+    // Add a ref to track if we've loaded from localStorage already
+    const initialLoadDone = useRef(false);
+
     const updateLocalUserData = (data) => {
         const currentUser = JSON.parse(localStorage.getItem('userData') || '{}');
         localStorage.setItem('userData', JSON.stringify({ ...currentUser, ...data }));
     };
 
-    // FIX 1: Load from localStorage FIRST - before any API calls
+    // FIX 1: Load from localStorage FIRST - runs once on mount
     useEffect(() => {
+        if (initialLoadDone.current) return;
+        
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
         
@@ -117,12 +122,14 @@ const Profile = () => {
             hasUserDataBanner: !!storedUserData.banner
         });
         
-        // Merge all sources, prioritizing storedUser (most recent)
+        // CRITICAL: Get the banner from localStorage
+        const localBanner = storedUser.banner || storedUserData.banner || '';
+        
         const initialData = {
             ...formData,
             ...storedUserData,
             ...storedUser,
-            banner: storedUser.banner || storedUserData.banner || formData.banner
+            banner: localBanner
         };
         
         setFormData(initialData);
@@ -133,17 +140,25 @@ const Profile = () => {
         if (initialData.avatar?.startsWith('data:image')) {
             setAvatarPreview(initialData.avatar);
         }
-    }, []); // Empty deps - runs once on mount
+        
+        initialLoadDone.current = true;
+    }, []);
 
-    // FIX 2: Main profile loading effect
+    // FIX 2: Main profile loading effect with banner preservation
     useEffect(() => {
         const loadProfile = async () => {
             if (!user?.id) return;
             
-            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            // Get current banner from state or localStorage
+            const currentBanner = bannerPreview || formData.banner || 
+                                 JSON.parse(localStorage.getItem('user') || '{}').banner || '';
             
-            // CRITICAL FIX: Get banner from localStorage FIRST
-            const localBanner = storedUser.banner || formData.banner || '';
+            console.log('🔄 Starting profile load with current banner:', {
+                hasBanner: !!currentBanner,
+                bannerLength: currentBanner?.length
+            });
+            
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             
             const authData = {
                 username: user.username || storedUser.username || "",
@@ -153,13 +168,13 @@ const Profile = () => {
                 avatar: user.avatar || storedUser.avatar || "",
                 name: user.name || storedUser.name || "",
                 bio: user.bio || storedUser.bio || "",
-                banner: localBanner, // Use local banner as base
+                banner: currentBanner, // Use current banner
                 level: storedUser.level || user.level || 1,
                 xp: storedUser.xp || user.xp || 0,
                 timezone: user.timezone || storedUser.timezone || ""
             };
             
-            // Update state with local data first
+            // Update state with local data
             setFormData(prev => ({ ...prev, ...authData }));
             
             if (authData.avatar?.startsWith('data:image')) setAvatarPreview(authData.avatar);
@@ -194,26 +209,22 @@ const Profile = () => {
                         hasBanner: !!userData.banner
                     });
                     
-                    // CRITICAL FIX: Always prioritize local banner over empty server response
-                    // Get the most up-to-date local banner
-                    const currentLocalBanner = bannerPreview || formData.banner || storedUser.banner || '';
+                    // CRITICAL FIX: ALWAYS preserve local banner if it exists and server returns empty
+                    // Get the most up-to-date local banner again (might have changed)
+                    const updatedLocalBanner = bannerPreview || formData.banner || currentBanner;
                     
-                    const serverBanner = userData.banner || '';
-                    
-                    // Use local banner if it exists AND server doesn't have one
-                    // This preserves the banner when server returns empty
-                    const finalBanner = (currentLocalBanner && !serverBanner) 
-                        ? currentLocalBanner 
-                        : (serverBanner || currentLocalBanner);
+                    // If we have a local banner and server doesn't, KEEP the local one
+                    const finalBanner = (updatedLocalBanner && !userData.banner) 
+                        ? updatedLocalBanner 
+                        : (userData.banner || updatedLocalBanner);
                     
                     console.log('📌 Banner decision:', {
-                        serverBanner: serverBanner ? 'exists' : 'missing',
-                        localBanner: currentLocalBanner ? 'exists' : 'missing',
-                        using: finalBanner ? 'local' : 'none'
+                        serverBanner: userData.banner ? 'exists' : 'missing',
+                        localBanner: updatedLocalBanner ? 'exists' : 'missing',
+                        using: finalBanner ? 'preserved' : 'none'
                     });
                     
                     const backendAvatar = userData.avatar || authData.avatar;
-                    const backendBanner = finalBanner;
                     
                     const backendData = {
                         username: userData.username || authData.username,
@@ -223,7 +234,7 @@ const Profile = () => {
                         avatar: backendAvatar,
                         name: userData.name || authData.name,
                         bio: userData.bio || authData.bio || "",
-                        banner: backendBanner,
+                        banner: finalBanner, // Use the preserved banner
                         level: storedUser.level ?? userData.level ?? authData.level,
                         xp: storedUser.xp ?? userData.xp ?? authData.xp
                     };
@@ -243,17 +254,16 @@ const Profile = () => {
                     
                     // Update previews
                     if (backendAvatar?.startsWith('data:image')) setAvatarPreview(backendAvatar);
-                    if (backendBanner?.startsWith('data:image')) setBannerPreview(backendBanner);
+                    if (backendData.banner?.startsWith('data:image')) setBannerPreview(backendData.banner);
                     
                     setLoginStreak(userData.login_streak ?? 0);
                     setAchievements(userData.achievements || []);
                     
-                    // CRITICAL FIX: Save to localStorage with banner explicitly preserved
+                    // CRITICAL: Save to localStorage with banner explicitly preserved
                     const updatedUser = { 
                         ...storedUser, 
                         ...backendData,
-                        // Ensure banner is saved
-                        banner: backendBanner || storedUser.banner
+                        banner: finalBanner // Ensure banner is saved
                     };
                     
                     console.log('💾 Saving to localStorage:', {
@@ -347,7 +357,7 @@ const Profile = () => {
             window.removeEventListener('xpUpdated', handleXPUpdate);
             window.removeEventListener('levelUp', handleLevelUp);
         };
-    }, [user]); // Only depend on user
+    }, [user]); // Only depend on user, not on formData
 
     // FIX 3: Journal stats effect
     useEffect(() => {
@@ -495,7 +505,7 @@ const Profile = () => {
                     setFormData(prev => ({ ...prev, banner: resizedBase64 }));
                     setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
                     
-                    // CRITICAL FIX: Immediately save to localStorage
+                    // CRITICAL: Immediately save to localStorage
                     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
                     const updatedUser = { ...storedUser, banner: resizedBase64 };
                     localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -548,7 +558,7 @@ const Profile = () => {
             
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             
-            // CRITICAL FIX: Get the most current banner
+            // CRITICAL: Get the most current banner
             const currentBanner = bannerPreview || formData.banner || storedUser.banner || '';
             
             const dataToSave = {
@@ -587,11 +597,11 @@ const Profile = () => {
                     bannerInResponse: !!serverData.banner
                 });
                 
-                // CRITICAL FIX: Preserve banner if server returns empty
+                // CRITICAL: Preserve banner if server returns empty
                 const updatedData = {
                     ...dataToSave,
                     ...serverData,
-                    banner: serverData.banner || currentBanner
+                    banner: serverData.banner || currentBanner // Keep our banner if server doesn't return one
                 };
                 
                 setFormData(prev => ({ ...prev, ...updatedData }));
@@ -685,36 +695,24 @@ const Profile = () => {
     return (
         <div className="pf-container">
             <CosmicBackground />
-
-            {/* Ambient glow orbs */}
             <div className="pf-ambient" aria-hidden="true">
                 <div className="pf-orb pf-orb-1"></div>
                 <div className="pf-orb pf-orb-2"></div>
             </div>
 
             <div className="pf-content">
-
                 {/* ── BANNER ── */}
                 <div className="pf-banner-wrap">
                     {bannerPreview || formData.banner ? (
-                        <>
-                            {console.log('🎨 Rendering banner:', {
-                                fromPreview: !!bannerPreview,
-                                fromFormData: !!formData.banner,
-                                previewLength: bannerPreview?.length,
-                                formDataLength: formData.banner?.length
-                            })}
-                            <img 
-                                src={bannerPreview || formData.banner} 
-                                alt="Banner" 
-                                className="pf-banner-img" 
-                                onError={(e) => {
-                                    console.error('❌ Banner failed to load');
-                                    e.target.style.display = 'none';
-                                }}
-                                onLoad={() => console.log('✅ Banner loaded successfully')}
-                            />
-                        </>
+                        <img 
+                            src={bannerPreview || formData.banner} 
+                            alt="Banner" 
+                            className="pf-banner-img" 
+                            onError={(e) => {
+                                console.error('❌ Banner failed to load');
+                                e.target.style.display = 'none';
+                            }}
+                        />
                     ) : (
                         <div className="pf-banner-placeholder">
                             <span className="pf-banner-hint">Upload Banner</span>
@@ -732,7 +730,7 @@ const Profile = () => {
                     </button>
                 </div>
 
-                {/* Rest of your JSX remains the same... */}
+                {/* Rest of your JSX remains exactly the same from here... */}
                 {/* ── HEADER CARD ── */}
                 <div className="pf-header-card">
                     {/* Avatar */}
@@ -1094,7 +1092,7 @@ const Profile = () => {
                     </div>
                 )}
 
-            </div>{/* /pf-content */}
+            </div>
         </div>
     );
 };
