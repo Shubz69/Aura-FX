@@ -82,18 +82,18 @@ module.exports = async (req, res) => {
       entitlements.updatedAt = updatedAt;
       entitlements.version = String(updatedAt);
 
-      // user.role must match entitlements.role (super admin by email → SUPER_ADMIN)
-      const user = {
-          id: userRow.id,
-        email: userRow.email,
-        username: userRow.username || userRow.email?.split('@')[0] || '',
-        name: userRow.name || userRow.username || '',
-        avatar: userRow.avatar ?? null,
-        role: entitlements.role,
-        level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
-        xp: userRow.xp != null ? parseFloat(userRow.xp) : 0,
-        timezone: userRow.timezone ?? null
-      };
+const user = {
+    id: userRow.id,
+    email: userRow.email,
+    username: userRow.username || userRow.email?.split('@')[0] || '',
+    name: userRow.name || userRow.username || '',
+    avatar: userRow.avatar ?? null,
+    banner: userRow.banner ?? null,  // <-- ADD THIS LINE
+    role: entitlements.role,
+    level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
+    xp: userRow.xp != null ? parseFloat(userRow.xp) : 0,
+    timezone: userRow.timezone ?? null
+};
 
       return { user, entitlements };
     };
