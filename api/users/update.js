@@ -183,44 +183,8 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Banner column - ensure it exists and is TEXT
-        try {
-          const [bannerColumns] = await db.execute(`
-            SELECT COLUMN_TYPE 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = ? 
-            AND TABLE_NAME = 'users' 
-            AND COLUMN_NAME = 'banner'
-          `, [process.env.MYSQL_DATABASE]);
-          
-          if (bannerColumns.length > 0) {
-            const columnType = bannerColumns[0].COLUMN_TYPE.toLowerCase();
-            // If it's VARCHAR (not TEXT), convert it to TEXT to handle long base64 strings
-            if (columnType.includes('varchar') && !columnType.includes('text')) {
-              try {
-                await db.execute('ALTER TABLE users MODIFY COLUMN banner TEXT');
-                console.log('Banner column converted to TEXT');
-              } catch (alterError) {
-                console.warn('Could not convert banner column to TEXT:', alterError.message);
-              }
-            }
-          } else {
-            // Column doesn't exist, create it as TEXT
-            await db.execute('ALTER TABLE users ADD COLUMN banner TEXT');
-            console.log('Banner column created as TEXT');
-          }
-        } catch (e) {
-          // If we can't check, try to add the column
-          try {
-            await db.execute('ALTER TABLE users ADD COLUMN banner TEXT');
-            console.log('Banner column added as TEXT');
-          } catch (addError) {
-            console.warn('Could not add banner column:', addError.message);
-          }
-        }
-
-        // Get update data from request body - ADDED BANNER HERE
-        const { name, username, email, phone, address, bio, avatar, banner, updateUsername } = req.body || {};
+        // Get update data from request body
+        const { name, username, email, phone, address, bio, avatar, updateUsername } = req.body || {};
 
         // Build update query dynamically
         const updates = [];
@@ -377,29 +341,6 @@ module.exports = async (req, res) => {
           values.push(avatarValue ?? null);
         }
 
-        // ADDED BANNER HANDLING HERE
-        if (banner !== undefined) {
-          let bannerValue = cleanValue(banner);
-          // If banner is a base64 string, ensure it's not too long
-          if (bannerValue && typeof bannerValue === 'string') {
-            // Base64 images can be long, but TEXT column can handle up to 65,535 bytes
-            // We'll limit to 60KB to be safe
-            if (bannerValue.length > 60000) {
-              console.warn('Banner data too long, truncating to 60KB');
-              bannerValue = bannerValue.substring(0, 60000);
-            }
-            // If it's not a base64 data URL and not a simple filename, treat invalid as clear banner
-            if (bannerValue && !bannerValue.startsWith('data:') && !bannerValue.match(/^[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif|webp)$/)) {
-              if (bannerValue.length > 1000 && !bannerValue.includes('base64')) {
-                console.warn('Banner value seems invalid, clearing');
-                bannerValue = null;
-              }
-            }
-          }
-          updates.push('banner = ?');
-          values.push(bannerValue ?? null);
-        }
-
         if (updates.length === 0) {
           await db.end();
           return res.status(400).json({ success: false, message: 'No fields to update' });
@@ -412,9 +353,9 @@ module.exports = async (req, res) => {
         const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
         await db.execute(query, values);
 
-        // Fetch updated user data (include last_username_change and banner) - ADDED BANNER HERE
+        // Fetch updated user data (include last_username_change)
         const [updatedRows] = await db.execute(
-          'SELECT id, username, email, name, phone, address, bio, avatar, banner, role, level, xp, last_username_change FROM users WHERE id = ?',
+          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change FROM users WHERE id = ?',
           [userId]
         );
 
@@ -477,14 +418,13 @@ module.exports = async (req, res) => {
           await db.execute('ALTER TABLE users ADD COLUMN login_streak INT DEFAULT 0');
         }
         
-        // Check if banner column exists - UPDATED
+        // Check if banner column exists
         let hasBanner = false;
         try {
           await db.execute('SELECT banner FROM users LIMIT 1');
           hasBanner = true;
         } catch (e) {
           // Banner column doesn't exist, will be null
-          console.log('Banner column does not exist yet');
         }
         
         // Check if last_seen column exists
@@ -496,7 +436,7 @@ module.exports = async (req, res) => {
           // last_seen column doesn't exist
         }
         
-        // Build select fields dynamically based on what columns exist - UPDATED with banner
+        // Build select fields dynamically based on what columns exist
         const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
         const fieldsWithBanner = hasBanner ? `${baseFields}, banner` : baseFields;
         const selectFields = hasLastSeen ? `${fieldsWithBanner}, last_seen` : fieldsWithBanner;
@@ -589,14 +529,14 @@ module.exports = async (req, res) => {
           await db.end();
         }
         
-        // Return user data with formatted dates - UPDATED with banner
+        // Return user data with formatted dates
         const responseData = {
           id: user.id,
           username: user.username || user.name || 'User',
           name: user.name,
           bio: user.bio || '',
           avatar: user.avatar ?? null,
-          banner: (hasBanner && user.banner) ? user.banner : '', // ADDED BANNER HERE
+          banner: (hasBanner && user.banner) ? user.banner : '',
           role: user.role || 'free',
           level: parseInt(user.level || 1),
           xp: parseFloat(user.xp || 0),
@@ -661,3 +601,4 @@ module.exports = async (req, res) => {
 
   return res.status(405).json({ success: false, message: 'Method not allowed' });
 };
+
