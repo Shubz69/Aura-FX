@@ -95,6 +95,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [editedUserData, setEditedUserData] = useState({});
     const [userRole, setUserRole] = useState("");
+    const [avatarColor, setAvatarColor] = useState(null);
     const navigate = useNavigate();
     const [lastUsernameChange, setLastUsernameChange] = useState(null);
     const [usernameValidationError, setUsernameValidationError] = useState("");
@@ -137,7 +138,11 @@ const Profile = () => {
 
         initialLoadDone.current = true;
     }, [user?.id]);
-
+ // Add this line to load saved avatar color
+    const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
+    if (savedColor) {
+        setAvatarColor(savedColor);
+    }
     // ─── Main profile loading effect ───
     useEffect(() => {
         const loadProfile = async () => {
@@ -237,7 +242,11 @@ const Profile = () => {
                     if (finalBanner) {
                         localStorage.setItem(userBannerKey, finalBanner);
                     }
-
+  // Add this line to load saved avatar color
+        const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
+        if (savedColor) {
+            setAvatarColor(savedColor);
+        }
                     // Daily login check
                     const currentUserId = user?.id || userData.id;
                     const lastCheckKey = `daily_login_check_${currentUserId}`;
@@ -281,7 +290,28 @@ const Profile = () => {
         };
 
         loadProfile();
+// Add this function near your other handler functions
+const handleColorSelect = (color) => {
+    if (!user?.id) return;
+    
+    // Save the color to localStorage with user-specific key
+    localStorage.setItem(`avatar_color_${user.id}`, color);
+    
+    // Update the avatarColor state to trigger re-render
+    setAvatarColor(color);
+    
+    // Also save using the existing utility function for backward compatibility
+    savePlaceholderColor(user.id, color);
+    
+    setStatus('Profile color updated!');
+    setTimeout(() => setStatus(''), 2000);
+};
 
+// Add this helper function
+const getAvatarDisplayColor = () => {
+    if (avatarColor) return avatarColor;
+    return getPlaceholderColor(user?.id ?? formData.username);
+};
         const handleXPUpdate = (event) => {
             const { newXP, newLevel } = event.detail;
             setFormData(prev => ({ ...prev, xp: newXP, level: newLevel }));
@@ -721,22 +751,25 @@ const Profile = () => {
                     {/* Avatar */}
                     <div className="pf-avatar-col">
                         <div className="pf-avatar-ring">
-                            <div className="pf-avatar-inner">
-                                {hasAvatar ? (
-                                    <img
-                                        src={avatarPreview || formData.avatar}
-                                        alt="Avatar"
-                                        className="pf-avatar-img"
-                                        onError={(e) => {
-                                            console.error('Avatar failed to load');
-                                            e.target.style.display = 'none';
-                                            e.target.parentNode.innerHTML = `<div class="pf-avatar-placeholder" style="background: ${getPlaceholderColor(user?.id ?? formData.username)}"></div>`;
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="pf-avatar-placeholder" style={{ background: getPlaceholderColor(user?.id ?? formData.username) }} />
-                                )}
-                            </div>
+                           <div className="pf-avatar-inner">
+    {hasAvatar ? (
+        <img
+            src={avatarPreview || formData.avatar}
+            alt="Avatar"
+            className="pf-avatar-img"
+            onError={(e) => {
+                console.error('Avatar failed to load');
+                e.target.style.display = 'none';
+                e.target.parentNode.innerHTML = `<div class="pf-avatar-placeholder" style="background: ${getAvatarDisplayColor()}"></div>`;
+            }}
+        />
+    ) : (
+        <div 
+            className="pf-avatar-placeholder" 
+            style={{ background: getAvatarDisplayColor() }}
+        />
+    )}
+</div>
                             <input
                                 type="file"
                                 ref={fileInputRef}
