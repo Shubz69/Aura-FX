@@ -1,6 +1,6 @@
 /* ============================================================
    COURSES.CSS — AURA FX PREMIUM EDUCATION EDITION
-   COMPLETE UPDATED FILE WITH PROPER ALIGNMENT
+   FIXED SCROLLING ISSUE - Like contact.css
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -27,18 +27,31 @@
     --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ===== Base Container ===== */
-.courses-container {
-    min-height: 100vh;
+/* ===== Base Container - FIXED ===== */
+html, body {
     width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
+}
+
+.courses-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
     background: var(--bg);
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 100px 20px 40px;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 100px 20px 40px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    min-height: 100vh;
     color: var(--text);
     box-sizing: border-box;
     font-family: 'Space Grotesk', sans-serif;
@@ -90,7 +103,8 @@
     position: relative;
     z-index: 2;
 }
-/* Eyebrow pill label - like explore page */
+
+/* Eyebrow pill label */
 .courses-header::before {
     content: 'AURA FX EDUCATION';
     display: block;
@@ -116,7 +130,6 @@
     max-width: 1100px;
     padding: 0 20px;
     display: block;
-    /* Animated gradient text */
     background: linear-gradient(270deg, #ffffff 0%, #c4b5fd 30%, #93c5fd 55%, #c4b5fd 75%, #ffffff 100%);
     background-size: 300% 100%;
     -webkit-background-clip: text;
@@ -136,11 +149,8 @@
 .courses-title .line2 {
     display: block;
 }
-@keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* Animated dot + line decoration - like explore page */
+
+/* Animated dot + line decoration */
 .courses-header-line {
     display: flex;
     align-items: center;
@@ -155,6 +165,7 @@
     width: 80px;
     height: 1px;
 }
+
 .courses-header-line::before {
     background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.65));
 }
@@ -162,6 +173,7 @@
 .courses-header-line::after {
     background: linear-gradient(90deg, rgba(99, 179, 237, 0.65), transparent);
 }
+
 .courses-header-dot {
     width: 6px;
     height: 6px;
@@ -170,10 +182,12 @@
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
     animation: dotPulse 2s ease-in-out infinite;
 }
+
 @keyframes dotPulse {
     0%, 100% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.7); opacity: 0.65; }
 }
+
 .courses-header p {
     font-size: 18px;
     max-width: 700px;
@@ -732,7 +746,6 @@
     margin-bottom: 50px;
 }
 
-
 .subscriptions-title {
     font-size: 2.8rem;
     font-weight: 200;
@@ -741,14 +754,13 @@
     margin: 0 0 0.5rem;
     display: inline-block;
     position: relative;
-    /* Animated gradient text */
     background: linear-gradient(270deg, #ffffff 0%, #c4b5fd 30%, #93c5fd 55%, #c4b5fd 75%, #ffffff 100%);
     background-size: 300% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: gradientShift 8s ease-in-out infinite;}
-
+    animation: gradientShift 8s ease-in-out infinite;
+}
 
 .subscriptions-title::after {
     content: '';
@@ -931,7 +943,7 @@
     0%, 100% { text-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
     50% { text-shadow: 0 0 50px rgba(16, 185, 129, 0.8); }
 }
-/* ===== Elegant Header Animations ===== */
+
 @keyframes gradientShift {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -941,6 +953,7 @@
     from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
 .promo-text {
     color: var(--up);
     font-size: 14px;
@@ -1058,7 +1071,7 @@
         0 0 0 1px rgba(139, 92, 246, 0.5);
 }
 
-/* ===== Responsive Design ===== */
+/* ===== Responsive Design - FIXED ===== */
 
 /* Large Desktop */
 @media (max-width: 1200px) {
@@ -1398,43 +1411,55 @@
     }
 }
 
+/* Height-based adjustments for shorter screens */
+@media (max-height: 700px) {
+    .courses-container {
+        padding-top: 60px;
+        padding-bottom: 20px;
+    }
+    
+    .courses-header {
+        margin-bottom: 30px;
+    }
+    
+    .courses-grid {
+        gap: 16px;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+    .courses-container {
+        padding-top: 60px;
+        padding-bottom: 20px;
+    }
+    
+    .courses-header {
+        margin-bottom: 25px;
+    }
+    
+    .courses-header::before {
+        margin-bottom: 1rem;
+    }
+    
+    .courses-title {
+        font-size: clamp(1.8rem, 5vw, 2.2rem);
+        margin-bottom: 1rem;
+    }
+    
+    .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .course-image {
+        height: 140px;
+    }
+}
+
 /* ===== Animation Keyframes ===== */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
-}
-
-/* ===== Preserve Original Scroll Behavior ===== */
-@media (max-width: 767px) {
-    .courses-container {
-        position: relative;
-        width: 100% !important;
-        max-width: 100vw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: 100vh !important;
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
-        padding: calc(70px + env(safe-area-inset-top, 0)) 0 max(32px, env(safe-area-inset-bottom, 0)) 0 !important;
-        scrollbar-width: none !important;
-    }
-    
-    .courses-container::-webkit-scrollbar {
-        display: none !important;
-    }
-    
-    .courses-content,
-    .courses-header,
-    .courses-subscriptions-section {
-        flex: none !important;
-        height: auto !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        overflow-x: hidden !important;
-        overflow-y: visible !important;
-    }
 }
 
 /* ===== Card Animation Delays ===== */
