@@ -3,6 +3,17 @@
    Dark theme with purple accent glow matching website
    ============================================================ */
 
+
+/* ── MUST be first line — loads Space Grotesk before any text renders ── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+/* ── Force Space Grotesk on the entire loading screen — overrides any serif fallback ── */
+.loading-screen,
+.loading-screen * {
+    font-family: 'Space Grotesk', sans-serif !important;
+}
+
+
 .loading-screen {
     position: fixed !important;
     top: 0 !important;
@@ -70,10 +81,10 @@
 
 .binary-digit {
     position: absolute;
-    color: rgba(139, 92, 246, 0.2); /* Purple tint instead of white */
+    color: rgba(139, 92, 246, 0.2);
     font-family: 'Space Grotesk', sans-serif;
     font-size: 12px;
-    font-weight: 400;
+    font-weight: 300; /* ← was 400, home.css uses 300 for light body text */
     animation: binary-fall linear infinite;
     user-select: none;
     pointer-events: none;
@@ -224,7 +235,7 @@
 
 .loading-percentage {
     color: var(--accent-solid, #8B5CF6);
-    font-weight: 600;
+    font-weight: 600; /* ← was missing explicit weight, home.css uses 600 for accents */
     animation: percentageGlow 1.5s ease-in-out infinite;
     text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }

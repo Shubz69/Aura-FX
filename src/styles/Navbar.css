@@ -993,12 +993,7 @@ body > div > .mobile-menu.active {
   .mobile-menu-close { top: 20px !important; right: 24px !important; width: 44px !important; height: 44px !important; }
 }
 
-/* ──────────────────────────────────────────
-   SCROLL & PAGE RESET
-────────────────────────────────────────── */
-html, body, #root {
-  height: auto;
-  min-height: 100%;
-  overflow-y: auto;
+/* Smooth scroll only — no height/overflow overrides */
+html {
   scroll-behavior: smooth;
 }

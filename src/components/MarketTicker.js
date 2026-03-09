@@ -1,11 +1,11 @@
 /**
  * MarketTicker - Shared component for live market prices
- * 
+ *
  * Features:
  * - Live price updates with green/red flash
  * - Auto-scrolling ticker tape (TradingView style)
  * - Category tabs for filtering
- * - "View All Markets" modal with live prices
+ * - "View All Markets" modal with live prices — premium AURA FX redesign
  * - Never shows 0.00 - shows loading or delayed indicator
  * - Stale data indicator
  * - Responsive design with proper height/padding
@@ -14,6 +14,7 @@
 import React, { useState, useCallback, memo } from 'react';
 import { useLivePrices } from '../hooks/useLivePrices';
 import '../styles/MarketTicker.css';
+import ReactDOM from 'react-dom';
 
 // Loading placeholder for prices
 const PriceLoading = () => (
@@ -25,27 +26,27 @@ const PriceLoading = () => (
 );
 
 // Individual ticker item (memoized for performance)
-const TickerItem = memo(({ 
-  symbol, 
-  displayName, 
-  price, 
-  change, 
+const TickerItem = memo(({
+  symbol,
+  displayName,
+  price,
+  change,
   changeSign,
-  changePercent, 
-  isUp, 
-  flash, 
-  loading, 
+  changePercent,
+  isUp,
+  flash,
+  loading,
   stale,
-  delayed 
+  delayed
 }) => {
   const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
   const hasPrice = price && parseFloat(price) > 0;
   const sign = isUp ? '+' : '';
-  
+
   return (
     <div className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''} ${delayed ? 'delayed' : ''}`}>
       <span className="ticker-symbol">{displayName || symbol}</span>
-      
+
       {hasPrice ? (
         <>
           <span className={`ticker-price ${isUp ? 'price-up' : 'price-down'}`}>
@@ -67,22 +68,22 @@ const TickerItem = memo(({
   );
 });
 
-// Market item for modal - ultra compact (just symbol + price)
-const MarketItem = memo(({ 
-  symbol, 
-  displayName, 
-  price, 
+// Market item for modal - premium compact card
+const MarketItem = memo(({
+  symbol,
+  displayName,
+  price,
   change,
   changeSign,
-  changePercent, 
-  isUp, 
-  flash, 
+  changePercent,
+  isUp,
+  flash,
   loading,
-  delayed 
+  delayed
 }) => {
   const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
   const hasPrice = price && parseFloat(price) > 0;
-  
+
   return (
     <div className={`market-item ${flashClass} ${delayed ? 'delayed' : ''}`}>
       <div className="market-item-info">
@@ -97,18 +98,32 @@ const MarketItem = memo(({
   );
 });
 
-// View All Markets Modal
+// View All Markets Modal — AURA FX premium redesign
 const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
   if (!isOpen) return null;
 
-  return (
+  return ReactDOM.createPortal(
     <div className="market-modal-overlay" onClick={onClose}>
       <div className="market-modal" onClick={e => e.stopPropagation()}>
+
+        {/* ── Header ── */}
         <div className="market-modal-header">
-          <h2>All Markets</h2>
-          {stale && <span className="modal-stale-badge">⚠️ Data may be delayed</span>}
-          <button className="market-modal-close" onClick={onClose}>×</button>
+          <div className="market-modal-header-left">
+            <h2>All Markets</h2>
+            <span className="market-modal-subtitle">Live Prices &amp; Rates</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {stale && (
+              <span className="modal-stale-badge">⚠ Delayed</span>
+            )}
+            <button className="market-modal-close" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </div>
         </div>
+
+        {/* ── Scrollable content ── */}
         <div className="market-modal-content">
           {Object.entries(groupedPrices)
             .sort((a, b) => a[1].order - b[1].order)
@@ -129,8 +144,10 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
               </div>
             ))}
         </div>
+
       </div>
-    </div>
+    </div>,
+    document.body
   );
 });
 
@@ -159,13 +176,13 @@ const CategoryTabs = memo(({ categories, activeCategory, onCategoryChange }) => 
 
 /**
  * MarketTicker Component
- * 
- * @param {Object} props
- * @param {boolean} props.compact - Compact mode (horizontal scrolling ticker)
- * @param {boolean} props.showTabs - Show category tabs
- * @param {boolean} props.showViewAll - Show "View All Markets" button
- * @param {boolean} props.autoScroll - Enable auto-scrolling
- * @param {string} props.className - Additional CSS class
+ *
+ * @param {Object}  props
+ * @param {boolean} props.compact      Compact mode (horizontal scrolling ticker)
+ * @param {boolean} props.showTabs     Show category tabs
+ * @param {boolean} props.showViewAll  Show "View All Markets" button
+ * @param {boolean} props.autoScroll   Enable auto-scrolling
+ * @param {string}  props.className    Additional CSS class
  */
 function MarketTicker({
   compact = true,
@@ -176,8 +193,7 @@ function MarketTicker({
 }) {
   const [activeCategory, setActiveCategory] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  
-  // When modal is open, fetch ALL symbols (not just beginner set)
+
   const {
     loading,
     connected,
@@ -189,38 +205,35 @@ function MarketTicker({
     refresh
   } = useLivePrices({ beginnerMode: !showModal && !activeCategory, category: activeCategory });
 
-  const pricesArray = getPricesArray();
+  const pricesArray   = getPricesArray();
   const groupedPrices = getPricesGrouped();
-  const health = getHealth();
 
-  // Get categories for tabs
-  const categories = watchlist?.groups 
+  const categories = watchlist?.groups
     ? Object.entries(watchlist.groups)
         .sort((a, b) => a[1].order - b[1].order)
         .map(([key, group]) => ({ key, name: group.name, icon: group.icon }))
     : [];
 
-  // Handle category change
   const handleCategoryChange = useCallback((category) => {
     setActiveCategory(category);
   }, []);
 
-  // Duplicate items for seamless scrolling
   const tickerItems = autoScroll ? [...pricesArray, ...pricesArray] : pricesArray;
+  const hasAnyData  = pricesArray.some(p => p.price && parseFloat(p.price) > 0);
 
-  // Check if any prices have data
-  const hasAnyData = pricesArray.some(p => p.price && parseFloat(p.price) > 0);
+  // Lock body scroll when modal is open
+  React.useEffect(() => {
+    document.body.style.overflow = showModal ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showModal]);
 
   return (
     <div className={`market-ticker-wrapper ${className} ${stale ? 'stale' : ''} ${!connected && !loading ? 'disconnected' : ''}`}>
-      {/* Connection/Stale indicator */}
+
       {stale && (
-        <div className="ticker-status stale">
-          ⚠️ Data may be delayed
-        </div>
+        <div className="ticker-status stale">⚠️ Data may be delayed</div>
       )}
-      
-      {/* Category tabs */}
+
       {showTabs && categories.length > 0 && (
         <CategoryTabs
           categories={categories}
@@ -228,8 +241,7 @@ function MarketTicker({
           onCategoryChange={handleCategoryChange}
         />
       )}
-      
-      {/* Ticker tape */}
+
       <div className={`stock-ticker-compact ${compact ? 'compact' : ''}`}>
         <div className={`ticker ${autoScroll && hasAnyData ? 'auto-scroll' : ''}`}>
           {tickerItems.map((item, index) => (
@@ -241,21 +253,19 @@ function MarketTicker({
           ))}
         </div>
       </div>
-      
-      {/* View All Markets button */}
+
       {showViewAll && (
-        <button 
+        <button
           className="view-all-markets-btn"
           onClick={() => {
             setShowModal(true);
-            refresh(); // fetch latest prices when opening modal
+            refresh();
           }}
         >
           View All Markets →
         </button>
       )}
-      
-      {/* Modal */}
+
       <ViewAllModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}

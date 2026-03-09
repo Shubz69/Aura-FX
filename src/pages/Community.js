@@ -12,6 +12,7 @@ import { FaBook, FaCheck, FaCalendarAlt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
+import ImageModal from '../components/ImageModal';
 import {
     getLevelFromXP,
     getXPForNextLevel,
@@ -240,6 +241,12 @@ const Community = () => {
     const [userId, setUserId] = useState(null);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [profileModalData, setProfileModalData] = useState(null);
+    //for image 
+const [isUserScrolling, setIsUserScrolling] = useState(false);
+const [showImageModal, setShowImageModal] = useState(false);
+const [selectedImage, setSelectedImage] = useState(null);
+const scrollTimeoutRef = useRef(null);
+const messagesContainerRef = useRef(null);
     
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
@@ -430,6 +437,7 @@ const [journalLoading, setJournalLoading] = useState(false);
     const [channelList, setChannelList] = useState([]);
     const [selectedChannel, setSelectedChannel] = useState(null);
     const [messages, setMessages] = useState([]);
+    const [messagesLoading, setMessagesLoading] = useState(false);
     const [newMessage, setNewMessage] = useState('');
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editingMessageContent, setEditingMessageContent] = useState('');
@@ -694,148 +702,118 @@ const fetchMiniJournalData = useCallback(async () => {
         setJournalLoading(false);
     }
 }, [isAuthenticated, userId, journalSelectedDate, showJournalModal]);
-// SIMPLE fetch for mini journal data - SHOW CACHED DATA FIRST, NO BLINKING
+
+// SIMPLE fetch for mini journal data - INSTANT, NO BLINKING
 useEffect(() => {
+    let isMounted = true;
     let timeoutId = null;
     
     if (showJournalModal && isAuthenticated && userId) {
-        // Check if we already have data for this date
-        const hasDataForDate = journalTasks.length > 0 && 
-            journalTasks.every(t => t.date === journalSelectedDate);
-        
-        // If we already have data for this date, don't fetch
-        if (hasDataForDate) {
-            return;
-        }
-        
-        // Set loading state only when switching to a new date without data
-        setJournalLoading(true);
-        
         // Clear any existing timeout
         if (timeoutId) clearTimeout(timeoutId);
         
-        // Single timeout - 300ms debounce
+        // Single fetch with debounce
         timeoutId = setTimeout(async () => {
             try {
-                // Get tasks for selected date
-                const tasksRes = await Api.getJournalTasks({ 
-                    dateFrom: journalSelectedDate, 
-                    dateTo: journalSelectedDate 
-                });
-                const tasksData = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
+                const [tasksRes, notesRes] = await Promise.all([
+                    Api.getJournalTasks({ 
+                        dateFrom: journalSelectedDate, 
+                        dateTo: journalSelectedDate 
+                    }),
+                    Api.getJournalNotes(journalSelectedDate)
+                ]);
                 
-                // Get notes for selected date
-                const notesRes = await Api.getJournalNotes(journalSelectedDate);
+                if (!isMounted) return;
+                
+                const tasksData = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
                 const notesData = Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : [];
                 
-                // Update state - this will trigger exactly one re-render
+                // Batch update both states together
                 setJournalTasks(tasksData);
                 setJournalNotes(notesData);
                 
             } catch (error) {
-                console.error('Error fetching mini journal data:', error);
-            } finally {
-                setJournalLoading(false);
+                if (isMounted) {
+                    console.error('Error fetching journal:', error);
+                }
             }
         }, 300);
     }
     
     return () => {
+        isMounted = false;
         if (timeoutId) clearTimeout(timeoutId);
     };
-}, [showJournalModal, journalSelectedDate, isAuthenticated, userId]); // Only these dependencies
+}, [showJournalModal, journalSelectedDate, isAuthenticated, userId]);
 
-// Initialize journal data when modal first opens - PRELOAD FOR INSTANT DISPLAY
+// Initialize journal data when modal first opens - SINGLE FETCH ONLY
 useEffect(() => {
+    let isMounted = true;
+    
     if (showJournalModal && isAuthenticated && userId && journalTasks.length === 0) {
-        // Don't show loading on first open - fetch immediately
         const initData = async () => {
             try {
-                const tasksRes = await Api.getJournalTasks({ 
-                    dateFrom: journalSelectedDate, 
-                    dateTo: journalSelectedDate 
-                });
-                const tasksData = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
+                const [tasksRes, notesRes] = await Promise.all([
+                    Api.getJournalTasks({ 
+                        dateFrom: journalSelectedDate, 
+                        dateTo: journalSelectedDate 
+                    }),
+                    Api.getJournalNotes(journalSelectedDate)
+                ]);
                 
-                const notesRes = await Api.getJournalNotes(journalSelectedDate);
-                const notesData = Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : [];
+                if (!isMounted) return;
                 
-                setJournalTasks(tasksData);
-                setJournalNotes(notesData);
+                setJournalTasks(Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : []);
+                setJournalNotes(Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : []);
+                
             } catch (error) {
-                console.error('Error initializing journal:', error);
+                if (isMounted) {
+                    console.error('Error initializing journal:', error);
+                }
             }
         };
         
         initData();
     }
+    
+    return () => {
+        isMounted = false;
+    };
 }, [showJournalModal]); // Only run when modal opens
 
-// Mini Journal Modal Component - ULTRA STABLE (ZERO BLINKING)
-const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDate, setSelectedDate, calendarMonth, setCalendarMonth, onTaskToggle, loading }) => {
-    // ALL HOOKS MUST BE CALLED FIRST - IN THE SAME ORDER EVERY TIME
+// Mini Journal Modal Component - OPTIMIZED (ZERO BLINKING, INSTANT RESPONSE)
+const MiniJournalModal = React.memo(({ 
+    isOpen, 
+    onClose, 
+    tasks = [], 
+    notes = [], 
+    selectedDate, 
+    setSelectedDate, 
+    calendarMonth, 
+    setCalendarMonth, 
+    onTaskToggle,
+    loading 
+}) => {
+    // ALL HOOKS FIRST - in same order every time
     const [closing, setClosing] = useState(false);
+    const [localTasks, setLocalTasks] = useState(tasks);
+    const [localNotes, setLocalNotes] = useState(notes);
+    const [isToggling, setIsToggling] = useState(false);
     const navigate = useNavigate();
     
-    // Refs - all declared at the top
+    // Refs for stable values
     const timeoutRef = useRef(null);
-    const isOpenRef = useRef(isOpen);
-    const localTasksRef = useRef(tasks);
-    const localNotesRef = useRef(notes);
-    const localSelectedDateRef = useRef(selectedDate);
-    const localCalendarMonthRef = useRef(calendarMonth);
-    const renderCountRef = useRef(0);
+    const pendingToggleRef = useRef(null);
+    const initialLoadDoneRef = useRef(false);
     
-    // Force update function - use sparingly
-    const [, forceUpdate] = useState({});
-    
-    // ALL useMemo hooks MUST be declared before any conditional returns
-    const calendarDays = useMemo(() => {
-        if (!calendarMonth) return [];
-        try {
-            const parts = String(calendarMonth).split('-');
-            const year = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10);
-            const first = new Date(year, month - 1, 1);
-            const last = new Date(year, month, 0);
-            const startPad = (first.getDay() + 6) % 7;
-            const days = [];
-            for (let i = 0; i < startPad; i++) days.push(null);
-            for (let d = 1; d <= last.getDate(); d++) {
-                days.push(`${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
-            }
-            return days;
-        } catch (e) {
-            return [];
+    // Update local state when props change, but with debounce
+    useEffect(() => {
+        if (!initialLoadDoneRef.current && tasks.length > 0) {
+            setLocalTasks(tasks);
+            setLocalNotes(notes);
+            initialLoadDoneRef.current = true;
         }
-    }, [calendarMonth]);
-    
-    const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-    
-    const stats = useMemo(() => {
-        const taskCount = tasks?.length || 0;
-        const completedCount = tasks?.filter(t => t.completed).length || 0;
-        const notesCount = notes?.length || 0;
-        const completionPct = taskCount ? Math.round((completedCount / taskCount) * 100) : 0;
-        return { taskCount, completedCount, notesCount, completionPct };
     }, [tasks, notes]);
-    
-    const taskDates = useMemo(() => {
-        return new Set(tasks?.filter(t => t.date).map(t => t.date) || []);
-    }, [tasks]);
-    
-    // Update refs when props change
-    useEffect(() => {
-        localTasksRef.current = tasks;
-        localNotesRef.current = notes;
-        localSelectedDateRef.current = selectedDate;
-        localCalendarMonthRef.current = calendarMonth;
-    }, [tasks, notes, selectedDate, calendarMonth]);
-    
-    // Update isOpen ref
-    useEffect(() => {
-        isOpenRef.current = isOpen;
-    }, [isOpen]);
     
     // Clean up timeouts
     useEffect(() => {
@@ -846,33 +824,65 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
         };
     }, []);
     
-    // ALL useCallbacks declared here
+    // Calendar days memo - heavy computation
+    const calendarDays = useMemo(() => {
+        if (!calendarMonth) return [];
+        try {
+            const [year, month] = calendarMonth.split('-').map(Number);
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            const startPadding = (firstDay.getDay() + 6) % 7;
+            
+            const days = [];
+            for (let i = 0; i < startPadding; i++) days.push(null);
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                days.push(`${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+            }
+            return days;
+        } catch {
+            return [];
+        }
+    }, [calendarMonth]);
+    
+    // Task dates for calendar indicators
+    const taskDates = useMemo(() => {
+        return new Set(tasks.filter(t => t.date).map(t => t.date));
+    }, [tasks]);
+    
+    // Stats memo
+    const stats = useMemo(() => ({
+        taskCount: tasks.length,
+        completedCount: tasks.filter(t => t.completed).length,
+        notesCount: notes.length,
+        completionPct: tasks.length ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0
+    }), [tasks, notes]);
+    
+    // Today's date
+    const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+    
+    // Handlers
     const handleClose = useCallback(() => {
         if (closing) return;
-        
         setClosing(true);
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
+        
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
             setClosing(false);
+            initialLoadDoneRef.current = false;
             onClose();
-            timeoutRef.current = null;
         }, 150);
     }, [closing, onClose]);
     
     const handlePrevMonth = useCallback(() => {
-        if (!calendarMonth) return;
         const [y, m] = calendarMonth.split('-').map(Number);
-        const nm = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
-        setCalendarMonth(nm);
+        const newMonth = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+        setCalendarMonth(newMonth);
     }, [calendarMonth, setCalendarMonth]);
     
     const handleNextMonth = useCallback(() => {
-        if (!calendarMonth) return;
         const [y, m] = calendarMonth.split('-').map(Number);
-        const nm = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
-        setCalendarMonth(nm);
+        const newMonth = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+        setCalendarMonth(newMonth);
     }, [calendarMonth, setCalendarMonth]);
     
     const handleGoToJournal = useCallback(() => {
@@ -880,12 +890,38 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
         timeoutRef.current = setTimeout(() => navigate('/journal'), 150);
     }, [handleClose, navigate]);
     
-    const handleTaskToggleWrapper = useCallback((task) => {
-        onTaskToggle(task);
-    }, [onTaskToggle]);
+    // OPTIMIZED: Instant task toggle with optimistic update
+    const handleTaskToggleOptimistic = useCallback(async (task) => {
+        if (isToggling) return; // Prevent double-clicks
+        
+        // Optimistic update - INSTANT UI response
+        setLocalTasks(prev => 
+            prev.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t)
+        );
+        
+        setIsToggling(true);
+        pendingToggleRef.current = task.id;
+        
+        try {
+            await onTaskToggle(task);
+            // After successful API call, sync with server data
+            if (pendingToggleRef.current === task.id) {
+                pendingToggleRef.current = null;
+            }
+        } catch (error) {
+            // Revert on error
+            setLocalTasks(prev => 
+                prev.map(t => t.id === task.id ? task : t)
+            );
+            console.error('Task toggle failed:', error);
+        } finally {
+            setIsToggling(false);
+        }
+    }, [onTaskToggle, isToggling]);
     
     const handleDateSelect = useCallback((date) => {
         setSelectedDate(date);
+        initialLoadDoneRef.current = false; // Force reload on date change
     }, [setSelectedDate]);
     
     // Escape key handler
@@ -900,14 +936,8 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, handleClose]);
     
-    // NOW we can have conditional returns - AFTER all hooks and useMemo
+    // If not open and not closing, render nothing
     if (!isOpen && !closing) return null;
-    
-    // Track renders for debugging (remove in production)
-    renderCountRef.current++;
-    if (process.env.NODE_ENV === 'development') {
-        console.log(`Modal render: ${renderCountRef.current}, loading: ${loading}`);
-    }
     
     return (
         <div 
@@ -1013,10 +1043,10 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
                         </div>
                     </div>
                     
-                    {/* Tasks */}
+                    {/* Tasks - Use localTasks for instant UI updates */}
                     <h4 className="jmodal-section-label">TODAY'S TASKS</h4>
                     <div className="tasks-container" style={{ minHeight: '200px' }}>
-                        {loading && (!tasks || tasks.length === 0) ? (
+                        {loading && localTasks.length === 0 ? (
                             <div className="jmodal-skeleton">
                                 {[1, 2, 3].map(i => (
                                     <div key={i} className="skeleton-task-item">
@@ -1026,14 +1056,15 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
                                     </div>
                                 ))}
                             </div>
-                        ) : !tasks || tasks.length === 0 ? (
+                        ) : localTasks.length === 0 ? (
                             <div className="jmodal-empty">No tasks for today</div>
                         ) : (
-                            tasks.slice(0, 5).map(task => (
+                            localTasks.slice(0, 5).map(task => (
                                 <div key={task.id} className="mini-task-item">
                                     <button
                                         className={`mini-task-checkbox ${task.completed ? 'checked' : ''}`}
-                                        onClick={() => handleTaskToggleWrapper(task)}
+                                        onClick={() => handleTaskToggleOptimistic(task)}
+                                        disabled={isToggling && pendingToggleRef.current === task.id}
                                         type="button"
                                     >
                                         {task.completed && <FaCheck />}
@@ -1049,10 +1080,10 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
                         )}
                     </div>
                     
-                    {/* Notes */}
+                    {/* Notes - Use localNotes */}
                     <h4 className="jmodal-section-label">RECENT NOTES</h4>
                     <div className="notes-container" style={{ minHeight: '100px' }}>
-                        {loading && (!notes || notes.length === 0) ? (
+                        {loading && localNotes.length === 0 ? (
                             <div className="jmodal-skeleton">
                                 {[1, 2].map(i => (
                                     <div key={i} className="skeleton-note-item">
@@ -1061,10 +1092,10 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
                                     </div>
                                 ))}
                             </div>
-                        ) : !notes || notes.length === 0 ? (
+                        ) : localNotes.length === 0 ? (
                             <div className="jmodal-empty">No notes for today</div>
                         ) : (
-                            notes.slice(0, 3).map(note => (
+                            localNotes.slice(0, 3).map(note => (
                                 <div key={note.id} className="mini-note-item">
                                     <p>{note.content?.length > 60 ? note.content.substring(0, 60) + '...' : note.content}</p>
                                 </div>
@@ -1087,29 +1118,42 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
         </div>
     );
 }, (prevProps, nextProps) => {
-    // STRICT comparison - ONLY re-render if absolutely necessary
+    // ULTRA-OPTIMIZED memo comparison
     if (prevProps.isOpen !== nextProps.isOpen) return false;
     if (prevProps.selectedDate !== nextProps.selectedDate) return false;
     if (prevProps.calendarMonth !== nextProps.calendarMonth) return false;
+    if (prevProps.loading !== nextProps.loading) return false;
     
-    // For tasks and notes, do deep comparison only if they changed significantly
-    if (prevProps.tasks?.length !== nextProps.tasks?.length) return false;
-    if (prevProps.notes?.length !== nextProps.notes?.length) return false;
+    // Only compare IDs and completion status for tasks
+    const prevTasks = prevProps.tasks || [];
+    const nextTasks = nextProps.tasks || [];
     
-    // Check if any task completed status changed
-    if (prevProps.tasks && nextProps.tasks) {
-        for (let i = 0; i < Math.min(prevProps.tasks.length, nextProps.tasks.length); i++) {
-            if (prevProps.tasks[i]?.completed !== nextProps.tasks[i]?.completed) {
-                return false;
-            }
-            if (prevProps.tasks[i]?.id !== nextProps.tasks[i]?.id) {
-                return false;
-            }
-        }
+    if (prevTasks.length !== nextTasks.length) return false;
+    
+    // Quick hash comparison for tasks
+    let prevHash = '';
+    let nextHash = '';
+    for (let i = 0; i < prevTasks.length; i++) {
+        prevHash += prevTasks[i].id + (prevTasks[i].completed ? '1' : '0');
+        nextHash += nextTasks[i].id + (nextTasks[i].completed ? '1' : '0');
     }
     
-    // If we get here, assume nothing important changed
-    return true;
+    if (prevHash !== nextHash) return false;
+    
+    // Quick hash for notes
+    const prevNotes = prevProps.notes || [];
+    const nextNotes = nextProps.notes || [];
+    
+    if (prevNotes.length !== nextNotes.length) return false;
+    
+    let prevNotesHash = '';
+    let nextNotesHash = '';
+    for (let i = 0; i < prevNotes.length; i++) {
+        prevNotesHash += prevNotes[i].id;
+        nextNotesHash += nextNotes[i].id;
+    }
+    
+    return prevNotesHash === nextNotesHash;
 });
 
     // Save category order to backend
@@ -1483,7 +1527,7 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
                     
                     // Scroll to bottom instantly (use requestAnimationFrame for smooth scroll)
                     if (window.requestAnimationFrame) {
-                        requestAnimationFrame(() => scrollToBottom());
+                       requestAnimationFrame(() => scrollToBottom(false, true));
                     } else {
                     setTimeout(() => scrollToBottom(), 0);
                     }
@@ -1588,6 +1632,16 @@ const MiniJournalModal = React.memo(({ isOpen, onClose, tasks, notes, selectedDa
         const fileName = filePath.split(/[/\\]/).pop();
         return fileName || filePath;
     };
+    // Helper function to escape HTML
+const esc = (str) => {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
     // Clean display name: hide raw hashes, show friendly label for images
     const getDisplayFileName = (filePath, fileType) => {
         const name = getFileName(filePath);
@@ -2006,54 +2060,72 @@ const renderMessageContent = (content, messageFile) => {
         return hasActiveSubscription;
     };
 
-    // Scroll to bottom of messages
-    const scrollToBottom = () => {
-        if (messagesEndRef.current) {
-            // Use instant scroll for real-time messages, smooth for user-initiated
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-        }
-    };
+// Scroll to bottom of messages
+const scrollToBottom = (force = false, smooth = true) => {
+    // Don't auto-scroll if user is manually scrolling (unless forced)
+    if (isUserScrolling && !force) return;
     
-    // Immediate scroll function for real-time messages
-    const scrollToBottomInstant = () => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "auto", block: "end" });
-        }
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    // Scroll to specific message when navigated from notification (?jump= or ?message=)
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const messageId = params.get('message') || params.get('jump');
+    if (messagesEndRef.current && messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
         
-        if (messageId && messages.length > 0) {
-            // Wait for messages to render, then scroll to the message
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    const messageElement = document.getElementById(`message-${messageId}`);
-                    if (messageElement) {
-                        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        // Highlight the message briefly
-                        messageElement.style.backgroundColor = 'rgba(139, 92, 246, 0.3)';
-                        messageElement.style.transition = 'background-color 0.3s ease';
-                        setTimeout(() => {
-                            messageElement.style.backgroundColor = '';
-                            setTimeout(() => {
-                                messageElement.style.transition = '';
-                            }, 300);
-                        }, 2000);
-                        // Clean URL: keep channel path, remove jump/message params
-                        const newUrl = selectedChannel?.id ? `/community/${selectedChannel.id}` : window.location.pathname;
-                        window.history.replaceState({}, '', newUrl);
-                    }
-                }, 100);
+        // Only auto-scroll if user is at bottom or we're forcing it
+        if (isAtBottom || force) {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: smooth ? 'smooth' : 'auto'
             });
         }
-    }, [location.search, messages, selectedChannel]);
+    }
+};
+
+// Immediate scroll function for real-time messages
+const scrollToBottomInstant = () => {
+    scrollToBottom(true, false); // force = true, smooth = false
+};
+
+   useEffect(() => {
+    // Only scroll to bottom on new messages if user is at bottom
+    scrollToBottom(false, true);
+    }, [messages]);
+
+   // Scroll to specific message when navigated from notification (?jump= or ?message=)
+useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const messageId = params.get('message') || params.get('jump');
+    
+    if (messageId && messages.length > 0) {
+        // Temporarily disable auto-scroll
+        setIsUserScrolling(true);
+        
+        // Wait for messages to render, then scroll to the message
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                const messageElement = document.getElementById(`message-${messageId}`);
+                if (messageElement) {
+                    messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Highlight the message briefly
+                    messageElement.style.backgroundColor = 'rgba(139, 92, 246, 0.3)';
+                    messageElement.style.transition = 'background-color 0.3s ease';
+                    
+                    setTimeout(() => {
+                        messageElement.style.backgroundColor = '';
+                        // Re-enable auto-scroll after highlighting
+                        setIsUserScrolling(false);
+                    }, 2000);
+                    
+                    // Clean URL: keep channel path, remove jump/message params
+                    const newUrl = selectedChannel?.id ? `/community/${selectedChannel.id}` : window.location.pathname;
+                    window.history.replaceState({}, '', newUrl);
+                } else {
+                    // If message not found, re-enable auto-scroll
+                    setIsUserScrolling(false);
+                }
+            }, 100);
+        });
+    }
+}, [location.search, messages, selectedChannel]);
 
     // Emoji selection handler
     const handleEmojiSelect = (emoji) => {
@@ -2135,12 +2207,12 @@ avatar: storedUser?.avatar || null,
         // Clear message input
         setNewMessage('');
         
-        // Scroll to bottom immediately to show new message
-        if (window.requestAnimationFrame) {
-            requestAnimationFrame(() => scrollToBottom());
-        } else {
-        setTimeout(() => scrollToBottom(), 0);
-        }
+     // Scroll to bottom instantly only if user is at bottom
+if (window.requestAnimationFrame) {
+    requestAnimationFrame(() => scrollToBottom(false, true));
+} else {
+    setTimeout(() => scrollToBottom(false, true), 0);
+}
 
         try {
             // Save to backend API for permanent persistence
@@ -2375,87 +2447,88 @@ avatar: storedUser?.avatar || null,
         }
     };
 
-    // Fetch messages for a channel - optimized for fast loading and real-time updates
     const fetchMessages = useCallback(async (channelId, mergeMode = false) => {
-        if (!channelId) return;
-        
-        try {
-            const response = await Api.getChannelMessages(channelId);
-            if (response && response.data && Array.isArray(response.data)) {
-                const apiMessages = response.data;
-                
-                if (mergeMode) {
-                    // Merge mode: Add only new messages that don't exist yet
-                    setMessages(prev => {
-                        const existingIds = new Set(prev.map(m => m.id));
-                        const newMessages = apiMessages.filter(m => !existingIds.has(m.id));
+    if (!channelId) return;
+    
+    try {
+        const response = await Api.getChannelMessages(channelId);
+        if (response && response.data && Array.isArray(response.data)) {
+            const apiMessages = response.data;
+            
+            if (mergeMode) {
+                // Merge mode: Add only new messages that don't exist yet
+                setMessages(prev => {
+                    const existingIds = new Set(prev.map(m => m.id));
+                    const newMessages = apiMessages.filter(m => !existingIds.has(m.id));
+                    
+                    if (newMessages.length > 0) {
+                        // Merge new messages with existing ones, sorted by timestamp
+                        const merged = [...prev, ...newMessages].sort((a, b) => {
+                            const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
+                            const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
+                            return timeA - timeB;
+                        });
                         
-                        if (newMessages.length > 0) {
-                            // Merge new messages with existing ones, sorted by timestamp
-                            const merged = [...prev, ...newMessages].sort((a, b) => {
-                                const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
-                                const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
-                                return timeA - timeB;
-                            });
-                            
-                            // Save to localStorage
-                            saveMessagesToStorage(channelId, merged);
-                            return merged;
-                        }
-                        
-                        return prev; // No new messages
-                    });
-                } else {
-                    // Full refresh mode: Replace all messages
-                    // OPTIMIZATION: Load from localStorage FIRST for instant display
-                    const cachedMessages = loadMessagesFromStorage(channelId);
-                    if (cachedMessages.length > 0) {
-                        // Show cached messages immediately while fetching fresh ones
-                        setMessages(cachedMessages);
-                    } else {
-                        // No cache, show empty array immediately
-                        setMessages([]);
+                        // Save to localStorage
+                        saveMessagesToStorage(channelId, merged);
+                        return merged;
                     }
                     
-                    // Always update with fresh messages from API (ensure persistence)
-                    // Compare by message count and IDs to determine if update is needed
-                    const cachedIds = new Set(cachedMessages.map(m => String(m.id || m.tempId || '')));
-                    const apiIds = new Set(apiMessages.map(m => String(m.id || '')));
-                    const hasNewMessages = apiMessages.length !== cachedMessages.length || 
-                                         apiMessages.some(m => !cachedIds.has(String(m.id))) ||
-                                         cachedMessages.some(m => m.id && !apiIds.has(String(m.id)));
-                    
-                    // Always save and update if:
-                    // 1. There are new messages from API
-                    // 2. API has messages (even if count matches, content might differ)
-                    // 3. API messages exist (to ensure persistence)
-                    const isAllowlistChannel = ['announcements', 'levels'].includes(String(channelId).toLowerCase());
-                    if (hasNewMessages || apiMessages.length > 0) {
-                        // Save to localStorage as backup/cache (CRITICAL for persistence)
-                        saveMessagesToStorage(channelId, apiMessages);
-                        setMessages(apiMessages);
-                    } else if (apiMessages.length === 0 && cachedMessages.length > 0) {
-                        saveMessagesToStorage(channelId, []);
-                    } else if (apiMessages.length === 0 && isAllowlistChannel) {
-                        // Don't overwrite - placeholder useEffect will show content for empty announcements/levels
-                        saveMessagesToStorage(channelId, []);
-                    }
-                }
-                return;
-            }
-        } catch (apiError) {
-            // In merge mode, don't show errors - just silently fail
-            if (!mergeMode) {
-                // Full refresh mode: show cached messages if available
+                    return prev; // No new messages
+                });
+            } else {
+                // Full refresh mode: Replace all messages
+                // OPTIMIZATION: Load from localStorage FIRST for instant display
                 const cachedMessages = loadMessagesFromStorage(channelId);
                 if (cachedMessages.length > 0) {
+                    // Show cached messages immediately while fetching fresh ones
                     setMessages(cachedMessages);
                 } else {
-                    console.warn('Backend API unavailable, no cached messages:', apiError.message);
+                    setMessages([]);
+                }
+                
+                // Always update with fresh messages from API (ensure persistence)
+                // Compare by message count and IDs to determine if update is needed
+                const cachedIds = new Set(cachedMessages.map(m => String(m.id || m.tempId || '')));
+                const apiIds = new Set(apiMessages.map(m => String(m.id || '')));
+                const hasNewMessages = apiMessages.length !== cachedMessages.length || 
+                                     apiMessages.some(m => !cachedIds.has(String(m.id))) ||
+                                     cachedMessages.some(m => m.id && !apiIds.has(String(m.id)));
+                
+                // Always save and update if:
+                // 1. There are new messages from API
+                // 2. API has messages (even if count matches, content might differ)
+                // 3. API messages exist (to ensure persistence)
+                const isAllowlistChannel = ['announcements', 'levels'].includes(String(channelId).toLowerCase());
+                if (hasNewMessages || apiMessages.length > 0) {
+                    // Save to localStorage as backup/cache (CRITICAL for persistence)
+                    saveMessagesToStorage(channelId, apiMessages);
+                    setMessages(apiMessages);
+                } else if (apiMessages.length === 0 && cachedMessages.length > 0) {
+                    saveMessagesToStorage(channelId, []);
+                } else if (apiMessages.length === 0 && isAllowlistChannel) {
+                    // Don't overwrite - placeholder useEffect will show content for empty announcements/levels
+                    saveMessagesToStorage(channelId, []);
                 }
             }
         }
-    }, []);
+    } catch (apiError) {
+        // In merge mode, don't show errors - just silently fail
+        if (!mergeMode) {
+            // Full refresh mode: show cached messages if available
+            const cachedMessages = loadMessagesFromStorage(channelId);
+            if (cachedMessages.length > 0) {
+                setMessages(cachedMessages);
+            } else {
+                console.warn('Backend API unavailable, no cached messages:', apiError.message);
+            }
+        }
+    } finally {
+        if (!mergeMode) { 
+             setMessagesLoading(false);
+        }
+    }
+}, []);
 
     const handleCreateChannel = async (event) => {
         if (event) {
@@ -3287,6 +3360,7 @@ avatar: storedUser?.avatar || null,
     // Load messages when channel changes - optimized for instant display
     useEffect(() => {
         if (selectedChannel && selectedChannel.id) {
+            setMessagesLoading(true);
             // Preserve ?jump= / ?message= when navigating (notification deep link)
             const params = new URLSearchParams(location.search);
             const jump = params.get('jump') || params.get('message');
@@ -3297,6 +3371,7 @@ avatar: storedUser?.avatar || null,
             const cachedMessages = loadMessagesFromStorage(selectedChannel.id);
             if (cachedMessages.length > 0) {
                 setMessages(cachedMessages);
+                setMessagesLoading(false);
                 // Scroll to bottom immediately when showing cached messages
                 setTimeout(() => scrollToBottom(), 0);
             } else {
@@ -3674,186 +3749,52 @@ Earn XP by:
         setNewMessage('');
     };
 
-   // Open/view file first (new tab). Does not download.
-const handleFileClick = (file) => {
+  const handleFileClick = (file) => {
     if (!file) return;
     
     // If no preview data, try to construct from filename or show error
     if (!file.preview) {
         // Try to see if this is a URL
         if (file.name && (file.name.startsWith('http://') || file.name.startsWith('https://'))) {
-            window.open(file.name, '_blank', 'noopener,noreferrer');
+            setSelectedImage({
+                url: file.name,
+                name: file.name,
+                type: 'image/url'
+            });
+            setShowImageModal(true);
             return;
         }
         
-        alert(`File "${file.name}" cannot be opened. The file data was not saved when the message was sent.`);
+        alert(`File "${file.name}" cannot be opened. The file data was not available.`);
         return;
     }
     
-    const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    // Check if it's an image
+    const isImage = file.type?.startsWith('image/') || 
+                    file.name?.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i);
     
-    // Open in new window/tab
-    const newWindow = window.open();
-    if (!newWindow) {
-        // If popup blocked, try direct download
-        handleFileDownload(null, file);
+    if (isImage) {
+        // Open in modal
+        setSelectedImage({
+            url: file.preview,
+            name: file.name,
+            type: file.type
+        });
+        setShowImageModal(true);
         return;
     }
     
-    // Handle different file types
-    if (file.type && file.type.startsWith('image/')) {
-        // Images
-        newWindow.document.write(`
-            <html>
-                <head>
-                    <title>${esc(file.name)}</title>
-                    <style>
-                        body { margin: 0; padding: 20px; background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                        img { max-width: 100%; max-height: 100vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-                    </style>
-                </head>
-                <body><img src="${file.preview}" alt="${esc(file.name)}" /></body>
-            </html>
-        `);
+    // For non-images, handle based on file type (PDF, text, etc.)
+    if (file.type?.includes('pdf') || file.name?.toLowerCase().endsWith('.pdf')) {
+        window.open(file.preview, '_blank');
         return;
     }
     
-    // PDF files
-    if (file.type && (file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf'))) {
-        // For PDFs, we can embed them
-        newWindow.document.write(`
-            <html>
-                <head>
-                    <title>${esc(file.name)}</title>
-                    <style>
-                        body { margin: 0; padding: 20px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; }
-                        .container { max-width: 100%; height: 100vh; margin: 0; padding: 0; }
-                        iframe { width: 100%; height: 100%; border: none; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <iframe src="${file.preview}" title="${esc(file.name)}"></iframe>
-                    </div>
-                </body>
-            </html>
-        `);
-        return;
-    }
-    
-    // Text files
-    if (file.type && (file.type.includes('text') || file.name.toLowerCase().endsWith('.txt') || 
-        file.name.toLowerCase().endsWith('.md') || file.name.toLowerCase().endsWith('.json'))) {
-        try {
-            // Decode base64 to text
-            const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
-            const text = atob(base64Data);
-            const escapedText = esc(text).replace(/\n/g, '<br>');
-            
-            newWindow.document.write(`
-                <html>
-                    <head>
-                        <title>${esc(file.name)}</title>
-                        <style>
-                            body { margin: 0; padding: 20px; background: #1a1a1a; color: #fff; font-family: monospace; white-space: pre-wrap; }
-                            pre { margin: 0; padding: 20px; background: #2a2a2a; border-radius: 8px; overflow: auto; }
-                        </style>
-                    </head>
-                    <body><pre>${escapedText}</pre></body>
-                </html>
-            `);
-        } catch (e) {
-            // If decoding fails, offer download
-            newWindow.document.write(`
-                <html>
-                    <head><title>${esc(file.name)}</title>
-                    <style>
-                        body { margin: 0; padding: 24px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                        .card { background: #2a2a2a; padding: 24px; border-radius: 12px; text-align: center; max-width: 360px; }
-                        h2 { margin: 0 0 8px; font-size: 1rem; word-break: break-all; }
-                        p { margin: 0 0 16px; color: #999; font-size: 0.875rem; }
-                        a { display: inline-block; padding: 10px 20px; background: #5865f2; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
-                        a:hover { background: #4752c4; }
-                    </style></head>
-                    <body>
-                        <div class="card">
-                            <h2>${esc(file.name)}</h2>
-                            <p>This file cannot be previewed in the browser.</p>
-                            <a href="#" id="dl">Download</a>
-                        </div>
-                    </body>
-                </html>
-            `);
-            
-            const blob = (() => {
-                try {
-                    const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
-                    const byteCharacters = atob(base64Data);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    return new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
-                } catch (e) { return null; }
-            })();
-            
-            if (blob) {
-                const url = URL.createObjectURL(blob);
-                newWindow.document.getElementById('dl').href = url;
-                newWindow.document.getElementById('dl').download = getFileName(file.name);
-            }
-        }
-        return;
-    }
-    
-    // For other file types (ODP, PPTX, DOCX, etc.), show download page
-    newWindow.document.write(`
-        <html>
-            <head>
-                <title>${esc(file.name)}</title>
-                <style>
-                    body { margin: 0; padding: 24px; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                    .card { background: #2a2a2a; padding: 24px; border-radius: 12px; text-align: center; max-width: 360px; }
-                    h2 { margin: 0 0 8px; font-size: 1rem; word-break: break-all; }
-                    p { margin: 0 0 16px; color: #999; font-size: 0.875rem; }
-                    .file-icon { font-size: 48px; margin-bottom: 16px; }
-                    .download-btn { display: inline-block; padding: 10px 20px; background: #5865f2; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
-                    .download-btn:hover { background: #4752c4; }
-                </style>
-            </head>
-            <body>
-                <div class="card">
-                    <div class="file-icon">📄</div>
-                    <h2>${esc(file.name)}</h2>
-                    <p>This file type cannot be previewed in the browser.</p>
-                    <a href="#" class="download-btn" id="dl">Download File</a>
-                </div>
-            </body>
-        </html>
-    `);
-    
-    // Create blob for download
-    try {
-        const base64Data = file.preview.includes(',') ? file.preview.split(',')[1] : file.preview;
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-        const blob = new Blob([new Uint8Array(byteNumbers)], { type: file.type || 'application/octet-stream' });
-        const url = URL.createObjectURL(blob);
-        newWindow.document.getElementById('dl').href = url;
-        newWindow.document.getElementById('dl').download = getFileName(file.name);
-    } catch (e) {
-        console.error('Error creating download blob:', e);
-        newWindow.document.write(`
-            <html>
-                <body>
-                    <div style="padding: 20px; text-align: center;">
-                        <h2>Error loading file</h2>
-                        <p>The file data appears to be corrupted.</p>
-                    </div>
-                </body>
-            </html>
-        `);
-    }
+    // For other file types, trigger download
+    handleFileDownload(null, file);
 };
+    
+    
 
    // Download file (explicit action). Used by Download button.
 const handleFileDownload = (e, file) => {
@@ -3887,8 +3828,7 @@ const handleFileDownload = (e, file) => {
     }
 };
 
-    // Handle send message (or update if editing)
-    // Handle send message (or update if editing)
+// Handle send message (or update if editing)
 const handleSendMessage = async (e) => {
     e.preventDefault();
     if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
@@ -3901,7 +3841,6 @@ const handleSendMessage = async (e) => {
         const message = messages.find(m => m.id === editingMessageId);
         if (message && String(message.userId) === String(userId)) {
             try {
-                // Update message content
                 const updatedContent = newMessage.trim();
                 setMessages(prev => {
                     const updated = prev.map(msg => 
@@ -3912,9 +3851,6 @@ const handleSendMessage = async (e) => {
                     saveMessagesToStorage(selectedChannel.id, updated);
                     return updated;
                 });
-                
-                // TODO: Send update to backend API
-                // For now, just update locally
                 
                 handleCancelEdit();
                 return;
@@ -3929,23 +3865,23 @@ const handleSendMessage = async (e) => {
     const messageContent = newMessage.trim();
     const senderUsername = storedUser?.username || storedUser?.name || 'User';
 
-    // Prepare message data - include file metadata if file exists
+    // Generate a unique client ID for this message
     const clientMessageId = typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
         : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     
     const messageToSend = {
         channelId: selectedChannel.id,
-        content: messageContent || '', // Empty if no text, file will be shown separately
+        content: messageContent || '',
         userId,
         username: senderUsername,
         clientMessageId
     };
     
-    // IMPORTANT: For file attachments, we need to save the file data properly
+    // Handle file if present
+    let fileData = null;
     if (selectedFile) {
-        // Read the file as data URL to save the content
-        const fileData = await new Promise((resolve) => {
+        fileData = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
             reader.readAsDataURL(selectedFile);
@@ -3955,11 +3891,11 @@ const handleSendMessage = async (e) => {
             name: selectedFile.name,
             type: selectedFile.type,
             size: selectedFile.size,
-            preview: fileData // Save the actual file data for ALL file types
+            preview: fileData
         };
     }
 
-    // Optimistic update - add message to UI immediately
+    // Create optimistic message with the file data
     const optimisticMessage = {
         id: clientMessageId,
         channelId: selectedChannel.id,
@@ -3971,22 +3907,21 @@ const handleSendMessage = async (e) => {
             role: getCurrentUserRole()
         },
         timestamp: new Date().toISOString(),
-        file: selectedFile ? {
-            name: selectedFile.name,
-            type: selectedFile.type,
-            size: selectedFile.size,
-            preview: filePreview || (selectedFile ? await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(selectedFile);
-            }) : null)
-        } : null,
+        file: messageToSend.file || null,
         userId,
-        username: senderUsername
+        username: senderUsername,
+        _optimistic: true // Mark as optimistic for debugging
     };
+
+    console.log('📤 Adding optimistic message:', optimisticMessage.id);
     
     // Add message to state immediately for instant UI feedback
     setMessages(prev => {
+        // Check if we already have this message (prevent duplicates)
+        if (prev.some(m => m.id === clientMessageId || m.clientMessageId === clientMessageId)) {
+            console.log('⚠️ Message already exists, skipping');
+            return prev;
+        }
         const updated = [...prev, optimisticMessage];
         saveMessagesToStorage(selectedChannel.id, updated);
         return updated;
@@ -4001,36 +3936,34 @@ const handleSendMessage = async (e) => {
     // Scroll to bottom immediately to show new message
     scrollToBottomInstant();
 
-    try {
+  try {
         // Send via API
-        Api.sendMessage(selectedChannel.id, messageToSend)
-            .then(response => {
-                if (response && response.data) {
-                    const serverMessage = response.data;
-                    const clientId = optimisticMessage.id;
-                    const serverId = serverMessage.id;
-                    setMessages(prev => {
-                        const withoutDuplicates = prev.filter(m => {
-                            const id = String(m.id || '');
-                            if (id === String(serverId)) return false;
-                            if (id === String(clientId)) return false;
-                            if (m.clientMessageId === messageToSend.clientMessageId) return false;
-                            return true;
-                        });
-                        const final = [...withoutDuplicates, serverMessage].sort((a, b) =>
-                            new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0));
-                        saveMessagesToStorage(selectedChannel.id, final);
-                        return final;
-                    });
-                }
-            })
-            .catch(error => {
-                const msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
-                if (process.env.NODE_ENV === 'development') console.error('Error saving message to API:', error);
-                toast.error(msg);
-            });
+        console.log('📡 Sending to API...');
+        const response = await Api.sendMessage(selectedChannel.id, messageToSend);
         
-        // Check for @mentions and send notifications
+        if (response && response.data) {
+            const serverMessage = response.data;
+            console.log('✅ Server responded with message:', serverMessage.id);
+            
+            // Update state by replacing optimistic message with server message
+            setMessages(prev => {
+                // Filter out the optimistic message and any duplicates
+                const withoutOptimistic = prev.filter(m => 
+                    m.id !== clientMessageId && 
+                    m.clientMessageId !== clientMessageId
+                );
+                
+                // Add the server message
+                const final = [...withoutOptimistic, serverMessage].sort((a, b) => 
+                    new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0)
+                );
+                
+                saveMessagesToStorage(selectedChannel.id, final);
+                return final;
+            });
+        }
+        
+        // Handle mentions (keep your existing mention code)
         const mentionRegex = /@(\w+)/g;
         const mentions = messageContent.match(mentionRegex);
         if (mentions) {
@@ -4118,8 +4051,15 @@ const handleSendMessage = async (e) => {
         }
     } catch (error) {
         console.error('Error sending message:', error);
-        persistMessagesList(selectedChannel.id, messages);
-        alert('Failed to send message. Please try again.');
+        
+        // On error, remove the optimistic message
+        setMessages(prev => {
+            const filtered = prev.filter(m => m.id !== clientMessageId && m.clientMessageId !== clientMessageId);
+            saveMessagesToStorage(selectedChannel.id, filtered);
+            return filtered;
+        });
+        
+        toast.error('Failed to send message. Please try again.');
     }
 };
 
@@ -4436,7 +4376,52 @@ const handleSendMessage = async (e) => {
         
         return grouped;
     }, [channelList, channelOrder]);
+   // Detect when user is manually scrolling
+useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+    if (!messagesContainer) return;
     
+    let scrollTimeout;
+    let isManuallyScrolling = false;
+    
+    const handleScroll = () => {
+        // User is scrolling manually
+        if (!isManuallyScrolling) {
+            isManuallyScrolling = true;
+            setIsUserScrolling(true);
+        }
+        
+        // Clear existing timeout
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+        
+        // Set new timeout to detect when scrolling stops
+        scrollTimeout = setTimeout(() => {
+            isManuallyScrolling = false;
+            setIsUserScrolling(false);
+            
+            // Check if user is near bottom when they stop scrolling
+            const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
+            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+            
+            // If they're near bottom, allow auto-scroll again
+            if (isNearBottom) {
+                setIsUserScrolling(false);
+            }
+        }, 200); // Slightly longer timeout for better detection
+    };
+    
+    messagesContainer.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+        messagesContainer.removeEventListener('scroll', handleScroll);
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+    };
+}, []);
+
     // Update category order when channels change
     useEffect(() => {
         const allCategories = Object.keys(groupedChannels);
@@ -5910,57 +5895,81 @@ const handleSendMessage = async (e) => {
                             </h2>
                         </div>
                         
-                        {/* Messages */}
-                        <div className="chat-messages">
-                            {messages.length === 0 ? (
-                                <div className="empty-state">
-                                    <h3>
-                                        {isWelcomeChannel
-                                            ? 'Welcome to AURA FX'
-                                            : `Welcome to #${selectedChannel?.displayName || selectedChannel?.name}`}
-                                    </h3>
-                                    <p>
-                                        {isWelcomeChannel
-                                            ? 'Read the rules above and click the checkmark below to unlock your channels.'
-                                            : (() => {
-                                                const desc = (selectedChannel?.description || '').replace(/glitch/gi, 'AURA FX').trim();
-                                                return desc || 'No messages yet. Be the first to start the conversation!';
-                                            })()}
-                                    </p>
-                                    {isWelcomeChannel && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
-                                        <div
-                                            role="button"
-                                            tabIndex={0}
-                                            style={{
-                                                marginTop: '24px',
-                                                padding: '16px 24px',
-                                                background: 'rgba(99, 102, 241, 0.15)',
-                                                borderRadius: '10px',
-                                                border: '2px solid rgba(99, 102, 241, 0.4)',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '12px',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                                fontWeight: 600,
-                                                color: '#fff'
-                                            }}
-                                            onClick={handleWelcomeAcknowledgment}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleWelcomeAcknowledgment(); } }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)';
-                                                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.6)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
-                                                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
-                                            }}
-                                        >
-                                            <span style={{ fontSize: '1.5rem' }}>✅</span>
-                                            <span>I've read and agree to the rules – unlock my channels</span>
-                                        </div>
-                                    )}
-                                </div>
+                      {/* Messages */}
+<div className="chat-messages" ref={messagesContainerRef}>
+    
+    {messagesLoading ? (
+        // Skeleton loading state
+        <div className="messages-skeleton" style={{
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            animation: 'fadeIn 0.2s ease'
+        }}>
+            {[...Array(6)].map((_, i) => (
+                <div key={i} style={{
+                    display: 'flex',
+                    gap: '12px',
+                    alignItems: 'flex-start',
+                    opacity: 1 - (i * 0.08),
+                    animationDelay: `${i * 0.05}s`
+                }}>
+                    {/* Avatar skeleton */}
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 1.5s infinite',
+                        flexShrink: 0
+                    }} />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px' }}>
+                        {/* Name + timestamp skeleton */}
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <div style={{
+                                height: '14px',
+                                width: `${70 + (i % 3) * 30}px`,
+                                borderRadius: '7px',
+                                background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.13) 50%, rgba(255,255,255,0.08) 75%)',
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer 1.5s infinite',
+                                animationDelay: `${i * 0.1}s`
+                            }} />
+                            <div style={{
+                                height: '11px',
+                                width: '48px',
+                                borderRadius: '6px',
+                                background: 'rgba(255,255,255,0.04)',
+                                flexShrink: 0
+                            }} />
+                        </div>
+                        {/* Message line(s) skeleton */}
+                        <div style={{
+                            height: '14px',
+                            width: `${40 + ((i * 37) % 50)}%`,
+                            borderRadius: '7px',
+                            background: 'linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%)',
+                            backgroundSize: '200% 100%',
+                            animation: 'shimmer 1.5s infinite',
+                            animationDelay: `${i * 0.12}s`
+                        }} />
+                        {i % 3 === 0 && (
+                            <div style={{
+                                height: '14px',
+                                width: `${25 + ((i * 19) % 35)}%`,
+                                borderRadius: '7px',
+                                background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 75%)',
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer 1.5s infinite',
+                                animationDelay: `${i * 0.15}s`
+                            }} />
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
                             ) : (
                                 messagesWithDateGroups.map((item, index) => {
                                     if (item.type === 'date') {
@@ -6529,7 +6538,7 @@ const handleSendMessage = async (e) => {
                             )}
                             <div ref={messagesEndRef} />
                         </div>
-                        
+                       
                         {/* WebSocket reconnect failed banner */}
                         {reconnectBanner && (
                             <div className="ws-reconnect-banner" style={{
@@ -8652,6 +8661,17 @@ const handleSendMessage = async (e) => {
     setCalendarMonth={setJournalCalendarMonth}
     onTaskToggle={handleMiniTaskToggle}
     loading={journalLoading}
+/>
+{/* Image Modal */}
+<ImageModal 
+    isOpen={showImageModal}
+    onClose={() => {
+        setShowImageModal(false);
+        setSelectedImage(null);
+    }}
+    imageUrl={selectedImage?.url}
+    fileName={selectedImage?.name}
+    fileType={selectedImage?.type}
 />
         </div>
     );

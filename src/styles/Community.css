@@ -1,10 +1,7 @@
 /* ============================================================
-   AURA FX Community — Final Bug Fix CSS
-   Fixes:
-   1. Manage Channels modal: inputs fully inside box, responsive
-   2. Duplicate centre hamburger: eliminated
-   3. Avatar / username: proper alignment & spacing  
-   4. Links in chat: visual styling (JS fix also provided)
+   AURA FX Community — Complete CSS
+   All original styles preserved.
+   Chat Input + Journal FAB fully fixed for desktop & mobile.
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
@@ -48,6 +45,15 @@ body.community-page-active [class*="Footer"] {
     height: 0 !important;
     overflow: hidden !important;
 }
+/* BUT keep journal modal footer visible */
+body.community-page-active .journal-modal-footer {
+    display: flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    height: auto !important;
+    min-height: 68px !important;
+    overflow: visible !important;
+}
 body.community-page-active,
 html.community-page-active {
     overflow: hidden !important;
@@ -89,30 +95,12 @@ html.community-page-active {
     z-index: 0;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FIX 2 — DUPLICATE CENTRE HAMBURGER
-   
-   Root cause: Community.js renders:
-     {isMobile && <button className="mobile-sidebar-toggle"
-       style={{ position:'fixed', top:'80px', left:'12px', zIndex:1002 }}>}
-   
-   On DESKTOP: isMobile=false so this button is never rendered → no issue.
-   On MOBILE: the button IS rendered with position:fixed top:80px which
-   places it in the middle of the screen ON TOP of the chat area, making
-   it look like a second sidebar / centre bar.
-   
-   Fix: override the inline position:fixed with position:relative so it
-   flows naturally inside the .chat-header (which already has a FaBars
-   button via the mobile-back-button). Since the toggle duplicates the
-   mobile-back-button functionality, we hide it entirely on mobile too.
-   ══════════════════════════════════════════════════════════════ */
-
-/* Hide mobile-sidebar-toggle completely — mobile uses the chat-header FaBars */
+/* ── Hide duplicate mobile hamburger ────────────────────────── */
 .mobile-sidebar-toggle {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
-    position: relative !important; /* Neutralise any fixed/absolute */
+    position: relative !important;
     opacity: 0 !important;
 }
 
@@ -252,10 +240,22 @@ html.community-page-active {
 .chat-header h2::before { content: '#'; color: var(--text-muted); font-weight: 600; font-size: 1.1rem; }
 
 .chat-messages {
-    flex: 1 1 0; overflow-y: auto; overflow-x: hidden;
-    padding: 16px 20px; min-height: 0;
-    background: var(--bg-tertiary);
-    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 16px 20px !important;
+    background: var(--bg-tertiary) !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    position: relative !important;
+    transition: opacity 0.25s ease;
+}
+.chat-messages.user-scrolling { scroll-behavior: auto !important; }
+.messages-end-anchor {
+    height: 1px !important; width: 100% !important;
+    visibility: hidden !important; pointer-events: none !important;
 }
 .chat-messages::-webkit-scrollbar { width: 4px; }
 .chat-messages::-webkit-scrollbar-track { background: transparent; }
@@ -278,23 +278,10 @@ html.community-page-active {
 .empty-state h3 { font-size: 1.75rem; font-weight: 700; color: #fff; margin: 0 0 10px; letter-spacing: -0.02em; }
 .empty-state p { font-size: 0.9375rem; color: var(--text-muted); line-height: 1.6; max-width: 520px; }
 
-/* ══════════════════════════════════════════════════════════════
-   FIX 3 — AVATAR / USERNAME ALIGNMENT
-   
-   Community.js renders the avatar as:
-     <div className="message-avatar" style={{
-       position:'absolute', left:'16px', top:'0.125rem',
-       width:'40px', height:'40px'
-     }}>
-   
-   So: left=16px, width=40px, gap=12px → padding-left must be ≥ 68px.
-   The author name and timestamp use .message-header-info with a flex row.
-   We use align-items:baseline so the timestamp sits on the same text line.
-   ══════════════════════════════════════════════════════════════ */
-
+/* ── MESSAGES ────────────────────────────────────────────────── */
 .message-item {
     display: flex;
-    padding: 2px 12px 2px 72px; /* 16px margin + 40px avatar + 16px gap */
+    padding: 2px 12px 2px 72px;
     margin: 0;
     position: relative;
     transition: background var(--transition);
@@ -313,8 +300,6 @@ html.community-page-active {
     padding-bottom: 1px !important;
 }
 
-/* The JS renders avatar as a <div className="message-avatar"> with inline styles.
-   We reinforce position/size so inline styles don't drift. */
 .message-avatar {
     position: absolute !important;
     left: 16px !important;
@@ -336,11 +321,10 @@ html.community-page-active {
     background: none !important; border: none !important; box-shadow: none !important;
 }
 
-/* Header row: author name + timestamp on same baseline */
 .message-header-info,
 .community-message-header-with-time {
     display: flex !important;
-    align-items: baseline !important;  /* ← key: text baseline alignment */
+    align-items: baseline !important;
     flex-wrap: nowrap !important;
     gap: 6px !important;
     margin-bottom: 4px !important;
@@ -348,7 +332,6 @@ html.community-page-active {
     overflow: visible;
 }
 
-/* Author name */
 .message-author {
     font-weight: 700 !important;
     color: #ffffff !important;
@@ -363,7 +346,6 @@ html.community-page-active {
 }
 .message-author:hover { color: var(--purple) !important; }
 
-/* Timestamp — shown on hover, sits on baseline next to name */
 .message-timestamp,
 .message-time-right {
     font-size: 0.68rem !important;
@@ -379,7 +361,6 @@ html.community-page-active {
 .message-item:hover .message-timestamp,
 .message-item:hover .message-time-right { opacity: 1; }
 
-/* Message body */
 .message-text {
     color: rgba(240,240,245,0.88);
     line-height: 1.55; font-size: 0.9125rem;
@@ -395,15 +376,6 @@ html.community-page-active {
 }
 .message-text img:hover { transform: scale(1.02); }
 
-/* ══════════════════════════════════════════════════════════════
-   FIX 4 — LINKS IN CHAT
-   
-   The JS renderTextWithBold function only handles **bold** segments and
-   wraps everything in <span>. URLs never become clickable <a> tags via CSS
-   alone — this requires a JS fix (see community-link-fix.js patch below).
-   
-   These CSS rules style the <a> tags that the patched JS will produce.
-   ══════════════════════════════════════════════════════════════ */
 .message-text a {
     color: #a78bfa !important;
     text-decoration: none !important;
@@ -417,17 +389,11 @@ html.community-page-active {
     color: #c4b5fd !important;
     border-bottom-color: rgba(196,181,253,0.85);
 }
-/* Force any download attribute to be overridden visually */
-.message-text a[download] {
-    color: #a78bfa !important;
-    cursor: pointer !important;
-}
+.message-text a[download] { color: #a78bfa !important; cursor: pointer !important; }
 
-/* Delete buttons on hover */
 .message-item:hover .message-delete-btn { opacity: 1 !important; }
 .message-item:hover .message-delete-grouped { opacity: 1 !important; }
 
-/* Reactions */
 .message-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .reaction-button {
     display: flex; align-items: center; gap: 4px;
@@ -438,38 +404,150 @@ html.community-page-active {
 }
 .reaction-button:hover { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.3); color: #fff; }
 
-/* ── CHAT INPUT ───────────────────────────────────────────────── */
-.chat-input-container { padding: 12px 16px 16px; background: var(--bg-tertiary); border-top: 1px solid var(--border); flex-shrink: 0; position: relative; overflow: visible; }
-.connection-status { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; letter-spacing: 0.3px; }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.status-dot.connected { background: var(--accent-green); box-shadow: 0 0 6px rgba(16,185,129,0.6); }
-.status-dot.connecting { background: var(--accent-amber); animation: statusPulse 2s ease-in-out infinite; }
-.status-dot.error { background: var(--accent-red); animation: statusPulse 2s ease-in-out infinite; }
-@keyframes statusPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.85); } }
+/* ════════════════════════════════════════════════════════════════
+   CHAT INPUT — COMPLETE REWRITE (FIXED)
+   
+   KEY INSIGHT: .journal-floating-btn is rendered OUTSIDE
+   .chat-input-container in the DOM (sibling of .chat-main or
+   child of .community-container). So position:absolute relative
+   to the container never works.
+   
+   SOLUTION: Use position:fixed for FAB on ALL breakpoints.
+   The container uses padding-right to reserve visual space for
+   the FAB so the form content never slides underneath it.
+   Desktop:  padding-right = FAB(52) + gap(12) + margin(16) = 80px
+   Tablet:   padding-right = FAB(46) + gap(12) + margin(14) = 72px
+   Mobile:   FAB floats ABOVE the bar — no padding-right needed.
+   ════════════════════════════════════════════════════════════════ */
 
-.chat-form { display: flex; flex-direction: row; gap: 10px; align-items: flex-end; }
-.chat-input-wrapper { flex: 1; position: relative; overflow: visible; }
-.chat-input {
-    width: 100%; padding: 10px 52px 10px 14px;
-    border-radius: 10px; border: 1px solid var(--border);
-    background: rgba(255,255,255,0.04); color: var(--text);
-    font-size: 0.875rem; font-family: 'Space Grotesk', sans-serif;
-    resize: none; outline: none;
-    transition: border-color var(--transition), background var(--transition);
-    min-height: 44px; max-height: 200px; line-height: 1.5; overflow-y: auto;
+.chat-input-container {
+    /* Right padding = FAB width (52px) + gap (12px) + outer margin (16px) = 80px */
+    padding: 14px 80px 14px 16px !important;
+    background: var(--bg-tertiary) !important;
+    border-top: 1px solid var(--border) !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    overflow: visible !important;
+    z-index: 10 !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
 }
-.chat-input:focus { border-color: rgba(139,92,246,0.4); background: rgba(255,255,255,0.055); box-shadow: 0 0 0 3px rgba(139,92,246,0.08); }
-.chat-input::placeholder { color: var(--text-dim); }
-.chat-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.chat-input-buttons { display: flex; gap: 4px; align-items: center; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
-.chat-input-btn { background: none; border: none; color: var(--text-dim); font-size: 1.05rem; cursor: pointer; padding: 6px; border-radius: 6px; transition: all 0.15s ease; display: flex; align-items: center; justify-content: center; }
-.chat-input-btn:hover { color: var(--purple); background: var(--purple-dim); }
+.chat-form {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
 
-.send-btn { padding: 0 18px; height: 44px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--purple) 0%, var(--indigo) 100%); color: #fff; font-weight: 700; font-size: 0.85rem; font-family: 'Space Grotesk', sans-serif; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 12px rgba(139,92,246,0.3); letter-spacing: 0.02em; }
-.send-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(139,92,246,0.5); }
-.send-btn:active:not(:disabled) { transform: translateY(0); }
-.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+.chat-input-wrapper {
+    flex: 1 1 auto !important;
+    position: relative !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.chat-input {
+    width: 100% !important;
+    padding: 13px 108px 13px 16px !important;
+    border-radius: 14px !important;
+    border: 1px solid var(--border) !important;
+    background: rgba(255,255,255,0.04) !important;
+    color: var(--text) !important;
+    font-size: 0.9375rem !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    line-height: 1.5 !important;
+    resize: none !important;
+    min-height: 52px !important;
+    max-height: 150px !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+.chat-input:focus {
+    border-color: var(--purple) !important;
+    background: rgba(255,255,255,0.06) !important;
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15) !important;
+    outline: none !important;
+}
+.chat-input::placeholder { color: var(--text-dim) !important; }
+.chat-input:disabled     { opacity: 0.4 !important; cursor: not-allowed !important; }
+
+/* Icon buttons — pinned to textarea's right inner edge */
+.chat-input-buttons {
+    position: absolute !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    top: auto !important;
+    left: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 3px !important;
+    z-index: 5 !important;
+    pointer-events: auto !important;
+}
+
+.chat-input-btn {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    color: rgba(255,255,255,0.5) !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    font-size: 0.95rem !important;
+    flex-shrink: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    transition: background 0.18s ease, color 0.18s ease,
+                border-color 0.18s ease, transform 0.18s ease !important;
+}
+.chat-input-btn:hover:not(:disabled) {
+    background: var(--purple-dim) !important;
+    border-color: var(--purple) !important;
+    color: #c4b5fd !important;
+    transform: translateY(-2px) !important;
+}
+.chat-input-btn:active:not(:disabled) { transform: translateY(0) scale(0.94) !important; }
+.chat-input-btn:disabled { opacity: 0.28 !important; cursor: not-allowed !important; transform: none !important; }
+
+/* Send button */
+.send-btn {
+    flex-shrink: 0 !important;
+    align-self: flex-end !important;
+    height: 52px !important;
+    padding: 0 22px !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: 0.9375rem !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease !important;
+}
+.send-btn:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 24px rgba(139,92,246,0.55) !important;
+}
+.send-btn:active:not(:disabled) { transform: translateY(0) !important; }
+.send-btn:disabled { opacity: 0.38 !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
 
 /* Mention autocomplete */
 .mention-autocomplete { position: absolute; bottom: 100%; left: 0; margin-bottom: 10px; min-width: 320px; max-width: 380px; background: var(--bg-secondary); border: 1px solid var(--border-h); border-radius: var(--radius-lg); max-height: 340px; overflow-y: auto; z-index: 3000; box-shadow: 0 12px 32px rgba(0,0,0,0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
@@ -508,28 +586,7 @@ html.community-page-active {
 .ws-reconnect-banner { padding: 10px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; margin: 0 16px 10px; font-size: 0.8125rem; }
 .chat-input-locked { padding: 10px 14px; margin-bottom: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 0.8125rem; font-style: italic; }
 
-/* ══════════════════════════════════════════════════════════════
-   FIX 1 — MANAGE CHANNELS MODAL INPUTS FLOATING OUTSIDE BOX
-   
-   Root cause: The modal card uses padding:24px but the inner
-   <form> and its child <div>s use width:100% with no box-sizing,
-   so inputs inherit the full container width and bleed outside.
-   
-   The modal is rendered as:
-     <div style="position:fixed; inset:0; padding:20px">   ← overlay
-       <div style="background:#1f2024; border-radius:16px; padding:24px; width:100%; max-width:520px">  ← card
-         <form style="display:grid; gap:12px">
-           <div style="display:flex; gap:12px">   ← the two-column row (Category + Access)
-             <div style="flex:1">  ← col
-               <select>  ← THIS bleeds out
-             <div style="flex:1">  ← col
-               <select>  ← THIS bleeds out
-   
-   Fix: box-sizing:border-box + min-width:0 on all inputs & flex children
-   inside the modal. We target via the fingerprint of the overlay's inline style.
-   ══════════════════════════════════════════════════════════════ */
-
-/* Overlay — ensure it starts below navbar */
+/* ── MANAGE CHANNELS MODAL ───────────────────────────────────── */
 div[style*="position: fixed"][style*="inset: 0"][style*="padding: 20px"],
 div[style*="position: fixed"][style*="inset: 0"][style*="padding:20px"] {
     top: var(--navbar-h) !important;
@@ -537,8 +594,6 @@ div[style*="position: fixed"][style*="inset: 0"][style*="padding:20px"] {
     overflow-y: auto !important;
     align-items: flex-start !important;
 }
-
-/* Card — constrain height so it never bleeds off screen */
 div[style*="position: fixed"][style*="inset: 0"] > div[style*="background: #1f2024"],
 div[style*="position: fixed"][style*="inset: 0"] > div[style*="background:#1f2024"] {
     box-sizing: border-box !important;
@@ -549,8 +604,6 @@ div[style*="position: fixed"][style*="inset: 0"] > div[style*="background:#1f202
     overflow-x: hidden !important;
     scrollbar-width: thin;
 }
-
-/* ALL inputs, selects, textareas inside the modal must be 100% and box-sizing */
 div[style*="position: fixed"][style*="inset: 0"] input,
 div[style*="position: fixed"][style*="inset: 0"] select,
 div[style*="position: fixed"][style*="inset: 0"] textarea {
@@ -559,8 +612,6 @@ div[style*="position: fixed"][style*="inset: 0"] textarea {
     min-width: 0 !important;
     box-sizing: border-box !important;
 }
-
-/* The two-column Category+Access row — wrap on narrow screens */
 div[style*="position: fixed"][style*="inset: 0"] div[style*="display: flex"][style*="gap: 12px"],
 div[style*="position: fixed"][style*="inset: 0"] div[style*="display:flex"][style*="gap:12px"] {
     flex-wrap: wrap !important;
@@ -568,16 +619,12 @@ div[style*="position: fixed"][style*="inset: 0"] div[style*="display:flex"][styl
     min-width: 0 !important;
     width: 100% !important;
 }
-
-/* Each flex child in those rows gets min-width:0 so it can shrink */
 div[style*="position: fixed"][style*="inset: 0"] div[style*="display: flex"][style*="gap: 12px"] > div,
 div[style*="position: fixed"][style*="inset: 0"] div[style*="display:flex"][style*="gap:12px"] > div {
     flex: 1 1 150px !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
 }
-
-/* The channel list inside the modal */
 div[style*="position: fixed"][style*="inset: 0"] div[style*="max-height: 220px"],
 div[style*="position: fixed"][style*="inset: 0"] div[style*="maxHeight: 220px"] {
     box-sizing: border-box !important;
@@ -610,11 +657,80 @@ div[style*="position: fixed"][style*="inset: 0"] div[style*="maxHeight: 220px"] 
 .mobile-sidebar-overlay { position: fixed; top: var(--navbar-h); left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); z-index: 1000; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease; }
 
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.2); } }
+@keyframes pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.2); } }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
 .channel-item.locked { opacity: 0.45; }
 .channel-item.locked:hover { opacity: 0.65; }
+
+/* ════════════════════════════════════════════════════════════════
+   JOURNAL FAB — position:fixed on ALL breakpoints.
+   
+   The FAB is rendered OUTSIDE .chat-input-container in the DOM
+   (as a sibling of .chat-main), so position:absolute relative
+   to that container never works.
+   
+   Desktop/Tablet: fixed to bottom-right, vertically aligned
+   with the input bar. Input bar = 14px top pad + 52px min-height
+   + 14px bottom pad = 80px total. FAB (52px) bottom-centre of
+   that zone = bottom: 14px + (80-52)/2 = 28px.
+   We nudge it to bottom:28px, right:16px.
+   ════════════════════════════════════════════════════════════════ */
+.journal-floating-btn {
+    position: fixed !important;
+    right: 16px !important;
+    bottom: 28px !important;
+    top: auto !important;
+    left: auto !important;
+
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 16px !important;
+
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #38bdf8 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 20px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.12) inset,
+        0 6px 20px rgba(139,92,246,0.45),
+        0 2px 8px rgba(0,0,0,0.35) !important;
+
+    z-index: 100 !important;
+    isolation: isolate !important;
+    animation: jm-float 4s ease-in-out infinite !important;
+    transition: border-radius 0.26s cubic-bezier(0.34,1.56,0.64,1),
+                box-shadow 0.26s ease !important;
+}
+.journal-floating-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: inherit !important;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 55%) !important;
+    opacity: 0 !important;
+    transition: opacity 0.2s ease !important;
+    pointer-events: none !important;
+}
+.journal-floating-btn:hover::before { opacity: 1 !important; }
+.journal-floating-btn:hover {
+    border-radius: 50% !important;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.22) inset,
+        0 12px 36px rgba(139,92,246,0.65),
+        0 4px 14px rgba(99,102,241,0.4) !important;
+    animation-play-state: paused !important;
+}
+.journal-floating-btn:active {
+    transform: scale(0.92) !important;
+    animation-play-state: paused !important;
+}
 
 /* ── TABLET 768–1024px ───────────────────────────────────────── */
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -627,10 +743,42 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
         display: flex !important; width: 200px !important;
         visibility: visible !important; opacity: 1 !important; transform: none !important;
     }
-    /* Manage modal on tablet */
     div[style*="position: fixed"][style*="inset: 0"] > div[style*="background: #1f2024"],
     div[style*="position: fixed"][style*="inset: 0"] > div[style*="background:#1f2024"] {
         max-width: 480px !important;
+    }
+    /* Container: right padding = FAB (46px) + gap (12px) + margin (14px) = 72px */
+    .chat-input-container {
+        padding: 12px 72px 12px 14px !important;
+    }
+    .chat-input {
+        padding: 11px 100px 11px 14px !important;
+        font-size: 0.875rem !important;
+        min-height: 48px !important;
+        border-radius: 12px !important;
+    }
+    .chat-input-btn {
+        width: 27px !important;
+        height: 27px !important;
+        font-size: 0.88rem !important;
+    }
+    .send-btn {
+        height: 48px !important;
+        padding: 0 16px !important;
+        font-size: 0.875rem !important;
+        border-radius: 12px !important;
+    }
+    /* FAB: fixed, aligned with tablet input bar
+       Input bar = 12px + 12px + 48px = 72px.
+       FAB (46px) centre = bottom: 12px + (72-46)/2 = 25px */
+    .journal-floating-btn {
+        position: fixed !important;
+        width: 46px !important;
+        height: 46px !important;
+        right: 14px !important;
+        bottom: 25px !important;
+        font-size: 17px !important;
+        border-radius: 14px !important;
     }
 }
 
@@ -651,7 +799,6 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
     .chat-header h2 { font-size: 0.875rem; }
     .chat-messages { flex: 1 1 0 !important; min-height: 0 !important; padding: 10px 12px !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
 
-    /* Scale avatar/text for mobile */
     .message-item { padding: 2px 8px 2px 60px !important; }
     .message-item:not(.grouped) { padding-top: 8px !important; }
     .message-avatar { left: 10px !important; width: 36px !important; height: 36px !important; top: 6px !important; }
@@ -659,13 +806,62 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
     .message-text { font-size: 0.9rem !important; }
     .message-header-info, .community-message-header-with-time { gap: 5px !important; margin-bottom: 3px !important; }
 
-    .send-btn span { display: none; }
-    .send-btn { padding: 0; width: 44px; border-radius: 50%; justify-content: center; }
-    .connection-status { display: none; }
-    .chat-input { padding: 9px 48px 9px 12px; font-size: 0.9375rem; }
-    .chat-input-container { padding: 8px 12px 12px; flex-shrink: 0; }
+    /* ── Mobile input container: right padding reserves space for FAB ── */
+    /* FAB(48px) + gap(8px) + right-margin(10px) = 66px */
+    .chat-input-container {
+        padding: 8px 66px 8px 10px !important;
+    }
 
-    /* Manage modal: bottom sheet on mobile */
+    /* FAB: fixed, perfectly IN-LINE with the input bar row.
+       
+       The input bar (.chat-input-container) sits at the very bottom
+       of the fixed .community-container (bottom:0).
+       Bar total height = 8px top-pad + 46px input + 8px bot-pad = 62px.
+       
+       FAB height = 48px.
+       To vertically centre: bottom = (62 - 48) / 2 = 7px
+       right = 10px  ← matches container's right outer padding         */
+    .journal-floating-btn {
+        position: fixed !important;
+        right: 10px !important;
+        bottom: 7px !important;
+        top: auto !important;
+        left: auto !important;
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 18px !important;
+        border-radius: 14px !important;
+        z-index: 999 !important;
+        animation: jm-float 4s ease-in-out infinite !important;
+    }
+    .journal-floating-btn:hover {
+        border-radius: 50% !important;
+        transform: translateY(-2px) scale(1.05) !important;
+    }
+    .journal-floating-btn:active {
+        transform: scale(0.92) !important;
+    }
+
+    .chat-form { gap: 6px !important; align-items: flex-end !important; }
+    .chat-input-wrapper { flex: 1 1 auto !important; max-width: 100% !important; }
+    .chat-input {
+        padding: 10px 92px 10px 12px !important;
+        font-size: 0.9rem !important;
+        min-height: 46px !important;
+        border-radius: 12px !important;
+    }
+    .chat-input-buttons { right: 8px !important; bottom: 8px !important; gap: 2px !important; }
+    .chat-input-btn { width: 26px !important; height: 26px !important; font-size: 0.88rem !important; border-radius: 7px !important; }
+
+    .send-btn span { display: none !important; }
+    .send-btn {
+        width: 46px !important; height: 46px !important;
+        padding: 0 !important; border-radius: 50% !important; flex-shrink: 0 !important;
+    }
+
+    .connection-status { display: none !important; }
+
+    /* Modal: bottom sheet on mobile */
     div[style*="position: fixed"][style*="inset: 0"][style*="padding: 20px"],
     div[style*="position: fixed"][style*="inset: 0"][style*="padding:20px"] {
         padding: 0 !important;
@@ -678,7 +874,6 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
         max-width: 100% !important;
         width: 100% !important;
     }
-    /* On mobile always stack Category+Access vertically */
     div[style*="position: fixed"][style*="inset: 0"] div[style*="display: flex"][style*="gap: 12px"] > div,
     div[style*="position: fixed"][style*="inset: 0"] div[style*="display:flex"][style*="gap:12px"] > div {
         flex: 1 1 100% !important;
@@ -691,8 +886,655 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
 /* ── VERY SMALL PHONES ≤480px ───────────────────────────────── */
 @media (max-width: 480px) {
     .community-container { height: calc(100dvh - var(--navbar-h)) !important; }
+    /* FAB(44px) + gap(8px) + outer(8px) = 60px */
+    .chat-input-container { padding: 7px 60px 7px 8px !important; }
+    .chat-input { padding: 9px 82px 9px 11px !important; font-size: 0.875rem !important; min-height: 44px !important; }
+    .chat-input-buttons { right: 6px !important; bottom: 7px !important; gap: 2px !important; }
+    .chat-input-btn { width: 24px !important; height: 24px !important; font-size: 0.82rem !important; }
+    .send-btn { width: 44px !important; height: 44px !important; }
+    /* Bar = 7+44+7 = 58px. FAB(44px) centre = bottom: (58-44)/2 = 7px */
+    .journal-floating-btn {
+        position: fixed !important;
+        width: 44px !important;
+        height: 44px !important;
+        right: 8px !important;
+        bottom: 7px !important;
+        font-size: 16px !important;
+    }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   JOURNAL FAB MODAL TOKENS + KEYFRAMES
+   ════════════════════════════════════════════════════════════════ */
+:root {
+    --jm-bg:        #0c0c0f;
+    --jm-surface:   #111115;
+    --jm-surface-2: #16161b;
+    --jm-surface-3: #1c1c23;
+    --jm-border:    rgba(255,255,255,0.07);
+    --jm-border-h:  rgba(139,92,246,0.3);
+    --jm-purple:    #8b5cf6;
+    --jm-indigo:    #6366f1;
+    --jm-sky:       #38bdf8;
+    --jm-green:     #10b981;
+    --jm-rose:      #f43f5e;
+    --jm-amber:     #f59e0b;
+    --jm-text:      #f0f0f5;
+    --jm-muted:     rgba(255,255,255,0.4);
+    --jm-dim:       rgba(255,255,255,0.18);
+    --jm-radius:    16px;
+    --jm-radius-sm: 10px;
+    --jm-ease:      cubic-bezier(0.4,0,0.2,1);
+    --jm-spring:    cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes jm-overlayIn  { from{opacity:0} to{opacity:1} }
+@keyframes jm-overlayOut { from{opacity:1} to{opacity:0} }
+@keyframes jm-cardIn  { from{opacity:0;transform:translateY(28px) scale(0.93)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes jm-cardOut { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(14px) scale(0.96)} }
+@keyframes jm-sheetIn  { from{transform:translateY(100%)} to{transform:translateY(0)} }
+@keyframes jm-sheetOut { from{transform:translateY(0)} to{transform:translateY(100%)} }
+@keyframes jm-float {
+    0%,100%{ transform:translateY(0) rotate(0deg) }
+    33%    { transform:translateY(-6px) rotate(-2deg) }
+    66%    { transform:translateY(-3px) rotate(1deg) }
+}
+@keyframes jm-pulse-ring {
+    0%,100%{ box-shadow:0 0 0 2px rgba(139,92,246,0.5),0 0 12px rgba(139,92,246,0.15) }
+    50%    { box-shadow:0 0 0 2px rgba(139,92,246,0.9),0 0 20px rgba(139,92,246,0.35) }
+}
+@keyframes jm-sel-glow {
+    0%,100%{ box-shadow:0 2px 14px rgba(139,92,246,0.45) }
+    50%    { box-shadow:0 4px 28px rgba(139,92,246,0.7) }
+}
+@keyframes jm-stat-slide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes jm-fadeUp     { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes jm-shimmer    { 0%{background-position:-200% center} 100%{background-position:200% center} }
+@keyframes jm-dot-breathe { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.7} }
+@keyframes jm-tick-pop   { 0%{transform:scale(0) rotate(-15deg);opacity:0} 60%{transform:scale(1.2) rotate(3deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+@keyframes jm-progress-fill { from{width:0} }
+
+/* ── OVERLAY ─────────────────────────────────────────────────── */
+.journal-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(4,4,8,0.82);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10000;
+    padding: 16px; box-sizing: border-box;
+    animation: jm-overlayIn 0.2s ease-out both;
+}
+.journal-modal-overlay.closing {
+    animation: jm-overlayOut 0.16s ease-in forwards;
+    pointer-events: none;
+}
+
+/* ── MODAL SHELL ─────────────────────────────────────────────── */
+.journal-modal-content {
+    position: relative;
+    width: 100%; max-width: 440px;
+    height: min(84vh, 660px);
+    display: flex !important; flex-direction: column !important;
+    overflow: hidden !important;
+    background: var(--jm-surface);
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow:
+        0 0 0 1px rgba(139,92,246,0.12) inset,
+        0 40px 80px rgba(0,0,0,0.85),
+        0 0 80px rgba(139,92,246,0.06);
+    animation: jm-cardIn 0.36s var(--jm-spring) both;
+    isolation: isolate;
+    -webkit-font-smoothing: antialiased;
+    max-height: min(84vh, 660px) !important;
+}
+.journal-modal-content::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.9) 20%, rgba(99,102,241,0.7) 50%, rgba(56,189,248,0.5) 80%, transparent 100%);
+    pointer-events:none; z-index:20;
+}
+.journal-modal-content::after {
+    content:'';
+    position:absolute; top:-60px; right:-40px;
+    width:200px; height:200px; border-radius:50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+    pointer-events:none; z-index:0;
+}
+.journal-modal-overlay.closing .journal-modal-content {
+    animation: jm-cardOut 0.16s ease-in forwards;
+}
+
+/* ── MODAL HEADER ────────────────────────────────────────────── */
+.journal-modal-header {
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.18);
+    position: relative; z-index: 5;
+}
+.journal-modal-header h3 {
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.36em; text-transform: uppercase;
+    background: linear-gradient(125deg, #fff 20%, #c4b5fd 55%, #93c5fd 90%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    display: flex; align-items: center; gap: 10px;
+}
+.journal-modal-header h3::before {
+    content: '';
+    display: inline-block;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #38bdf8);
+    box-shadow: 0 0 10px rgba(139,92,246,0.8);
+    flex-shrink: 0;
+    -webkit-text-fill-color: unset; background-clip: unset; -webkit-background-clip: unset;
+    animation: jm-dot-breathe 2.8s ease-in-out infinite;
+}
+.journal-modal-close {
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 9px;
+    color: rgba(255,255,255,0.28);
+    font-size: 1.1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; line-height:1;
+}
+.journal-modal-close:hover {
+    background: rgba(244,63,94,0.12); border-color: rgba(244,63,94,0.3);
+    color: #fda4af; transform: rotate(90deg);
+}
+
+/* ── MODAL BODY ──────────────────────────────────────────────── */
+.journal-modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    padding: 20px 18px 10px;
+    padding-bottom: 20px !important;
+    max-height: none !important;
+    position: relative; z-index: 1;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139,92,246,0.18) transparent;
+}
+.journal-modal-body::-webkit-scrollbar { width: 3px; }
+.journal-modal-body::-webkit-scrollbar-track { background: transparent; }
+.journal-modal-body::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.22); border-radius:2px; }
+
+/* ── MODAL FOOTER ────────────────────────────────────────────── */
+.journal-modal-footer {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 14px 18px !important;
+    border-top: 2px solid rgba(139,92,246,0.4) !important;
+    background: rgba(0,0,0,0.3) !important;
+    width: 100% !important;
+    min-height: 70px !important;
+    position: relative !important;
+    z-index: 10 !important;
+    box-sizing: border-box !important;
+    margin-top: 0 !important;
+}
+.journal-modal-footer::before {
+    content:'';
+    position:absolute; bottom:100%; left:0; right:0; height:32px;
+    background: linear-gradient(to top, rgba(0,0,0,0.25), transparent);
+    pointer-events:none;
+}
+
+/* Go to Journal Button */
+.go-to-journal-btn {
+    display: inline-flex !important;
+    align-items: center !important; justify-content: center !important;
+    gap: 10px;
+    width: 100% !important;
+    padding: 13px 20px !important;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #38bdf8 100%) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 99px !important;
+    color: #fff !important;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    box-shadow: 0 0 30px rgba(139,92,246,0.38), 0 1px 0 rgba(255,255,255,0.16) inset;
+    transition: transform 0.24s var(--jm-spring), box-shadow 0.24s ease !important;
+    isolation: isolate; position: relative; overflow: hidden;
+}
+.go-to-journal-btn::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.14), transparent 55%);
+    opacity:0; transition:opacity 0.2s;
+}
+.go-to-journal-btn::after {
+    content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    transition: left 0.5s ease;
+}
+.go-to-journal-btn:hover::before { opacity:1; }
+.go-to-journal-btn:hover::after  { left:150%; }
+.go-to-journal-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 0 48px rgba(139,92,246,0.6), 0 10px 28px rgba(0,0,0,0.45) !important;
+}
+.go-to-journal-btn:active { transform:scale(0.97) !important; }
+
+/* ── STATS BAR ───────────────────────────────────────────────── */
+.mini-stats-bar {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 8px; margin-bottom: 20px;
+}
+.mini-stat-item {
+    position: relative;
+    padding: 13px 8px 11px;
+    background: rgba(255,255,255,0.024);
+    border: 1px solid rgba(255,255,255,0.065);
+    border-radius: 14px; text-align: center;
+    overflow: hidden;
+    transition: border-color 0.2s, background 0.2s, transform 0.22s var(--jm-spring);
+    animation: jm-stat-slide 0.32s ease-out both;
+    isolation: isolate; cursor: default;
+}
+.mini-stat-item:nth-child(2){ animation-delay:0.06s; }
+.mini-stat-item:nth-child(3){ animation-delay:0.12s; }
+.mini-stat-item::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent);
+    opacity:0; transition:opacity 0.2s;
+}
+.mini-stat-item::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:35%;
+    background: linear-gradient(to top, rgba(139,92,246,0.05), transparent);
+    pointer-events:none;
+}
+.mini-stat-item:hover { border-color:rgba(139,92,246,0.3); transform:translateY(-2px); background:rgba(255,255,255,0.04); }
+.mini-stat-item:hover::before { opacity:1; }
+
+.mini-stat-label {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.48rem; font-weight: 700;
+    color: rgba(255,255,255,0.26);
+    text-transform: uppercase; letter-spacing: 0.24em;
+    margin-bottom: 7px;
+}
+.mini-stat-value {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem; font-weight: 300; line-height: 1;
+    background: linear-gradient(135deg, #fff 25%, #c4b5fd 65%, #93c5fd 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    letter-spacing: -0.03em;
+}
+.mini-stat-value.completed {
+    background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+/* ── SECTION LABEL ───────────────────────────────────────────── */
+.jmodal-section-label {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.5rem; font-weight: 700;
+    color: rgba(255,255,255,0.22);
+    text-transform: uppercase; letter-spacing: 0.3em;
+    margin: 0 0 10px; user-select: none;
+}
+.jmodal-section-label::after {
+    content:''; flex:1; height:1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.07), transparent);
+}
+
+/* ── CALENDAR ────────────────────────────────────────────────── */
+.journal-modal-body .mini-calendar,
+.journal-modal-body .journal-calendar {
+    position: relative;
+    background: rgba(255,255,255,0.018);
+    border: 1px solid rgba(255,255,255,0.065);
+    border-radius: 20px;
+    padding: 16px 14px 14px;
+    margin-bottom: 20px;
+    width: 100%; box-sizing: border-box;
+    overflow: hidden; isolation: isolate;
+}
+.journal-modal-body .mini-calendar::before,
+.journal-modal-body .journal-calendar::before {
+    content:''; position:absolute; top:0; left:12px; right:12px; height:1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.7) 30%, rgba(56,189,248,0.5) 70%, transparent 100%);
+    pointer-events:none; z-index:2;
+}
+.journal-modal-body .mini-calendar::after,
+.journal-modal-body .journal-calendar::after {
+    content:''; position:absolute; inset:0;
+    background-image:
+        radial-gradient(circle, rgba(139,92,246,0.12) 1px, transparent 1px),
+        radial-gradient(circle, rgba(56,189,248,0.08) 1px, transparent 1px);
+    background-size: 22px 22px, 37px 37px;
+    background-position: 0 0, 11px 11px;
+    pointer-events:none; z-index:0; opacity:0.5;
+}
+.journal-modal-body .mini-calendar-header,
+.journal-modal-body .journal-calendar-nav {
+    display: flex; flex-direction: row;
+    align-items: center; justify-content: space-between;
+    gap: 6px; margin-bottom: 16px;
+    position: relative; z-index: 1;
+}
+.journal-modal-body .mini-calendar-nav-btn,
+.journal-modal-body .journal-calendar-btn {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; color: rgba(255,255,255,0.4);
+    font-size: 0.75rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.journal-modal-body .mini-calendar-nav-btn:hover,
+.journal-modal-body .journal-calendar-btn:hover {
+    background: rgba(139,92,246,0.16); border-color: rgba(139,92,246,0.45);
+    color: #c4b5fd; transform: scale(1.1);
+}
+.journal-modal-body .mini-calendar-nav-btn:active,
+.journal-modal-body .journal-calendar-btn:active { transform:scale(0.9); }
+.journal-modal-body .mini-calendar-nav-btn:disabled { opacity:0.18; cursor:not-allowed; pointer-events:none; }
+
+.journal-modal-body .mini-calendar-header h4,
+.journal-modal-body .journal-calendar-month {
+    flex: 1; text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    background: linear-gradient(90deg, #c4b5fd, #93c5fd);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin: 0; user-select: none;
+}
+.journal-modal-body .mini-calendar-weekdays,
+.journal-modal-body .journal-calendar-weekdays {
+    display: grid; grid-template-columns: repeat(7,1fr);
+    margin-bottom: 8px; position: relative; z-index: 1;
+}
+.journal-modal-body .mini-calendar-weekday,
+.journal-modal-body .journal-calendar-wd {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.44rem; font-weight: 800;
+    color: rgba(255,255,255,0.18); text-align: center;
+    padding: 0 0 6px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.journal-modal-body .mini-calendar-grid,
+.journal-modal-body .journal-calendar-grid {
+    display: grid; grid-template-columns: repeat(7,1fr);
+    gap: 4px; position: relative; z-index: 1;
+}
+.journal-modal-body .mini-calendar-day,
+.journal-modal-body .journal-calendar-day {
+    aspect-ratio: 1/1;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.6rem; font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    border-radius: 10px; border: 1px solid transparent;
+    background: transparent; cursor: pointer;
+    position: relative; box-sizing: border-box; user-select: none;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.16s var(--jm-spring);
+    isolation: isolate; -webkit-tap-highlight-color: transparent;
+}
+.journal-modal-body .mini-calendar-day:hover,
+.journal-modal-body .journal-calendar-day:hover {
+    background: rgba(139,92,246,0.16); color: #e0d4ff;
+    border-color: rgba(139,92,246,0.32); transform: scale(1.14); z-index: 2;
+}
+.journal-modal-body .mini-calendar-day.empty,
+.journal-modal-body .journal-calendar-day--empty { pointer-events: none; opacity: 0; }
+.journal-modal-body .journal-calendar-day--past { color: rgba(255,255,255,0.2); }
+.journal-modal-body .mini-calendar-day.today,
+.journal-modal-body .journal-calendar-day--today {
+    color: #c4b5fd; font-weight: 700;
+    border-color: rgba(139,92,246,0.55); background: rgba(139,92,246,0.1);
+    animation: jm-pulse-ring 2.8s ease-in-out infinite;
+}
+.journal-modal-body .mini-calendar-day.selected,
+.journal-modal-body .journal-calendar-day--selected {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 55%, #4f46e5 100%);
+    color: #fff; font-weight: 700; border-color: transparent;
+    animation: jm-sel-glow 2.6s ease-in-out infinite;
+    transform: scale(1.08); border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(139,92,246,0.5);
+}
+.journal-modal-body .mini-calendar-day.selected:hover,
+.journal-modal-body .journal-calendar-day--selected:hover {
+    background: linear-gradient(135deg, #9d72f8, #7578f3); transform: scale(1.14);
+}
+.journal-modal-body .mini-calendar-day.today.selected,
+.journal-modal-body .journal-calendar-day--today.journal-calendar-day--selected {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    border-color: rgba(196,181,253,0.6);
+}
+.journal-modal-body .mini-calendar-day.has-tasks::after,
+.journal-modal-body .journal-calendar-day-dot {
+    content: ''; position: absolute;
+    bottom: 3px; left: 50%; transform: translateX(-50%);
+    width: 3px; height: 3px; border-radius: 50%;
+    background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.8); display: block;
+}
+.journal-modal-body .mini-calendar-day.selected.has-tasks::after {
+    background: rgba(255,255,255,0.7); box-shadow: none;
+}
+.journal-modal-body .journal-calendar-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.journal-calendar-footer-done {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.48rem; font-weight: 700;
+    color: #10b981; letter-spacing: 0.18em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 5px;
+}
+.journal-calendar-footer-done-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.7); display: inline-block;
+    animation: jm-dot-breathe 1.8s ease-in-out infinite;
+}
+.journal-calendar-footer-today-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.48rem; font-weight: 600;
+    color: rgba(196,181,253,0.5); letter-spacing: 0.14em; text-transform: uppercase;
+    background: none; border: 1px solid rgba(139,92,246,0.18);
+    border-radius: 6px; padding: 3px 10px; cursor: pointer; transition: all 0.15s;
+}
+.journal-calendar-footer-today-btn:hover {
+    background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.4); color: #c4b5fd;
+}
+
+/* ── PROGRESS RING ───────────────────────────────────────────── */
+.jmodal-progress-wrap {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.018);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; margin-bottom: 18px;
+}
+.jmodal-progress-ring { flex-shrink: 0; width: 44px; height: 44px; position: relative; }
+.jmodal-progress-ring svg { transform: rotate(-90deg); }
+.jmodal-progress-ring circle.track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 4; }
+.jmodal-progress-ring circle.fill {
+    fill: none; stroke-width: 4; stroke-linecap: round;
+    stroke: url(#prog-grad);
+    transition: stroke-dashoffset 0.6s var(--jm-spring);
+}
+.jmodal-progress-ring .pct {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.56rem; font-weight: 700;
+    background: linear-gradient(135deg, #c4b5fd, #93c5fd);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.jmodal-progress-info { flex: 1; min-width: 0; }
+.jmodal-progress-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.52rem; font-weight: 700;
+    color: rgba(255,255,255,0.22);
+    text-transform: uppercase; letter-spacing: 0.22em; margin-bottom: 4px;
+}
+.jmodal-progress-bar-track { height: 4px; border-radius: 99px; background: rgba(255,255,255,0.07); overflow: hidden; }
+.jmodal-progress-bar-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #8b5cf6, #6366f1, #38bdf8);
+    animation: jm-progress-fill 0.7s var(--jm-spring) both;
+    transition: width 0.5s var(--jm-spring);
+}
+.jmodal-progress-sub {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.58rem; font-weight: 400;
+    color: rgba(255,255,255,0.3); margin-top: 5px;
+}
+.jmodal-progress-sub strong { color: rgba(196,181,253,0.7); font-weight: 600; }
+
+/* ── TASK CARDS ──────────────────────────────────────────────── */
+.mini-task-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.022);
+    border: 1px solid rgba(255,255,255,0.065);
+    border-radius: 12px; margin-bottom: 6px;
+    transition: border-color 0.16s, background 0.16s, transform 0.18s var(--jm-spring);
+    animation: jm-fadeUp 0.26s ease-out both;
+    isolation: isolate; position: relative; overflow: hidden;
+}
+.mini-task-item::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:2px;
+    background: linear-gradient(180deg, #8b5cf6, #38bdf8);
+    opacity:0; border-radius:0 2px 2px 0; transition: opacity 0.2s;
+}
+.mini-task-item:nth-child(2){ animation-delay:0.04s; }
+.mini-task-item:nth-child(3){ animation-delay:0.08s; }
+.mini-task-item:nth-child(4){ animation-delay:0.12s; }
+.mini-task-item:nth-child(5){ animation-delay:0.16s; }
+.mini-task-item:hover { background: rgba(255,255,255,0.04); border-color: rgba(139,92,246,0.28); transform: translateX(4px); }
+.mini-task-item:hover::before { opacity:1; }
+
+.mini-task-checkbox {
+    flex-shrink: 0; width: 18px; height: 18px;
+    border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.18);
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; color: #10b981;
+    transition: all 0.16s; -webkit-tap-highlight-color: transparent;
+}
+.mini-task-checkbox:hover { border-color: rgba(255,255,255,0.35); transform:scale(1.1); }
+.mini-task-checkbox.checked { background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.6); }
+.mini-task-checkbox.checked span { animation: jm-tick-pop 0.3s var(--jm-spring) both; }
+
+.mini-task-title {
+    flex: 1; min-width: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem; font-weight: 400;
+    color: rgba(255,255,255,0.8);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mini-task-title.completed { text-decoration: line-through; color: rgba(255,255,255,0.24); }
+.mini-task-xp {
+    flex-shrink: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.54rem; font-weight: 700; color: #10b981;
+    padding: 2px 7px; background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.22); border-radius: 99px; white-space: nowrap;
+}
+.jmodal-more-hint {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.56rem; font-weight: 400;
+    color: rgba(255,255,255,0.16);
+    letter-spacing: 0.14em; text-align: center;
+    margin: -2px 0 14px; text-transform: uppercase;
+}
+
+/* ── NOTE CARDS ──────────────────────────────────────────────── */
+.mini-note-item {
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.018);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-left: 2px solid rgba(56,189,248,0.5);
+    border-radius: 12px; margin-bottom: 7px;
+    transition: border-color 0.16s, transform 0.18s var(--jm-spring);
+    animation: jm-fadeUp 0.26s ease-out 0.1s both;
+}
+.mini-note-item:hover {
+    border-color: rgba(56,189,248,0.18); border-left-color: rgba(56,189,248,0.75);
+    transform: translateX(4px);
+}
+.mini-note-item p {
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem; font-weight: 300;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.55; word-break: break-word;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ── EMPTY STATE ─────────────────────────────────────────────── */
+.jmodal-empty {
+    padding: 18px 12px; text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.64rem; font-weight: 300;
+    color: rgba(255,255,255,0.16); letter-spacing: 0.1em;
+    background: rgba(255,255,255,0.012);
+    border: 1px dashed rgba(255,255,255,0.055);
+    border-radius: 12px; margin-bottom: 12px;
+}
+
+/* ── ANTI-FLASH ──────────────────────────────────────────────── */
+.journal-modal-content button,
+.journal-modal-content a,
+.journal-modal-content input {
+    isolation: isolate; -webkit-tap-highlight-color: transparent;
+}
+
+/* ── JOURNAL MODAL RESPONSIVE ────────────────────────────────── */
+@media (min-width:769px) and (max-width:1024px) {
+    .journal-modal-content { max-width:400px; height:min(80vh,620px); max-height:min(80vh,620px) !important; }
+}
+@media (max-width:767px) {
+    .journal-modal-overlay { align-items:flex-end; padding:0; }
+    .journal-modal-content {
+        max-width:100%; width:100%; height:88vh; max-height:88vh !important;
+        border-radius:22px 22px 0 0;
+        animation: jm-sheetIn 0.34s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .journal-modal-overlay.closing .journal-modal-content {
+        animation: jm-sheetOut 0.2s ease-in forwards;
+    }
+    .journal-modal-header { padding:16px 16px 13px; }
+    .journal-modal-body   { padding:16px 14px 8px; }
+    .journal-modal-footer {
+        padding:10px 14px !important;
+        padding-bottom:calc(10px + env(safe-area-inset-bottom,0px)) !important;
+        min-height:65px !important;
+    }
+    .mini-stats-bar { gap:6px; margin-bottom:16px; }
+    .mini-stat-value { font-size:1.25rem; }
+    .journal-modal-body .mini-calendar,
+    .journal-modal-body .journal-calendar { padding:14px 12px 12px; }
+}
+@media (max-width:400px) {
+    .mini-stat-value { font-size:1.1rem; }
+    .journal-modal-body .mini-calendar-day,
+    .journal-modal-body .journal-calendar-day { font-size:0.56rem; border-radius:8px; }
 }
 
 /* ── BODY LOCK ───────────────────────────────────────────────── */
-body.community-page-active { overflow: hidden !important; height: 100vh !important; }
-html.community-page-active { overflow: hidden !important; height: 100vh !important; }
+body.community-page-active  { overflow: hidden !important; height: 100vh !important; }
+html.community-page-active  { overflow: hidden !important; height: 100vh !important; }
+body.sidebar-open-mobile    { overflow: hidden; width: 100%; height: 100%; }

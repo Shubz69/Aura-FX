@@ -893,114 +893,221 @@ img, video, canvas {
 }
 
 /* ============================================================
-   FOOTER VISIBILITY FIX
-   Paste these rules at the very BOTTOM of your index.css
-   They override the overflow:hidden / max-height:100vh locks
-   that were clipping the footer on screens below 486px.
+   UNIFIED LAYOUT — definitive scroll fix
    ============================================================ */
 
-/* ── 1. The footer itself must never be clipped or collapsed ── */
-footer.footer,
-.footer {
+footer.footer, .footer {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  overflow: visible !important;
-  /* Remove any inherited height constraints */
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  /* Full width always */
   width: 100% !important;
-  max-width: 100% !important;
-  /* Sit above background layers */
+  overflow: visible !important;
   position: relative !important;
   z-index: 10 !important;
-  flex-shrink: 0 !important; /* never shrink inside flex column */
+  flex-shrink: 0 !important;
 }
 
-/* ── 2. The .page-wrapper is overflow:hidden + max-height:100vh on mobile.
-        This means the footer (which is a SIBLING of .page-wrapper, not a
-        child) is fine — BUT if your footer is INSIDE .page-wrapper you
-        must make the wrapper scrollable to expose the footer.
-        Check your App.js / layout and move <Footer /> OUTSIDE .page-wrapper.
-        
-        If you cannot move it, the wrapper needs enough height to show it: ── */
-
-/* Make .page-wrapper tall enough to include the footer when footer is inside it */
-.page-wrapper {
-  /* Allow the wrapper to grow beyond 100vh so footer is reachable by scrolling */
-  min-height: 100vh !important;
-  /* Do NOT lock max-height when footer needs to be visible */
+/* ── ALL screen sizes: shared base ── */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  background: #0a0a0a !important;
 }
 
-/* ── 3. Override the aggressive mobile locks only for pages that need footer ──
-        The :has() selectors in index.css set max-height:100vh on .page-wrapper.
-        We lift that restriction so the footer can be scrolled into view. ── */
-
-/* All pages — ensure .page-wrapper can scroll to reveal footer */
-.page-wrapper:has(.home-container),
-.page-wrapper:has(.contact-container),
-.page-wrapper:has(.why-container),
-.page-wrapper:has(.explore-container),
-.page-wrapper:has(.profile-container),
-.page-wrapper:has(.courses-container),
-.page-wrapper:has(.login-container),
-.page-wrapper:has(.register-container) {
-  max-height: none !important; /* lift the 100vh ceiling */
-  overflow-y: auto !important;  /* scrollable, not clipped */
-  -webkit-overflow-scrolling: touch !important;
+#root {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  background: #0a0a0a !important;
 }
 
-/* ── 4. On mobile (≤767px) the html+body are overflow:hidden.
-        This means the ONLY scroll container is .page-wrapper.
-        So the footer MUST be inside .page-wrapper (not a sibling)
-        OR you move the scroll lock to a different element. ── */
+.app-container {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  background: #0a0a0a !important;
+}
 
-@media (max-width: 767px) {
-  /* Allow footer to be visible and scrollable inside the locked layout */
-  footer.footer,
-  .footer {
-    position: relative !important;
-    z-index: 10 !important;
-    flex-shrink: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  /* If footer is a direct child of #root or .app-container,
-     those containers must not clip it */
-  #root,
-  .app-container {
-    /* Keep flex column so footer stacks below content */
-    display: flex !important;
-    flex-direction: column !important;
-    /* But DO NOT clip children — let .page-wrapper handle scroll */
-    overflow: visible !important;
+/* ── DESKTOP > 1366px: body scrolls naturally ── */
+@media (min-width: 1367px) {
+  html, body {
     height: auto !important;
-    max-height: none !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
   }
-
-  /* The actual scroll lock stays on .page-wrapper only */
+  #root, .app-container {
+    min-height: 100vh !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
   .page-wrapper {
     flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: calc(100vh - 58px) !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-top: 58px !important;
+  }
+  /* All inner containers: natural flow */
+  .home-container,
+  .contact-container,
+  .why-container,
+  .explore-container,
+  .profile-container,
+  .courses-container,
+  .login-container,
+  .register-container,
+  .leaderboard-container {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding-top: 0 !important;
+  }
+}
+
+/* ── TABLET 768-1366px: page-wrapper is the ONE scroll surface ── */
+@media (min-width: 768px) and (max-width: 1366px) {
+  html, body {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+  #root {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .app-container {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    flex: 1 1 auto !important;
+  }
+  .page-wrapper {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    /* page-wrapper fills remaining space below fixed navbar */
+    height: calc(100dvh - 62px) !important;
+    margin-top: 62px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
-    /* No max-height — footer sibling needs space */
+    padding-top: 0 !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .page-wrapper::-webkit-scrollbar { display: none !important; }
+  /* Inner containers: natural height, scroll via page-wrapper */
+  .home-container,
+  .contact-container,
+  .why-container,
+  .explore-container,
+  .profile-container,
+  .courses-container,
+  .login-container,
+  .register-container,
+  .leaderboard-container {
+    height: auto !important;
+    min-height: 0 !important;
     max-height: none !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding-top: 0 !important;
+  }
+  /* Contact: override its own min-height:100vh */
+  .contact-container {
     min-height: 0 !important;
   }
 }
 
-@media (max-width: 480px) {
-  footer.footer,
-  .footer {
-    display: block !important;
+/* ── MOBILE ≤ 767px: same as tablet ── */
+@media (max-width: 767px) {
+  html, body {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+  #root {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .app-container {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    flex: 1 1 auto !important;
+  }
+  .page-wrapper {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     max-height: none !important;
-    overflow: visible !important;
-    width: 100% !important;
-    flex-shrink: 0 !important;
+    height: calc(100dvh - 58px) !important;
+    margin-top: 58px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    padding-top: 0 !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .page-wrapper::-webkit-scrollbar { display: none !important; }
+  /* Inner containers: natural height */
+  .home-container,
+  .contact-container,
+  .why-container,
+  .explore-container,
+  .profile-container,
+  .courses-container,
+  .login-container,
+  .register-container,
+  .leaderboard-container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding-top: 0 !important;
+  }
+  .contact-container {
+    min-height: 0 !important;
+  }
+  /* Community: unchanged */
+  body.community-page-active {
+    overflow: hidden !important;
+  }
+  body.community-page-active .page-wrapper {
+    overflow: hidden !important;
+    margin-top: 0 !important;
+    height: 100dvh !important;
+  }
+}
+
+/* ── Small mobile navbar height adjustment ── */
+@media (max-width: 480px) {
+  .page-wrapper {
+    height: calc(100dvh - 56px) !important;
+    margin-top: 56px !important;
+  }
+}
+@media (max-width: 374px) {
+  .page-wrapper {
+    height: calc(100dvh - 54px) !important;
+    margin-top: 54px !important;
   }
 }

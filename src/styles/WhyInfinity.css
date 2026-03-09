@@ -1,5 +1,5 @@
 /* ============================================================
-   WHYINFINITY.CSS — AURA FX  |  Premium Fintech Redesign
+   WHYINFINITY.CSS — AURA FX | Premium Fintech Redesign - FIXED SCROLLING
    Matches home.css aesthetic: dark, purple/blue accents,
    Space Grotesk, refined minimalism with purposeful motion
    ============================================================ */
@@ -20,6 +20,16 @@
     --down:        #ef4444;
     --radius:      10px;
     --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── HTML/BODY Reset ──────────────────────────────────────── */
+html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
 }
 
 .why-container {
@@ -51,17 +61,22 @@
     height: 48px;
 }
 
-/* ── Scroll Container ─────────────────────────────────────── */
+/* ── Scroll Container - FIXED like contact.css ─────────────────────── */
 .why-container {
     position: relative;
-    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     background: var(--bg);
     color: var(--text);
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding: 120px 20px 80px;
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    min-height: 100vh;
     z-index: 1;
 }
 
@@ -99,6 +114,7 @@
     max-width: 1300px;
     margin: 0 auto;
     padding: 0 2rem;
+    width: 100%;
     animation: fadeInUp 0.9s ease-out both;
 }
 
@@ -699,21 +715,62 @@
 }
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE - FIXED
    ============================================================ */
 
-@media (max-width: 1200px) {
-    .content-wrapper { padding: 0 1.75rem; }
-    .why-main-content { gap: 3.5rem; }
-    .why-features-grid { gap: 1.25rem; }
-    .why-additional-features,
-    .why-not-for-you-box { padding: 3.5rem 2.5rem; }
+/* Large Desktop */
+@media (min-width: 1600px) {
+    .why-container {
+        padding: 140px 30px 100px;
+    }
+    
+    .why-main-title {
+        font-size: 3.8rem;
+    }
+    
+    .content-wrapper {
+        max-width: 1500px;
+    }
 }
 
+/* Desktop */
+@media (max-width: 1200px) {
+    .content-wrapper { 
+        padding: 0 1.75rem; 
+    }
+    
+    .why-main-content { 
+        gap: 3.5rem; 
+    }
+    
+    .why-features-grid { 
+        gap: 1.25rem; 
+    }
+    
+    .why-additional-features,
+    .why-not-for-you-box { 
+        padding: 3.5rem 2.5rem; 
+    }
+}
+
+/* Large Tablet */
 @media (max-width: 992px) {
-    .why-main-content { grid-template-columns: 1fr; gap: 3rem; }
-    .why-text-section { padding-right: 0; }
-    .why-features-grid { grid-template-columns: repeat(2, 1fr); }
+    .why-main-content { 
+        grid-template-columns: 1fr; 
+        gap: 3rem; 
+    }
+    
+    .why-text-section { 
+        padding-right: 0; 
+    }
+    
+    .why-features-grid { 
+        grid-template-columns: repeat(2, 1fr); 
+    }
+    
+    .why-container {
+        padding: 100px 20px 60px;
+    }
 }
 
 /* VS stacks on tablet */
@@ -737,56 +794,205 @@
     }
 }
 
+/* Tablet */
 @media (max-width: 768px) {
-    .why-container { padding: 90px 15px 60px; }
-    .content-wrapper { padding: 0 max(1.25rem, env(safe-area-inset-left)); }
-    .why-main-title { font-size: 2.2rem; }
-    .why-subtitle { font-size: 1.3rem; }
-    .why-section-heading { font-size: 1.5rem; }
-    .why-features-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+    .why-container { 
+        padding: 90px 15px 50px; 
+    }
+    
+    .content-wrapper { 
+        padding: 0 max(1.25rem, env(safe-area-inset-left)); 
+    }
+    
+    .why-main-title { 
+        font-size: 2.2rem; 
+    }
+    
+    .why-subtitle { 
+        font-size: 1.3rem; 
+    }
+    
+    .why-section-heading { 
+        font-size: 1.5rem; 
+    }
+    
+    .why-features-grid { 
+        grid-template-columns: 1fr; 
+        gap: 1.25rem; 
+    }
+    
     .why-additional-features,
-    .why-not-for-you-box { padding: 3rem max(1.25rem, env(safe-area-inset-left)); }
-}
-
-@media (max-width: 576px) {
-    .why-container { padding: 80px max(12px, env(safe-area-inset-left)) 60px; }
-    .content-wrapper { padding: 0 max(1rem, env(safe-area-inset-left)); }
-    .why-main-title { font-size: 1.8rem; }
-    .why-text { font-size: 0.9rem; }
-    .why-section-heading { font-size: 1.35rem; }
-    .why-additional-features,
-    .why-not-for-you-box { padding: 2.5rem max(1rem, env(safe-area-inset-left)); }
-    .why-platform-feature,
-    .why-feature-card { padding: 1.5rem 1.25rem; }
-    .vs-card { padding: 1.75rem 1.25rem; border-radius: 14px; }
-    .vs-list__item { font-size: 0.82rem; padding: 0.6rem 0.75rem; }
-}
-
-/* iPhone scroll fix */
-@media (max-width: 767px) {
-    .why-container {
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: 100vh !important;
-        max-height: 100dvh !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y;
+    .why-not-for-you-box { 
+        padding: 3rem max(1.25rem, env(safe-area-inset-left)); 
+    }
+    
+    .why-header {
+        margin-bottom: 3rem;
+    }
+    
+    .why-main-content {
+        margin-bottom: 4rem;
     }
 }
 
-/* iPad */
-@media (min-width: 768px) and (max-width: 1366px) {
+/* Mobile */
+@media (max-width: 576px) {
+    .why-container { 
+        padding: 80px max(12px, env(safe-area-inset-left)) 40px; 
+    }
+    
+    .content-wrapper { 
+        padding: 0 max(1rem, env(safe-area-inset-left)); 
+    }
+    
+    .why-main-title { 
+        font-size: 1.8rem; 
+    }
+    
+    .why-text { 
+        font-size: 0.9rem; 
+    }
+    
+    .why-section-heading { 
+        font-size: 1.35rem; 
+    }
+    
+    .why-additional-features,
+    .why-not-for-you-box { 
+        padding: 2.5rem max(1rem, env(safe-area-inset-left)); 
+    }
+    
+    .why-platform-feature,
+    .why-feature-card { 
+        padding: 1.5rem 1.25rem; 
+    }
+    
+    .vs-card { 
+        padding: 1.75rem 1.25rem; 
+        border-radius: 14px; 
+    }
+    
+    .vs-list__item { 
+        font-size: 0.82rem; 
+        padding: 0.6rem 0.75rem; 
+    }
+    
+    .why-cta-button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* iPhone SE & Small Phones */
+@media (max-width: 375px) {
+    .why-main-title {
+        font-size: 1.5rem;
+        letter-spacing: 0.15em;
+    }
+    
+    .why-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .why-section-heading {
+        font-size: 1.2rem;
+    }
+    
+    .why-platform-feature h3 {
+        font-size: 0.85rem;
+    }
+    
+    .why-platform-feature p {
+        font-size: 0.8rem;
+    }
+    
+    .vs-card__title {
+        font-size: 0.85rem;
+    }
+    
+    .vs-list__item {
+        font-size: 0.75rem;
+    }
+}
+
+/* Height-based adjustments for shorter screens */
+@media (max-height: 700px) {
     .why-container {
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: 100vh !important;
-        max-height: 100dvh !important;
-        min-height: 0 !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y;
+        padding-top: 80px;
+        padding-bottom: 40px;
+    }
+    
+    .why-header {
+        margin-bottom: 2.5rem;
+    }
+    
+    .why-main-content {
+        margin-bottom: 3rem;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+    .why-container {
+        padding-top: 70px;
+        padding-bottom: 30px;
+    }
+    
+    .why-header {
+        margin-bottom: 2rem;
+    }
+    
+    .why-main-title {
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        margin-bottom: 1rem;
+    }
+    
+    .why-main-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .why-features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Very tall screens */
+@media (min-height: 1000px) {
+    .why-container {
+        padding-top: 150px;
+        padding-bottom: 100px;
+    }
+    
+    .why-header {
+        margin-bottom: 6rem;
+    }
+    
+    .why-main-content {
+        margin-bottom: 8rem;
+    }
+}
+
+/* Extra Small Devices */
+@media (max-width: 320px) {
+    .why-main-title {
+        font-size: 1.3rem;
+    }
+    
+    .why-subtitle {
+        font-size: 1rem;
+    }
+    
+    .why-text {
+        font-size: 0.8rem;
+    }
+    
+    .why-platform-feature {
+        padding: 1.25rem 1rem;
+    }
+    
+    .vs-card {
+        padding: 1.5rem 1rem;
     }
 }

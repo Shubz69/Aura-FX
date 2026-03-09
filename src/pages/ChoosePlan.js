@@ -157,7 +157,7 @@ const ChoosePlan = () => {
           style={{
             color: '#ffffff',
             fontSize: '36px',
-            fontWeight: 'bold',
+            fontWeight: 'normal',
             marginBottom: '12px',
             textAlign: 'center',
             background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',

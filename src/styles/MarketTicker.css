@@ -1,12 +1,6 @@
 /**
  * MarketTicker CSS - Compact TradingView-style ticker
- * 
- * Visual requirements:
- * - Slim, dense tiles with minimal padding
- * - Continuous horizontal flow, no large gaps
- * - Proper vertical alignment
- * - Green/red flash on tick
- * - Smooth auto-scrolling
+ * AURA FX Premium Redesign — Modal enhanced to match home.css aesthetic
  */
 
 /* ============================================================================
@@ -109,12 +103,10 @@
   background: linear-gradient(135deg, rgba(20, 12, 38, 0.8), rgba(30, 22, 48, 0.8));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  /* Compact height - just enough to fit tiles */
   min-height: 48px;
   padding: 8px 0;
   display: flex;
   align-items: center;
-  /* Allow horizontal scroll on ticker but don't block vertical page scroll */
   touch-action: pan-x pan-y;
 }
 
@@ -124,7 +116,6 @@
   padding: 0 12px;
   width: max-content;
   align-items: center;
-  /* Allow horizontal panning but don't block vertical scroll */
   touch-action: pan-x pan-y;
 }
 
@@ -149,13 +140,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  /* Minimal padding for compact look */
   padding: 6px 12px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 6px;
   transition: all 0.25s ease;
   white-space: nowrap;
-  /* Slim height */
   height: 32px;
   line-height: 1.2;
 }
@@ -164,50 +153,29 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-.ticker-item.loading {
-  opacity: 0.6;
-}
-
-.ticker-item.stale {
-  opacity: 0.75;
-}
-
-.ticker-item.delayed {
-  border: 1px dashed rgba(245, 158, 11, 0.25);
-}
+.ticker-item.loading { opacity: 0.6; }
+.ticker-item.stale   { opacity: 0.75; }
+.ticker-item.delayed { border: 1px dashed rgba(245, 158, 11, 0.25); }
 
 /* ============================================================================
-   Flash Animations - Subtle TradingView Style
+   Flash Animations
    ============================================================================ */
 
-.ticker-item.flash-green {
-  animation: flashGreen 0.5s ease;
-}
-
-.ticker-item.flash-red {
-  animation: flashRed 0.5s ease;
-}
+.ticker-item.flash-green { animation: flashGreen 0.5s ease; }
+.ticker-item.flash-red   { animation: flashRed  0.5s ease; }
 
 @keyframes flashGreen {
-  0%, 100% {
-    background: rgba(255, 255, 255, 0.04);
-  }
-  30% {
-    background: rgba(34, 197, 94, 0.25);
-  }
+  0%, 100% { background: rgba(255, 255, 255, 0.04); }
+  30%       { background: rgba(34, 197, 94, 0.25);  }
 }
 
 @keyframes flashRed {
-  0%, 100% {
-    background: rgba(255, 255, 255, 0.04);
-  }
-  30% {
-    background: rgba(239, 68, 68, 0.25);
-  }
+  0%, 100% { background: rgba(255, 255, 255, 0.04); }
+  30%       { background: rgba(239, 68, 68, 0.25);  }
 }
 
 /* ============================================================================
-   Symbol Name - Compact
+   Symbol / Price / Change
    ============================================================================ */
 
 .ticker-symbol {
@@ -218,10 +186,6 @@
   min-width: 50px;
 }
 
-/* ============================================================================
-   Price Display - Compact
-   ============================================================================ */
-
 .ticker-price {
   font-family: 'Space Grotesk', 'SF Mono', monospace;
   font-weight: 600;
@@ -231,41 +195,24 @@
   text-align: right;
 }
 
-.ticker-price.price-up {
-  color: #22c55e;
-}
+.ticker-price.price-up      { color: #22c55e; }
+.ticker-price.price-down    { color: #ef4444; }
+.ticker-price.loading-price { color: rgba(255, 255, 255, 0.4); }
 
-.ticker-price.price-down {
-  color: #ef4444;
-}
-
-.ticker-price.loading-price {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-/* Loading shimmer for prices */
-.price-loading {
-  display: inline-flex;
-  gap: 2px;
-}
+.price-loading { display: inline-flex; gap: 2px; }
 
 .loading-dot {
   animation: shimmerDot 1s ease-in-out infinite;
   color: rgba(255, 255, 255, 0.35);
   font-size: 0.7rem;
 }
-
 .loading-dot:nth-child(2) { animation-delay: 0.15s; }
-.loading-dot:nth-child(3) { animation-delay: 0.3s; }
+.loading-dot:nth-child(3) { animation-delay: 0.3s;  }
 
 @keyframes shimmerDot {
   0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
+  50%       { opacity: 0.8; }
 }
-
-/* ============================================================================
-   Change Percentage Badge - Compact
-   ============================================================================ */
 
 .ticker-change {
   font-family: 'Space Grotesk', sans-serif;
@@ -278,29 +225,14 @@
   line-height: 1.2;
 }
 
-.ticker-change.ticker-up {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
-}
+.ticker-change.ticker-up      { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.ticker-change.ticker-down    { background: rgba(239, 68, 68, 0.15);  color: #ef4444; }
+.ticker-change.ticker-loading { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.4); }
 
-.ticker-change.ticker-down {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-}
-
-.ticker-change.ticker-loading {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.ticker-delayed-badge {
-  font-size: 0.6rem;
-  margin-left: 3px;
-  opacity: 0.6;
-}
+.ticker-delayed-badge { font-size: 0.6rem; margin-left: 3px; opacity: 0.6; }
 
 /* ============================================================================
-   View All Markets Button - Compact
+   View All Markets Button
    ============================================================================ */
 
 .view-all-markets-btn {
@@ -325,116 +257,257 @@
 }
 
 /* ============================================================================
-   Modal Overlay
+   PREMIUM MODAL OVERLAY — AURA FX redesign
    ============================================================================ */
 
 .market-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(5, 3, 12, 0.88);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 99999 !important;
   padding: 16px;
-  animation: fadeIn 0.15s ease;
-  /* Allow scrolling inside modal, contain overscroll */
+  animation: overlayFadeIn 0.2s ease both;
   overscroll-behavior: contain;
+  transform: none !important;
 }
 
-@keyframes fadeIn {
+@keyframes overlayFadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
+}
+
+/* Ambient glow behind modal — matches central-glow from home */
+.market-modal-overlay::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(139, 92, 246, 0.09) 0%,
+    rgba(99, 179, 237, 0.05) 40%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  animation: glowPulse 6s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
 /* ============================================================================
-   Modal Container - Compact Cards
+   PREMIUM MODAL CONTAINER
    ============================================================================ */
 
 .market-modal {
-  background: linear-gradient(145deg, rgba(22, 14, 40, 0.98), rgba(32, 24, 52, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: linear-gradient(155deg,
+    rgba(14, 8, 28, 0.97) 0%,
+    rgba(22, 14, 42, 0.97) 50%,
+    rgba(18, 12, 36, 0.97) 100%
+  );
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 20px;
   width: 100%;
-  max-width: 800px;
-  max-height: 80vh;
+  max-width: 820px;
+  max-height: 82vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.2s ease;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  /* Enable touch scrolling inside modal */
+  animation: modalReveal 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-shadow:
+    0 32px 96px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 60px rgba(139, 92, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior: contain;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Top shimmer line — matches feature-card::before in home.css */
+.market-modal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.6) 30%,
+    rgba(99, 179, 237, 0.5) 70%,
+    transparent 100%
+  );
+  z-index: 2;
+  border-radius: 20px 20px 0 0;
 }
+
+/* Diagonal grid texture overlay — matches stat-item::after */
+.market-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 24px,
+    rgba(255, 255, 255, 0.008) 24px,
+    rgba(255, 255, 255, 0.008) 25px
+  );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 20px;
+}
+
+@keyframes modalReveal {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ============================================================================
+   MODAL HEADER — Premium
+   ============================================================================ */
 
 .market-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
+  position: relative;
+  z-index: 3;
+}
+
+/* Left accent bar — matches stat-item::before */
+.market-modal-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(139, 92, 246, 0) 0%,
+    rgba(139, 92, 246, 0.9) 50%,
+    rgba(99, 179, 237, 0.6) 100%
+  );
+  border-radius: 0 2px 2px 0;
+  opacity: 0.7;
+}
+
+.market-modal-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .market-modal-header h2 {
   margin: 0;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: white;
+  font-size: 1.3rem;
+  font-weight: 200;
+  color: var(--text, #fff);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  /* Gradient text — matches brand-name and stat-number */
+  background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.3));
+}
+
+.market-modal-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-weight: 400;
 }
 
 .modal-stale-badge {
-  font-size: 0.7rem;
-  padding: 3px 8px;
-  background: rgba(245, 158, 11, 0.12);
+  font-size: 0.68rem;
+  padding: 3px 10px;
+  background: rgba(245, 158, 11, 0.1);
   color: #F59E0B;
-  border-radius: 10px;
-  margin-left: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 20px;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.06em;
 }
 
 .market-modal-close {
-  background: rgba(255, 255, 255, 0.06);
-  border: none;
-  color: white;
-  width: 32px;
-  height: 32px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.22s ease;
+  font-family: 'Space Grotesk', sans-serif;
+  flex-shrink: 0;
 }
 
 .market-modal-close:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.market-modal-content {
-  padding: 12px 16px;
-  overflow-y: auto;
-  flex: 1;
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: white;
+  transform: rotate(90deg);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.2);
 }
 
 /* ============================================================================
-   Market Groups in Modal - Ultra Compact Grid
+   MODAL CONTENT SCROLL AREA
+   ============================================================================ */
+
+.market-modal-content {
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+  flex: 1;
+  position: relative;
+  z-index: 3;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
+.market-modal-content::-webkit-scrollbar {
+  width: 4px;
+}
+.market-modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.market-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 2px;
+}
+.market-modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+/* ============================================================================
+   MARKET GROUPS — Section title style from home.css
    ============================================================================ */
 
 .market-group {
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 
 .market-group:last-child {
@@ -444,88 +517,144 @@
 .market-group-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  position: relative;
+}
+
+/* Gradient underline — matches section-title::after */
+.market-group-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(139, 92, 246, 0.35) 0%,
+    rgba(99, 179, 237, 0.2) 40%,
+    transparent 100%
+  );
 }
 
 .market-group-icon {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
 }
 
 .market-group-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 5px;
 }
 
 /* ============================================================================
-   Market Item in Modal - ULTRA COMPACT (just symbol + price)
+   MARKET ITEM CARDS — Matches feature-card / stat-item style
    ============================================================================ */
 
 .market-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 4px;
-  padding: 4px 8px;
-  transition: all 0.15s ease;
-  height: 28px;
-  min-height: 28px;
-  max-height: 28px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 36px;
+  min-height: 36px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Inner glow — matches feature-card::after */
+.market-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top left, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
 .market-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(139, 92, 246, 0.08);
+}
+
+.market-item:hover::before {
+  opacity: 1;
 }
 
 .market-item.delayed {
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
 .market-item.flash-green {
-  animation: flashGreen 0.4s ease;
+  animation: marketFlashGreen 0.45s ease;
 }
 
 .market-item.flash-red {
-  animation: flashRed 0.4s ease;
+  animation: marketFlashRed 0.45s ease;
+}
+
+@keyframes marketFlashGreen {
+  0%, 100% { background: rgba(255, 255, 255, 0.025); border-color: rgba(255, 255, 255, 0.05); }
+  35%       { background: rgba(34, 197, 94, 0.18);   border-color: rgba(34, 197, 94, 0.3); }
+}
+
+@keyframes marketFlashRed {
+  0%, 100% { background: rgba(255, 255, 255, 0.025); border-color: rgba(255, 255, 255, 0.05); }
+  35%       { background: rgba(239, 68, 68, 0.18);   border-color: rgba(239, 68, 68, 0.3); }
 }
 
 .market-item-info {
   display: flex;
   align-items: center;
-  gap: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .market-item-symbol {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.04em;
 }
 
-.market-item-delayed {
-  display: none;
-}
+.market-item-delayed { display: none; }
 
 .market-item-price {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  position: relative;
+  z-index: 1;
 }
 
 .market-item-value {
   font-family: 'Space Grotesk', 'SF Mono', monospace;
   font-weight: 500;
-  font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.7rem;
+  /* Subtle gradient on the price value */
+  background: linear-gradient(125deg, #e2e8f0 0%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .market-item-change {
@@ -535,171 +664,73 @@
   display: none;
 }
 
-.market-item-change.up {
-  color: #22c55e;
-}
-
-.market-item-change.down {
-  color: #ef4444;
-}
-
-.market-item-change.loading {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 0.55rem;
-}
+.market-item-change.up      { color: #22c55e; }
+.market-item-change.down    { color: #ef4444; }
+.market-item-change.loading { color: rgba(255, 255, 255, 0.3); font-size: 0.55rem; }
 
 /* ============================================================================
    Responsive Styles
    ============================================================================ */
 
 @media (max-width: 768px) {
-  .market-ticker-wrapper {
-    margin: 10px 0;
-  }
-  
-  .ticker-categories {
-    padding: 0 12px 4px;
-  }
-  
-  .ticker-category {
-    padding: 4px 10px;
-    font-size: 0.7rem;
-  }
-  
+  .market-ticker-wrapper { margin: 10px 0; }
+  .ticker-categories      { padding: 0 12px 4px; }
+  .ticker-category        { padding: 4px 10px; font-size: 0.7rem; }
+
   .stock-ticker-compact {
     min-height: 44px;
     padding: 6px 0;
     border-radius: 8px;
   }
-  
-  .ticker {
-    gap: 6px;
-    padding: 0 10px;
-  }
-  
-  .ticker-item {
-    gap: 6px;
-    padding: 5px 10px;
-    height: 28px;
-  }
-  
-  .ticker-symbol {
-    font-size: 0.75rem;
-    min-width: 42px;
-  }
-  
-  .ticker-price {
-    font-size: 0.8rem;
-    min-width: 48px;
-  }
-  
-  .ticker-change {
-    font-size: 0.65rem;
-    padding: 2px 5px;
-    min-width: 50px;
-  }
-  
-  .view-all-markets-btn {
-    padding: 5px 14px;
-    font-size: 0.72rem;
-  }
-  
+
+  .ticker         { gap: 6px; padding: 0 10px; }
+  .ticker-item    { gap: 6px; padding: 5px 10px; height: 28px; }
+  .ticker-symbol  { font-size: 0.75rem; min-width: 42px; }
+  .ticker-price   { font-size: 0.8rem;  min-width: 48px; }
+  .ticker-change  { font-size: 0.65rem; padding: 2px 5px; min-width: 50px; }
+
+  .view-all-markets-btn { padding: 5px 14px; font-size: 0.72rem; }
+
   .market-modal {
-    max-height: 85vh;
-    border-radius: 12px;
+    max-height: 88vh;
+    border-radius: 16px;
   }
-  
-  .market-modal-header {
-    padding: 12px 16px;
-  }
-  
-  .market-modal-header h2 {
-    font-size: 1.1rem;
-  }
-  
-  .market-modal-content {
-    padding: 12px 16px;
-  }
-  
+
+  .market-modal-header { padding: 16px 18px 14px; }
+  .market-modal-header h2 { font-size: 1.1rem; letter-spacing: 0.2em; }
+  .market-modal-content { padding: 12px 14px 16px; }
+
   .market-group-items {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 3px;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 4px;
   }
-  
-  .market-item {
-    padding: 3px 6px;
-    height: 24px;
-    min-height: 24px;
-  }
-  
-  .market-item-symbol {
-    font-size: 0.65rem;
-  }
-  
-  .market-item-value {
-    font-size: 0.6rem;
-  }
+
+  .market-item { padding: 7px 9px; height: 34px; min-height: 34px; }
+  .market-item-symbol { font-size: 0.65rem; }
+  .market-item-value  { font-size: 0.65rem; }
 }
 
 @media (max-width: 480px) {
-  .ticker.auto-scroll {
-    animation-duration: 30s;
-  }
-  
-  .stock-ticker-compact {
-    min-height: 40px;
-    padding: 5px 0;
-  }
-  
-  .ticker-item {
-    gap: 5px;
-    padding: 4px 8px;
-    height: 26px;
-  }
-  
-  .ticker-symbol {
-    font-size: 0.7rem;
-    min-width: 38px;
-  }
-  
-  .ticker-price {
-    font-size: 0.75rem;
-    min-width: 42px;
-  }
-  
-  .ticker-change {
-    font-size: 0.6rem;
-    padding: 1px 4px;
-    min-width: 44px;
-  }
-  
-  .market-modal-header h2 {
-    font-size: 1rem;
-  }
-  
-  .modal-stale-badge {
-    display: none;
-  }
-  
+  .ticker.auto-scroll { animation-duration: 30s; }
+
+  .stock-ticker-compact { min-height: 40px; padding: 5px 0; }
+  .ticker-item    { gap: 5px; padding: 4px 8px; height: 26px; }
+  .ticker-symbol  { font-size: 0.7rem;  min-width: 38px; }
+  .ticker-price   { font-size: 0.75rem; min-width: 42px; }
+  .ticker-change  { font-size: 0.6rem;  padding: 1px 4px; min-width: 44px; }
+
+  .market-modal { max-height: 90vh; }
+  .market-modal-header h2 { font-size: 1rem; letter-spacing: 0.16em; }
+
+  .modal-stale-badge { display: none; }
+
   .market-group-items {
     grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
   }
-  
-  .market-item {
-    padding: 2px 5px;
-    height: 22px;
-    min-height: 22px;
-  }
-  
-  .market-item-symbol {
-    font-size: 0.6rem;
-  }
-  
-  .market-item-value {
-    font-size: 0.55rem;
-  }
-  
-  .market-item-change {
-    display: none;
-  }
+
+  .market-item { padding: 6px 7px; height: 30px; min-height: 30px; border-radius: 6px; }
+  .market-item-symbol { font-size: 0.6rem; }
+  .market-item-value  { font-size: 0.6rem; }
+  .market-item-change { display: none; }
 }

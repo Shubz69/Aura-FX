@@ -228,10 +228,11 @@ function AppRoutes() {
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </Suspense>
+                 <Footer />
             </main>
 
-            {/* Footer moved OUTSIDE page-wrapper - now it's a sibling */}
-            <Footer />
+           
+           
 
             {showChatbot && (
                 <Suspense fallback={null}>
