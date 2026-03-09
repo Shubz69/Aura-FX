@@ -4,8 +4,8 @@ import axios from "axios";
 import Api from "../services/Api";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
-import { validateUsername, canChangeUsername, getCooldownMessage, formatLastUsernameChange } from '../utils/usernameValidation';
 import CosmicBackground from '../components/CosmicBackground';
+import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
 import { getPlaceholderColor, setPlaceholderColor as savePlaceholderColor, PLACEHOLDER_COLORS } from '../utils/avatar';
 import {
     getRankTitle,
@@ -108,41 +108,43 @@ const Profile = () => {
 
     const initialLoadDone = useRef(false);
 
-    // ─── Load initial data from localStorage, SCOPED to this user ───
-    useEffect(() => {
-        if (initialLoadDone.current) return;
-        if (!user?.id) return; // Wait until we know the user
+   // ─── Load initial data from localStorage, SCOPED to this user ───
+useEffect(() => {
+    if (initialLoadDone.current) return;
+    if (!user?.id) return; // Wait until we know the user
 
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-        // FIXED: Only use banner if it belongs to THIS user
-        // We scope it by userId so different accounts don't share banners
-        const userBannerKey = userKey(user.id, 'banner');
-        const scopedBanner = localStorage.getItem(userBannerKey) || '';
+    // FIXED: Only use banner if it belongs to THIS user
+    // We scope it by userId so different accounts don't share banners
+    const userBannerKey = userKey(user.id, 'banner');
+    const scopedBanner = localStorage.getItem(userBannerKey) || '';
 
-        // Only use storedUser banner if it's for the same user
-        const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
+    // Only use storedUser banner if it's for the same user
+    const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
 
-        const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
 
-        const initialData = {
-            ...formData,
-            ...storedUserData,
-            ...storedUser,
-            banner: localBanner // Use scoped banner only
-        };
+    // FIXED: Trim username when loading from localStorage
+    const initialData = {
+        ...formData,
+        ...storedUserData,
+        ...storedUser,
+        username: storedUser.username?.trim() || storedUserData.username?.trim() || '',
+        banner: localBanner // Use scoped banner only
+    };
 
-        setFormData(initialData);
+    setFormData(initialData);
 
-        if (initialData.banner?.startsWith('data:image') || initialData.banner?.startsWith('http')) {
-            setBannerPreview(initialData.banner);
-        }
-        if (initialData.avatar?.startsWith('data:image') || initialData.avatar?.startsWith('http')) {
-            setAvatarPreview(initialData.avatar);
-        }
+    if (initialData.banner?.startsWith('data:image') || initialData.banner?.startsWith('http')) {
+        setBannerPreview(initialData.banner);
+    }
+    if (initialData.avatar?.startsWith('data:image') || initialData.avatar?.startsWith('http')) {
+        setAvatarPreview(initialData.avatar);
+    }
 
-        initialLoadDone.current = true;
-    }, [user?.id]); // Re-run when user id is known
+    initialLoadDone.current = true;
+}, [user?.id]); // Re-run when user id is known
 
     // ─── Main profile loading effect ───
     useEffect(() => {
@@ -157,7 +159,7 @@ const Profile = () => {
             const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
 
             const authData = {
-                username: user.username || storedUser.username || "",
+                username: (user.username || storedUser.username || "").trim(),
                 email: user.email || storedUser.email || "",
                 phone: user.phone || storedUser.phone || "",
                 address: user.address || storedUser.address || "",
@@ -495,37 +497,33 @@ const Profile = () => {
         }
 
         // ─── FIXED: Username validation ───
-        const newUsername = formData.username?.trim();
-        const originalUsername = user.username?.trim();
+        // Only validate if username was actually changed
+        const newUsername = formData.username?.trim() || '';
+        const originalUsername = user.username?.trim() || '';
+        
+        // Check if username actually changed (case-sensitive comparison after trim)
+        const usernameChanged = newUsername !== originalUsername;
 
-        // Only validate if username field has a value and it's different from original
-        if (newUsername) {
-            // Check if username actually changed
-            if (newUsername !== originalUsername) {
-                // Step 1: Format validation - check length and characters
-                const validation = validateUsername(newUsername);
-                if (!validation.isValid) {
-                    setUsernameValidationError(validation.error);
-                    setStatus("Username validation failed: " + validation.error);
+        if (usernameChanged) {
+            // Step 1: Format validation
+            const validation = validateUsername(newUsername);
+            if (!validation.isValid) {
+                setUsernameValidationError(validation.error);
+                setStatus("Username validation failed");
+                return;
+            }
+
+            // Step 2: Cooldown check — only applies if they HAVE changed it before
+            // AND if they're trying to change it again
+            if (lastUsernameChange !== null && lastUsernameChange !== undefined) {
+                const cooldownCheck = canChangeUsername(lastUsernameChange);
+                if (!cooldownCheck.canChange) {
+                    const msg = getCooldownMessage(lastUsernameChange);
+                    setUsernameValidationError(msg);
+                    setStatus("Username change on cooldown");
                     return;
                 }
-
-                // Step 2: Cooldown check - only if they've changed it before
-                if (lastUsernameChange) {
-                    const cooldownCheck = canChangeUsername(lastUsernameChange);
-                    if (!cooldownCheck.canChange) {
-                        const msg = getCooldownMessage(lastUsernameChange);
-                        setUsernameValidationError(msg);
-                        setStatus("Username change on cooldown");
-                        return;
-                    }
-                }
             }
-        } else {
-            // Username is empty - invalid
-            setUsernameValidationError("Username cannot be empty");
-            setStatus("Username validation failed: Username cannot be empty");
-            return;
         }
 
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -537,14 +535,14 @@ const Profile = () => {
 
         const dataToSave = {
             id: user.id,
-            username: newUsername, // Use trimmed username
+            username: newUsername || storedUser.username || '',
             email: formData.email || storedUser.email || '',
             phone: formData.phone || storedUser.phone || '',
             address: formData.address || storedUser.address || '',
             name: formData.name || storedUser.name || '',
             bio: formData.bio || storedUser.bio || '',
             avatar: formData.avatar || storedUser.avatar || '',
-            banner: currentBanner,
+            banner: currentBanner, // This user's banner only
             timezone: formData.timezone || storedUser.timezone || '',
         };
 
@@ -565,7 +563,8 @@ const Profile = () => {
         if (response.status === 200) {
             const serverData = response.data;
 
-            // FIXED: Trust server response for banner
+            // FIXED: Trust server response for banner. If server saved it, it will return it.
+            // Only fall back to local if server returns nothing (e.g., server strips large base64)
             const savedBanner = serverData.banner || currentBanner;
 
             const updatedData = {
@@ -588,8 +587,8 @@ const Profile = () => {
 
             if (setUser) setUser(updatedStoredUser);
 
-            // Update lastUsernameChange if username was changed
-            if (newUsername !== originalUsername && serverData.last_username_change) {
+            // Update lastUsernameChange only if username was actually changed
+            if (usernameChanged && serverData.last_username_change) {
                 setLastUsernameChange(serverData.last_username_change);
             }
 
