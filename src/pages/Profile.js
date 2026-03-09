@@ -109,26 +109,65 @@ const Profile = () => {
     const initialLoadDone = useRef(false);
 
     // Add these helper functions at the component level, right after useState declarations
-    const handleColorSelect = (color) => {
-        if (!user?.id) return;
-        
-        // Save the color to localStorage with user-specific key
-        localStorage.setItem(`avatar_color_${user.id}`, color);
-        
-        // Update the avatarColor state to trigger re-render
-        setAvatarColor(color);
-        
-        // Also save using the existing utility function for backward compatibility
-        savePlaceholderColor(user.id, color);
-        
-        setStatus('Profile color updated!');
-        setTimeout(() => setStatus(''), 2000);
-    };
+   const handleColorSelect = async (color) => {
+    if (!user?.id) return;
+    
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setStatus("Authentication required");
+            return;
+        }
 
-    const getAvatarDisplayColor = () => {
-        if (avatarColor) return avatarColor;
-        return getPlaceholderColor(user?.id ?? formData.username);
-    };
+       // Save to server first
+        const response = await axios.put(
+            `${resolveApiBaseUrl()}/api/users/${user.id}`,
+            { 
+                id: user.id,
+                avatarColor: color  // Add this field to your user schema
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+       if (response.status === 200) {
+            // Save to localStorage as backup
+            localStorage.setItem(`avatar_color_${user.id}`, color);
+            
+            // Update state
+            setAvatarColor(color);
+            
+            // Also save using the existing utility function
+            savePlaceholderColor(user.id, color);
+            
+            setStatus('Profile color updated!');
+            setTimeout(() => setStatus(''), 2000);
+        }
+    } catch (error) {
+        console.error('Error saving avatar color:', error);
+        setStatus('Failed to save color. Please try again.');
+        setTimeout(() => setStatus(''), 3000);
+    }
+};
+
+// ADD THIS MISSING FUNCTION
+const getAvatarDisplayColor = () => {
+    // Check state first
+    if (avatarColor) return avatarColor;
+    
+    // Check if user object has avatarColor
+    if (user?.avatarColor) return user.avatarColor;
+    
+    // Check formData (which might have been loaded from server)
+    if (formData?.avatarColor) return formData.avatarColor;
+    
+    // Fallback to default
+    return getPlaceholderColor(user?.id ?? formData.username);
+};
 
 
     // ─── Load initial data from localStorage, SCOPED to this user ───
@@ -142,11 +181,14 @@ const Profile = () => {
         const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
         const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
 
-        // Load saved avatar color
-        const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
-        if (savedColor) {
-            setAvatarColor(savedColor);
-        }
+          // Try to load from localStorage first
+    const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
+    if (savedColor) {
+        setAvatarColor(savedColor);
+    } else if (storedUser.avatarColor) {
+        // If not in localStorage but in storedUser, use that
+        setAvatarColor(storedUser.avatarColor);
+    }
 
         const initialData = {
             ...formData,
@@ -243,9 +285,15 @@ const Profile = () => {
                         bio: userData.bio || authData.bio || "",
                         banner: finalBanner,
                         level: storedUser.level ?? userData.level ?? authData.level,
-                        xp: storedUser.xp ?? userData.xp ?? authData.xp
+                        xp: storedUser.xp ?? userData.xp ?? authData.xp,
+                        avatarColor: userData.avatarColor || null 
                     };
-
+  // Load avatar color from server response
+    if (userData.avatarColor) {
+        setAvatarColor(userData.avatarColor);
+        // Also cache it locally
+        localStorage.setItem(`avatar_color_${user.id}`, userData.avatarColor);
+    }
                     if (userData.last_username_change) {
                         setLastUsernameChange(userData.last_username_change);
                         setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
@@ -273,7 +321,12 @@ const Profile = () => {
                     if (finalBanner) {
                         localStorage.setItem(userBannerKey, finalBanner);
                     }
-
+   // Load avatar color from server response
+    if (userData.avatarColor) {
+        setAvatarColor(userData.avatarColor);
+        // Also cache it locally
+        localStorage.setItem(`avatar_color_${user.id}`, userData.avatarColor);
+    }
                     // Daily login check
                     const currentUserId = user?.id || userData.id;
                     const lastCheckKey = `daily_login_check_${currentUserId}`;
@@ -580,6 +633,7 @@ const Profile = () => {
                 avatar: formData.avatar || storedUser.avatar || '',
                 banner: currentBanner,
                 timezone: formData.timezone || storedUser.timezone || '',
+                avatarColor: avatarColor || null,
             };
 
             // Update localStorage optimistically
