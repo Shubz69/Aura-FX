@@ -16,23 +16,7 @@ import {
     getXPProgress,
     getNextRankMilestone
 } from '../utils/xpSystem';
-// Add this temporary debug wrapper around validateUsername
-// You can place this at the top of your component, after the imports
 
-const debugValidateUsername = (username) => {
-    console.log('Validating username:', username);
-    try {
-        const result = validateUsername(username);
-        console.log('Validation result:', result);
-        return result;
-    } catch (error) {
-        console.error('Validation error:', error);
-        return { isValid: false, error: 'Validation function error' };
-    }
-};
-
-// Then in handleSaveChanges, replace validateUsername(newUsername) with:
-const validation = debugValidateUsername(newUsername);
 const resolveApiBaseUrl = () => {
     if (typeof window !== 'undefined' && window.location?.origin) {
         return window.location.origin;
@@ -65,7 +49,6 @@ const getWeekEnd = (d) => { const start = new Date(getWeekStart(d)); start.setDa
 const isSameDay = (a, b) => a && b && String(a).slice(0, 10) === String(b).slice(0, 10);
 
 // ─── Helper: user-scoped localStorage keys ───
-// This prevents one user's banner from leaking into another user's session
 const userKey = (userId, key) => `user_${userId}_${key}`;
 
 /* ─── Mini SVG ring component ─── */
@@ -124,75 +107,62 @@ const Profile = () => {
 
     const initialLoadDone = useRef(false);
 
-   // ─── Load initial data from localStorage, SCOPED to this user ───
-useEffect(() => {
-    if (initialLoadDone.current) return;
-    if (!user?.id) return; // Wait until we know the user
-
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-
-    // FIXED: Only use banner if it belongs to THIS user
-    // We scope it by userId so different accounts don't share banners
-    const userBannerKey = userKey(user.id, 'banner');
-    const scopedBanner = localStorage.getItem(userBannerKey) || '';
-
-    // Only use storedUser banner if it's for the same user
-    const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
-
-    const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
-
-    // FIXED: Trim username when loading from localStorage
-    const initialData = {
-        ...formData,
-        ...storedUserData,
-        ...storedUser,
-        username: storedUser.username?.trim() || storedUserData.username?.trim() || '',
-        banner: localBanner // Use scoped banner only
-    };
-
-    setFormData(initialData);
-
-    if (initialData.banner?.startsWith('data:image') || initialData.banner?.startsWith('http')) {
-        setBannerPreview(initialData.banner);
-    }
-    if (initialData.avatar?.startsWith('data:image') || initialData.avatar?.startsWith('http')) {
-        setAvatarPreview(initialData.avatar);
-    }
-
-    initialLoadDone.current = true;
-}, [user?.id]); // Re-run when user id is known
-
-    // ─── Main profile loading effect ───
-  useEffect(() => {
-    const loadProfile = async () => {
+    // ─── Load initial data from localStorage, SCOPED to this user ───
+    useEffect(() => {
+        if (initialLoadDone.current) return;
         if (!user?.id) return;
 
-        // CRITICAL: Store a reference to the current user to avoid stale closures
-        const currentUserId = user.id;
-        const currentUser = { ...user };
-
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-
-        // Only use stored banner if it belongs to THIS user
-        const userBannerKey = userKey(currentUserId, 'banner');
+        const userBannerKey = userKey(user.id, 'banner');
         const scopedBanner = localStorage.getItem(userBannerKey) || '';
-        const localBanner = (storedUser.id === currentUserId ? storedUser.banner : '') || scopedBanner || '';
+        const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
+        const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
 
-        const authData = {
-            username: (currentUser.username || storedUser.username || "").trim(),
-            email: currentUser.email || storedUser.email || "",
-            phone: currentUser.phone || storedUser.phone || "",
-            address: currentUser.address || storedUser.address || "",
-            avatar: currentUser.avatar || storedUser.avatar || "",
-            name: currentUser.name || storedUser.name || "",
-            bio: currentUser.bio || storedUser.bio || "",
-            banner: localBanner,
-            level: storedUser.level || currentUser.level || 1,
-            xp: storedUser.xp || currentUser.xp || 0,
-            timezone: currentUser.timezone || storedUser.timezone || ""
+        const initialData = {
+            ...formData,
+            ...storedUserData,
+            ...storedUser,
+            username: (storedUser.username || storedUserData.username || '').trim(),
+            banner: localBanner
         };
 
-        setFormData(prev => ({ ...prev, ...authData }));
+        setFormData(initialData);
+
+        if (initialData.banner?.startsWith('data:image') || initialData.banner?.startsWith('http')) {
+            setBannerPreview(initialData.banner);
+        }
+        if (initialData.avatar?.startsWith('data:image') || initialData.avatar?.startsWith('http')) {
+            setAvatarPreview(initialData.avatar);
+        }
+
+        initialLoadDone.current = true;
+    }, [user?.id]);
+
+    // ─── Main profile loading effect ───
+    useEffect(() => {
+        const loadProfile = async () => {
+            if (!user?.id) return;
+
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const userBannerKey = userKey(user.id, 'banner');
+            const scopedBanner = localStorage.getItem(userBannerKey) || '';
+            const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
+
+            const authData = {
+                username: (user.username || storedUser.username || "").trim(),
+                email: user.email || storedUser.email || "",
+                phone: user.phone || storedUser.phone || "",
+                address: user.address || storedUser.address || "",
+                avatar: user.avatar || storedUser.avatar || "",
+                name: user.name || storedUser.name || "",
+                bio: user.bio || storedUser.bio || "",
+                banner: localBanner,
+                level: storedUser.level || user.level || 1,
+                xp: storedUser.xp || user.xp || 0,
+                timezone: user.timezone || storedUser.timezone || ""
+            };
+
+            setFormData(prev => ({ ...prev, ...authData }));
 
             if (authData.avatar?.startsWith('data:image') || authData.avatar?.startsWith('http')) {
                 setAvatarPreview(authData.avatar);
@@ -223,17 +193,12 @@ useEffect(() => {
 
                 if (userRes?.status === 200 && userRes.data) {
                     const userData = userRes.data;
-
-                    // FIXED: Trust the server for the banner.
-                    // If server has a banner, use it. If not, fall back to the scoped local banner.
-                    // This means each user gets their own banner from DB.
                     const serverBanner = userData.banner || '';
                     const finalBanner = serverBanner || localBanner;
-
                     const backendAvatar = userData.avatar || authData.avatar;
 
                     const backendData = {
-                        username: userData.username || authData.username,
+                        username: (userData.username || authData.username).trim(),
                         email: userData.email || authData.email,
                         phone: userData.phone || authData.phone,
                         address: userData.address || authData.address,
@@ -262,15 +227,13 @@ useEffect(() => {
                     setLoginStreak(userData.login_streak ?? 0);
                     setAchievements(userData.achievements || []);
 
-                    // Save to localStorage scoped by userId
                     const updatedUser = {
                         ...storedUser,
                         ...backendData,
-                        id: user.id // always keep id
+                        id: user.id
                     };
                     localStorage.setItem('user', JSON.stringify(updatedUser));
 
-                    // Also save banner in scoped key
                     if (finalBanner) {
                         localStorage.setItem(userBannerKey, finalBanner);
                     }
@@ -318,7 +281,6 @@ useEffect(() => {
         };
 
         loadProfile();
-        
 
         const handleXPUpdate = (event) => {
             const { newXP, newLevel } = event.detail;
@@ -390,7 +352,6 @@ useEffect(() => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         setEditedUserData(prev => ({ ...prev, [name]: value }));
-        // Clear username error when user types
         if (name === 'username') setUsernameValidationError("");
     };
 
@@ -480,13 +441,11 @@ useEffect(() => {
                     setFormData(prev => ({ ...prev, banner: resizedBase64 }));
                     setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
 
-                    // FIXED: Save banner scoped by userId to prevent cross-account leakage
                     if (user?.id) {
                         const userBannerKey = userKey(user.id, 'banner');
                         localStorage.setItem(userBannerKey, resizedBase64);
                     }
 
-                    // Also update the main user object
                     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
                     localStorage.setItem('user', JSON.stringify({ ...storedUser, banner: resizedBase64, id: user?.id }));
 
@@ -501,189 +460,183 @@ useEffect(() => {
         }
     };
 
-  const handleSaveChanges = async () => {
-    if (!user?.id) {
-        setStatus("You must be logged in to save changes");
-        return;
-    }
-
-    setStatus("Saving...");
-    setUsernameValidationError("");
-
-    try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            setStatus("Authentication required");
+    // COMPLETELY REWRITTEN handleSaveChanges function
+    const handleSaveChanges = async () => {
+        // Check if user is logged in
+        if (!user?.id) {
+            setStatus("You must be logged in to save changes");
             return;
         }
 
-        // Get the current user data from localStorage for reference
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        
-        // CRITICAL FIX: Get the original username from the user object, not from formData
-        // Also ensure we have a valid string to compare
-        const originalUsername = (user.username || storedUser.username || '').toString().trim();
-        const newUsername = (formData.username || '').toString().trim();
-        
-        // Log for debugging
-        console.log('Username comparison:', {
-            original: originalUsername,
-            new: newUsername,
-            changed: originalUsername !== newUsername
-        });
+        setStatus("Saving...");
+        setUsernameValidationError("");
 
-        // Only validate if username actually changed
-        if (originalUsername !== newUsername) {
-            // Validate username format
-            if (!newUsername || newUsername.length === 0) {
-                setUsernameValidationError("Username cannot be empty");
-                setStatus("Username validation failed");
+        try {
+            // Check for authentication token
+            const token = localStorage.getItem("token");
+            if (!token) {
+                setStatus("Authentication required");
                 return;
             }
 
-            // Call validation function and handle potential null response
-            const validation = validateUsername(newUsername);
+            // Get stored user data for reference
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             
-            // FIX: Check if validation exists and has the expected structure
-            if (!validation || typeof validation !== 'object') {
-                setUsernameValidationError("Username validation error");
-                setStatus("Username validation failed");
-                return;
-            }
+            // Get and trim usernames for comparison
+            const currentUsername = (user.username || storedUser.username || '').toString().trim();
+            const newUsername = (formData.username || '').toString().trim();
             
-            // Check if validation failed
-            if (validation.isValid === false) {
-                setUsernameValidationError(validation.error || "Invalid username format");
-                setStatus("Username validation failed");
-                return;
-            }
+            // Check if username actually changed
+            const usernameChanged = currentUsername !== newUsername;
 
-            // Cooldown check - only if they've changed username before
-            if (lastUsernameChange) {
-                const cooldownCheck = canChangeUsername(lastUsernameChange);
-                if (cooldownCheck && cooldownCheck.canChange === false) {
-                    const msg = getCooldownMessage(lastUsernameChange) || "Username change on cooldown";
-                    setUsernameValidationError(msg);
-                    setStatus("Username change on cooldown");
+            // Only validate username if it was changed
+            if (usernameChanged) {
+                // Check if username is empty
+                if (!newUsername) {
+                    setUsernameValidationError("Username cannot be empty");
+                    setStatus("Username validation failed");
                     return;
                 }
-            }
-        }
 
-        // Get banner scoped to this user
-        const userBannerKey = userKey(user.id, 'banner');
-        const scopedBanner = localStorage.getItem(userBannerKey) || '';
-        const currentBanner = bannerPreview || formData.banner || scopedBanner || '';
+                // Validate username format
+                const validation = validateUsername(newUsername);
+                
+                // Check if validation returned a valid result
+                if (!validation || typeof validation !== 'object') {
+                    setUsernameValidationError("Username validation error");
+                    setStatus("Username validation failed");
+                    return;
+                }
+                
+                // Check if validation failed
+                if (validation.isValid === false) {
+                    setUsernameValidationError(validation.error || "Invalid username format");
+                    setStatus("Username validation failed");
+                    return;
+                }
 
-        // Prepare data to save - use original username if it hasn't changed
-        const dataToSave = {
-            id: user.id,
-            username: originalUsername !== newUsername ? newUsername : originalUsername,
-            email: formData.email || storedUser.email || '',
-            phone: formData.phone || storedUser.phone || '',
-            address: formData.address || storedUser.address || '',
-            name: formData.name || storedUser.name || '',
-            bio: (formData.bio || '').trim(), // Always save bio even if username hasn't changed
-            avatar: formData.avatar || storedUser.avatar || '',
-            banner: currentBanner,
-            timezone: formData.timezone || storedUser.timezone || '',
-        };
-
-        console.log('Saving data:', dataToSave);
-
-        // Update localStorage immediately for better UX
-        localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
-
-        const response = await axios.put(
-            `${resolveApiBaseUrl()}/api/users/${user.id}`,
-            dataToSave,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                // Check cooldown period if user has changed username before
+                if (lastUsernameChange) {
+                    const cooldownCheck = canChangeUsername(lastUsernameChange);
+                    if (cooldownCheck && cooldownCheck.canChange === false) {
+                        const cooldownMessage = getCooldownMessage(lastUsernameChange) || "Username change on cooldown";
+                        setUsernameValidationError(cooldownMessage);
+                        setStatus("Username change on cooldown");
+                        return;
+                    }
                 }
             }
-        );
 
-        if (response.status === 200) {
-            const serverData = response.data || {};
-            
-            // Ensure we have valid data from server
-            const savedBanner = serverData.banner || currentBanner;
-            
-            // Merge server response with our data
-            const updatedData = {
-                ...dataToSave,
-                ...serverData,
-                banner: savedBanner,
+            // Get banner for this user
+            const userBannerKey = userKey(user.id, 'banner');
+            const scopedBanner = localStorage.getItem(userBannerKey) || '';
+            const currentBanner = bannerPreview || formData.banner || scopedBanner || '';
+
+            // Prepare data to save
+            const dataToSave = {
                 id: user.id,
-                username: serverData.username || dataToSave.username, // Use server username if provided
+                username: usernameChanged ? newUsername : currentUsername, // Use new username only if changed
+                email: formData.email || storedUser.email || '',
+                phone: formData.phone || storedUser.phone || '',
+                address: formData.address || storedUser.address || '',
+                name: formData.name || storedUser.name || '',
+                bio: (formData.bio || '').trim(), // Always include bio
+                avatar: formData.avatar || storedUser.avatar || '',
+                banner: currentBanner,
+                timezone: formData.timezone || storedUser.timezone || '',
             };
 
-            // Update all states
-            setFormData(prev => ({ ...prev, ...updatedData }));
-            
-            if (savedBanner) {
-                setBannerPreview(savedBanner);
-            }
+            // Update localStorage optimistically
+            localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
 
-            // Update localStorage with merged data
-            const updatedStoredUser = { ...storedUser, ...updatedData };
-            localStorage.setItem('user', JSON.stringify(updatedStoredUser));
-
-            // Update scoped banner
-            if (savedBanner) {
-                localStorage.setItem(userBannerKey, savedBanner);
-            }
-
-            // Update auth context
-            if (setUser) {
-                setUser(updatedStoredUser);
-            }
-
-            // Update lastUsernameChange only if username was actually changed on server
-            if (originalUsername !== newUsername && serverData.last_username_change) {
-                setLastUsernameChange(serverData.last_username_change);
-            }
-
-            // Clear edited data
-            setEditedUserData({});
-            
-            // Show success message
-            setStatus("Profile updated successfully!");
-            setTimeout(() => setStatus(""), 3000);
-            
-        } else {
-            setStatus("Failed to update profile");
-        }
-    } catch (error) {
-        console.error('Save error:', error);
-
-        // Handle specific error cases
-        if (error.response) {
-            const errorMessage = error.response.data?.message || '';
-            
-            if (error.response.status === 409) {
-                setUsernameValidationError("This username is already taken. Please choose another.");
-                setStatus("Username already taken.");
-            } else if (error.response.status === 400) {
-                // Check if it's a username validation error from server
-                if (errorMessage.toLowerCase().includes('username')) {
-                    setUsernameValidationError(errorMessage || "Invalid username format");
+            // Send to server
+            const response = await axios.put(
+                `${resolveApiBaseUrl()}/api/users/${user.id}`,
+                dataToSave,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 }
-                setStatus(errorMessage || "Bad request. Please check your data.");
-            } else if (error.response.status === 413) {
-                setStatus("Images too large. Please try smaller images.");
+            );
+
+            // Handle successful response
+            if (response.status === 200) {
+                const serverData = response.data || {};
+                
+                // Determine final banner (server response or current)
+                const savedBanner = serverData.banner || currentBanner;
+                
+                // Merge server data with our data
+                const updatedData = {
+                    ...dataToSave,
+                    ...serverData,
+                    banner: savedBanner,
+                    id: user.id,
+                    username: serverData.username || dataToSave.username,
+                };
+
+                // Update all state
+                setFormData(prev => ({ ...prev, ...updatedData }));
+                
+                if (savedBanner) {
+                    setBannerPreview(savedBanner);
+                }
+
+                // Update localStorage with merged data
+                const updatedStoredUser = { ...storedUser, ...updatedData };
+                localStorage.setItem('user', JSON.stringify(updatedStoredUser));
+
+                // Update scoped banner
+                if (savedBanner) {
+                    localStorage.setItem(userBannerKey, savedBanner);
+                }
+
+                // Update auth context
+                if (setUser) {
+                    setUser(updatedStoredUser);
+                }
+
+                // Update last username change timestamp if username was actually changed
+                if (usernameChanged && serverData.last_username_change) {
+                    setLastUsernameChange(serverData.last_username_change);
+                }
+
+                // Clear edited data and show success message
+                setEditedUserData({});
+                setStatus("Profile updated successfully!");
+                setTimeout(() => setStatus(""), 3000);
             } else {
-                setStatus(errorMessage || `Error ${error.response.status}: Failed to update profile`);
+                setStatus("Failed to update profile");
             }
-        } else if (error.request) {
-            setStatus("No response from server. Please check your connection.");
-        } else {
-            setStatus(error.message || "Failed to update profile");
+        } catch (error) {
+            console.error('Save error:', error);
+
+            // Handle specific error cases
+            if (error.response) {
+                const errorMessage = error.response.data?.message || '';
+                
+                if (error.response.status === 409) {
+                    setUsernameValidationError("This username is already taken. Please choose another.");
+                    setStatus("Username already taken.");
+                } else if (error.response.status === 400) {
+                    if (errorMessage.toLowerCase().includes('username')) {
+                        setUsernameValidationError(errorMessage || "Invalid username format");
+                    }
+                    setStatus(errorMessage || "Bad request. Please check your data.");
+                } else if (error.response.status === 413) {
+                    setStatus("Images too large. Please try smaller images.");
+                } else {
+                    setStatus(errorMessage || `Error ${error.response.status}: Failed to update profile`);
+                }
+            } else if (error.request) {
+                setStatus("No response from server. Please check your connection.");
+            } else {
+                setStatus(error.message || "Failed to update profile");
+            }
         }
-    }
-};
+    };
 
     // XP calculations
     const xpProgress = getXPProgress(formData.xp || 0, formData.level || 1);
@@ -734,7 +687,7 @@ useEffect(() => {
             </div>
 
             <div className="pf-content">
-                {/* ── BANNER ── */}
+                {/* Banner section */}
                 <div className="pf-banner-wrap">
                     {bannerPreview || formData.banner ? (
                         <img
@@ -763,7 +716,7 @@ useEffect(() => {
                     </button>
                 </div>
 
-                {/* ── HEADER CARD ── */}
+                {/* Header card */}
                 <div className="pf-header-card">
                     {/* Avatar */}
                     <div className="pf-avatar-col">
@@ -843,7 +796,7 @@ useEffect(() => {
                     </div>
                 </div>
 
-                {/* ── XP PROGRESS ── */}
+                {/* XP progress */}
                 <div className="pf-xp-card">
                     <div className="pf-xp-header">
                         <div>
@@ -872,7 +825,7 @@ useEffect(() => {
                     </div>
                 </div>
 
-                {/* ── STREAK + MINI STATS ── */}
+                {/* Streak + mini stats */}
                 <div className="pf-row-2">
                     <div className="pf-streak-card">
                         <span className="pf-streak-flame">🔥</span>
@@ -901,7 +854,7 @@ useEffect(() => {
                     </div>
                 </div>
 
-                {/* ── JOURNAL SUMMARY ── */}
+                {/* Journal summary */}
                 <div className="pf-journal-card">
                     <p className="pf-section-label">Journal · Completion</p>
                     {journalStatsLoading ? (
@@ -924,7 +877,7 @@ useEffect(() => {
                     )}
                 </div>
 
-                {/* ── TABS ── */}
+                {/* Tabs */}
                 <div className="pf-tabs">
                     {['overview', 'journey', 'statistics', 'achievements'].map(tab => (
                         <button
@@ -937,7 +890,7 @@ useEffect(() => {
                     ))}
                 </div>
 
-                {/* ── TAB PANEL ── */}
+                {/* Tab panel */}
                 <div className="pf-tab-panel">
                     {/* Overview Tab */}
                     {activeTab === 'overview' && (
@@ -1020,7 +973,7 @@ useEffect(() => {
                         </div>
                     )}
 
-                    {/* Journey Tab */}
+                    {/* Other tabs remain the same */}
                     {activeTab === 'journey' && (
                         <div className="pf-panel">
                             <p className="pf-section-label">Hero's Journey</p>
@@ -1064,7 +1017,6 @@ useEffect(() => {
                         </div>
                     )}
 
-                    {/* Statistics Tab */}
                     {activeTab === 'statistics' && (
                         <div className="pf-panel">
                             <p className="pf-section-label">Trading Statistics</p>
@@ -1091,7 +1043,6 @@ useEffect(() => {
                         </div>
                     )}
 
-                    {/* Achievements Tab */}
                     {activeTab === 'achievements' && (
                         <div className="pf-panel">
                             <p className="pf-section-label">Achievements · {achievements.length} Unlocked</p>
@@ -1115,7 +1066,7 @@ useEffect(() => {
                     )}
                 </div>
 
-                {/* ── STATUS MSG ── */}
+                {/* Status message */}
                 {status && (
                     <div className={`pf-status${status.toLowerCase().includes('fail') || status.toLowerCase().includes('error') ? ' pf-status-err' : ''}`}>
                         {status}
