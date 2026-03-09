@@ -4,8 +4,8 @@ import axios from "axios";
 import Api from "../services/Api";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
+import { validateUsername, canChangeUsername, getCooldownMessage, formatLastUsernameChange } from '../utils/usernameValidation';
 import CosmicBackground from '../components/CosmicBackground';
-import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
 import { getPlaceholderColor, setPlaceholderColor as savePlaceholderColor, PLACEHOLDER_COLORS } from '../utils/avatar';
 import {
     getRankTitle,
@@ -478,39 +478,40 @@ const Profile = () => {
         }
     };
 
-    const handleSaveChanges = async () => {
-        if (!user?.id) {
-            setStatus("You must be logged in to save changes");
+   const handleSaveChanges = async () => {
+    if (!user?.id) {
+        setStatus("You must be logged in to save changes");
+        return;
+    }
+
+    setStatus("Saving...");
+    setUsernameValidationError("");
+
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setStatus("Authentication required");
             return;
         }
 
-        setStatus("Saving...");
-        setUsernameValidationError("");
+        // ─── FIXED: Username validation ───
+        const newUsername = formData.username?.trim();
+        const originalUsername = user.username?.trim();
 
-        try {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                setStatus("Authentication required");
-                return;
-            }
-
-            // ─── FIXED: Username validation ───
-            // Only validate if username was actually changed
-            const newUsername = formData.username?.trim();
-            const originalUsername = user.username?.trim();
-
-            if (newUsername && newUsername !== originalUsername) {
-                // Step 1: Format validation
+        // Only validate if username field has a value and it's different from original
+        if (newUsername) {
+            // Check if username actually changed
+            if (newUsername !== originalUsername) {
+                // Step 1: Format validation - check length and characters
                 const validation = validateUsername(newUsername);
                 if (!validation.isValid) {
                     setUsernameValidationError(validation.error);
-                    setStatus("Username validation failed");
+                    setStatus("Username validation failed: " + validation.error);
                     return;
                 }
 
-                // Step 2: Cooldown check — only applies if they HAVE changed it before
-                // If lastUsernameChange is null, it means they've never changed it → always allow
-                if (lastUsernameChange !== null && lastUsernameChange !== undefined) {
+                // Step 2: Cooldown check - only if they've changed it before
+                if (lastUsernameChange) {
                     const cooldownCheck = canChangeUsername(lastUsernameChange);
                     if (!cooldownCheck.canChange) {
                         const msg = getCooldownMessage(lastUsernameChange);
@@ -520,103 +521,108 @@ const Profile = () => {
                     }
                 }
             }
+        } else {
+            // Username is empty - invalid
+            setUsernameValidationError("Username cannot be empty");
+            setStatus("Username validation failed: Username cannot be empty");
+            return;
+        }
 
-            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-            // FIXED: Get banner scoped to this user only
-            const userBannerKey = userKey(user.id, 'banner');
-            const scopedBanner = localStorage.getItem(userBannerKey) || '';
-            const currentBanner = bannerPreview || formData.banner || scopedBanner || '';
+        // FIXED: Get banner scoped to this user only
+        const userBannerKey = userKey(user.id, 'banner');
+        const scopedBanner = localStorage.getItem(userBannerKey) || '';
+        const currentBanner = bannerPreview || formData.banner || scopedBanner || '';
 
-            const dataToSave = {
-                id: user.id,
-                username: newUsername || storedUser.username || '',
-                email: formData.email || storedUser.email || '',
-                phone: formData.phone || storedUser.phone || '',
-                address: formData.address || storedUser.address || '',
-                name: formData.name || storedUser.name || '',
-                bio: formData.bio || storedUser.bio || '',
-                avatar: formData.avatar || storedUser.avatar || '',
-                banner: currentBanner, // This user's banner only
-                timezone: formData.timezone || storedUser.timezone || '',
+        const dataToSave = {
+            id: user.id,
+            username: newUsername, // Use trimmed username
+            email: formData.email || storedUser.email || '',
+            phone: formData.phone || storedUser.phone || '',
+            address: formData.address || storedUser.address || '',
+            name: formData.name || storedUser.name || '',
+            bio: formData.bio || storedUser.bio || '',
+            avatar: formData.avatar || storedUser.avatar || '',
+            banner: currentBanner,
+            timezone: formData.timezone || storedUser.timezone || '',
+        };
+
+        // Update localStorage immediately
+        localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
+
+        const response = await axios.put(
+            `${resolveApiBaseUrl()}/api/users/${user.id}`,
+            dataToSave,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        if (response.status === 200) {
+            const serverData = response.data;
+
+            // FIXED: Trust server response for banner
+            const savedBanner = serverData.banner || currentBanner;
+
+            const updatedData = {
+                ...dataToSave,
+                ...serverData,
+                banner: savedBanner,
+                id: user.id
             };
 
-            // Update localStorage immediately
-            localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
+            setFormData(prev => ({ ...prev, ...updatedData }));
+            if (savedBanner) setBannerPreview(savedBanner);
 
-            const response = await axios.put(
-                `${resolveApiBaseUrl()}/api/users/${user.id}`,
-                dataToSave,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+            const updatedStoredUser = { ...storedUser, ...updatedData };
+            localStorage.setItem('user', JSON.stringify(updatedStoredUser));
 
-            if (response.status === 200) {
-                const serverData = response.data;
-
-                // FIXED: Trust server response for banner. If server saved it, it will return it.
-                // Only fall back to local if server returns nothing (e.g., server strips large base64)
-                const savedBanner = serverData.banner || currentBanner;
-
-                const updatedData = {
-                    ...dataToSave,
-                    ...serverData,
-                    banner: savedBanner,
-                    id: user.id
-                };
-
-                setFormData(prev => ({ ...prev, ...updatedData }));
-                if (savedBanner) setBannerPreview(savedBanner);
-
-                const updatedStoredUser = { ...storedUser, ...updatedData };
-                localStorage.setItem('user', JSON.stringify(updatedStoredUser));
-
-                // Update scoped banner key too
-                if (savedBanner) {
-                    localStorage.setItem(userBannerKey, savedBanner);
-                }
-
-                if (setUser) setUser(updatedStoredUser);
-
-                // Update lastUsernameChange if username was changed
-                if (newUsername && newUsername !== originalUsername && serverData.last_username_change) {
-                    setLastUsernameChange(serverData.last_username_change);
-                }
-
-                setStatus("Profile updated successfully!");
-                setEditedUserData({});
-                setTimeout(() => setStatus(""), 3000);
-            } else {
-                setStatus("Failed to update profile");
+            // Update scoped banner key too
+            if (savedBanner) {
+                localStorage.setItem(userBannerKey, savedBanner);
             }
-        } catch (error) {
-            console.error('Save error:', error);
 
-            if (error.response) {
-                if (error.response.data?.message) {
-                    setStatus(error.response.data.message);
-                } else if (error.response.status === 413) {
-                    setStatus("Images too large. Please try smaller images.");
-                } else if (error.response.status === 400) {
-                    setStatus("Bad request. The server rejected the data.");
-                } else if (error.response.status === 409) {
-                    // Username conflict
-                    setUsernameValidationError("This username is already taken. Please choose another.");
-                    setStatus("Username already taken.");
-                } else {
-                    setStatus(`Error ${error.response.status}: Failed to update profile`);
-                }
-            } else if (error.request) {
-                setStatus("No response from server. Please check your connection.");
-            } else {
-                setStatus(error.message || "Failed to update profile");
+            if (setUser) setUser(updatedStoredUser);
+
+            // Update lastUsernameChange if username was changed
+            if (newUsername !== originalUsername && serverData.last_username_change) {
+                setLastUsernameChange(serverData.last_username_change);
             }
+
+            setStatus("Profile updated successfully!");
+            setEditedUserData({});
+            setTimeout(() => setStatus(""), 3000);
+        } else {
+            setStatus("Failed to update profile");
         }
-    };
+    } catch (error) {
+        console.error('Save error:', error);
+
+        if (error.response) {
+            if (error.response.data?.message) {
+                setStatus(error.response.data.message);
+            } else if (error.response.status === 413) {
+                setStatus("Images too large. Please try smaller images.");
+            } else if (error.response.status === 400) {
+                setStatus("Bad request. The server rejected the data.");
+            } else if (error.response.status === 409) {
+                // Username conflict
+                setUsernameValidationError("This username is already taken. Please choose another.");
+                setStatus("Username already taken.");
+            } else {
+                setStatus(`Error ${error.response.status}: Failed to update profile`);
+            }
+        } else if (error.request) {
+            setStatus("No response from server. Please check your connection.");
+        } else {
+            setStatus(error.message || "Failed to update profile");
+        }
+    }
+};
 
     // XP calculations
     const xpProgress = getXPProgress(formData.xp || 0, formData.level || 1);
