@@ -1,12 +1,19 @@
 /* AdminPanel.css - Premium Fintech Redesign */
+/* ============================================================
+   FIX: All CSS variables are now scoped to .admin-panel-container
+   instead of :root — this prevents them from overriding the
+   community page variables when navigating back from admin panel.
+   ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 /* ============================================================
-   CSS VARIABLES & ANIMATIONS
+   CSS VARIABLES — SCOPED TO .admin-panel-container ONLY
+   (Previously in :root — this was the bug causing community
+    sidebar to break after visiting admin panel)
    ============================================================ */
 
-:root {
+.admin-panel-container {
   --bg-primary: #0a0a0a;
   --bg-elevated: #111217;
   --bg-card: rgba(255, 255, 255, 0.03);
@@ -33,46 +40,50 @@
   --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeInUp {
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes ap-fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fadeInLeft {
+@keyframes ap-fadeInLeft {
   from { opacity: 0; transform: translateX(-20px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes scaleIn {
+@keyframes ap-scaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes glowPulse {
-  0%, 100% { 
-    opacity: 0.6; 
+@keyframes ap-glowPulse {
+  0%, 100% {
+    opacity: 0.6;
     transform: translate(-50%, -50%) scale(1);
     filter: blur(40px);
   }
-  50% { 
-    opacity: 0.9; 
+  50% {
+    opacity: 0.9;
     transform: translate(-50%, -50%) scale(1.1);
     filter: blur(60px);
   }
 }
 
-@keyframes spin {
+@keyframes ap-spin {
   to { transform: rotate(360deg); }
 }
 
-@keyframes shimmer {
+@keyframes ap-shimmer {
   0% { left: -100%; }
   100% { left: 200%; }
 }
 
-@keyframes cardHover {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-4px); }
+@keyframes ap-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
 }
 
 /* ============================================================
@@ -91,10 +102,10 @@
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  animation: fadeInUp 0.8s ease-out;
+  animation: ap-fadeInUp 0.8s ease-out;
 }
 
-/* Cosmic Background Effect (like journal.css) */
+/* Cosmic Background Effect */
 .admin-panel-container::before {
   content: '';
   position: fixed;
@@ -137,7 +148,7 @@
   border-radius: 50%;
   z-index: 0;
   pointer-events: none;
-  animation: glowPulse 6s ease-in-out infinite;
+  animation: ap-glowPulse 6s ease-in-out infinite;
 }
 
 .admin-panel {
@@ -162,10 +173,9 @@
   border-radius: var(--radius-xl);
   position: relative;
   overflow: hidden;
-  animation: scaleIn 0.6s ease-out;
+  animation: ap-scaleIn 0.6s ease-out;
 }
 
-/* Top shimmer line */
 .admin-header::before {
   content: '';
   position: absolute;
@@ -196,7 +206,7 @@
   filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.3));
 }
 
-.user-summary {
+.admin-panel-container .user-summary {
   font-size: 1rem;
   font-weight: 300;
   color: var(--text-primary);
@@ -209,7 +219,8 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.connection-status {
+/* Scope connection-status to admin panel only to avoid conflict with community */
+.admin-panel-container .connection-status {
   margin-left: 12px;
   font-weight: 500;
   padding: 6px 14px;
@@ -219,14 +230,14 @@
   text-transform: uppercase;
 }
 
-.connection-status.online {
+.admin-panel-container .connection-status.online {
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.3);
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
 }
 
-.connection-status.offline {
+.admin-panel-container .connection-status.offline {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
@@ -301,7 +312,6 @@
   border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
-/* Counter badge for tabs */
 .admin-tab-btn::after {
   content: attr(data-count);
   display: inline-block;
@@ -318,7 +328,7 @@
    ERROR MESSAGE
    ============================================================ */
 
-.error-message {
+.admin-panel-container .error-message {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: var(--radius-md);
@@ -330,7 +340,7 @@
   color: #fca5a5;
   position: relative;
   backdrop-filter: blur(10px);
-  animation: fadeInUp 0.3s ease-out;
+  animation: ap-fadeInUp 0.3s ease-out;
 }
 
 .error-icon {
@@ -376,7 +386,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  animation: fadeInUp 0.5s ease-out;
+  animation: ap-fadeInUp 0.5s ease-out;
 }
 
 .search-icon {
@@ -441,7 +451,6 @@
   margin-top: 20px;
 }
 
-/* User Card */
 .user-card {
   background: rgba(17, 18, 23, 0.6);
   backdrop-filter: blur(20px);
@@ -451,11 +460,10 @@
   transition: all var(--transition);
   position: relative;
   overflow: hidden;
-  animation: scaleIn 0.5s ease-out;
+  animation: ap-scaleIn 0.5s ease-out;
   animation-fill-mode: both;
 }
 
-/* Staggered animation */
 .user-card:nth-child(1) { animation-delay: 0.05s; }
 .user-card:nth-child(2) { animation-delay: 0.1s; }
 .user-card:nth-child(3) { animation-delay: 0.15s; }
@@ -463,7 +471,6 @@
 .user-card:nth-child(5) { animation-delay: 0.25s; }
 .user-card:nth-child(6) { animation-delay: 0.3s; }
 
-/* Gradient border effect */
 .user-card::before {
   content: '';
   position: absolute;
@@ -485,7 +492,6 @@
   transition: opacity var(--transition);
 }
 
-/* Shimmer effect */
 .user-card::after {
   content: '';
   position: absolute;
@@ -508,13 +514,8 @@
   border-color: rgba(139, 92, 246, 0.2);
 }
 
-.user-card:hover::before {
-  opacity: 1;
-}
-
-.user-card:hover::after {
-  left: 100%;
-}
+.user-card:hover::before { opacity: 1; }
+.user-card:hover::after  { left: 100%; }
 
 /* User Info Section */
 .user-info {
@@ -533,9 +534,7 @@
   transition: color var(--transition);
 }
 
-.user-email:hover {
-  color: var(--accent-purple);
-}
+.user-email:hover { color: var(--accent-purple); }
 
 .user-email::before {
   content: '@';
@@ -555,7 +554,6 @@
   border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
-/* Role Badge */
 .user-role {
   display: inline-block;
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.1));
@@ -570,7 +568,6 @@
   letter-spacing: 0.1em;
 }
 
-/* XP Display */
 .user-xp {
   display: flex;
   align-items: center;
@@ -591,15 +588,9 @@
   font-weight: 500;
 }
 
-.user-xp span:first-child {
-  color: var(--accent-orange);
-}
+.user-xp span:first-child { color: var(--accent-orange); }
+.user-xp span:last-child  { color: var(--text-primary); }
 
-.user-xp span:last-child {
-  color: var(--text-primary);
-}
-
-/* User Meta */
 .user-joined {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -615,8 +606,8 @@
   opacity: 0.6;
 }
 
-/* Status Indicator */
-.user-status {
+/* Status — scoped to admin panel to avoid bleeding into community */
+.admin-panel-container .user-status {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -625,7 +616,7 @@
   padding: 6px 0;
 }
 
-.user-status::before {
+.admin-panel-container .user-status::before {
   content: '';
   width: 10px;
   height: 10px;
@@ -633,26 +624,15 @@
   transition: all var(--transition);
 }
 
-.user-status.online {
-  color: var(--up);
-}
-
-.user-status.online::before {
+.admin-panel-container .user-status.online { color: var(--up); }
+.admin-panel-container .user-status.online::before {
   background: var(--up);
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
-  animation: pulse 2s infinite;
+  animation: ap-pulse 2s infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.1); }
-}
-
-.user-status.offline {
-  color: var(--text-muted);
-}
-
-.user-status.offline::before {
+.admin-panel-container .user-status.offline { color: var(--text-muted); }
+.admin-panel-container .user-status.offline::before {
   background: var(--text-muted);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
@@ -670,7 +650,6 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Base Button Styles */
 .action-btn {
   padding: 10px 18px;
   border: none;
@@ -708,80 +687,53 @@
   transition: left 0.5s ease;
 }
 
-.action-btn:hover::before {
-  left: 100%;
-}
-
+.action-btn:hover::before { left: 100%; }
 .action-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* XP Button */
 .xp-btn {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.8));
   border: 1px solid rgba(245, 158, 11, 0.3);
   box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
+.xp-btn:hover { box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); }
 
-.xp-btn:hover {
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
-}
-
-/* Reset XP Button */
 .reset-xp-btn {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.8));
   border: 1px solid rgba(239, 68, 68, 0.3);
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
 }
+.reset-xp-btn:hover { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
 
-.reset-xp-btn:hover {
-  box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
-}
-
-/* Grant Access Button */
 .grant-access-btn {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.8));
   border: 1px solid rgba(16, 185, 129, 0.3);
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
 }
+.grant-access-btn:hover { box-shadow: 0 0 25px rgba(16, 185, 129, 0.4); }
 
-.grant-access-btn:hover {
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
-}
-
-/* Revoke Access Button */
 .revoke-access-btn {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.8));
   border: 1px solid rgba(239, 68, 68, 0.3);
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
 }
+.revoke-access-btn:hover { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
 
-.revoke-access-btn:hover {
-  box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
-}
-
-/* Grant Admin Button */
 .grant-admin-btn {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(109, 40, 217, 0.8));
   border: 1px solid rgba(139, 92, 246, 0.3);
   box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
 }
+.grant-admin-btn:hover { box-shadow: 0 0 25px rgba(139, 92, 246, 0.4); }
 
-.grant-admin-btn:hover {
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
-}
-
-/* Delete Button */
 .delete-btn {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.8));
   border: 1px solid rgba(239, 68, 68, 0.3);
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
 }
-
-.delete-btn:hover {
-  box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
-}
+.delete-btn:hover { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
 
 /* ============================================================
    CHANNELS SECTION
@@ -796,10 +748,10 @@
   transition: all var(--transition);
   position: relative;
   overflow: hidden;
-  animation: scaleIn 0.5s ease-out;
+  animation: ap-scaleIn 0.5s ease-out;
 }
 
-.channel-name {
+.admin-panel-container .channel-name {
   font-size: 1.3rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -809,13 +761,14 @@
   gap: 8px;
 }
 
-.channel-name::before {
+.admin-panel-container .channel-name::before {
   content: '#';
   color: var(--accent-purple);
   font-weight: 600;
 }
 
-.channel-category {
+/* Scope channel-category to admin panel to avoid overriding community sidebar */
+.admin-panel-container .channel-category {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-bottom: 8px;
@@ -837,7 +790,6 @@
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-/* Access Level Select */
 .access-level-select {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -867,7 +819,6 @@
   color: var(--text-primary);
 }
 
-/* Refresh Button */
 .refresh-btn {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -910,18 +861,18 @@
   width: 50px;
   height: 50px;
   border: 2px solid transparent;
-  border-top-color: var(--accent-purple);
-  border-right-color: var(--accent-blue);
+  border-top-color: #8B5CF6;
+  border-right-color: #3B82F6;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: ap-spin 1s linear infinite;
 }
 
 .loading-text {
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.55);
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  animation: pulse 2s infinite;
+  animation: ap-pulse 2s infinite;
 }
 
 /* ============================================================
@@ -936,7 +887,7 @@
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-xl);
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .no-users-message p,
@@ -950,7 +901,7 @@
 .retry-btn {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.1));
   border: 1px solid rgba(139, 92, 246, 0.3);
-  color: var(--text-primary);
+  color: #ffffff;
   padding: 12px 28px;
   border-radius: 40px;
   cursor: pointer;
@@ -981,13 +932,13 @@
   .users-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .admin-tabs {
     flex-wrap: wrap;
     border-radius: 20px;
     padding: 12px;
   }
-  
+
   .admin-tab-btn {
     flex: 1 1 auto;
     padding: 10px 16px;
@@ -999,58 +950,58 @@
   .admin-panel-container {
     padding: 80px 15px 30px;
   }
-  
+
   .admin-header {
     padding: 20px 15px;
   }
-  
+
   .admin-title {
     font-size: 1.8rem;
     letter-spacing: 0.15em;
   }
-  
-  .user-summary {
+
+  .admin-panel-container .user-summary {
     font-size: 0.9rem;
     padding: 12px 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-  
-  .connection-status {
+
+  .admin-panel-container .connection-status {
     margin-left: 0;
   }
-  
+
   .search-container {
     flex-direction: column;
     padding: 15px;
   }
-  
+
   .search-icon {
     margin-left: 0;
   }
-  
+
   .search-input {
     width: 100%;
   }
-  
+
   .clear-search-btn {
     margin-right: 0;
   }
-  
+
   .user-card {
     padding: 20px;
   }
-  
+
   .user-actions {
     flex-direction: column;
   }
-  
+
   .action-btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .user-xp {
     width: 100%;
     justify-content: center;
@@ -1062,26 +1013,26 @@
     font-size: 1.5rem;
     letter-spacing: 0.1em;
   }
-  
+
   .admin-tab-btn {
     padding: 8px 12px;
     font-size: 0.75rem;
   }
-  
+
   .user-email {
     font-size: 1rem;
     word-break: break-all;
   }
-  
+
   .user-name {
     font-size: 0.8rem;
   }
-  
+
   .user-role {
     font-size: 0.7rem;
     padding: 4px 12px;
   }
-  
+
   .user-xp {
     flex-direction: column;
     align-items: flex-start;
@@ -1089,9 +1040,8 @@
   }
 }
 
-/* Dark mode support (already dark) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  .admin-panel-container {
     --bg-primary: #0a0a0a;
   }
 }
