@@ -140,6 +140,7 @@ module.exports = async (req, res) => {
         await ensureColumn('phone VARCHAR(50)', 'SELECT phone FROM users LIMIT 1');
         await ensureColumn('address TEXT', 'SELECT address FROM users LIMIT 1');
         await ensureColumn('bio TEXT', 'SELECT bio FROM users LIMIT 1');
+        await ensureColumn('avatarColor VARCHAR(50)', 'SELECT avatarColor FROM users LIMIT 1');
         
         // Avatar column - ensure it's TEXT (for base64 images which can be very long)
         try {
@@ -183,8 +184,8 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Get update data from request body
-        const { name, username, email, phone, address, bio, avatar, updateUsername } = req.body || {};
+       // Get update data from request body
+const { name, username, email, phone, address, bio, avatar, updateUsername, avatarColor } = req.body || {};
 
         // Build update query dynamically
         const updates = [];
@@ -345,7 +346,10 @@ module.exports = async (req, res) => {
           await db.end();
           return res.status(400).json({ success: false, message: 'No fields to update' });
         }
-
+if (avatarColor !== undefined) {
+  updates.push('avatarColor = ?');
+  values.push(cleanValue(avatarColor));
+}
         // Add userId to values
         values.push(userId);
 
@@ -353,11 +357,11 @@ module.exports = async (req, res) => {
         const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
         await db.execute(query, values);
 
-        // Fetch updated user data (include last_username_change)
-        const [updatedRows] = await db.execute(
-          'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change FROM users WHERE id = ?',
-          [userId]
-        );
+       // Fetch updated user data (include last_username_change and avatarColor)
+const [updatedRows] = await db.execute(
+  'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change, avatarColor FROM users WHERE id = ?',
+  [userId]
+);
 
         await db.end();
 
@@ -435,11 +439,20 @@ module.exports = async (req, res) => {
         } catch (e) {
           // last_seen column doesn't exist
         }
-        
+        // Check if avatarColor column exists
+let hasAvatarColor = false;
+try {
+  await db.execute('SELECT avatarColor FROM users LIMIT 1');
+  hasAvatarColor = true;
+} catch (e) {
+  // avatarColor column doesn't exist yet
+}
+
         // Build select fields dynamically based on what columns exist
-        const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
-        const fieldsWithBanner = hasBanner ? `${baseFields}, banner` : baseFields;
-        const selectFields = hasLastSeen ? `${fieldsWithBanner}, last_seen` : fieldsWithBanner;
+const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
+const fieldsWithBanner = hasBanner ? `${baseFields}, banner` : baseFields;
+const fieldsWithAvatarColor = hasAvatarColor ? `${fieldsWithBanner}, avatarColor` : fieldsWithBanner;
+const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : fieldsWithAvatarColor;
         
         let rows;
         try {
@@ -537,6 +550,7 @@ module.exports = async (req, res) => {
           bio: user.bio || '',
           avatar: user.avatar ?? null,
           banner: (hasBanner && user.banner) ? user.banner : '',
+          avatarColor: user.avatarColor || null,
           role: user.role || 'free',
           level: parseInt(user.level || 1),
           xp: parseFloat(user.xp || 0),
