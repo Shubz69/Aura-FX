@@ -108,7 +108,6 @@ const Profile = () => {
 
     const initialLoadDone = useRef(false);
 
-    // Add these helper functions at the component level, right after useState declarations
    const handleColorSelect = async (color) => {
     if (!user?.id) return;
     
@@ -119,13 +118,17 @@ const Profile = () => {
             return;
         }
 
-       // Save to server first
+        // Log what we're sending
+        const payload = { 
+            id: user.id,
+            avatarColor: color 
+        };
+        console.log('Sending payload:', payload);
+
+        // Save to server first
         const response = await axios.put(
             `${resolveApiBaseUrl()}/api/users/${user.id}`,
-            { 
-                id: user.id,
-                avatarColor: color  // Add this field to your user schema
-            },
+            payload,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -134,14 +137,11 @@ const Profile = () => {
             }
         );
 
-       if (response.status === 200) {
-            // Save to localStorage as backup
+        console.log('Server response:', response);
+
+        if (response.status === 200) {
             localStorage.setItem(`avatar_color_${user.id}`, color);
-            
-            // Update state
             setAvatarColor(color);
-            
-            // Also save using the existing utility function
             savePlaceholderColor(user.id, color);
             
             setStatus('Profile color updated!');
@@ -149,6 +149,7 @@ const Profile = () => {
         }
     } catch (error) {
         console.error('Error saving avatar color:', error);
+        console.error('Error response:', error.response?.data); // Log the error response
         setStatus('Failed to save color. Please try again.');
         setTimeout(() => setStatus(''), 3000);
     }
