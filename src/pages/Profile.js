@@ -95,7 +95,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [editedUserData, setEditedUserData] = useState({});
     const [userRole, setUserRole] = useState("");
-    const [avatarColor, setAvatarColor] = useState(null); // Add this state
+    const [avatarColor, setAvatarColor] = useState(null);
     const navigate = useNavigate();
     const [lastUsernameChange, setLastUsernameChange] = useState(null);
     const [usernameValidationError, setUsernameValidationError] = useState("");
@@ -108,70 +108,38 @@ const Profile = () => {
 
     const initialLoadDone = useRef(false);
 
-   const handleColorSelect = async (color) => {
-    if (!user?.id) return;
-    
-    try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            setStatus("Authentication required");
-            return;
-        }
-
-        // Log what we're sending
-        const payload = { 
-            id: user.id,
-            avatarColor: color 
-        };
-        console.log('Sending payload:', payload);
-
-        // Save to server first
-        const response = await axios.put(
-            `${resolveApiBaseUrl()}/api/users/${user.id}`,
-            payload,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-
-        console.log('Server response:', response);
-
-        if (response.status === 200) {
-            localStorage.setItem(`avatar_color_${user.id}`, color);
-            setAvatarColor(color);
-            savePlaceholderColor(user.id, color);
-            
-            setStatus('Profile color updated!');
-            setTimeout(() => setStatus(''), 2000);
-        }
-    } catch (error) {
-        console.error('Error saving avatar color:', error);
-        console.error('Error response:', error.response?.data); // Log the error response
-        setStatus('Failed to save color. Please try again.');
+    // Handle color selection
+    const handleColorSelect = (color) => {
+        if (!user?.id) return;
+        
+        setAvatarColor(color);
+        localStorage.setItem(`avatar_color_${user.id}`, color);
+        savePlaceholderColor(user.id, color);
+        
+        setStatus('Color selected. Click Save Profile to update permanently.');
         setTimeout(() => setStatus(''), 3000);
-    }
-};
+    };
 
-// ADD THIS MISSING FUNCTION
-const getAvatarDisplayColor = () => {
-    // Check state first
-    if (avatarColor) return avatarColor;
-    
-    // Check if user object has avatarColor
-    if (user?.avatarColor) return user.avatarColor;
-    
-    // Check formData (which might have been loaded from server)
-    if (formData?.avatarColor) return formData.avatarColor;
-    
-    // Fallback to default
-    return getPlaceholderColor(user?.id ?? formData.username);
-};
+    // Get avatar display color from various sources
+    const getAvatarDisplayColor = () => {
+        if (avatarColor) return avatarColor;
+        
+        if (formData.avatar && formData.avatar.includes('fill=')) {
+            try {
+                const match = formData.avatar.match(/fill='([^']+)'/);
+                if (match && match[1]) {
+                    return decodeURIComponent(match[1]);
+                }
+            } catch (e) {}
+        }
+        
+        const savedColor = localStorage.getItem(`avatar_color_${user?.id}`);
+        if (savedColor) return savedColor;
+        
+        return getPlaceholderColor(user?.id ?? formData.username);
+    };
 
-
-    // ─── Load initial data from localStorage, SCOPED to this user ───
+    // ─── Load initial data from localStorage ───
     useEffect(() => {
         if (initialLoadDone.current) return;
         if (!user?.id) return;
@@ -182,14 +150,10 @@ const getAvatarDisplayColor = () => {
         const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
         const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
 
-          // Try to load from localStorage first
-    const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
-    if (savedColor) {
-        setAvatarColor(savedColor);
-    } else if (storedUser.avatarColor) {
-        // If not in localStorage but in storedUser, use that
-        setAvatarColor(storedUser.avatarColor);
-    }
+        const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
+        if (savedColor) {
+            setAvatarColor(savedColor);
+        }
 
         const initialData = {
             ...formData,
@@ -212,11 +176,10 @@ const getAvatarDisplayColor = () => {
     }, [user?.id]);
 
     // ─── Main profile loading effect ───
-   useEffect(() => {
+    useEffect(() => {
         const loadProfile = async () => {
             if (!user?.id) return;
 
-            // Load saved avatar color
             const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
             if (savedColor) {
                 setAvatarColor(savedColor);
@@ -272,6 +235,21 @@ const getAvatarDisplayColor = () => {
 
                 if (userRes?.status === 200 && userRes.data) {
                     const userData = userRes.data;
+                    
+                    // Check if avatar is a colored SVG and extract color
+                    if (userData.avatar && userData.avatar.includes('fill=')) {
+                        try {
+                            const match = userData.avatar.match(/fill='([^']+)'/);
+                            if (match && match[1]) {
+                                const color = decodeURIComponent(match[1]);
+                                setAvatarColor(color);
+                                localStorage.setItem(`avatar_color_${user.id}`, color);
+                            }
+                        } catch (e) {
+                            console.error('Error parsing avatar color:', e);
+                        }
+                    }
+
                     const serverBanner = userData.banner || '';
                     const finalBanner = serverBanner || localBanner;
                     const backendAvatar = userData.avatar || authData.avatar;
@@ -286,15 +264,9 @@ const getAvatarDisplayColor = () => {
                         bio: userData.bio || authData.bio || "",
                         banner: finalBanner,
                         level: storedUser.level ?? userData.level ?? authData.level,
-                        xp: storedUser.xp ?? userData.xp ?? authData.xp,
-                        avatarColor: userData.avatarColor || null 
+                        xp: storedUser.xp ?? userData.xp ?? authData.xp
                     };
-  // Load avatar color from server response
-    if (userData.avatarColor) {
-        setAvatarColor(userData.avatarColor);
-        // Also cache it locally
-        localStorage.setItem(`avatar_color_${user.id}`, userData.avatarColor);
-    }
+
                     if (userData.last_username_change) {
                         setLastUsernameChange(userData.last_username_change);
                         setUsernameCooldownInfo(canChangeUsername(userData.last_username_change));
@@ -322,12 +294,7 @@ const getAvatarDisplayColor = () => {
                     if (finalBanner) {
                         localStorage.setItem(userBannerKey, finalBanner);
                     }
-   // Load avatar color from server response
-    if (userData.avatarColor) {
-        setAvatarColor(userData.avatarColor);
-        // Also cache it locally
-        localStorage.setItem(`avatar_color_${user.id}`, userData.avatarColor);
-    }
+
                     // Daily login check
                     const currentUserId = user?.id || userData.id;
                     const lastCheckKey = `daily_login_check_${currentUserId}`;
@@ -412,7 +379,7 @@ const getAvatarDisplayColor = () => {
         };
     }, [user]);
 
-    // ─── Journal stats effect ───
+    // Journal stats effect
     useEffect(() => {
         if (!user?.id) {
             setJournalStatsLoading(false);
@@ -550,9 +517,7 @@ const getAvatarDisplayColor = () => {
         }
     };
 
-    // COMPLETELY REWRITTEN handleSaveChanges function
     const handleSaveChanges = async () => {
-        // Check if user is logged in
         if (!user?.id) {
             setStatus("You must be logged in to save changes");
             return;
@@ -562,50 +527,39 @@ const getAvatarDisplayColor = () => {
         setUsernameValidationError("");
 
         try {
-            // Check for authentication token
             const token = localStorage.getItem("token");
             if (!token) {
                 setStatus("Authentication required");
                 return;
             }
 
-            // Get stored user data for reference
             const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
             
-            // Get and trim usernames for comparison
             const currentUsername = (user.username || storedUser.username || '').toString().trim();
             const newUsername = (formData.username || '').toString().trim();
-            
-            // Check if username actually changed
             const usernameChanged = currentUsername !== newUsername;
 
-            // Only validate username if it was changed
             if (usernameChanged) {
-                // Check if username is empty
                 if (!newUsername) {
                     setUsernameValidationError("Username cannot be empty");
                     setStatus("Username validation failed");
                     return;
                 }
 
-                // Validate username format
                 const validation = validateUsername(newUsername);
                 
-                // Check if validation returned a valid result
                 if (!validation || typeof validation !== 'object') {
                     setUsernameValidationError("Username validation error");
                     setStatus("Username validation failed");
                     return;
                 }
                 
-                // Check if validation failed
                 if (validation.isValid === false) {
                     setUsernameValidationError(validation.error || "Invalid username format");
                     setStatus("Username validation failed");
                     return;
                 }
 
-                // Check cooldown period if user has changed username before
                 if (lastUsernameChange) {
                     const cooldownCheck = canChangeUsername(lastUsernameChange);
                     if (cooldownCheck && cooldownCheck.canChange === false) {
@@ -617,7 +571,6 @@ const getAvatarDisplayColor = () => {
                 }
             }
 
-            // Get banner for this user
             const userBannerKey = userKey(user.id, 'banner');
             const scopedBanner = localStorage.getItem(userBannerKey) || '';
             const currentBanner = bannerPreview || formData.banner || scopedBanner || '';
@@ -625,22 +578,22 @@ const getAvatarDisplayColor = () => {
             // Prepare data to save
             const dataToSave = {
                 id: user.id,
-                username: usernameChanged ? newUsername : currentUsername, // Use new username only if changed
+                username: usernameChanged ? newUsername : currentUsername,
                 email: formData.email || storedUser.email || '',
                 phone: formData.phone || storedUser.phone || '',
                 address: formData.address || storedUser.address || '',
                 name: formData.name || storedUser.name || '',
-                bio: (formData.bio || '').trim(), // Always include bio
-                avatar: formData.avatar || storedUser.avatar || '',
+                bio: (formData.bio || '').trim(),
                 banner: currentBanner,
                 timezone: formData.timezone || storedUser.timezone || '',
-                avatarColor: avatarColor || null,
+                // Save color in avatar field if user has no custom avatar
+                avatar: avatarColor && !formData.avatar && !avatarPreview ? 
+                    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='${encodeURIComponent(avatarColor)}'/%3E%3C/svg%3E`
+                    : formData.avatar || storedUser.avatar || '',
             };
 
-            // Update localStorage optimistically
             localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
 
-            // Send to server
             const response = await axios.put(
                 `${resolveApiBaseUrl()}/api/users/${user.id}`,
                 dataToSave,
@@ -652,14 +605,10 @@ const getAvatarDisplayColor = () => {
                 }
             );
 
-            // Handle successful response
             if (response.status === 200) {
                 const serverData = response.data || {};
-                
-                // Determine final banner (server response or current)
                 const savedBanner = serverData.banner || currentBanner;
                 
-                // Merge server data with our data
                 const updatedData = {
                     ...dataToSave,
                     ...serverData,
@@ -668,33 +617,27 @@ const getAvatarDisplayColor = () => {
                     username: serverData.username || dataToSave.username,
                 };
 
-                // Update all state
                 setFormData(prev => ({ ...prev, ...updatedData }));
                 
                 if (savedBanner) {
                     setBannerPreview(savedBanner);
                 }
 
-                // Update localStorage with merged data
                 const updatedStoredUser = { ...storedUser, ...updatedData };
                 localStorage.setItem('user', JSON.stringify(updatedStoredUser));
 
-                // Update scoped banner
                 if (savedBanner) {
                     localStorage.setItem(userBannerKey, savedBanner);
                 }
 
-                // Update auth context
                 if (setUser) {
                     setUser(updatedStoredUser);
                 }
 
-                // Update last username change timestamp if username was actually changed
                 if (usernameChanged && serverData.last_username_change) {
                     setLastUsernameChange(serverData.last_username_change);
                 }
 
-                // Clear edited data and show success message
                 setEditedUserData({});
                 setStatus("Profile updated successfully!");
                 setTimeout(() => setStatus(""), 3000);
@@ -704,7 +647,6 @@ const getAvatarDisplayColor = () => {
         } catch (error) {
             console.error('Save error:', error);
 
-            // Handle specific error cases
             if (error.response) {
                 const errorMessage = error.response.data?.message || '';
                 
@@ -812,25 +754,40 @@ const getAvatarDisplayColor = () => {
                     {/* Avatar */}
                     <div className="pf-avatar-col">
                         <div className="pf-avatar-ring">
-                          <div className="pf-avatar-inner">
-        {hasAvatar ? (
-            <img
-                src={avatarPreview || formData.avatar}
-                alt="Avatar"
-                className="pf-avatar-img"
-                onError={(e) => {
-                    console.error('Avatar failed to load');
-                    e.target.style.display = 'none';
-                    e.target.parentNode.innerHTML = `<div class="pf-avatar-placeholder" style="background: ${getAvatarDisplayColor()}"></div>`;
-                }}
-            />
-        ) : (
-            <div 
-                className="pf-avatar-placeholder" 
-                style={{ background: getAvatarDisplayColor() }}
-            />
-        )}
-    </div>
+                            <div className="pf-avatar-inner">
+                                {hasAvatar ? (
+                                    <div style={{ position: 'relative' }}>
+                                        <img
+                                            src={avatarPreview || formData.avatar}
+                                            alt="Avatar"
+                                            className="pf-avatar-img"
+                                            onError={(e) => {
+                                                console.error('Avatar failed to load');
+                                                e.target.style.display = 'none';
+                                                e.target.parentNode.innerHTML = `<div class="pf-avatar-placeholder" style="background: ${getAvatarDisplayColor()}"></div>`;
+                                            }}
+                                        />
+                                        {avatarColor && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                bottom: '0',
+                                                right: '0',
+                                                width: '15px',
+                                                height: '15px',
+                                                borderRadius: '50%',
+                                                backgroundColor: avatarColor,
+                                                border: '2px solid white',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                            }} />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div 
+                                        className="pf-avatar-placeholder" 
+                                        style={{ background: getAvatarDisplayColor() }}
+                                    />
+                                )}
+                            </div>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -841,23 +798,22 @@ const getAvatarDisplayColor = () => {
                             <button className="pf-avatar-edit-btn" onClick={() => fileInputRef.current?.click()} title="Change avatar">✏️</button>
                         </div>
 
-                      {!hasAvatar && (
-        <div className="pf-swatch-picker">
-            <span className="pf-swatch-label">Ring Colour</span>
-            <div className="pf-swatches">
-                {PLACEHOLDER_COLORS.map((color) => (
-                    <button
-                        key={color}
-                        className={`pf-swatch ${avatarColor === color ? 'active' : ''}`}
-                        style={{ background: color }}
-                        title={color}
-                        onClick={() => handleColorSelect(color)}
-                    />
-                ))}
-            </div>
-        </div>
-    )}
-
+                        {!hasAvatar && (
+                            <div className="pf-swatch-picker">
+                                <span className="pf-swatch-label">Ring Colour</span>
+                                <div className="pf-swatches">
+                                    {PLACEHOLDER_COLORS.map((color) => (
+                                        <button
+                                            key={color}
+                                            className={`pf-swatch ${avatarColor === color ? 'active' : ''}`}
+                                            style={{ background: color }}
+                                            title={color}
+                                            onClick={() => handleColorSelect(color)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Info */}
