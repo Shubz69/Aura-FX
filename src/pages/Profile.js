@@ -476,7 +476,78 @@ useEffect(() => {
     };
 
    // Update the handleBannerChange function - optimize the banner size further:
+const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+        setStatus("Banner image must be less than 10MB");
+        return;
+    }
+
+    try {
+        const base64 = await convertToBase64(file);
+        const img = new Image();
+        img.src = base64;
+
+        await new Promise((resolve) => {
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                let { width, height } = img;
+                
+                // More aggressive resizing for banners
+                const maxWidth = 1200;
+                const maxHeight = 300;
+
+                if (width > maxWidth) { 
+                    height = (height * maxWidth) / width; 
+                    width = maxWidth; 
+                }
+                if (height > maxHeight) { 
+                    width = (width * maxHeight) / height; 
+                    height = maxHeight; 
+                }
+
+                canvas.width = Math.round(width); 
+                canvas.height = Math.round(height);
+                ctx.imageSmoothingEnabled = true; 
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Use lower quality for banners
+                const resizedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                setBannerPreview(resizedBase64);
+                setFormData(prev => ({ ...prev, banner: resizedBase64 }));
+                setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
+
+                if (user?.id) {
+                    const userBannerKey = userKey(user.id, 'banner');
+                    localStorage.setItem(userBannerKey, resizedBase64);
+                }
+
+                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const updatedUser = { 
+                    ...storedUser, 
+                    banner: resizedBase64, 
+                    id: user?.id 
+                };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                // Also save to a dedicated banner storage
+                localStorage.setItem(`user_banner_${user?.id}`, resizedBase64);
+
+                resolve();
+            };
+        });
+
+        setStatus("Banner ready to save. Click 'Save Profile' to update permanently.");
+    } catch (error) {
+        console.error('Banner processing error:', error);
+        setStatus("Failed to process banner image");
+    }
+};
 const handleSaveChanges = async () => {
     if (!user?.id) {
         setStatus("You must be logged in to save changes");
