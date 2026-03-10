@@ -1500,154 +1500,148 @@ useEffect(() => {
         return true;
     }, []);
 
-    const { 
-        isConnected, 
-        connectionError,
-        reconnectBanner,
-        retry: retryWebSocket,
-        sendMessage: sendWebSocketMessage,
-        addReconnectListener
-    } = useWebSocket(
-        selectedChannel?.id,
-        (message) => {
-            // Handle MESSAGE_DELETED events
-            if (message.type === 'MESSAGE_DELETED') {
-                const { messageId, channelId: deletedChannelId } = message;
-                
-                // Update messages if it's for current channel
-                if (selectedChannel?.id && 
-                    (String(deletedChannelId) === String(selectedChannel.id))) {
-                    setMessages(prev => 
-                        prev.map(msg => 
-                            String(msg.id) === String(messageId) 
-                                ? { ...msg, content: '[deleted]', isDeleted: true }
-                                : msg
-                        )
-                    );
-                    // After 5 seconds remove from list so other messages fill the gap
-                    const storageKey = `community_messages_${selectedChannel.id}`;
-                    setTimeout(() => {
-                        setMessages(prev => prev.filter(m => String(m.id) !== String(messageId)));
-                        try {
-                            const current = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                            const filtered = current.filter(m => String(m.id) !== String(messageId));
-                            localStorage.setItem(storageKey, JSON.stringify(filtered));
-                        } catch (e) { /* ignore */ }
-                    }, 5000);
-                }
-                return; // Don't process as a new message
-            }
-            
-            // Check if message is for current channel
-            const isCurrentChannel = selectedChannel?.id && 
-                (String(message.channelId) === String(selectedChannel.id) || 
-                 String(message.channel_id) === String(selectedChannel.id));
-            
-            // Check if message mentions current user (case-insensitive)
-            const currentUsername = storedUser?.username || storedUser?.name || '';
-            const messageContent = message.content || '';
-            const mentionRegex = new RegExp(`@${currentUsername}\\b`, 'i');
-            const isMentioned = currentUsername && mentionRegex.test(messageContent);
-            
-            // Get message channel ID
-            const messageChannelId = message.channelId || message.channel_id;
-            const messageSenderId = message.sender?.id || message.userId;
-            const isOwnMessage = String(messageSenderId) === String(userId);
-            
-            // Trigger notifications and update badges
-            if (!isCurrentChannel && !isOwnMessage) {
-                // New message in different channel - update badge
-                updateChannelBadge(messageChannelId, 'unread');
-                
-                // Check if user is mentioned
-                if (isMentioned) {
-                    updateChannelBadge(messageChannelId, 'mentions');
-                }
-                
-                const channelName = channelList.find(c => 
-                    String(c.id) === String(messageChannelId)
-                )?.name || 'a channel';
-                
-                if (isMentioned) {
-                    triggerNotification(
-                        'mention',
-                        `You were mentioned in #${channelName}`,
-                        `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                        `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-                        userId
-                    );
-                } else {
-                    triggerNotification(
-                        'message',
-                        `New message in #${channelName}`,
-                        `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                        `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-                        null
-                    );
-                }
-            } else if (isCurrentChannel && isMentioned && !isOwnMessage) {
-                // User was mentioned in current channel
-                triggerNotification(
-                    'mention',
-                    `You were mentioned in #${selectedChannel.name}`,
-                    `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                    `/community/${selectedChannel.id}?message=${message.id}`,
-                    userId
-                );
-            } else if (!isCurrentChannel && !isOwnMessage) {
-                // Message in other channel, update badge
-                updateChannelBadge(messageChannelId, 'unread');
-            }
-            
-            // INSTANT UI update - only add message if it's for the current channel
-            if (isCurrentChannel) {
-                // Use functional update for instant state change (no batching delay)
-                setMessages(prev => {
-                    // Fast duplicate check using Set for O(1) lookup
-                    const existingIds = new Set(prev.map(m => String(m.id || '')));
-                    if (message.id && existingIds.has(String(message.id))) {
-                        return prev; // Duplicate - skip
-                    }
-                    
-                    // Fast content-based duplicate check (optimized)
-                    // Check for same content/file, same sender, within 5 seconds
-                    const isDuplicate = prev.some(m => {
-                        const sameContent = (m.content || '') === (message.content || '');
-                        const sameFile = (m.file?.name || '') === (message.file?.name || '');
-                        const sameSender = String(m.userId || m.sender?.id || '') === String(message.userId || message.sender?.id || '');
-                        const timeDiff = Math.abs(
-                            new Date(m.timestamp || m.createdAt || 0).getTime() - 
-                            new Date(message.timestamp || message.createdAt || 0).getTime()
-                        );
-                        return sameSender && timeDiff < 5000 && (sameContent && (sameFile || (!m.file && !message.file)));
-                    });
-                    
-                    if (isDuplicate) {
-                        return prev;
-                    }
-                    
-                    // Add message instantly
-                    const newMessages = [...prev, message];
-                    
-                    // Save to localStorage IMMEDIATELY (critical for persistence)
-                    // Don't defer - messages must be saved to prevent loss
-                    if (selectedChannel?.id) {
-                        saveMessagesToStorage(selectedChannel.id, newMessages);
-                    }
-                    
-                    // Scroll to bottom instantly (use requestAnimationFrame for smooth scroll)
-                    if (window.requestAnimationFrame) {
-                       requestAnimationFrame(() => scrollToBottom(false, true));
-                    } else {
-                    setTimeout(() => scrollToBottom(), 0);
-                    }
-                    
-                    return newMessages;
-                });
-            }
-        },
-        enableRealtime
-    );
+   // In your useWebSocket callback, replace the message handling section with this:
+const { 
+  isConnected, 
+  connectionError,
+  reconnectBanner,
+  retry: retryWebSocket,
+  sendMessage: sendWebSocketMessage,
+  addReconnectListener
+} = useWebSocket(
+  selectedChannel?.id,
+  (message) => {
+    // Handle MESSAGE_DELETED events
+    if (message.type === 'MESSAGE_DELETED') {
+      const { messageId, channelId: deletedChannelId } = message;
+      
+      // Update messages if it's for current channel
+      if (selectedChannel?.id && 
+          (String(deletedChannelId) === String(selectedChannel.id))) {
+        setMessages(prev => 
+          prev.map(msg => 
+            String(msg.id) === String(messageId) 
+              ? { ...msg, content: '[deleted]', isDeleted: true }
+              : msg
+          )
+        );
+        // After 5 seconds remove from list
+        const storageKey = `community_messages_${selectedChannel.id}`;
+        setTimeout(() => {
+          setMessages(prev => prev.filter(m => String(m.id) !== String(messageId)));
+          try {
+            const current = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const filtered = current.filter(m => String(m.id) !== String(messageId));
+            localStorage.setItem(storageKey, JSON.stringify(filtered));
+          } catch (e) { /* ignore */ }
+        }, 5000);
+      }
+      return;
+    }
+    
+    // Check if message is for current channel
+    const isCurrentChannel = selectedChannel?.id && 
+      (String(message.channelId) === String(selectedChannel.id) || 
+       String(message.channel_id) === String(selectedChannel.id));
+    
+    // Check if message mentions current user
+    const currentUsername = storedUser?.username || storedUser?.name || '';
+    const messageContent = message.content || '';
+    const mentionRegex = new RegExp(`@${currentUsername}\\b`, 'i');
+    const isMentioned = currentUsername && mentionRegex.test(messageContent);
+    
+    const messageChannelId = message.channelId || message.channel_id;
+    const messageSenderId = message.sender?.id || message.userId;
+    const isOwnMessage = String(messageSenderId) === String(userId);
+    
+    // Trigger notifications and update badges
+    if (!isCurrentChannel && !isOwnMessage) {
+      updateChannelBadge(messageChannelId, 'unread');
+      if (isMentioned) {
+        updateChannelBadge(messageChannelId, 'mentions');
+      }
+      
+      const channelName = channelList.find(c => 
+        String(c.id) === String(messageChannelId)
+      )?.name || 'a channel';
+      
+      if (isMentioned) {
+        triggerNotification(
+          'mention',
+          `You were mentioned in #${channelName}`,
+          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+          userId
+        );
+      } else {
+        triggerNotification(
+          'message',
+          `New message in #${channelName}`,
+          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+          null
+        );
+      }
+    } else if (isCurrentChannel && isMentioned && !isOwnMessage) {
+      triggerNotification(
+        'mention',
+        `You were mentioned in #${selectedChannel.name}`,
+        `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+        `/community/${selectedChannel.id}?message=${message.id}`,
+        userId
+      );
+    }
+    
+    // INSTANT UI update - only add message if it's for the current channel
+    if (isCurrentChannel) {
+      setMessages(prev => {
+        // Fast duplicate check
+        const existingIds = new Set(prev.map(m => String(m.id || '')));
+        if (message.id && existingIds.has(String(message.id))) {
+          return prev;
+        }
+        
+        // Check for content-based duplicates
+        const isDuplicate = prev.some(m => {
+          const sameContent = (m.content || '') === (message.content || '');
+          const sameFile = (m.file?.name || '') === (message.file?.name || '');
+          const sameSender = String(m.userId || m.sender?.id || '') === String(message.userId || message.sender?.id || '');
+          const timeDiff = Math.abs(
+            new Date(m.timestamp || m.createdAt || 0).getTime() - 
+            new Date(message.timestamp || message.createdAt || 0).getTime()
+          );
+          return sameSender && timeDiff < 5000 && (sameContent && (sameFile || (!m.file && !message.file)));
+        });
+        
+        if (isDuplicate) {
+          return prev;
+        }
+        
+        // Add message and sort chronologically (oldest to newest)
+        const newMessages = [...prev, message].sort((a, b) => {
+          const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
+          const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
+          return timeA - timeB; // Ascending order
+        });
+        
+        // Save to localStorage
+        if (selectedChannel?.id) {
+          saveMessagesToStorage(selectedChannel.id, newMessages);
+        }
+        
+        // Scroll to bottom if user is at bottom
+        if (window.requestAnimationFrame) {
+          requestAnimationFrame(() => scrollToBottom(false, true));
+        } else {
+          setTimeout(() => scrollToBottom(), 0);
+        }
+        
+        return newMessages;
+      });
+    }
+  },
+  enableRealtime
+);
 
     const messagesRef = useRef(messages);
     messagesRef.current = messages;
@@ -3935,138 +3929,148 @@ const handleFileDownload = (e, file) => {
 
 // Handle send message (or update if editing)
 const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
-    if (selectedChannel.canWrite === false) {
-        return;
-    }
+  e.preventDefault();
+  if ((!newMessage.trim() && !selectedFile) || !selectedChannel) return;
+  if (selectedChannel.canWrite === false) {
+    return;
+  }
 
-    // If editing a message, handle update instead
-    if (editingMessageId) {
-        const message = messages.find(m => m.id === editingMessageId);
-        if (message && String(message.userId) === String(userId)) {
-            try {
-                const updatedContent = newMessage.trim();
-                setMessages(prev => {
-                    const updated = prev.map(msg => 
-                        msg.id === editingMessageId 
-                            ? { ...msg, content: updatedContent, edited: true }
-                            : msg
-                    );
-                    saveMessagesToStorage(selectedChannel.id, updated);
-                    return updated;
-                });
-                
-                handleCancelEdit();
-                return;
-            } catch (error) {
-                console.error('Error editing message:', error);
-                alert('Failed to edit message. Please try again.');
-                return;
-            }
-        }
-    }
-
-    const messageContent = newMessage.trim();
-    const senderUsername = storedUser?.username || storedUser?.name || 'User';
-
-    // Generate a unique client ID for this message
-    const clientMessageId = typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    
-    const messageToSend = {
-        channelId: selectedChannel.id,
-        content: messageContent || '',
-        userId,
-        username: senderUsername,
-        clientMessageId
-    };
-    
-    // Handle file if present
-    let fileData = null;
-    if (selectedFile) {
-        fileData = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(selectedFile);
+  // If editing a message, handle update instead
+  if (editingMessageId) {
+    const message = messages.find(m => m.id === editingMessageId);
+    if (message && String(message.userId) === String(userId)) {
+      try {
+        const updatedContent = newMessage.trim();
+        setMessages(prev => {
+          const updated = prev.map(msg => 
+            msg.id === editingMessageId 
+              ? { ...msg, content: updatedContent, edited: true }
+              : msg
+          );
+          saveMessagesToStorage(selectedChannel.id, updated);
+          return updated;
         });
         
-        messageToSend.file = {
-            name: selectedFile.name,
-            type: selectedFile.type,
-            size: selectedFile.size,
-            preview: fileData
-        };
+        handleCancelEdit();
+        return;
+      } catch (error) {
+        console.error('Error editing message:', error);
+        alert('Failed to edit message. Please try again.');
+        return;
+      }
     }
+  }
 
-    // Create optimistic message with the file data
-    const optimisticMessage = {
-        id: clientMessageId,
-        channelId: selectedChannel.id,
-        content: messageContent,
-        sender: {
-            id: userId,
-            username: storedUser?.username || storedUser?.name || 'User',
-            avatar: storedUser?.avatar || null,
-            role: getCurrentUserRole()
-        },
-        timestamp: new Date().toISOString(),
-        file: messageToSend.file || null,
-        userId,
-        username: senderUsername,
-        _optimistic: true // Mark as optimistic for debugging
-    };
+  const messageContent = newMessage.trim();
+  const senderUsername = storedUser?.username || storedUser?.name || 'User';
 
-    console.log('📤 Adding optimistic message:', optimisticMessage.id);
-    
-    // Add message to state immediately for instant UI feedback
-    setMessages(prev => {
-        // Check if we already have this message (prevent duplicates)
-        if (prev.some(m => m.id === clientMessageId || m.clientMessageId === clientMessageId)) {
-            console.log('⚠️ Message already exists, skipping');
-            return prev;
-        }
-        const updated = [...prev, optimisticMessage];
-        saveMessagesToStorage(selectedChannel.id, updated);
-        return updated;
+  // Generate a unique client ID for this message
+  const clientMessageId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  
+  const messageToSend = {
+    channelId: selectedChannel.id,
+    content: messageContent || '',
+    userId,
+    username: senderUsername,
+    clientMessageId
+  };
+  
+  // Handle file if present
+  let fileData = null;
+  if (selectedFile) {
+    fileData = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(selectedFile);
     });
     
-    // Clear inputs immediately
-    setNewMessage('');
-    setEditingMessageId(null);
-    setEditingMessageContent('');
-    removeSelectedFile();
+    messageToSend.file = {
+      name: selectedFile.name,
+      type: selectedFile.type,
+      size: selectedFile.size,
+      preview: fileData
+    };
+  }
+
+  // Create optimistic message with current timestamp
+  const now = new Date();
+  const optimisticMessage = {
+    id: clientMessageId,
+    channelId: selectedChannel.id,
+    content: messageContent,
+    sender: {
+      id: userId,
+      username: storedUser?.username || storedUser?.name || 'User',
+      avatar: storedUser?.avatar || null,
+      role: getCurrentUserRole()
+    },
+    timestamp: now.toISOString(),
+    file: messageToSend.file || null,
+    userId,
+    username: senderUsername,
+    _optimistic: true
+  };
+
+  console.log('📤 Adding optimistic message:', optimisticMessage.id);
+  
+  // Add message to state immediately and ensure proper chronological order
+  setMessages(prev => {
+    // Check if we already have this message (prevent duplicates)
+    if (prev.some(m => m.id === clientMessageId || m.clientMessageId === clientMessageId)) {
+      console.log('⚠️ Message already exists, skipping');
+      return prev;
+    }
     
-    // Scroll to bottom immediately to show new message
-    scrollToBottomInstant();
+    // Add new message and sort by timestamp (oldest first)
+    const updated = [...prev, optimisticMessage].sort((a, b) => {
+      const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
+      const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
+      return timeA - timeB; // Ascending order (oldest to newest)
+    });
+    
+    saveMessagesToStorage(selectedChannel.id, updated);
+    return updated;
+  });
+  
+  // Clear inputs immediately
+  setNewMessage('');
+  setEditingMessageId(null);
+  setEditingMessageContent('');
+  removeSelectedFile();
+  
+  // Scroll to bottom to show new message
+  scrollToBottomInstant();
 
   try {
-        // Send via API
-        console.log('📡 Sending to API...');
-        const response = await Api.sendMessage(selectedChannel.id, messageToSend);
+    // Send via API
+    console.log('📡 Sending to API...');
+    const response = await Api.sendMessage(selectedChannel.id, messageToSend);
+    
+    if (response && response.data) {
+      const serverMessage = response.data;
+      console.log('✅ Server responded with message:', serverMessage.id);
+      
+      // Update state by replacing optimistic message with server message and maintain order
+      setMessages(prev => {
+        // Filter out the optimistic message
+        const withoutOptimistic = prev.filter(m => 
+          m.id !== clientMessageId && 
+          m.clientMessageId !== clientMessageId
+        );
         
-        if (response && response.data) {
-            const serverMessage = response.data;
-            console.log('✅ Server responded with message:', serverMessage.id);
-            
-            // Update state by replacing optimistic message with server message
-            setMessages(prev => {
-                // Filter out the optimistic message and any duplicates
-                const withoutOptimistic = prev.filter(m => 
-                    m.id !== clientMessageId && 
-                    m.clientMessageId !== clientMessageId
-                );
-                
-                // Add the server message
-                const final = [...withoutOptimistic, serverMessage].sort((a, b) => 
-                    new Date(a.timestamp || a.created_at || 0) - new Date(b.timestamp || b.created_at || 0)
-                );
-                
-                saveMessagesToStorage(selectedChannel.id, final);
-                return final;
-            });
-        }
+        // Add the server message and sort chronologically
+        const final = [...withoutOptimistic, serverMessage].sort((a, b) => {
+          const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
+          const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
+          return timeA - timeB; // Ascending order (oldest to newest)
+        });
+        
+        saveMessagesToStorage(selectedChannel.id, final);
+        return final;
+      });
+    }
         
         // Handle mentions (keep your existing mention code)
         const mentionRegex = /@(\w+)/g;
