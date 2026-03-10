@@ -67,44 +67,56 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
         </div>
     );
 };
-// PPTX Viewer Component
+// PPTX Viewer Component - FIXED
 const PptxViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [pdfUrl, setPdfUrl] = useState(null);
-    const [viewerType, setViewerType] = useState('google'); // 'google', 'microsoft', or 'pdf'
+    const [viewerUrl, setViewerUrl] = useState(null);
+    const [viewerType, setViewerType] = useState('google');
     
     useEffect(() => {
         const loadPptx = async () => {
             try {
                 setLoading(true);
+                setError(null);
                 
                 // If we have a file object with preview data
                 if (file?.preview) {
-                    // Check if it's a data URL or regular URL
+                    // Check if it's a data URL
                     if (file.preview.startsWith('data:')) {
-                        // Convert data URL to blob URL for better compatibility
-                        const response = await fetch(file.preview);
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        setPdfUrl(url);
-                        setViewerType('pdf');
+                        // For data URLs, we need to create a blob URL
+                        try {
+                            // Extract the base64 data
+                            const base64Data = file.preview.split(',')[1];
+                            const byteCharacters = atob(base64Data);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], { type: file.type || 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+                            
+                            // Create blob URL
+                            const url = URL.createObjectURL(blob);
+                            setViewerUrl(url);
+                            setViewerType('blob');
+                        } catch (e) {
+                            console.error('Error creating blob from data URL:', e);
+                            setError('Failed to process file data');
+                        }
                     } else {
-                        // Regular URL - try to use Google Docs viewer
-                        setPdfUrl(file.preview);
+                        // Regular URL
+                        setViewerUrl(file.preview);
                         setViewerType('google');
                     }
-                } 
-                // If we have a URL from the server
-                else if (file?.url) {
-                    setPdfUrl(file.url);
+                } else if (file?.url) {
+                    // Server URL
+                    setViewerUrl(file.url);
                     setViewerType('google');
-                }
-                // If we have a file name but no data, try to construct URL
-                else if (file?.name) {
-                    // For demo purposes - in production, you'd have a real URL
-                    // You might need to fetch the file from your server here
-                    setError('File URL not available');
+                } else {
+                    setError('No file data available');
                 }
                 
                 setLoading(false);
@@ -119,8 +131,8 @@ const PptxViewer = ({ file, onClose }) => {
         
         return () => {
             // Clean up blob URLs
-            if (pdfUrl && pdfUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(pdfUrl);
+            if (viewerUrl && viewerUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(viewerUrl);
             }
         };
     }, [file]);
@@ -135,8 +147,22 @@ const PptxViewer = ({ file, onClose }) => {
     
     if (loading) {
         return (
-            <div className="pptx-viewer-loading">
-                <div className="pptx-loading-spinner"></div>
+            <div className="pptx-viewer-loading" style={{
+                background: '#1e1f22',
+                borderRadius: '12px',
+                padding: '40px',
+                textAlign: 'center',
+                color: '#fff'
+            }}>
+                <div className="pptx-loading-spinner" style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '3px solid rgba(255,255,255,0.1)',
+                    borderTopColor: '#5865f2',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 20px'
+                }}></div>
                 <p>Loading presentation...</p>
             </div>
         );
@@ -144,16 +170,40 @@ const PptxViewer = ({ file, onClose }) => {
     
     if (error) {
         return (
-            <div className="pptx-viewer-error">
-                <p>❌ {error}</p>
-                <button onClick={onClose}>Close</button>
+            <div className="pptx-viewer-error" style={{
+                background: '#1e1f22',
+                borderRadius: '12px',
+                padding: '40px',
+                textAlign: 'center',
+                color: '#fff'
+            }}>
+                <p style={{ color: '#f87171', marginBottom: '20px' }}>❌ {error}</p>
+                <button 
+                    onClick={onClose}
+                    style={{
+                        padding: '10px 20px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Close
+                </button>
             </div>
         );
     }
     
-    if (!pdfUrl) {
+    if (!viewerUrl) {
         return (
-            <div className="pptx-viewer-error">
+            <div className="pptx-viewer-error" style={{
+                background: '#1e1f22',
+                borderRadius: '12px',
+                padding: '40px',
+                textAlign: 'center',
+                color: '#fff'
+            }}>
                 <p>No presentation data available</p>
                 <button onClick={onClose}>Close</button>
             </div>
@@ -161,39 +211,77 @@ const PptxViewer = ({ file, onClose }) => {
     }
     
     return (
-        <div className="pptx-viewer-container" onClick={(e) => e.stopPropagation()}>
-            <div className="pptx-viewer-header">
-                <h3>{file?.name || 'Presentation'}</h3>
-                <button onClick={onClose} className="pptx-viewer-close">×</button>
+        <div className="pptx-viewer-container" onClick={(e) => e.stopPropagation()} style={{
+            background: '#1e1f22',
+            borderRadius: '12px',
+            width: '90vw',
+            height: '90vh',
+            maxWidth: '1200px',
+            maxHeight: '800px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+        }}>
+            <div className="pptx-viewer-header" style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                background: '#2b2d31',
+                borderBottom: '1px solid rgba(255,255,255,0.1)'
+            }}>
+                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 600 }}>
+                    {file?.name || 'Presentation'}
+                </h3>
+                <button 
+                    onClick={onClose} 
+                    className="pptx-viewer-close"
+                    style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        border: 'none',
+                        color: '#fff',
+                        fontSize: '24px',
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                        e.currentTarget.style.transform = 'rotate(90deg)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                        e.currentTarget.style.transform = 'rotate(0deg)';
+                    }}
+                >
+                    ×
+                </button>
             </div>
-            <div className="pptx-viewer-content">
-                {viewerType === 'google' && (
+            <div className="pptx-viewer-content" style={{ flex: 1, background: '#fff', position: 'relative' }}>
+                {viewerType === 'blob' ? (
                     <iframe
-                        src={getGoogleDocsViewerUrl(pdfUrl)}
+                        src={viewerUrl}
                         title="PPTX Viewer"
                         width="100%"
                         height="100%"
                         frameBorder="0"
-                        allowFullScreen
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                     />
-                )}
-                {viewerType === 'microsoft' && (
+                ) : (
                     <iframe
-                        src={getMicrosoftViewerUrl(pdfUrl)}
+                        src={getGoogleDocsViewerUrl(viewerUrl)}
                         title="PPTX Viewer"
                         width="100%"
                         height="100%"
                         frameBorder="0"
-                        allowFullScreen
-                    />
-                )}
-                {viewerType === 'pdf' && (
-                    <iframe
-                        src={pdfUrl}
-                        title="PPTX as PDF"
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                         allowFullScreen
                     />
                 )}
@@ -383,8 +471,8 @@ const messagesContainerRef = useRef(null);
 
 const [showPptxModal, setShowPptxModal] = useState(false);
 const [selectedPptx, setSelectedPptx] = useState(null);
-    // PPTX Preview Component
-const PptxPreview = ({ file, onClick }) => {
+   // PPTX Preview Component - FIXED with useMemo
+const PptxPreview = React.memo(({ file, onClick }) => {
     return (
         <div 
             className="pptx-preview clickable-file"
@@ -453,7 +541,12 @@ const PptxPreview = ({ file, onClick }) => {
             </div>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    // Only re-render if the file name or preview changes
+    return prevProps.file.name === nextProps.file.name && 
+           prevProps.file.preview === nextProps.file.preview &&
+           prevProps.file.size === nextProps.file.size;
+});
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
@@ -1877,7 +1970,7 @@ const renderMessageContent = (content, messageFile) => {
         // Handle **bold** text in the remaining content
         const boldParts = cleanContent.split(/\*\*([^*]+)\*\*/g);
         return (
-            <span style={{ pointerEvents: 'none' }}> {/* This prevents clicks on the text */}
+            <span>
                 {boldParts.map((part, i) => {
                     if (i % 2 === 1) {
                         return <strong key={i}>{part}</strong>;
@@ -1902,7 +1995,7 @@ const renderMessageContent = (content, messageFile) => {
             const boldParts = part.split(/\*\*([^*]+)\*\*/g);
             const boldElements = boldParts.map((boldPart, i) => {
                 if (i % 2 === 1) {
-                    return <strong key={`bold-${i}`}>{boldPart}</strong>;
+                    return <strong key={`bold-${index}-${i}`}>{boldPart}</strong>;
                 }
                 return boldPart;
             });
@@ -1920,8 +2013,8 @@ const renderMessageContent = (content, messageFile) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => {
-                        e.stopPropagation(); // Prevent event bubbling
-                        e.preventDefault(); // Prevent default behavior
+                        e.stopPropagation();
+                        e.preventDefault();
                         window.open(fullUrl, '_blank', 'noopener,noreferrer');
                     }}
                     style={{
@@ -1949,6 +2042,7 @@ const renderMessageContent = (content, messageFile) => {
         return acc;
     }, []);
 };
+
     // ***** XP SYSTEM FUNCTIONS *****
     // XP system utilities are imported at the top of the file
     
@@ -3958,13 +4052,16 @@ Earn XP by:
 const handleFileClick = (file) => {
     if (!file) return;
     
-    // Check if it's a PPTX file
+    // Check if it's a PPTX file - more comprehensive check
     const isPptx = file.type?.includes('presentation') || 
                    file.type?.includes('powerpoint') || 
+                   file.type?.includes('vnd.openxmlformats-officedocument.presentationml') ||
                    file.name?.toLowerCase().endsWith('.pptx') ||
-                   file.name?.toLowerCase().endsWith('.ppt');
+                   file.name?.toLowerCase().endsWith('.ppt') ||
+                   file.name?.toLowerCase().endsWith('.odp');
     
     if (isPptx) {
+        console.log('Opening PPTX file:', file.name);
         setSelectedPptx(file);
         setShowPptxModal(true);
         return;
@@ -4748,29 +4845,29 @@ useEffect(() => {
     };
 
     // Render
-    // Always render something to prevent white screen, even during initialization
-    const hasToken = localStorage.getItem('token');
-    
-    if (!isAuthenticated && !hasToken) {
-        // Show loading state instead of null to prevent white screen
+// Always render something to prevent white screen, even during initialization
+const hasToken = localStorage.getItem('token');
+
+if (!isAuthenticated && !hasToken) {
+    // Show loading state instead of null to prevent white screen
     return (
-            <div style={{ 
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: '#0a0a0a',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 9999
-            }}>
-                <CosmicBackground />
-                <div style={{ color: '#fff', fontSize: '18px' }}>Loading...</div>
-            </div>
-        );
-    }
+        <div style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: '#0a0a0a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+        }}>
+            <CosmicBackground />
+            <div style={{ color: '#fff', fontSize: '18px' }}>Loading...</div>
+        </div>
+    );
+}
 
     return (
         <div 
