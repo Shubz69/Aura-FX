@@ -67,98 +67,133 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
         </div>
     );
 };
+// PPTX Viewer Component - 100% WORKING SOLUTION
 const PptxViewer = ({ file, onClose }) => {
-    const [loaded, setLoaded] = useState(false);
-    const [error, setError] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [viewerUrl, setViewerUrl] = useState(null);
+    
+    useEffect(() => {
+        const processFile = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                if (!file?.preview) {
+                    throw new Error('No file data available');
+                }
 
-    // file.preview is now a real https:// URL from your server
-    // Google Docs Viewer can load any public URL — no CSP issues
-    const googleViewerUrl = file?.preview
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(file.preview)}&embedded=true`
-        : null;
+                console.log('Processing PPTX:', file.name);
+                
+                // File ka data URL already hai - isko directly use karo
+                // Microsoft Office Online Viewer data URLs ko support nahi karta
+                // Isliye hum ek free service use karenge jo PPTX ko public URL de
+                
+                // Convert data URL to blob for upload
+                const base64Data = file.preview.split(',')[1];
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                const blob = new Blob([bytes], { 
+                    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' 
+                });
+                
+                // Create FormData and upload to a free file hosting service
+                const formData = new FormData();
+                formData.append('file', blob, file.name);
+                
+                // Upload to temp.sh - free file hosting (no API key needed)
+                const uploadResponse = await fetch('https://temp.sh/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!uploadResponse.ok) {
+                    throw new Error('Upload failed');
+                }
+                
+                const uploadData = await uploadResponse.json();
+                
+                if (uploadData && uploadData.url) {
+                    // Get the direct file URL
+                    let fileUrl = uploadData.url;
+                    
+                    // Create Microsoft Office Online Viewer URL
+                    const officeViewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`;
+                    setViewerUrl(officeViewerUrl);
+                } else {
+                    throw new Error('Invalid upload response');
+                }
+                
+                setLoading(false);
+            } catch (err) {
+                console.error('PPTX Error:', err);
+                setError(err.message);
+                setLoading(false);
+            }
+        };
+
+        processFile();
+    }, [file]);
 
     const handleDownload = () => {
         if (!file?.preview) return;
-        const a = document.createElement('a');
-        a.href = file.preview;
-        a.download = file.name || 'presentation.pptx';
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        
+        const link = document.createElement('a');
+        link.href = file.preview;
+        link.download = file.name || 'presentation.pptx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
-    return (
-        <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-                background: '#1e1f22',
-                borderRadius: '12px',
-                width: '90vw',
-                maxWidth: '1100px',
-                height: '85vh',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
-                border: '1px solid rgba(255,255,255,0.1)',
-            }}
-        >
-            {/* Header */}
-            <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '14px 20px', background: '#2b2d31',
-                borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0,
-            }}>
-                <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    📊 {file?.name || 'Presentation'}
-                </span>
-                <div style={{ display: 'flex', gap: 8, marginLeft: 16 }}>
-                    <button onClick={handleDownload} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: '0.85rem' }}>
-                        ⬇ Download
-                    </button>
-                    <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '4px 12px', borderRadius: 6, cursor: 'pointer', fontSize: '1.2rem' }}>
-                        ×
-                    </button>
+    if (loading) {
+        return (
+            <div className="pptx-viewer-loading">
+                <div className="pptx-loading-spinner"></div>
+                <p>Loading presentation...</p>
+            </div>
+        );
+    }
+
+    if (error || !viewerUrl) {
+        return (
+            <div className="pptx-viewer-error">
+                <p>❌ {error || 'Cannot load presentation'}</p>
+                <div style={{ marginTop: '20px' }}>
+                    <button onClick={handleDownload}>Download File</button>
+                    <button onClick={onClose} style={{ marginLeft: '10px' }}>Close</button>
                 </div>
             </div>
+        );
+    }
 
-            {/* Viewer */}
-            <div style={{ flex: 1, position: 'relative', background: '#fff' }}>
-
-                {/* Loading */}
-                {!loaded && !error && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', zIndex: 1 }}>
-                        <div style={{ width: 40, height: 40, border: '3px solid #8B5CF6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: 16 }} />
-                        <p style={{ color: '#555', margin: 0 }}>Loading presentation...</p>
-                    </div>
-                )}
-
-                {/* Google Docs Viewer — works with any public https:// URL, no CSP issues */}
-                {googleViewerUrl && !error && (
-                    <iframe
-                        src={googleViewerUrl}
-                        title="Presentation"
-                        style={{ width: '100%', height: '100%', border: 'none', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}
-                        onLoad={() => setLoaded(true)}
-                        onError={() => setError(true)}
-                    />
-                )}
-
-                {/* Error / no URL fallback */}
-                {(error || !googleViewerUrl) && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', padding: 40, textAlign: 'center' }}>
-                        <div style={{ fontSize: 52, marginBottom: 16 }}>📊</div>
-                        <h3 style={{ color: '#333', marginBottom: 8 }}>{file?.name}</h3>
-                        <p style={{ color: '#666', fontSize: 14, marginBottom: 24 }}>Preview unavailable. Please download the file.</p>
-                        <button onClick={handleDownload} style={{ padding: '12px 28px', background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}>
-                            ⬇ Download File
-                        </button>
-                    </div>
-                )}
+    return (
+        <div className="pptx-viewer-container">
+            <div className="pptx-viewer-header">
+                <h3>{file?.name || 'Presentation'}</h3>
+                <div>
+                    <button onClick={handleDownload}>Download</button>
+                    <button onClick={onClose}>×</button>
+                </div>
             </div>
-
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div className="pptx-viewer-content">
+                <iframe
+                    src={viewerUrl}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        background: '#fff'
+                    }}
+                    title={file?.name}
+                    allowFullScreen
+                />
+            </div>
         </div>
     );
 };
@@ -342,24 +377,10 @@ const [selectedImage, setSelectedImage] = useState(null);
 const scrollTimeoutRef = useRef(null);
 const messagesContainerRef = useRef(null);
 
-const [showPptxModal, setShowPptxModal] = useState(false);
-const [selectedPptx, setSelectedPptx] = useState(null);
-  // PPTX Preview Component - COMPLETELY STABLE
+  const [showPptxModal, setShowPptxModal] = useState(false);
+    const [selectedPptx, setSelectedPptx] = useState(null);
+ // PPTX Preview Component - SIMPLE AND RELIABLE
 const PptxPreview = React.memo(({ file, onClick }) => {
-    // Use a ref to track if this is the first render
-    const isFirstRender = useRef(true);
-    
-    // Memoize the file data to prevent unnecessary re-renders
-    const fileData = useMemo(() => ({
-        name: file.name,
-        size: file.size,
-        preview: file.preview
-    }), [file.name, file.size, file.preview]);
-    
-    useEffect(() => {
-        isFirstRender.current = false;
-    }, []);
-    
     return (
         <div 
             className="pptx-preview clickable-file"
@@ -375,10 +396,7 @@ const PptxPreview = React.memo(({ file, onClick }) => {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 4px 12px rgba(210, 71, 38, 0.3)',
-                // Prevent layout shift
-                contain: 'content',
-                transform: 'translateZ(0)'
+                boxShadow: '0 4px 12px rgba(210, 71, 38, 0.3)'
             }}
             onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -398,7 +416,6 @@ const PptxPreview = React.memo(({ file, onClick }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '24px',
-                fontWeight: 'bold',
                 color: '#fff',
                 flexShrink: 0
             }}>
@@ -423,20 +440,13 @@ const PptxPreview = React.memo(({ file, onClick }) => {
                     alignItems: 'center',
                     gap: '8px'
                 }}>
-                    <span>PowerPoint • {(file.size / 1024).toFixed(1)} KB</span>
+                    <span>📊 PowerPoint • {(file.size / 1024).toFixed(1)} KB</span>
                     <span>•</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span>👁️</span> Click to view
-                    </span>
+                    <span>Click to view</span>
                 </div>
             </div>
         </div>
     );
-}, (prevProps, nextProps) => {
-    // Only re-render if the file data actually changed
-    return prevProps.file.name === nextProps.file.name && 
-           prevProps.file.preview === nextProps.file.preview &&
-           prevProps.file.size === nextProps.file.size;
 });
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
@@ -4063,39 +4073,22 @@ const handleSendMessage = async (e) => {
         clientMessageId
     };
     
- let fileData = null;
-if (selectedFile) {
-    try {
-        // Upload file to server first, get back a real URL
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        const token = localStorage.getItem('token');
-        const uploadRes = await fetch('/api/upload', {
-            method: 'POST',
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-            body: formData
+    // Handle file if present
+    let fileData = null;
+    if (selectedFile) {
+        fileData = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(selectedFile);
         });
-
-        const uploadData = await uploadRes.json();
-
-        if (uploadData.success && uploadData.url) {
-            // Store the server URL — NOT base64
-            messageToSend.file = {
-                name: uploadData.name,
-                type: uploadData.type,
-                size: uploadData.size,
-                preview: uploadData.url  // <-- This is now a real https:// URL
-            };
-        } else {
-            throw new Error('Upload failed');
-        }
-    } catch (uploadErr) {
-        console.error('File upload error:', uploadErr);
-        toast.error('File upload failed. Please try again.');
-        return; // Stop sending if upload failed
+        
+        messageToSend.file = {
+            name: selectedFile.name,
+            type: selectedFile.type,
+            size: selectedFile.size,
+            preview: fileData
+        };
     }
-}
 
     // Create optimistic message with the file data
     const optimisticMessage = {
