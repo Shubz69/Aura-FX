@@ -1920,6 +1920,545 @@ body.sidebar-open-mobile {
     backface-visibility: hidden;
     will-change: transform, box-shadow;
 }
+/* =============================================
+   PPTX Viewer - Download Only (Theme Matched)
+   ============================================= */
+
+.pptx-viewer-container {
+    width: 90vw;
+    max-width: 500px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(210, 71, 38, 0.2);
+    animation: pptxModalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(210, 71, 38, 0.3);
+}
+
+@keyframes pptxModalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.pptx-viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(210, 71, 38, 0.3);
+}
+
+.pptx-viewer-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100% - 50px);
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.pptx-viewer-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pptx-viewer-close:hover {
+    background: rgba(210, 71, 38, 0.3);
+    border-color: rgba(210, 71, 38, 0.5);
+    transform: rotate(90deg);
+    color: #ff8a5c;
+}
+
+.pptx-viewer-content {
+    padding: 32px 24px 40px;
+}
+
+.pptx-download-prompt {
+    text-align: center;
+    color: #fff;
+}
+
+.pptx-icon-container {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, rgba(210, 71, 38, 0.2) 0%, rgba(210, 71, 38, 0.1) 100%);
+    border-radius: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(210, 71, 38, 0.3);
+    box-shadow: 0 10px 30px -10px rgba(210, 71, 38, 0.3);
+}
+
+.pptx-icon-container svg {
+    width: 48px;
+    height: 48px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.pptx-download-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 16px;
+    background: linear-gradient(135deg, #fff 0%, #ffb199 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.pptx-file-info {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.pptx-file-name {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 70%;
+}
+
+.pptx-file-size {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    font-weight: 400;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.pptx-download-description {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0 0 24px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.pptx-download-button {
+    background: linear-gradient(135deg, #D24726 0%, #B63E1F 100%);
+    border: none;
+    border-radius: 14px;
+    padding: 16px 32px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 20px -8px rgba(210, 71, 38, 0.5);
+    width: 100%;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.pptx-download-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 30px -10px rgba(210, 71, 38, 0.7);
+    background: linear-gradient(135deg, #E25736 0%, #C64E2F 100%);
+}
+
+.pptx-download-button:active {
+    transform: translateY(-1px);
+}
+
+.download-icon {
+    font-size: 1.1rem;
+}
+
+.pptx-download-note {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.75rem;
+    margin-top: 20px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.pptx-viewer-loading {
+    padding: 60px 24px;
+    text-align: center;
+    color: #fff;
+}
+
+.pptx-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(210, 71, 38, 0.2);
+    border-top-color: #D24726;
+    border-radius: 50%;
+    animation: pptxSpin 0.8s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes pptxSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .pptx-viewer-container {
+        width: 95vw;
+        max-width: none;
+        border-radius: 20px;
+    }
+    
+    .pptx-viewer-header {
+        padding: 14px 18px;
+    }
+    
+    .pptx-viewer-content {
+        padding: 24px 18px 32px;
+    }
+    
+    .pptx-icon-container {
+        width: 72px;
+        height: 72px;
+        margin-bottom: 18px;
+    }
+    
+    .pptx-icon-container svg {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .pptx-download-title {
+        font-size: 1.25rem;
+        margin-bottom: 12px;
+    }
+    
+    .pptx-download-button {
+        padding: 14px 24px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pptx-viewer-header h3 {
+        font-size: 0.85rem;
+    }
+    
+    .pptx-file-info {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .pptx-file-name {
+        max-width: 100%;
+    }
+}
+/* =============================================
+   PPTX Preview - Theme Matching
+   ============================================= */
+
+.pptx-preview {
+    margin-top: 12px;
+    margin-bottom: 8px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: 72px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pptx-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(210, 71, 38, 0.1) 0%, 
+        rgba(210, 71, 38, 0.02) 50%,
+        transparent 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pptx-preview:hover {
+    transform: translateY(-2px);
+    border-color: rgba(210, 71, 38, 0.3);
+    box-shadow: 0 12px 24px -8px rgba(210, 71, 38, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pptx-preview:hover::before {
+    opacity: 1;
+}
+
+.pptx-preview:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(210, 71, 38, 0.2);
+}
+
+/* Left accent bar */
+.pptx-preview-accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #D24726 0%, #B63E1F 100%);
+    box-shadow: 0 0 12px rgba(210, 71, 38, 0.5);
+}
+
+/* PowerPoint Icon */
+.pptx-preview-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    margin-left: 20px;
+    background: linear-gradient(135deg, rgba(210, 71, 38, 0.15) 0%, rgba(210, 71, 38, 0.05) 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(210, 71, 38, 0.3);
+    transition: all 0.25s ease;
+}
+
+.pptx-preview:hover .pptx-preview-icon {
+    background: linear-gradient(135deg, rgba(210, 71, 38, 0.25) 0%, rgba(210, 71, 38, 0.1) 100%);
+    border-color: rgba(210, 71, 38, 0.5);
+    transform: scale(1.05);
+}
+
+.pptx-preview-icon svg {
+    width: 28px;
+    height: 28px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* File Info Section */
+.pptx-preview-info {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 0;
+}
+
+.pptx-preview-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #fff;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.pptx-preview-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Space Grotesk', sans-serif;
+    flex-wrap: wrap;
+}
+
+.pptx-preview-type {
+    color: #D24726;
+    font-weight: 600;
+    background: rgba(210, 71, 38, 0.15);
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(210, 71, 38, 0.2);
+}
+
+.pptx-preview-size {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 500;
+}
+
+.pptx-preview-action {
+    color: #8B5CF6;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    transition: all 0.2s ease;
+}
+
+.pptx-preview:hover .pptx-preview-action {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #A78BFA;
+}
+
+/* Download Icon */
+.pptx-preview-download {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    margin-right: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    transition: all 0.25s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pptx-preview:hover .pptx-preview-download {
+    background: rgba(210, 71, 38, 0.15);
+    color: #D24726;
+    border-color: rgba(210, 71, 38, 0.3);
+    transform: translateX(2px);
+}
+
+/* Message attachment styling (for images) */
+.message-attachment {
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-top: 8px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    max-width: 280px;
+}
+
+.message-attachment:hover {
+    transform: translateY(-2px);
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 12px 24px -8px rgba(139, 92, 246, 0.3);
+}
+
+.message-attachment img {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .pptx-preview {
+        min-height: 64px;
+        gap: 12px;
+    }
+    
+    .pptx-preview-icon {
+        width: 40px;
+        height: 40px;
+        margin-left: 16px;
+    }
+    
+    .pptx-preview-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .pptx-preview-name {
+        font-size: 0.85rem;
+    }
+    
+    .pptx-preview-meta {
+        font-size: 0.7rem;
+        gap: 6px;
+    }
+    
+    .pptx-preview-download {
+        width: 36px;
+        height: 36px;
+        margin-right: 16px;
+        font-size: 0.9rem;
+    }
+    
+    .message-attachment {
+        max-width: 240px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pptx-preview {
+        flex-wrap: wrap;
+        min-height: auto;
+        padding: 12px 0;
+    }
+    
+    .pptx-preview-icon {
+        margin-left: 16px;
+    }
+    
+    .pptx-preview-info {
+        padding: 0;
+    }
+    
+    .pptx-preview-meta {
+        flex-wrap: wrap;
+    }
+    
+    .pptx-preview-download {
+        margin-right: 16px;
+    }
+    
+    .message-attachment {
+        max-width: 100%;
+    }
+}
 /* ── BODY LOCK ───────────────────────────────────────────────── */
 body.community-page-active  { overflow: hidden !important; height: 100vh !important; }
 html.community-page-active  { overflow: hidden !important; height: 100vh !important; }

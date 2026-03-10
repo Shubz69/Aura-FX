@@ -319,28 +319,53 @@ const { name, username, email, phone, address, bio, avatar, updateUsername, avat
           updates.push('bio = ?');
           values.push(cleanValue(bio));
         }
-        if (avatar !== undefined) {
-          let avatarValue = cleanValue(avatar);
-          // If avatar is a base64 string, ensure it's not too long (TEXT can handle up to 65KB)
-          // But we'll truncate if it's extremely long to prevent issues
-          if (avatarValue && typeof avatarValue === 'string') {
-            // Base64 images can be long, but TEXT column can handle up to 65,535 bytes
-            // We'll limit to 60KB to be safe (60,000 characters for base64)
-            if (avatarValue.length > 60000) {
-              console.warn('Avatar data too long, truncating to 60KB');
-              avatarValue = avatarValue.substring(0, 60000);
-            }
-            // If it's not a base64 data URL and not a simple filename, treat invalid as clear avatar
-            if (avatarValue && !avatarValue.startsWith('data:') && !avatarValue.match(/^[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif|webp)$/)) {
-              if (avatarValue.length > 1000 && !avatarValue.includes('base64')) {
-                console.warn('Avatar value seems invalid, clearing');
-                avatarValue = null;
-              }
-            }
-          }
-          updates.push('avatar = ?');
-          values.push(avatarValue ?? null);
-        }
+      // In update.js, find the section where you build the updates array
+// Add this after the avatar handling section:
+
+if (avatar !== undefined) {
+  let avatarValue = cleanValue(avatar);
+  // If avatar is a base64 string, ensure it's not too long (TEXT can handle up to 65KB)
+  // But we'll truncate if it's extremely long to prevent issues
+  if (avatarValue && typeof avatarValue === 'string') {
+    // Base64 images can be long, but TEXT column can handle up to 65,535 bytes
+    // We'll limit to 60KB to be safe (60,000 characters for base64)
+    if (avatarValue.length > 60000) {
+      console.warn('Avatar data too long, truncating to 60KB');
+      avatarValue = avatarValue.substring(0, 60000);
+    }
+    // If it's not a base64 data URL and not a simple filename, treat invalid as clear avatar
+    if (avatarValue && !avatarValue.startsWith('data:') && !avatarValue.match(/^[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif|webp)$/)) {
+      if (avatarValue.length > 1000 && !avatarValue.includes('base64')) {
+        console.warn('Avatar value seems invalid, clearing');
+        avatarValue = null;
+      }
+    }
+  }
+  updates.push('avatar = ?');
+  values.push(avatarValue ?? null);
+}
+
+// ADD THIS SECTION FOR BANNER HANDLING
+if (req.body.banner !== undefined) {
+  let bannerValue = cleanValue(req.body.banner);
+  // Banner can be base64 too, so handle similarly
+  if (bannerValue && typeof bannerValue === 'string') {
+    // Banners can be large, TEXT can handle up to 65KB
+    if (bannerValue.length > 60000) {
+      console.warn('Banner data too long, truncating to 60KB');
+      bannerValue = bannerValue.substring(0, 60000);
+    }
+    // If it's not a data URL and not a URL, treat as invalid
+    if (bannerValue && !bannerValue.startsWith('data:') && !bannerValue.startsWith('http')) {
+      if (bannerValue.length > 1000) {
+        console.warn('Banner value seems invalid, clearing');
+        bannerValue = null;
+      }
+    }
+  }
+  updates.push('banner = ?');
+  values.push(bannerValue ?? null);
+}
 
         if (updates.length === 0) {
           await db.end();
@@ -359,7 +384,7 @@ if (avatarColor !== undefined) {
 
        // Fetch updated user data (include last_username_change and avatarColor)
 const [updatedRows] = await db.execute(
-  'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, last_username_change, avatarColor FROM users WHERE id = ?',
+  'SELECT id, username, email, name, phone, address, bio, avatar, banner, role, level, xp, last_username_change, avatarColor FROM users WHERE id = ?',
   [userId]
 );
 
@@ -543,28 +568,28 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
         }
         
         // Return user data with formatted dates
-        const responseData = {
-          id: user.id,
-          username: user.username || user.name || 'User',
-          name: user.name,
-          bio: user.bio || '',
-          avatar: user.avatar ?? null,
-          banner: (hasBanner && user.banner) ? user.banner : '',
-          avatarColor: user.avatarColor || null,
-          role: user.role || 'free',
-          level: parseInt(user.level || 1),
-          xp: parseFloat(user.xp || 0),
-          joinDate: user.created_at,
-          createdAt: user.created_at,
-          login_streak: (user.login_streak !== undefined && user.login_streak !== null) ? user.login_streak : 0,
-          last_seen: lastSeenValue,
-          stats: {
-            reputation: Math.floor((user.xp || 0) / 100), // Calculate reputation from XP
-            totalTrades: 0,
-            winRate: 0,
-            totalProfit: 0
-          }
-        };
+       const responseData = {
+  id: user.id,
+  username: user.username || user.name || 'User',
+  name: user.name,
+  bio: user.bio || '',
+  avatar: user.avatar ?? null,
+  banner: (hasBanner && user.banner) ? user.banner : '', // THIS IS IMPORTANT
+  avatarColor: user.avatarColor || null,
+  role: user.role || 'free',
+  level: parseInt(user.level || 1),
+  xp: parseFloat(user.xp || 0),
+  joinDate: user.created_at,
+  createdAt: user.created_at,
+  login_streak: (user.login_streak !== undefined && user.login_streak !== null) ? user.login_streak : 0,
+  last_seen: lastSeenValue,
+  stats: {
+    reputation: Math.floor((user.xp || 0) / 100),
+    totalTrades: 0,
+    winRate: 0,
+    totalProfit: 0
+  }
+};
         if (journalStats) {
           responseData.journalStats = journalStats;
         }

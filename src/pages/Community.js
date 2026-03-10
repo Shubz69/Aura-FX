@@ -13,6 +13,7 @@ import { toast } from 'react-toastify';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import ImageModal from '../components/ImageModal';
+import MiniJournalModal from '../components/MiniJournalModal';
 import {
     getLevelFromXP,
     getXPForNextLevel,
@@ -109,12 +110,11 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
 };
 const PptxViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [viewerUrl, setViewerUrl] = useState('');
+    const [downloadUrl, setDownloadUrl] = useState('');
+    const [fileSize, setFileSize] = useState('');
     
     useEffect(() => {
         if (!file?.preview) {
-            setError('No file data available');
             setLoading(false);
             return;
         }
@@ -142,29 +142,32 @@ const PptxViewer = ({ file, onClose }) => {
                 type: file.type || 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
             });
             
-            // Create blob URL
+            // Format file size
+            const sizeInKB = (blob.size / 1024).toFixed(1);
+            setFileSize(sizeInKB);
+            
+            // Create blob URL for download
             const url = URL.createObjectURL(blob);
-            setViewerUrl(url);
+            setDownloadUrl(url);
             
         } catch (err) {
             console.error('Error processing PPTX:', err);
-            setError('Failed to process presentation file');
         } finally {
             setLoading(false);
         }
         
         return () => {
-            if (viewerUrl) {
-                URL.revokeObjectURL(viewerUrl);
+            if (downloadUrl) {
+                URL.revokeObjectURL(downloadUrl);
             }
         };
     }, [file]);
     
     const handleDownload = () => {
-        if (!viewerUrl) return;
+        if (!downloadUrl) return;
         
         const link = document.createElement('a');
-        link.href = viewerUrl;
+        link.href = downloadUrl;
         link.download = file.name || 'presentation.pptx';
         document.body.appendChild(link);
         link.click();
@@ -176,29 +179,11 @@ const PptxViewer = ({ file, onClose }) => {
             <div className="pptx-viewer-container">
                 <div className="pptx-viewer-header">
                     <h3>{file?.name || 'Presentation'}</h3>
-                    <button onClick={onClose} className="close-btn">×</button>
+                    <button onClick={onClose} className="pptx-viewer-close">×</button>
                 </div>
                 <div className="pptx-viewer-loading">
-                    <div className="spinner"></div>
-                    <p>Loading presentation...</p>
-                </div>
-            </div>
-        );
-    }
-    
-    if (error) {
-        return (
-            <div className="pptx-viewer-container">
-                <div className="pptx-viewer-header">
-                    <h3>{file?.name || 'Presentation'}</h3>
-                    <button onClick={handleDownload} className="download-btn">Download</button>
-                    <button onClick={onClose} className="close-btn">×</button>
-                </div>
-                <div className="pptx-viewer-error">
-                    <p>❌ {error}</p>
-                    <button onClick={handleDownload} className="retry-btn">
-                        Download Instead
-                    </button>
+                    <div className="pptx-loading-spinner"></div>
+                    <p>Preparing file for download...</p>
                 </div>
             </div>
         );
@@ -208,28 +193,95 @@ const PptxViewer = ({ file, onClose }) => {
         <div className="pptx-viewer-container">
             <div className="pptx-viewer-header">
                 <h3>{file?.name || 'Presentation'}</h3>
-                <div className="header-actions">
-                    <button onClick={handleDownload} className="download-btn">
-                        <FaDownload /> Download
-                    </button>
-                    <button onClick={onClose} className="close-btn">×</button>
-                </div>
+                <button onClick={onClose} className="pptx-viewer-close">×</button>
             </div>
+            
             <div className="pptx-viewer-content">
-                <iframe
-                    src={viewerUrl}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
-                        background: '#fff'
-                    }}
-                    title={file?.name || 'PPTX Viewer'}
-                />
+                <div className="pptx-download-prompt">
+                    {/* PowerPoint Icon */}
+                    <div className="pptx-icon-container">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21.5 3H2.5C1.7 3 1 3.7 1 4.5v15c0 .8.7 1.5 1.5 1.5h19c.8 0 1.5-.7 1.5-1.5v-15c0-.8-.7-1.5-1.5-1.5z" fill="#D24726"/>
+                            <path d="M8 15H6v-5h2v5zm5 0h-2v-5h2v5zm5 0h-2v-5h2v5z" fill="white"/>
+                        </svg>
+                    </div>
+                    
+                    <h2 className="pptx-download-title">PowerPoint Presentation</h2>
+                    
+                    <div className="pptx-file-info">
+                        <span className="pptx-file-name">{file?.name || 'presentation.pptx'}</span>
+                        <span className="pptx-file-size">{fileSize} KB</span>
+                    </div>
+                    
+                    <p className="pptx-download-description">
+                        Download this presentation to view it in Microsoft PowerPoint, 
+                        Google Slides, or any compatible presentation software.
+                    </p>
+                    
+                    <button 
+                        onClick={handleDownload} 
+                        className="pptx-download-button"
+                    >
+                        <FaDownload className="download-icon" />
+                        Download Presentation
+                    </button>
+                    
+                    <p className="pptx-download-note">
+                        After downloading, open the file with your preferred presentation software.
+                    </p>
+                </div>
             </div>
         </div>
     );
 };
+ // PPTX Preview Component - THEME MATCHING
+const PptxPreview = React.memo(({ file, onClick }) => {
+    // Format file size nicely
+    const formatFileSize = (bytes) => {
+        if (!bytes) return '0 KB';
+        const kb = bytes / 1024;
+        if (kb < 1024) return `${kb.toFixed(1)} KB`;
+        return `${(kb / 1024).toFixed(1)} MB`;
+    };
+
+    return (
+        <div 
+            className="pptx-preview"
+            onClick={onClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && onClick()}
+        >
+            {/* Left accent bar with PowerPoint orange */}
+            <div className="pptx-preview-accent"></div>
+            
+            {/* PowerPoint Icon */}
+            <div className="pptx-preview-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21.5 3H2.5C1.7 3 1 3.7 1 4.5v15c0 .8.7 1.5 1.5 1.5h19c.8 0 1.5-.7 1.5-1.5v-15c0-.8-.7-1.5-1.5-1.5z" fill="#D24726"/>
+                    <path d="M8 15H6v-5h2v5zm5 0h-2v-5h2v5zm5 0h-2v-5h2v5z" fill="white"/>
+                </svg>
+            </div>
+
+            {/* File Info */}
+            <div className="pptx-preview-info">
+                <div className="pptx-preview-name">
+                    {file.name || 'Presentation'}
+                </div>
+                <div className="pptx-preview-meta">
+                    <span className="pptx-preview-type">PowerPoint</span>
+                    <span className="pptx-preview-size">{formatFileSize(file.size)}</span>
+                    <span className="pptx-preview-action">Click to download</span>
+                </div>
+            </div>
+
+            {/* Download Icon */}
+            <div className="pptx-preview-download">
+                <FaDownload />
+            </div>
+        </div>
+    );
+});
 // GIF Picker component
 const GifPicker = ({ onGifSelect, onClose }) => {
     const [gifs, setGifs] = useState([]);
@@ -412,74 +464,268 @@ const messagesContainerRef = useRef(null);
 
   const [showPptxModal, setShowPptxModal] = useState(false);
     const [selectedPptx, setSelectedPptx] = useState(null);
- // PPTX Preview Component - SIMPLE AND RELIABLE
-const PptxPreview = React.memo(({ file, onClick }) => {
+
+// Memoized message component to prevent re-renders
+const MessageItem = React.memo(({ 
+    message, 
+    isGrouped, 
+    onContextMenu, 
+    onAvatarClick, 
+    onDelete, 
+    canDelete,
+    entitlements,
+    hasReadWelcome,
+    onWelcomeAcknowledgment,
+    messageReactions,
+    onReactionClick,
+    formatTimeOnly,
+    formatTimestamp,
+    renderMessageContent,
+    PptxPreview,
+    handleFileClick,
+    getDisplayFileName
+}) => {
     return (
         <div 
-            className="pptx-preview clickable-file"
-            onClick={onClick}
-            style={{
-                marginTop: '8px',
-                padding: '16px',
-                background: 'linear-gradient(135deg, #D24726 0%, #B63E1F 100%)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 4px 12px rgba(210, 71, 38, 0.3)'
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 16px rgba(210, 71, 38, 0.5)';
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(210, 71, 38, 0.3)';
-            }}
+            id={`message-${message.id}`}
+            className={`message-item ${isGrouped ? 'grouped' : ''}`}
+            onContextMenu={onContextMenu}
         >
-            <div style={{
-                width: '48px',
-                height: '48px',
-                background: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px',
-                color: '#fff',
-                flexShrink: 0
-            }}>
-                📊
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    color: '#fff',
-                    marginBottom: '4px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                }}>
-                    {file.name || 'Presentation'}
+            {!isGrouped && (
+                <div 
+                    className="message-avatar" 
+                    onClick={onAvatarClick}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                        e.currentTarget.style.opacity = '0.9';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.opacity = '1';
+                    }}
+                >
+                    {resolveAvatarUrl(message.sender?.avatar, window.location?.origin) ? (
+                        <img 
+                            src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} 
+                            alt="" 
+                            loading="lazy" 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                    ) : (
+                        <div style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            borderRadius: '50%', 
+                            background: getPlaceholderColor(message.sender?.id ?? message.sender?.username ?? message.userId) 
+                        }} />
+                    )}
                 </div>
-                <div style={{
-                    fontSize: '0.75rem',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    <span>📊 PowerPoint • {(file.size / 1024).toFixed(1)} KB</span>
-                    <span>•</span>
-                    <span>Click to view</span>
+            )}
+            
+            <div className="message-content">
+                {!isGrouped && (
+                    <div className="message-header-info community-message-header-with-time">
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
+                            <span 
+                                className="message-author"
+                                onClick={onAvatarClick}
+                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                            >
+                                {message.sender?.username || 'Unknown'}
+                            </span>
+                            {message.edited && (
+                                <span style={{ 
+                                    fontSize: '0.6875rem', 
+                                    color: '#72767D',
+                                    fontStyle: 'italic'
+                                }}>
+                                    (edited)
+                                </span>
+                            )}
+                        </div>
+                        <span className="message-timestamp message-time-right" title={formatTimestamp(message.timestamp)}>
+                            {formatTimeOnly(message.timestamp || message.createdAt || message.created_at)}
+                        </span>
+                        
+                        {!message.isDeleted && message.content !== '[deleted]' && canDelete && (
+                            <button
+                                onClick={() => onDelete(message.id)}
+                                className="message-delete-btn"
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#f87171',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    opacity: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '0.85rem',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = 1;
+                                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = 0;
+                                    e.currentTarget.style.background = 'transparent';
+                                }}
+                                title="Delete message"
+                            >
+                                <FaTrash size={12} />
+                            </button>
+                        )}
+                    </div>
+                )}
+                
+                {/* Delete button for grouped messages */}
+                {isGrouped && !message.isDeleted && message.content !== '[deleted]' && canDelete && (
+                    <div className="message-delete-grouped" style={{ 
+                        position: 'absolute', 
+                        right: '16px', 
+                        top: '2px',
+                        opacity: 0,
+                        transition: 'opacity 0.2s ease'
+                    }}>
+                        <button
+                            onClick={() => onDelete(message.id)}
+                            className="message-delete-btn"
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#f87171',
+                                cursor: 'pointer',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.85rem',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                            title="Delete message"
+                        >
+                            <FaTrash size={12} />
+                        </button>
+                    </div>
+                )}
+                
+                <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
+                    {message.isDeleted || message.content === '[deleted]' ? (
+                        <span style={{ color: '#72767D', fontStyle: 'italic', opacity: 0.7 }}>
+                            [message deleted]
+                        </span>
+                    ) : message.isWelcomeMessage ? (
+                        message.content.split('\n').map((line, idx) => {
+                            const trimmedLine = line.trim();
+                            if (trimmedLine.startsWith('## ')) {
+                                return <h3 key={idx} style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '16px', marginBottom: '10px', color: 'var(--primary)' }}>{trimmedLine.substring(3)}</h3>;
+                            }
+                            if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && trimmedLine.length > 4) {
+                                return <div key={idx} style={{ fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>{trimmedLine.replace(/\*\*/g, '')}</div>;
+                            }
+                            if (trimmedLine === '') {
+                                return <br key={idx} />;
+                            }
+                            return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
+                        })
+                    ) : (
+                        renderMessageContent(message.content, message.file)
+                    )}
                 </div>
+                
+                {message.isWelcomeMessage && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
+                    <div style={{
+                        marginTop: '20px',
+                        padding: '16px',
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                    }}
+                    onClick={onWelcomeAcknowledgment}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
+                    >
+                        <span style={{ fontSize: '1.5rem' }}>✅</span>
+                        <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
+                    </div>
+                )}
+                
+                {message.file && message.file.preview && (
+                    (() => {
+                        const isPptx = message.file.type?.includes('presentation') || 
+                                       message.file.type?.includes('powerpoint') || 
+                                       message.file.name?.toLowerCase().endsWith('.pptx') ||
+                                       message.file.name?.toLowerCase().endsWith('.ppt') ||
+                                       message.file.name?.toLowerCase().endsWith('.odp');
+                        
+                        if (isPptx) {
+                            return (
+                                <PptxPreview 
+                                    file={message.file}
+                                    onClick={() => handleFileClick(message.file)}
+                                />
+                            );
+                        }
+                        
+                        if (message.file.type?.startsWith('image/')) {
+                            return (
+                                <div 
+                                    className="message-attachment clickable-file"
+                                    onClick={() => handleFileClick(message.file)}
+                                >
+                                    <img 
+                                        src={message.file.preview} 
+                                        alt={getDisplayFileName(message.file.name, message.file.type)}
+                                        loading="lazy"
+                                    />
+                                </div>
+                            );
+                        }
+                        
+                        return null;
+                    })()
+                )}
+                
+                {messageReactions[message.id] && Object.keys(messageReactions[message.id]).length > 0 && (
+                    <div className="message-reactions">
+                        {Object.entries(messageReactions[message.id]).map(([emoji, count]) => (
+                            <button
+                                key={emoji}
+                                className="reaction-button"
+                                onClick={() => onReactionClick(message.id, emoji)}
+                            >
+                                <span>{emoji}</span>
+                                <span>{count}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
+}, (prevProps, nextProps) => {
+    // Custom comparison to prevent re-renders
+    return prevProps.message.id === nextProps.message.id &&
+           prevProps.message.content === nextProps.message.content &&
+           prevProps.message.edited === nextProps.message.edited &&
+           prevProps.message.isDeleted === nextProps.message.isDeleted &&
+           prevProps.isGrouped === nextProps.isGrouped &&
+           prevProps.hasReadWelcome === nextProps.hasReadWelcome &&
+           JSON.stringify(prevProps.messageReactions[prevProps.message.id]) === 
+           JSON.stringify(nextProps.messageReactions[nextProps.message.id]);
 });
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
@@ -620,6 +866,7 @@ const [journalNotes, setJournalNotes] = useState([]);
 const [journalSelectedDate, setJournalSelectedDate] = useState(new Date().toISOString().slice(0, 10));
 const [journalCalendarMonth, setJournalCalendarMonth] = useState(new Date().toISOString().slice(0, 7));
 const [journalLoading, setJournalLoading] = useState(false);
+
     const [draggedCategory, setDraggedCategory] = useState(null);
     const [draggedChannel, setDraggedChannel] = useState(null);
     const [dragOverChannel, setDragOverChannel] = useState(null); // Channel being dragged over
@@ -936,17 +1183,12 @@ const fetchMiniJournalData = useCallback(async () => {
     }
 }, [isAuthenticated, userId, journalSelectedDate, showJournalModal]);
 
-// SIMPLE fetch for mini journal data - INSTANT, NO BLINKING
+// OPTIMIZED fetch for mini journal data - single source of truth
 useEffect(() => {
     let isMounted = true;
-    let timeoutId = null;
     
     if (showJournalModal && isAuthenticated && userId) {
-        // Clear any existing timeout
-        if (timeoutId) clearTimeout(timeoutId);
-        
-        // Single fetch with debounce
-        timeoutId = setTimeout(async () => {
+        const fetchData = async () => {
             try {
                 const [tasksRes, notesRes] = await Promise.all([
                     Api.getJournalTasks({ 
@@ -958,26 +1200,34 @@ useEffect(() => {
                 
                 if (!isMounted) return;
                 
-                const tasksData = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
-                const notesData = Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : [];
+                const newTasks = Array.isArray(tasksRes.data?.tasks) ? tasksRes.data.tasks : [];
+                const newNotes = Array.isArray(notesRes.data?.notes) ? notesRes.data.notes : [];
                 
-                // Batch update both states together
-                setJournalTasks(tasksData);
-                setJournalNotes(notesData);
+                // Only update if data actually changed
+                setJournalTasks(prev => {
+                    if (JSON.stringify(prev) === JSON.stringify(newTasks)) return prev;
+                    return newTasks;
+                });
+                
+                setJournalNotes(prev => {
+                    if (JSON.stringify(prev) === JSON.stringify(newNotes)) return prev;
+                    return newNotes;
+                });
                 
             } catch (error) {
                 if (isMounted) {
                     console.error('Error fetching journal:', error);
                 }
             }
-        }, 300);
+        };
+        
+        fetchData();
     }
     
     return () => {
         isMounted = false;
-        if (timeoutId) clearTimeout(timeoutId);
     };
-}, [showJournalModal, journalSelectedDate, isAuthenticated, userId]);
+}, [showJournalModal, journalSelectedDate, isAuthenticated, userId]); // Only these deps
 
 // Initialize journal data when modal first opens - SINGLE FETCH ONLY
 useEffect(() => {
@@ -1014,380 +1264,7 @@ useEffect(() => {
     };
 }, [showJournalModal]); // Only run when modal opens
 
-// Mini Journal Modal Component - OPTIMIZED (ZERO BLINKING, INSTANT RESPONSE)
-const MiniJournalModal = React.memo(({ 
-    isOpen, 
-    onClose, 
-    tasks = [], 
-    notes = [], 
-    selectedDate, 
-    setSelectedDate, 
-    calendarMonth, 
-    setCalendarMonth, 
-    onTaskToggle,
-    loading 
-}) => {
-    // ALL HOOKS FIRST - in same order every time
-    const [closing, setClosing] = useState(false);
-    const [localTasks, setLocalTasks] = useState(tasks);
-    const [localNotes, setLocalNotes] = useState(notes);
-    const [isToggling, setIsToggling] = useState(false);
-    const navigate = useNavigate();
-    
-    // Refs for stable values
-    const timeoutRef = useRef(null);
-    const pendingToggleRef = useRef(null);
-    const initialLoadDoneRef = useRef(false);
-    
-    // Update local state when props change, but with debounce
-    useEffect(() => {
-        if (!initialLoadDoneRef.current && tasks.length > 0) {
-            setLocalTasks(tasks);
-            setLocalNotes(notes);
-            initialLoadDoneRef.current = true;
-        }
-    }, [tasks, notes]);
-    
-    // Clean up timeouts
-    useEffect(() => {
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, []);
-    
-    // Calendar days memo - heavy computation
-    const calendarDays = useMemo(() => {
-        if (!calendarMonth) return [];
-        try {
-            const [year, month] = calendarMonth.split('-').map(Number);
-            const firstDay = new Date(year, month - 1, 1);
-            const lastDay = new Date(year, month, 0);
-            const startPadding = (firstDay.getDay() + 6) % 7;
-            
-            const days = [];
-            for (let i = 0; i < startPadding; i++) days.push(null);
-            for (let d = 1; d <= lastDay.getDate(); d++) {
-                days.push(`${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
-            }
-            return days;
-        } catch {
-            return [];
-        }
-    }, [calendarMonth]);
-    
-    // Task dates for calendar indicators
-    const taskDates = useMemo(() => {
-        return new Set(tasks.filter(t => t.date).map(t => t.date));
-    }, [tasks]);
-    
-    // Stats memo
-    const stats = useMemo(() => ({
-        taskCount: tasks.length,
-        completedCount: tasks.filter(t => t.completed).length,
-        notesCount: notes.length,
-        completionPct: tasks.length ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0
-    }), [tasks, notes]);
-    
-    // Today's date
-    const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-    
-    // Handlers
-    const handleClose = useCallback(() => {
-        if (closing) return;
-        setClosing(true);
-        
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => {
-            setClosing(false);
-            initialLoadDoneRef.current = false;
-            onClose();
-        }, 150);
-    }, [closing, onClose]);
-    
-    const handlePrevMonth = useCallback(() => {
-        const [y, m] = calendarMonth.split('-').map(Number);
-        const newMonth = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
-        setCalendarMonth(newMonth);
-    }, [calendarMonth, setCalendarMonth]);
-    
-    const handleNextMonth = useCallback(() => {
-        const [y, m] = calendarMonth.split('-').map(Number);
-        const newMonth = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
-        setCalendarMonth(newMonth);
-    }, [calendarMonth, setCalendarMonth]);
-    
-    const handleGoToJournal = useCallback(() => {
-        handleClose();
-        timeoutRef.current = setTimeout(() => navigate('/journal'), 150);
-    }, [handleClose, navigate]);
-    
-    // OPTIMIZED: Instant task toggle with optimistic update
-    const handleTaskToggleOptimistic = useCallback(async (task) => {
-        if (isToggling) return; // Prevent double-clicks
-        
-        // Optimistic update - INSTANT UI response
-        setLocalTasks(prev => 
-            prev.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t)
-        );
-        
-        setIsToggling(true);
-        pendingToggleRef.current = task.id;
-        
-        try {
-            await onTaskToggle(task);
-            // After successful API call, sync with server data
-            if (pendingToggleRef.current === task.id) {
-                pendingToggleRef.current = null;
-            }
-        } catch (error) {
-            // Revert on error
-            setLocalTasks(prev => 
-                prev.map(t => t.id === task.id ? task : t)
-            );
-            console.error('Task toggle failed:', error);
-        } finally {
-            setIsToggling(false);
-        }
-    }, [onTaskToggle, isToggling]);
-    
-    const handleDateSelect = useCallback((date) => {
-        setSelectedDate(date);
-        initialLoadDoneRef.current = false; // Force reload on date change
-    }, [setSelectedDate]);
-    
-    // Escape key handler
-    useEffect(() => {
-        if (!isOpen) return;
-        
-        const handleEsc = (e) => {
-            if (e.key === 'Escape') handleClose();
-        };
-        
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, [isOpen, handleClose]);
-    
-    // If not open and not closing, render nothing
-    if (!isOpen && !closing) return null;
-    
-    return (
-        <div 
-            className={`journal-modal-overlay ${closing ? 'closing' : ''}`}
-            onClick={handleClose}
-            style={{ 
-                pointerEvents: 'auto',
-                transition: 'opacity 0.15s ease',
-                willChange: 'opacity',
-                backfaceVisibility: 'hidden'
-            }}
-        >
-            <div 
-                className="journal-modal-content"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    transform: closing ? 'scale(0.95)' : 'scale(1)',
-                    opacity: closing ? 0 : 1,
-                    transition: 'transform 0.15s ease, opacity 0.15s ease',
-                    willChange: 'transform, opacity',
-                    backfaceVisibility: 'hidden'
-                }}
-            >
-                {/* Header */}
-                <div className="journal-modal-header">
-                    <h3>Quick Journal</h3>
-                    <button className="journal-modal-close" onClick={handleClose}>×</button>
-                </div>
-                
-                {/* Scrollable Body */}
-                <div className="journal-modal-body">
-                    {/* Stats Bar */}
-                    <div className="mini-stats-bar">
-                        <div className="mini-stat-item">
-                            <span className="mini-stat-label">Tasks</span>
-                            <span className="mini-stat-value">
-                                {stats.completedCount}/{stats.taskCount}
-                            </span>
-                        </div>
-                        <div className="mini-stat-item">
-                            <span className="mini-stat-label">Notes</span>
-                            <span className="mini-stat-value">{stats.notesCount}</span>
-                        </div>
-                        <div className="mini-stat-item">
-                            <span className="mini-stat-label">Progress</span>
-                            <span className="mini-stat-value completed">
-                                {stats.completionPct}%
-                            </span>
-                        </div>
-                    </div>
-                    
-                    {/* Calendar */}
-                    <div className="mini-calendar">
-                        <div className="mini-calendar-header">
-                            <button 
-                                className="mini-calendar-nav-btn"
-                                onClick={handlePrevMonth}
-                                type="button"
-                            >
-                                ‹
-                            </button>
-                            <h4>
-                                {calendarMonth ? new Date(calendarMonth + '-01').toLocaleDateString('en-US', { 
-                                    month: 'short', 
-                                    year: 'numeric' 
-                                }) : '—'}
-                            </h4>
-                            <button 
-                                className="mini-calendar-nav-btn"
-                                onClick={handleNextMonth}
-                                type="button"
-                            >
-                                ›
-                            </button>
-                        </div>
-                        
-                        <div className="mini-calendar-weekdays">
-                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(day => (
-                                <div key={day} className="mini-calendar-weekday">{day}</div>
-                            ))}
-                        </div>
-                        
-                        <div className="mini-calendar-grid">
-                            {calendarDays.map((date, i) => {
-                                if (!date) {
-                                    return <div key={`empty-${i}`} className="mini-calendar-day empty" />;
-                                }
-                                const isSelected = date === selectedDate;
-                                const isToday = date === today;
-                                const hasTasks = taskDates.has(date);
-                                
-                                return (
-                                    <button
-                                        key={date}
-                                        className={`mini-calendar-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${hasTasks ? 'has-tasks' : ''}`}
-                                        onClick={() => handleDateSelect(date)}
-                                        type="button"
-                                    >
-                                        {parseInt(date.slice(-2), 10)}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    
-                    {/* Tasks - Use localTasks for instant UI updates */}
-                    <h4 className="jmodal-section-label">TODAY'S TASKS</h4>
-                    <div className="tasks-container" style={{ minHeight: '200px' }}>
-                        {loading && localTasks.length === 0 ? (
-                            <div className="jmodal-skeleton">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="skeleton-task-item">
-                                        <div className="skeleton-checkbox"></div>
-                                        <div className="skeleton-text"></div>
-                                        <div className="skeleton-xp"></div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : localTasks.length === 0 ? (
-                            <div className="jmodal-empty">No tasks for today</div>
-                        ) : (
-                            localTasks.slice(0, 5).map(task => (
-                                <div key={task.id} className="mini-task-item">
-                                    <button
-                                        className={`mini-task-checkbox ${task.completed ? 'checked' : ''}`}
-                                        onClick={() => handleTaskToggleOptimistic(task)}
-                                        disabled={isToggling && pendingToggleRef.current === task.id}
-                                        type="button"
-                                    >
-                                        {task.completed && <FaCheck />}
-                                    </button>
-                                    <span className={`mini-task-title ${task.completed ? 'completed' : ''}`}>
-                                        {task.title}
-                                    </span>
-                                    {!task.completed && (
-                                        <span className="mini-task-xp">+5</span>
-                                    )}
-                                </div>
-                            ))
-                        )}
-                    </div>
-                    
-                    {/* Notes - Use localNotes */}
-                    <h4 className="jmodal-section-label">RECENT NOTES</h4>
-                    <div className="notes-container" style={{ minHeight: '100px' }}>
-                        {loading && localNotes.length === 0 ? (
-                            <div className="jmodal-skeleton">
-                                {[1, 2].map(i => (
-                                    <div key={i} className="skeleton-note-item">
-                                        <div className="skeleton-note-line"></div>
-                                        <div className="skeleton-note-line-short"></div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : localNotes.length === 0 ? (
-                            <div className="jmodal-empty">No notes for today</div>
-                        ) : (
-                            localNotes.slice(0, 3).map(note => (
-                                <div key={note.id} className="mini-note-item">
-                                    <p>{note.content?.length > 60 ? note.content.substring(0, 60) + '...' : note.content}</p>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-                
-                {/* Footer */}
-                <div className="journal-modal-footer">
-                    <button
-                        className="go-to-journal-btn"
-                        onClick={handleGoToJournal}
-                        type="button"
-                    >
-                        Go to Full Journal →
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}, (prevProps, nextProps) => {
-    // ULTRA-OPTIMIZED memo comparison
-    if (prevProps.isOpen !== nextProps.isOpen) return false;
-    if (prevProps.selectedDate !== nextProps.selectedDate) return false;
-    if (prevProps.calendarMonth !== nextProps.calendarMonth) return false;
-    if (prevProps.loading !== nextProps.loading) return false;
-    
-    // Only compare IDs and completion status for tasks
-    const prevTasks = prevProps.tasks || [];
-    const nextTasks = nextProps.tasks || [];
-    
-    if (prevTasks.length !== nextTasks.length) return false;
-    
-    // Quick hash comparison for tasks
-    let prevHash = '';
-    let nextHash = '';
-    for (let i = 0; i < prevTasks.length; i++) {
-        prevHash += prevTasks[i].id + (prevTasks[i].completed ? '1' : '0');
-        nextHash += nextTasks[i].id + (nextTasks[i].completed ? '1' : '0');
-    }
-    
-    if (prevHash !== nextHash) return false;
-    
-    // Quick hash for notes
-    const prevNotes = prevProps.notes || [];
-    const nextNotes = nextProps.notes || [];
-    
-    if (prevNotes.length !== nextNotes.length) return false;
-    
-    let prevNotesHash = '';
-    let nextNotesHash = '';
-    for (let i = 0; i < prevNotes.length; i++) {
-        prevNotesHash += prevNotes[i].id;
-        nextNotesHash += nextNotes[i].id;
-    }
-    
-    return prevNotesHash === nextNotesHash;
-});
+
 
     // Save category order to backend
     const saveCategoryOrder = async (newOrder) => {
@@ -1886,7 +1763,7 @@ const esc = (str) => {
         return name.length > 40 ? name.slice(0, 37) + '...' : name;
     };
 const renderMessageContent = (content, messageFile) => {
-    console.log('Rendering message:', { content, hasFile: !!messageFile });
+
     if (!content) return null;
     
     // If this message has a file attachment, we need to remove or neutralize the [FILE: ...] tags
@@ -4316,28 +4193,37 @@ const handleSendMessage = async (e) => {
         }
     };
 
-    // Group messages by date and interleave date separators (all channels)
     const messagesWithDateGroups = useMemo(() => {
-        if (!messages || messages.length === 0) return [];
-        const groups = new Map();
-        for (const msg of messages) {
-            const ts = msg.timestamp || msg.createdAt || msg.created_at;
-            const dateKey = ts ? (() => {
-                const d = new Date(ts);
-                return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-            })() : 'unknown';
-            if (!groups.has(dateKey)) groups.set(dateKey, { label: getDateLabel(ts), messages: [] });
-            groups.get(dateKey).messages.push(msg);
+    if (!messages || messages.length === 0) return [];
+    
+    const groups = new Map();
+    const dateLabels = new Map(); // Cache date labels
+    
+    for (const msg of messages) {
+        const ts = msg.timestamp || msg.createdAt || msg.created_at;
+        if (!ts) continue;
+        
+        const date = new Date(ts);
+        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        
+        // Get or compute date label
+        if (!dateLabels.has(dateKey)) {
+            dateLabels.set(dateKey, getDateLabel(ts));
         }
-        const sortedKeys = [...groups.keys()].sort();
-        return sortedKeys.flatMap((k) => {
-            const { label, messages: dayMsgs } = groups.get(k);
-            return [
-                { type: 'date', label, dateKey: k },
-                ...dayMsgs.map((m) => ({ type: 'message', message: m }))
-            ];
-        });
-    }, [messages]);
+        
+        if (!groups.has(dateKey)) {
+            groups.set(dateKey, []);
+        }
+        groups.get(dateKey).push(msg);
+    }
+    
+    const sortedKeys = [...groups.keys()].sort();
+    
+    return sortedKeys.flatMap(key => [
+        { type: 'date', label: dateLabels.get(key), dateKey: key },
+        ...groups.get(key).map(msg => ({ type: 'message', message: msg }))
+    ]);
+}, [messages]); // Only depend on messages
 
     // Format timestamp with timezone awareness
     const formatTimestamp = (timestamp) => {
@@ -8782,8 +8668,8 @@ if (!isAuthenticated && !hasToken) {
 <MiniJournalModal
     isOpen={showJournalModal}
     onClose={() => setShowJournalModal(false)}
-    tasks={journalTasks}
-    notes={journalNotes}
+    tasks={journalTasks}  // Use the original state, not memoized
+    notes={journalNotes}   // Use the original state, not memoized
     selectedDate={journalSelectedDate}
     setSelectedDate={setJournalSelectedDate}
     calendarMonth={journalCalendarMonth}
@@ -8791,6 +8677,7 @@ if (!isAuthenticated && !hasToken) {
     onTaskToggle={handleMiniTaskToggle}
     loading={journalLoading}
 />
+
             {/* Image Modal */}
             <ImageModal 
                 isOpen={showImageModal}
