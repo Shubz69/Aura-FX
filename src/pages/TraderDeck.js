@@ -1,11 +1,6 @@
 import React from 'react';
+import MarketIntelligenceDashboard from './trader-deck/MarketIntelligenceDashboard';
 
-const TraderDeck = () => {
-  return (
-    <div style={{ minHeight: '80vh', padding: '2rem' }}>
-      {/* Placeholder – content to be added */}
-    </div>
-  );
-};
+const TraderDeck = () => <MarketIntelligenceDashboard />;
 
 export default TraderDeck;
