@@ -18,12 +18,19 @@ const getInitials = (name) => {
     : name.slice(0, 2).toUpperCase();
 };
 
+const ALLOWED_FRIENDS_ROLES = ['premium', 'elite', 'a7fx', 'admin', 'super_admin'];
+const isFriendsAllowed = (role) => ALLOWED_FRIENDS_ROLES.includes((role || '').toLowerCase());
+const isAdminRole = (role) => ((role || '').toUpperCase() === 'ADMIN' || (role || '').toUpperCase() === 'SUPER_ADMIN');
+
 const AdminInbox = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const threadFromUrl = searchParams.get('thread');
+  const [activeTab, setActiveTab] = useState('admin'); // 'admin' | 'friends'
   const [users, setUsers] = useState([]);
   const [threads, setThreads] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState(threadFromUrl ? parseInt(threadFromUrl, 10) : null);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -38,14 +45,17 @@ const AdminInbox = () => {
 
   const activeThread = useMemo(() => threads.find(t => t.id === activeThreadId), [threads, activeThreadId]);
   const activeUser = useMemo(() => {
+    if (activeTab === 'friends' && selectedUserId) {
+      const f = friends.find(fr => fr.id === selectedUserId);
+      return f ? { id: f.id, username: f.username, name: f.username, email: f.email } : null;
+    }
     if (activeThread) return { id: activeThread.userId, username: activeThread.username, name: activeThread.name, email: activeThread.email };
     return users.find(u => u.id === selectedUserId) || null;
-  }, [activeThread, selectedUserId, users]);
+  }, [activeTab, activeThread, selectedUserId, users, friends]);
 
- /* ── Load users + threads ── */
+ /* ── Load users + threads (Admin tab only) ── */
 useEffect(() => {
-  const role = (user?.role || '').toUpperCase();
-  if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') return;
+  if (!isAdminRole(user?.role)) return;
   let mounted = true;
   const load = async () => {
     setLoadingUsers(true);
@@ -88,7 +98,36 @@ useEffect(() => {
   return () => { clearInterval(refreshList); mounted = false; };
 }, [user, activeThreadId, threadFromUrl, setSearchParams]);
 
-  /* ── Select user ── */
+  /* ── Default to Friends tab when user is Premium but not Admin ── */
+  useEffect(() => {
+    if (!user?.role) return;
+    if (isFriendsAllowed(user.role) && !isAdminRole(user.role)) setActiveTab('friends');
+  }, [user?.role]);
+
+  /* ── Load friends (Friends tab only) ── */
+  useEffect(() => {
+    if (activeTab !== 'friends' || !isFriendsAllowed(user?.role) || !user?.id) return;
+    let mounted = true;
+    const load = async () => {
+      setLoadingFriends(true);
+      try {
+        const res = await fetch(`${API_BASE()}/api/friends/list`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!mounted) return;
+        const data = res.ok ? await res.json() : {};
+        setFriends(data.friends || []);
+      } catch (e) {
+        if (mounted) console.error('Load friends failed', e);
+      } finally {
+        if (mounted) setLoadingFriends(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [activeTab, user?.id, user?.role]);
+
+  /* ── Select user (Admin tab) ── */
   const handleSelectUser = async (u) => {
     const existing = threads.find(t => t.userId === u.id);
     if (existing) {
@@ -116,10 +155,27 @@ useEffect(() => {
     }
   };
 
+  /* ── Select friend (Friends tab) ── */
+  const handleSelectFriend = async (friend) => {
+    setSelectedUserId(friend.id);
+    setEnsuringThread(true);
+    try {
+      const resp = await Api.ensureUserThread(friend.id);
+      const thread = resp.data?.thread;
+      if (thread) {
+        setActiveThreadId(thread.id);
+      }
+    } catch (e) {
+      console.error('Ensure friend thread failed', e);
+    } finally {
+      setEnsuringThread(false);
+    }
+  };
+
   /* ── Load messages + WS ── */
   useEffect(() => {
-    const role = (user?.role || '').toUpperCase();
-    if ((role !== 'ADMIN' && role !== 'SUPER_ADMIN') || !activeThreadId) return;
+    const canLoad = (activeTab === 'admin' && isAdminRole(user?.role)) || (activeTab === 'friends' && isFriendsAllowed(user?.role));
+    if (!canLoad || !activeThreadId) return;
     let mounted = true;
     const loadMessages = async () => {
       try {
@@ -155,7 +211,7 @@ useEffect(() => {
       }).catch(() => {});
     }, 8000);
     return () => { clearInterval(pollInterval); WebSocketService.offThreadEvents(); mounted = false; };
-  }, [user, activeThreadId]);
+  }, [user, activeThreadId, activeTab]);
 
   /* ── Send message ── */
   const handleSend = async (e) => {
@@ -226,6 +282,22 @@ useEffect(() => {
     return [...withThreads, ...withoutThreads];
   }, [users, threads, searchTerm]);
 
+  /* ── Build friends list (filtered by search) ── */
+  const friendsList = useMemo(() => {
+    const q = (searchTerm || '').toLowerCase().trim();
+    const list = friends.filter(f => !q || (f.username || '').toLowerCase().includes(q));
+    return list.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
+  }, [friends, searchTerm]);
+
+  const showAdminTab = isAdminRole(user?.role);
+  const showFriendsTab = isFriendsAllowed(user?.role);
+  const onTabChange = (tab) => {
+    setActiveTab(tab);
+    setActiveThreadId(null);
+    setSelectedUserId(null);
+    setMessages([]);
+  };
+
   const displayName = (u) => u?.username || u?.name || u?.email || `User ${u?.id}`;
 
   /* ── Group messages by date ── */
@@ -259,11 +331,37 @@ useEffect(() => {
 
           {/* ── Sidebar ── */}
           <aside className="admin-inbox-sidebar">
+            {/* Tabs: Admin | Friends */}
+            <div className="admin-inbox-tabs">
+              {showAdminTab && (
+                <button
+                  type="button"
+                  className={`admin-inbox-tab${activeTab === 'admin' ? ' active' : ''}`}
+                  onClick={() => onTabChange('admin')}
+                >
+                  Admin
+                </button>
+              )}
+              {showFriendsTab && (
+                <button
+                  type="button"
+                  className={`admin-inbox-tab${activeTab === 'friends' ? ' active' : ''}`}
+                  onClick={() => onTabChange('friends')}
+                >
+                  Friends
+                </button>
+              )}
+            </div>
+
             <div className="admin-inbox-sidebar-header">
-              <span className="admin-inbox-sidebar-title">Inbox</span>
+              <span className="admin-inbox-sidebar-title">
+                {activeTab === 'friends' ? 'Friends' : 'Inbox'}
+              </span>
               <span className="admin-inbox-sidebar-count">
-                {loadingUsers ? '—' : inboxList.length}
-                {totalUnread > 0 && (
+                {activeTab === 'friends'
+                  ? (loadingFriends ? '—' : friendsList.length)
+                  : (loadingUsers ? '—' : inboxList.length)}
+                {activeTab === 'admin' && totalUnread > 0 && (
                   <span className="unread-badge" style={{ marginLeft: 10, fontSize: '0.7rem', verticalAlign: 'middle' }}>
                     {totalUnread > 99 ? '99+' : totalUnread} new
                   </span>
@@ -275,57 +373,98 @@ useEffect(() => {
               <FaSearch className="admin-inbox-search-icon" aria-hidden />
               <input
                 type="text"
-                placeholder="Search users…"
+                placeholder={activeTab === 'friends' ? 'Search friends…' : 'Search users…'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Search users"
+                aria-label={activeTab === 'friends' ? 'Search friends' : 'Search users'}
               />
             </div>
 
             <div className="admin-inbox-sidebar-divider" />
 
             <div className="admin-inbox-user-list">
-              {loadingUsers ? (
-                <div className="admin-inbox-loading">Loading users…</div>
-              ) : inboxList.length === 0 ? (
-                <div className="admin-inbox-empty-list">
-                  {searchTerm
-                    ? 'No users match your search.'
-                    : 'Users will appear here once they message support.'}
-                </div>
-              ) : (
-                inboxList.map((u) => {
-                  const thread = u.thread || threads.find(t => t.userId === u.id);
-                  const isSelected = (activeThreadId && thread?.id === activeThreadId) || selectedUserId === u.id;
-                  const unread = u.adminUnreadCount ?? thread?.adminUnreadCount ?? 0;
-                  const name = displayName(u);
-                  return (
-                    <button
-                      key={u.id}
-                      type="button"
-                      className={`admin-inbox-user-item${isSelected ? ' selected' : ''}`}
-                      onClick={() => handleSelectUser(u)}
-                      disabled={ensuringThread}
-                    >
-                      <div className="admin-inbox-user-row">
-                        <div className="admin-inbox-avatar">{getInitials(name)}</div>
-                        <div className="admin-inbox-user-info">
-                          <div className="admin-inbox-user-name">
-                            {name}
-                            {unread > 0 && (
-                              <span className="unread-badge">{unread > 99 ? '99+' : unread}</span>
-                            )}
+              {activeTab === 'admin' && (
+                <>
+                  {loadingUsers ? (
+                    <div className="admin-inbox-loading">Loading users…</div>
+                  ) : inboxList.length === 0 ? (
+                    <div className="admin-inbox-empty-list">
+                      {searchTerm
+                        ? 'No users match your search.'
+                        : 'Users will appear here once they message support.'}
+                    </div>
+                  ) : (
+                    inboxList.map((u) => {
+                      const thread = u.thread || threads.find(t => t.userId === u.id);
+                      const isSelected = (activeThreadId && thread?.id === activeThreadId) || selectedUserId === u.id;
+                      const unread = u.adminUnreadCount ?? thread?.adminUnreadCount ?? 0;
+                      const name = displayName(u);
+                      return (
+                        <button
+                          key={u.id}
+                          type="button"
+                          className={`admin-inbox-user-item${isSelected ? ' selected' : ''}`}
+                          onClick={() => handleSelectUser(u)}
+                          disabled={ensuringThread}
+                        >
+                          <div className="admin-inbox-user-row">
+                            <div className="admin-inbox-avatar">{getInitials(name)}</div>
+                            <div className="admin-inbox-user-info">
+                              <div className="admin-inbox-user-name">
+                                {name}
+                                {unread > 0 && (
+                                  <span className="unread-badge">{unread > 99 ? '99+' : unread}</span>
+                                )}
+                              </div>
+                              <div className="admin-inbox-user-meta">
+                                {thread?.lastMessageAt
+                                  ? new Date(thread.lastMessageAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                  : 'No messages yet'}
+                              </div>
+                            </div>
                           </div>
-                          <div className="admin-inbox-user-meta">
-                            {thread?.lastMessageAt
-                              ? new Date(thread.lastMessageAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                              : 'No messages yet'}
+                        </button>
+                      );
+                    })
+                  )}
+                </>
+              )}
+              {activeTab === 'friends' && (
+                <>
+                  {loadingFriends ? (
+                    <div className="admin-inbox-loading">Loading friends…</div>
+                  ) : friendsList.length === 0 ? (
+                    <div className="admin-inbox-empty-list">
+                      {searchTerm
+                        ? 'No friends match your search.'
+                        : 'Add friends to message them here.'}
+                    </div>
+                  ) : (
+                    friendsList.map((f) => {
+                      const name = f.username || `User ${f.id}`;
+                      const isSelected = selectedUserId === f.id;
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          className={`admin-inbox-user-item${isSelected ? ' selected' : ''}`}
+                          onClick={() => handleSelectFriend(f)}
+                          disabled={ensuringThread}
+                        >
+                          <div className="admin-inbox-user-row">
+                            <div className="admin-inbox-avatar">{getInitials(name)}</div>
+                            <div className="admin-inbox-user-info">
+                              <div className="admin-inbox-user-name">{name}</div>
+                              <div className="admin-inbox-user-meta">
+                                {f.isOnline ? 'Online' : (f.lastSeen ? `Last seen ${f.lastSeen}` : 'Friend')}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })
+                        </button>
+                      );
+                    })
+                  )}
+                </>
               )}
             </div>
           </aside>
@@ -339,7 +478,7 @@ useEffect(() => {
                   <div className="admin-inbox-main-avatar">{getInitials(displayName(activeUser))}</div>
                   <div className="admin-inbox-main-title-wrap">
                     <span className="admin-inbox-main-title">{displayName(activeUser)}</span>
-                    <span className="admin-inbox-main-subtitle">Support Thread</span>
+                    <span className="admin-inbox-main-subtitle">{activeTab === 'friends' ? 'Friends' : 'Support Thread'}</span>
                   </div>
                   <div className="admin-inbox-status-dot" title="Active" />
                 </>

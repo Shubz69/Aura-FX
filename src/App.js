@@ -5,7 +5,7 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 import { EntitlementsProvider } from './context/EntitlementsContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { AuraConnectionProvider } from './context/AuraConnectionContext';
-import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard, AuthenticatedGuard } from './components/RouteGuards';
+import { CommunityGuard, SubscriptionPageGuard, PremiumAIGuard, AdminGuard, AuthenticatedGuard, InboxGuard } from './components/RouteGuards';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import AuraDashboardGuard from './pages/aura-analysis/AuraDashboardGuard';
@@ -219,7 +219,7 @@ function AppRoutes() {
                         </Route>
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
-                        <Route path="/admin/inbox" element={<AdminGuard><AdminInbox /></AdminGuard>} />
+                        <Route path="/admin/inbox" element={<InboxGuard><AdminInbox /></InboxGuard>} />
                         <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
                         <Route path="/admin/users" element={<AdminGuard><AdminUserList /></AdminGuard>} />
                         <Route path="/admin/journal" element={<AdminGuard><AdminJournal /></AdminGuard>} />

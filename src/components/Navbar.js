@@ -120,7 +120,7 @@ const mobileMenuPortal = ReactDOM.createPortal(
                         </Link>
                     </li>
                     <li>
-                        <Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} onClick={closeMobileMenu}>
+                        <Link to={(isAdmin(user) || isPremium(user)) ? "/admin/inbox" : "/messages"} onClick={closeMobileMenu}>
                             <FaEnvelope className="dropdown-icon" /> Messages
                         </Link>
                     </li>
@@ -244,7 +244,7 @@ const mobileMenuPortal = ReactDOM.createPortal(
                                             <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                 <FaChartLine className="dropdown-icon" /> Aura Analysis
                                             </Link>
-                                            <Link to={isAdmin(user) ? "/admin/inbox" : "/messages"} className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <Link to={(isAdmin(user) || isPremium(user)) ? "/admin/inbox" : "/messages"} className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                 <FaEnvelope className="dropdown-icon" /> Messages
                                             </Link>
                                             <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>

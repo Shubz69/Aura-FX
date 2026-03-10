@@ -156,11 +156,38 @@ export const AdminGuard = ({ children }) => {
   return children;
 };
 
+/** Allowed roles for Friends tab (Premium/Elite/Admin/SuperAdmin) */
+const INBOX_FRIENDS_ROLES = ['premium', 'elite', 'a7fx', 'admin', 'super_admin'];
+
+/**
+ * InboxGuard - Allows Admin (full inbox) or Premium/Elite/Admin (Friends tab only) to access /admin/inbox
+ */
+export const InboxGuard = ({ children }) => {
+  const { user, token } = useAuth();
+  const location = useLocation();
+
+  if (!user || !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  const role = (user?.role || '').toString().toLowerCase();
+  const isAdmin = role === 'admin' || role === 'super_admin' ||
+                  user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+  const canUseFriends = INBOX_FRIENDS_ROLES.includes(role);
+
+  if (!isAdmin && !canUseFriends) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 const RouteGuards = {
   CommunityGuard,
   SubscriptionPageGuard,
   AuthenticatedGuard,
-  AdminGuard
+  AdminGuard,
+  InboxGuard
 };
 
 export default RouteGuards;

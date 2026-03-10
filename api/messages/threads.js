@@ -140,16 +140,39 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, thread: newThreadRows[0] });
     }
     
-    // Handle /api/messages/threads/ensure-user/:userId - Create or get DM thread with specific user (for admins)
+    // Handle /api/messages/threads/ensure-user/:userId - Create or get DM thread (admin with any user, or Premium+ with friend only)
     const ensureUserMatch = pathname.match(/\/ensure-user\/(\d+)/);
     if (ensureUserMatch && req.method === 'POST') {
       const targetUserId = parseInt(ensureUserMatch[1]);
       const body = parseBody(req);
       const adminUserId = body.userId || null;
-      
+
       if (!adminUserId || !targetUserId) {
         db.release && db.release();
         return res.status(400).json({ success: false, message: 'User IDs required' });
+      }
+
+      if (!isAdmin) {
+        // Non-admin: only allow DMs with friends, and only for Premium/Elite/Admin/SuperAdmin
+        const allowedRoles = ['premium', 'elite', 'a7fx', 'admin', 'super_admin'];
+        const myRole = (decoded.role || '').toString().toLowerCase();
+        if (!allowedRoles.includes(myRole)) {
+          db.release && db.release();
+          return res.status(403).json({ success: false, message: 'Friends messaging is for Premium, Elite, or Admin only' });
+        }
+        if (parseInt(adminUserId, 10) !== parseInt(decoded.id, 10)) {
+          db.release && db.release();
+          return res.status(403).json({ success: false, message: 'Not allowed' });
+        }
+        // Check friendship (friendships table: user_id, friend_id)
+        const [friendRows] = await db.execute(
+          'SELECT 1 FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?) LIMIT 1',
+          [decoded.id, targetUserId, targetUserId, decoded.id]
+        );
+        if (!friendRows || friendRows.length === 0) {
+          db.release && db.release();
+          return res.status(403).json({ success: false, message: 'You can only message friends' });
+        }
       }
 
       const [existing] = await db.execute(
@@ -173,9 +196,59 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, thread: newThreadRows[0] });
     }
 
-    // Handle /api/messages/threads - List all user-support threads (admin only)
-    // Only threads with adminId IS NULL = shared inbox; all admins see same users
+    // Handle /api/messages/threads - List threads: admin inbox (adminId IS NULL) or DM threads (mode=dms)
     if (pathname.endsWith('/threads') && !pathname.includes('/threads/') && req.method === 'GET') {
+      const modeDms = (req.query && req.query.mode === 'dms') || (req.url && req.url.includes('mode=dms'));
+      const friendsOnly = (req.query && req.query.friendsOnly === '1') || (req.url && req.url.includes('friendsOnly=1'));
+
+      if (modeDms) {
+        // DM threads: (userId = me OR adminId = me) AND adminId IS NOT NULL
+        const myId = decoded.id;
+        const [threads] = await db.execute(
+          `SELECT t.*, 
+            CASE WHEN t.userId = ? THEN u2.id ELSE u1.id END as otherUserId,
+            CASE WHEN t.userId = ? THEN u2.username ELSE u1.username END as username,
+            CASE WHEN t.userId = ? THEN u2.name ELSE u1.name END as name,
+            CASE WHEN t.userId = ? THEN u2.email ELSE u1.email END as email
+           FROM threads t
+           LEFT JOIN users u1 ON u1.id = t.userId
+           LEFT JOIN users u2 ON u2.id = t.adminId
+           WHERE t.adminId IS NOT NULL AND (t.userId = ? OR t.adminId = ?)
+           ORDER BY COALESCE(t.lastMessageAt, t.createdAt) DESC
+           LIMIT 200`,
+          [myId, myId, myId, myId, myId, myId]
+        );
+        let result = threads || [];
+        if (friendsOnly && result.length > 0) {
+          const [friendRows] = await db.execute(
+            'SELECT friend_id FROM friendships WHERE user_id = ? UNION SELECT user_id FROM friendships WHERE friend_id = ?',
+            [myId, myId]
+          );
+          const friendIds = new Set((friendRows || []).map((r) => r.friend_id));
+          result = result.filter((t) => {
+            const other = t.userId === myId ? t.adminId : t.userId;
+            return friendIds.has(other);
+          });
+        }
+        const threadIds = result.map((t) => t.id).filter(Boolean);
+        let unreadMap = {};
+        if (threadIds.length > 0) {
+          const placeholders = threadIds.map(() => '?').join(',');
+          const [unreadRows] = await db.execute(
+            `SELECT threadId, COUNT(*) as c FROM thread_messages WHERE threadId IN (${placeholders}) AND recipientId = ? AND readAt IS NULL GROUP BY threadId`,
+            [...threadIds, String(myId)]
+          );
+          (unreadRows || []).forEach((r) => { unreadMap[r.threadId] = r.c; });
+        }
+        const threadsWithUnread = result.map((t) => ({
+          ...t,
+          userId: t.otherUserId,
+          adminUnreadCount: unreadMap[t.id] || 0
+        }));
+        db.release && db.release();
+        return res.status(200).json({ success: true, threads: threadsWithUnread });
+      }
+
       if (!isAdmin) {
         db.release && db.release();
         return res.status(403).json({ success: false, message: 'Admin access required' });
@@ -188,7 +261,6 @@ module.exports = async (req, res) => {
          ORDER BY COALESCE(t.lastMessageAt, t.createdAt) DESC 
          LIMIT 200`
       );
-      // Add admin unread count per thread (messages where recipientId = 'ADMIN' and readAt IS NULL)
       const threadIds = (threads || []).map((t) => t.id).filter(Boolean);
       let unreadMap = {};
       if (threadIds.length > 0) {
@@ -218,7 +290,8 @@ module.exports = async (req, res) => {
       }
       const thread = threadRows[0];
       const isOwner = String(thread.userId) === String(decoded.id);
-      if (!isOwner && !isAdmin) {
+      const isDmParticipant = thread.adminId != null && (String(thread.userId) === String(decoded.id) || String(thread.adminId) === String(decoded.id));
+      if (!isOwner && !isAdmin && !isDmParticipant) {
         db.release && db.release();
         return res.status(403).json({ success: false, message: 'Access denied' });
       }
@@ -254,12 +327,15 @@ module.exports = async (req, res) => {
       }
       const thread = threadRows[0];
       const isOwner = String(thread.userId) === String(senderId);
-      if (!isOwner && !isAdmin) {
+      const isDmParticipant = thread.adminId != null && (String(thread.userId) === String(senderId) || String(thread.adminId) === String(senderId));
+      if (!isOwner && !isAdmin && !isDmParticipant) {
         db.release && db.release();
         return res.status(403).json({ success: false, message: 'Access denied' });
       }
 
-      const recipientId = isOwner ? 'ADMIN' : String(thread.userId);
+      const recipientId = thread.adminId != null
+        ? (String(thread.userId) === String(senderId) ? String(thread.adminId) : String(thread.userId))
+        : (isOwner ? 'ADMIN' : String(thread.userId));
 
       const [insertResult] = await db.execute(
         'INSERT INTO thread_messages (threadId, senderId, recipientId, body) VALUES (?, ?, ?, ?)',
@@ -325,9 +401,11 @@ module.exports = async (req, res) => {
     const threadReadMatch = pathname.match(/\/threads\/(\d+)\/read/);
     if (threadReadMatch && req.method === 'POST') {
       const threadId = parseInt(threadReadMatch[1]);
-      const body = parseBody(req);
-      // When admin marks read: messages sent TO admin have recipientId = 'ADMIN'. When user marks read: recipientId = their userId.
-      const recipientId = isAdmin ? 'ADMIN' : String(decoded.id);
+      const [trRows] = await db.execute('SELECT userId, adminId FROM threads WHERE id = ?', [threadId]);
+      const thread = trRows && trRows[0] ? trRows[0] : null;
+      // DM thread: messages to me have recipientId = my id. Support thread: to admin = 'ADMIN', to user = user id.
+      const isDm = thread && thread.adminId != null;
+      const recipientId = isDm ? String(decoded.id) : (isAdmin ? 'ADMIN' : String(decoded.id));
 
       await db.execute(
         'UPDATE thread_messages SET readAt = NOW() WHERE threadId = ? AND recipientId = ? AND readAt IS NULL',

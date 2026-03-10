@@ -1103,6 +1103,21 @@ const Api = {
         }
     },
 
+    /** List DM threads (for Friends tab); optional friendsOnly */
+    listFriendThreads: async (friendsOnly = true) => {
+        try {
+            const token = localStorage.getItem('token');
+            const url = `${API_BASE_URL}/api/messages/threads?mode=dms${friendsOnly ? '&friendsOnly=1' : ''}`;
+            const response = await axios.get(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            return response;
+        } catch (error) {
+            console.error('Error listing friend threads:', error);
+            throw error;
+        }
+    },
+
     getThreadMessages: async (threadId, options = {}) => {
         try {
             const token = localStorage.getItem('token');
