@@ -13,7 +13,6 @@ import { toast } from 'react-toastify';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import ImageModal from '../components/ImageModal';
-import { DocViewerPlus } from 'react-doc-viewer-plus';
 import {
     getLevelFromXP,
     getXPForNextLevel,
