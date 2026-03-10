@@ -216,18 +216,22 @@ const mobileMenuPortal = ReactDOM.createPortal(
                         </>
                     ) : (
                         <>
-                            <NavbarNotifications />
-                            <div className="user-profile">
-                                <button
-                                    type="button"
-                                    className="user-icon"
-                                    onClick={handleUserIconClick}
-                                    aria-expanded={dropdownOpen}
-                                    aria-haspopup="true"
-                                    aria-label="User menu"
-                                >
-                                    <FaUserCircle />
-                                </button>
+                           {/* This will be visible on all devices */}
+            <div className="notifications-wrapper">
+                <NavbarNotifications />
+            </div>
+                            {/* Desktop-only user profile (hidden on mobile) */}
+            <div className="user-profile desktop-only">
+                <button
+                    type="button"
+                    className="user-icon"
+                    onClick={handleUserIconClick}
+                    aria-expanded={dropdownOpen}
+                    aria-haspopup="true"
+                    aria-label="User menu"
+                >
+                    <FaUserCircle />
+                </button>
 
                                 {dropdownOpen && ReactDOM.createPortal(
                                     <div className="user-dropdown-overlay" onClick={() => setDropdownOpen(false)}>
