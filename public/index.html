@@ -39,13 +39,14 @@
 
   img-src 'self' data: https: blob:;
 
-  frame-src 'self' 
+ frame-src 'self' blob:
     https://www.recaptcha.net 
     https://www.google.com 
     https://www.gstatic.com 
     https://js.stripe.com 
-    https://vercel.live;
-
+    https://vercel.live
+    https://docs.google.com;
+    
   connect-src 'self' https: wss: ws: 
     https://api.stripe.com 
     https://www.google.com 

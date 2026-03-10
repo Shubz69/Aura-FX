@@ -67,12 +67,11 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
         </div>
     );
 };
-// PPTX Viewer Component - FIXED
+// PPTX Viewer Component - Optimized for your CSP
 const PptxViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [viewerUrl, setViewerUrl] = useState(null);
-    const [viewerType, setViewerType] = useState('google');
     
     useEffect(() => {
         const loadPptx = async () => {
@@ -80,41 +79,17 @@ const PptxViewer = ({ file, onClose }) => {
                 setLoading(true);
                 setError(null);
                 
-                // If we have a file object with preview data
                 if (file?.preview) {
-                    // Check if it's a data URL
                     if (file.preview.startsWith('data:')) {
-                        // For data URLs, we need to create a blob URL
-                        try {
-                            // Extract the base64 data
-                            const base64Data = file.preview.split(',')[1];
-                            const byteCharacters = atob(base64Data);
-                            const byteNumbers = new Array(byteCharacters.length);
-                            
-                            for (let i = 0; i < byteCharacters.length; i++) {
-                                byteNumbers[i] = byteCharacters.charCodeAt(i);
-                            }
-                            
-                            const byteArray = new Uint8Array(byteNumbers);
-                            const blob = new Blob([byteArray], { type: file.type || 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
-                            
-                            // Create blob URL
-                            const url = URL.createObjectURL(blob);
-                            setViewerUrl(url);
-                            setViewerType('blob');
-                        } catch (e) {
-                            console.error('Error creating blob from data URL:', e);
-                            setError('Failed to process file data');
-                        }
+                        // For data URLs, create a blob URL (now allowed by CSP)
+                        const response = await fetch(file.preview);
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        setViewerUrl(url);
                     } else {
                         // Regular URL
                         setViewerUrl(file.preview);
-                        setViewerType('google');
                     }
-                } else if (file?.url) {
-                    // Server URL
-                    setViewerUrl(file.url);
-                    setViewerType('google');
                 } else {
                     setError('No file data available');
                 }
@@ -130,8 +105,7 @@ const PptxViewer = ({ file, onClose }) => {
         loadPptx();
         
         return () => {
-            // Clean up blob URLs
-            if (viewerUrl && viewerUrl.startsWith('blob:')) {
+            if (viewerUrl?.startsWith('blob:')) {
                 URL.revokeObjectURL(viewerUrl);
             }
         };
@@ -141,150 +115,39 @@ const PptxViewer = ({ file, onClose }) => {
         return `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`;
     };
     
-    const getMicrosoftViewerUrl = (url) => {
-        return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
-    };
-    
     if (loading) {
         return (
-            <div className="pptx-viewer-loading" style={{
-                background: '#1e1f22',
-                borderRadius: '12px',
-                padding: '40px',
-                textAlign: 'center',
-                color: '#fff'
-            }}>
-                <div className="pptx-loading-spinner" style={{
-                    width: '40px',
-                    height: '40px',
-                    border: '3px solid rgba(255,255,255,0.1)',
-                    borderTopColor: '#5865f2',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    margin: '0 auto 20px'
-                }}></div>
+            <div className="pptx-viewer-loading">
+                <div className="pptx-loading-spinner"></div>
                 <p>Loading presentation...</p>
             </div>
         );
     }
     
-    if (error) {
+    if (error || !viewerUrl) {
         return (
-            <div className="pptx-viewer-error" style={{
-                background: '#1e1f22',
-                borderRadius: '12px',
-                padding: '40px',
-                textAlign: 'center',
-                color: '#fff'
-            }}>
-                <p style={{ color: '#f87171', marginBottom: '20px' }}>❌ {error}</p>
-                <button 
-                    onClick={onClose}
-                    style={{
-                        padding: '10px 20px',
-                        background: 'rgba(255,255,255,0.1)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        borderRadius: '8px',
-                        color: '#fff',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Close
-                </button>
-            </div>
-        );
-    }
-    
-    if (!viewerUrl) {
-        return (
-            <div className="pptx-viewer-error" style={{
-                background: '#1e1f22',
-                borderRadius: '12px',
-                padding: '40px',
-                textAlign: 'center',
-                color: '#fff'
-            }}>
-                <p>No presentation data available</p>
+            <div className="pptx-viewer-error">
+                <p>❌ {error || 'Cannot load presentation'}</p>
                 <button onClick={onClose}>Close</button>
             </div>
         );
     }
     
     return (
-        <div className="pptx-viewer-container" onClick={(e) => e.stopPropagation()} style={{
-            background: '#1e1f22',
-            borderRadius: '12px',
-            width: '90vw',
-            height: '90vh',
-            maxWidth: '1200px',
-            maxHeight: '800px',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
-        }}>
-            <div className="pptx-viewer-header" style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '16px 20px',
-                background: '#2b2d31',
-                borderBottom: '1px solid rgba(255,255,255,0.1)'
-            }}>
-                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 600 }}>
-                    {file?.name || 'Presentation'}
-                </h3>
-                <button 
-                    onClick={onClose} 
-                    className="pptx-viewer-close"
-                    style={{
-                        background: 'rgba(255,255,255,0.1)',
-                        border: 'none',
-                        color: '#fff',
-                        fontSize: '24px',
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-                        e.currentTarget.style.transform = 'rotate(90deg)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                        e.currentTarget.style.transform = 'rotate(0deg)';
-                    }}
-                >
-                    ×
-                </button>
+        <div className="pptx-viewer-container">
+            <div className="pptx-viewer-header">
+                <h3>{file?.name || 'Presentation'}</h3>
+                <button onClick={onClose} className="pptx-viewer-close">×</button>
             </div>
-            <div className="pptx-viewer-content" style={{ flex: 1, background: '#fff', position: 'relative' }}>
-                {viewerType === 'blob' ? (
-                    <iframe
-                        src={viewerUrl}
-                        title="PPTX Viewer"
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                    />
-                ) : (
-                    <iframe
-                        src={getGoogleDocsViewerUrl(viewerUrl)}
-                        title="PPTX Viewer"
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                        allowFullScreen
-                    />
-                )}
+            <div className="pptx-viewer-content">
+                <iframe
+                    src={getGoogleDocsViewerUrl(viewerUrl)}
+                    title="PPTX Viewer"
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    allowFullScreen
+                />
             </div>
         </div>
     );
@@ -471,8 +334,22 @@ const messagesContainerRef = useRef(null);
 
 const [showPptxModal, setShowPptxModal] = useState(false);
 const [selectedPptx, setSelectedPptx] = useState(null);
-   // PPTX Preview Component - FIXED with useMemo
+  // PPTX Preview Component - COMPLETELY STABLE
 const PptxPreview = React.memo(({ file, onClick }) => {
+    // Use a ref to track if this is the first render
+    const isFirstRender = useRef(true);
+    
+    // Memoize the file data to prevent unnecessary re-renders
+    const fileData = useMemo(() => ({
+        name: file.name,
+        size: file.size,
+        preview: file.preview
+    }), [file.name, file.size, file.preview]);
+    
+    useEffect(() => {
+        isFirstRender.current = false;
+    }, []);
+    
     return (
         <div 
             className="pptx-preview clickable-file"
@@ -488,7 +365,10 @@ const PptxPreview = React.memo(({ file, onClick }) => {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 4px 12px rgba(210, 71, 38, 0.3)'
+                boxShadow: '0 4px 12px rgba(210, 71, 38, 0.3)',
+                // Prevent layout shift
+                contain: 'content',
+                transform: 'translateZ(0)'
             }}
             onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -509,7 +389,8 @@ const PptxPreview = React.memo(({ file, onClick }) => {
                 justifyContent: 'center',
                 fontSize: '24px',
                 fontWeight: 'bold',
-                color: '#fff'
+                color: '#fff',
+                flexShrink: 0
             }}>
                 📊
             </div>
@@ -542,7 +423,7 @@ const PptxPreview = React.memo(({ file, onClick }) => {
         </div>
     );
 }, (prevProps, nextProps) => {
-    // Only re-render if the file name or preview changes
+    // Only re-render if the file data actually changed
     return prevProps.file.name === nextProps.file.name && 
            prevProps.file.preview === nextProps.file.preview &&
            prevProps.file.size === nextProps.file.size;
@@ -4052,7 +3933,7 @@ Earn XP by:
 const handleFileClick = (file) => {
     if (!file) return;
     
-    // Check if it's a PPTX file - more comprehensive check
+    // Check if it's a PPTX file
     const isPptx = file.type?.includes('presentation') || 
                    file.type?.includes('powerpoint') || 
                    file.type?.includes('vnd.openxmlformats-officedocument.presentationml') ||
@@ -4067,29 +3948,8 @@ const handleFileClick = (file) => {
         return;
     }
     
-    // If no preview data, try to construct from filename or show error
-    if (!file.preview) {
-        // Try to see if this is a URL
-        if (file.name && (file.name.startsWith('http://') || file.name.startsWith('https://'))) {
-            setSelectedImage({
-                url: file.name,
-                name: file.name,
-                type: 'image/url'
-            });
-            setShowImageModal(true);
-            return;
-        }
-        
-        alert(`File "${file.name}" cannot be opened. The file data was not available.`);
-        return;
-    }
-    
-    // Check if it's an image
-    const isImage = file.type?.startsWith('image/') || 
-                    file.name?.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i);
-    
-    if (isImage) {
-        // Open in modal
+    // Handle other file types...
+    if (file.type?.startsWith('image/')) {
         setSelectedImage({
             url: file.preview,
             name: file.name,
@@ -4105,7 +3965,7 @@ const handleFileClick = (file) => {
         return;
     }
     
-    // For other file types, trigger download
+    // For other file types, offer download
     handleFileDownload(null, file);
 };
     
@@ -6633,100 +6493,62 @@ if (!isAuthenticated && !hasToken) {
                                                     <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
                                                 </div>
                                             )}
-                                                                                       {message.file && message.file.preview && (
-                                                // Check for PPTX files first
-                                                (message.file.type?.includes('presentation') || 
-                                                 message.file.type?.includes('powerpoint') || 
-                                                 message.file.name?.toLowerCase().endsWith('.pptx') ||
-                                                 message.file.name?.toLowerCase().endsWith('.ppt')) ? (
-                                                    
-                                                    <PptxPreview 
-                                                        file={message.file}
-                                                        onClick={() => handleFileClick(message.file)}
-                                                    />
-                                                    
-                                                ) : message.file.type?.startsWith('image/') ? (
-                                                    <div 
-                                                        className="message-attachment clickable-file"
-                                                        onClick={() => handleFileClick(message.file)}
-                                                        style={{
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.2s ease',
-                                                            marginTop: '8px',
-                                                            borderRadius: '12px',
-                                                            overflow: 'hidden',
-                                                            background: 'var(--bg-elevated)',
-                                                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.transform = 'scale(1.01)';
-                                                            e.currentTarget.style.borderColor = 'var(--accent-blue)';
-                                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.3)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.transform = 'scale(1)';
-                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                                                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                                                        }}
-                                                        title="Click to open"
-                                                    >
-                                                        <img 
-                                                            src={message.file.preview} 
-                                                            alt={getDisplayFileName(message.file.name, message.file.type)}
-                                                            loading="lazy"
-                                                            style={{
-                                                                width: 'auto',
-                                                                maxWidth: '180px',
-                                                                maxHeight: '180px',
-                                                                objectFit: 'contain',
-                                                                display: 'block',
-                                                                pointerEvents: 'none',
-                                                                background: 'var(--bg-tertiary)'
-                                                            }}
-                                                        />
-                                                        <div style={{
-                                                            padding: '8px 12px',
-                                                            background: 'var(--bg-elevated)',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '8px',
-                                                            borderTop: '1px solid rgba(255, 255, 255, 0.05)'
-                                                        }}>
-                                                            <FaImage style={{ fontSize: '0.875rem', color: 'var(--accent-blue)', flexShrink: 0 }} />
-                                                            <span style={{ 
-                                                                flex: 1, 
-                                                                fontSize: '0.875rem',
-                                                                color: '#ffffff',
-                                                                fontWeight: 500,
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                                whiteSpace: 'nowrap'
-                                                            }}>
-                                                                {getDisplayFileName(message.file.name, message.file.type)}
-                                                            </span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => handleFileDownload(e, message.file)}
-                                                                title="Download"
-                                                                style={{
-                                                                    padding: '6px 10px',
-                                                                    background: 'rgba(88, 101, 242, 0.3)',
-                                                                    border: 'none',
-                                                                    borderRadius: '8px',
-                                                                    color: 'var(--accent-blue)',
-                                                                    cursor: 'pointer',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center'
-                                                                }}
-                                                            >
-                                                                <FaDownload style={{ fontSize: '0.875rem' }} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ) : null
-                                            )}
+                                                                                    {message.file && message.file.preview && (
+    // Check for PPTX files first
+    (() => {
+        const isPptx = message.file.type?.includes('presentation') || 
+                       message.file.type?.includes('powerpoint') || 
+                       message.file.name?.toLowerCase().endsWith('.pptx') ||
+                       message.file.name?.toLowerCase().endsWith('.ppt') ||
+                       message.file.name?.toLowerCase().endsWith('.odp');
+        
+        if (isPptx) {
+            return (
+                <PptxPreview 
+                    key={`pptx-${message.id}-${message.file.name}`} // Stable key
+                    file={message.file}
+                    onClick={() => handleFileClick(message.file)}
+                />
+            );
+        }
+        
+        if (message.file.type?.startsWith('image/')) {
+            return (
+                <div 
+                    key={`img-${message.id}`}
+                    className="message-attachment clickable-file"
+                    onClick={() => handleFileClick(message.file)}
+                    style={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        marginTop: '8px',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: 'var(--bg-elevated)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    }}
+                >
+                    <img 
+                        src={message.file.preview} 
+                        alt={getDisplayFileName(message.file.name, message.file.type)}
+                        loading="lazy"
+                        style={{
+                            width: 'auto',
+                            maxWidth: '180px',
+                            maxHeight: '180px',
+                            objectFit: 'contain',
+                            display: 'block',
+                            background: 'var(--bg-tertiary)'
+                        }}
+                    />
+                </div>
+            );
+        }
+        
+        return null;
+    })()
+)}
                                             
                                             {/* Emoji Reactions - At the bottom of message */}
                                             {messageReactions[message.id] && Object.keys(messageReactions[message.id]).length > 0 && (
