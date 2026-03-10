@@ -1,0 +1,134 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import Api from '../../services/Api';
+import '../../styles/aura-analysis/AuraLeaderboard.css';
+
+const SORT_OPTIONS = [
+  { value: 'pnl', label: 'Total PnL' },
+  { value: 'trades', label: 'Trades' },
+  { value: 'winRate', label: 'Win rate' },
+  { value: 'avgR', label: 'Avg R' },
+  { value: 'profitFactor', label: 'PF' },
+  { value: 'consistency', label: 'Consistency' },
+];
+
+function formatPnL(n) {
+  if (n == null || Number.isNaN(n)) return '$0.00';
+  const v = Number(n);
+  const abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return v >= 0 ? `$${abs}` : `-$${abs}`;
+}
+
+export default function AuraLeaderboard() {
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('pnl');
+  const [order, setOrder] = useState('desc');
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    Api.getAuraAnalysisLeaderboard(sortBy, order)
+      .then((res) => {
+        const list = res.data?.leaderboard ?? [];
+        setLeaderboard(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        setError(err.response?.data?.message || 'Failed to load leaderboard');
+        setLeaderboard([]);
+      })
+      .finally(() => setLoading(false));
+  }, [sortBy, order]);
+
+  const toggleOrder = () => {
+    setOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+  };
+
+  return (
+    <div className="aura-leaderboard">
+      <div className="aura-leaderboard-header">
+        <h1 className="aura-leaderboard-title">Leaderboard</h1>
+        <div className="aura-leaderboard-controls">
+          <label className="aura-leaderboard-sort-label">
+            Sort by
+            <select
+              className="aura-leaderboard-sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              aria-label="Sort by"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="aura-leaderboard-order-btn"
+            onClick={toggleOrder}
+            aria-label="Toggle sort order"
+          >
+            {order === 'desc' ? '↓ Descending' : '↑ Ascending'}
+          </button>
+        </div>
+      </div>
+
+      {error && <p className="aura-leaderboard-error">{error}</p>}
+      {loading ? (
+        <p className="aura-leaderboard-loading">Loading leaderboard…</p>
+      ) : (
+        <div className="aura-leaderboard-table-wrap">
+          <table className="aura-leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Trader</th>
+                <th>Trades</th>
+                <th>Win rate</th>
+                <th>Avg R</th>
+                <th>PnL</th>
+                <th>PF</th>
+                <th>Consistency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leaderboard.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="aura-leaderboard-empty">
+                    No traders yet. Use the Trade Validator or Trader Deck to log trades and appear here.
+                  </td>
+                </tr>
+              ) : (
+                leaderboard.map((row) => {
+                  const isYou = currentUserId != null && row.userId === currentUserId;
+                  return (
+                    <tr
+                      key={row.userId}
+                      className={isYou ? 'aura-leaderboard-row-you' : ''}
+                    >
+                      <td>{row.rank}</td>
+                      <td className="aura-leaderboard-trader">
+                        {isYou ? 'You (local)' : row.trader}
+                      </td>
+                      <td>{row.trades}</td>
+                      <td>{row.winRate.toFixed(2)}%</td>
+                      <td>{row.avgR.toFixed(2)}</td>
+                      <td className={row.pnl >= 0 ? 'aura-leaderboard-pnl-pos' : 'aura-leaderboard-pnl-neg'}>
+                        {formatPnL(row.pnl)}
+                      </td>
+                      <td>{row.profitFactor.toFixed(2)}</td>
+                      <td>{row.consistency}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

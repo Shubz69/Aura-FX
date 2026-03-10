@@ -1,0 +1,65 @@
+/* Trader Deck – 2-button gateway */
+.td-gateway {
+  padding: 24px 0 48px;
+  text-align: center;
+}
+
+.td-gateway-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--aa-text);
+}
+
+.td-gateway-sub {
+  font-size: 0.95rem;
+  color: var(--aa-text-muted);
+  margin: 0 0 32px 0;
+}
+
+.td-gateway-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.td-gateway-btn {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 24px;
+  background: var(--aa-panel);
+  border: 1px solid var(--aa-border);
+  border-radius: var(--aa-radius-lg);
+  color: var(--aa-text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.td-gateway-btn:hover {
+  background: var(--aa-panel-soft);
+  border-color: var(--aa-accent);
+  transform: translateY(-2px);
+}
+
+.td-gateway-btn-icon {
+  font-size: 2rem;
+  color: var(--aa-accent);
+}
+
+.td-gateway-btn-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.td-gateway-btn-desc {
+  font-size: 0.85rem;
+  color: var(--aa-text-muted);
+}

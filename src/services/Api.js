@@ -651,6 +651,14 @@ const Api = {
     createAuraAnalysisTrade: (body) => {
         return axios.post(`${API_BASE_URL}/api/aura-analysis/trades`, body);
     },
+    updateAuraAnalysisTrade: (id, body) => {
+        return axios.put(`${API_BASE_URL}/api/aura-analysis/trades/${id}`, body);
+    },
+    getAuraAnalysisLeaderboard: (sortBy = 'pnl', order = 'desc') => {
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/leaderboard`, {
+            params: { sortBy, order }
+        });
+    },
 
     getTraderDeckMarketIntelligence: () => {
         return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`);

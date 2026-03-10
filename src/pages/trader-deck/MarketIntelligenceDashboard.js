@@ -49,7 +49,7 @@ function RegimeRow({ label, value }) {
   );
 }
 
-export default function MarketIntelligenceDashboard() {
+export default function MarketIntelligenceDashboard({ embedded }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,6 +61,13 @@ export default function MarketIntelligenceDashboard() {
   }, []);
 
   if (loading || !data) {
+    if (embedded) {
+      return (
+        <div className="td-market-embedded">
+          <p className="td-market-embedded-loading">Loading…</p>
+        </div>
+      );
+    }
     return (
       <div className="td-page">
         <CosmicBackground />
@@ -91,20 +98,17 @@ export default function MarketIntelligenceDashboard() {
     ? new Date(updatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     : null;
 
-  return (
-    <div className="td-page">
-      <CosmicBackground />
-      <div className="td-dashboard">
-        <div className="td-dashboard-shell">
-          <header className="td-header">
-            <h1>Market Intelligence Dashboard</h1>
-            <p>
-              At-a-glance regime, pulse, drivers, and risk.
-              {updatedLabel && <span className="td-header-updated"> · Updated {updatedLabel}</span>}
-            </p>
-          </header>
+  const content = (
+    <>
+      <header className="td-header">
+        <h1>Market Intelligence Dashboard</h1>
+        <p>
+          At-a-glance regime, pulse, drivers, and risk.
+          {updatedLabel && <span className="td-header-updated"> · Updated {updatedLabel}</span>}
+        </p>
+      </header>
 
-          <div className="td-grid">
+      <div className="td-grid">
             {/* Row 1: Market Regime (large) | Market Pulse */}
             <DashboardCard title="Market Regime" className="td-card--regime">
               <RegimeRow label="Current Regime" value={marketRegime.currentRegime} />
@@ -173,6 +177,19 @@ export default function MarketIntelligenceDashboard() {
               </ul>
             </DashboardCard>
           </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="td-market-embedded">{content}</div>;
+  }
+
+  return (
+    <div className="td-page">
+      <CosmicBackground />
+      <div className="td-dashboard">
+        <div className="td-dashboard-shell">
+          {content}
         </div>
       </div>
     </div>

@@ -27,6 +27,21 @@
     --glow-weak: 0 0 0.5px;
     --glow-medium: 0 0 1px;
     --glow-strong: 0 0 1.5px;
+
+    /* Aura Analysis / Trader Deck – match Aura-analysis-start (GitHub) */
+    --aa-bg: #05050a;
+    --aa-bg-elevated: #070710;
+    --aa-panel: #0e0e17;
+    --aa-panel-soft: #151525;
+    --aa-border: #1a1a2b;
+    --aa-text: #e8e8f0;
+    --aa-text-muted: #a6a6c2;
+    --aa-accent: #7b5cff;
+    --aa-accent-mid: #9b7bff;
+    --aa-success: #2ee6a6;
+    --aa-loss: #ff5a6a;
+    --aa-radius: 0.5rem;
+    --aa-radius-lg: 12px;
 }
 
 /* No-avatar placeholder: coloured circle, transparent fill (no personal PFP) */

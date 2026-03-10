@@ -82,6 +82,16 @@
   font-size: 0.9em;
 }
 
+.td-market-embedded {
+  padding: 0;
+}
+
+.td-market-embedded-loading {
+  color: var(--td-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
 /* ── Grid: row1 Regime | Pulse; row2 Drivers | Signals | Changes; row3 Focus | Radar ── */
 .td-grid {
   display: grid;

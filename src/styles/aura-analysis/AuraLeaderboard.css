@@ -1,0 +1,166 @@
+/* Aura Analysis – Leaderboard (dark theme, match reference) */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+.aura-leaderboard {
+  color: var(--aa-text);
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 0 0 40px;
+}
+
+.aura-leaderboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.aura-leaderboard-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--aa-text);
+}
+
+.aura-leaderboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aura-leaderboard-sort-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--aa-text-muted);
+}
+
+.aura-leaderboard-sort-select {
+  padding: 8px 12px;
+  padding-right: 28px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.6)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.aura-leaderboard-sort-select:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.aura-leaderboard-order-btn {
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.aura-leaderboard-order-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.aura-leaderboard-error {
+  color: #ef4444;
+  margin: 0 0 16px 0;
+  font-size: 0.9rem;
+}
+
+.aura-leaderboard-loading {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 24px 0;
+}
+
+.aura-leaderboard-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--aa-border);
+  border-radius: var(--aa-radius-lg);
+  background: var(--aa-panel);
+}
+
+.aura-leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.aura-leaderboard-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.aura-leaderboard-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.aura-leaderboard-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.aura-leaderboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.aura-leaderboard-row-you {
+  background: rgba(123, 92, 255, 0.12);
+}
+
+.aura-leaderboard-row-you:hover {
+  background: rgba(123, 92, 255, 0.18);
+}
+
+.aura-leaderboard-trader {
+  font-weight: 500;
+}
+
+.aura-leaderboard-pnl-pos {
+  color: var(--aa-success);
+  font-weight: 500;
+}
+
+.aura-leaderboard-pnl-neg {
+  color: var(--aa-loss);
+  font-weight: 500;
+}
+
+.aura-leaderboard-empty {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 32px 16px !important;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .aura-leaderboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .aura-leaderboard-table {
+    font-size: 0.8rem;
+  }
+  .aura-leaderboard-table th,
+  .aura-leaderboard-table td {
+    padding: 10px 12px;
+  }
+}

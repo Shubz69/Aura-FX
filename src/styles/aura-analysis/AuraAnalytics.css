@@ -1,0 +1,279 @@
+/* Aura Analytics – dark theme, KPI grid + Equity curve + PnL charts */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+.aura-analytics {
+  color: var(--aa-text);
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 0 0 40px;
+}
+
+.aura-analytics-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+  color: var(--aa-text);
+}
+
+.aura-analytics-loading {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+/* KPI grid – dark grey cards, 4 columns then 3 then 2 */
+.aura-analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.aura-analytics-kpi-card {
+  background: var(--aa-panel);
+  border: 1px solid var(--aa-border);
+  border-radius: var(--aa-radius-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aura-analytics-kpi-label {
+  font-size: 0.8rem;
+  color: var(--aa-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.aura-analytics-kpi-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--aa-text);
+}
+
+.aura-analytics-kpi-value.positive {
+  color: var(--aa-success);
+}
+
+.aura-analytics-kpi-value.negative {
+  color: var(--aa-loss);
+}
+
+/* Section titles */
+.aura-analytics-section {
+  margin-bottom: 24px;
+}
+
+.aura-analytics-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--aa-text);
+}
+
+/* Equity curve */
+.aura-analytics-equity-section {
+  background: var(--aa-panel);
+  border: 1px solid var(--aa-border);
+  border-radius: var(--aa-radius-lg);
+  padding: 20px;
+}
+
+.aura-analytics-equity-chart {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aura-analytics-equity-yaxis {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.aura-analytics-equity-svg-wrap {
+  flex: 1;
+  min-height: 160px;
+  width: 100%;
+}
+
+.aura-analytics-equity-svg {
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+}
+
+.aura-analytics-equity-xaxis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.aura-analytics-chart-empty {
+  color: rgba(255, 255, 255, 0.45);
+  margin: 24px 0;
+  font-size: 0.9rem;
+}
+
+/* Two-column charts row */
+.aura-analytics-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.aura-analytics-bar-section {
+  background: var(--aa-panel);
+  border: 1px solid var(--aa-border);
+  border-radius: var(--aa-radius-lg);
+  padding: 20px;
+}
+
+/* PnL by pair – horizontal bars */
+.aura-analytics-pair-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aura-analytics-pair-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 90px;
+  align-items: center;
+  gap: 12px;
+}
+
+.aura-analytics-pair-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.aura-analytics-pair-bar-wrap {
+  height: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.aura-analytics-pair-bar {
+  height: 100%;
+  min-width: 4px;
+  background: linear-gradient(90deg, rgba(99, 179, 237, 0.9), rgba(59, 130, 246, 0.9));
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.aura-analytics-pair-value {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: right;
+}
+
+.aura-analytics-pair-value.positive {
+  color: var(--aa-success);
+}
+
+.aura-analytics-pair-value.negative {
+  color: var(--aa-loss);
+}
+
+/* PnL by session – vertical bars with zero baseline */
+.aura-analytics-session-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 180px;
+}
+
+.aura-analytics-session-yaxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.aura-analytics-session-bars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 16px;
+  position: relative;
+}
+
+.aura-analytics-session-bars::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: 0;
+}
+
+.aura-analytics-session-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.aura-analytics-session-bar-wrap {
+  width: 100%;
+  max-width: 48px;
+  height: 140px;
+  position: relative;
+}
+
+.aura-analytics-session-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  min-height: 4px;
+  border-radius: 6px;
+  transition: height 0.3s ease;
+}
+
+.aura-analytics-session-bar.positive {
+  bottom: 50%;
+  background: linear-gradient(180deg, rgba(99, 179, 237, 0.95), rgba(59, 130, 246, 0.9));
+  border-radius: 6px 6px 0 0;
+}
+
+.aura-analytics-session-bar.negative {
+  top: 50%;
+  background: linear-gradient(0deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.85));
+  border-radius: 0 0 6px 6px;
+}
+
+.aura-analytics-session-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 900px) {
+  .aura-analytics-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .aura-analytics-charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .aura-analytics-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .aura-analytics-pair-row {
+    grid-template-columns: 80px 1fr 70px;
+    font-size: 0.8rem;
+  }
+}

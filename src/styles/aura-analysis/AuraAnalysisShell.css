@@ -4,8 +4,8 @@
 .aura-shell {
   min-height: 100vh;
   width: 100%;
-  background: #0a0a0a;
-  color: #fff;
+  background: var(--aa-bg);
+  color: var(--aa-text);
   font-family: 'Space Grotesk', sans-serif;
   padding-bottom: 48px;
 }
@@ -13,7 +13,7 @@
 /* Hero: title + subtitle + Quick Add Trade */
 .aura-shell-hero {
   padding: 24px 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--aa-border);
 }
 
 .aura-shell-hero-inner {
@@ -36,12 +36,12 @@
   font-weight: 600;
   margin: 0 0 8px 0;
   letter-spacing: -0.02em;
-  color: #fff;
+  color: var(--aa-text);
 }
 
 .aura-shell-sub {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--aa-text-muted);
   margin: 0;
 }
 
@@ -50,21 +50,21 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.9) 0%, rgba(124, 58, 237, 0.95) 100%);
+  background: linear-gradient(135deg, var(--aa-accent) 0%, #5a3fd9 100%);
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
   border-radius: 12px;
-  border: 1px solid rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 24px rgba(139, 92, 246, 0.35);
+  border: 1px solid var(--aa-border);
+  box-shadow: 0 0 24px rgba(123, 92, 255, 0.25);
   transition: transform 0.2s, box-shadow 0.2s;
   flex-shrink: 0;
 }
 
 .aura-shell-quick-add:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 32px rgba(139, 92, 246, 0.45);
+  box-shadow: 0 0 32px rgba(123, 92, 255, 0.35);
   color: #fff;
 }
 
@@ -73,8 +73,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(10, 10, 10, 0.97);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--aa-bg);
+  border-bottom: 1px solid var(--aa-border);
   backdrop-filter: blur(12px);
 }
 
@@ -98,7 +98,7 @@
   padding: 14px 18px;
   font-size: 0.9rem;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--aa-text-muted);
   text-decoration: none;
   border-radius: 10px;
   white-space: nowrap;
@@ -108,15 +108,15 @@
 }
 
 .aura-shell-tab:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--aa-text);
+  background: var(--aa-panel-soft);
 }
 
 .aura-shell-tab.active {
-  color: #fff;
-  background: rgba(139, 92, 246, 0.2);
+  color: var(--aa-text);
+  background: rgba(123, 92, 255, 0.2);
   font-weight: 500;
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  border: 1px solid var(--aa-border);
 }
 
 .aura-shell-tab.active::after {
@@ -127,7 +127,7 @@
   transform: translateX(-50%);
   width: 60%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.9), rgba(99, 179, 237, 0.7));
+  background: linear-gradient(90deg, var(--aa-accent), rgba(99, 179, 237, 0.7));
   border-radius: 2px;
 }
 

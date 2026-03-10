@@ -1,0 +1,423 @@
+/* Trader Deck Overview – match Aura Analysis / reference images */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+.td-overview-page {
+  width: 100%;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 0 0 40px;
+  box-sizing: border-box;
+}
+
+.td-overview-muted {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.td-overview-glance-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0 0 16px 0;
+  letter-spacing: 0.04em;
+}
+
+.td-overview-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.td-overview-kpi-card {
+  background: rgba(18, 18, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 18px 20px;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.td-overview-kpi-card:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.08);
+}
+
+.td-overview-kpi-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.td-overview-kpi-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.td-overview-kpi-value--green {
+  color: #22c55e;
+}
+
+.td-overview-kpi-value--red {
+  color: #f87171;
+}
+
+/* Monthly + calendar */
+.td-overview-monthly {
+  background: rgba(18, 18, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 20px 24px 24px;
+  margin-bottom: 28px;
+}
+
+.td-overview-monthly-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.td-overview-monthly-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.td-overview-monthly-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.td-overview-monthly-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.td-overview-monthly-pnl {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.td-overview-monthly-meta {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.td-overview-monthly-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.td-overview-month-nav-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.td-overview-month-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.td-overview-month-nav-label {
+  font-size: 0.95rem;
+  color: #fff;
+  min-width: 120px;
+  text-align: center;
+}
+
+.td-overview-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.td-overview-cal-dow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.td-overview-cal-day {
+  min-height: 56px;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+
+.td-overview-cal-day--empty {
+  background: transparent;
+  min-height: 40px;
+  cursor: default;
+}
+
+.td-overview-cal-day--win {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.td-overview-cal-day--loss {
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.2);
+}
+
+.td-overview-cal-day--today {
+  border-color: rgba(99, 179, 237, 0.5);
+  box-shadow: 0 0 0 1px rgba(99, 179, 237, 0.3);
+}
+
+.td-overview-cal-day--selected {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3);
+}
+
+.td-overview-cal-num {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.td-overview-cal-pnl {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.td-overview-cal-pnl.positive { color: #22c55e; }
+.td-overview-cal-pnl.negative { color: #f87171; }
+
+.td-overview-calendar-hint {
+  margin: 16px 0 0 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 2x2 charts grid */
+.td-overview-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.td-overview-chart-card {
+  background: rgba(18, 18, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 200px;
+}
+
+.td-overview-chart-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 16px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.td-overview-chart-empty {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.td-overview-equity-chart {
+  height: 140px;
+  width: 100%;
+}
+
+.td-overview-equity-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.td-overview-pair-chart,
+.td-overview-session-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.td-overview-pair-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 90px;
+  align-items: center;
+  gap: 10px;
+}
+
+.td-overview-pair-label,
+.td-overview-session-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.td-overview-pair-bar-wrap {
+  height: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.td-overview-pair-bar {
+  height: 100%;
+  border-radius: 6px;
+  min-width: 4px;
+}
+
+.td-overview-pair-bar.positive { background: rgba(34, 197, 94, 0.6); }
+.td-overview-pair-bar.negative { background: rgba(248, 113, 113, 0.6); }
+
+.td-overview-pair-value,
+.td-overview-session-value {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: right;
+}
+
+.td-overview-pair-value.positive,
+.td-overview-session-value.positive { color: #22c55e; }
+.td-overview-pair-value.negative,
+.td-overview-session-value.negative { color: #f87171; }
+
+.td-overview-session-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 90px;
+  align-items: center;
+  gap: 10px;
+}
+
+.td-overview-session-bar-wrap {
+  width: 100%;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.td-overview-session-bar {
+  width: 100%;
+  border-radius: 6px;
+  min-height: 4px;
+}
+
+.td-overview-session-bar.positive { background: rgba(34, 197, 94, 0.6); }
+.td-overview-session-bar.negative { background: rgba(248, 113, 113, 0.6); }
+
+.td-overview-recent-card {
+  grid-column: 1 / -1;
+}
+
+.td-overview-recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.td-overview-view-all {
+  font-size: 0.8rem;
+  color: rgba(139, 92, 246, 0.9);
+  text-decoration: none;
+}
+
+.td-overview-view-all:hover {
+  text-decoration: underline;
+}
+
+.td-overview-recent-table-wrap {
+  overflow-x: auto;
+}
+
+.td-overview-recent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.td-overview-recent-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.td-overview-recent-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.td-overview-result.win { color: #22c55e; }
+.td-overview-result.loss { color: #f87171; }
+
+.td-overview-pnl-positive { color: #22c55e; }
+.td-overview-pnl-negative { color: #f87171; }
+
+@media (max-width: 900px) {
+  .td-overview-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .td-overview-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .td-overview-recent-card {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .td-overview-monthly-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .td-overview-pair-row {
+    grid-template-columns: 70px 1fr 70px;
+  }
+  .td-overview-session-row {
+    grid-template-columns: 70px 1fr 70px;
+  }
+}

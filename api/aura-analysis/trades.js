@@ -106,7 +106,7 @@ function mapRow(r) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -120,6 +120,8 @@ module.exports = async (req, res) => {
   }
   const userId = Number(decoded.id);
   const pathname = getPathname(req);
+  const idMatch = pathname.match(/\/api\/aura-analysis\/trades\/(\d+)$/i);
+  const tradeId = idMatch ? Number(idMatch[1]) : null;
 
   let db = null;
   try {
@@ -128,6 +130,40 @@ module.exports = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Database error' });
     }
     await ensureTradesTable(db);
+
+    // PUT /api/aura-analysis/trades/:id – update result / pnl
+    if (req.method === 'PUT' && tradeId) {
+      const [existing] = await db.execute('SELECT id FROM aura_analysis_trades WHERE id = ? AND user_id = ?', [tradeId, userId]);
+      if (!existing || existing.length === 0) {
+        if (db.release) db.release();
+        return res.status(404).json({ success: false, message: 'Trade not found' });
+      }
+      const body = parseBody(req);
+      const result = ['win', 'loss', 'breakeven', 'open'].includes((body.result || '').toLowerCase())
+        ? body.result.toLowerCase()
+        : null;
+      const pnl = body.pnl != null ? Number(body.pnl) : null;
+      const updates = [];
+      const params = [];
+      if (result !== null) {
+        updates.push('result = ?');
+        params.push(result);
+      }
+      if (pnl !== null) {
+        updates.push('pnl = ?');
+        params.push(pnl);
+      }
+      if (updates.length === 0) {
+        const [rows] = await db.execute('SELECT * FROM aura_analysis_trades WHERE id = ?', [tradeId]);
+        db.release && db.release();
+        return res.status(200).json({ success: true, trade: mapRow(rows[0]) });
+      }
+      params.push(tradeId);
+      await db.execute(`UPDATE aura_analysis_trades SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`, [...params, userId]);
+      const [rows] = await db.execute('SELECT * FROM aura_analysis_trades WHERE id = ?', [tradeId]);
+      db.release && db.release();
+      return res.status(200).json({ success: true, trade: mapRow(rows[0]) });
+    }
 
     // GET /api/aura-analysis/trades – list my trades; optional dateFrom, dateTo, and pnl=1 for daily/weekly/monthly summary
     if (req.method === 'GET') {

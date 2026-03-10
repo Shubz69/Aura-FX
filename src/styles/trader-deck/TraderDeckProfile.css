@@ -1,0 +1,144 @@
+/* Trader Deck – Profile tab (match Aura Analysis reference) */
+.td-profile {
+  color: #fff;
+}
+
+.td-profile-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+  color: #fff;
+}
+
+.td-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Account card */
+.td-profile-account-card {
+  background: var(--aa-panel);
+  border: 1px solid var(--aa-border);
+  border-radius: var(--aa-radius-lg);
+  padding: 24px;
+}
+
+.td-profile-account-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.td-profile-account-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: var(--aa-text);
+}
+
+.td-profile-account-sub {
+  font-size: 0.9rem;
+  color: var(--aa-text-muted);
+  margin: 0;
+}
+
+.td-profile-settings-icon {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.1rem;
+  padding: 6px;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.td-profile-settings-icon:hover {
+  color: rgba(139, 92, 246, 0.9);
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.td-profile-account-fields {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.td-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.td-profile-field dt {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.td-profile-field dd {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--aa-text);
+  margin: 0;
+}
+
+/* Trading statistics grid */
+.td-profile-stats-wrap {
+  min-width: 0;
+}
+
+.td-profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.td-profile-stat-card {
+  background: var(--aa-panel);
+  border: 1px solid var(--aa-border);
+  border-radius: var(--aa-radius-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.td-profile-stat-label {
+  font-size: 0.8rem;
+  color: var(--aa-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.td-profile-stat-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--aa-text);
+}
+
+.td-profile-stat-positive {
+  color: var(--aa-success);
+}
+
+.td-profile-stat-negative {
+  color: var(--aa-loss);
+}
+
+@media (max-width: 900px) {
+  .td-profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .td-profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .td-profile-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
