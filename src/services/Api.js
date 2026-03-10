@@ -652,6 +652,10 @@ const Api = {
         return axios.post(`${API_BASE_URL}/api/aura-analysis/trades`, body);
     },
 
+    getTraderDeckMarketIntelligence: () => {
+        return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`);
+    },
+
     getJournalDaily: (date) => {
         return axios.get(`${API_BASE_URL}/api/journal/daily`, { params: { date } });
     },

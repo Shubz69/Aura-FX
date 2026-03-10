@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CosmicBackground from '../../components/CosmicBackground';
-import { getMarketIntelligence } from '../../data/marketIntelligence';
+import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
 import '../../styles/TraderDeckMarket.css';
 
 function Arrow({ direction }) {
@@ -37,7 +37,7 @@ export default function MarketIntelligenceDashboard() {
   useEffect(() => {
     getMarketIntelligence()
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => setData(SEED_MARKET_INTELLIGENCE))
       .finally(() => setLoading(false));
   }, []);
 
@@ -55,7 +55,11 @@ export default function MarketIntelligenceDashboard() {
     );
   }
 
-  const { marketRegime, marketPulse, keyDrivers, crossAssetSignals, marketChangesToday, traderFocus, riskRadar } = data;
+  const { marketRegime, marketPulse, keyDrivers, crossAssetSignals, marketChangesToday, traderFocus, riskRadar, updatedAt } = data;
+
+  const updatedLabel = updatedAt
+    ? new Date(updatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   return (
     <div className="td-market-page">
@@ -63,7 +67,10 @@ export default function MarketIntelligenceDashboard() {
       <div className="td-market-inner">
         <header className="td-market-header">
           <h1>Market Intelligence Dashboard</h1>
-          <p>At-a-glance regime, pulse, drivers, and risk — ready for live data.</p>
+          <p>
+            At-a-glance regime, pulse, drivers, and risk.
+            {updatedLabel && <span className="td-market-updated"> · Updated {updatedLabel}</span>}
+          </p>
         </header>
 
         <div className="td-market-grid">

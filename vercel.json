@@ -451,6 +451,10 @@
     {
       "source": "/api/markets/snapshot",
       "destination": "/api/markets/snapshot.js"
+    },
+    {
+      "source": "/api/trader-deck/market-intelligence",
+      "destination": "/api/trader-deck/market-intelligence.js"
     }
   ],
   "crons": [

@@ -48,6 +48,11 @@
   margin: 0;
 }
 
+.td-market-updated {
+  opacity: 0.85;
+  font-size: 0.85em;
+}
+
 .td-market-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

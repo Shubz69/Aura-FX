@@ -1,7 +1,10 @@
 /**
  * Market Intelligence data for Trader Deck.
- * Structure is API-ready: swap getMarketIntelligence() implementation for live data later.
+ * Fetches from backend /api/trader-deck/market-intelligence (live Finnhub, FMP, FRED).
+ * Maps API response to dashboard shape; falls back to seed if request fails.
  */
+
+import Api from '../services/Api';
 
 export const DEFAULT_MARKET_REGIME = {
   currentRegime: '',
@@ -10,7 +13,7 @@ export const DEFAULT_MARKET_REGIME = {
   marketSentiment: '',
 };
 
-export const DEFAULT_MARKET_PULSE = { value: 50, label: 'NEUTRAL' }; // value 0–100
+export const DEFAULT_MARKET_PULSE = { value: 50, label: 'NEUTRAL' };
 
 export const SEED_MARKET_INTELLIGENCE = {
   marketRegime: {
@@ -33,25 +36,73 @@ export const SEED_MARKET_INTELLIGENCE = {
     { asset: 'Stocks', direction: 'neutral', label: 'Neutral' },
     { asset: 'Oil', direction: 'up', label: 'Rising' },
   ],
-  marketChangesToday: [
-    'Strong US Jobs Data',
-    'Bond Yields Surging',
-    'USD Gaining Strength',
-    'Gold Under Pressure',
-  ],
-  traderFocus: [
-    'Watch US bond yields',
-    'Monitor EURUSD levels',
-    "Track gold's reaction to yields",
-  ],
-  riskRadar: [
-    'Upcoming CPI Report',
-    'Fed Speakers Today',
-    'Geopolitical Tensions',
-  ],
+  marketChangesToday: ['Strong US Jobs Data', 'Bond Yields Surging', 'USD Gaining Strength', 'Gold Under Pressure'],
+  traderFocus: ['Watch US bond yields', 'Monitor EURUSD levels', "Track gold's reaction to yields"],
+  riskRadar: ['Upcoming CPI Report', 'Fed Speakers Today', 'Geopolitical Tensions'],
 };
 
+function capitalize(s) {
+  if (!s || typeof s !== 'string') return s;
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function mapBackendToDashboard(apiData) {
+  if (!apiData || typeof apiData !== 'object') return null;
+  const r = apiData.marketRegime;
+  const p = apiData.marketPulse;
+  const k = apiData.keyDrivers;
+  const c = apiData.crossAssetSignals;
+  const m = apiData.marketChangesToday;
+  const t = apiData.traderFocus;
+  const rr = apiData.riskRadar;
+  return {
+    marketRegime: r
+      ? {
+          currentRegime: r.currentRegime || '',
+          primaryDriver: r.primaryDriver || '',
+          secondaryDriver: r.secondaryDriver || '',
+          marketSentiment: r.marketSentiment || 'Neutral',
+        }
+      : SEED_MARKET_INTELLIGENCE.marketRegime,
+    marketPulse: p
+      ? { value: typeof p.score === 'number' ? p.score : 50, label: p.label || 'NEUTRAL' }
+      : SEED_MARKET_INTELLIGENCE.marketPulse,
+    keyDrivers: Array.isArray(k)
+      ? k.map((d) => ({
+          title: d.name || d.title || '',
+          direction: d.direction || 'neutral',
+          impact: capitalize(d.impact) || 'Medium',
+        }))
+      : SEED_MARKET_INTELLIGENCE.keyDrivers,
+    crossAssetSignals: Array.isArray(c)
+      ? c.map((s) => ({
+          asset: s.asset || '',
+          direction: s.direction || 'neutral',
+          label: s.signal || s.label || '—',
+        }))
+      : SEED_MARKET_INTELLIGENCE.crossAssetSignals,
+    marketChangesToday: Array.isArray(m)
+      ? m.map((x) => (typeof x === 'string' ? x : x.title || x.description || ''))
+      : SEED_MARKET_INTELLIGENCE.marketChangesToday,
+    traderFocus: Array.isArray(t)
+      ? t.map((x) => (typeof x === 'string' ? x : x.title || x.text || ''))
+      : SEED_MARKET_INTELLIGENCE.traderFocus,
+    riskRadar: Array.isArray(rr)
+      ? rr.map((x) => (typeof x === 'string' ? x : x.title || x.text || ''))
+      : SEED_MARKET_INTELLIGENCE.riskRadar,
+    updatedAt: apiData.updatedAt || null,
+  };
+}
+
 export async function getMarketIntelligence() {
-  // Later: return (await Api.getTraderDeckMarketIntelligence())?.data ?? SEED_MARKET_INTELLIGENCE;
-  return Promise.resolve(SEED_MARKET_INTELLIGENCE);
+  try {
+    const res = await Api.getTraderDeckMarketIntelligence();
+    const data = res && res.data;
+    if (data && data.success && (data.marketRegime || data.marketPulse)) {
+      return mapBackendToDashboard(data);
+    }
+  } catch (e) {
+    // Fallback to seed on network or API error
+  }
+  return SEED_MARKET_INTELLIGENCE;
 }
