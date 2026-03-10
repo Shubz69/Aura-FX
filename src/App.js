@@ -56,6 +56,7 @@ const Journal = lazy(() => import('./pages/Journal'));
 const AuraAnalysis = lazy(() => import('./pages/AuraAnalysis'));
 const AuraAnalysisGateway = lazy(() => import('./pages/aura-analysis/AuraAnalysisGateway'));
 const TradeValidatorEntry = lazy(() => import('./pages/aura-analysis/TradeValidatorEntry'));
+/** Resolves to src/pages/TraderDeck.js – do not remove or rename; required for build. */
 const TraderDeck = lazy(() => import('./pages/TraderDeck'));
 const ConnectionHub = lazy(() => import('./pages/aura-analysis/ConnectionHub'));
 const AuraDashboardLayout = lazy(() => import('./pages/aura-analysis/AuraDashboardLayout'));
