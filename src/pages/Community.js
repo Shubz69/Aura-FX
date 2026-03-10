@@ -13,6 +13,7 @@ import { toast } from 'react-toastify';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import ImageModal from '../components/ImageModal';
+import DocViewer from "@cyntler/react-doc-viewer";
 import {
     getLevelFromXP,
     getXPForNextLevel,
@@ -67,88 +68,35 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
         </div>
     );
 };
-// PPTX Viewer Component - 100% WORKING SOLUTION
 const PptxViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [viewerUrl, setViewerUrl] = useState(null);
+    const [docUri, setDocUri] = useState(null);
     
     useEffect(() => {
-        const processFile = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                
-                if (!file?.preview) {
-                    throw new Error('No file data available');
-                }
-
-                console.log('Processing PPTX:', file.name);
-                
-                // File ka data URL already hai - isko directly use karo
-                // Microsoft Office Online Viewer data URLs ko support nahi karta
-                // Isliye hum ek free service use karenge jo PPTX ko public URL de
-                
-                // Convert data URL to blob for upload
-                const base64Data = file.preview.split(',')[1];
-                const binaryString = atob(base64Data);
-                const bytes = new Uint8Array(binaryString.length);
-                
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-
-                const blob = new Blob([bytes], { 
-                    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' 
-                });
-                
-                // Create FormData and upload to a free file hosting service
-                const formData = new FormData();
-                formData.append('file', blob, file.name);
-                
-                // Upload to temp.sh - free file hosting (no API key needed)
-                const uploadResponse = await fetch('https://temp.sh/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!uploadResponse.ok) {
-                    throw new Error('Upload failed');
-                }
-                
-                const uploadData = await uploadResponse.json();
-                
-                if (uploadData && uploadData.url) {
-                    // Get the direct file URL
-                    let fileUrl = uploadData.url;
-                    
-                    // Create Microsoft Office Online Viewer URL
-                    const officeViewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`;
-                    setViewerUrl(officeViewerUrl);
-                } else {
-                    throw new Error('Invalid upload response');
-                }
-                
-                setLoading(false);
-            } catch (err) {
-                console.error('PPTX Error:', err);
-                setError(err.message);
-                setLoading(false);
+        try {
+            if (!file?.preview) {
+                throw new Error('No file data available');
             }
-        };
-
-        processFile();
+            
+            console.log('Initializing DocViewer for:', file.name);
+            
+            // DocViewer directly supports data URLs!
+            setDocUri(file.preview);
+            setLoading(false);
+            
+        } catch (err) {
+            console.error('DocViewer Error:', err);
+            setError(err.message);
+            setLoading(false);
+        }
     }, [file]);
 
     const handleDownload = () => {
-        if (!file?.preview) return;
-        
         const link = document.createElement('a');
         link.href = file.preview;
-        link.download = file.name || 'presentation.pptx';
-        document.body.appendChild(link);
+        link.download = file.name;
         link.click();
-        document.body.removeChild(link);
     };
 
     if (loading) {
@@ -160,17 +108,23 @@ const PptxViewer = ({ file, onClose }) => {
         );
     }
 
-    if (error || !viewerUrl) {
+    if (error || !docUri) {
         return (
             <div className="pptx-viewer-error">
                 <p>❌ {error || 'Cannot load presentation'}</p>
-                <div style={{ marginTop: '20px' }}>
-                    <button onClick={handleDownload}>Download File</button>
-                    <button onClick={onClose} style={{ marginLeft: '10px' }}>Close</button>
-                </div>
+                <button onClick={handleDownload}>Download File</button>
+                <button onClick={onClose}>Close</button>
             </div>
         );
     }
+
+    const documents = [
+        {
+            uri: docUri,
+            fileName: file.name,
+            fileType: "pptx"
+        }
+    ];
 
     return (
         <div className="pptx-viewer-container">
@@ -182,16 +136,25 @@ const PptxViewer = ({ file, onClose }) => {
                 </div>
             </div>
             <div className="pptx-viewer-content">
-                <iframe
-                    src={viewerUrl}
+                <DocViewer
+                    documents={documents}
+                    config={{
+                        header: {
+                            disableHeader: true, // Hide default header
+                            disableFileName: false,
+                            retainURLParams: false
+                        },
+                        pdfZoom: {
+                            defaultZoom: 1.0,
+                            zoomJump: 0.1
+                        }
+                    }}
                     style={{
-                        width: '100%',
                         height: '100%',
+                        width: '100%',
                         border: 'none',
                         background: '#fff'
                     }}
-                    title={file?.name}
-                    allowFullScreen
                 />
             </div>
         </div>
