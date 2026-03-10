@@ -13,7 +13,7 @@ import { toast } from 'react-toastify';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import ImageModal from '../components/ImageModal';
-import DocViewer from "@cyntler/react-doc-viewer";
+import { DocViewerPlus } from 'react-doc-viewer-plus';
 import {
     getLevelFromXP,
     getXPForNextLevel,
@@ -45,7 +45,47 @@ const emojis = [
 
 // Online users will be fetched from API or computed from real data
 
+// Mobile sidebar scroll fix
+function fixMobileSidebarScroll() {
+    const sidebar = document.querySelector('.community-sidebar.mobile-sidebar');
+    if (!sidebar) return;
+    
+    const channelsSection = sidebar.querySelector('.channels-section');
+    if (!channelsSection) return;
+    
+    // Force a reflow to ensure proper height calculation
+    setTimeout(() => {
+        // Make sure the channels section is scrollable
+        channelsSection.style.overflowY = 'auto';
+        channelsSection.style.flex = '1 1 auto';
+        channelsSection.style.maxHeight = 'none';
+        
+        // Calculate available height
+        const headerHeight = sidebar.querySelector('.sidebar-header')?.offsetHeight || 0;
+        const footerHeight = sidebar.querySelector('.sidebar-footer')?.offsetHeight || 0;
+        const viewportHeight = window.innerHeight - 60; // Subtract navbar height
+        
+        channelsSection.style.maxHeight = `${viewportHeight - headerHeight - footerHeight - 20}px`;
+    }, 100);
+}
 
+// Call when sidebar opens
+function onSidebarOpen() {
+    document.body.classList.add('sidebar-open-mobile');
+    fixMobileSidebarScroll();
+}
+
+// Call when sidebar closes
+function onSidebarClose() {
+    document.body.classList.remove('sidebar-open-mobile');
+}
+
+// Add resize handler
+window.addEventListener('resize', () => {
+    if (document.body.classList.contains('sidebar-open-mobile')) {
+        fixMobileSidebarScroll();
+    }
+});
 // Emoji picker component
 const EmojiPicker = ({ onEmojiSelect, onClose }) => {
     return (
@@ -71,81 +111,109 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
 const PptxViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [viewerUrl, setViewerUrl] = useState(null);
+    const [viewerUrl, setViewerUrl] = useState('');
     
     useEffect(() => {
-        const loadPresentation = async () => {
-            try {
-                setLoading(true);
-                
-                if (!file?.preview) {
-                    throw new Error('No file data available');
+        if (!file?.preview) {
+            setError('No file data available');
+            setLoading(false);
+            return;
+        }
+        
+        try {
+            // Extract base64 data
+            const base64Data = file.preview.includes(',') 
+                ? file.preview.split(',')[1] 
+                : file.preview;
+            
+            // Convert base64 to blob
+            const byteCharacters = atob(base64Data);
+            const byteArrays = [];
+            
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
                 }
-
-                // Convert data URL to blob
-                const base64Data = file.preview.split(',')[1];
-                const binaryString = atob(base64Data);
-                const bytes = new Uint8Array(binaryString.length);
-                
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-
-                const blob = new Blob([bytes], { 
-                    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' 
-                });
-                
-                const blobUrl = URL.createObjectURL(blob);
-                
-                // Use Google Docs Viewer (already in CSP)
-                const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(blobUrl)}&embedded=true`;
-                setViewerUrl(googleViewerUrl);
-                
-                setLoading(false);
-                
-            } catch (err) {
-                console.error('Error:', err);
-                setError(err.message);
-                setLoading(false);
+                byteArrays.push(new Uint8Array(byteNumbers));
+            }
+            
+            const blob = new Blob(byteArrays, { 
+                type: file.type || 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            });
+            
+            // Create blob URL
+            const url = URL.createObjectURL(blob);
+            setViewerUrl(url);
+            
+        } catch (err) {
+            console.error('Error processing PPTX:', err);
+            setError('Failed to process presentation file');
+        } finally {
+            setLoading(false);
+        }
+        
+        return () => {
+            if (viewerUrl) {
+                URL.revokeObjectURL(viewerUrl);
             }
         };
-
-        loadPresentation();
     }, [file]);
-
+    
     const handleDownload = () => {
+        if (!viewerUrl) return;
+        
         const link = document.createElement('a');
-        link.href = file.preview;
-        link.download = file.name;
+        link.href = viewerUrl;
+        link.download = file.name || 'presentation.pptx';
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     };
-
+    
     if (loading) {
         return (
-            <div className="pptx-viewer-loading">
-                <div className="pptx-loading-spinner"></div>
-                <p>Loading presentation...</p>
+            <div className="pptx-viewer-container">
+                <div className="pptx-viewer-header">
+                    <h3>{file?.name || 'Presentation'}</h3>
+                    <button onClick={onClose} className="close-btn">×</button>
+                </div>
+                <div className="pptx-viewer-loading">
+                    <div className="spinner"></div>
+                    <p>Loading presentation...</p>
+                </div>
             </div>
         );
     }
-
-    if (error || !viewerUrl) {
+    
+    if (error) {
         return (
-            <div className="pptx-viewer-error">
-                <p>❌ {error || 'Cannot load presentation'}</p>
-                <button onClick={handleDownload}>Download File</button>
-                <button onClick={onClose}>Close</button>
+            <div className="pptx-viewer-container">
+                <div className="pptx-viewer-header">
+                    <h3>{file?.name || 'Presentation'}</h3>
+                    <button onClick={handleDownload} className="download-btn">Download</button>
+                    <button onClick={onClose} className="close-btn">×</button>
+                </div>
+                <div className="pptx-viewer-error">
+                    <p>❌ {error}</p>
+                    <button onClick={handleDownload} className="retry-btn">
+                        Download Instead
+                    </button>
+                </div>
             </div>
         );
     }
-
+    
     return (
         <div className="pptx-viewer-container">
             <div className="pptx-viewer-header">
                 <h3>{file?.name || 'Presentation'}</h3>
-                <div>
-                    <button onClick={handleDownload}>Download</button>
-                    <button onClick={onClose}>×</button>
+                <div className="header-actions">
+                    <button onClick={handleDownload} className="download-btn">
+                        <FaDownload /> Download
+                    </button>
+                    <button onClick={onClose} className="close-btn">×</button>
                 </div>
             </div>
             <div className="pptx-viewer-content">
@@ -157,8 +225,7 @@ const PptxViewer = ({ file, onClose }) => {
                         border: 'none',
                         background: '#fff'
                     }}
-                    title={file?.name}
-                    allowFullScreen
+                    title={file?.name || 'PPTX Viewer'}
                 />
             </div>
         </div>
