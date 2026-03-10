@@ -5,27 +5,46 @@ import '../../styles/TraderDeckMarket.css';
 
 function Arrow({ direction }) {
   const d = direction === 'up' ? '▲' : direction === 'down' ? '▼' : '◆';
-  return <span className={`td-market-arrow ${direction}`}>{d}</span>;
+  return <span className={`td-arrow td-arrow--${direction}`} aria-hidden>{d}</span>;
 }
 
 function MarketPulseGauge({ value, label }) {
   const rotation = -90 + (Number(value) / 100) * 90;
   const badgeClass = value <= 33 ? 'risk-off' : value <= 66 ? 'neutral' : 'risk-on';
   return (
-    <div className="td-market-gauge-wrap">
-      <div className="td-market-gauge">
-        <div className="td-market-gauge-arc" />
-        <div className="td-market-gauge-arc-fill" />
+    <div className="td-gauge-wrap">
+      <div className="td-gauge" aria-hidden>
+        <div className="td-gauge-arc" />
+        <div className="td-gauge-arc-fill" />
         <div
-          className="td-market-gauge-needle"
+          className="td-gauge-needle"
           style={{ transform: `rotate(${rotation}deg)` }}
         />
       </div>
-      <div className="td-market-gauge-labels">
+      <div className="td-gauge-labels">
         <span>Risk Off</span>
+        <span>Neutral</span>
         <span>Risk On</span>
       </div>
-      <span className={`td-market-pulse-badge ${badgeClass}`}>{label}</span>
+      <span className={`td-gauge-badge td-gauge-badge--${badgeClass}`}>{label}</span>
+    </div>
+  );
+}
+
+function DashboardCard({ title, children, className = '', wide }) {
+  return (
+    <section className={`td-card ${wide ? 'td-card--wide' : ''} ${className}`}>
+      <h2 className="td-card-title">{title}</h2>
+      <div className="td-card-body">{children}</div>
+    </section>
+  );
+}
+
+function RegimeRow({ label, value }) {
+  return (
+    <div className="td-regime-row">
+      <span className="td-regime-label">{label}</span>
+      <span className="td-regime-value">{value}</span>
     </div>
   );
 }
@@ -43,120 +62,116 @@ export default function MarketIntelligenceDashboard() {
 
   if (loading || !data) {
     return (
-      <div className="td-market-page">
+      <div className="td-page">
         <CosmicBackground />
-        <div className="td-market-inner">
-          <div className="td-market-header">
-            <h1>Market Intelligence</h1>
-            <p>Loading…</p>
+        <div className="td-dashboard">
+          <div className="td-dashboard-shell">
+            <header className="td-header">
+              <h1>Market Intelligence</h1>
+              <p>Loading…</p>
+            </header>
           </div>
         </div>
       </div>
     );
   }
 
-  const { marketRegime, marketPulse, keyDrivers, crossAssetSignals, marketChangesToday, traderFocus, riskRadar, updatedAt } = data;
+  const {
+    marketRegime,
+    marketPulse,
+    keyDrivers = [],
+    crossAssetSignals = [],
+    marketChangesToday = [],
+    traderFocus = [],
+    riskRadar = [],
+    updatedAt,
+  } = data;
 
   const updatedLabel = updatedAt
     ? new Date(updatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     : null;
 
   return (
-    <div className="td-market-page">
+    <div className="td-page">
       <CosmicBackground />
-      <div className="td-market-inner">
-        <header className="td-market-header">
-          <h1>Market Intelligence Dashboard</h1>
-          <p>
-            At-a-glance regime, pulse, drivers, and risk.
-            {updatedLabel && <span className="td-market-updated"> · Updated {updatedLabel}</span>}
-          </p>
-        </header>
+      <div className="td-dashboard">
+        <div className="td-dashboard-shell">
+          <header className="td-header">
+            <h1>Market Intelligence Dashboard</h1>
+            <p>
+              At-a-glance regime, pulse, drivers, and risk.
+              {updatedLabel && <span className="td-header-updated"> · Updated {updatedLabel}</span>}
+            </p>
+          </header>
 
-        <div className="td-market-grid">
-          {/* 1. Market Regime */}
-          <div className="td-market-panel">
-            <h2 className="td-market-panel-title">Aurax Market Regime</h2>
-            <div className="td-market-regime-row">
-              <span>Current Regime</span>
-              <span>{marketRegime.currentRegime}</span>
-            </div>
-            <div className="td-market-regime-row">
-              <span>Primary Driver</span>
-              <span>{marketRegime.primaryDriver}</span>
-            </div>
-            <div className="td-market-regime-row">
-              <span>Secondary Driver</span>
-              <span>{marketRegime.secondaryDriver}</span>
-            </div>
-            <div className="td-market-regime-row">
-              <span>Market Sentiment</span>
-              <span>{marketRegime.marketSentiment}</span>
-            </div>
-          </div>
+          <div className="td-grid">
+            {/* Row 1: Market Regime (large) | Market Pulse */}
+            <DashboardCard title="Market Regime" className="td-card--regime">
+              <RegimeRow label="Current Regime" value={marketRegime.currentRegime} />
+              <RegimeRow label="Primary Driver" value={marketRegime.primaryDriver} />
+              <RegimeRow label="Secondary Driver" value={marketRegime.secondaryDriver} />
+              <RegimeRow label="Market Sentiment" value={marketRegime.marketSentiment} />
+            </DashboardCard>
 
-          {/* 2. Market Pulse */}
-          <div className="td-market-panel">
-            <h2 className="td-market-panel-title">Aurax Market Pulse</h2>
-            <MarketPulseGauge value={marketPulse.value} label={marketPulse.label} />
-          </div>
+            <DashboardCard title="Market Pulse" className="td-card--pulse">
+              <MarketPulseGauge value={marketPulse.value} label={marketPulse.label} />
+            </DashboardCard>
 
-          {/* 3. Key Market Drivers */}
-          <div className="td-market-panel td-market-span-2">
-            <h2 className="td-market-panel-title">Key Market Drivers</h2>
-            <ul className="td-market-list">
-              {keyDrivers.map((d, i) => (
-                <li key={i}>
-                  <Arrow direction={d.direction} />
-                  <span className="label">{d.title}</span>
-                  <span className="meta">{d.impact} Impact</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Row 2: Key Market Drivers | Cross-Asset Signals | Market Change Today */}
+            <DashboardCard title="Key Market Drivers" className="td-card--drivers">
+              <ul className="td-list">
+                {keyDrivers.map((d, i) => (
+                  <li key={i}>
+                    <Arrow direction={d.direction} />
+                    <span className="td-list-label">{d.title}</span>
+                    <span className="td-list-meta">{d.impact} Impact</span>
+                  </li>
+                ))}
+              </ul>
+            </DashboardCard>
 
-          {/* 4. Cross-Asset Signals */}
-          <div className="td-market-panel">
-            <h2 className="td-market-panel-title">Cross-Asset Signals</h2>
-            <ul className="td-market-list">
-              {crossAssetSignals.map((s, i) => (
-                <li key={i}>
-                  <Arrow direction={s.direction} />
-                  <span className="label">{s.asset}</span>
-                  <span className="meta">{s.label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <DashboardCard title="Cross-Asset Signals" className="td-card--signals">
+              <ul className="td-list">
+                {crossAssetSignals.map((s, i) => (
+                  <li key={i}>
+                    <Arrow direction={s.direction} />
+                    <span className="td-list-label">{s.asset}</span>
+                    <span className="td-list-meta">{s.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </DashboardCard>
 
-          {/* 5. Market Change Today */}
-          <div className="td-market-panel">
-            <h2 className="td-market-panel-title">Market Change Today</h2>
-            <ul className="td-market-bullets">
-              {marketChangesToday.map((item, i) => (
-                <li key={i}>{typeof item === 'string' ? item : item.title || item.description}</li>
-              ))}
-            </ul>
-          </div>
+            <DashboardCard title="Market Change Today" className="td-card--changes">
+              <ul className="td-bullets">
+                {marketChangesToday.length
+                  ? marketChangesToday.map((item, i) => (
+                      <li key={i}>{typeof item === 'string' ? item : item.title || item.description}</li>
+                    ))
+                  : <li className="td-empty">No themes yet</li>}
+              </ul>
+            </DashboardCard>
 
-          {/* 6. Trader Focus */}
-          <div className="td-market-panel">
-            <h2 className="td-market-panel-title">Trader Focus</h2>
-            <ul className="td-market-bullets">
-              {traderFocus.map((item, i) => (
-                <li key={i}>{typeof item === 'string' ? item : item.text || item.title}</li>
-              ))}
-            </ul>
-          </div>
+            {/* Row 3: Trader Focus | Risk Radar (wide) */}
+            <DashboardCard title="Trader Focus" wide className="td-card--focus">
+              <ul className="td-bullets">
+                {traderFocus.length
+                  ? traderFocus.map((item, i) => (
+                      <li key={i}>{typeof item === 'string' ? item : item.text || item.title}</li>
+                    ))
+                  : <li className="td-empty">No focus items yet</li>}
+              </ul>
+            </DashboardCard>
 
-          {/* 7. Risk Radar */}
-          <div className="td-market-panel">
-            <h2 className="td-market-panel-title">Risk Radar</h2>
-            <ul className="td-market-bullets">
-              {riskRadar.map((item, i) => (
-                <li key={i}>{typeof item === 'string' ? item : item.text || item.title}</li>
-              ))}
-            </ul>
+            <DashboardCard title="Risk Radar" wide className="td-card--radar">
+              <ul className="td-bullets">
+                {riskRadar.length
+                  ? riskRadar.map((item, i) => (
+                      <li key={i}>{typeof item === 'string' ? item : item.text || item.title}</li>
+                    ))
+                  : <li className="td-empty">No upcoming events</li>}
+              </ul>
+            </DashboardCard>
           </div>
         </div>
       </div>

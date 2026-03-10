@@ -1,13 +1,13 @@
-/* Trade Validator – same design language as Journal / Gateway */
+/* Trade Validator – same design language as Aura Analysis (Overview / reference repo) */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 .trade-validator-page {
   --tv-bg: #0a0a0a;
-  --tv-card: rgba(255,255,255,0.025);
-  --tv-border: rgba(255,255,255,0.07);
-  --tv-accent: rgba(139,92,246,0.85);
+  --tv-card: #121218;
+  --tv-border: rgba(255,255,255,0.15);
+  --tv-accent: rgba(139,92,246,0.9);
   --tv-text: #ffffff;
-  --tv-muted: rgba(255,255,255,0.52);
+  --tv-muted: rgba(255,255,255,0.65);
   --tv-radius: 12px;
   --tv-up: #10b981;
   --tv-down: #ef4444;
@@ -18,15 +18,27 @@
   padding: calc(70px + env(safe-area-inset-top, 0) + 24px) 24px 64px;
   position: relative;
   z-index: 1;
+  isolation: isolate;
+  visibility: visible;
+  opacity: 1;
 }
 
 .trade-validator-page * {
   box-sizing: border-box;
 }
 
+/* Single visible panel – solid background so content is always visible */
 .trade-validator-inner {
   max-width: 900px;
   margin: 0 auto;
+  position: relative;
+  z-index: 10;
+  min-height: 60vh;
+  background: var(--tv-card) !important;
+  border: 1px solid var(--tv-border);
+  border-radius: 16px;
+  padding: 28px 24px 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 .trade-validator-back {
@@ -64,11 +76,12 @@
   margin-bottom: 28px;
 }
 .trade-validator-pnl-card {
-  background: var(--tv-card);
+  background: rgba(0,0,0,0.35);
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 16px;
   text-align: center;
+  min-height: 72px;
 }
 .trade-validator-pnl-card span {
   display: block;
@@ -86,17 +99,20 @@
 .trade-validator-pnl-card.negative strong { color: var(--tv-down); }
 
 .trade-validator-section {
-  background: var(--tv-card);
+  background: rgba(0,0,0,0.35);
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 24px;
   margin-bottom: 24px;
+  min-height: 120px;
 }
 .trade-validator-section h2 {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   margin: 0 0 16px 0;
   color: var(--tv-text);
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .trade-validator-score {
@@ -128,14 +144,15 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid transparent;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
 }
 .trade-validator-checklist label:hover {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.12);
 }
 .trade-validator-checklist input {
   margin-top: 2px;

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import CosmicBackground from '../../components/CosmicBackground';
 import Api from '../../services/Api';
 import '../../styles/TradeValidatorView.css';
 
@@ -199,7 +198,6 @@ export default function TradeValidatorView() {
 
   return (
     <div className="trade-validator-page">
-      <CosmicBackground />
       <div className="trade-validator-inner">
         <Link to="/aura-analysis" className="trade-validator-back">
           <FaArrowLeft /> Back to Aura Analysis
