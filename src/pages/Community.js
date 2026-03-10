@@ -67,52 +67,94 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
         </div>
     );
 };
-// PPTX Viewer Component - Optimized for your CSP
+// PPTX Viewer Component - ULTIMATE SOLUTION
 const PptxViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [viewerUrl, setViewerUrl] = useState(null);
+    const [viewerType, setViewerType] = useState('google');
+    const [objectUrl, setObjectUrl] = useState(null);
+    const [downloadUrl, setDownloadUrl] = useState(null);
     
     useEffect(() => {
-        const loadPptx = async () => {
+        const processFile = async () => {
             try {
                 setLoading(true);
                 setError(null);
                 
-                if (file?.preview) {
-                    if (file.preview.startsWith('data:')) {
-                        // For data URLs, create a blob URL (now allowed by CSP)
-                        const response = await fetch(file.preview);
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        setViewerUrl(url);
-                    } else {
-                        // Regular URL
-                        setViewerUrl(file.preview);
-                    }
-                } else {
+                console.log('Processing file:', file?.name);
+                
+                if (!file?.preview) {
                     setError('No file data available');
+                    setLoading(false);
+                    return;
+                }
+                
+                // Create a downloadable URL first (always works)
+                if (file.preview.startsWith('data:')) {
+                    // For data URLs, convert to blob for download
+                    const base64Data = file.preview.split(',')[1];
+                    const byteCharacters = atob(base64Data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    
+                    const byteArray = new Uint8Array(byteNumbers);
+                    
+                    // Determine correct MIME type
+                    let mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+                    if (file.name?.endsWith('.odp')) {
+                        mimeType = 'application/vnd.oasis.opendocument.presentation';
+                    } else if (file.name?.endsWith('.ppt')) {
+                        mimeType = 'application/vnd.ms-powerpoint';
+                    }
+                    
+                    const blob = new Blob([byteArray], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    setDownloadUrl(url);
+                    setObjectUrl(url);
+                } else {
+                    // Regular URL
+                    setDownloadUrl(file.preview);
+                    setObjectUrl(file.preview);
                 }
                 
                 setLoading(false);
             } catch (err) {
-                console.error('Error loading PPTX:', err);
-                setError('Failed to load presentation');
+                console.error('Error processing file:', err);
+                setError('Failed to process file');
                 setLoading(false);
             }
         };
         
-        loadPptx();
+        processFile();
         
         return () => {
-            if (viewerUrl?.startsWith('blob:')) {
-                URL.revokeObjectURL(viewerUrl);
+            if (downloadUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(downloadUrl);
+            }
+            if (objectUrl?.startsWith('blob:') && objectUrl !== downloadUrl) {
+                URL.revokeObjectURL(objectUrl);
             }
         };
     }, [file]);
     
-    const getGoogleDocsViewerUrl = (url) => {
-        return `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`;
+    const handleDownload = () => {
+        if (downloadUrl) {
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = file?.name || 'presentation.pptx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+    
+    const handleOpenInNewTab = () => {
+        if (objectUrl) {
+            window.open(objectUrl, '_blank');
+        }
     };
     
     if (loading) {
@@ -124,10 +166,13 @@ const PptxViewer = ({ file, onClose }) => {
         );
     }
     
-    if (error || !viewerUrl) {
+    if (error || !objectUrl) {
         return (
             <div className="pptx-viewer-error">
                 <p>❌ {error || 'Cannot load presentation'}</p>
+                <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
+                    File: {file?.name}
+                </p>
                 <button onClick={onClose}>Close</button>
             </div>
         );
@@ -137,17 +182,94 @@ const PptxViewer = ({ file, onClose }) => {
         <div className="pptx-viewer-container">
             <div className="pptx-viewer-header">
                 <h3>{file?.name || 'Presentation'}</h3>
-                <button onClick={onClose} className="pptx-viewer-close">×</button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                        onClick={handleDownload}
+                        style={{
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: '#fff',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem'
+                        }}
+                    >
+                        Download
+                    </button>
+                    <button 
+                        onClick={handleOpenInNewTab}
+                        style={{
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: '#fff',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem'
+                        }}
+                    >
+                        Open in New Tab
+                    </button>
+                    <button onClick={onClose} className="pptx-viewer-close">×</button>
+                </div>
             </div>
             <div className="pptx-viewer-content">
-                <iframe
-                    src={getGoogleDocsViewerUrl(viewerUrl)}
-                    title="PPTX Viewer"
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    allowFullScreen
-                />
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    background: '#f5f5f5',
+                    padding: '40px'
+                }}>
+                    <div style={{
+                        fontSize: '48px',
+                        marginBottom: '20px'
+                    }}>
+                        📊
+                    </div>
+                    <h3 style={{ marginBottom: '16px', color: '#333' }}>
+                        {file?.name}
+                    </h3>
+                    <p style={{ marginBottom: '24px', color: '#666', textAlign: 'center', maxWidth: '400px' }}>
+                        Due to browser security restrictions, presentations cannot be previewed directly. 
+                        Please download the file or open it in a new tab.
+                    </p>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                        <button
+                            onClick={handleDownload}
+                            style={{
+                                padding: '12px 24px',
+                                background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '1rem'
+                            }}
+                        >
+                            ⬇️ Download File
+                        </button>
+                        <button
+                            onClick={handleOpenInNewTab}
+                            style={{
+                                padding: '12px 24px',
+                                background: '#fff',
+                                border: '2px solid #8B5CF6',
+                                borderRadius: '8px',
+                                color: '#8B5CF6',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '1rem'
+                            }}
+                        >
+                            📂 Open in New Tab
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
