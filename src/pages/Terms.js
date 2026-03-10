@@ -137,9 +137,7 @@ const Terms = () => {
                     </section>
                 </div>
 
-                <div className="terms-footer">
-                    <Link to="/register" className="back-link">← Back to Sign Up</Link>
-                </div>
+                
             </div>
         </div>
     );

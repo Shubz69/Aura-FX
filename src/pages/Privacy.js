@@ -154,9 +154,6 @@ const Privacy = () => {
                     </section>
                 </div>
 
-                <div className="privacy-footer">
-                    <Link to="/register" className="back-link">← Back to Sign Up</Link>
-                </div>
             </div>
         </div>
     );

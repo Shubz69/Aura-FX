@@ -67,7 +67,140 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
         </div>
     );
 };
-
+// PPTX Viewer Component
+const PptxViewer = ({ file, onClose }) => {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [pdfUrl, setPdfUrl] = useState(null);
+    const [viewerType, setViewerType] = useState('google'); // 'google', 'microsoft', or 'pdf'
+    
+    useEffect(() => {
+        const loadPptx = async () => {
+            try {
+                setLoading(true);
+                
+                // If we have a file object with preview data
+                if (file?.preview) {
+                    // Check if it's a data URL or regular URL
+                    if (file.preview.startsWith('data:')) {
+                        // Convert data URL to blob URL for better compatibility
+                        const response = await fetch(file.preview);
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        setPdfUrl(url);
+                        setViewerType('pdf');
+                    } else {
+                        // Regular URL - try to use Google Docs viewer
+                        setPdfUrl(file.preview);
+                        setViewerType('google');
+                    }
+                } 
+                // If we have a URL from the server
+                else if (file?.url) {
+                    setPdfUrl(file.url);
+                    setViewerType('google');
+                }
+                // If we have a file name but no data, try to construct URL
+                else if (file?.name) {
+                    // For demo purposes - in production, you'd have a real URL
+                    // You might need to fetch the file from your server here
+                    setError('File URL not available');
+                }
+                
+                setLoading(false);
+            } catch (err) {
+                console.error('Error loading PPTX:', err);
+                setError('Failed to load presentation');
+                setLoading(false);
+            }
+        };
+        
+        loadPptx();
+        
+        return () => {
+            // Clean up blob URLs
+            if (pdfUrl && pdfUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(pdfUrl);
+            }
+        };
+    }, [file]);
+    
+    const getGoogleDocsViewerUrl = (url) => {
+        return `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`;
+    };
+    
+    const getMicrosoftViewerUrl = (url) => {
+        return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+    };
+    
+    if (loading) {
+        return (
+            <div className="pptx-viewer-loading">
+                <div className="pptx-loading-spinner"></div>
+                <p>Loading presentation...</p>
+            </div>
+        );
+    }
+    
+    if (error) {
+        return (
+            <div className="pptx-viewer-error">
+                <p>❌ {error}</p>
+                <button onClick={onClose}>Close</button>
+            </div>
+        );
+    }
+    
+    if (!pdfUrl) {
+        return (
+            <div className="pptx-viewer-error">
+                <p>No presentation data available</p>
+                <button onClick={onClose}>Close</button>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="pptx-viewer-container" onClick={(e) => e.stopPropagation()}>
+            <div className="pptx-viewer-header">
+                <h3>{file?.name || 'Presentation'}</h3>
+                <button onClick={onClose} className="pptx-viewer-close">×</button>
+            </div>
+            <div className="pptx-viewer-content">
+                {viewerType === 'google' && (
+                    <iframe
+                        src={getGoogleDocsViewerUrl(pdfUrl)}
+                        title="PPTX Viewer"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allowFullScreen
+                    />
+                )}
+                {viewerType === 'microsoft' && (
+                    <iframe
+                        src={getMicrosoftViewerUrl(pdfUrl)}
+                        title="PPTX Viewer"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allowFullScreen
+                    />
+                )}
+                {viewerType === 'pdf' && (
+                    <iframe
+                        src={pdfUrl}
+                        title="PPTX as PDF"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allowFullScreen
+                    />
+                )}
+            </div>
+        </div>
+    );
+};
 // GIF Picker component
 const GifPicker = ({ onGifSelect, onClose }) => {
     const [gifs, setGifs] = useState([]);
@@ -247,7 +380,80 @@ const [showImageModal, setShowImageModal] = useState(false);
 const [selectedImage, setSelectedImage] = useState(null);
 const scrollTimeoutRef = useRef(null);
 const messagesContainerRef = useRef(null);
-    
+
+const [showPptxModal, setShowPptxModal] = useState(false);
+const [selectedPptx, setSelectedPptx] = useState(null);
+    // PPTX Preview Component
+const PptxPreview = ({ file, onClick }) => {
+    return (
+        <div 
+            className="pptx-preview clickable-file"
+            onClick={onClick}
+            style={{
+                marginTop: '8px',
+                padding: '16px',
+                background: 'linear-gradient(135deg, #D24726 0%, #B63E1F 100%)',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 4px 12px rgba(210, 71, 38, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 16px rgba(210, 71, 38, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(210, 71, 38, 0.3)';
+            }}
+        >
+            <div style={{
+                width: '48px',
+                height: '48px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#fff'
+            }}>
+                📊
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    color: '#fff',
+                    marginBottom: '4px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                }}>
+                    {file.name || 'Presentation'}
+                </div>
+                <div style={{
+                    fontSize: '0.75rem',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <span>PowerPoint • {(file.size / 1024).toFixed(1)} KB</span>
+                    <span>•</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>👁️</span> Click to view
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+};
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
@@ -3749,8 +3955,20 @@ Earn XP by:
         setNewMessage('');
     };
 
-  const handleFileClick = (file) => {
+const handleFileClick = (file) => {
     if (!file) return;
+    
+    // Check if it's a PPTX file
+    const isPptx = file.type?.includes('presentation') || 
+                   file.type?.includes('powerpoint') || 
+                   file.name?.toLowerCase().endsWith('.pptx') ||
+                   file.name?.toLowerCase().endsWith('.ppt');
+    
+    if (isPptx) {
+        setSelectedPptx(file);
+        setShowPptxModal(true);
+        return;
+    }
     
     // If no preview data, try to construct from filename or show error
     if (!file.preview) {
@@ -3784,7 +4002,7 @@ Earn XP by:
         return;
     }
     
-    // For non-images, handle based on file type (PDF, text, etc.)
+    // For PDF files
     if (file.type?.includes('pdf') || file.name?.toLowerCase().endsWith('.pdf')) {
         window.open(file.preview, '_blank');
         return;
@@ -6318,160 +6536,99 @@ useEffect(() => {
                                                     <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
                                                 </div>
                                             )}
-                                            {message.file && message.file.preview && message.file.type && message.file.type.startsWith('image/') && (
-                                                <div 
-                                                    className="message-attachment clickable-file"
-                                                    onClick={() => handleFileClick(message.file)}
-                                                    style={{
-                                                        cursor: 'pointer',
-                                                        transition: 'all 0.2s ease',
-                                                        marginTop: '8px',
-                                                        borderRadius: '12px',
-                                                        overflow: 'hidden',
-                                                        background: 'var(--bg-elevated)',
-                                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1.01)';
-                                                        e.currentTarget.style.borderColor = 'var(--accent-blue)';
-                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.3)';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1)';
-                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
-                                                    }}
-                                                    title="Click to open"
-                                                >
-                                                    <img 
-                                                        src={message.file.preview} 
-                                                        alt={getDisplayFileName(message.file.name, message.file.type)}
-                                                        loading="lazy"
-                                                        style={{
-                                                            width: 'auto',
-                                                            maxWidth: '180px',
-                                                            maxHeight: '180px',
-                                                            objectFit: 'contain',
-                                                            display: 'block',
-                                                            pointerEvents: 'none',
-                                                            background: 'var(--bg-tertiary)'
-                                                        }}
+                                                                                       {message.file && message.file.preview && (
+                                                // Check for PPTX files first
+                                                (message.file.type?.includes('presentation') || 
+                                                 message.file.type?.includes('powerpoint') || 
+                                                 message.file.name?.toLowerCase().endsWith('.pptx') ||
+                                                 message.file.name?.toLowerCase().endsWith('.ppt')) ? (
+                                                    
+                                                    <PptxPreview 
+                                                        file={message.file}
+                                                        onClick={() => handleFileClick(message.file)}
                                                     />
-                                                    <div style={{
-                                                        padding: '8px 12px',
-                                                        background: 'var(--bg-elevated)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        borderTop: '1px solid rgba(255, 255, 255, 0.05)'
-                                                    }}>
-                                                        <FaImage style={{ fontSize: '0.875rem', color: 'var(--accent-blue)', flexShrink: 0 }} />
-                                                        <span style={{ 
-                                                            flex: 1, 
-                                                            fontSize: '0.875rem',
-                                                            color: '#ffffff',
-                                                            fontWeight: 500,
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap'
-                                                        }}>
-                                                            {getDisplayFileName(message.file.name, message.file.type)}
-                                                        </span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => handleFileDownload(e, message.file)}
-                                                            title="Download"
-                                                            style={{
-                                                                padding: '6px 10px',
-                                                                background: 'rgba(88, 101, 242, 0.3)',
-                                                                border: 'none',
-                                                                borderRadius: '8px',
-                                                                color: 'var(--accent-blue)',
-                                                                cursor: 'pointer',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}
-                                                        >
-                                                            <FaDownload style={{ fontSize: '0.875rem' }} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {message.file && (!message.file.preview || !message.file.type || !message.file.type.startsWith('image/')) && (
-                                                <div 
-                                                    className="message-file clickable-file"
-                                                    onClick={() => handleFileClick(message.file)}
-                                                    style={{
-                                                        marginTop: '8px',
-                                                        padding: '14px 16px',
-                                                        background: 'var(--bg-elevated)',
-                                                        borderRadius: '12px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '12px',
-                                                        cursor: 'pointer',
-                                                        transition: 'all 0.2s ease',
-                                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.background = 'var(--hover-bg)';
-                                                        e.currentTarget.style.borderColor = 'var(--accent-blue)';
-                                                        e.currentTarget.style.transform = 'translateX(4px)';
-                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.25)';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.background = 'var(--bg-elevated)';
-                                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                                                        e.currentTarget.style.transform = 'translateX(0)';
-                                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-                                                    }}
-                                                    title="Click to open"
-                                                >
-                                                    <div style={{
-                                                        width: '40px',
-                                                        height: '40px',
-                                                        borderRadius: '10px',
-                                                        background: 'linear-gradient(135deg, var(--accent-blue), var(--purple-primary))',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        flexShrink: 0
-                                                    }}>
-                                                        <FaPaperclip style={{ fontSize: '1.1rem', color: '#ffffff' }} />
-                                                    </div>
-                                                    <span style={{ 
-                                                        flex: 1, 
-                                                        fontWeight: 600,
-                                                        fontSize: '0.9375rem',
-                                                        color: '#ffffff',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
-                                                        {getDisplayFileName(message.file.name, message.file.type)}
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => handleFileDownload(e, message.file)}
-                                                        title="Download"
+                                                    
+                                                ) : message.file.type?.startsWith('image/') ? (
+                                                    <div 
+                                                        className="message-attachment clickable-file"
+                                                        onClick={() => handleFileClick(message.file)}
                                                         style={{
-                                                            padding: '8px 12px',
-                                                            background: 'rgba(88, 101, 242, 0.3)',
-                                                            border: 'none',
-                                                            borderRadius: '8px',
-                                                            color: 'var(--accent-blue)',
                                                             cursor: 'pointer',
+                                                            transition: 'all 0.2s ease',
+                                                            marginTop: '8px',
+                                                            borderRadius: '12px',
+                                                            overflow: 'hidden',
+                                                            background: 'var(--bg-elevated)',
+                                                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(1.01)';
+                                                            e.currentTarget.style.borderColor = 'var(--accent-blue)';
+                                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.3)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(1)';
+                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                                                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+                                                        }}
+                                                        title="Click to open"
+                                                    >
+                                                        <img 
+                                                            src={message.file.preview} 
+                                                            alt={getDisplayFileName(message.file.name, message.file.type)}
+                                                            loading="lazy"
+                                                            style={{
+                                                                width: 'auto',
+                                                                maxWidth: '180px',
+                                                                maxHeight: '180px',
+                                                                objectFit: 'contain',
+                                                                display: 'block',
+                                                                pointerEvents: 'none',
+                                                                background: 'var(--bg-tertiary)'
+                                                            }}
+                                                        />
+                                                        <div style={{
+                                                            padding: '8px 12px',
+                                                            background: 'var(--bg-elevated)',
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}
-                                                    >
-                                                        <FaDownload style={{ fontSize: '1rem' }} />
-                                                    </button>
-                                                </div>
+                                                            gap: '8px',
+                                                            borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+                                                        }}>
+                                                            <FaImage style={{ fontSize: '0.875rem', color: 'var(--accent-blue)', flexShrink: 0 }} />
+                                                            <span style={{ 
+                                                                flex: 1, 
+                                                                fontSize: '0.875rem',
+                                                                color: '#ffffff',
+                                                                fontWeight: 500,
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}>
+                                                                {getDisplayFileName(message.file.name, message.file.type)}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => handleFileDownload(e, message.file)}
+                                                                title="Download"
+                                                                style={{
+                                                                    padding: '6px 10px',
+                                                                    background: 'rgba(88, 101, 242, 0.3)',
+                                                                    border: 'none',
+                                                                    borderRadius: '8px',
+                                                                    color: 'var(--accent-blue)',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}
+                                                            >
+                                                                <FaDownload style={{ fontSize: '0.875rem' }} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : null
                                             )}
                                             
                                             {/* Emoji Reactions - At the bottom of message */}
@@ -8662,19 +8819,51 @@ useEffect(() => {
     onTaskToggle={handleMiniTaskToggle}
     loading={journalLoading}
 />
-{/* Image Modal */}
-<ImageModal 
-    isOpen={showImageModal}
-    onClose={() => {
-        setShowImageModal(false);
-        setSelectedImage(null);
-    }}
-    imageUrl={selectedImage?.url}
-    fileName={selectedImage?.name}
-    fileType={selectedImage?.type}
-/>
+            {/* Image Modal */}
+            <ImageModal 
+                isOpen={showImageModal}
+                onClose={() => {
+                    setShowImageModal(false);
+                    setSelectedImage(null);
+                }}
+                imageUrl={selectedImage?.url}
+                fileName={selectedImage?.name}
+                fileType={selectedImage?.type}
+            />
+            
+            {/* PPTX Modal */}
+            {showPptxModal && (
+                <div
+                    className="pptx-modal-overlay"
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.9)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10004,
+                        padding: '20px'
+                    }}
+                    onClick={() => {
+                        setShowPptxModal(false);
+                        setSelectedPptx(null);
+                    }}
+                >
+                    <PptxViewer 
+                        file={selectedPptx}
+                        onClose={() => {
+                            setShowPptxModal(false);
+                            setSelectedPptx(null);
+                        }}
+                    />
+                </div>
+            )}
         </div>
     );
-};
+}; 
 
 export default Community;
