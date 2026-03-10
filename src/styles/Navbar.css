@@ -183,7 +183,6 @@ body.loading-active .navbar {
 
 .nav-links li { margin: 0; position: relative; }
 
-/* ── FIX: text centred inside each nav link ── */
 .nav-links li a {
   text-decoration: none;
   color: var(--text-secondary);
@@ -197,8 +196,8 @@ body.loading-active .navbar {
   transition: color var(--transition-fast), background var(--transition-fast);
   display: flex;
   align-items: center;
-  justify-content: center;   /* ← FIX: centres text horizontally */
-  text-align: center;        /* ← FIX: fallback */
+  justify-content: center;
+  text-align: center;
   gap: 6px;
   position: relative;
   white-space: nowrap;
@@ -250,7 +249,6 @@ body.loading-active .navbar {
   overflow: visible;
 }
 
-/* ── FIX: Sign In — text centred ── */
 .sign-in {
   padding: 0.5rem 1.4rem;
   background: transparent;
@@ -265,8 +263,8 @@ body.loading-active .navbar {
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
-  justify-content: center;   /* ← FIX */
-  text-align: center;        /* ← FIX */
+  justify-content: center;
+  text-align: center;
 }
 
 .sign-in:hover {
@@ -275,7 +273,6 @@ body.loading-active .navbar {
   background: var(--surface-hover);
 }
 
-/* ── FIX: Start Trading — text centred ── */
 .start-trading {
   padding: 0.5rem 1.4rem;
   background: linear-gradient(135deg, var(--cta-from) 0%, var(--cta-to) 100%);
@@ -292,8 +289,8 @@ body.loading-active .navbar {
   overflow: hidden;
   display: flex;
   align-items: center;
-  justify-content: center;   /* ← FIX */
-  text-align: center;        /* ← FIX */
+  justify-content: center;
+  text-align: center;
   box-shadow:
     0 2px 14px var(--cta-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
@@ -422,6 +419,60 @@ body.loading-active .navbar {
 }
 
 /* ──────────────────────────────────────────
+   NOTIFICATIONS WRAPPER - ALWAYS VISIBLE
+────────────────────────────────────────── */
+.notifications-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.notifications-wrapper .messages-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all var(--transition-fast);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.notifications-wrapper .messages-btn:hover {
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.notifications-wrapper .notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid #0a0a0a;
+  animation: badge-pulse 2.5s ease infinite;
+}
+
+/* Desktop-only class */
+.desktop-only {
+  display: flex;
+}
+
+/* ──────────────────────────────────────────
    MOBILE MENU TOGGLE
 ────────────────────────────────────────── */
 .mobile-menu-toggle {
@@ -448,7 +499,7 @@ body.loading-active .navbar {
 }
 
 /* ──────────────────────────────────────────
-   MOBILE FULL-SCREEN MENU — FIXED
+   MOBILE FULL-SCREEN MENU
 ────────────────────────────────────────── */
 .mobile-menu {
   position: fixed;
@@ -508,26 +559,28 @@ body.loading-active .navbar {
   position: fixed;
   top: 12px;
   right: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
   color: var(--text-secondary);
   font-size: 1.25rem;
   cursor: pointer;
   transition: all var(--transition-fast);
   padding: 0;
   z-index: 10001;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .mobile-menu-close:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
   color: var(--text-primary);
 }
 
@@ -556,8 +609,8 @@ body.loading-active .navbar {
   font-weight: 400;
   font-family: var(--font-main);
   letter-spacing: 0.03em;
-  position: relative;           /* needed for absolute arrow */
-  padding: 1rem 2.5rem;         /* equal padding so text stays truly centred */
+  position: relative;
+  padding: 1rem 2.5rem;
   transition: all var(--transition-fast);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
@@ -566,7 +619,7 @@ body.loading-active .navbar {
   min-height: 56px;
   display: flex;
   align-items: center;
-  justify-content: center;      /* ← centres the text */
+  justify-content: center;
   text-align: center;
   box-sizing: border-box;
 }
@@ -577,7 +630,6 @@ body.loading-active .navbar {
   border-color: rgba(139, 92, 246, 0.22);
 }
 
-/* Arrow absolutely positioned on the right — doesn't push text off-centre */
 .mobile-nav-links li a::after {
   content: '→';
   position: absolute;
@@ -608,7 +660,6 @@ body.loading-active .navbar {
   box-sizing: border-box;
 }
 
-/* ── FIX: mobile button text centred ── */
 .mobile-sign-in,
 .mobile-start-trading {
   padding: 0.9rem 2rem;
@@ -620,7 +671,7 @@ body.loading-active .navbar {
   text-align: center;
   display: flex;
   align-items: center;
-  justify-content: center;   /* ← FIX */
+  justify-content: center;
   transition: all var(--transition-smooth);
   min-height: 52px;
   font-size: 0.9rem;
@@ -780,8 +831,25 @@ body.loading-active .navbar {
 }
 
 @media (max-width: 1150px) {
-  .nav-links   { display: none !important; }
-  .nav-buttons { display: none !important; }
+  .nav-links { 
+    display: none !important; 
+  }
+  
+  .nav-buttons .user-profile.desktop-only { 
+    display: none !important; 
+  }
+  
+  .nav-buttons .notifications-wrapper {
+    display: flex !important;
+  }
+  
+  .nav-buttons {
+    display: flex !important;
+    gap: 0.5rem;
+    order: 2;
+    margin-left: auto;
+  }
+  
   .mobile-menu-toggle {
     display: flex !important;
     width: 42px;
@@ -794,6 +862,26 @@ body.loading-active .navbar {
     color: var(--text-primary);
     align-items: center;
     justify-content: center;
+    order: 3;
+    margin-left: 0.25rem;
+  }
+  
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .logo-container {
+    order: 1;
+  }
+  
+  .nav-buttons {
+    order: 2;
+  }
+  
+  .mobile-menu-toggle {
+    order: 3;
   }
 }
 
@@ -802,6 +890,21 @@ body.loading-active .navbar {
     padding: 0 2rem;
     height: 62px;
     min-height: 62px;
+  }
+
+  .nav-buttons {
+    gap: 0.75rem;
+  }
+  
+  .notifications-wrapper .messages-btn {
+    padding: 0.45rem;
+    font-size: 1.1rem;
+  }
+  
+  .mobile-menu-toggle {
+    width: 44px;
+    height: 44px;
+    font-size: 1.35rem;
   }
 
   .mobile-menu {
@@ -851,6 +954,10 @@ body.loading-active .navbar {
     z-index: 1000;
   }
 
+  .nav-buttons {
+    gap: 0.25rem;
+  }
+
   .mobile-menu { padding-top: 80px; padding-left: 1.5rem; padding-right: 1.5rem; }
 
   .logo-container  { display: flex !important; flex: 0 0 auto; align-items: center; }
@@ -867,35 +974,111 @@ body.loading-active .navbar {
 }
 
 @media (max-width: 480px) {
-  .navbar { padding: 0 0.9rem; height: 56px; min-height: 56px; }
-  .navbar-logo-wrapper .aura-logo-symbol { width: 24px; height: 24px; }
-  .logo { display: block !important; font-size: 0.68rem; letter-spacing: 0.15em; white-space: nowrap; font-weight: 300; }
+  .navbar { 
+    padding: 0 0.9rem; 
+    height: 56px; 
+    min-height: 56px; 
+  }
+  
+  .navbar-logo-wrapper .aura-logo-symbol { 
+    width: 24px; 
+    height: 24px; 
+  }
+  
+  .logo { 
+    display: block !important; 
+    font-size: 0.68rem; 
+    letter-spacing: 0.15em; 
+    white-space: nowrap; 
+    font-weight: 300; 
+  }
+  
+  .notifications-wrapper .messages-btn {
+    padding: 0.35rem;
+    font-size: 1rem;
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  .notifications-wrapper .notification-badge {
+    width: 14px;
+    height: 14px;
+    font-size: 0.6rem;
+    top: -1px;
+    right: -1px;
+    border-width: 1.5px;
+  }
+  
   .mobile-menu-toggle {
     display: flex !important;
-    width: 40px; height: 40px; font-size: 1.2rem;
+    width: 40px; 
+    height: 40px; 
+    font-size: 1.2rem;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 7px; flex-shrink: 0;
+    border-radius: 7px; 
+    flex-shrink: 0;
     color: var(--text-primary);
-    align-items: center; justify-content: center;
+    align-items: center; 
+    justify-content: center;
+  }
+  
+  .nav-buttons {
+    gap: 0.25rem;
   }
 }
 
 @media (max-width: 374px) {
-  .navbar { padding: 0 0.75rem; height: 54px; min-height: 54px; }
-  .navbar-logo-wrapper .aura-logo-symbol { width: 22px; height: 22px; }
-  .logo { display: block !important; font-size: 0.62rem; letter-spacing: 0.12em; white-space: nowrap; font-weight: 300; }
+  .navbar { 
+    padding: 0 0.75rem; 
+    height: 54px; 
+    min-height: 54px; 
+  }
+  
+  .navbar-logo-wrapper .aura-logo-symbol { 
+    width: 22px; 
+    height: 22px; 
+  }
+  
+  .logo { 
+    display: block !important; 
+    font-size: 0.62rem; 
+    letter-spacing: 0.12em; 
+    white-space: nowrap; 
+    font-weight: 300; 
+  }
+  
+  .notifications-wrapper .messages-btn {
+    padding: 0.3rem;
+    font-size: 0.95rem;
+    min-width: 34px;
+    min-height: 34px;
+  }
+  
+  .notifications-wrapper .notification-badge {
+    width: 13px;
+    height: 13px;
+    font-size: 0.55rem;
+  }
+  
   .mobile-menu-toggle {
     display: flex !important;
-    width: 38px; height: 38px; font-size: 1.1rem;
+    width: 38px; 
+    height: 38px; 
+    font-size: 1.1rem;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 7px; flex-shrink: 0;
+    border-radius: 7px; 
+    flex-shrink: 0;
     color: var(--text-primary);
-    align-items: center; justify-content: center;
+    align-items: center; 
+    justify-content: center;
   }
 }
 
+/* ──────────────────────────────────────────
+   MOBILE MENU FINAL FIXES
+────────────────────────────────────────── */
 @media (max-width: 1150px) {
   .mobile-menu,
   .mobile-menu.active {
@@ -906,10 +1089,6 @@ body.loading-active .navbar {
     border-radius: 0 !important; z-index: 10000 !important;
   }
 }
-
-/* ============================================================
-   FINAL FIX — True full-screen mobile menu
-   ============================================================ */
 
 .mobile-menu,
 div.mobile-menu,
@@ -955,7 +1134,7 @@ body > div > .mobile-menu.active {
 .mobile-menu .mobile-nav-links li a {
   width: 100% !important; box-sizing: border-box !important;
   display: flex !important; align-items: center !important;
-  justify-content: center !important;   /* ← centred, arrow is absolute */
+  justify-content: center !important;
   text-align: center !important;
 }
 
@@ -993,7 +1172,7 @@ body > div > .mobile-menu.active {
   .mobile-menu-close { top: 20px !important; right: 24px !important; width: 44px !important; height: 44px !important; }
 }
 
-/* Smooth scroll only — no height/overflow overrides */
+/* Smooth scroll only */
 html {
   scroll-behavior: smooth;
 }
