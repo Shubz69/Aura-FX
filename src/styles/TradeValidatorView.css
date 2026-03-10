@@ -1,0 +1,233 @@
+/* Trade Validator – same design language as Journal / Gateway */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+.trade-validator-page {
+  --tv-bg: #0a0a0a;
+  --tv-card: rgba(255,255,255,0.025);
+  --tv-border: rgba(255,255,255,0.07);
+  --tv-accent: rgba(139,92,246,0.85);
+  --tv-text: #ffffff;
+  --tv-muted: rgba(255,255,255,0.52);
+  --tv-radius: 12px;
+  --tv-up: #10b981;
+  --tv-down: #ef4444;
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  background: var(--tv-bg);
+  color: var(--tv-text);
+  padding: calc(70px + env(safe-area-inset-top, 0) + 24px) 24px 64px;
+  position: relative;
+  z-index: 1;
+}
+
+.trade-validator-page * {
+  box-sizing: border-box;
+}
+
+.trade-validator-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.trade-validator-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tv-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+  transition: color 0.2s;
+}
+.trade-validator-back:hover {
+  color: var(--tv-accent);
+}
+
+.trade-validator-header {
+  margin-bottom: 32px;
+}
+.trade-validator-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+.trade-validator-header p {
+  font-size: 0.95rem;
+  color: var(--tv-muted);
+  margin: 0;
+}
+
+.trade-validator-pnl-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.trade-validator-pnl-card {
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
+  border-radius: var(--tv-radius);
+  padding: 16px;
+  text-align: center;
+}
+.trade-validator-pnl-card span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--tv-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.trade-validator-pnl-card strong {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.trade-validator-pnl-card.positive strong { color: var(--tv-up); }
+.trade-validator-pnl-card.negative strong { color: var(--tv-down); }
+
+.trade-validator-section {
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
+  border-radius: var(--tv-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.trade-validator-section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--tv-text);
+}
+
+.trade-validator-score {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.trade-validator-score-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+.trade-validator-score-value.good { color: var(--tv-up); }
+.trade-validator-score-value.warn { color: #f59e0b; }
+.trade-validator-score-value.low { color: var(--tv-down); }
+.trade-validator-score-label {
+  font-size: 0.9rem;
+  color: var(--tv-muted);
+}
+
+.trade-validator-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.trade-validator-checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.trade-validator-checklist label:hover {
+  background: rgba(255,255,255,0.04);
+}
+.trade-validator-checklist input {
+  margin-top: 2px;
+  accent-color: var(--tv-accent);
+}
+.trade-validator-checklist span {
+  font-size: 0.85rem;
+  color: var(--tv-text);
+}
+
+.trade-validator-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+.trade-validator-form-grid .full {
+  grid-column: 1 / -1;
+}
+.trade-validator-field label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--tv-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.trade-validator-field input,
+.trade-validator-field select {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--tv-border);
+  border-radius: 8px;
+  color: var(--tv-text);
+  font-size: 0.95rem;
+}
+.trade-validator-field input:focus,
+.trade-validator-field select:focus {
+  outline: none;
+  border-color: rgba(139,92,246,0.5);
+}
+
+.trade-validator-computed {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(139,92,246,0.08);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: var(--tv-radius);
+  font-size: 0.9rem;
+}
+.trade-validator-computed p {
+  margin: 0 0 6px 0;
+  color: var(--tv-muted);
+}
+.trade-validator-computed strong {
+  color: var(--tv-text);
+}
+
+.trade-validator-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.trade-validator-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  font-family: inherit;
+  border: none;
+}
+.trade-validator-btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+}
+.trade-validator-btn-primary:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+.trade-validator-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .trade-validator-pnl-strip {
+    grid-template-columns: 1fr;
+  }
+  .trade-validator-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

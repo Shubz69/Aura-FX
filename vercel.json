@@ -217,6 +217,10 @@
       "destination": "/api/messages/threads.js"
     },
     {
+      "source": "/api/aura-analysis/trades",
+      "destination": "/api/aura-analysis/trades.js"
+    },
+    {
       "source": "/api/users/update-xp",
       "destination": "/api/users/update-xp.js"
     },

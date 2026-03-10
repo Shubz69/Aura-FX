@@ -54,6 +54,9 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const PremiumAI = lazy(() => import('./pages/PremiumAI'));
 const Journal = lazy(() => import('./pages/Journal'));
 const AuraAnalysis = lazy(() => import('./pages/AuraAnalysis'));
+const AuraAnalysisGateway = lazy(() => import('./pages/aura-analysis/AuraAnalysisGateway'));
+const TradeValidatorEntry = lazy(() => import('./pages/aura-analysis/TradeValidatorEntry'));
+const TraderDeck = lazy(() => import('./pages/TraderDeck'));
 const ConnectionHub = lazy(() => import('./pages/aura-analysis/ConnectionHub'));
 const AuraDashboardLayout = lazy(() => import('./pages/aura-analysis/AuraDashboardLayout'));
 const AuraOverview = lazy(() => import('./pages/aura-analysis/tabs/Overview'));
@@ -204,7 +207,9 @@ function AppRoutes() {
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
-                            <Route index element={<ConnectionHub />} />
+                            <Route index element={<AuraAnalysisGateway />} />
+                            <Route path="ai" element={<ConnectionHub />} />
+                            <Route path="trade-validator" element={<TradeValidatorEntry />} />
                             <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
                                 <Route index element={<Navigate to="overview" replace />} />
                                 <Route path="overview" element={<AuraOverview />} />
@@ -217,6 +222,7 @@ function AppRoutes() {
                                 <Route path="growth" element={<AuraGrowth />} />
                             </Route>
                         </Route>
+                        <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
                         <Route path="/admin/inbox" element={<InboxGuard><AdminInbox /></InboxGuard>} />

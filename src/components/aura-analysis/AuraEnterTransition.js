@@ -358,7 +358,7 @@ function useRAF(cb) {
 }
 
 /* ─── Component ─────────────────────────────────────────────────────────── */
-export default function AuraEnterTransition({ onComplete }) {
+export default function AuraEnterTransition({ onComplete, label }) {
   const canvasRef = useRef(null);
   const galaxyRef = useRef(null);
   const suckRef = useRef(0);
@@ -456,7 +456,7 @@ export default function AuraEnterTransition({ onComplete }) {
       </div>
 
       <div className={`aet-hud${hudHide ? ' aet-hud-hide' : ''}`}>
-        <p className="aet-hud-label">Initializing Aura Analysis</p>
+        <p className="aet-hud-label">{typeof label === 'string' ? label : 'Initializing Aura Analysis'}</p>
         <div className="aet-hud-track">
           <div className="aet-hud-fill" style={{ width: `${progress}%` }} />
         </div>

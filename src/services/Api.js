@@ -641,6 +641,17 @@ const Api = {
     deleteJournalTask: (id) => {
         return axios.delete(`${API_BASE_URL}/api/journal/tasks/${id}`);
     },
+
+    getAuraAnalysisTrades: (params = {}) => {
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params });
+    },
+    getAuraAnalysisPnl: () => {
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params: { pnl: 1 } });
+    },
+    createAuraAnalysisTrade: (body) => {
+        return axios.post(`${API_BASE_URL}/api/aura-analysis/trades`, body);
+    },
+
     getJournalDaily: (date) => {
         return axios.get(`${API_BASE_URL}/api/journal/daily`, { params: { date } });
     },

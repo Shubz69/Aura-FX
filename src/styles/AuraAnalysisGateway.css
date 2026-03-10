@@ -1,0 +1,169 @@
+/* Aura Analysis Gateway – same language as Journal.css */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+.aura-gateway-page {
+  --bg:            #0a0a0a;
+  --bg-card:       rgba(255,255,255,0.025);
+  --bg-card-h:     rgba(255,255,255,0.048);
+  --border:        rgba(255,255,255,0.07);
+  --border-h:      rgba(255,255,255,0.18);
+  --border-accent: rgba(139,92,246,0.35);
+  --text:          #ffffff;
+  --text-muted:    rgba(255,255,255,0.52);
+  --accent:        rgba(139,92,246,0.85);
+  --accent-soft:   rgba(139,92,246,0.15);
+  --accent-blue:   rgba(99,179,237,0.75);
+  --radius:        12px;
+  --radius-lg:     18px;
+  --transition:    0.28s cubic-bezier(0.4,0,0.2,1);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  padding: calc(70px + env(safe-area-inset-top, 0) + 32px) 24px 64px;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.aura-gateway-page * {
+  box-sizing: border-box;
+}
+
+.aura-gateway-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.aura-gateway-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.aura-gateway-title {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  margin: 0 0 8px 0;
+}
+
+.aura-gateway-headline {
+  font-size: 1.75rem;
+  font-weight: 200;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.02em;
+  background: linear-gradient(125deg, #fff 25%, #c4b5fd 60%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.aura-gateway-sub {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+.aura-gateway-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  justify-content: center;
+}
+
+.aura-gateway-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  transition: border-color var(--transition), background var(--transition), transform var(--transition), box-shadow var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.aura-gateway-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(99,179,237,0.35), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.aura-gateway-card:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-card-h);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(139,92,246,0.12);
+}
+
+.aura-gateway-card:hover::before {
+  opacity: 1;
+}
+
+.aura-gateway-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(139,92,246,0.25);
+}
+
+.aura-gateway-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.02em;
+}
+
+.aura-gateway-card-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.aura-gateway-card-cta {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aura-gateway-card:hover .aura-gateway-card-cta {
+  color: #a78bfa;
+}
+
+@media (max-width: 640px) {
+  .aura-gateway-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .aura-gateway-headline {
+    font-size: 1.4rem;
+  }
+  .aura-gateway-cards {
+    grid-template-columns: 1fr;
+  }
+}

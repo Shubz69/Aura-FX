@@ -47,6 +47,7 @@ MySQL DB/
 
 # Other
 server.js.backup
+_temp_aura_analysis/
 
 # Backup directories with secrets
 backend-backup/
