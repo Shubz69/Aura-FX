@@ -139,41 +139,45 @@ const Profile = () => {
         return getPlaceholderColor(user?.id ?? formData.username);
     };
 
-    // ─── Load initial data from localStorage ───
-    useEffect(() => {
-        if (initialLoadDone.current) return;
-        if (!user?.id) return;
+    // Add this to the initial useEffect that loads from localStorage
+useEffect(() => {
+    if (initialLoadDone.current) return;
+    if (!user?.id) return;
 
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const userBannerKey = userKey(user.id, 'banner');
-        const scopedBanner = localStorage.getItem(userBannerKey) || '';
-        const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
-        const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const userBannerKey = userKey(user.id, 'banner');
+    
+    // Try multiple sources for banner
+    const scopedBanner = localStorage.getItem(userBannerKey) || '';
+    const dedicatedBanner = localStorage.getItem(`user_banner_${user.id}`) || '';
+    const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || dedicatedBanner || '';
+    
+    const storedUserData = JSON.parse(localStorage.getItem('userData') || '{}');
 
-        const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
-        if (savedColor) {
-            setAvatarColor(savedColor);
-        }
+    const savedColor = localStorage.getItem(`avatar_color_${user.id}`);
+    if (savedColor) {
+        setAvatarColor(savedColor);
+    }
 
-        const initialData = {
-            ...formData,
-            ...storedUserData,
-            ...storedUser,
-            username: (storedUser.username || storedUserData.username || '').trim(),
-            banner: localBanner
-        };
+    const initialData = {
+        ...formData,
+        ...storedUserData,
+        ...storedUser,
+        username: (storedUser.username || storedUserData.username || '').trim(),
+        banner: localBanner
+    };
 
-        setFormData(initialData);
+    setFormData(initialData);
 
-        if (initialData.banner?.startsWith('data:image') || initialData.banner?.startsWith('http')) {
-            setBannerPreview(initialData.banner);
-        }
-        if (initialData.avatar?.startsWith('data:image') || initialData.avatar?.startsWith('http')) {
-            setAvatarPreview(initialData.avatar);
-        }
+    if (initialData.banner?.startsWith('data:image') || initialData.banner?.startsWith('http')) {
+        setBannerPreview(initialData.banner);
+    }
+    if (initialData.avatar?.startsWith('data:image') || initialData.avatar?.startsWith('http')) {
+        setAvatarPreview(initialData.avatar);
+    }
 
-        initialLoadDone.current = true;
-    }, [user?.id]);
+    initialLoadDone.current = true;
+}, [user?.id]);
 
     // ─── Main profile loading effect ───
     useEffect(() => {
@@ -233,39 +237,41 @@ const Profile = () => {
                     setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
                 }
 
-                if (userRes?.status === 200 && userRes.data) {
-                    const userData = userRes.data;
-                    
-                    // Check if avatar is a colored SVG and extract color
-                    if (userData.avatar && userData.avatar.includes('fill=')) {
-                        try {
-                            const match = userData.avatar.match(/fill='([^']+)'/);
-                            if (match && match[1]) {
-                                const color = decodeURIComponent(match[1]);
-                                setAvatarColor(color);
-                                localStorage.setItem(`avatar_color_${user.id}`, color);
-                            }
-                        } catch (e) {
-                            console.error('Error parsing avatar color:', e);
-                        }
-                    }
+               if (userRes?.status === 200 && userRes.data) {
+    const userData = userRes.data;
+    
+    // Check if avatar is a colored SVG and extract color
+    if (userData.avatar && userData.avatar.includes('fill=')) {
+        try {
+            const match = userData.avatar.match(/fill='([^']+)'/);
+            if (match && match[1]) {
+                const color = decodeURIComponent(match[1]);
+                setAvatarColor(color);
+                localStorage.setItem(`avatar_color_${user.id}`, color);
+            }
+        } catch (e) {
+            console.error('Error parsing avatar color:', e);
+        }
+    }
+
 
                     const serverBanner = userData.banner || '';
-                    const finalBanner = serverBanner || localBanner;
-                    const backendAvatar = userData.avatar || authData.avatar;
+    // Only use local banner if server doesn't have one and we have a valid one
+    const finalBanner = serverBanner || localBanner;
+    const backendAvatar = userData.avatar || authData.avatar;
 
                     const backendData = {
-                        username: (userData.username || authData.username).trim(),
-                        email: userData.email || authData.email,
-                        phone: userData.phone || authData.phone,
-                        address: userData.address || authData.address,
-                        avatar: backendAvatar,
-                        name: userData.name || authData.name,
-                        bio: userData.bio || authData.bio || "",
-                        banner: finalBanner,
-                        level: storedUser.level ?? userData.level ?? authData.level,
-                        xp: storedUser.xp ?? userData.xp ?? authData.xp
-                    };
+        username: (userData.username || authData.username).trim(),
+        email: userData.email || authData.email,
+        phone: userData.phone || authData.phone,
+        address: userData.address || authData.address,
+        avatar: backendAvatar,
+        name: userData.name || authData.name,
+        bio: userData.bio || authData.bio || "",
+        banner: finalBanner, // Use server banner if available
+        level: storedUser.level ?? userData.level ?? authData.level,
+        xp: storedUser.xp ?? userData.xp ?? authData.xp
+    };
 
                     if (userData.last_username_change) {
                         setLastUsernameChange(userData.last_username_change);
@@ -287,12 +293,18 @@ const Profile = () => {
                     const updatedUser = {
                         ...storedUser,
                         ...backendData,
-                        id: user.id
+                        id: user.id,
+                        banner: finalBanner 
                     };
                     localStorage.setItem('user', JSON.stringify(updatedUser));
 
                     if (finalBanner) {
                         localStorage.setItem(userBannerKey, finalBanner);
+                          // Also save banner to user object in localStorage for redundancy
+    if (finalBanner && updatedUser) {
+        updatedUser.banner = finalBanner;
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
                     }
 
                     // Daily login check
@@ -463,59 +475,80 @@ const Profile = () => {
         }
     };
 
-    const handleBannerChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+   // Update the handleBannerChange function - optimize the banner size further:
 
-        if (file.size > 10 * 1024 * 1024) {
-            setStatus("Banner image must be less than 10MB");
-            return;
-        }
+const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-        try {
-            const base64 = await convertToBase64(file);
-            const img = new Image();
-            img.src = base64;
+    if (file.size > 10 * 1024 * 1024) {
+        setStatus("Banner image must be less than 10MB");
+        return;
+    }
 
-            await new Promise((resolve) => {
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    let { width, height } = img;
-                    const maxWidth = 1920;
-                    const maxHeight = 400;
+    try {
+        const base64 = await convertToBase64(file);
+        const img = new Image();
+        img.src = base64;
 
-                    if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
-                    if (height > maxHeight) { width = (width * maxHeight) / height; height = maxHeight; }
+        await new Promise((resolve) => {
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                let { width, height } = img;
+                
+                // More aggressive resizing for banners
+                const maxWidth = 1200; // Reduced from 1920
+                const maxHeight = 300;  // Reduced from 400
 
-                    canvas.width = Math.round(width); canvas.height = Math.round(height);
-                    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, width, height);
+                if (width > maxWidth) { 
+                    height = (height * maxWidth) / width; 
+                    width = maxWidth; 
+                }
+                if (height > maxHeight) { 
+                    width = (width * maxHeight) / height; 
+                    height = maxHeight; 
+                }
 
-                    const resizedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                canvas.width = Math.round(width); 
+                canvas.height = Math.round(height);
+                ctx.imageSmoothingEnabled = true; 
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
 
-                    setBannerPreview(resizedBase64);
-                    setFormData(prev => ({ ...prev, banner: resizedBase64 }));
-                    setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
+                // Use lower quality for banners (0.7 instead of 0.85)
+                const resizedBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
-                    if (user?.id) {
-                        const userBannerKey = userKey(user.id, 'banner');
-                        localStorage.setItem(userBannerKey, resizedBase64);
-                    }
+                setBannerPreview(resizedBase64);
+                setFormData(prev => ({ ...prev, banner: resizedBase64 }));
+                setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
 
-                    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                    localStorage.setItem('user', JSON.stringify({ ...storedUser, banner: resizedBase64, id: user?.id }));
+                if (user?.id) {
+                    const userBannerKey = userKey(user.id, 'banner');
+                    localStorage.setItem(userBannerKey, resizedBase64);
+                }
 
-                    resolve();
+                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const updatedUser = { 
+                    ...storedUser, 
+                    banner: resizedBase64, 
+                    id: user?.id 
                 };
-            });
+                localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            setStatus("Banner ready to save. Click 'Save Profile' to update permanently.");
-        } catch (error) {
-            console.error('Banner processing error:', error);
-            setStatus("Failed to process banner image");
-        }
-    };
+                // Also save to a dedicated banner storage
+                localStorage.setItem(`user_banner_${user?.id}`, resizedBase64);
+
+                resolve();
+            };
+        });
+
+        setStatus("Banner ready to save. Click 'Save Profile' to update permanently.");
+    } catch (error) {
+        console.error('Banner processing error:', error);
+        setStatus("Failed to process banner image");
+    }
+};
 
     const handleSaveChanges = async () => {
         if (!user?.id) {
@@ -576,21 +609,23 @@ const Profile = () => {
             const currentBanner = bannerPreview || formData.banner || scopedBanner || '';
 
             // Prepare data to save
-            const dataToSave = {
-                id: user.id,
-                username: usernameChanged ? newUsername : currentUsername,
-                email: formData.email || storedUser.email || '',
-                phone: formData.phone || storedUser.phone || '',
-                address: formData.address || storedUser.address || '',
-                name: formData.name || storedUser.name || '',
-                bio: (formData.bio || '').trim(),
-                banner: currentBanner,
-                timezone: formData.timezone || storedUser.timezone || '',
-                // Save color in avatar field if user has no custom avatar
-                avatar: avatarColor && !formData.avatar && !avatarPreview ? 
-                    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='${encodeURIComponent(avatarColor)}'/%3E%3C/svg%3E`
-                    : formData.avatar || storedUser.avatar || '',
-            };
+      const dataToSave = {
+    id: user.id,
+    username: usernameChanged ? newUsername : currentUsername,
+    email: formData.email || storedUser.email || '',
+    phone: formData.phone || storedUser.phone || '',
+    address: formData.address || storedUser.address || '',
+    name: formData.name || storedUser.name || '',
+    bio: (formData.bio || '').trim(),
+    // Only send banner if it's a data URL (new upload) or existing URL
+    banner: currentBanner && (currentBanner.startsWith('data:image') || currentBanner.startsWith('http')) 
+        ? currentBanner 
+        : '',
+    timezone: formData.timezone || storedUser.timezone || '',
+    avatar: avatarColor && !formData.avatar && !avatarPreview ? 
+        `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='${encodeURIComponent(avatarColor)}'/%3E%3C/svg%3E`
+        : formData.avatar || storedUser.avatar || '',
+};
 
             localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
 
