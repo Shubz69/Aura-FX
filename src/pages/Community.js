@@ -71,25 +71,46 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
 const PptxViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [docUri, setDocUri] = useState(null);
+    const [viewerUrl, setViewerUrl] = useState(null);
     
     useEffect(() => {
-        try {
-            if (!file?.preview) {
-                throw new Error('No file data available');
+        const loadPresentation = async () => {
+            try {
+                setLoading(true);
+                
+                if (!file?.preview) {
+                    throw new Error('No file data available');
+                }
+
+                // Convert data URL to blob
+                const base64Data = file.preview.split(',')[1];
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                const blob = new Blob([bytes], { 
+                    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' 
+                });
+                
+                const blobUrl = URL.createObjectURL(blob);
+                
+                // Use Google Docs Viewer (already in CSP)
+                const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(blobUrl)}&embedded=true`;
+                setViewerUrl(googleViewerUrl);
+                
+                setLoading(false);
+                
+            } catch (err) {
+                console.error('Error:', err);
+                setError(err.message);
+                setLoading(false);
             }
-            
-            console.log('Initializing DocViewer for:', file.name);
-            
-            // DocViewer directly supports data URLs!
-            setDocUri(file.preview);
-            setLoading(false);
-            
-        } catch (err) {
-            console.error('DocViewer Error:', err);
-            setError(err.message);
-            setLoading(false);
-        }
+        };
+
+        loadPresentation();
     }, [file]);
 
     const handleDownload = () => {
@@ -108,7 +129,7 @@ const PptxViewer = ({ file, onClose }) => {
         );
     }
 
-    if (error || !docUri) {
+    if (error || !viewerUrl) {
         return (
             <div className="pptx-viewer-error">
                 <p>❌ {error || 'Cannot load presentation'}</p>
@@ -117,14 +138,6 @@ const PptxViewer = ({ file, onClose }) => {
             </div>
         );
     }
-
-    const documents = [
-        {
-            uri: docUri,
-            fileName: file.name,
-            fileType: "pptx"
-        }
-    ];
 
     return (
         <div className="pptx-viewer-container">
@@ -136,25 +149,16 @@ const PptxViewer = ({ file, onClose }) => {
                 </div>
             </div>
             <div className="pptx-viewer-content">
-                <DocViewer
-                    documents={documents}
-                    config={{
-                        header: {
-                            disableHeader: true, // Hide default header
-                            disableFileName: false,
-                            retainURLParams: false
-                        },
-                        pdfZoom: {
-                            defaultZoom: 1.0,
-                            zoomJump: 0.1
-                        }
-                    }}
+                <iframe
+                    src={viewerUrl}
                     style={{
-                        height: '100%',
                         width: '100%',
+                        height: '100%',
                         border: 'none',
                         background: '#fff'
                     }}
+                    title={file?.name}
+                    allowFullScreen
                 />
             </div>
         </div>
