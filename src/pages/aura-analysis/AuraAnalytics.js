@@ -133,7 +133,7 @@ export default function AuraAnalytics() {
 
   const equityMin = useMemo(() => (equityCurve.length ? Math.min(...equityCurve.map((p) => p.equity)) : 0), [equityCurve]);
   const equityMax = useMemo(() => (equityCurve.length ? Math.max(...equityCurve.map((p) => p.equity)) : 1), [equityCurve]);
-  const pairMax = useMemo(() => (pairPerformance.length ? Math.max(...pairPerformance.map((p) => Math.abs(p.pnl)))) : 1), [pairPerformance]);
+  const pairMax = useMemo(() => (pairPerformance.length ? Math.max(...pairPerformance.map((p) => Math.abs(p.pnl))) : 1), [pairPerformance]);
   const sessionExtent = useMemo(() => {
     if (!sessionPerformance.length) return 1;
     const vals = sessionPerformance.map((p) => p.pnl);
