@@ -5,7 +5,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntitlements } from '../context/EntitlementsContext';
 import { useSubscription } from '../context/SubscriptionContext';
@@ -160,7 +160,59 @@ export const AdminGuard = ({ children }) => {
 const INBOX_FRIENDS_ROLES = ['premium', 'elite', 'a7fx', 'admin', 'super_admin'];
 
 /**
- * InboxGuard - Allows Admin (full inbox) or Premium/Elite/Admin (Friends tab only) to access /admin/inbox
+ * Shown when a user without Premium/Elite tries to use the Friends tab.
+ * Export so AdminInbox can render it inside the messaging layout.
+ */
+export const FriendsUpgradeRequired = () => (
+  <div style={{
+    minHeight: 'calc(100vh - 120px)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '40px 24px',
+    background: 'transparent',
+    color: '#fff',
+    textAlign: 'center',
+    fontFamily: "'Space Grotesk', sans-serif"
+  }}>
+    <div style={{
+      maxWidth: 420,
+      padding: '32px 28px',
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(139,92,246,0.25)',
+      borderRadius: 16,
+      boxShadow: '0 8px 40px rgba(0,0,0,0.4)'
+    }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: 12, letterSpacing: '0.02em' }}>
+        Friends messaging is a premium feature
+      </h2>
+      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: 24 }}>
+        You have to buy Premium or Elite to use this feature.
+      </p>
+      <Link
+        to="/subscription"
+        style={{
+          display: 'inline-block',
+          padding: '12px 24px',
+          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+          color: '#fff',
+          borderRadius: 10,
+          fontWeight: 600,
+          textDecoration: 'none',
+          fontSize: '0.9rem'
+        }}
+      >
+        View Premium & Elite plans
+      </Link>
+    </div>
+  </div>
+);
+
+/**
+ * InboxGuard - Allows all authenticated users. Admin tab (message admin) is for everyone;
+ * Friends tab is gated inside AdminInbox (Premium/Elite/Admin only).
  */
 export const InboxGuard = ({ children }) => {
   const { user, token } = useAuth();
@@ -168,15 +220,6 @@ export const InboxGuard = ({ children }) => {
 
   if (!user || !token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  const role = (user?.role || '').toString().toLowerCase();
-  const isAdmin = role === 'admin' || role === 'super_admin' ||
-                  user?.email?.toLowerCase() === 'shubzfx@gmail.com';
-  const canUseFriends = INBOX_FRIENDS_ROLES.includes(role);
-
-  if (!isAdmin && !canUseFriends) {
-    return <Navigate to="/" replace />;
   }
 
   return children;

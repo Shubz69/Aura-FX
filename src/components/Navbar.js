@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 import "../styles/UserDropdown.css";
-import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH, FaChartLine } from 'react-icons/fa';
+import { FaUserCircle, FaSignOutAlt, FaBook, FaTrophy, FaCog, FaHeadset, FaBars, FaTimes, FaEnvelope, FaSlidersH, FaChartLine, FaThLarge } from 'react-icons/fa';
 import { isSuperAdmin, isAdmin, isPremium } from '../utils/roles';
 import A7Logo from './A7Logo';
 import { triggerNotification } from './NotificationSystem';
@@ -120,7 +120,12 @@ const mobileMenuPortal = ReactDOM.createPortal(
                         </Link>
                     </li>
                     <li>
-                        <Link to={(isAdmin(user) || isPremium(user)) ? "/admin/inbox" : "/messages"} onClick={closeMobileMenu}>
+                        <Link to="/trader-deck" onClick={closeMobileMenu}>
+                            <FaThLarge className="dropdown-icon" /> The Trader Deck
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/admin/inbox" onClick={closeMobileMenu}>
                             <FaEnvelope className="dropdown-icon" /> Messages
                         </Link>
                     </li>
@@ -244,7 +249,10 @@ const mobileMenuPortal = ReactDOM.createPortal(
                                             <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                 <FaChartLine className="dropdown-icon" /> Aura Analysis
                                             </Link>
-                                            <Link to={(isAdmin(user) || isPremium(user)) ? "/admin/inbox" : "/messages"} className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <Link to="/trader-deck" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                                <FaThLarge className="dropdown-icon" /> The Trader Deck
+                                            </Link>
+                                            <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                 <FaEnvelope className="dropdown-icon" /> Messages
                                             </Link>
                                             <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
