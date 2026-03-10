@@ -135,32 +135,96 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     }, [isOwnProfile, token]);
 
     const checkFriendStatus = useCallback(async () => {
-        if (isOwnProfile || !token || !userId || isSystemUser) return;
-        try {
-            const response = await fetch(`${window.location.origin}/api/friends/status/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            if (response.ok) {
-                const data = await response.json();
-                const s = (data.status || 'NONE').toLowerCase();
-                setFriendStatus(s === 'friends' ? 'accepted' : s);
+    if (isOwnProfile || !token || !userId || isSystemUser) {
+        setFriendStatus('none');
+        setFriendRequestId(null);
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${window.location.origin}/api/friends/status/${userId}`, { 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Friend status response:', data); // Debug log
+            
+            // Convert status to lowercase for consistent handling
+            const status = (data.status || 'none').toLowerCase();
+            
+            // Handle different status values
+            if (status === 'accepted' || status === 'friends') {
+                setFriendStatus('accepted');
+                setFriendRequestId(null);
+            } else if (status === 'pending') {
+                // Need to determine if sent or received
+                // The API should ideally tell us direction
+                if (data.direction === 'sent') {
+                    setFriendStatus('pending_sent');
+                } else if (data.direction === 'received') {
+                    setFriendStatus('pending_received');
+                } else {
+                    // If we don't have direction info, default to sent
+                    setFriendStatus('pending_sent');
+                }
                 setFriendRequestId(data.requestId || null);
-            } else { setFriendStatus('none'); setFriendRequestId(null); }
-        } catch (err) { setFriendStatus('none'); setFriendRequestId(null); }
-    }, [isOwnProfile, token, userId, isSystemUser]);
-
-    useEffect(() => {
-        if (isOpen && userId) {
-            setMounted(false);
-            setTimeout(() => setMounted(true), 50);
-            if (isSystemUser) { setProfile(userData || { username: 'AURA FX', id: 'system' }); setLoading(false); return; }
-            if (!userData) fetchProfile(); else {
-                setProfile(userData);
-                if (userData.last_seen) { const d = new Date(userData.last_seen); setIsOnline(d >= new Date(Date.now() - 5 * 60 * 1000)); setLastSeen(d); }
-                setLoading(false);
+            } else if (status === 'pending_sent') {
+                setFriendStatus('pending_sent');
+                setFriendRequestId(data.requestId || null);
+            } else if (status === 'pending_received') {
+                setFriendStatus('pending_received');
+                setFriendRequestId(data.requestId || null);
+            } else {
+                setFriendStatus('none');
+                setFriendRequestId(null);
             }
-            fetchSettings();
-            checkFriendStatus();
+        } else {
+            setFriendStatus('none');
+            setFriendRequestId(null);
         }
-    }, [isOpen, userId, userData, isSystemUser, fetchProfile, fetchSettings, checkFriendStatus]);
+    } catch (err) { 
+        console.error('Error checking friend status:', err);
+        setFriendStatus('none'); 
+        setFriendRequestId(null); 
+    }
+}, [isOwnProfile, token, userId, isSystemUser]);
+
+   useEffect(() => {
+    if (isOpen && userId) {
+        setMounted(false);
+        setTimeout(() => setMounted(true), 50);
+        
+        if (isSystemUser) { 
+            setProfile(userData || { username: 'AURA FX', id: 'system' }); 
+            setLoading(false); 
+            return; 
+        }
+        
+        if (!userData) {
+            fetchProfile(); 
+        } else {
+            setProfile(userData);
+            if (userData.last_seen) { 
+                const d = new Date(userData.last_seen); 
+                setIsOnline(d >= new Date(Date.now() - 5 * 60 * 1000)); 
+                setLastSeen(d); 
+            }
+            setLoading(false);
+        }
+        
+        fetchSettings();
+        checkFriendStatus(); // Make sure this is called
+    }
+    
+    // Reset friend status when modal closes
+    return () => {
+        if (!isOpen) {
+            setFriendStatus('none');
+            setFriendRequestId(null);
+        }
+    };
+}, [isOpen, userId, userData, isSystemUser, fetchProfile, fetchSettings, checkFriendStatus]);
 
     useEffect(() => {
         if (profile && isOpen) {
@@ -173,41 +237,81 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     if (!isOpen) return null;
 
-    const handleFriendAction = async (action) => {
-        if (!token) { toast.error('Please log in to manage friends'); return; }
-        setFriendLoading(true);
-        try {
-            let endpoint = '', method = 'POST', body = {};
+   const handleFriendAction = async (action) => {
+    if (!token) { toast.error('Please log in to manage friends'); return; }
+    setFriendLoading(true);
+    
+    try {
+        let endpoint = '', method = 'POST', body = {};
+        
+        switch (action) {
+            case 'add': 
+                endpoint = '/api/friends/request'; 
+                body = { receiverUserId: userId }; 
+                break;
+            case 'cancel': 
+                endpoint = '/api/friends/cancel'; 
+                body = { requestId: friendRequestId }; 
+                break;
+            case 'accept': 
+                endpoint = '/api/friends/accept'; 
+                body = { requestId: friendRequestId }; 
+                break;
+            case 'reject': 
+                endpoint = '/api/friends/decline'; 
+                body = { requestId: friendRequestId }; 
+                break;
+            case 'remove': 
+                endpoint = '/api/friends/remove'; 
+                method = 'DELETE'; 
+                body = { friendUserId: userId }; 
+                break;
+            default: 
+                return;
+        }
+        
+        const response = await fetch(`${window.location.origin}${endpoint}`, {
+            method, 
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update friend status based on action
             switch (action) {
-                case 'add': endpoint = '/api/friends/request'; body = { receiverUserId: userId }; break;
-                case 'cancel': endpoint = '/api/friends/cancel'; body = { requestId: friendRequestId }; break;
-                case 'accept': endpoint = '/api/friends/accept'; body = { requestId: friendRequestId }; break;
-                case 'reject': endpoint = '/api/friends/decline'; body = { requestId: friendRequestId }; break;
-                case 'remove': endpoint = '/api/friends/remove'; method = 'DELETE'; body = { friendUserId: userId }; break;
-                default: return;
+                case 'add':
+                    setFriendStatus('pending_sent');
+                    setFriendRequestId(data.request?.id || data.requestId || null);
+                    break;
+                case 'cancel':
+                case 'reject':
+                case 'remove':
+                    setFriendStatus('none');
+                    setFriendRequestId(null);
+                    break;
+                case 'accept':
+                    setFriendStatus('accepted');
+                    setFriendRequestId(null);
+                    break;
+                default:
+                    break;
             }
-            const response = await fetch(`${window.location.origin}${endpoint}`, {
-                method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(body)
-            });
-            const data = await response.json();
-      // AFTER:
-if (data.success) {
-    if (action === 'cancel' || action === 'reject' || action === 'remove') {
-        setFriendStatus('none');
-        setFriendRequestId(null);           // ✅ hard reset — no stale ID
-    } else if (action === 'add') {
-        setFriendStatus('pending_sent');
-        setFriendRequestId(data.request?.id || data.requestId || null);
-    } else if (action === 'accept') {
-        setFriendStatus('accepted');
-        setFriendRequestId(null);
+            toast.success(data.message || 'Action completed successfully');
+        } else { 
+            toast.error(data.message || 'Action failed'); 
+        }
+    } catch (err) { 
+        console.error('Friend action error:', err);
+        toast.error('Failed to complete action'); 
+    } finally { 
+        setFriendLoading(false); 
     }
-    toast.success(data.message);
-            } else { toast.error(data.message || 'Action failed'); }
-        } catch (err) { toast.error('Failed to complete action'); }
-        finally { setFriendLoading(false); }
-    };
+};
 
     const handleSettingsUpdate = async (updates) => {
         setSettings(prev => ({ ...prev, ...updates }));
@@ -221,14 +325,46 @@ if (data.success) {
         finally { setSettingsLoading(false); }
     };
 
-    const getFriendButton = () => {
-        switch (friendStatus) {
-            case 'accepted': return { icon: <FaUserCheck />, text: 'Friends', color: '#23A55A', action: 'remove', subtext: 'Click to remove' };
-            case 'pending_sent': return { icon: <FaHourglass />, text: 'Pending', color: '#F0B232', action: 'cancel', subtext: 'Click to cancel' };
-            case 'pending_received': return { icon: <FaUserPlus />, text: 'Accept', color: '#8b5cf6', action: 'accept', subtext: 'Accept request' };
-            default: return { icon: <FaUserPlus />, text: 'Add Friend', color: '#8b5cf6', action: 'add', subtext: 'Send request' };
-        }
-    };
+   const getFriendButton = () => {
+    // Debug log to see what status we're getting
+    console.log('Current friendStatus:', friendStatus);
+    
+    switch (friendStatus) {
+        case 'accepted':
+            return { 
+                icon: <FaUserCheck />, 
+                text: 'Friends', 
+                color: '#23A55A', 
+                action: 'remove', 
+                subtext: 'Click to remove' 
+            };
+        case 'pending_sent':
+            return { 
+                icon: <FaHourglass />, 
+                text: 'Pending', 
+                color: '#F0B232', 
+                action: 'cancel', 
+                subtext: 'Click to cancel' 
+            };
+        case 'pending_received':
+            return { 
+                icon: <FaUserPlus />, 
+                text: 'Accept', 
+                color: '#8b5cf6', 
+                action: 'accept', 
+                subtext: 'Accept request' 
+            };
+        case 'none':
+        default:
+            return { 
+                icon: <FaUserPlus />, 
+                text: 'Add Friend', 
+                color: '#8b5cf6', 
+                action: 'add', 
+                subtext: 'Send request' 
+            };
+    }
+};
 
     const friendBtn = getFriendButton();
 
