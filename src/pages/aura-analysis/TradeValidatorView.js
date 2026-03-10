@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
@@ -51,6 +51,8 @@ function calcForexRisk(pair, balance, riskPercent, entry, stop, direction) {
 }
 
 export default function TradeValidatorView() {
+  const location = useLocation();
+  const isEmbedded = location.pathname === '/aura-analysis/trade-validator';
   const [checked, setChecked] = useState(() => {
     try {
       const raw = localStorage.getItem('aura-trade-validator-checked');
@@ -197,16 +199,20 @@ export default function TradeValidatorView() {
   };
 
   return (
-    <div className="trade-validator-page">
+    <div className={`trade-validator-page ${isEmbedded ? 'trade-validator-embedded' : ''}`}>
       <div className="trade-validator-inner">
-        <Link to="/aura-analysis" className="trade-validator-back">
-          <FaArrowLeft /> Back to Aura Analysis
-        </Link>
+        {!isEmbedded && (
+          <Link to="/aura-analysis/overview" className="trade-validator-back">
+            <FaArrowLeft /> Back to Aura Analysis
+          </Link>
+        )}
 
-        <header className="trade-validator-header">
-          <h1>Trade Validator</h1>
-          <p>Run your trade through the confluence checklist and risk calculator. Log results and track PnL.</p>
-        </header>
+        {!isEmbedded && (
+          <header className="trade-validator-header">
+            <h1>Trade Validator</h1>
+            <p>Run your trade through the confluence checklist and risk calculator. Log results and track PnL.</p>
+          </header>
+        )}
 
         <div className="trade-validator-pnl-strip">
           <div className={`trade-validator-pnl-card ${pnl.dailyPnl >= 0 ? 'positive' : 'negative'}`}>

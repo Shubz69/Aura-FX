@@ -109,6 +109,221 @@
   text-transform: uppercase;
 }
 
+/* ── Reference: Your trading performance at a glance (2x4 KPI grid) ── */
+.aura-overview-muted {
+  color: var(--ov-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.aura-overview-glance-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ov-muted);
+  margin: 0 0 16px 0;
+  letter-spacing: 0.04em;
+}
+
+.aura-overview-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.aura-overview-kpi-card {
+  background: rgba(18, 18, 24, 0.95);
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  padding: 18px 20px;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.aura-overview-kpi-card:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.08);
+}
+
+.aura-overview-kpi-label {
+  font-size: 0.72rem;
+  color: var(--ov-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.aura-overview-kpi-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ov-text);
+}
+
+.aura-overview-kpi-value--green {
+  color: var(--ov-green);
+}
+
+.aura-overview-kpi-value--red {
+  color: var(--ov-red);
+}
+
+/* ── Monthly total + calendar (reference style) ── */
+.aura-overview-monthly {
+  background: rgba(18, 18, 24, 0.95);
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  padding: 20px 24px 24px;
+  margin-bottom: 24px;
+}
+
+.aura-overview-monthly-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.aura-overview-monthly-title-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.aura-overview-monthly-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ov-muted);
+  letter-spacing: 0.1em;
+}
+
+.aura-overview-monthly-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aura-overview-monthly-pnl {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.aura-overview-monthly-meta {
+  font-size: 0.85rem;
+  color: var(--ov-muted);
+}
+
+.aura-overview-monthly-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aura-overview-month-nav-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--ov-border);
+  color: var(--ov-text);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.aura-overview-month-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.aura-overview-month-nav-label {
+  font-size: 0.95rem;
+  color: var(--ov-text);
+  min-width: 120px;
+  text-align: center;
+}
+
+.aura-overview-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.aura-overview-cal-dow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ov-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.aura-overview-cal-day {
+  min-height: 56px;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.aura-overview-cal-day--empty {
+  background: transparent;
+  min-height: 40px;
+}
+
+.aura-overview-cal-day--win {
+  background: var(--ov-green-dim);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.aura-overview-cal-day--loss {
+  background: var(--ov-red-dim);
+  border-color: rgba(248, 113, 113, 0.2);
+}
+
+.aura-overview-cal-day--today {
+  border-color: rgba(99, 179, 237, 0.5);
+  box-shadow: 0 0 0 1px rgba(99, 179, 237, 0.3);
+}
+
+.aura-overview-cal-num {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ov-text);
+}
+
+.aura-overview-cal-pnl {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.aura-overview-cal-pnl.positive { color: var(--ov-green); }
+.aura-overview-cal-pnl.negative { color: var(--ov-red); }
+
+@media (max-width: 768px) {
+  .aura-overview-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .aura-overview-monthly-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* ── Grid — full width, no horizontal overflow ───────────── */
 .aura-overview-grid {
   display: grid;

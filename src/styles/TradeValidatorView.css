@@ -27,6 +27,11 @@
   box-sizing: border-box;
 }
 
+.trade-validator-page.trade-validator-embedded {
+  padding-top: 0;
+  min-height: 0;
+}
+
 /* Single visible panel – solid background so content is always visible */
 .trade-validator-inner {
   max-width: 900px;

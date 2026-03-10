@@ -1,0 +1,160 @@
+/* Aura Analysis Shell – matches reference (Aura-analysis-start) */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+.aura-shell {
+  min-height: 100vh;
+  width: 100%;
+  background: #0a0a0a;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  padding-bottom: 48px;
+}
+
+/* Hero: title + subtitle + Quick Add Trade */
+.aura-shell-hero {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.aura-shell-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.aura-shell-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.aura-shell-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.aura-shell-sub {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+
+.aura-shell-quick-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.9) 0%, rgba(124, 58, 237, 0.95) 100%);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.aura-shell-quick-add:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(139, 92, 246, 0.45);
+  color: #fff;
+}
+
+/* Tab bar */
+.aura-shell-tabs-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10, 10, 10, 0.97);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.aura-shell-tabs-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.aura-shell-tabs-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.aura-shell-tab {
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.2s, background 0.2s;
+  position: relative;
+}
+
+.aura-shell-tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.aura-shell-tab.active {
+  color: #fff;
+  background: rgba(139, 92, 246, 0.2);
+  font-weight: 500;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.aura-shell-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.9), rgba(99, 179, 237, 0.7));
+  border-radius: 2px;
+}
+
+/* Content area */
+.aura-shell-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .aura-shell-hero-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .aura-shell-quick-add {
+    align-self: flex-start;
+  }
+  .aura-shell-tabs-inner {
+    padding: 0 16px;
+  }
+  .aura-shell-tab {
+    padding: 12px 14px;
+    font-size: 0.82rem;
+  }
+  .aura-shell-content {
+    padding: 20px 16px 32px;
+  }
+}

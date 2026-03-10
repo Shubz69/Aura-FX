@@ -54,6 +54,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const PremiumAI = lazy(() => import('./pages/PremiumAI'));
 const Journal = lazy(() => import('./pages/Journal'));
 const AuraAnalysis = lazy(() => import('./pages/AuraAnalysis'));
+const AuraAnalysisShell = lazy(() => import('./components/aura-analysis/AuraAnalysisShell'));
 const AuraAnalysisGateway = lazy(() => import('./pages/aura-analysis/AuraAnalysisGateway'));
 const TradeValidatorEntry = lazy(() => import('./pages/aura-analysis/TradeValidatorEntry'));
 /** Resolves to src/pages/TraderDeck.js – do not remove or rename; required for build. */
@@ -68,6 +69,7 @@ const AuraExecutionLab = lazy(() => import('./pages/aura-analysis/tabs/Execution
 const AuraCalendar = lazy(() => import('./pages/aura-analysis/tabs/CalendarIntelligence'));
 const AuraPsychology = lazy(() => import('./pages/aura-analysis/tabs/PsychologyDiscipline'));
 const AuraGrowth = lazy(() => import('./pages/aura-analysis/tabs/GrowthEngine'));
+const AuraAnalysisPlaceholder = lazy(() => import('./pages/aura-analysis/AuraAnalysisPlaceholder'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
@@ -208,9 +210,8 @@ function AppRoutes() {
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
-                            <Route index element={<AuraAnalysisGateway />} />
+                            <Route index element={<Navigate to="overview" replace />} />
                             <Route path="ai" element={<ConnectionHub />} />
-                            <Route path="trade-validator" element={<TradeValidatorEntry />} />
                             <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
                                 <Route index element={<Navigate to="overview" replace />} />
                                 <Route path="overview" element={<AuraOverview />} />
@@ -222,6 +223,13 @@ function AppRoutes() {
                                 <Route path="psychology" element={<AuraPsychology />} />
                                 <Route path="growth" element={<AuraGrowth />} />
                             </Route>
+                            <Route path="overview" element={<AuraOverview />} />
+                            <Route path="trade-validator" element={<TradeValidatorEntry />} />
+                            <Route path="calculator" element={<AuraAnalysisPlaceholder title="Trade Calculator — Coming soon" />} />
+                            <Route path="journal" element={<AuraAnalysisPlaceholder title="Trade Journal — Coming soon" />} />
+                            <Route path="analytics" element={<AuraAnalysisPlaceholder title="Analytics — Coming soon" />} />
+                            <Route path="leaderboard" element={<Navigate to="/leaderboard" replace />} />
+                            <Route path="profile" element={<Navigate to="/profile" replace />} />
                         </Route>
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
