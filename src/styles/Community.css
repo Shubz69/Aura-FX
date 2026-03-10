@@ -635,34 +635,148 @@ div[style*="position: fixed"][style*="inset: 0"] div[style*="maxHeight: 220px"] 
 .community-sidebar.mobile-sidebar {
     position: fixed !important;
     top: var(--navbar-h) !important;
-    left: 0; bottom: 0;
-    width: 280px; max-width: 82vw;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
     z-index: 1001;
     transform: translateX(-100%);
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
     box-shadow: 4px 0 24px rgba(0,0,0,0.7);
     background: var(--bg-primary) !important;
-    visibility: hidden; opacity: 0;
     height: calc(100vh - var(--navbar-h)) !important;
-    display: flex; flex-direction: column; overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    visibility: hidden;
+    opacity: 0;
 }
+
 .community-sidebar.mobile-sidebar.sidebar-open {
-    transform: translateX(0); visibility: visible; opacity: 1;
+    transform: translateX(0);
+    visibility: visible;
+    opacity: 1;
 }
+
+/* Sidebar header - fixed at top */
+.community-sidebar.mobile-sidebar .sidebar-header {
+    flex-shrink: 0;
+    padding: 16px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+    z-index: 2;
+}
+
+/* Channels section - scrollable area */
 .community-sidebar.mobile-sidebar .channels-section {
-    flex: 1 1 0; overflow-y: auto; min-height: 0;
-    padding-bottom: 24px; -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 8px 6px 24px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
-.mobile-sidebar-overlay { position: fixed; top: var(--navbar-h); left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); z-index: 1000; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease; }
+/* Ensure all channel categories and items are visible */
+.community-sidebar.mobile-sidebar .channel-category {
+    margin-bottom: 8px;
+}
 
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-@keyframes pulse  { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.2); } }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.community-sidebar.mobile-sidebar .channels-list {
+    margin-bottom: 12px;
+}
 
-body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
-.channel-item.locked { opacity: 0.45; }
-.channel-item.locked:hover { opacity: 0.65; }
+/* Sidebar footer - fixed at bottom */
+.community-sidebar.mobile-sidebar .sidebar-footer {
+    flex-shrink: 0 !important;
+    padding: 12px 16px !important;
+    border-top: 1px solid var(--border);
+    background: var(--bg-primary);
+    margin-top: auto;
+    z-index: 2;
+}
+
+/* Mobile sidebar overlay */
+.mobile-sidebar-overlay { 
+    position: fixed; 
+    top: var(--navbar-h); 
+    left: 0; 
+    right: 0; 
+    bottom: 0; 
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000; 
+    animation: fadeIn 0.2s ease; 
+}
+
+/* Prevent body scroll when sidebar is open */
+body.sidebar-open-mobile { 
+    overflow: hidden !important; 
+    position: fixed !important;
+    width: 100% !important; 
+    height: 100% !important; 
+}
+
+/* Fix for iOS safe areas */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .community-sidebar.mobile-sidebar {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .community-sidebar.mobile-sidebar .sidebar-footer {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* Ensure all content is visible */
+.community-sidebar.mobile-sidebar .channel-item {
+    min-height: 40px;
+    padding: 8px 12px;
+}
+
+/* Category header spacing */
+.community-sidebar.mobile-sidebar .category-header {
+    padding: 8px 12px;
+}
+
+/* Manage button positioning */
+.community-sidebar.mobile-sidebar .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Online now indicator */
+.community-sidebar.mobile-sidebar .online-indicator {
+    margin: 4px 12px 12px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+/* Additional styles for mobile sidebar content */
+@media (max-width: 767px) {
+    /* Ensure the main container doesn't interfere */
+    .community-container {
+        position: relative !important;
+    }
+    
+    /* Better touch scrolling */
+    .community-sidebar.mobile-sidebar .channels-section {
+        overscroll-behavior: contain;
+    }
+    
+    /* Fix for Android */
+    .community-sidebar.mobile-sidebar {
+        -webkit-overflow-scrolling: touch;
+    }
+}
 
 /* ════════════════════════════════════════════════════════════════
    JOURNAL FAB — position:fixed on ALL breakpoints.
@@ -784,20 +898,38 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
 
 /* ── MOBILE ≤767px ───────────────────────────────────────────── */
 @media (max-width: 767px) {
-    .community-container {
-        display: flex !important; flex-direction: column !important;
+   .community-container {
+        display: flex !important; 
+        flex-direction: column !important;
         top: var(--navbar-h) !important;
-        height: calc(100vh - var(--navbar-h)) !important;
-        width: 100vw !important; overflow: hidden !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        width: 100vw !important; 
+        overflow: hidden !important;
     }
     .community-sidebar:not(.mobile-sidebar) { display: none !important; }
     .chat-main {
-        flex: 1 1 0 !important; width: 100% !important; min-height: 0 !important;
-        display: flex !important; flex-direction: column !important; overflow: hidden !important;
+        flex: 1 1 0 !important; 
+        width: 100% !important; 
+        min-height: 0 !important;
+        display: flex !important; 
+        flex-direction: column !important; 
+        overflow: hidden !important;
     }
-    .chat-header { padding: 0 10px !important; min-height: 48px !important; height: 48px !important; flex-shrink: 0 !important; }
+    .chat-header { 
+        padding: 0 10px !important; 
+        min-height: 48px !important; 
+        height: 48px !important; 
+        flex-shrink: 0 !important; 
+    }
     .chat-header h2 { font-size: 0.875rem; }
-    .chat-messages { flex: 1 1 0 !important; min-height: 0 !important; padding: 10px 12px !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+    .chat-messages { 
+        flex: 1 1 0 !important; 
+        min-height: 0 !important; 
+        padding: 10px 12px !important; 
+        overflow-y: auto !important; 
+        -webkit-overflow-scrolling: touch; 
+    }
 
     .message-item { padding: 2px 8px 2px 60px !important; }
     .message-item:not(.grouped) { padding-top: 8px !important; }
@@ -806,62 +938,146 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
     .message-text { font-size: 0.9rem !important; }
     .message-header-info, .community-message-header-with-time { gap: 5px !important; margin-bottom: 3px !important; }
 
-    /* ── Mobile input container: right padding reserves space for FAB ── */
-    /* FAB(48px) + gap(8px) + right-margin(10px) = 66px */
+    /* ── FIXED: Mobile input container ── */
     .chat-input-container {
-        padding: 8px 66px 8px 10px !important;
+        padding: 8px 12px 8px 10px !important;
+        background: var(--bg-tertiary) !important;
+        border-top: 1px solid var(--border) !important;
+        position: relative !important;
+        z-index: 20 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    /* FAB: fixed, perfectly IN-LINE with the input bar row.
-       
-       The input bar (.chat-input-container) sits at the very bottom
-       of the fixed .community-container (bottom:0).
-       Bar total height = 8px top-pad + 46px input + 8px bot-pad = 62px.
-       
-       FAB height = 48px.
-       To vertically centre: bottom = (62 - 48) / 2 = 7px
-       right = 10px  ← matches container's right outer padding         */
-    .journal-floating-btn {
-        position: fixed !important;
-        right: 10px !important;
-        bottom: 7px !important;
-        top: auto !important;
-        left: auto !important;
+    .chat-form { 
+        gap: 8px !important; 
+        align-items: flex-end !important; 
+        width: 100% !important;
+        position: relative !important;
+    }
+    
+    .chat-input-wrapper { 
+        flex: 1 1 auto !important; 
+        max-width: calc(100% - 54px) !important; /* Reserve space for send button */
+        position: relative !important;
+    }
+    
+    .chat-input {
+        width: 100% !important;
+        padding: 12px 40px 12px 14px !important; /* Right padding for emoji/GIF buttons */
+        font-size: 0.95rem !important;
+        min-height: 48px !important;
+        max-height: 120px !important;
+        border-radius: 24px !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        background: rgba(0,0,0,0.3) !important;
+        color: var(--text) !important;
+        line-height: 1.4 !important;
+        resize: none !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+        display: block !important;
+        word-wrap: break-word !important;
+        white-space: pre-wrap !important;
+    }
+    
+    .chat-input:focus {
+        border-color: var(--purple) !important;
+        background: rgba(0,0,0,0.4) !important;
+        outline: none !important;
+    }
+
+    /* Emoji/GIF buttons inside textarea */
+    .chat-input-buttons { 
+        position: absolute !important;
+        right: 8px !important;
+        bottom: 8px !important;
+        display: flex !important;
+        gap: 4px !important;
+        z-index: 25 !important;
+        background: transparent !important;
+    }
+    
+    .chat-input-btn { 
+        width: 28px !important; 
+        height: 28px !important; 
+        font-size: 0.9rem !important; 
+        border-radius: 8px !important;
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+        color: rgba(255,255,255,0.7) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .chat-input-btn:hover {
+        background: var(--purple-dim) !important;
+        color: #fff !important;
+    }
+
+    /* Send button */
+    .send-btn {
         width: 48px !important;
         height: 48px !important;
-        font-size: 18px !important;
-        border-radius: 14px !important;
-        z-index: 999 !important;
-        animation: jm-float 4s ease-in-out infinite !important;
-    }
-    .journal-floating-btn:hover {
+        padding: 0 !important;
         border-radius: 50% !important;
-        transform: translateY(-2px) scale(1.05) !important;
+        flex-shrink: 0 !important;
+        background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+        border: none !important;
+        color: #fff !important;
+        font-size: 1.2rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(139,92,246,0.3) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     }
-    .journal-floating-btn:active {
-        transform: scale(0.92) !important;
-    }
-
-    .chat-form { gap: 6px !important; align-items: flex-end !important; }
-    .chat-input-wrapper { flex: 1 1 auto !important; max-width: 100% !important; }
-    .chat-input {
-        padding: 10px 92px 10px 12px !important;
-        font-size: 0.9rem !important;
-        min-height: 46px !important;
-        border-radius: 12px !important;
-    }
-    .chat-input-buttons { right: 8px !important; bottom: 8px !important; gap: 2px !important; }
-    .chat-input-btn { width: 26px !important; height: 26px !important; font-size: 0.88rem !important; border-radius: 7px !important; }
-
+    
     .send-btn span { display: none !important; }
-    .send-btn {
-        width: 46px !important; height: 46px !important;
-        padding: 0 !important; border-radius: 50% !important; flex-shrink: 0 !important;
+    
+    .send-btn:hover:not(:disabled) {
+        transform: scale(1.05) !important;
+        box-shadow: 0 6px 16px rgba(139,92,246,0.5) !important;
+    }
+    
+    .send-btn:active:not(:disabled) {
+        transform: scale(0.95) !important;
+    }
+
+    /* FAB button positioning - adjusted to not overlap */
+    .journal-floating-btn {
+        position: fixed !important;
+        right: 16px !important;
+        bottom: 80px !important; /* Moved up above the input bar */
+        top: auto !important;
+        left: auto !important;
+        width: 52px !important;
+        height: 52px !important;
+        font-size: 20px !important;
+        border-radius: 16px !important;
+        z-index: 100 !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+    }
+
+    /* Ensure textarea is always visible */
+    .chat-input:empty:before {
+        content: attr(placeholder);
+        color: var(--text-dim);
+    }
+
+    /* Fix for iOS */
+    .chat-input {
+        -webkit-appearance: none !important;
+        appearance: none !important;
     }
 
     .connection-status { display: none !important; }
 
-    /* Modal: bottom sheet on mobile */
+    /* Modal adjustments */
     div[style*="position: fixed"][style*="inset: 0"][style*="padding: 20px"],
     div[style*="position: fixed"][style*="inset: 0"][style*="padding:20px"] {
         padding: 0 !important;
@@ -879,27 +1095,60 @@ body.sidebar-open-mobile { overflow: hidden; width: 100%; height: 100%; }
         flex: 1 1 100% !important;
     }
 
-    .gif-picker { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; max-height: 55vh; z-index: 1500; }
-    .emoji-picker { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 16px 16px 0 0; height: 50vh; z-index: 1500; }
+    .gif-picker, .emoji-picker { 
+        position: fixed; 
+        left: 0; 
+        right: 0; 
+        bottom: 0; 
+        width: 100%; 
+        border-radius: 16px 16px 0 0; 
+        z-index: 1500; 
+    }
+    .gif-picker { max-height: 55vh; }
+    .emoji-picker { height: 50vh; }
 }
 
 /* ── VERY SMALL PHONES ≤480px ───────────────────────────────── */
 @media (max-width: 480px) {
     .community-container { height: calc(100dvh - var(--navbar-h)) !important; }
-    /* FAB(44px) + gap(8px) + outer(8px) = 60px */
-    .chat-input-container { padding: 7px 60px 7px 8px !important; }
-    .chat-input { padding: 9px 82px 9px 11px !important; font-size: 0.875rem !important; min-height: 44px !important; }
-    .chat-input-buttons { right: 6px !important; bottom: 7px !important; gap: 2px !important; }
-    .chat-input-btn { width: 24px !important; height: 24px !important; font-size: 0.82rem !important; }
-    .send-btn { width: 44px !important; height: 44px !important; }
-    /* Bar = 7+44+7 = 58px. FAB(44px) centre = bottom: (58-44)/2 = 7px */
+    
+    .chat-input-container { 
+        padding: 6px 10px !important; 
+    }
+    
+    .chat-input-wrapper { 
+        max-width: calc(100% - 48px) !important; 
+    }
+    
+    .chat-input { 
+        padding: 10px 36px 10px 12px !important; 
+        font-size: 0.9rem !important; 
+        min-height: 44px !important; 
+    }
+    
+    .chat-input-buttons { 
+        right: 6px !important; 
+        bottom: 6px !important; 
+    }
+    
+    .chat-input-btn { 
+        width: 26px !important; 
+        height: 26px !important; 
+        font-size: 0.85rem !important; 
+    }
+    
+    .send-btn { 
+        width: 44px !important; 
+        height: 44px !important; 
+        font-size: 1.1rem !important;
+    }
+    
     .journal-floating-btn {
-        position: fixed !important;
-        width: 44px !important;
-        height: 44px !important;
-        right: 8px !important;
-        bottom: 7px !important;
-        font-size: 16px !important;
+        width: 48px !important;
+        height: 48px !important;
+        right: 12px !important;
+        bottom: 70px !important;
+        font-size: 18px !important;
     }
 }
 
