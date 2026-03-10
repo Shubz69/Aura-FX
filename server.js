@@ -5,6 +5,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'your_stripe_k
 const path = require('path');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
+const multer = require('multer');  // ADD THIS
+const fs = require('fs');          // ADD THIS
 let sqlite3;
 try {
   sqlite3 = require('better-sqlite3');
@@ -14,6 +16,28 @@ try {
 
 const app = express();
 const port = process.env.PORT || 8080;
+
+// ================================================================
+// FILE UPLOAD SETUP - ADD THIS BLOCK
+// ================================================================
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadsDir),
+    filename: (req, file, cb) => {
+        const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, unique + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+// ================================================================
 
 // Email configuration
 const transporter = nodemailer.createTransporter({
@@ -62,12 +86,18 @@ try {
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 app.use(express.static(path.join(__dirname, 'build')));
+
+// ================================================================
+// SERVE UPLOADED FILES - ADD THIS LINE (after express.static above)
+// ================================================================
+app.use('/uploads', express.static(uploadsDir));
+// ================================================================
 
 // Mock course data
 const courses = [
@@ -79,24 +109,41 @@ const courses = [
   { id: 6, title: "Swing Trading", description: "Profit from market swings.", price: 0.3 }
 ];
 
+// ================================================================
+// FILE UPLOAD ENDPOINT - ADD THIS BLOCK
+// ================================================================
+app.post('/api/upload', upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+    res.json({
+        success: true,
+        url: fileUrl,
+        name: req.file.originalname,
+        size: req.file.size,
+        type: req.file.mimetype
+    });
+});
+// ================================================================
+
 // Direct checkout endpoint - no authentication required
 app.get('/api/payments/checkout-direct', async (req, res) => {
   try {
-    // Get course ID from query parameters
     const { courseId } = req.query;
     
     if (!courseId) {
       return res.status(400).json({ error: 'Course ID is required' });
     }
     
-    // Find course by ID
     const course = courses.find(c => c.id.toString() === courseId.toString());
     
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
     
-    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -107,7 +154,7 @@ app.get('/api/payments/checkout-direct', async (req, res) => {
               name: course.title,
               description: course.description,
             },
-            unit_amount: Math.round(course.price * 100), // Convert to cents
+            unit_amount: Math.round(course.price * 100),
           },
           quantity: 1,
         },
@@ -117,7 +164,6 @@ app.get('/api/payments/checkout-direct', async (req, res) => {
       cancel_url: `http://localhost:3000/courses`,
     });
     
-    // Redirect to Stripe checkout
     return res.redirect(303, session.url);
   } catch (error) {
     console.error('Error creating checkout session:', error);
@@ -127,9 +173,6 @@ app.get('/api/payments/checkout-direct', async (req, res) => {
 
 // Payment success webhook
 app.post('/api/payments/complete', (req, res) => {
-  // In a real application, you would verify the payment with Stripe
-  // and update your database accordingly
-  
   return res.json({ 
     success: true, 
     message: 'Payment completed successfully' 
@@ -141,7 +184,6 @@ app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, message } = req.body;
     
-    // Email content
     const mailOptions = {
       from: process.env.EMAIL_USER || 'your-email@gmail.com',
       to: process.env.CONTACT_INBOX || 'Support@auraxfx.com',
@@ -157,7 +199,6 @@ app.post('/api/contact', async (req, res) => {
       `
     };
     
-    // Send email
     await transporter.sendMail(mailOptions);
     
     res.json({ 
@@ -173,17 +214,12 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Password Reset Endpoints
-// Use database if available, otherwise fallback to in-memory storage
-const resetCodes = new Map(); // email -> { code, expiresAt } (fallback)
+const resetCodes = new Map();
 
-// Generate 6-digit code
 const generateResetCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Forgot password - send reset code
-// Handle both /api/auth/forgot-password and /forgot-password for compatibility
 app.post(['/api/auth/forgot-password', '/forgot-password'], async (req, res) => {
   try {
     const { email } = req.body;
@@ -195,27 +231,21 @@ app.post(['/api/auth/forgot-password', '/forgot-password'], async (req, res) => 
       });
     }
     
-    // Generate 6-digit code
     const resetCode = generateResetCode();
-    const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
+    const expiresAt = Date.now() + (10 * 60 * 1000);
     const emailLower = email.toLowerCase();
     
-    // Store code in database or memory
     if (db) {
-      // Delete any existing codes for this email
       db.prepare('DELETE FROM reset_codes WHERE email = ?').run(emailLower);
-      // Insert new code
       db.prepare('INSERT INTO reset_codes (email, code, expires_at) VALUES (?, ?, ?)')
         .run(emailLower, resetCode, expiresAt);
     } else {
-      // Fallback to in-memory storage
       resetCodes.set(emailLower, {
         code: resetCode,
         expiresAt: expiresAt
       });
     }
     
-    // Send email with reset code
     const mailOptions = {
       from: process.env.EMAIL_USER || 'your-email@gmail.com',
       to: email,
@@ -248,7 +278,6 @@ app.post(['/api/auth/forgot-password', '/forgot-password'], async (req, res) => 
   }
 });
 
-// Verify reset code
 app.post(['/api/auth/verify-reset-code', '/verify-reset-code'], async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -263,7 +292,6 @@ app.post(['/api/auth/verify-reset-code', '/verify-reset-code'], async (req, res)
     const emailLower = email.toLowerCase();
     let stored;
     
-    // Retrieve code from database or memory
     if (db) {
       const row = db.prepare('SELECT * FROM reset_codes WHERE email = ? AND code = ? ORDER BY created_at DESC LIMIT 1')
         .get(emailLower, code);
@@ -284,10 +312,8 @@ app.post(['/api/auth/verify-reset-code', '/verify-reset-code'], async (req, res)
       }
       
       stored = { code: row.code, expiresAt: row.expires_at };
-      // Delete used code
       db.prepare('DELETE FROM reset_codes WHERE email = ?').run(emailLower);
     } else {
-      // Fallback to in-memory storage
       stored = resetCodes.get(emailLower);
       
       if (!stored) {
@@ -312,15 +338,13 @@ app.post(['/api/auth/verify-reset-code', '/verify-reset-code'], async (req, res)
         });
       }
       
-      // Remove used code
       resetCodes.delete(emailLower);
     }
     
-    // Generate reset token (JWT-like token for password reset)
     const resetToken = Buffer.from(JSON.stringify({
       email: email,
       code: code,
-      expiresAt: Date.now() + (15 * 60 * 1000) // 15 minutes
+      expiresAt: Date.now() + (15 * 60 * 1000)
     })).toString('base64');
     
     res.json({ 
@@ -337,7 +361,6 @@ app.post(['/api/auth/verify-reset-code', '/verify-reset-code'], async (req, res)
   }
 });
 
-// Reset password with token
 app.post(['/api/auth/reset-password', '/reset-password'], async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -356,7 +379,6 @@ app.post(['/api/auth/reset-password', '/reset-password'], async (req, res) => {
       });
     }
     
-    // Decode token
     let tokenData;
     try {
       tokenData = JSON.parse(Buffer.from(token, 'base64').toString());
@@ -367,7 +389,6 @@ app.post(['/api/auth/reset-password', '/reset-password'], async (req, res) => {
       });
     }
     
-    // Check if token expired
     if (Date.now() > tokenData.expiresAt) {
       return res.status(400).json({ 
         success: false, 
@@ -375,20 +396,16 @@ app.post(['/api/auth/reset-password', '/reset-password'], async (req, res) => {
       });
     }
     
-    // Hash the new password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
     
-    // Update password in database
     if (db) {
-      // Check if users table exists
       const tableExists = db.prepare(`
         SELECT name FROM sqlite_master 
         WHERE type='table' AND name='users'
       `).get();
       
       if (tableExists) {
-        // Update user password
         const result = db.prepare('UPDATE users SET password = ? WHERE email = ?')
           .run(hashedPassword, tokenData.email.toLowerCase());
         
@@ -420,7 +437,7 @@ app.post(['/api/auth/reset-password', '/reset-password'], async (req, res) => {
   }
 });
 
-// Serve the React app - catch-all route using regex for compatibility
+// Serve the React app - catch-all route
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
@@ -436,7 +453,7 @@ if (db) {
     } catch (error) {
       console.error('Error cleaning up expired codes:', error);
     }
-  }, 60 * 60 * 1000); // Every hour
+  }, 60 * 60 * 1000);
 }
 
 // Start the server
@@ -448,18 +465,3 @@ app.listen(port, () => {
     console.log('⚠ Database not connected - using in-memory storage');
   }
 });
-
-// To use this server:
-// 1. Install required packages: npm install express cors stripe nodemailer bcrypt better-sqlite3
-// 2. Set environment variables:
-//    - EMAIL_USER: Your email address
-//    - EMAIL_PASS: Your email app password
-//    - STRIPE_SECRET_KEY: Your Stripe secret key
-// 3. Save this file as server.js in your project root
-// 4. Run with: node server.js
-//
-// Password Reset Features:
-// - Stores reset codes in SQLite database (data.sqlite3)
-// - Codes expire after 10 minutes
-// - Passwords are hashed with bcrypt before storage
-// - Automatic cleanup of expired codes
