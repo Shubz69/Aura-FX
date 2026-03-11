@@ -2206,6 +2206,7 @@ body.sidebar-open-mobile {
         position: relative !important;
         display: flex !important;
         flex-direction: row !important;
+        bottom: 9px;
     }
     
     .chat-input-wrapper { 
@@ -2437,14 +2438,14 @@ body.sidebar-open-mobile {
     }
     
     .chat-input { 
-        padding: 10px 40px 10px 12px !important; 
+        padding: 32px 61px 18px 19px !important; 
         font-size: 15px !important; 
         min-height: 44px !important; 
     }
     
     .chat-input-buttons { 
         right: 6px !important; 
-        bottom: 6px !important; 
+        bottom: 29px !important; 
     }
     
     .chat-input-btn { 

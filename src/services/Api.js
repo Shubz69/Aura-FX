@@ -4,13 +4,15 @@ import { savePostAuthRedirect } from '../utils/postAuthRedirect';
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
 const getApiBaseUrl = () => {
-  // If running on localhost → use LIVE backend
-  if (window.location.hostname === "localhost") {
-    return "https://www.auraxfx.com";
-  }
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+    }
 
-  // Otherwise (production)
-  return window.location.origin;
+    if (process.env.REACT_APP_API_URL) {
+        return process.env.REACT_APP_API_URL;
+    }
+    
+    return '';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -656,6 +658,10 @@ const Api = {
         return axios.get(`${API_BASE_URL}/api/aura-analysis/leaderboard`, {
             params: { sortBy, order }
         });
+    },
+
+    getTraderDeckMarketIntelligence: () => {
+        return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`);
     },
 
     getJournalDaily: (date) => {
