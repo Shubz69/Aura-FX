@@ -908,9 +908,14 @@ body.sidebar-open-mobile {
         max-height: 100dvh !important;
         width: 100vw !important; 
         overflow: hidden !important;
+        position: fixed !important;
     }
-    .community-sidebar:not(.mobile-sidebar) { display: none !important; }
-     .chat-main {
+    
+    .community-sidebar:not(.mobile-sidebar) { 
+        display: none !important; 
+    }
+    
+    .chat-main {
         flex: 1 !important;
         display: flex !important; 
         flex-direction: column !important; 
@@ -918,32 +923,55 @@ body.sidebar-open-mobile {
         height: 100% !important;
         min-height: 0 !important;
     }
+    
     .chat-header { 
         padding: 0 10px !important; 
         min-height: 48px !important; 
         height: 48px !important; 
         flex-shrink: 0 !important; 
     }
-    .chat-header h2 { font-size: 0.875rem; }
+    
+    .chat-header h2 { 
+        font-size: 0.875rem; 
+    }
     
     /* FIXED: Messages container - proper height calculation */
-     .chat-messages { 
+    .chat-messages { 
         flex: 1 1 auto !important;
         min-height: 0 !important;
         max-height: none !important;
-        height: auto !important;
         overflow-y: auto !important;
         padding: 10px 12px !important;
-        /* THIS PREVENTS IT FROM BEING PUSHED OFF SCREEN */
-        flex-basis: 0 !important;
     }
 
-    .message-item { padding: 2px 8px 2px 60px !important; }
-    .message-item:not(.grouped) { padding-top: 8px !important; }
-    .message-avatar { left: 10px !important; width: 36px !important; height: 36px !important; top: 6px !important; }
-    .message-author { font-size: 0.875rem !important; }
-    .message-text { font-size: 0.9rem !important; }
-    .message-header-info, .community-message-header-with-time { gap: 5px !important; margin-bottom: 3px !important; }
+    .message-item { 
+        padding: 2px 8px 2px 60px !important; 
+    }
+    
+    .message-item:not(.grouped) { 
+        padding-top: 8px !important; 
+    }
+    
+    .message-avatar { 
+        left: 10px !important; 
+        width: 36px !important; 
+        height: 36px !important; 
+        top: 6px !important; 
+    }
+    
+    .message-author { 
+        font-size: 0.875rem !important; 
+    }
+    
+    .message-text { 
+        font-size: 0.9rem !important; 
+    }
+    
+    .message-header-info, 
+    .community-message-header-with-time { 
+        gap: 5px !important; 
+        margin-bottom: 3px !important; 
+    }
 
     /* ── FIXED: Mobile input container with proper positioning ── */
     .chat-input-container {
@@ -951,14 +979,12 @@ body.sidebar-open-mobile {
         background: var(--bg-tertiary) !important;
         border-top: 1px solid var(--border) !important;
         position: relative !important;
-        z-index: 30 !important; /* Increased z-index */
+        z-index: 30 !important;
         width: 100% !important;
         box-sizing: border-box !important;
         flex-shrink: 0 !important;
-        /* Ensure it's always visible */
         visibility: visible !important;
         opacity: 1 !important;
-        /* Add safe area padding for modern phones */
         padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
@@ -995,7 +1021,6 @@ body.sidebar-open-mobile {
         display: block !important;
         word-wrap: break-word !important;
         white-space: pre-wrap !important;
-        /* Fix for iOS */
         -webkit-appearance: none !important;
         appearance: none !important;
     }
@@ -1006,7 +1031,6 @@ body.sidebar-open-mobile {
         outline: none !important;
     }
 
-    /* Emoji/GIF buttons inside textarea */
     .chat-input-buttons { 
         position: absolute !important;
         right: 8px !important;
@@ -1039,7 +1063,6 @@ body.sidebar-open-mobile {
         color: #fff !important;
     }
 
-    /* Send button */
     .send-btn {
         width: 48px !important;
         height: 48px !important;
@@ -1061,7 +1084,9 @@ body.sidebar-open-mobile {
         z-index: 30 !important;
     }
     
-    .send-btn span { display: none !important; }
+    .send-btn span { 
+        display: none !important; 
+    }
     
     .send-btn:hover:not(:disabled) {
         transform: scale(1.05) !important;
@@ -1072,11 +1097,10 @@ body.sidebar-open-mobile {
         transform: scale(0.95) !important;
     }
 
-    /* FAB button positioning - adjusted to not overlap and stay visible */
     .journal-floating-btn {
         position: fixed !important;
         right: 16px !important;
-        bottom: 90px !important; /* Increased from 80px to ensure visibility above keyboard/input */
+        bottom: 90px !important;
         top: auto !important;
         left: auto !important;
         width: 52px !important;
@@ -1085,22 +1109,19 @@ body.sidebar-open-mobile {
         border-radius: 16px !important;
         z-index: 100 !important;
         box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
-        /* Ensure it doesn't get hidden */
         visibility: visible !important;
         opacity: 1 !important;
     }
 
-    /* Fix for virtual keyboard on mobile */
     @media (max-height: 600px) {
         .chat-messages {
-            max-height: calc(100dvh - 48px - 64px) !important; /* Adjust when keyboard is open */
+            max-height: calc(100dvh - 48px - 64px) !important;
         }
         .journal-floating-btn {
             bottom: 80px !important;
         }
     }
 
-    /* Ensure textarea is always visible and properly sized */
     .chat-input:empty:before {
         content: attr(placeholder);
         color: var(--text-dim);
@@ -1110,12 +1131,12 @@ body.sidebar-open-mobile {
         display: none !important; 
     }
 
-    /* Modal adjustments */
     div[style*="position: fixed"][style*="inset: 0"][style*="padding: 20px"],
     div[style*="position: fixed"][style*="inset: 0"][style*="padding:20px"] {
         padding: 0 !important;
         align-items: flex-end !important;
     }
+    
     div[style*="position: fixed"][style*="inset: 0"] > div[style*="background: #1f2024"],
     div[style*="position: fixed"][style*="inset: 0"] > div[style*="background:#1f2024"] {
         border-radius: 16px 16px 0 0 !important;
@@ -1123,6 +1144,7 @@ body.sidebar-open-mobile {
         max-width: 100% !important;
         width: 100% !important;
     }
+    
     div[style*="position: fixed"][style*="inset: 0"] div[style*="display: flex"][style*="gap: 12px"] > div,
     div[style*="position: fixed"][style*="inset: 0"] div[style*="display:flex"][style*="gap:12px"] > div {
         flex: 1 1 100% !important;
@@ -1137,6 +1159,7 @@ body.sidebar-open-mobile {
         border-radius: 16px 16px 0 0; 
         z-index: 1500; 
     }
+    
     .gif-picker { max-height: 55vh; }
     .emoji-picker { height: 50vh; }
 }
@@ -2492,21 +2515,7 @@ body.sidebar-open-mobile {
         max-width: 100%;
     }
 }
-/* ULTIMATE FIX - GUARANTEED TO WORK */
-@media (max-width: 767px) {
-    .chat-main {
-        display: flex !important;
-        flex-direction: column !important;
-        height: 100% !important;
-    }
-    
-    .chat-messages {
-        flex: 1 1 0 !important;
-        min-height: 0 !important;
-        max-height: 100% !important;
-        overflow-y: auto !important;
-    }
-}
+
 /* ── BODY LOCK ───────────────────────────────────────────────── */
 body.community-page-active  { overflow: hidden !important; height: 100vh !important; }
 html.community-page-active  { overflow: hidden !important; height: 100vh !important; }
