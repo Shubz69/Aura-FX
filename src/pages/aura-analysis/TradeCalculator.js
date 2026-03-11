@@ -1,30 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { getAllInstruments } from '../../lib/aura-analysis/instruments';
+import { calculateRisk } from '../../lib/aura-analysis/calculators/calculateRisk';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
-const PAIRS = [
-  { value: 'EURUSD', label: 'EUR/USD' },
-  { value: 'GBPUSD', label: 'GBP/USD' },
-  { value: 'USDJPY', label: 'USD/JPY' },
-  { value: 'XAUUSD', label: 'XAU/USD' },
-  { value: 'US30', label: 'US30' },
+const INSTRUMENTS_LIST = getAllInstruments();
+
+const SESSIONS = [
+  { value: '', label: 'Select session' },
+  { value: 'Asia', label: 'Asia' },
+  { value: 'London', label: 'London' },
+  { value: 'New York', label: 'New York' },
+  { value: 'Sydney', label: 'Sydney' },
 ];
-
-const SESSIONS = [{ value: '', label: 'Select session' }, { value: 'Asia', label: 'Asia' }, { value: 'London', label: 'London' }, { value: 'New York', label: 'New York' }, { value: 'Sydney', label: 'Sydney' }];
-
-function calcForexRisk(pair, balance, riskPercent, entry, stop) {
-  const riskAmount = (balance * riskPercent) / 100;
-  if (riskAmount <= 0) return { riskAmount, positionSize: 0, stopPips: 0, pipValuePerLot: 0 };
-  const isJpy = pair.includes('JPY');
-  const pipSize = isJpy ? 0.01 : 0.0001;
-  const stopDistance = Math.abs(entry - stop);
-  const stopPips = stopDistance / pipSize;
-  const contractSize = 100000;
-  const pipValuePerLot = isJpy ? (contractSize * pipSize) / (entry || 1) : contractSize * pipSize;
-  if (stopPips <= 0 || pipValuePerLot <= 0) return { riskAmount, positionSize: 0, stopPips: 0, pipValuePerLot: 0 };
-  const positionSize = riskAmount / (stopPips * pipValuePerLot);
-  return { riskAmount, positionSize, stopPips, pipValuePerLot };
-}
 
 export default function TradeCalculator() {
   const [form, setForm] = useState({
@@ -41,37 +29,68 @@ export default function TradeCalculator() {
     notes: '',
   });
 
-  const pairOption = PAIRS.find((p) => p.value === form.pair) || PAIRS[0];
+  const calcInput = useMemo(
+    () => ({
+      accountBalance: Number(form.accountBalance) || 0,
+      riskPercent: Number(form.riskPercent) || 0,
+      entry: Number(form.entryPrice) || 0,
+      stop: Number(form.stopLoss) || 0,
+      takeProfit: Number(form.takeProfit) || 0,
+      direction: form.direction,
+    }),
+    [
+      form.accountBalance,
+      form.riskPercent,
+      form.entryPrice,
+      form.stopLoss,
+      form.takeProfit,
+      form.direction,
+    ]
+  );
 
-  const { riskAmount, positionSize: suggestedSize, stopPips, pipValuePerLot } = useMemo(() => {
-    const balance = Number(form.accountBalance) || 0;
-    const risk = Number(form.riskPercent) || 0;
-    const entry = Number(form.entryPrice) || 0;
-    const stop = Number(form.stopLoss) || 0;
-    return calcForexRisk(form.pair, balance, risk, entry, stop);
-  }, [form.pair, form.accountBalance, form.riskPercent, form.entryPrice, form.stopLoss]);
+  const result = useMemo(() => {
+    return calculateRisk(form.pair, calcInput);
+  }, [form.pair, calcInput]);
 
-  const takeProfitPips = useMemo(() => {
-    const isJpy = form.pair.includes('JPY');
-    const pipSize = isJpy ? 0.01 : 0.0001;
-    return Math.abs((Number(form.takeProfit) || 0) - (Number(form.entryPrice) || 0)) / pipSize;
-  }, [form.pair, form.entryPrice, form.takeProfit]);
+  const positionSizeUsed = useMemo(() => {
+    const manual = Number(form.positionSize);
+    if (manual > 0) return manual;
+    return result.positionSize;
+  }, [form.positionSize, result.positionSize]);
 
-  const positionSizeNum = Number(form.positionSize) || suggestedSize || 0;
-  const rr = stopPips > 0 ? (takeProfitPips / stopPips).toFixed(2) : '0';
-  const potentialProfit = pipValuePerLot && positionSizeNum > 0 ? takeProfitPips * pipValuePerLot * positionSizeNum : 0;
+  const potentialProfitDisplay = useMemo(() => {
+    if (result.positionSize <= 0) return 0;
+    return result.potentialProfit * (positionSizeUsed / result.positionSize);
+  }, [result.potentialProfit, result.positionSize, positionSizeUsed]);
 
-  const hasEntrySlTp = (Number(form.entryPrice) || 0) > 0 && (Number(form.stopLoss) || 0) !== 0 && (Number(form.takeProfit) || 0) > 0;
+  const potentialLossDisplay = useMemo(() => {
+    if (result.positionSize <= 0) return result.riskAmount;
+    return result.potentialLoss * (positionSizeUsed / result.positionSize);
+  }, [result.potentialLoss, result.positionSize, result.riskAmount, positionSizeUsed]);
+
+  const hasEntrySlTp =
+    (Number(form.entryPrice) || 0) > 0 &&
+    (Number(form.stopLoss) || 0) !== 0 &&
+    (Number(form.takeProfit) || 0) > 0;
 
   const handlePairChange = (e) => {
     const v = e.target.value;
-    const p = PAIRS.find((x) => x.value === v) || PAIRS[0];
-    setForm((f) => ({ ...f, pair: v, pairLabel: p.label }));
+    const inst = INSTRUMENTS_LIST.find((x) => x.symbol === v) || INSTRUMENTS_LIST[0];
+    setForm((f) => ({ ...f, pair: v, pairLabel: inst.displayName }));
   };
 
   const suggestFromRisk = () => {
-    setForm((f) => ({ ...f, positionSize: suggestedSize > 0 ? suggestedSize.toFixed(2) : '' }));
+    const size = result.positionSize;
+    const label = result.positionUnitLabel;
+    let str = size;
+    if (label === 'lots' || label === 'units') str = size.toFixed(2);
+    else if (label === 'contracts' || label === 'shares') str = Math.round(size);
+    setForm((f) => ({ ...f, positionSize: String(str) }));
   };
+
+  const altUnit = result.altUnitLabel || 'pips';
+  const stopAlt = result.stopDistanceAlt ?? result.stopDistancePrice;
+  const tpAlt = result.takeProfitDistanceAlt ?? result.takeProfitDistancePrice;
 
   return (
     <div className="trade-calc-page">
@@ -94,8 +113,10 @@ export default function TradeCalculator() {
             <label>Pair / Asset</label>
             <div className="trade-calc-pair-row">
               <select value={form.pair} onChange={handlePairChange} className="trade-calc-input">
-                {PAIRS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.value}</option>
+                {INSTRUMENTS_LIST.map((inst) => (
+                  <option key={inst.symbol} value={inst.symbol}>
+                    {inst.symbol}
+                  </option>
                 ))}
               </select>
               <input
@@ -222,7 +243,9 @@ export default function TradeCalculator() {
               className="trade-calc-input"
             >
               {SESSIONS.map((s) => (
-                <option key={s.value || 'session'} value={s.value}>{s.label}</option>
+                <option key={s.value || 'session'} value={s.value}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </div>
@@ -248,10 +271,30 @@ export default function TradeCalculator() {
               </p>
             ) : (
               <div className="trade-calc-calc-results">
-                <p><strong>Risk amount:</strong> ${riskAmount.toFixed(2)}</p>
-                <p><strong>Position size:</strong> {(form.positionSize ? positionSizeNum : suggestedSize)?.toFixed(2) ?? '0.00'} lots</p>
-                <p><strong>Stop:</strong> {stopPips.toFixed(1)} pips — <strong>TP:</strong> {takeProfitPips.toFixed(1)} pips — <strong>R:R</strong> 1:{rr}</p>
-                <p><strong>Potential profit:</strong> ${potentialProfit.toFixed(2)}</p>
+                <p><strong>Risk amount:</strong> ${result.riskAmount.toFixed(2)}</p>
+                <p>
+                  <strong>Position size:</strong>{' '}
+                  {result.positionUnitLabel === 'lots' || result.positionUnitLabel === 'units'
+                    ? positionSizeUsed.toFixed(2)
+                    : Math.round(positionSizeUsed)}{' '}
+                  {result.positionUnitLabel}
+                </p>
+                <p>
+                  <strong>Stop:</strong> {typeof stopAlt === 'number' ? stopAlt.toFixed(2) : stopAlt} {altUnit}
+                  {' — '}
+                  <strong>TP:</strong> {typeof tpAlt === 'number' ? tpAlt.toFixed(2) : tpAlt} {altUnit}
+                  {' — '}
+                  <strong>R:R</strong> 1:{result.riskReward.toFixed(2)}
+                </p>
+                <p><strong>Potential profit:</strong> ${potentialProfitDisplay.toFixed(2)}</p>
+                <p><strong>Potential loss:</strong> ${potentialLossDisplay.toFixed(2)}</p>
+                {result.warnings && result.warnings.length > 0 && (
+                  <div className="trade-calc-warnings">
+                    {result.warnings.map((w, i) => (
+                      <p key={i} className="trade-calc-warning">{w}</p>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
