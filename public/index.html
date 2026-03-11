@@ -2,17 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  
-  <!-- CACHE CONTROL - CRITICAL for loading new changes -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  
-  <!-- Viewport settings - CRITICAL for mobile -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a0a" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
 
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="
@@ -78,29 +70,13 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
-  
-  <!-- YOUR CSS - WITH CACHE BUSTER -->
-  <link rel="stylesheet" href="/path-to-your-css/your-styles.css?v=20240310_1" />
 </head>
 <body>
 
 <!-- React App Root -->
 <div id="root"></div>
 
-<!-- Add a small script to force reload on mobile -->
-<script>
-  // Force page to reload if it was cached
-  window.onload = function() {
-    // Check if this is a fresh load or from cache
-    if (window.performance && window.performance.navigation.type === 2) {
-      window.location.reload(true);
-    }
-  };
-  
-  // Log to console to verify new code is running
-  console.log('Index loaded with cache busting - ' + new Date().toISOString());
-</script>
-
 <!-- React Scripts will be automatically injected here during build -->
+
 </body>
 </html>

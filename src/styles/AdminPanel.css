@@ -1039,7 +1039,10 @@
     gap: 8px;
   }
 }
-
+.action-btn.plan-btn {
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  color: #000;
+}
 @media (prefers-color-scheme: dark) {
   .admin-panel-container {
     --bg-primary: #0a0a0a;

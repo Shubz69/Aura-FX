@@ -605,6 +605,46 @@ const AdminPanel = () => {
                     >
                       Delete
                     </button>
+                    {/* Add this button near the other action buttons */}
+<button 
+  className="action-btn plan-btn"
+  onClick={() => {
+    const newPlan = window.prompt(
+      `Change subscription for ${userItem.email}\n\nCurrent: ${userItem.subscription_plan || 'free'}\n\nEnter new plan (free/premium/a7fx/elite):`,
+      userItem.subscription_plan || 'free'
+    );
+    if (newPlan && ['free', 'premium', 'a7fx', 'elite'].includes(newPlan)) {
+      if (window.confirm(`Change ${userItem.email} to ${newPlan} plan?`)) {
+        // Call API here
+        fetch('/api/admin/change-subscription', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: userItem.id,
+            plan: newPlan
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(`✅ Changed to ${newPlan}`);
+            fetchUsers(); // Refresh list
+          } else {
+            alert('❌ Failed: ' + data.message);
+          }
+        })
+        .catch(err => alert('Error: ' + err.message));
+      }
+    } else {
+      alert('Invalid plan. Use: free, premium, a7fx, elite');
+    }
+  }}
+>
+  🔄 Change Plan
+</button>
                   </div>
                 </div>
               ))}
