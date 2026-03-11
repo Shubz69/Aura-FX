@@ -4208,21 +4208,13 @@ setMessages(prev => {
         }
     };
 
-   const messagesWithDateGroups = useMemo(() => {
+  const messagesWithDateGroups = useMemo(() => {
     if (!messages || messages.length === 0) return [];
     
     const groups = new Map();
     const dateLabels = new Map();
     
-    // First, sort all messages by timestamp (newest first)
-    const sortedMessages = [...messages].sort((a, b) => {
-        const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
-        const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
-        return timeB - timeA; // DESCENDING order (newest first)
-    });
-    
-    // Group the sorted messages by date
-    for (const msg of sortedMessages) {
+    for (const msg of messages) {
         const ts = msg.timestamp || msg.createdAt || msg.created_at;
         if (!ts) continue;
         
@@ -4239,20 +4231,26 @@ setMessages(prev => {
         groups.get(dateKey).push(msg);
     }
     
-    // Sort date keys in DESCENDING order (newest dates first)
+    // Sort keys in ASCENDING order (oldest first)
     const sortedKeys = [...groups.keys()].sort((a, b) => {
-        // Compare as dates: b - a = descending (newest first)
         const dateA = new Date(a);
         const dateB = new Date(b);
-        return dateB - dateA; // DESCENDING = newest first
+        return dateA - dateB; // ASCENDING = oldest first
     });
     
-    // Build the result with date separators and messages
+    // Build result
     const result = [];
     sortedKeys.forEach(key => {
         result.push({ type: 'date', label: dateLabels.get(key), dateKey: key });
-        // Messages are already sorted within each group (newest first from the initial sort)
-        result.push(...groups.get(key).map(msg => ({ type: 'message', message: msg })));
+        
+        // Sort messages within this date in ASCENDING order (oldest first)
+        const sortedMessages = groups.get(key).sort((a, b) => {
+            const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
+            const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
+            return timeA - timeB; // ASCENDING = oldest first
+        });
+        
+        result.push(...sortedMessages.map(msg => ({ type: 'message', message: msg })));
     });
     
     return result;
