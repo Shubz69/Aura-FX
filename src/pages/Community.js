@@ -4208,20 +4208,27 @@ setMessages(prev => {
         }
     };
 
-    const messagesWithDateGroups = useMemo(() => {
+   const messagesWithDateGroups = useMemo(() => {
     if (!messages || messages.length === 0) return [];
     
     const groups = new Map();
-    const dateLabels = new Map(); // Cache date labels
+    const dateLabels = new Map();
     
-    for (const msg of messages) {
+    // First, sort all messages by timestamp (newest first)
+    const sortedMessages = [...messages].sort((a, b) => {
+        const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
+        const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
+        return timeB - timeA; // DESCENDING order (newest first)
+    });
+    
+    // Group the sorted messages by date
+    for (const msg of sortedMessages) {
         const ts = msg.timestamp || msg.createdAt || msg.created_at;
         if (!ts) continue;
         
         const date = new Date(ts);
         const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
         
-        // Get or compute date label
         if (!dateLabels.has(dateKey)) {
             dateLabels.set(dateKey, getDateLabel(ts));
         }
@@ -4232,14 +4239,24 @@ setMessages(prev => {
         groups.get(dateKey).push(msg);
     }
     
-    const sortedKeys = [...groups.keys()].sort();
+    // Sort date keys in DESCENDING order (newest dates first)
+    const sortedKeys = [...groups.keys()].sort((a, b) => {
+        // Compare as dates: b - a = descending (newest first)
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateB - dateA; // DESCENDING = newest first
+    });
     
-    return sortedKeys.flatMap(key => [
-        { type: 'date', label: dateLabels.get(key), dateKey: key },
-        ...groups.get(key).map(msg => ({ type: 'message', message: msg }))
-    ]);
-}, [messages]); // Only depend on messages
-
+    // Build the result with date separators and messages
+    const result = [];
+    sortedKeys.forEach(key => {
+        result.push({ type: 'date', label: dateLabels.get(key), dateKey: key });
+        // Messages are already sorted within each group (newest first from the initial sort)
+        result.push(...groups.get(key).map(msg => ({ type: 'message', message: msg })));
+    });
+    
+    return result;
+}, [messages]);
     // Format timestamp with timezone awareness
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return 'Unknown time';
@@ -4566,51 +4583,7 @@ useEffect(() => {
             }
         }
     }, [groupedChannels, categoryOrderState]);
-// Detect when user is manually scrolling
-useEffect(() => {
-    const messagesContainer = messagesContainerRef.current;
-    if (!messagesContainer) return;
-    
-    let scrollTimeout;
-    let isManuallyScrolling = false;
-    
-    const handleScroll = () => {
-        // User is scrolling manually
-        if (!isManuallyScrolling) {
-            isManuallyScrolling = true;
-            setIsUserScrolling(true);
-        }
-        
-        // Clear existing timeout
-        if (scrollTimeout) {
-            clearTimeout(scrollTimeout);
-        }
-        
-        // Set new timeout to detect when scrolling stops
-        scrollTimeout = setTimeout(() => {
-            isManuallyScrolling = false;
-            setIsUserScrolling(false);
-            
-            // Check if user is near bottom when they stop scrolling
-            const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
-            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-            
-            // If they're near bottom, allow auto-scroll again
-            if (isNearBottom) {
-                setIsUserScrolling(false);
-            }
-        }, 200);
-    };
-    
-    messagesContainer.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-        messagesContainer.removeEventListener('scroll', handleScroll);
-        if (scrollTimeout) {
-            clearTimeout(scrollTimeout);
-        }
-    };
-}, []);
+
     // CRITICAL: Comprehensive subscription check with multiple fallbacks
     // Priority: Admin > Premium Role > Active Subscription Status > Database Check > LocalStorage
     
