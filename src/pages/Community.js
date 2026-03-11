@@ -4624,7 +4624,33 @@ useEffect(() => {
         }
     };
 }, []);
+// Add this effect after your other useEffects (around line 1300 in your component)
+useEffect(() => {
+    // Handle input focus for mobile keyboard
+    const handleFocus = () => {
+        // Small delay to allow keyboard to open
+        setTimeout(() => {
+            if (messageInputRef.current && messagesContainerRef.current) {
+                // Scroll to bottom when input is focused (keyboard opens)
+                messagesContainerRef.current.scrollTo({
+                    top: messagesContainerRef.current.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }, 300);
+    };
 
+    const input = messageInputRef.current;
+    if (input) {
+        input.addEventListener('focus', handleFocus);
+    }
+
+    return () => {
+        if (input) {
+            input.removeEventListener('focus', handleFocus);
+        }
+    };
+}, []);
     // Update category order when channels change
     useEffect(() => {
         const allCategories = Object.keys(groupedChannels);
