@@ -925,15 +925,19 @@ body.sidebar-open-mobile {
         flex-shrink: 0 !important; 
     }
     .chat-header h2 { font-size: 0.875rem; }
- .chat-messages { 
-    flex: 1 1 0 !important; 
-    min-height: 0 !important; 
-    padding: 10px 12px !important; 
-    overflow-y: auto !important; 
-    -webkit-overflow-scrolling: touch; 
-    display: flex !important;
-    flex-direction: column !important;
-}
+    
+    /* FIXED: Messages container - proper height calculation */
+    .chat-messages { 
+        flex: 1 1 auto !important; 
+        min-height: 0 !important; 
+        max-height: none !important;
+        height: auto !important;
+        padding: 10px 12px !important; 
+        overflow-y: auto !important; 
+        -webkit-overflow-scrolling: touch; 
+        display: flex !important;
+        flex-direction: column !important;
+    }
 
     .message-item { padding: 2px 8px 2px 60px !important; }
     .message-item:not(.grouped) { padding-top: 8px !important; }
@@ -942,15 +946,21 @@ body.sidebar-open-mobile {
     .message-text { font-size: 0.9rem !important; }
     .message-header-info, .community-message-header-with-time { gap: 5px !important; margin-bottom: 3px !important; }
 
-    /* ── FIXED: Mobile input container ── */
+    /* ── FIXED: Mobile input container with proper positioning ── */
     .chat-input-container {
         padding: 8px 12px 8px 10px !important;
         background: var(--bg-tertiary) !important;
         border-top: 1px solid var(--border) !important;
         position: relative !important;
-        z-index: 20 !important;
+        z-index: 30 !important; /* Increased z-index */
         width: 100% !important;
         box-sizing: border-box !important;
+        flex-shrink: 0 !important;
+        /* Ensure it's always visible */
+        visibility: visible !important;
+        opacity: 1 !important;
+        /* Add safe area padding for modern phones */
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .chat-form { 
@@ -958,17 +968,20 @@ body.sidebar-open-mobile {
         align-items: flex-end !important; 
         width: 100% !important;
         position: relative !important;
+        display: flex !important;
+        flex-direction: row !important;
     }
     
     .chat-input-wrapper { 
         flex: 1 1 auto !important; 
-        max-width: calc(100% - 54px) !important; /* Reserve space for send button */
+        max-width: calc(100% - 54px) !important;
+        min-width: 0 !important;
         position: relative !important;
     }
     
     .chat-input {
         width: 100% !important;
-        padding: 12px 40px 12px 14px !important; /* Right padding for emoji/GIF buttons */
+        padding: 12px 40px 12px 14px !important;
         font-size: 0.95rem !important;
         min-height: 48px !important;
         max-height: 120px !important;
@@ -983,6 +996,9 @@ body.sidebar-open-mobile {
         display: block !important;
         word-wrap: break-word !important;
         white-space: pre-wrap !important;
+        /* Fix for iOS */
+        -webkit-appearance: none !important;
+        appearance: none !important;
     }
     
     .chat-input:focus {
@@ -998,8 +1014,9 @@ body.sidebar-open-mobile {
         bottom: 8px !important;
         display: flex !important;
         gap: 4px !important;
-        z-index: 25 !important;
+        z-index: 35 !important;
         background: transparent !important;
+        pointer-events: auto !important;
     }
     
     .chat-input-btn { 
@@ -1015,6 +1032,7 @@ body.sidebar-open-mobile {
         justify-content: center !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
+        flex-shrink: 0 !important;
     }
     
     .chat-input-btn:hover {
@@ -1039,6 +1057,9 @@ body.sidebar-open-mobile {
         cursor: pointer !important;
         box-shadow: 0 4px 12px rgba(139,92,246,0.3) !important;
         transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        margin: 0 !important;
+        position: relative !important;
+        z-index: 30 !important;
     }
     
     .send-btn span { display: none !important; }
@@ -1052,11 +1073,11 @@ body.sidebar-open-mobile {
         transform: scale(0.95) !important;
     }
 
-    /* FAB button positioning - adjusted to not overlap */
+    /* FAB button positioning - adjusted to not overlap and stay visible */
     .journal-floating-btn {
         position: fixed !important;
         right: 16px !important;
-        bottom: 80px !important; /* Moved up above the input bar */
+        bottom: 90px !important; /* Increased from 80px to ensure visibility above keyboard/input */
         top: auto !important;
         left: auto !important;
         width: 52px !important;
@@ -1065,21 +1086,30 @@ body.sidebar-open-mobile {
         border-radius: 16px !important;
         z-index: 100 !important;
         box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+        /* Ensure it doesn't get hidden */
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
-    /* Ensure textarea is always visible */
+    /* Fix for virtual keyboard on mobile */
+    @media (max-height: 600px) {
+        .chat-messages {
+            max-height: calc(100dvh - 48px - 64px) !important; /* Adjust when keyboard is open */
+        }
+        .journal-floating-btn {
+            bottom: 80px !important;
+        }
+    }
+
+    /* Ensure textarea is always visible and properly sized */
     .chat-input:empty:before {
         content: attr(placeholder);
         color: var(--text-dim);
     }
 
-    /* Fix for iOS */
-    .chat-input {
-        -webkit-appearance: none !important;
-        appearance: none !important;
+    .connection-status { 
+        display: none !important; 
     }
-
-    .connection-status { display: none !important; }
 
     /* Modal adjustments */
     div[style*="position: fixed"][style*="inset: 0"][style*="padding: 20px"],
@@ -1151,7 +1181,7 @@ body.sidebar-open-mobile {
         width: 48px !important;
         height: 48px !important;
         right: 12px !important;
-        bottom: 70px !important;
+        bottom: 80px !important;
         font-size: 18px !important;
     }
 }
