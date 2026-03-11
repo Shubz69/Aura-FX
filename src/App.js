@@ -214,8 +214,21 @@ function AppRoutes() {
                         } />
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
-                        <Route path="/aura-analysis" element={<Navigate to="/trader-deck/trade-validator" replace />} />
-                        <Route path="/aura-analysis/*" element={<Navigate to="/trader-deck/trade-validator" replace />} />
+                        <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
+                            <Route index element={<Navigate to="/aura-analysis/ai" replace />} />
+                            <Route path="ai" element={<ConnectionHub />} />
+                            <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
+                                <Route index element={<Navigate to="overview" replace />} />
+                                <Route path="overview" element={<AuraOverview />} />
+                                <Route path="performance" element={<AuraPerformance />} />
+                                <Route path="risk-lab" element={<AuraRiskLab />} />
+                                <Route path="edge-analyzer" element={<AuraEdgeAnalyzer />} />
+                                <Route path="execution-lab" element={<AuraExecutionLab />} />
+                                <Route path="calendar" element={<AuraCalendar />} />
+                                <Route path="psychology" element={<AuraPsychology />} />
+                                <Route path="growth" element={<AuraGrowth />} />
+                            </Route>
+                        </Route>
                         <Route path="/trader-deck/trade-validator" element={<AuthenticatedGuard><TradeValidatorShell /></AuthenticatedGuard>}>
                             <Route index element={<Navigate to="/trader-deck/trade-validator/checklist" replace />} />
                             <Route path="checklist" element={<TradeValidatorEntry />} />
