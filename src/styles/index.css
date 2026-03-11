@@ -28,18 +28,18 @@
     --glow-medium: 0 0 1px;
     --glow-strong: 0 0 1.5px;
 
-    /* Aura Analysis / Trader Deck – match Journal page (Journal.css) */
+    /* Aura Analysis / Trader Deck – readable dark theme (good contrast) */
     --aa-bg: #0a0a0a;
-    --aa-bg-elevated: rgba(255,255,255,0.025);
-    --aa-panel: rgba(255,255,255,0.025);
-    --aa-panel-soft: rgba(255,255,255,0.048);
-    --aa-border: rgba(255,255,255,0.07);
-    --aa-border-h: rgba(255,255,255,0.18);
+    --aa-bg-elevated: rgba(255,255,255,0.04);
+    --aa-panel: #14141c;
+    --aa-panel-soft: rgba(255,255,255,0.08);
+    --aa-border: rgba(255,255,255,0.16);
+    --aa-border-h: rgba(255,255,255,0.28);
     --aa-text: #ffffff;
-    --aa-text-muted: rgba(255,255,255,0.52);
-    --aa-accent: rgba(139,92,246,0.85);
-    --aa-accent-mid: rgba(139,92,246,0.6);
-    --aa-accent-soft: rgba(139,92,246,0.15);
+    --aa-text-muted: rgba(255,255,255,0.78);
+    --aa-accent: #a78bfa;
+    --aa-accent-mid: rgba(167,139,250,0.8);
+    --aa-accent-soft: rgba(139,92,246,0.2);
     --aa-success: #10b981;
     --aa-loss: #ef4444;
     --aa-radius: 12px;
