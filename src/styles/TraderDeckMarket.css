@@ -1,396 +1,463 @@
-/* Trader Deck Market Intelligence – premium dashboard, galaxy theme */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+/* =============================================================================
+   Trader Deck Market Intelligence – premium dashboard (reference image)
+   Galaxy purple background, glowing frame, structured cards, pulse gauge
+   ============================================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* ── Variables ── */
-.td-page {
-  --td-bg: #0a0a0c;
-  --td-shell: #0f0f12;
-  --td-card-bg: #14141a;
-  --td-card-border: rgba(139, 92, 246, 0.35);
-  --td-card-glow: rgba(139, 92, 246, 0.12);
-  --td-text: #ffffff;
-  --td-text-strong: #f4f4f5;
-  --td-muted: rgba(255, 255, 255, 0.78);
-  --td-muted-soft: rgba(255, 255, 255, 0.55);
-  --td-accent: #a78bfa;
-  --td-radius: 14px;
-  --td-radius-sm: 10px;
-  --td-up: #22c55e;
-  --td-down: #ef4444;
-  --td-neutral: #eab308;
+/* ── Page / embedded container ───────────────────────────────────────────── */
+.td-mi {
   font-family: 'Space Grotesk', sans-serif;
-  min-height: 100vh;
-  background: var(--td-bg);
-  color: var(--td-text);
-  padding: calc(70px + env(safe-area-inset-top, 0) + 24px) 24px 64px;
+  color: #ffffff;
   position: relative;
   z-index: 1;
   box-sizing: border-box;
 }
 
-.td-page * {
+.td-mi * {
   box-sizing: border-box;
 }
 
-/* Keep galaxy canvas behind dashboard content */
-.td-page .cosmic-background-canvas {
+.td-mi--page {
+  min-height: 100vh;
+  background: #0a0612;
+  padding: calc(70px + env(safe-area-inset-top, 0) + 24px) 24px 64px;
+}
+
+.td-mi--page .cosmic-background-canvas {
   z-index: 0;
 }
 
-/* ── Dashboard container: single visible frame ── */
-.td-dashboard {
-  max-width: 1200px;
+.td-mi--embedded {
+  padding: 0;
+  min-height: 320px;
+}
+
+.td-mi-page-inner {
+  max-width: 1180px;
   margin: 0 auto;
   position: relative;
   z-index: 2;
 }
 
-.td-dashboard-shell {
-  background: var(--td-shell);
-  border: 1px solid var(--td-card-border);
-  border-radius: 18px;
-  padding: 28px 24px 32px;
+/* ── Shell: strong purple outer frame + glow ────────────────────────────────── */
+.td-mi-shell {
+  position: relative;
+  border-radius: 20px;
+  padding: 3px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(99, 102, 241, 0.5) 100%);
   box-shadow:
-    0 0 0 1px rgba(139, 92, 246, 0.08),
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 60px var(--td-card-glow);
+    0 0 0 1px rgba(139, 92, 246, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.25),
+    0 0 80px rgba(139, 92, 246, 0.15),
+    inset 0 0 60px rgba(0, 0, 0, 0.3);
 }
 
-/* ── Header ── */
-.td-header {
-  margin-bottom: 28px;
-  padding-bottom: 20px;
+.td-mi-shell-glow {
+  position: absolute;
+  inset: -8px;
+  border-radius: 24px;
+  background: transparent;
+  box-shadow: 0 0 60px rgba(139, 92, 246, 0.2);
+  pointer-events: none;
+}
+
+.td-mi-shell-inner {
+  position: relative;
+  border-radius: 18px;
+  background: rgba(12, 8, 22, 0.92);
+  padding: 28px 24px 32px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.td-mi-shell-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.td-header h1 {
-  font-size: 1.65rem;
+.td-mi-shell-title {
+  font-size: 1.35rem;
   font-weight: 600;
-  margin: 0 0 8px 0;
+  margin: 0;
   letter-spacing: -0.02em;
-  color: var(--td-text-strong);
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
 }
 
-.td-header p {
-  font-size: 0.95rem;
-  color: var(--td-muted);
-  margin: 0;
-}
-
-.td-header-updated {
-  color: var(--td-muted-soft);
-  font-size: 0.9em;
-}
-
-.td-market-embedded {
-  padding: 0;
-}
-
-.td-market-embedded-loading {
-  color: var(--td-muted);
-  font-size: 0.95rem;
-  margin: 0;
-}
-
-/* ── Grid: row1 Regime | Pulse; row2 Drivers | Signals | Changes; row3 Focus | Radar ── */
-.td-grid {
+/* ── Grid: top row 2 cols (regime ~2/3, pulse ~1/3), middle 3, bottom 2 ─────── */
+.td-mi-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1fr;
+  gap: 18px;
 }
 
 @media (min-width: 768px) {
-  .td-grid {
+  .td-mi-grid {
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+  .td-mi-panel--regime { grid-column: 1; }
+  .td-mi-panel--pulse { grid-column: 2; }
+  .td-mi-panel--drivers { grid-column: 1; }
+  .td-mi-panel--signals { grid-column: 2; }
+  .td-mi-panel--changes { grid-column: 1; }
+  .td-mi-panel--focus { grid-column: 1; }
+  .td-mi-panel--radar { grid-column: 2; }
+}
+
+@media (min-width: 1024px) {
+  .td-mi-grid {
     grid-template-columns: repeat(6, 1fr);
     gap: 22px;
   }
-  .td-card--regime { grid-column: 1 / span 3; }
-  .td-card--pulse { grid-column: 4 / span 3; }
-  .td-card--drivers { grid-column: 1 / span 2; }
-  .td-card--signals { grid-column: 3 / span 2; }
-  .td-card--changes { grid-column: 5 / span 2; }
-  .td-card--focus { grid-column: 1 / span 3; }
-  .td-card--radar { grid-column: 4 / span 3; }
+  .td-mi-panel--regime { grid-column: 1 / span 4; }
+  .td-mi-panel--pulse { grid-column: 5 / span 2; }
+  .td-mi-panel--drivers { grid-column: 1 / span 2; }
+  .td-mi-panel--signals { grid-column: 3 / span 2; }
+  .td-mi-panel--changes { grid-column: 5 / span 2; }
+  .td-mi-panel--focus { grid-column: 1 / span 3; }
+  .td-mi-panel--radar { grid-column: 4 / span 3; }
 }
 
-/* ── Cards: visible, bordered, readable ── */
-.td-card {
-  background: var(--td-card-bg);
-  border: 1px solid var(--td-card-border);
-  border-radius: var(--td-radius);
+/* ── Panels: glass/nebula card, glowing border, header ──────────────────────── */
+.td-mi-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 14px;
   padding: 20px 22px;
   min-height: 160px;
-  box-shadow: 0 0 20px var(--td-card-glow);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(139, 92, 246, 0.08);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.td-card:hover {
+.td-mi-panel:hover {
   border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 28px rgba(139, 92, 246, 0.18);
+  box-shadow: 0 0 32px rgba(139, 92, 246, 0.12);
 }
 
-.td-card--wide {
+.td-mi-panel--wide {
   min-height: 140px;
 }
 
-.td-card-title {
-  font-size: 0.7rem;
+.td-mi-panel-title {
+  font-size: 0.95rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--td-muted);
   margin: 0 0 16px 0;
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
 }
 
-.td-card-body {
-  color: var(--td-text);
+.td-mi-panel-body {
+  color: rgba(255, 255, 255, 0.95);
 }
 
-/* ── Market Regime rows ── */
-.td-regime-row {
+/* ── Market Regime rows ───────────────────────────────────────────────────── */
+.td-mi-regime-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.td-mi-regime-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 0.95rem;
 }
 
-.td-regime-row:last-child {
+.td-mi-regime-row:last-child {
   border-bottom: none;
 }
 
-.td-regime-label {
-  color: var(--td-muted);
+.td-mi-regime-label {
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 400;
 }
 
-.td-regime-value {
-  font-weight: 600;
-  color: var(--td-text-strong);
+.td-mi-regime-value {
+  font-weight: 700;
+  color: #ffffff;
 }
 
-/* ── Market Pulse gauge ── */
-.td-gauge-wrap {
+/* ── Market Pulse gauge: semi-circle, gradient, needle, badge ─────────────── */
+.td-mi-gauge-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 8px 0;
 }
 
-.td-gauge {
-  width: 180px;
-  height: 96px;
+.td-mi-gauge {
+  width: 200px;
+  height: 110px;
   position: relative;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
-.td-gauge-arc {
+.td-mi-gauge-arc-bg {
   position: absolute;
   left: 0;
   top: 0;
-  width: 180px;
-  height: 90px;
-  border-radius: 90px 90px 0 0;
+  width: 200px;
+  height: 100px;
+  border-radius: 200px 200px 0 0;
   overflow: hidden;
-  background: linear-gradient(90deg, var(--td-down) 0%, #f59e0b 50%, var(--td-up) 100%);
-  opacity: 0.35;
+  background: linear-gradient(
+    90deg,
+    #dc2626 0%,
+    #ea580c 18%,
+    #ca8a04 38%,
+    #eab308 50%,
+    #84cc16 68%,
+    #22c55e 85%,
+    #16a34a 100%
+  );
+  opacity: 0.9;
 }
 
-.td-gauge-arc-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 180px;
-  height: 90px;
-  border-radius: 90px 90px 0 0;
-  background: linear-gradient(90deg, var(--td-down) 0%, #f59e0b 50%, var(--td-up) 100%);
-  clip-path: inset(0 0 50% 0);
-  opacity: 0.95;
-}
-
-.td-gauge-needle {
-  position: absolute;
-  left: 50%;
-  bottom: 4px;
-  width: 4px;
-  height: 72px;
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 2px;
-  transform-origin: 50% 100%;
-  transition: transform 0.4s ease-out;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
-}
-
-.td-gauge-labels {
-  display: flex;
-  justify-content: space-between;
-  width: 180px;
-  font-size: 0.68rem;
-  color: var(--td-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 12px;
-}
-
-.td-gauge-badge {
-  display: inline-block;
-  padding: 8px 18px;
-  border-radius: var(--td-radius-sm);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--td-text-strong);
-}
-
-.td-gauge-badge--risk-off {
-  background: rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-}
-
-.td-gauge-badge--neutral {
-  background: rgba(234, 179, 8, 0.2);
-  color: #fde047;
-  border: 1px solid rgba(234, 179, 8, 0.35);
-}
-
-.td-gauge-badge--risk-on {
-  background: rgba(34, 197, 94, 0.2);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.35);
-}
-
-/* ── List (drivers / signals) ── */
-.td-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.td-list li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  font-size: 0.92rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.td-list li:last-child {
-  border-bottom: none;
-}
-
-.td-arrow {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-}
-
-.td-arrow--up { color: var(--td-up); }
-.td-arrow--down { color: var(--td-down); }
-.td-arrow--neutral { color: var(--td-neutral); }
-
-.td-list-label {
-  font-weight: 500;
-  color: var(--td-text-strong);
-}
-
-.td-list-meta {
-  color: var(--td-muted);
-  font-size: 0.82rem;
-  margin-left: auto;
-}
-
-/* ── Bullet lists (changes, focus, radar) ── */
-.td-bullets {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.td-bullets li {
-  position: relative;
-  padding: 10px 0 10px 20px;
-  font-size: 0.92rem;
-  color: var(--td-text-strong);
-  line-height: 1.4;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.td-bullets li:last-child {
-  border-bottom: none;
-}
-
-.td-bullets li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 14px;
-  width: 0;
-  height: 0;
-  border: 5px solid transparent;
-  border-left-color: var(--td-accent);
-  border-right: none;
-}
-
-.td-empty {
-  color: var(--td-muted-soft) !important;
-  font-style: italic;
-}
-
-.td-empty::before {
+.td-mi-gauge-arc-fill {
   display: none;
 }
 
-/* ── Responsive: stack on small screens ── */
+.td-mi-gauge-needle {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 4px;
+  height: 78px;
+  margin-left: -2px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%);
+  border-radius: 2px;
+  transform-origin: 50% 100%;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.td-mi-gauge-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 200px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+
+.td-mi-gauge-badge {
+  display: inline-block;
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.2);
+}
+
+.td-mi-gauge-badge--risk-off {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.td-mi-gauge-badge--neutral {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  color: #1c1917;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.4);
+}
+
+.td-mi-gauge-badge--risk-on {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── Lists: drivers, signals (with arrows and dividers) ────────────────────── */
+.td-mi-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.td-mi-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.td-mi-list-item:last-child {
+  border-bottom: none;
+}
+
+.td-mi-arrow {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.td-mi-arrow--up { color: #22c55e; }
+.td-mi-arrow--down { color: #ef4444; }
+.td-mi-arrow--neutral { color: rgba(255, 255, 255, 0.6); }
+
+.td-mi-list-main {
+  flex: 1;
+  color: #ffffff;
+}
+
+.td-mi-list-meta {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.td-mi-list-empty {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  padding: 12px 0;
+  list-style: none;
+}
+
+/* ── Bullet lists (changes, focus, radar) ──────────────────────────────────── */
+.td-mi-bullets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.td-mi-bullet-item {
+  position: relative;
+  padding: 10px 0 10px 22px;
+  font-size: 0.92rem;
+  color: #ffffff;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.td-mi-bullet-item:last-child {
+  border-bottom: none;
+}
+
+.td-mi-bullet-item::before {
+  content: '►';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  font-size: 0.7rem;
+  color: rgba(139, 92, 246, 0.9);
+}
+
+.td-mi-bullets .td-mi-list-empty {
+  padding-left: 0;
+}
+
+.td-mi-bullets .td-mi-list-empty::before {
+  display: none;
+}
+
+/* ── Loading state ────────────────────────────────────────────────────────── */
+.td-mi-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  color: rgba(255, 255, 255, 0.8);
+  gap: 16px;
+}
+
+.td-mi-loading--page {
+  min-height: 50vh;
+}
+
+.td-mi-loading p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.td-mi-loading-pulse {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(139, 92, 246, 0.4);
+  border-top-color: rgba(139, 92, 246, 0.9);
+  border-radius: 50%;
+  animation: td-mi-spin 0.8s linear infinite;
+}
+
+@keyframes td-mi-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Fallback message & updated label ─────────────────────────────────────── */
+.td-mi-fallback-msg {
+  margin: 0 0 12px 0;
+  padding: 8px 14px;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+}
+
+.td-mi-updated {
+  margin: 16px 0 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Responsive: stack on small screens ────────────────────────────────────── */
 @media (max-width: 767px) {
-  .td-grid {
+  .td-mi-grid {
     grid-template-columns: 1fr;
   }
-  .td-card--regime,
-  .td-card--pulse,
-  .td-card--drivers,
-  .td-card--signals,
-  .td-card--changes,
-  .td-card--focus,
-  .td-card--radar {
+  .td-mi-panel--regime,
+  .td-mi-panel--pulse,
+  .td-mi-panel--drivers,
+  .td-mi-panel--signals,
+  .td-mi-panel--changes,
+  .td-mi-panel--focus,
+  .td-mi-panel--radar {
     grid-column: 1;
+  }
+  .td-mi-gauge {
+    width: 180px;
+    height: 100px;
+  }
+  .td-mi-gauge-arc-bg {
+    width: 180px;
+    height: 90px;
+    border-radius: 180px 180px 0 0;
+  }
+  .td-mi-gauge-needle {
+    height: 70px;
+  }
+  .td-mi-gauge-axis-labels {
+    width: 180px;
   }
 }
 
 @media (max-width: 640px) {
-  .td-page {
+  .td-mi--page {
     padding-left: 16px;
     padding-right: 16px;
   }
-  .td-dashboard-shell {
+  .td-mi-shell-inner {
     padding: 20px 18px 24px;
   }
-  .td-card {
+  .td-mi-panel {
     padding: 18px 20px;
     min-height: 140px;
-  }
-  .td-gauge {
-    width: 150px;
-    height: 80px;
-  }
-  .td-gauge-arc,
-  .td-gauge-arc-fill {
-    width: 150px;
-    height: 75px;
-    border-radius: 75px 75px 0 0;
-  }
-  .td-gauge-needle {
-    height: 60px;
-  }
-  .td-gauge-labels {
-    width: 150px;
   }
 }
