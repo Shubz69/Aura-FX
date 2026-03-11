@@ -1,8 +1,9 @@
-/* Aura Analysis – Leaderboard (dark theme, match reference) */
+/* Aura Analysis – Leaderboard (same UI/UX as Aura Journal) */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 .aura-leaderboard {
-  color: var(--aa-text);
+  background: #0a0a0a;
+  color: #ffffff;
   font-family: 'Space Grotesk', sans-serif;
   padding: 0 0 40px;
 }
@@ -20,7 +21,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-  color: var(--aa-text);
+  color: #ffffff;
 }
 
 .aura-leaderboard-controls {
@@ -35,7 +36,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: var(--aa-text-muted);
+  color: rgba(255,255,255,0.65);
 }
 
 .aura-leaderboard-sort-select {
@@ -82,15 +83,15 @@
 }
 
 .aura-leaderboard-loading {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.75);
   margin: 24px 0;
 }
 
 .aura-leaderboard-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--aa-border);
-  border-radius: var(--aa-radius-lg);
-  background: var(--aa-panel);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.025);
 }
 
 .aura-leaderboard-table {
@@ -103,15 +104,15 @@
   text-align: left;
   padding: 14px 16px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.65);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   white-space: nowrap;
 }
 
 .aura-leaderboard-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .aura-leaderboard-table tbody tr:hover {
@@ -135,18 +136,18 @@
 }
 
 .aura-leaderboard-pnl-pos {
-  color: var(--aa-success);
+  color: #10b981;
   font-weight: 500;
 }
 
 .aura-leaderboard-pnl-neg {
-  color: var(--aa-loss);
+  color: #ef4444;
   font-weight: 500;
 }
 
 .aura-leaderboard-empty {
   text-align: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.75);
   padding: 32px 16px !important;
   font-size: 0.9rem;
 }

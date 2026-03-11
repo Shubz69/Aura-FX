@@ -4,8 +4,8 @@
 .aura-shell {
   min-height: 100vh;
   width: 100%;
-  background: var(--aa-bg);
-  color: var(--aa-text);
+  background: #0a0a0a;
+  color: #ffffff;
   font-family: 'Space Grotesk', sans-serif;
   padding-bottom: 48px;
 }
@@ -13,7 +13,7 @@
 /* Hero: title + subtitle + Quick Add Trade */
 .aura-shell-hero {
   padding: 24px 24px 20px;
-  border-bottom: 1px solid var(--aa-border);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
 }
 
 .aura-shell-hero-inner {
@@ -60,12 +60,12 @@
   font-weight: 600;
   margin: 0 0 8px 0;
   letter-spacing: -0.02em;
-  color: var(--aa-text);
+  color: #ffffff;
 }
 
 .aura-shell-sub {
   font-size: 0.95rem;
-  color: var(--aa-text-muted);
+  color: rgba(255,255,255,0.65);
   margin: 0;
 }
 
@@ -74,13 +74,13 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--aa-accent) 0%, #5a3fd9 100%);
+  background: linear-gradient(135deg, rgba(139,92,246,0.9) 0%, #5a3fd9 100%);
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
   border-radius: 12px;
-  border: 1px solid var(--aa-border);
+  border: 1px solid rgba(139,92,246,0.35);
   box-shadow: 0 0 24px rgba(123, 92, 255, 0.25);
   transition: transform 0.2s, box-shadow 0.2s;
   flex-shrink: 0;
@@ -97,8 +97,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--aa-bg);
-  border-bottom: 1px solid var(--aa-border);
+  background: #0a0a0a;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
   backdrop-filter: blur(12px);
 }
 
@@ -133,14 +133,14 @@
 
 .aura-shell-tab:hover {
   color: #fff;
-  background: var(--aa-panel-soft);
+  background: rgba(255,255,255,0.048);
 }
 
 .aura-shell-tab.active {
   color: #fff;
   background: rgba(139, 92, 246, 0.35);
   font-weight: 500;
-  border: 1px solid rgba(167, 139, 250, 0.5);
+  border: 1px solid rgba(139,92,246,0.35);
 }
 
 .aura-shell-tab.active::after {
@@ -151,16 +151,18 @@
   transform: translateX(-50%);
   width: 60%;
   height: 2px;
-  background: linear-gradient(90deg, var(--aa-accent), rgba(99, 179, 237, 0.7));
+  background: linear-gradient(90deg, rgba(139,92,246,0.85), rgba(99, 179, 237, 0.75));
   border-radius: 2px;
 }
 
-/* Content area */
+/* Content area – journal background so all tab content is readable */
 .aura-shell-content {
   max-width: 1200px;
   margin: 0 auto;
   padding: 28px 24px 48px;
   box-sizing: border-box;
+  background: #0a0a0a;
+  color: #ffffff;
 }
 
 @media (max-width: 768px) {

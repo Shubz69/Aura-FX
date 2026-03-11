@@ -1,8 +1,9 @@
-/* Aura Analytics – dark theme, KPI grid + Equity curve + PnL charts */
+/* Aura Analytics – same UI/UX as Aura Journal (readable, journal palette) */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 .aura-analytics {
-  color: var(--aa-text);
+  background: #0a0a0a;
+  color: #ffffff;
   font-family: 'Space Grotesk', sans-serif;
   padding: 0 0 40px;
 }
@@ -11,15 +12,15 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0 0 24px 0;
-  color: var(--aa-text);
+  color: #ffffff;
 }
 
 .aura-analytics-loading {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.75);
   margin: 0;
 }
 
-/* KPI grid – dark grey cards, 4 columns then 3 then 2 */
+/* KPI grid – journal-style cards */
 .aura-analytics-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -28,9 +29,9 @@
 }
 
 .aura-analytics-kpi-card {
-  background: var(--aa-panel);
-  border: 1px solid var(--aa-border);
-  border-radius: var(--aa-radius-lg);
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -39,7 +40,7 @@
 
 .aura-analytics-kpi-label {
   font-size: 0.8rem;
-  color: var(--aa-text-muted);
+  color: rgba(255,255,255,0.65);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -47,15 +48,15 @@
 .aura-analytics-kpi-value {
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--aa-text);
+  color: #ffffff;
 }
 
 .aura-analytics-kpi-value.positive {
-  color: var(--aa-success);
+  color: #10b981;
 }
 
 .aura-analytics-kpi-value.negative {
-  color: var(--aa-loss);
+  color: #ef4444;
 }
 
 /* Section titles */
@@ -67,14 +68,14 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0 0 16px 0;
-  color: var(--aa-text);
+  color: #ffffff;
 }
 
 /* Equity curve */
 .aura-analytics-equity-section {
-  background: var(--aa-panel);
-  border: 1px solid var(--aa-border);
-  border-radius: var(--aa-radius-lg);
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
   padding: 20px;
 }
 
@@ -90,7 +91,7 @@
   justify-content: flex-end;
   gap: 12px;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .aura-analytics-equity-svg-wrap {
@@ -109,11 +110,11 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .aura-analytics-chart-empty {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.7);
   margin: 24px 0;
   font-size: 0.9rem;
 }
@@ -126,9 +127,9 @@
 }
 
 .aura-analytics-bar-section {
-  background: var(--aa-panel);
-  border: 1px solid var(--aa-border);
-  border-radius: var(--aa-radius-lg);
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
   padding: 20px;
 }
 
@@ -148,12 +149,12 @@
 
 .aura-analytics-pair-label {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
 }
 
 .aura-analytics-pair-bar-wrap {
   height: 24px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -173,11 +174,11 @@
 }
 
 .aura-analytics-pair-value.positive {
-  color: var(--aa-success);
+  color: #10b981;
 }
 
 .aura-analytics-pair-value.negative {
-  color: var(--aa-loss);
+  color: #ef4444;
 }
 
 /* PnL by session – vertical bars with zero baseline */
@@ -193,7 +194,7 @@
   flex-direction: column;
   justify-content: space-between;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .aura-analytics-session-bars {
@@ -212,7 +213,7 @@
   right: 0;
   top: 50%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   z-index: 0;
 }
 
@@ -256,7 +257,7 @@
 
 .aura-analytics-session-label {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 @media (max-width: 900px) {

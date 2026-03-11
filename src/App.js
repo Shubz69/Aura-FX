@@ -73,6 +73,7 @@ const AuraAnalysisPlaceholder = lazy(() => import('./pages/aura-analysis/AuraAna
 const TradeCalculator = lazy(() => import('./pages/aura-analysis/TradeCalculator'));
 const AuraAnalytics = lazy(() => import('./pages/aura-analysis/AuraAnalytics'));
 const AuraLeaderboard = lazy(() => import('./pages/aura-analysis/AuraLeaderboard'));
+const TraderDeckTradeJournal = lazy(() => import('./pages/trader-deck/TraderDeckTradeJournal'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
@@ -229,7 +230,7 @@ function AppRoutes() {
                             <Route path="overview" element={<AuraOverview />} />
                             <Route path="trade-validator" element={<TradeValidatorEntry />} />
                             <Route path="calculator" element={<TradeCalculator />} />
-                            <Route path="journal" element={<AuraAnalysisPlaceholder title="Trade Journal — Coming soon" />} />
+                            <Route path="journal" element={<TraderDeckTradeJournal />} />
                             <Route path="analytics" element={<AuraAnalytics />} />
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
                             <Route path="profile" element={<Navigate to="/profile" replace />} />
