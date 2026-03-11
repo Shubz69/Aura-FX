@@ -1031,6 +1031,8 @@ const [journalLoading, setJournalLoading] = useState(false);
     // Delete message modal state
     const [deleteMessageModal, setDeleteMessageModal] = useState(null); // { messageId, messageContent }
     const [isDeletingMessage, setIsDeletingMessage] = useState(false);
+
+    
     
     // Category order - load from backend or use default
     // Try to load from localStorage first for instant display, then update from backend
