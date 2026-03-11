@@ -51,7 +51,7 @@ function SectionCard({ section, timeframes, items, checked, onToggle }) {
 
 export default function TradeValidatorView() {
   const location = useLocation();
-  const isEmbedded = location.pathname === '/aura-analysis/trade-validator';
+  const isEmbedded = location.pathname === '/trader-deck/trade-validator';
   const [checked, setChecked] = useState(() => {
     try {
       const raw = localStorage.getItem('aura-trade-validator-checked');
@@ -199,8 +199,8 @@ export default function TradeValidatorView() {
   return (
     <div className={`trade-validator-page ${isEmbedded ? 'trade-validator-embedded' : ''}`}>
       <div className="trade-validator-inner tv-new-layout">
-        <Link to="/aura-analysis" className="trade-validator-back">
-          <FaArrowLeft aria-hidden /> Back to Aura Analysis
+        <Link to="/trader-deck" className="trade-validator-back">
+          <FaArrowLeft aria-hidden /> Back to Trader Desk
         </Link>
 
         <header className="tv-header">

@@ -214,7 +214,7 @@ function AppRoutes() {
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
-                            <Route index element={<AuraAnalysisGateway />} />
+                            <Route index element={<Navigate to="/aura-analysis/overview" replace />} />
                             <Route path="ai" element={<ConnectionHub />} />
                             <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
                                 <Route index element={<Navigate to="overview" replace />} />
@@ -228,13 +228,13 @@ function AppRoutes() {
                                 <Route path="growth" element={<AuraGrowth />} />
                             </Route>
                             <Route path="overview" element={<AuraOverview />} />
-                            <Route path="trade-validator" element={<TradeValidatorEntry />} />
                             <Route path="calculator" element={<TradeCalculator />} />
                             <Route path="journal" element={<TraderDeckTradeJournal />} />
                             <Route path="analytics" element={<AuraAnalytics />} />
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
                             <Route path="profile" element={<Navigate to="/profile" replace />} />
                         </Route>
+                        <Route path="/trader-deck/trade-validator" element={<AuthenticatedGuard><TradeValidatorEntry /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />

@@ -17,6 +17,7 @@ import {
   FaSlidersH,
   FaChartLine,
   FaThLarge,
+  FaCheckSquare,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -203,6 +204,11 @@ const Navbar = () => {
               </Link>
             </li>
             <li>
+              <Link to="/trader-deck/trade-validator" onClick={closeMobileMenu}>
+                <FaCheckSquare className="dropdown-icon" /> Trade Validator
+              </Link>
+            </li>
+            <li>
               <Link to="/admin/inbox" onClick={closeMobileMenu}>
                 <FaEnvelope className="dropdown-icon" /> Messages
               </Link>
@@ -386,6 +392,13 @@ const Navbar = () => {
                         >
                           <FaThLarge className="dropdown-icon" /> The Trader
                           Desk
+                        </Link>
+                        <Link
+                          to="/trader-deck/trade-validator"
+                          className="dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <FaCheckSquare className="dropdown-icon" /> Trade Validator
                         </Link>
                         <Link
                           to="/admin/inbox"
