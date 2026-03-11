@@ -1350,151 +1350,201 @@ useEffect(() => {
         });
     }, [categoryOrder]);
 
-    const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
-        if (!isAuthenticated) {
-            return channelListRef.current;
-        }
+const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
+    if (!isAuthenticated) {
+        return channelListRef.current;
+    }
 
-        const u = JSON.parse(localStorage.getItem('user') || '{}');
-        const cachedChannelsKey = `community_channels_cache_${u.id || 'anon'}`;
-        let cachedChannels = [];
-        let channelsFromServer = [];
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    const cachedChannelsKey = `community_channels_cache_${u.id || 'anon'}`;
+    let cachedChannels = [];
+    let channelsFromServer = [];
 
-        // Cache-first: show cached channels immediately so list loads fast
-        try {
-            const raw = localStorage.getItem(cachedChannelsKey);
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    cachedChannels = parsed;
-                    channelsFromServer = parsed;
-                }
+    // Cache-first: show cached channels immediately so list loads fast
+    try {
+        const raw = localStorage.getItem(cachedChannelsKey);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                cachedChannels = parsed;
+                channelsFromServer = parsed;
             }
+        }
+    } catch (e) { /* ignore */ }
+
+    const storedUserForChannels = JSON.parse(localStorage.getItem('user') || '{}');
+    const userRoleForChannels = (storedUserForChannels.role || '').toString().toLowerCase();
+    const userEmailForChannels = (storedUserForChannels.email || '').toString().toLowerCase();
+    const isAdminOrSuperForChannels = userRoleForChannels === 'admin' || userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
+    const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
+
+    // Get current user's subscription tier
+    const currentUserRole = (() => {
+        if (isAdminOrSuperForChannels) return 'admin';
+        if (storedUser?.subscription_status === 'active') {
+            if (storedUser?.subscription_plan === 'a7fx' || storedUser?.subscription_plan === 'elite') return 'a7fx';
+            if (storedUser?.subscription_plan === 'aura' || storedUser?.subscription_plan === 'premium') return 'premium';
+        }
+        return storedUser?.role?.toLowerCase() || 'free';
+    })();
+    
+    const isFreeUser = currentUserRole === 'free';
+    const isPremiumUser = currentUserRole === 'premium';
+    const isEliteUser = currentUserRole === 'a7fx' || currentUserRole === 'elite';
+
+    // Helper to check if user can access a channel based on its access level
+    const canAccessChannelByTier = (channel) => {
+        // Admins always have access
+        if (isAdminOrSuperForChannels) return true;
+        
+        const accessLevel = (channel.accessLevel || channel.access_level || 'free').toLowerCase();
+        
+        // Free channels - everyone can access
+        if (accessLevel === 'free' || accessLevel === 'open') {
+            return true;
+        }
+        
+        // Premium channels - only premium and elite users
+        if (accessLevel === 'premium') {
+            return isPremiumUser || isEliteUser;
+        }
+        
+        // A7FX/Elite channels - only elite users
+        if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+            return isEliteUser;
+        }
+        
+        // Admin-only channels - only admins (already handled above)
+        if (accessLevel === 'admin-only') {
+            return false;
+        }
+        
+        // Default: free access
+        return true;
+    };
+
+    const buildPreparedFromServer = (serverList) => {
+        if (!Array.isArray(serverList) || serverList.length === 0) return [];
+        
+        return serverList.map((channel) => {
+            const baseId = channel.id ?? channel.name ?? `channel-${Date.now()}`;
+            const idString = String(baseId);
+            const normalizedName = channel.name || idString;
+            const displayNameValue = channel.displayName || normalizedName
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+            const accessLevelValue = (channel.accessLevel || channel.access_level || 'free').toLowerCase();
+            const readOnly = (channel.permissionType || channel.permission_type || 'read-write').toString().toLowerCase() === 'read-only';
+            
+            // CRITICAL: Determine if user can see this channel based on subscription tier
+            const canSee = canAccessChannelByTier(channel);
+            
+            const canRead = isAdminOrSuperForChannels ? true : (canSee && (channel.canRead !== false));
+            const canWrite = (channel.canWrite !== undefined && channel.canWrite !== null)
+                ? channel.canWrite
+                : (readOnly ? isSuperAdminForChannels : (isAdminOrSuperForChannels ? true : (canSee && (channel.canWrite !== false))));
+            const locked = (channel.locked !== undefined && channel.locked !== null)
+                ? channel.locked
+                : (isAdminOrSuperForChannels ? false : (accessLevelValue === 'admin-only'));
+            
+            return {
+                ...channel,
+                id: idString,
+                name: normalizedName,
+                displayName: displayNameValue,
+                category: channel.category || 'general',
+                description: channel.description || '',
+                accessLevel: accessLevelValue,
+                locked,
+                canSee,
+                canRead,
+                canWrite
+            };
+        }).filter((ch) => ch.canSee === true);
+    };
+
+    // Show cache immediately so channels appear fast
+    if (cachedChannels.length > 0) {
+        const fromCache = buildPreparedFromServer(cachedChannels);
+        if (fromCache.length > 0) {
+            const sortedCache = sortChannels(fromCache);
+            setChannelList(sortedCache);
+        }
+    }
+
+    try {
+        const response = await Api.getChannelsBootstrap();
+        const data = response?.data;
+        if (data?.success && Array.isArray(data.channels)) {
+            channelsFromServer = data.channels;
+            if (Array.isArray(data.categoryOrder) && data.categoryOrder.length > 0) {
+                setCategoryOrderState(data.categoryOrder);
+            }
+            if (data.channelOrder && typeof data.channelOrder === 'object') {
+                setChannelOrder(data.channelOrder);
+            }
+        } else if (Array.isArray(data)) {
+            channelsFromServer = data;
+        } else if (Array.isArray(data?.channels)) {
+            channelsFromServer = data.channels;
+        }
+    } catch (_) {
+        try {
+            const response = await Api.getChannels();
+            if (Array.isArray(response?.data)) {
+                channelsFromServer = response.data;
+            } else if (Array.isArray(response?.data?.channels)) {
+                channelsFromServer = response.data.channels;
+            }
+        } catch (error) {
+            console.warn('Failed to fetch channels from API:', error?.message || error);
+            if (cachedChannels.length > 0) return channelListRef.current;
+        }
+    }
+
+    if (channelsFromServer.length > 0) {
+        try {
+            localStorage.setItem(cachedChannelsKey, JSON.stringify(channelsFromServer));
         } catch (e) { /* ignore */ }
+    }
 
-        const storedUserForChannels = JSON.parse(localStorage.getItem('user') || '{}');
-        const userRoleForChannels = (storedUserForChannels.role || '').toString().toLowerCase();
-        const userEmailForChannels = (storedUserForChannels.email || '').toString().toLowerCase();
-        const isAdminOrSuperForChannels = userRoleForChannels === 'admin' || userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
-        const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
+    let preparedChannels = [];
+    if (Array.isArray(channelsFromServer) && channelsFromServer.length > 0) {
+        preparedChannels = buildPreparedFromServer(channelsFromServer);
+    } else if (channelListRef.current.length > 0) {
+        preparedChannels = channelListRef.current;
+    }
 
-        const buildPreparedFromServer = (serverList) => {
-            if (!Array.isArray(serverList) || serverList.length === 0) return [];
-            return serverList.map((channel) => {
-                const baseId = channel.id ?? channel.name ?? `channel-${Date.now()}`;
-                const idString = String(baseId);
-                const normalizedName = channel.name || idString;
-                const displayNameValue = channel.displayName || normalizedName
-                    .split('-')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-                const accessLevelValue = (channel.accessLevel || channel.access_level || 'open').toLowerCase();
-                const readOnly = (channel.permissionType || channel.permission_type || 'read-write').toString().toLowerCase() === 'read-only';
-                const canSee = isAdminOrSuperForChannels || channel.canSee === true;
-                const canRead = isAdminOrSuperForChannels ? true : (canSee && (channel.canRead !== false));
-                const canWrite = (channel.canWrite !== undefined && channel.canWrite !== null)
-                    ? channel.canWrite
-                    : (readOnly ? isSuperAdminForChannels : (isAdminOrSuperForChannels ? true : (canSee && (channel.canWrite !== false))));
-                const locked = (channel.locked !== undefined && channel.locked !== null)
-                    ? channel.locked
-                    : (isAdminOrSuperForChannels ? false : (accessLevelValue === 'admin-only'));
-                return {
-                    ...channel,
-                    id: idString,
-                    name: normalizedName,
-                    displayName: displayNameValue,
-                    category: channel.category || 'general',
-                    description: channel.description || '',
-                    accessLevel: accessLevelValue,
-                    locked,
-                    canSee,
-                    canRead,
-                    canWrite
-                };
-            }).filter((ch) => ch.canSee === true);
-        };
+    if (preparedChannels.length === 0) {
+        setChannelList([]);
+        return [];
+    }
 
-        // Show cache immediately so channels appear fast
-        if (cachedChannels.length > 0) {
-            const fromCache = buildPreparedFromServer(cachedChannels);
-            if (fromCache.length > 0) {
-                const sortedCache = sortChannels(fromCache);
-                setChannelList(sortedCache);
-            }
-        }
+    const sortedChannels = sortChannels(preparedChannels);
+    setChannelList(sortedChannels);
 
-        try {
-            const response = await Api.getChannelsBootstrap();
-            const data = response?.data;
-            if (data?.success && Array.isArray(data.channels)) {
-                channelsFromServer = data.channels;
-                if (Array.isArray(data.categoryOrder) && data.categoryOrder.length > 0) {
-                    setCategoryOrderState(data.categoryOrder);
-                }
-                if (data.channelOrder && typeof data.channelOrder === 'object') {
-                    setChannelOrder(data.channelOrder);
-                }
-            } else if (Array.isArray(data)) {
-                channelsFromServer = data;
-            } else if (Array.isArray(data?.channels)) {
-                channelsFromServer = data.channels;
-            }
-        } catch (_) {
-            try {
-                const response = await Api.getChannels();
-                if (Array.isArray(response?.data)) {
-                    channelsFromServer = response.data;
-                } else if (Array.isArray(response?.data?.channels)) {
-                    channelsFromServer = response.data.channels;
-                }
-            } catch (error) {
-                console.warn('Failed to fetch channels from API:', error?.message || error);
-                if (cachedChannels.length > 0) return channelListRef.current;
-            }
-        }
+    const currentSelectedId = selectedChannelRef.current?.id || null;
+    const normalizedSelectId = selectChannelId ? selectChannelId.toString() : null;
+    const routeTargetId = channelIdParam ? channelIdParam.toString() : null;
+    const targetId = normalizedSelectId || routeTargetId || currentSelectedId;
 
-        if (channelsFromServer.length > 0) {
-            try {
-                localStorage.setItem(cachedChannelsKey, JSON.stringify(channelsFromServer));
-            } catch (e) { /* ignore */ }
-        }
+    let nextSelection = sortedChannels.find((channel) => String(channel.id) === String(targetId));
 
-        let preparedChannels = [];
-        if (Array.isArray(channelsFromServer) && channelsFromServer.length > 0) {
-            preparedChannels = buildPreparedFromServer(channelsFromServer);
-        } else if (channelListRef.current.length > 0) {
-            preparedChannels = channelListRef.current;
-        }
+    if (!nextSelection && currentSelectedId) {
+        nextSelection = sortedChannels.find((channel) => String(channel.id) === String(currentSelectedId));
+    }
 
-        if (preparedChannels.length === 0) {
-            setChannelList([]);
-            return [];
-        }
+    if (!nextSelection && sortedChannels.length > 0) {
+        nextSelection = sortedChannels[0];
+    }
 
-        const sortedChannels = sortChannels(preparedChannels);
-        setChannelList(sortedChannels);
+    if ((nextSelection?.id || null) !== currentSelectedId) {
+        setSelectedChannel(nextSelection || null);
+    }
 
-        const currentSelectedId = selectedChannelRef.current?.id || null;
-        const normalizedSelectId = selectChannelId ? selectChannelId.toString() : null;
-        const routeTargetId = channelIdParam ? channelIdParam.toString() : null;
-        const targetId = normalizedSelectId || routeTargetId || currentSelectedId;
-
-        let nextSelection = sortedChannels.find((channel) => String(channel.id) === String(targetId));
-
-        if (!nextSelection && currentSelectedId) {
-            nextSelection = sortedChannels.find((channel) => String(channel.id) === String(currentSelectedId));
-        }
-
-        if (!nextSelection && sortedChannels.length > 0) {
-            nextSelection = sortedChannels[0];
-        }
-
-        if ((nextSelection?.id || null) !== currentSelectedId) {
-            setSelectedChannel(nextSelection || null);
-        }
-
-        return sortedChannels;
-    }, [isAuthenticated, sortChannels]);
+    return sortedChannels;
+}, [isAuthenticated, sortChannels]);
     
     // Initialize WebSocket connection for real-time messaging
     const enableRealtime = useMemo(() => {
@@ -2003,47 +2053,54 @@ const renderMessageContent = (content, messageFile) => {
     // XP calculation is now handled by the imported calculateMessageXP function from xpSystem.js
 
     // Get user's role - check subscription status and plan
-    const getCurrentUserRole = () => {
-        if (isSuperAdminUser) return 'super_admin';
-        if (isAdminUser) return 'admin';
-        
-        // Check subscription status and plan from user object
-        const subscriptionStatus = storedUser?.subscription_status;
-        const subscriptionPlan = storedUser?.subscription_plan;
-        const userRole = storedUser?.role?.toLowerCase() || 'free';
-        
-        // If user has active subscription, ensure role matches plan
-        if (subscriptionStatus === 'active') {
-            if (subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'A7FX') {
-                return 'a7fx';
-            }
-            if (subscriptionPlan === 'aura' || subscriptionPlan === 'Aura FX' || subscriptionPlan === 'premium') {
-                return 'premium';
-            }
-            // If no plan specified but has active subscription, check role
-            if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
-                return userRole;
-            }
-            // Default to premium if subscription is active but no plan specified
+const getCurrentUserRole = () => {
+    if (isSuperAdminUser) return 'super_admin';
+    if (isAdminUser) return 'admin';
+    
+    // Check subscription status and plan from user object
+    const subscriptionStatus = storedUser?.subscription_status;
+    const subscriptionPlan = storedUser?.subscription_plan;
+    const userRole = storedUser?.role?.toLowerCase() || 'free';
+    
+    // If user has active subscription, ensure role matches plan
+    if (subscriptionStatus === 'active') {
+        if (subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'A7FX') {
+            return 'a7fx';
+        }
+        if (subscriptionPlan === 'aura' || subscriptionPlan === 'premium') {
             return 'premium';
         }
-        
-        // If subscription is inactive/expired, downgrade to free
-        if (subscriptionStatus === 'inactive' || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') {
-        return 'free';
+        // If no plan specified but has active subscription, check role
+        if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
+            return userRole;
         }
-        
-        // Return stored role or default to free
-        return userRole || 'free';
-    };
+        // Default to premium if subscription is active but no plan specified
+        return 'premium';
+    }
+    
+    // If subscription is inactive/expired, downgrade to free
+    if (subscriptionStatus === 'inactive' || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') {
+        return 'free';
+    }
+    
+    // Check entitlements context for tier information
+    if (entitlements?.tier) {
+        const tier = entitlements.tier.toLowerCase();
+        if (tier === 'elite' || tier === 'a7fx') return 'a7fx';
+        if (tier === 'premium' || tier === 'aura') return 'premium';
+    }
+    
+    // Return stored role or default to free
+    return userRole || 'free';
+};
 
     // Get user's courses
     const getUserCourses = () => {
         return storedUser?.courses || [];
     };
 
-    // Channels free users can always see (read-only; only admins can post)
-    const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
+   // Channels free users can always see
+const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
     // Check if user can access channel (view)
     // Channel access levels: 'premium' (premium + a7fx), 'a7fx' (a7fx only), 'admin-only' (admins only)
