@@ -20,7 +20,6 @@ export default function TraderDeck() {
           <div className="td-layout-shell">
             <header className="td-layout-header">
               <h1 className="td-layout-title">Trader Deck</h1>
-              <p className="td-layout-sub">Manual trade planning, validation and journaling tools</p>
             </header>
             <main className="td-layout-content">
               <TraderDeckGateway onSelect={handleGatewaySelect} />

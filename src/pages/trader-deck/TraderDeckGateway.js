@@ -5,8 +5,8 @@ import '../../styles/trader-deck/TraderDeckGateway.css';
 export default function TraderDeckGateway({ onSelect }) {
   return (
     <div className="td-gateway">
-      <h2 className="td-gateway-title">Trader Deck</h2>
-      <p className="td-gateway-sub">Choose where to start</p>
+      <p className="td-gateway-sub">Maximize daily planning, validation and journaling tools.</p>
+      <p className="td-gateway-cta">Choose where to start</p>
       <div className="td-gateway-buttons">
         <button
           type="button"

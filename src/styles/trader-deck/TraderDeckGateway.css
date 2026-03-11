@@ -1,65 +1,90 @@
-/* Trader Deck – 2-button gateway */
+/* Trader Deck gateway – match reference image, journal UI/UX, all text visible */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
 .td-gateway {
   padding: 24px 0 48px;
   text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .td-gateway-title {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 8px 0;
-  color: var(--aa-text);
+  color: #ffffff;
+  letter-spacing: -0.02em;
 }
 
 .td-gateway-sub {
-  font-size: 0.95rem;
-  color: var(--aa-text-muted);
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0 0 32px 0;
+  line-height: 1.4;
+}
+
+.td-gateway-cta {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 24px 0;
 }
 
 .td-gateway-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 24px;
   justify-content: center;
-  max-width: 560px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
 .td-gateway-btn {
   flex: 1;
-  min-width: 220px;
+  min-width: 240px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   padding: 28px 24px;
-  background: var(--aa-panel);
-  border: 1px solid var(--aa-border);
-  border-radius: var(--aa-radius-lg);
-  color: var(--aa-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  color: #ffffff;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .td-gateway-btn:hover {
-  background: var(--aa-panel-soft);
-  border-color: var(--aa-accent);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.5);
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .td-gateway-btn-icon {
   font-size: 2rem;
-  color: var(--aa-accent);
+  color: rgba(139, 92, 246, 0.9);
 }
 
 .td-gateway-btn-label {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 600;
+  color: #ffffff;
 }
 
 .td-gateway-btn-desc {
-  font-size: 0.85rem;
-  color: var(--aa-text-muted);
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .td-gateway-buttons {
+    flex-direction: column;
+    max-width: 100%;
+  }
+  .td-gateway-btn {
+    min-width: 0;
+    width: 100%;
+  }
 }

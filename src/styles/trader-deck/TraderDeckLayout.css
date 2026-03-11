@@ -4,8 +4,8 @@
 .td-layout-page {
   min-height: 100vh;
   width: 100%;
-  background: var(--aa-bg);
-  color: var(--aa-text);
+  background: #0a0a0a;
+  color: #ffffff;
   font-family: 'Space Grotesk', sans-serif;
   padding: calc(70px + env(safe-area-inset-top, 0) + 24px) 24px 64px;
   position: relative;
@@ -21,17 +21,17 @@
 }
 
 .td-layout-shell {
-  background: var(--aa-panel);
-  border: 1px solid var(--aa-border);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 18px;
   padding: 28px 24px 32px;
-  box-shadow: 0 0 0 1px rgba(123, 92, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.1), 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .td-layout-header {
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 1px solid var(--aa-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .td-layout-back {
@@ -42,18 +42,18 @@
   padding: 8px 14px;
   font-size: 0.9rem;
   font-family: inherit;
-  color: var(--aa-text-muted);
-  background: var(--aa-panel-soft);
-  border: 1px solid var(--aa-border);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 10px;
   cursor: pointer;
   transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 
 .td-layout-back:hover {
-  color: var(--aa-text);
-  border-color: var(--aa-accent);
-  background: rgba(123, 92, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.12);
 }
 
 .td-layout-title {
@@ -61,18 +61,18 @@
   font-weight: 600;
   margin: 0 0 8px 0;
   letter-spacing: -0.02em;
-  color: var(--aa-text);
+  color: #ffffff;
 }
 
 .td-layout-sub {
   font-size: 0.95rem;
-  color: var(--aa-text-muted);
+  color: rgba(255, 255, 255, 0.78);
   margin: 0;
 }
 
 .td-layout-tabs-wrap {
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--aa-border);
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .td-layout-tabs-inner {
@@ -84,7 +84,7 @@
   padding: 14px 20px;
   font-size: 0.9rem;
   font-weight: 400;
-  color: var(--aa-text-muted);
+  color: rgba(255, 255, 255, 0.85);
   background: none;
   border: none;
   border-radius: 10px;
@@ -95,13 +95,13 @@
 }
 
 .td-layout-tab:hover {
-  color: var(--aa-text);
-  background: var(--aa-panel-soft);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .td-layout-tab.active {
-  color: var(--aa-text);
-  background: rgba(123, 92, 255, 0.2);
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.25);
   font-weight: 500;
 }
 
@@ -113,12 +113,47 @@
   transform: translateX(-50%);
   width: 60%;
   height: 2px;
-  background: linear-gradient(90deg, var(--aa-accent), rgba(99, 179, 237, 0.7));
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.9), rgba(99, 179, 237, 0.7));
   border-radius: 2px;
+}
+
+.td-layout-semi-wrap {
+  margin-bottom: 20px;
+}
+
+.td-layout-semi-inner {
+  display: flex;
+  gap: 6px;
+}
+
+.td-layout-semi-tab {
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.td-layout-semi-tab:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.td-layout-semi-tab.active {
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.35);
 }
 
 .td-layout-content {
   min-height: 200px;
+  color: #ffffff;
 }
 
 @media (max-width: 768px) {

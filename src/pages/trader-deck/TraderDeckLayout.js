@@ -4,18 +4,31 @@ import CosmicBackground from '../../components/CosmicBackground';
 import TraderDeckOverview from './TraderDeckOverview';
 import MarketIntelligenceDashboard from './MarketIntelligenceDashboard';
 import TraderDeckTradeJournal from './TraderDeckTradeJournal';
-import TraderDeckProfile from './TraderDeckProfile';
 import '../../styles/trader-deck/TraderDeckLayout.css';
 
-const TABS = [
+const MAIN_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'market-intelligence', label: 'Market Intelligence' },
   { id: 'trade-journal', label: 'Trade Journal' },
-  { id: 'profile', label: 'Profile' },
+];
+
+const OVERVIEW_SEMI = [
+  { id: 'glance', label: 'At a glance' },
+  { id: 'calendar', label: 'Calendar' },
+];
+
+const MI_SEMI = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'signals', label: 'Signals' },
 ];
 
 export default function TraderDeckLayout({ initialTab = 'overview', onBack }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [overviewSemi, setOverviewSemi] = useState('glance');
+  const [miSemi, setMiSemi] = useState('dashboard');
+
+  const showOverviewSemi = activeTab === 'overview';
+  const showMiSemi = activeTab === 'market-intelligence';
 
   return (
     <div className="td-layout-page">
@@ -39,7 +52,7 @@ export default function TraderDeckLayout({ initialTab = 'overview', onBack }) {
 
           <nav className="td-layout-tabs-wrap" aria-label="Trader Deck sections">
             <div className="td-layout-tabs-inner">
-              {TABS.map((tab) => (
+              {MAIN_TABS.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
@@ -52,11 +65,48 @@ export default function TraderDeckLayout({ initialTab = 'overview', onBack }) {
             </div>
           </nav>
 
+          {showOverviewSemi && (
+            <nav className="td-layout-semi-wrap" aria-label="Overview sub-sections">
+              <div className="td-layout-semi-inner">
+                {OVERVIEW_SEMI.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`td-layout-semi-tab ${overviewSemi === s.id ? 'active' : ''}`}
+                    onClick={() => setOverviewSemi(s.id)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </nav>
+          )}
+
+          {showMiSemi && (
+            <nav className="td-layout-semi-wrap" aria-label="Market Intelligence sub-sections">
+              <div className="td-layout-semi-inner">
+                {MI_SEMI.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`td-layout-semi-tab ${miSemi === s.id ? 'active' : ''}`}
+                    onClick={() => setMiSemi(s.id)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </nav>
+          )}
+
           <main className="td-layout-content">
-            {activeTab === 'overview' && <TraderDeckOverview />}
-            {activeTab === 'market-intelligence' && <MarketIntelligenceDashboard embedded />}
+            {activeTab === 'overview' && (
+              <TraderDeckOverview mode={overviewSemi} />
+            )}
+            {activeTab === 'market-intelligence' && (
+              <MarketIntelligenceDashboard embedded mode={miSemi} />
+            )}
             {activeTab === 'trade-journal' && <TraderDeckTradeJournal />}
-            {activeTab === 'profile' && <TraderDeckProfile />}
           </main>
         </div>
       </div>
