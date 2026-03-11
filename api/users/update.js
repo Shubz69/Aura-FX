@@ -319,13 +319,13 @@ const { name, username, email, phone, address, bio, avatar, updateUsername, avat
           updates.push('bio = ?');
           values.push(cleanValue(bio));
         }
-      // In update.js, find the section where you build the updates array
-// Add this after the avatar handling section:
+  
+
 
 if (avatar !== undefined) {
   let avatarValue = cleanValue(avatar);
-  // If avatar is a base64 string, ensure it's not too long (TEXT can handle up to 65KB)
-  // But we'll truncate if it's extremely long to prevent issues
+  
+  // If avatar is a base64 string, ensure it's properly handled
   if (avatarValue && typeof avatarValue === 'string') {
     // Base64 images can be long, but TEXT column can handle up to 65,535 bytes
     // We'll limit to 60KB to be safe (60,000 characters for base64)
@@ -333,16 +333,26 @@ if (avatar !== undefined) {
       console.warn('Avatar data too long, truncating to 60KB');
       avatarValue = avatarValue.substring(0, 60000);
     }
-    // If it's not a base64 data URL and not a simple filename, treat invalid as clear avatar
-    if (avatarValue && !avatarValue.startsWith('data:') && !avatarValue.match(/^[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif|webp)$/)) {
-      if (avatarValue.length > 1000 && !avatarValue.includes('base64')) {
-        console.warn('Avatar value seems invalid, clearing');
-        avatarValue = null;
-      }
+    
+    // Check if it's a valid avatar format
+    const isValidAvatar = avatarValue.startsWith('data:image') || 
+                          avatarValue.startsWith('http') || 
+                          avatarValue.match(/^[a-zA-Z0-9_-]+\.(png|jpg|jpeg|gif|webp|svg)$/);
+    
+    if (!isValidAvatar && avatarValue.length > 100) {
+      console.warn('Avatar value seems invalid, clearing');
+      avatarValue = null;
     }
   }
+  
   updates.push('avatar = ?');
   values.push(avatarValue ?? null);
+}
+
+// Also handle avatarColor if it exists
+if (avatarColor !== undefined) {
+  updates.push('avatarColor = ?');
+  values.push(cleanValue(avatarColor));
 }
 
 // ADD THIS SECTION FOR BANNER HANDLING
