@@ -1039,10 +1039,23 @@
     gap: 8px;
   }
 }
+/* Add to AdminPanel.css */
 .action-btn.plan-btn {
   background: linear-gradient(135deg, #ffd700, #ffa500);
   color: #000;
 }
+
+.action-btn.plan-btn:hover {
+  background: linear-gradient(135deg, #ffed4a, #ffb347);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+.user-plan {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  padding: 2px 0;
+}
+
 @media (prefers-color-scheme: dark) {
   .admin-panel-container {
     --bg-primary: #0a0a0a;

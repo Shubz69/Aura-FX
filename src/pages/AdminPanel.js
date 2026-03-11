@@ -558,6 +558,23 @@ const AdminPanel = () => {
                       <span>•</span>
                       <span>{Math.floor(userItem.xp || 0).toLocaleString()} XP</span>
                     </div>
+                    {/* Add this line in the user-info div */}
+<div className="user-plan">
+  📋 Plan: <span style={{ 
+    color: userItem.subscription_plan === 'premium' ? '#ffd700' : 
+           userItem.subscription_plan === 'a7fx' ? '#00ffff' :
+           userItem.subscription_plan === 'elite' ? '#ff6b6b' : '#aaa',
+    fontWeight: 'bold',
+    textTransform: 'uppercase'
+  }}>
+    {userItem.subscription_plan || 'free'}
+  </span>
+  {userItem.subscription_expiry && userItem.subscription_plan !== 'free' && (
+    <span style={{ fontSize: '0.8rem', color: '#888', marginLeft: '8px' }}>
+      (expires: {new Date(userItem.subscription_expiry).toLocaleDateString()})
+    </span>
+  )}
+</div>
                     <div className="user-joined">
                       Joined: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
