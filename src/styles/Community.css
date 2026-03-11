@@ -251,6 +251,8 @@ html.community-page-active {
     max-height: 100% !important;
     position: relative !important;
     transition: opacity 0.25s ease;
+    display: flex !important;
+    flex-direction: column !important;
 }
 .chat-messages.user-scrolling { scroll-behavior: auto !important; }
 .messages-end-anchor {
@@ -923,13 +925,15 @@ body.sidebar-open-mobile {
         flex-shrink: 0 !important; 
     }
     .chat-header h2 { font-size: 0.875rem; }
-    .chat-messages { 
-        flex: 1 1 0 !important; 
-        min-height: 0 !important; 
-        padding: 10px 12px !important; 
-        overflow-y: auto !important; 
-        -webkit-overflow-scrolling: touch; 
-    }
+ .chat-messages { 
+    flex: 1 1 0 !important; 
+    min-height: 0 !important; 
+    padding: 10px 12px !important; 
+    overflow-y: auto !important; 
+    -webkit-overflow-scrolling: touch; 
+    display: flex !important;
+    flex-direction: column !important;
+}
 
     .message-item { padding: 2px 8px 2px 60px !important; }
     .message-item:not(.grouped) { padding-top: 8px !important; }
