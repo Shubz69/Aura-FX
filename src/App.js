@@ -213,7 +213,7 @@ function AppRoutes() {
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
-                            <Route index element={<Navigate to="overview" replace />} />
+                            <Route index element={<AuraAnalysisGateway />} />
                             <Route path="ai" element={<ConnectionHub />} />
                             <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
                                 <Route index element={<Navigate to="overview" replace />} />

@@ -22,7 +22,7 @@ export default function AuraAnalysisGateway() {
           <button
             type="button"
             className="aura-gateway-card"
-            onClick={() => navigate('/aura-analysis/trade-validator')}
+            onClick={() => navigate('/aura-analysis/trade-validator', { state: { fromGateway: true } })}
             aria-label="Open Trade Validator"
           >
             <div className="aura-gateway-card-icon" aria-hidden>✓</div>

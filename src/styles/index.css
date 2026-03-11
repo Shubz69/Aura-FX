@@ -28,20 +28,22 @@
     --glow-medium: 0 0 1px;
     --glow-strong: 0 0 1.5px;
 
-    /* Aura Analysis / Trader Deck – match Aura-analysis-start (GitHub) */
-    --aa-bg: #05050a;
-    --aa-bg-elevated: #070710;
-    --aa-panel: #0e0e17;
-    --aa-panel-soft: #151525;
-    --aa-border: #1a1a2b;
-    --aa-text: #e8e8f0;
-    --aa-text-muted: #a6a6c2;
-    --aa-accent: #7b5cff;
-    --aa-accent-mid: #9b7bff;
-    --aa-success: #2ee6a6;
-    --aa-loss: #ff5a6a;
-    --aa-radius: 0.5rem;
-    --aa-radius-lg: 12px;
+    /* Aura Analysis / Trader Deck – match Journal page (Journal.css) */
+    --aa-bg: #0a0a0a;
+    --aa-bg-elevated: rgba(255,255,255,0.025);
+    --aa-panel: rgba(255,255,255,0.025);
+    --aa-panel-soft: rgba(255,255,255,0.048);
+    --aa-border: rgba(255,255,255,0.07);
+    --aa-border-h: rgba(255,255,255,0.18);
+    --aa-text: #ffffff;
+    --aa-text-muted: rgba(255,255,255,0.52);
+    --aa-accent: rgba(139,92,246,0.85);
+    --aa-accent-mid: rgba(139,92,246,0.6);
+    --aa-accent-soft: rgba(139,92,246,0.15);
+    --aa-success: #10b981;
+    --aa-loss: #ef4444;
+    --aa-radius: 12px;
+    --aa-radius-lg: 18px;
 }
 
 /* No-avatar placeholder: coloured circle, transparent fill (no personal PFP) */
