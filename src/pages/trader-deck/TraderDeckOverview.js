@@ -349,7 +349,7 @@ export default function TraderDeckOverview() {
         <section className="td-overview-chart-card td-overview-recent-card">
           <div className="td-overview-recent-header">
             <h3 className="td-overview-chart-title">Recent Trades</h3>
-            <Link to="/aura-analysis/overview" className="td-overview-view-all">View all</Link>
+            <Link to="/trader-deck/trade-validator/overview" className="td-overview-view-all">View all</Link>
           </div>
           <div className="td-overview-recent-table-wrap">
             <table className="td-overview-recent-table">

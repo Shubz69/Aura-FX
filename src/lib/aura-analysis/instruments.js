@@ -448,3 +448,27 @@ export function getInstrumentOrFallback(symbol) {
 export function getAllInstruments() {
   return [...INSTRUMENTS];
 }
+
+const CATEGORY_LABELS = {
+  forex: 'Forex',
+  commodity: 'Commodities',
+  index: 'Indices',
+  stock: 'Stocks',
+  future: 'Futures',
+  crypto: 'Crypto',
+};
+
+/** Group instruments by asset class for categorized dropdowns. */
+export function getInstrumentsByCategory() {
+  const groups = {};
+  INSTRUMENTS.forEach((inst) => {
+    const key = inst.assetClass || 'forex';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(inst);
+  });
+  return Object.entries(groups).map(([key, list]) => ({
+    category: key,
+    label: CATEGORY_LABELS[key] || key,
+    instruments: list,
+  }));
+}

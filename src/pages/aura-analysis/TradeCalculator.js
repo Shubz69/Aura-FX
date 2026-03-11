@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllInstruments } from '../../lib/aura-analysis/instruments';
+import { getAllInstruments, getInstrumentsByCategory } from '../../lib/aura-analysis/instruments';
 import { calculateRisk } from '../../lib/aura-analysis/calculators/calculateRisk';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
 const INSTRUMENTS_LIST = getAllInstruments();
+const INSTRUMENTS_BY_CATEGORY = getInstrumentsByCategory();
 
 const SESSIONS = [
   { value: '', label: 'Select session' },
@@ -28,6 +29,18 @@ export default function TradeCalculator() {
     session: '',
     notes: '',
   });
+  const [pairDropdownOpen, setPairDropdownOpen] = useState(false);
+  const pairDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pairDropdownRef.current && !pairDropdownRef.current.contains(e.target)) {
+        setPairDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const calcInput = useMemo(
     () => ({
@@ -73,10 +86,16 @@ export default function TradeCalculator() {
     (Number(form.stopLoss) || 0) !== 0 &&
     (Number(form.takeProfit) || 0) > 0;
 
-  const handlePairChange = (e) => {
-    const v = e.target.value;
-    const inst = INSTRUMENTS_LIST.find((x) => x.symbol === v) || INSTRUMENTS_LIST[0];
-    setForm((f) => ({ ...f, pair: v, pairLabel: inst.displayName }));
+  const riskAmountFromBalance = useMemo(() => {
+    const bal = Number(form.accountBalance) || 0;
+    const pct = Number(form.riskPercent) || 0;
+    if (bal <= 0 || pct <= 0) return 0;
+    return (bal * pct) / 100;
+  }, [form.accountBalance, form.riskPercent]);
+
+  const handlePairSelect = (inst) => {
+    setForm((f) => ({ ...f, pair: inst.symbol, pairLabel: inst.displayName }));
+    setPairDropdownOpen(false);
   };
 
   const suggestFromRisk = () => {
@@ -112,13 +131,45 @@ export default function TradeCalculator() {
           <div className="trade-calc-field">
             <label>Pair / Asset</label>
             <div className="trade-calc-pair-row">
-              <select value={form.pair} onChange={handlePairChange} className="trade-calc-input">
-                {INSTRUMENTS_LIST.map((inst) => (
-                  <option key={inst.symbol} value={inst.symbol}>
-                    {inst.symbol}
-                  </option>
-                ))}
-              </select>
+              <div className="trade-calc-pair-dropdown" ref={pairDropdownRef}>
+                <button
+                  type="button"
+                  className="trade-calc-input trade-calc-pair-trigger"
+                  onClick={() => setPairDropdownOpen((o) => !o)}
+                  aria-expanded={pairDropdownOpen}
+                  aria-haspopup="listbox"
+                  aria-label="Select pair or asset"
+                >
+                  <span>{form.pair}</span>
+                  <span className="trade-calc-pair-arrow" aria-hidden>{pairDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+                {pairDropdownOpen && (
+                  <div
+                    className="trade-calc-pair-list"
+                    role="listbox"
+                    aria-label="Pair and asset list"
+                  >
+                    {INSTRUMENTS_BY_CATEGORY.map(({ label, instruments }) => (
+                      <div key={label} className="trade-calc-pair-category">
+                        <div className="trade-calc-pair-category-label">{label}</div>
+                        {instruments.map((inst) => (
+                          <button
+                            key={inst.symbol}
+                            type="button"
+                            role="option"
+                            aria-selected={form.pair === inst.symbol}
+                            className={`trade-calc-pair-option ${form.pair === inst.symbol ? 'selected' : ''}`}
+                            onClick={() => handlePairSelect(inst)}
+                          >
+                            <span className="trade-calc-pair-option-symbol">{inst.symbol}</span>
+                            <span className="trade-calc-pair-option-name">{inst.displayName}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input
                 type="text"
                 className="trade-calc-input"
@@ -265,9 +316,14 @@ export default function TradeCalculator() {
         <section className="trade-calc-panel trade-calc-calculated">
           <h2 className="trade-calc-panel-title">Calculated</h2>
           <div className="trade-calc-calc-body">
+            {riskAmountFromBalance > 0 && (
+              <p className="trade-calc-calc-results trade-calc-calc-partial">
+                <strong>Risk amount (from balance × risk %):</strong> ${riskAmountFromBalance.toFixed(2)}
+              </p>
+            )}
             {!hasEntrySlTp ? (
               <p className="trade-calc-calc-hint">
-                Enter entry, stop loss, and take profit to see distances and suggest position size.
+                Enter entry, stop loss, and take profit to see distances, position size, and P/L.
               </p>
             ) : (
               <div className="trade-calc-calc-results">

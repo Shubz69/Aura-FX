@@ -214,9 +214,11 @@ function AppRoutes() {
                         } />
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
+                        {/* Aura Analysis = MT5 only (Connection Hub + dashboard). No Trade Validator. */}
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
                             <Route index element={<Navigate to="/aura-analysis/ai" replace />} />
                             <Route path="ai" element={<ConnectionHub />} />
+                            <Route path="overview" element={<Navigate to="/aura-analysis/dashboard/overview" replace />} />
                             <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
                                 <Route index element={<Navigate to="overview" replace />} />
                                 <Route path="overview" element={<AuraOverview />} />

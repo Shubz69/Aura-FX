@@ -279,7 +279,7 @@ export default function TradeValidatorView() {
             {canProceed ? 'Score meets minimum requirement (70%).' : 'Reach 70% to use the calculator or save.'}
           </div>
           <div className="tv-bottom-actions">
-            <Link to="/aura-analysis/calculator" className="tv-btn-calc">Use in Trade Calculator</Link>
+            <Link to="/trader-deck/trade-validator/calculator" className="tv-btn-calc">Use in Trade Calculator</Link>
             {canProceed && (
               <button type="button" className="tv-btn-save" onClick={() => setShowTradeForm(true)} disabled={saving}>
                 {saving ? 'Saving…' : 'Save trade'}

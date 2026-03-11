@@ -10,7 +10,7 @@ export default function AuraDashboardGuard({ children }) {
   const location = useLocation();
 
   if (!canEnter) {
-    return <Navigate to="/aura-analysis" state={{ from: location }} replace />;
+    return <Navigate to="/aura-analysis/ai" state={{ from: location }} replace />;
   }
 
   return children;

@@ -20,10 +20,10 @@ export default function AuraDashboardLayout() {
     <div className="aura-dashboard">
       <div className="aura-dashboard-tabs-wrap">
         <div className="aura-dashboard-tabs-inner">
-          <Link to="/aura-analysis" className="aura-dashboard-back">
+          <Link to="/aura-analysis/ai" className="aura-dashboard-back">
             ← Connection Hub
           </Link>
-          <nav className="aura-dashboard-tabs" aria-label="Aura Analysis sections">
+          <nav className="aura-dashboard-tabs" aria-label="MT5 Dashboard sections">
             {TABS.map(({ path, label }) => (
               <NavLink
                 key={path}

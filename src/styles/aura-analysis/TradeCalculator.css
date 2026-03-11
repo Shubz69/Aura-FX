@@ -123,6 +123,98 @@
   gap: 12px;
 }
 
+/* Custom pair dropdown: always visible list with categories */
+.trade-calc-pair-dropdown {
+  position: relative;
+}
+
+.trade-calc-pair-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.trade-calc-pair-arrow {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.trade-calc-pair-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #1a1a24;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+}
+
+.trade-calc-pair-category {
+  padding: 0 0 8px 0;
+}
+
+.trade-calc-pair-category:first-child {
+  padding-top: 8px;
+}
+
+.trade-calc-pair-category-label {
+  padding: 6px 14px 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(139, 92, 246, 0.25);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.trade-calc-pair-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.9);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.trade-calc-pair-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.trade-calc-pair-option.selected {
+  background: rgba(139, 92, 246, 0.3);
+  color: #fff;
+}
+
+.trade-calc-pair-option-symbol {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.trade-calc-pair-option-name {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
 .trade-calc-helper {
   display: block;
   font-size: 0.78rem;
@@ -227,6 +319,12 @@
 
 .trade-calc-calc-results p {
   margin: 0 0 10px 0;
+}
+
+.trade-calc-calc-partial {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .trade-calc-calc-results strong {

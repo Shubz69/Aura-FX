@@ -294,7 +294,7 @@ export default function ConnectionHub() {
             disabled={!canEnter}
           >
             <i className="fas fa-rocket" style={{ marginRight: 12 }} />
-            Enter Aura Analysis
+            Enter MT5 Dashboard
             <i className="fas fa-arrow-right" style={{ marginLeft: 12 }} />
           </button>
           
