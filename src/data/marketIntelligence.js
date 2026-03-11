@@ -1,5 +1,5 @@
 /**
- * Market Intelligence data for Trader Deck.
+ * Market Intelligence data for Trader Desk.
  * Fetches from backend /api/trader-deck/market-intelligence (live Finnhub, FMP, FRED).
  * Maps API response to dashboard shape; falls back to seed if request fails.
  */

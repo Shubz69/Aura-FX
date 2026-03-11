@@ -1,10 +1,10 @@
 import React from 'react';
 
 /**
- * Outer frame and title for Trader Deck.
+ * Outer frame and title for Trader Desk.
  * Optionally shows Edit/Save/Cancel when canEdit (admin/super_admin).
  */
-export default function TraderDeckDashboardShell({ title = 'Trader Deck', children, canEdit, editMode, onEditToggle, onSave, onCancel }) {
+export default function TraderDeckDashboardShell({ title = 'Trader Desk', children, canEdit, editMode, onEditToggle, onSave, onCancel }) {
   return (
     <div className="td-mi-shell">
       <div className="td-mi-shell-glow" aria-hidden />

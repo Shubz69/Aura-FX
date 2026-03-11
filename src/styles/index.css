@@ -28,7 +28,7 @@
     --glow-medium: 0 0 1px;
     --glow-strong: 0 0 1.5px;
 
-    /* Aura Analysis / Trader Deck – exact same UI/UX as Aura Journal (Journal.css) */
+    /* Aura Analysis / Trader Desk – exact same UI/UX as Aura Journal (Journal.css) */
     --aa-bg:            #0a0a0a;
     --aa-bg-card:       rgba(255,255,255,0.025);
     --aa-bg-card-h:     rgba(255,255,255,0.048);

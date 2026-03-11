@@ -4,23 +4,23 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Variables ────────────────────────────────────────────── */
-:root {
-  --ov-bg:           #0a0a0a;
-  --ov-card:         rgba(255, 255, 255, 0.035);
-  --ov-card-h:       rgba(255, 255, 255, 0.058);
-  --ov-border:       rgba(255, 255, 255, 0.08);
-  --ov-border-h:     rgba(255, 255, 255, 0.18);
-  --ov-purple:       #a78bfa;
-  --ov-purple-dim:   rgba(139, 92, 246, 0.45);
-  --ov-blue:         rgba(99, 179, 237, 0.5);
-  --ov-green:        #22c55e;
-  --ov-green-dim:    rgba(34, 197, 94, 0.18);
-  --ov-red:          #f87171;
-  --ov-red-dim:      rgba(248, 113, 113, 0.18);
-  --ov-text:         #ffffff;
-  --ov-muted:        rgba(255, 255, 255, 0.5);
-  --ov-radius:       12px;
+/* ── Variables: journal UI/UX (match Journal / --aa-*) ──────── */
+.aura-overview-page {
+  --ov-bg:           var(--aa-bg, #0a0a0a);
+  --ov-card:         var(--aa-bg-card, rgba(255, 255, 255, 0.025));
+  --ov-card-h:       var(--aa-bg-card-h, rgba(255, 255, 255, 0.048));
+  --ov-border:       var(--aa-border, rgba(255, 255, 255, 0.08));
+  --ov-border-h:     var(--aa-border-h, rgba(255, 255, 255, 0.18));
+  --ov-purple:       var(--aa-accent, rgba(139, 92, 246, 0.85));
+  --ov-purple-dim:   var(--aa-accent-soft, rgba(139, 92, 246, 0.15));
+  --ov-blue:         var(--aa-accent-blue, rgba(99, 179, 237, 0.75));
+  --ov-green:        var(--aa-success, #10b981);
+  --ov-green-dim:    rgba(16, 185, 129, 0.18);
+  --ov-red:          var(--aa-loss, #ef4444);
+  --ov-red-dim:      rgba(239, 68, 68, 0.18);
+  --ov-text:         var(--aa-text, #ffffff);
+  --ov-muted:        var(--aa-text-muted, rgba(255, 255, 255, 0.6));
+  --ov-radius:       var(--aa-radius, 12px);
   --ov-ease:         cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -132,7 +132,7 @@
 }
 
 .aura-overview-kpi-card {
-  background: rgba(18, 18, 24, 0.95);
+  background: var(--ov-card);
   border: 1px solid var(--ov-border);
   border-radius: var(--ov-radius);
   padding: 18px 20px;
@@ -140,12 +140,18 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .aura-overview-kpi-card:hover {
-  border-color: rgba(139, 92, 246, 0.35);
+  background: var(--ov-card-h);
+  border-color: var(--aa-border-accent, rgba(139, 92, 246, 0.35));
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.08);
+}
+
+.aura-overview-kpi-card:focus-within {
+  border-color: var(--ov-purple);
+  outline: none;
 }
 
 .aura-overview-kpi-label {
@@ -172,11 +178,16 @@
 
 /* ── Monthly total + calendar (reference style) ── */
 .aura-overview-monthly {
-  background: rgba(18, 18, 24, 0.95);
+  background: var(--ov-card);
   border: 1px solid var(--ov-border);
   border-radius: var(--ov-radius);
   padding: 20px 24px 24px;
   margin-bottom: 24px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.aura-overview-monthly:hover {
+  border-color: var(--ov-border-h);
 }
 
 .aura-overview-monthly-header {
@@ -226,21 +237,35 @@
 }
 
 .aura-overview-month-nav-btn {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ov-card);
   border: 1px solid var(--ov-border);
   color: var(--ov-text);
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   line-height: 1;
-  transition: background 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .aura-overview-month-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(139, 92, 246, 0.4);
+  background: var(--ov-card-h);
+  border-color: var(--aa-border-accent, rgba(139, 92, 246, 0.4));
+  transform: scale(1.06);
+}
+
+.aura-overview-month-nav-btn:active {
+  transform: scale(0.96);
+}
+
+.aura-overview-month-nav-btn:focus-visible {
+  outline: none;
+  border-color: var(--ov-purple);
+  box-shadow: 0 0 0 2px var(--ov-purple-dim);
 }
 
 .aura-overview-month-nav-label {
@@ -269,35 +294,77 @@
 .aura-overview-cal-day {
   min-height: 56px;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: var(--ov-radius);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ov-card);
   border: 1px solid transparent;
-  transition: background 0.2s, border-color 0.2s;
+  color: var(--ov-text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.aura-overview-cal-day:hover:not(.aura-overview-cal-day--empty) {
+  background: var(--ov-card-h);
+  border-color: var(--ov-border-h);
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.aura-overview-cal-day:active:not(.aura-overview-cal-day--empty) {
+  transform: scale(0.98);
+}
+
+.aura-overview-cal-day:focus-visible {
+  outline: none;
+  border-color: var(--ov-purple);
+  box-shadow: 0 0 0 2px var(--ov-purple-dim);
 }
 
 .aura-overview-cal-day--empty {
   background: transparent;
   min-height: 40px;
+  cursor: default;
+  pointer-events: none;
 }
 
 .aura-overview-cal-day--win {
   background: var(--ov-green-dim);
-  border-color: rgba(34, 197, 94, 0.25);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.aura-overview-cal-day--win:hover {
+  background: rgba(16, 185, 129, 0.22);
 }
 
 .aura-overview-cal-day--loss {
   background: var(--ov-red-dim);
-  border-color: rgba(248, 113, 113, 0.2);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.aura-overview-cal-day--loss:hover {
+  background: rgba(239, 68, 68, 0.22);
 }
 
 .aura-overview-cal-day--today {
-  border-color: rgba(99, 179, 237, 0.5);
-  box-shadow: 0 0 0 1px rgba(99, 179, 237, 0.3);
+  border-color: var(--ov-blue);
+  box-shadow: 0 0 0 1px rgba(99, 179, 237, 0.35);
+}
+
+.aura-overview-cal-day--selected {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border-color: var(--ov-purple);
+  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 4px 16px rgba(139, 92, 246, 0.2);
+  transform: scale(1.02);
+}
+
+.aura-overview-cal-day--selected:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.45) 0%, rgba(139, 92, 246, 0.28) 100%);
+  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 6px 20px rgba(139, 92, 246, 0.25);
 }
 
 .aura-overview-cal-num {
@@ -313,6 +380,108 @@
 
 .aura-overview-cal-pnl.positive { color: var(--ov-green); }
 .aura-overview-cal-pnl.negative { color: var(--ov-red); }
+
+/* Selected day panel (journal-style card) */
+.aura-overview-selected-day {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: var(--ov-card);
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.aura-overview-selected-day:hover {
+  background: var(--ov-card-h);
+  border-color: var(--ov-border-h);
+}
+
+.aura-overview-selected-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.aura-overview-selected-day-label {
+  font-weight: 600;
+  color: var(--ov-text);
+}
+
+.aura-overview-selected-day-close {
+  background: transparent;
+  border: 1px solid var(--ov-border);
+  color: var(--ov-text);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.aura-overview-selected-day-close:hover {
+  background: var(--ov-card-h);
+  border-color: var(--ov-border-h);
+  transform: scale(1.06);
+}
+
+.aura-overview-selected-day-close:active {
+  transform: scale(0.96);
+}
+
+.aura-overview-selected-day-close:focus-visible {
+  outline: none;
+  border-color: var(--ov-purple);
+}
+
+.aura-overview-selected-day-empty {
+  color: var(--ov-muted);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.aura-overview-selected-day-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aura-overview-selected-day-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ov-border);
+  border-radius: 8px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.aura-overview-selected-day-item:hover {
+  background: var(--ov-card-h);
+  border-color: var(--ov-border-h);
+}
+
+.aura-overview-selected-day-pair {
+  color: var(--ov-text);
+  font-weight: 500;
+}
+
+.aura-overview-selected-day-pnl.positive {
+  color: var(--ov-green);
+}
+
+.aura-overview-selected-day-pnl.negative {
+  color: var(--ov-red);
+}
 
 @media (max-width: 768px) {
   .aura-overview-kpi-grid {

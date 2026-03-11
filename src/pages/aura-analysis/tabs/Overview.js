@@ -56,6 +56,7 @@ export default function Overview() {
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -124,6 +125,31 @@ export default function Overview() {
   const today = new Date();
   const isCurrentMonth = viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
   const todayDate = today.getDate();
+
+  const isSelected = (cell) => {
+    if (!selectedDate || cell.day === '') return false;
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
+    return key === selectedDate;
+  };
+
+  const handleDayClick = (cell) => {
+    if (cell.day === '') return;
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
+    setSelectedDate((prev) => (prev === key ? null : key));
+  };
+
+  const selectedDayTrades = useMemo(() => {
+    if (!selectedDate) return [];
+    return trades.filter((t) => {
+      const d = t.created_at || t.createdAt || t.date;
+      if (!d) return false;
+      return new Date(d).toISOString().slice(0, 10) === selectedDate;
+    });
+  }, [trades, selectedDate]);
 
   if (loading) {
     return (
@@ -208,9 +234,13 @@ export default function Overview() {
             cell.day === '' ? (
               <div key={`e-${i}`} className="aura-overview-cal-day aura-overview-cal-day--empty" />
             ) : (
-              <div
+              <button
+                type="button"
                 key={cell.day}
-                className={`aura-overview-cal-day ${cell.pnl != null ? (cell.pnl >= 0 ? 'aura-overview-cal-day--win' : 'aura-overview-cal-day--loss') : ''} ${isCurrentMonth && cell.day === todayDate ? 'aura-overview-cal-day--today' : ''}`}
+                className={`aura-overview-cal-day ${cell.pnl != null ? (cell.pnl >= 0 ? 'aura-overview-cal-day--win' : 'aura-overview-cal-day--loss') : ''} ${isCurrentMonth && cell.day === todayDate ? 'aura-overview-cal-day--today' : ''} ${isSelected(cell) ? 'aura-overview-cal-day--selected' : ''}`}
+                onClick={() => handleDayClick(cell)}
+                aria-label={`Day ${cell.day}${cell.pnl != null ? `, PnL ${formatPnL(cell.pnl)}` : ''}`}
+                aria-pressed={isSelected(cell)}
               >
                 <span className="aura-overview-cal-num">{cell.day}</span>
                 {cell.pnl != null && (
@@ -218,10 +248,34 @@ export default function Overview() {
                     {formatPnL(cell.pnl)}
                   </span>
                 )}
-              </div>
+              </button>
             )
           )}
         </div>
+        {selectedDate && (
+          <div className="aura-overview-selected-day">
+            <div className="aura-overview-selected-day-header">
+              <span className="aura-overview-selected-day-label">
+                {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+              <button type="button" className="aura-overview-selected-day-close" onClick={() => setSelectedDate(null)} aria-label="Close">×</button>
+            </div>
+            {selectedDayTrades.length === 0 ? (
+              <p className="aura-overview-selected-day-empty">No trades on this day</p>
+            ) : (
+              <ul className="aura-overview-selected-day-list">
+                {selectedDayTrades.map((t, idx) => (
+                  <li key={t.id || idx} className="aura-overview-selected-day-item">
+                    <span className="aura-overview-selected-day-pair">{t.pair || '—'}</span>
+                    <span className={`aura-overview-selected-day-pnl ${(Number(t.pnl) || 0) >= 0 ? 'positive' : 'negative'}`}>
+                      {formatPnL(t.pnl)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );

@@ -16,19 +16,21 @@ import '../../styles/TraderDeckMarket.css';
 
 const STORAGE_KEY = 'trader-deck-market-intelligence';
 
+const TODAY_STR = () => new Date().toISOString().slice(0, 10);
+
 function normalizeForUI(data) {
   if (!data) return null;
   const regime = data.marketRegime;
   const pulse = data.marketPulse;
   const drivers = (data.keyDrivers || []).map((d) => ({
-    name: d.name || d.title,
-    direction: d.direction || 'neutral',
-    impact: d.impact,
+    name: d.name || d.title || '',
+    direction: (d.direction || 'neutral').toLowerCase(),
+    impact: typeof d.impact === 'string' ? d.impact.toLowerCase() : (d.impact || 'medium'),
   }));
   const signals = (data.crossAssetSignals || []).map((s) => ({
-    asset: s.asset,
-    signal: s.signal || s.label,
-    direction: s.direction || 'neutral',
+    asset: s.asset || '',
+    signal: s.signal || s.label || '—',
+    direction: (s.direction || 'neutral').toLowerCase(),
   }));
   return {
     marketRegime: regime,
@@ -43,6 +45,7 @@ function normalizeForUI(data) {
     marketChangesToday: data.marketChangesToday || [],
     traderFocus: data.traderFocus || [],
     riskRadar: data.riskRadar || [],
+    riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
   };
 }
@@ -62,7 +65,7 @@ function saveToStorage(payload) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (e) {
-    console.warn('Trader Deck: could not save to localStorage', e);
+    console.warn('Trader Desk: could not save to localStorage', e);
   }
 }
 
@@ -81,14 +84,27 @@ export default function MarketIntelligenceDashboard({ embedded }) {
     setError(null);
     getMarketIntelligence()
       .then((raw) => {
-        const normalized = normalizeForUI(raw) || normalizeForUI(SEED_MARKET_INTELLIGENCE);
+        const apiNormalized = normalizeForUI(raw) || normalizeForUI(SEED_MARKET_INTELLIGENCE);
         const saved = loadSaved();
-        setData(saved || normalized);
+        const todayStr = TODAY_STR();
+        let data = saved || apiNormalized;
+        // Risk Radar: after midnight use fresh API (FMP) data; during the day use saved if same day
+        if (saved && saved.riskRadarDate && saved.riskRadarDate !== todayStr) {
+          data = { ...data, riskRadar: apiNormalized.riskRadar || [], riskRadarDate: todayStr };
+        } else if (saved && saved.riskRadar) {
+          data = { ...data, riskRadarDate: saved.riskRadarDate || todayStr };
+        }
+        setData(data);
       })
       .catch(() => {
         const normalized = normalizeForUI(SEED_MARKET_INTELLIGENCE);
         const saved = loadSaved();
-        setData(saved || normalized);
+        const todayStr = TODAY_STR();
+        let data = saved || normalized;
+        if (saved && saved.riskRadarDate && saved.riskRadarDate !== todayStr) {
+          data = { ...data, riskRadar: normalized.riskRadar || [], riskRadarDate: todayStr };
+        }
+        setData(data);
         setError('Using fallback data');
       })
       .finally(() => setLoading(false));
@@ -124,6 +140,7 @@ export default function MarketIntelligenceDashboard({ embedded }) {
       marketChangesToday: editDraft.marketChangesToday,
       traderFocus: editDraft.traderFocus,
       riskRadar: editDraft.riskRadar,
+      riskRadarDate: TODAY_STR(),
       updatedAt: new Date().toISOString(),
     };
     const normalized = normalizeForUI(payload);
@@ -270,6 +287,138 @@ export default function MarketIntelligenceDashboard({ embedded }) {
     </ul>
   );
 
+  const impactOptions = ['high', 'medium', 'low'];
+  const directionOptions = ['up', 'down', 'neutral'];
+
+  const renderDriversEdit = () => (
+    <div className="td-mi-edit td-mi-edit--drivers">
+      <p className="td-mi-source">Live data from FRED, Finnhub &amp; FMP. Edit to override.</p>
+      <ul className="td-mi-list td-mi-list--drivers">
+        {(editDraft.keyDrivers || []).map((d, i) => (
+          <li key={i} className="td-mi-list-item td-mi-list-item--edit">
+            <input
+              type="text"
+              className="td-mi-edit-input td-mi-edit-driver-name"
+              value={d.name || ''}
+              onChange={(e) => {
+                const next = [...(editDraft.keyDrivers || [])];
+                next[i] = { ...next[i], name: e.target.value };
+                setEditDraft((x) => ({ ...x, keyDrivers: next }));
+              }}
+              placeholder="Driver name"
+            />
+            <select
+              className="td-mi-edit-select"
+              value={d.impact || 'medium'}
+              onChange={(e) => {
+                const next = [...(editDraft.keyDrivers || [])];
+                next[i] = { ...next[i], impact: e.target.value };
+                setEditDraft((x) => ({ ...x, keyDrivers: next }));
+              }}
+              aria-label="Impact"
+            >
+              {impactOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)} Impact</option>
+              ))}
+            </select>
+            <select
+              className="td-mi-edit-select td-mi-edit-select--dir"
+              value={d.direction || 'neutral'}
+              onChange={(e) => {
+                const next = [...(editDraft.keyDrivers || [])];
+                next[i] = { ...next[i], direction: e.target.value };
+                setEditDraft((x) => ({ ...x, keyDrivers: next }));
+              }}
+              aria-label="Direction"
+            >
+              {directionOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt === 'neutral' ? 'Neutral' : opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="td-mi-btn td-mi-btn-remove"
+              onClick={() => setEditDraft((x) => ({ ...x, keyDrivers: (x.keyDrivers || []).filter((_, j) => j !== i) }))}
+              aria-label="Remove"
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        className="td-mi-btn td-mi-btn-small"
+        onClick={() => setEditDraft((d) => ({ ...d, keyDrivers: [...(d.keyDrivers || []), { name: '', impact: 'medium', direction: 'neutral' }] }))}
+      >
+        + Add driver
+      </button>
+    </div>
+  );
+
+  const renderSignalsEdit = () => (
+    <div className="td-mi-edit td-mi-edit--signals">
+      <p className="td-mi-source">Live data from FRED, Finnhub &amp; FMP. Edit to override.</p>
+      <ul className="td-mi-list td-mi-list--signals">
+        {(editDraft.crossAssetSignals || []).map((s, i) => (
+          <li key={i} className="td-mi-list-item td-mi-list-item--edit">
+            <input
+              type="text"
+              className="td-mi-edit-input td-mi-edit-signal-asset"
+              value={s.asset || ''}
+              onChange={(e) => {
+                const next = [...(editDraft.crossAssetSignals || [])];
+                next[i] = { ...next[i], asset: e.target.value };
+                setEditDraft((x) => ({ ...x, crossAssetSignals: next }));
+              }}
+              placeholder="Asset"
+            />
+            <input
+              type="text"
+              className="td-mi-edit-input td-mi-edit-signal-value"
+              value={s.signal || ''}
+              onChange={(e) => {
+                const next = [...(editDraft.crossAssetSignals || [])];
+                next[i] = { ...next[i], signal: e.target.value };
+                setEditDraft((x) => ({ ...x, crossAssetSignals: next }));
+              }}
+              placeholder="Signal"
+            />
+            <select
+              className="td-mi-edit-select td-mi-edit-select--dir"
+              value={s.direction || 'neutral'}
+              onChange={(e) => {
+                const next = [...(editDraft.crossAssetSignals || [])];
+                next[i] = { ...next[i], direction: e.target.value };
+                setEditDraft((x) => ({ ...x, crossAssetSignals: next }));
+              }}
+              aria-label="Direction"
+            >
+              {directionOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt === 'neutral' ? 'Neutral' : opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="td-mi-btn td-mi-btn-remove"
+              onClick={() => setEditDraft((x) => ({ ...x, crossAssetSignals: (x.crossAssetSignals || []).filter((_, j) => j !== i) }))}
+              aria-label="Remove"
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        className="td-mi-btn td-mi-btn-small"
+        onClick={() => setEditDraft((d) => ({ ...d, crossAssetSignals: [...(d.crossAssetSignals || []), { asset: '', signal: '—', direction: 'neutral' }] }))}
+      >
+        + Add signal
+      </button>
+    </div>
+  );
+
   const content = (
     <>
       {error && (
@@ -278,7 +427,7 @@ export default function MarketIntelligenceDashboard({ embedded }) {
         </p>
       )}
       <TraderDeckDashboardShell
-        title="Trader Deck"
+        title="Trader Desk"
         canEdit={canEdit}
         editMode={editMode}
         onEditToggle={handleEditToggle}
@@ -293,10 +442,20 @@ export default function MarketIntelligenceDashboard({ embedded }) {
         </DashboardPanel>
 
         <DashboardPanel title="Key Market Drivers" className="td-mi-panel--drivers">
-          <DriverList drivers={keyDrivers} />
+          {editMode && editDraft ? renderDriversEdit() : (
+            <>
+              <p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p>
+              <DriverList drivers={keyDrivers} />
+            </>
+          )}
         </DashboardPanel>
         <DashboardPanel title="Cross-Asset Signals" className="td-mi-panel--signals">
-          <SignalList signals={crossAssetSignals} />
+          {editMode && editDraft ? renderSignalsEdit() : (
+            <>
+              <p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p>
+              <SignalList signals={crossAssetSignals} />
+            </>
+          )}
         </DashboardPanel>
         <DashboardPanel title="Market Change Today" className="td-mi-panel--changes">
           {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : <ChangeList items={marketChangesToday} />}
@@ -306,7 +465,17 @@ export default function MarketIntelligenceDashboard({ embedded }) {
           {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : <FocusList items={traderFocus} />}
         </DashboardPanel>
         <DashboardPanel title="Risk Radar" wide className="td-mi-panel--radar">
-          {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'Event') : <RiskRadarList items={riskRadar} />}
+          {editMode && editDraft ? (
+            <>
+              <p className="td-mi-source">Upcoming news. List refreshes from FMP at midnight.</p>
+              {renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event')}
+            </>
+          ) : (
+            <>
+              <p className="td-mi-source td-mi-source--readonly">Upcoming news (FMP). Refreshes at midnight.</p>
+              <RiskRadarList items={riskRadar} />
+            </>
+          )}
         </DashboardPanel>
       </TraderDeckDashboardShell>
       {updatedLabel && !editMode && (

@@ -2,25 +2,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 .trade-validator-page {
-  --tv-bg:            #0a0a0a;
-  --tv-card:          rgba(255,255,255,0.025);
-  --tv-card-h:        rgba(255,255,255,0.048);
-  --tv-border:        rgba(255,255,255,0.07);
-  --tv-border-h:      rgba(255,255,255,0.18);
-  --tv-border-accent: rgba(139,92,246,0.35);
-  --tv-text:          #ffffff;
-  --tv-muted:         rgba(255,255,255,0.52);
-  --tv-accent:         rgba(139,92,246,0.85);
-  --tv-accent-soft:   rgba(139,92,246,0.15);
-  --tv-radius:         12px;
-  --tv-radius-lg:      18px;
-  --tv-up:             #10b981;
-  --tv-down:           #ef4444;
+  --tv-bg:            var(--aa-bg, #0a0a0a);
+  --tv-card:          var(--aa-bg-card, rgba(255,255,255,0.025));
+  --tv-card-h:        var(--aa-bg-card-h, rgba(255,255,255,0.048));
+  --tv-border:        var(--aa-border, rgba(255,255,255,0.07));
+  --tv-border-h:      var(--aa-border-h, rgba(255,255,255,0.18));
+  --tv-border-accent: var(--aa-border-accent, rgba(139,92,246,0.35));
+  --tv-text:          var(--aa-text, #ffffff);
+  --tv-muted:         var(--aa-text-muted, rgba(255,255,255,0.52));
+  --tv-accent:        var(--aa-accent, rgba(139,92,246,0.85));
+  --tv-accent-soft:   var(--aa-accent-soft, rgba(139,92,246,0.15));
+  --tv-radius:        var(--aa-radius, 12px);
+  --tv-radius-lg:     var(--aa-radius-lg, 18px);
+  --tv-up:            var(--aa-success, #10b981);
+  --tv-down:          var(--aa-loss, #ef4444);
   font-family: 'Space Grotesk', sans-serif;
   min-height: 100vh;
   background: var(--tv-bg);
   color: var(--tv-text);
-  padding: calc(70px + env(safe-area-inset-top, 0) + 24px) 24px 64px;
+  padding: calc(100px + env(safe-area-inset-top, 0) + 40px) 24px 64px;
   position: relative;
   z-index: 1;
   isolation: isolate;
@@ -33,7 +33,7 @@
 }
 
 .trade-validator-page.trade-validator-embedded {
-  padding-top: 0;
+  padding-top: calc(48px + env(safe-area-inset-top, 0));
   min-height: 0;
 }
 
@@ -49,6 +49,11 @@
   border-radius: var(--tv-radius-lg);
   padding: 28px 24px 32px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.trade-validator-inner:hover {
+  border-color: var(--tv-border-h);
 }
 
 /* ─── New layout (reference) ─────────────────────────────────────────────── */
@@ -88,6 +93,12 @@
   border-radius: var(--tv-radius);
   padding: 20px 24px;
   margin-bottom: 28px;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.tv-score-card:hover {
+  background: var(--tv-card-h);
+  border-color: var(--tv-border-h);
 }
 .tv-score-left {
   display: flex;
@@ -157,6 +168,13 @@
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 20px;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.tv-core-col:hover {
+  background: var(--tv-card-h);
+  border-color: var(--tv-border-h);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 .tv-core-col-title {
   font-size: 1rem;
@@ -170,17 +188,34 @@
   margin: 0 0 16px 0;
 }
 
-/* Checklist item (shared) */
+/* Checklist item (shared) – journal-style interactive */
 .tv-checklist-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
+  padding: 10px 12px;
+  margin: 0 -12px;
   cursor: pointer;
+  border-radius: 8px;
   border-bottom: 1px solid var(--tv-border);
   font-size: 0.9rem;
   color: var(--tv-text);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
 }
+
+.tv-checklist-item:hover {
+  background: var(--tv-card-h);
+}
+
+.tv-checklist-item:active {
+  transform: scale(0.99);
+}
+
+.tv-checklist-item:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--tv-accent-soft);
+}
+
 .tv-checklist-item:last-child {
   border-bottom: none;
 }
@@ -195,9 +230,13 @@
   width: 20px;
   height: 20px;
   border: 2px solid var(--tv-border-h);
-  border-radius: 4px;
+  border-radius: 6px;
   background: transparent;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.tv-checklist-item:hover .tv-checkmark {
+  border-color: var(--tv-border-accent);
 }
 .tv-checkmark {
   position: relative;
@@ -237,6 +276,13 @@
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 20px;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.tv-section-card:hover {
+  background: var(--tv-card-h);
+  border-color: var(--tv-border-h);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 .tv-section-card-icon {
   width: 48px;
@@ -285,6 +331,11 @@
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 20px;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.tv-setup-section:hover {
+  border-color: var(--tv-border-h);
 }
 .tv-setup-section-title {
   font-size: 1rem;
@@ -354,14 +405,23 @@
   color: #fff;
   font-weight: 600;
   font-size: 0.9rem;
-  border-radius: 10px;
+  border-radius: var(--tv-radius);
   text-decoration: none;
-  transition: opacity 0.2s, transform 0.2s;
+  border: 1px solid transparent;
+  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .tv-btn-calc:hover {
   opacity: 0.95;
-  transform: translateY(-1px);
+  transform: scale(1.04);
   color: #fff;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+}
+.tv-btn-calc:active {
+  transform: scale(0.98);
+}
+.tv-btn-calc:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--tv-accent-soft);
 }
 .tv-btn-save {
   padding: 12px 24px;
@@ -369,15 +429,23 @@
   color: #fff;
   font-weight: 600;
   font-size: 0.9rem;
-  border-radius: 10px;
-  border: none;
+  border-radius: var(--tv-radius);
+  border: 1px solid transparent;
   cursor: pointer;
   font-family: inherit;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .tv-btn-save:hover:not(:disabled) {
   opacity: 0.95;
-  transform: translateY(-1px);
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+.tv-btn-save:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.tv-btn-save:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--tv-accent-soft);
 }
 .tv-btn-save:disabled {
   opacity: 0.5;
@@ -391,6 +459,11 @@
   background: var(--tv-card);
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.tv-trade-form-block:hover {
+  border-color: var(--tv-border-h);
 }
 .tv-trade-form-header {
   display: flex;
@@ -406,15 +479,25 @@
 }
 .tv-close-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
   color: var(--tv-muted);
   font-size: 1.5rem;
   cursor: pointer;
   line-height: 1;
-  padding: 0 8px;
+  padding: 4px 10px;
+  transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s;
 }
 .tv-close-btn:hover {
   color: var(--tv-text);
+  background: var(--tv-card-h);
+}
+.tv-close-btn:active {
+  transform: scale(0.96);
+}
+.tv-close-btn:focus-visible {
+  outline: none;
+  border-color: var(--tv-accent);
 }
 .tv-trade-form-actions {
   display: flex;
@@ -435,12 +518,21 @@
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
+  transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .trade-validator-back:hover {
   color: #ffffff;
   background: rgba(139,92,246,0.25);
   border-color: var(--tv-accent);
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.2);
+}
+.trade-validator-back:active {
+  transform: scale(0.98);
+}
+.trade-validator-back:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--tv-accent-soft);
 }
 
 .trade-validator-header {
@@ -464,12 +556,18 @@
   margin-bottom: 28px;
 }
 .trade-validator-pnl-card {
-  background: rgba(0,0,0,0.35);
+  background: var(--tv-card);
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 16px;
   text-align: center;
   min-height: 72px;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.trade-validator-pnl-card:hover {
+  background: var(--tv-card-h);
+  border-color: var(--tv-border-h);
 }
 .trade-validator-pnl-card span {
   display: block;
@@ -487,12 +585,17 @@
 .trade-validator-pnl-card.negative strong { color: var(--tv-down); }
 
 .trade-validator-section {
-  background: rgba(0,0,0,0.35);
+  background: var(--tv-card);
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 24px;
   margin-bottom: 24px;
   min-height: 120px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.trade-validator-section:hover {
+  border-color: var(--tv-border-h);
 }
 .trade-validator-section h2 {
   font-size: 1.05rem;
@@ -532,15 +635,22 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
+  border-radius: var(--tv-radius);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .trade-validator-checklist label:hover {
-  background: rgba(255,255,255,0.09);
-  border-color: rgba(255,255,255,0.12);
+  background: var(--tv-card-h);
+  border-color: var(--tv-border-h);
+}
+.trade-validator-checklist label:active {
+  transform: scale(0.99);
+}
+.trade-validator-checklist label:focus-within {
+  border-color: var(--tv-border-accent);
+  box-shadow: 0 0 0 2px var(--tv-accent-soft);
 }
 .trade-validator-checklist input {
   margin-top: 2px;
@@ -571,16 +681,23 @@
 .trade-validator-field select {
   width: 100%;
   padding: 10px 12px;
-  background: rgba(255,255,255,0.06);
+  background: var(--tv-card);
   border: 1px solid var(--tv-border);
   border-radius: 8px;
   color: var(--tv-text);
   font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.trade-validator-field input:hover,
+.trade-validator-field select:hover {
+  border-color: var(--tv-border-h);
 }
 .trade-validator-field input:focus,
 .trade-validator-field select:focus {
   outline: none;
-  border-color: rgba(139,92,246,0.5);
+  border-color: var(--tv-accent);
+  box-shadow: 0 0 0 2px var(--tv-accent-soft);
 }
 
 .trade-validator-computed {

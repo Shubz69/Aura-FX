@@ -98,7 +98,7 @@ export default function AuraLeaderboard() {
               {leaderboard.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="aura-leaderboard-empty">
-                    No traders yet. Use the Trade Validator or Trader Deck to log trades and appear here.
+                    No traders yet. Use the Trade Validator or Trader Desk to log trades and appear here.
                   </td>
                 </tr>
               ) : (

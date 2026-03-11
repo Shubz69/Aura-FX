@@ -121,7 +121,7 @@ const mobileMenuPortal = ReactDOM.createPortal(
                     </li>
                     <li>
                         <Link to="/trader-deck" onClick={closeMobileMenu}>
-                            <FaThLarge className="dropdown-icon" /> The Trader Deck
+                            <FaThLarge className="dropdown-icon" /> The Trader Desk
                         </Link>
                     </li>
                     <li>
@@ -250,7 +250,7 @@ const mobileMenuPortal = ReactDOM.createPortal(
                                                 <FaChartLine className="dropdown-icon" /> Aura Analysis
                                             </Link>
                                             <Link to="/trader-deck" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                                                <FaThLarge className="dropdown-icon" /> The Trader Deck
+                                                <FaThLarge className="dropdown-icon" /> The Trader Desk
                                             </Link>
                                             <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                                 <FaEnvelope className="dropdown-icon" /> Messages

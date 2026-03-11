@@ -41,7 +41,7 @@ export default function TraderDeckLayout({ initialTab = 'overview', onBack }) {
                 type="button"
                 className="td-layout-back"
                 onClick={onBack}
-                aria-label="Back to Trader Deck menu"
+                aria-label="Back to Trader Desk menu"
               >
                 <FaArrowLeft aria-hidden /> Back
               </button>
@@ -50,7 +50,7 @@ export default function TraderDeckLayout({ initialTab = 'overview', onBack }) {
             <p className="td-layout-sub">Manual trade planning, validation and journaling tools</p>
           </header>
 
-          <nav className="td-layout-tabs-wrap" aria-label="Trader Deck sections">
+          <nav className="td-layout-tabs-wrap" aria-label="Trader Desk sections">
             <div className="td-layout-tabs-inner">
               {MAIN_TABS.map((tab) => (
                 <button

@@ -1,5 +1,5 @@
 /* =============================================================================
-   Trader Deck Market Intelligence – premium dashboard (reference image)
+   Trader Desk Market Intelligence – premium dashboard (reference image)
    Galaxy purple background, glowing frame, structured cards, pulse gauge
    ============================================================================= */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
@@ -187,6 +187,77 @@
   font-weight: 600;
   color: #ffffff;
   margin-left: 8px;
+}
+
+.td-mi-source {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 10px 0;
+  letter-spacing: 0.02em;
+}
+
+.td-mi-source--readonly {
+  margin-bottom: 8px;
+}
+
+.td-mi-edit-select {
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.td-mi-edit-select--dir {
+  min-width: 90px;
+}
+
+.td-mi-btn-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.td-mi-btn-remove:hover {
+  color: #fff;
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.td-mi-list-item--edit {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.td-mi-list-item--edit:last-child {
+  border-bottom: none;
+}
+
+.td-mi-edit--drivers .td-mi-edit-driver-name,
+.td-mi-edit--signals .td-mi-edit-signal-asset {
+  min-width: 0;
+}
+
+.td-mi-edit--signals .td-mi-list-item--edit {
+  grid-template-columns: 1fr 1fr auto auto;
+}
+
+.td-mi-edit-signal-value {
+  min-width: 0;
 }
 
 /* ── Grid: top row 2 cols (regime ~2/3, pulse ~1/3), middle 3, bottom 2 ─────── */
