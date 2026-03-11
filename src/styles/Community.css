@@ -2206,6 +2206,7 @@ body.sidebar-open-mobile {
         position: relative !important;
         display: flex !important;
         flex-direction: row !important;
+        bottom: 9px;
     }
     
     .chat-input-wrapper { 
@@ -2433,18 +2434,18 @@ body.sidebar-open-mobile {
     }
     
     .chat-input-container { 
-        padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 6px)) 8px !important; 
+        padding: 30px 10px calc(33px + env(safe-area-inset-bottom, 6px)) 8px !important; 
     }
     
     .chat-input { 
-        padding: 10px 40px 10px 12px !important; 
+          padding: 35px 116px 10px 12px !important; 
         font-size: 15px !important; 
         min-height: 44px !important; 
     }
     
     .chat-input-buttons { 
-        right: 6px !important; 
-        bottom: 6px !important; 
+       right: 6px !important; 
+        bottom: 41px !important; 
     }
     
     .chat-input-btn { 

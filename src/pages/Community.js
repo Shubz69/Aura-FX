@@ -4651,6 +4651,7 @@ useEffect(() => {
         }
     };
 }, []);
+
     // Update category order when channels change
     useEffect(() => {
         const allCategories = Object.keys(groupedChannels);
