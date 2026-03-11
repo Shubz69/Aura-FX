@@ -10,7 +10,6 @@ const TABS = [
   { path: '/aura-analysis/journal', label: 'Trade Journal' },
   { path: '/aura-analysis/analytics', label: 'Analytics' },
   { path: '/aura-analysis/leaderboard', label: 'Leaderboard' },
-  { path: '/aura-analysis/profile', label: 'Profile' },
 ];
 
 export default function AuraAnalysisShell({ children }) {

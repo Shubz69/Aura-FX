@@ -289,11 +289,9 @@ export default function TradeValidatorView() {
   return (
     <div className={`trade-validator-page ${isEmbedded ? 'trade-validator-embedded' : ''}`}>
       <div className="trade-validator-inner tv-new-layout">
-        {!isEmbedded && (
-          <Link to="/aura-analysis" className="trade-validator-back">
-            <FaArrowLeft /> Back to Aura Analysis
-          </Link>
-        )}
+        <Link to="/aura-analysis" className="trade-validator-back">
+          <FaArrowLeft aria-hidden /> Back to Aura Analysis
+        </Link>
 
         <header className="tv-header">
           <h1 className="tv-title"><FaCheckSquare className="tv-title-icon" aria-hidden /> Trade Validator</h1>

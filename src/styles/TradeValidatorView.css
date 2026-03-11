@@ -1,16 +1,21 @@
-/* Trade Validator – same design language as Aura Analysis (Overview / reference repo) */
+/* Trade Validator – same colours as Journal page (Journal.css) */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 .trade-validator-page {
-  --tv-bg: var(--aa-bg);
-  --tv-card: var(--aa-panel);
-  --tv-border: var(--aa-border);
-  --tv-accent: var(--aa-accent);
-  --tv-text: var(--aa-text);
-  --tv-muted: var(--aa-text-muted);
-  --tv-radius: var(--aa-radius-lg);
-  --tv-up: var(--aa-success);
-  --tv-down: var(--aa-loss);
+  --tv-bg:            #0a0a0a;
+  --tv-card:          rgba(255,255,255,0.025);
+  --tv-card-h:        rgba(255,255,255,0.048);
+  --tv-border:        rgba(255,255,255,0.07);
+  --tv-border-h:      rgba(255,255,255,0.18);
+  --tv-border-accent: rgba(139,92,246,0.35);
+  --tv-text:          #ffffff;
+  --tv-muted:         rgba(255,255,255,0.52);
+  --tv-accent:         rgba(139,92,246,0.85);
+  --tv-accent-soft:   rgba(139,92,246,0.15);
+  --tv-radius:         12px;
+  --tv-radius-lg:      18px;
+  --tv-up:             #10b981;
+  --tv-down:           #ef4444;
   font-family: 'Space Grotesk', sans-serif;
   min-height: 100vh;
   background: var(--tv-bg);
@@ -32,18 +37,18 @@
   min-height: 0;
 }
 
-/* Single visible panel – solid background so content is always visible */
+/* Single visible panel – journal-style card */
 .trade-validator-inner {
   max-width: 900px;
   margin: 0 auto;
   position: relative;
   z-index: 10;
   min-height: 60vh;
-  background: #16161f !important;
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 16px;
+  background: var(--tv-card) !important;
+  border: 1px solid var(--tv-border);
+  border-radius: var(--tv-radius-lg);
   padding: 28px 24px 32px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
 /* ─── New layout (reference) ─────────────────────────────────────────────── */
@@ -78,8 +83,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 20px;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 20px 24px;
   margin-bottom: 28px;
@@ -112,15 +117,15 @@
 .tv-score-bar-wrap {
   flex: 1;
   min-width: 160px;
-  height: 14px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 7px;
+  height: 12px;
+  background: var(--tv-border-h);
+  border-radius: 6px;
   overflow: hidden;
 }
 .tv-score-bar {
   height: 100%;
-  background: linear-gradient(90deg, #059669 0%, #10b981 100%);
-  border-radius: 7px;
+  background: linear-gradient(90deg, #059669 0%, var(--tv-up) 100%);
+  border-radius: 6px;
   transition: width 0.3s ease;
 }
 
@@ -148,15 +153,15 @@
   gap: 20px;
 }
 .tv-core-col {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 20px;
 }
 .tv-core-col-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: rgba(99,179,237,0.9);
   margin: 0 0 6px 0;
 }
 .tv-core-col-time {
@@ -172,7 +177,7 @@
   gap: 10px;
   padding: 8px 0;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid var(--tv-border);
   font-size: 0.9rem;
   color: var(--tv-text);
 }
@@ -189,9 +194,9 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255,255,255,0.5);
+  border: 2px solid var(--tv-border-h);
   border-radius: 4px;
-  background: rgba(255,255,255,0.05);
+  background: transparent;
   transition: background 0.2s, border-color 0.2s;
 }
 .tv-checkmark {
@@ -228,22 +233,22 @@
   margin-bottom: 28px;
 }
 .tv-section-card {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 20px;
 }
 .tv-section-card-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, rgba(96,165,250,0.25) 0%, rgba(139,92,246,0.25) 100%);
+  background: var(--tv-accent-soft);
   border-radius: 10px;
   margin-bottom: 14px;
 }
 .tv-section-card-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: rgba(99,179,237,0.9);
   margin: 0 0 6px 0;
 }
 .tv-section-timeframes {
@@ -261,7 +266,7 @@
 }
 .tv-section-score-value {
   font-weight: 700;
-  color: #93c5fd;
+  color: var(--tv-accent);
 }
 
 /* SETUP FORMATION CHECKLIST */
@@ -271,20 +276,20 @@
 .tv-setup-chart {
   width: 100%;
   height: 80px;
-  background: linear-gradient(180deg, rgba(96,165,250,0.08) 0%, rgba(139,92,246,0.08) 100%);
+  background: var(--tv-accent-soft);
   border-radius: var(--tv-radius);
   margin-bottom: 20px;
 }
 .tv-setup-section {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   padding: 20px;
 }
 .tv-setup-section-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: rgba(99,179,237,0.9);
   margin: 0 0 6px 0;
 }
 .tv-setup-section-time {
@@ -311,7 +316,7 @@
   margin: 16px 0 0 0;
 }
 .tv-setup-section-score .tv-section-score-value {
-  color: #93c5fd;
+  color: var(--tv-accent);
 }
 
 /* Bottom bar */
@@ -322,8 +327,8 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
   margin-top: 24px;
 }
@@ -383,7 +388,7 @@
 .tv-trade-form-block {
   margin-top: 24px;
   padding: 24px;
-  background: rgba(0,0,0,0.35);
+  background: var(--tv-card);
   border: 1px solid var(--tv-border);
   border-radius: var(--tv-radius);
 }
@@ -421,14 +426,21 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--tv-muted);
+  padding: 10px 16px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  background: var(--tv-accent-soft);
+  border: 1px solid var(--tv-border-accent);
+  border-radius: var(--tv-radius);
   text-decoration: none;
   font-size: 0.9rem;
-  margin-bottom: 24px;
-  transition: color 0.2s;
+  font-weight: 500;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
 }
 .trade-validator-back:hover {
-  color: var(--tv-accent);
+  color: #ffffff;
+  background: rgba(139,92,246,0.25);
+  border-color: var(--tv-accent);
 }
 
 .trade-validator-header {
