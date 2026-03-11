@@ -910,13 +910,13 @@ body.sidebar-open-mobile {
         overflow: hidden !important;
     }
     .community-sidebar:not(.mobile-sidebar) { display: none !important; }
-    .chat-main {
-        flex: 1 1 0 !important; 
-        width: 100% !important; 
-        min-height: 0 !important;
+     .chat-main {
+        flex: 1 !important;
         display: flex !important; 
         flex-direction: column !important; 
         overflow: hidden !important;
+        height: 100% !important;
+        min-height: 0 !important;
     }
     .chat-header { 
         padding: 0 10px !important; 
@@ -927,16 +927,15 @@ body.sidebar-open-mobile {
     .chat-header h2 { font-size: 0.875rem; }
     
     /* FIXED: Messages container - proper height calculation */
-    .chat-messages { 
-        flex: 1 1 auto !important; 
-        min-height: 0 !important; 
+     .chat-messages { 
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
         max-height: none !important;
         height: auto !important;
-        padding: 10px 12px !important; 
-        overflow-y: auto !important; 
-        -webkit-overflow-scrolling: touch; 
-        display: flex !important;
-        flex-direction: column !important;
+        overflow-y: auto !important;
+        padding: 10px 12px !important;
+        /* THIS PREVENTS IT FROM BEING PUSHED OFF SCREEN */
+        flex-basis: 0 !important;
     }
 
     .message-item { padding: 2px 8px 2px 60px !important; }
@@ -2491,6 +2490,21 @@ body.sidebar-open-mobile {
     
     .message-attachment {
         max-width: 100%;
+    }
+}
+/* ULTIMATE FIX - GUARANTEED TO WORK */
+@media (max-width: 767px) {
+    .chat-main {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+    }
+    
+    .chat-messages {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
     }
 }
 /* ── BODY LOCK ───────────────────────────────────────────────── */
