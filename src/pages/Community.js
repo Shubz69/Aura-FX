@@ -930,6 +930,7 @@ const [journalLoading, setJournalLoading] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'connecting', 'server-issue', 'wifi-issue'
     const messagesEndRef = useRef(null);
     const messageInputRef = useRef(null);
+ 
     
     // Channel badge tracking: { channelId: { unread: number, mentions: number } }
     const [channelBadges, setChannelBadges] = useState(() => {
@@ -1617,26 +1618,26 @@ const {
           return prev;
         }
         
-        // Add message and sort chronologically (oldest to newest)
-        const newMessages = [...prev, message].sort((a, b) => {
-          const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
-          const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
-          return timeA - timeB; // Ascending order
-        });
-        
-        // Save to localStorage
-        if (selectedChannel?.id) {
-          saveMessagesToStorage(selectedChannel.id, newMessages);
-        }
-        
-        // Scroll to bottom if user is at bottom
-        if (window.requestAnimationFrame) {
-          requestAnimationFrame(() => scrollToBottom(false, true));
-        } else {
-          setTimeout(() => scrollToBottom(), 0);
-        }
-        
-        return newMessages;
+       // Add message and sort chronologically (oldest to newest)
+const newMessages = [...prev, message].sort((a, b) => {
+    const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
+    const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
+    return timeA - timeB; // Ascending order (oldest first)
+});
+
+// Save to localStorage
+if (selectedChannel?.id) {
+    saveMessagesToStorage(selectedChannel.id, newMessages);
+}
+
+// Scroll to bottom if user is at bottom
+if (window.requestAnimationFrame) {
+    requestAnimationFrame(() => scrollToBottom(false, true));
+} else {
+    setTimeout(() => scrollToBottom(), 0);
+}
+
+return newMessages;
       });
     }
   },
@@ -2189,10 +2190,11 @@ const scrollToBottomInstant = () => {
     scrollToBottom(true, false); // force = true, smooth = false
 };
 
-   useEffect(() => {
+// Scroll to bottom on new messages
+useEffect(() => {
     // Only scroll to bottom on new messages if user is at bottom
     scrollToBottom(false, true);
-    }, [messages]);
+}, [messages]);
 
    // Scroll to specific message when navigated from notification (?jump= or ?message=)
 useEffect(() => {
@@ -3941,15 +3943,24 @@ const handleSendMessage = async (e) => {
     if (message && String(message.userId) === String(userId)) {
       try {
         const updatedContent = newMessage.trim();
-        setMessages(prev => {
-          const updated = prev.map(msg => 
-            msg.id === editingMessageId 
-              ? { ...msg, content: updatedContent, edited: true }
-              : msg
-          );
-          saveMessagesToStorage(selectedChannel.id, updated);
-          return updated;
-        });
+       // Add message to state immediately and ensure proper chronological order
+setMessages(prev => {
+    // Check if we already have this message (prevent duplicates)
+    if (prev.some(m => m.id === clientMessageId || m.clientMessageId === clientMessageId)) {
+        console.log('⚠️ Message already exists, skipping');
+        return prev;
+    }
+    
+    // Add new message and sort by timestamp (oldest first)
+    const updated = [...prev, optimisticMessage].sort((a, b) => {
+        const timeA = new Date(a.timestamp || a.createdAt || a.created_at || 0).getTime();
+        const timeB = new Date(b.timestamp || b.createdAt || b.created_at || 0).getTime();
+        return timeA - timeB; // Ascending order (oldest to newest)
+    });
+    
+    saveMessagesToStorage(selectedChannel.id, updated);
+    return updated;
+});
         
         handleCancelEdit();
         return;
@@ -4555,7 +4566,51 @@ useEffect(() => {
             }
         }
     }, [groupedChannels, categoryOrderState]);
-
+// Detect when user is manually scrolling
+useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+    if (!messagesContainer) return;
+    
+    let scrollTimeout;
+    let isManuallyScrolling = false;
+    
+    const handleScroll = () => {
+        // User is scrolling manually
+        if (!isManuallyScrolling) {
+            isManuallyScrolling = true;
+            setIsUserScrolling(true);
+        }
+        
+        // Clear existing timeout
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+        
+        // Set new timeout to detect when scrolling stops
+        scrollTimeout = setTimeout(() => {
+            isManuallyScrolling = false;
+            setIsUserScrolling(false);
+            
+            // Check if user is near bottom when they stop scrolling
+            const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
+            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+            
+            // If they're near bottom, allow auto-scroll again
+            if (isNearBottom) {
+                setIsUserScrolling(false);
+            }
+        }, 200);
+    };
+    
+    messagesContainer.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+        messagesContainer.removeEventListener('scroll', handleScroll);
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+    };
+}, []);
     // CRITICAL: Comprehensive subscription check with multiple fallbacks
     // Priority: Admin > Premium Role > Active Subscription Status > Database Check > LocalStorage
     
