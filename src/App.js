@@ -57,6 +57,7 @@ const AuraAnalysis = lazy(() => import('./pages/AuraAnalysis'));
 const AuraAnalysisShell = lazy(() => import('./components/aura-analysis/AuraAnalysisShell'));
 const AuraAnalysisGateway = lazy(() => import('./pages/aura-analysis/AuraAnalysisGateway'));
 const TradeValidatorEntry = lazy(() => import('./pages/aura-analysis/TradeValidatorEntry'));
+const TradeValidatorShell = lazy(() => import('./components/trader-deck/TradeValidatorShell'));
 /** Resolves to src/pages/TraderDeck.js – do not remove or rename; required for build. */
 const TraderDeck = lazy(() => import('./pages/TraderDeck'));
 const ConnectionHub = lazy(() => import('./pages/aura-analysis/ConnectionHub'));
@@ -213,28 +214,17 @@ function AppRoutes() {
                         } />
                         <Route path="/leaderboard" element={<AuthenticatedGuard><Leaderboard /></AuthenticatedGuard>} />
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
-                        <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
-                            <Route index element={<Navigate to="/aura-analysis/overview" replace />} />
-                            <Route path="ai" element={<ConnectionHub />} />
-                            <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
-                                <Route index element={<Navigate to="overview" replace />} />
-                                <Route path="overview" element={<AuraOverview />} />
-                                <Route path="performance" element={<AuraPerformance />} />
-                                <Route path="risk-lab" element={<AuraRiskLab />} />
-                                <Route path="edge-analyzer" element={<AuraEdgeAnalyzer />} />
-                                <Route path="execution-lab" element={<AuraExecutionLab />} />
-                                <Route path="calendar" element={<AuraCalendar />} />
-                                <Route path="psychology" element={<AuraPsychology />} />
-                                <Route path="growth" element={<AuraGrowth />} />
-                            </Route>
+                        <Route path="/aura-analysis" element={<Navigate to="/trader-deck/trade-validator" replace />} />
+                        <Route path="/aura-analysis/*" element={<Navigate to="/trader-deck/trade-validator" replace />} />
+                        <Route path="/trader-deck/trade-validator" element={<AuthenticatedGuard><TradeValidatorShell /></AuthenticatedGuard>}>
+                            <Route index element={<Navigate to="/trader-deck/trade-validator/checklist" replace />} />
+                            <Route path="checklist" element={<TradeValidatorEntry />} />
                             <Route path="overview" element={<AuraOverview />} />
                             <Route path="calculator" element={<TradeCalculator />} />
                             <Route path="journal" element={<TraderDeckTradeJournal />} />
                             <Route path="analytics" element={<AuraAnalytics />} />
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
-                            <Route path="profile" element={<Navigate to="/profile" replace />} />
                         </Route>
-                        <Route path="/trader-deck/trade-validator" element={<AuthenticatedGuard><TradeValidatorEntry /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />

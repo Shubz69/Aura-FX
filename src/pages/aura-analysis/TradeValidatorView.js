@@ -51,7 +51,7 @@ function SectionCard({ section, timeframes, items, checked, onToggle }) {
 
 export default function TradeValidatorView() {
   const location = useLocation();
-  const isEmbedded = location.pathname === '/trader-deck/trade-validator';
+  const isEmbedded = location.pathname.startsWith('/trader-deck/trade-validator');
   const [checked, setChecked] = useState(() => {
     try {
       const raw = localStorage.getItem('aura-trade-validator-checked');
@@ -199,14 +199,18 @@ export default function TradeValidatorView() {
   return (
     <div className={`trade-validator-page ${isEmbedded ? 'trade-validator-embedded' : ''}`}>
       <div className="trade-validator-inner tv-new-layout">
-        <Link to="/trader-deck" className="trade-validator-back">
-          <FaArrowLeft aria-hidden /> Back to Trader Desk
-        </Link>
+        {!isEmbedded && (
+          <Link to="/trader-deck" className="trade-validator-back">
+            <FaArrowLeft aria-hidden /> Back to Trader Desk
+          </Link>
+        )}
 
-        <header className="tv-header">
-          <h1 className="tv-title"><FaCheckSquare className="tv-title-icon" aria-hidden /> Trade Validator</h1>
-          <p className="tv-subtitle">Confluence scoring engine confirms your setup before execution.</p>
-        </header>
+        {!isEmbedded && (
+          <header className="tv-header">
+            <h1 className="tv-title"><FaCheckSquare className="tv-title-icon" aria-hidden /> Trade Validator</h1>
+            <p className="tv-subtitle">Confluence scoring engine confirms your setup before execution.</p>
+          </header>
+        )}
 
         <section className="tv-score-card">
           <div className="tv-score-left">
