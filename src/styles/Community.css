@@ -2094,7 +2094,7 @@ body.sidebar-open-mobile {
 }
 
 /* ============================================================
-   MOBILE STYLES (≤767px)
+   MOBILE STYLES (≤767px) - FIXED CHAT INPUT VISIBILITY
    ============================================================ */
 
 @media (max-width: 767px) {
@@ -2122,6 +2122,7 @@ body.sidebar-open-mobile {
         overflow: hidden !important;
         height: 100% !important;
         min-height: 0 !important;
+        position: relative !important;
     }
     
     .chat-header { 
@@ -2129,19 +2130,22 @@ body.sidebar-open-mobile {
         min-height: 48px !important; 
         height: 48px !important; 
         flex-shrink: 0 !important; 
+        z-index: 10 !important;
+        position: relative !important;
     }
     
     .chat-header h2 { 
         font-size: 0.875rem; 
     }
     
-    /* Chat Messages */
+    /* Chat Messages - CRITICAL: Allow proper flex shrinkage */
     .chat-messages { 
         flex: 1 1 auto !important;
         min-height: 0 !important;
         max-height: none !important;
         overflow-y: auto !important;
         padding: 10px 12px !important;
+        position: relative !important;
     }
     
     /* Message Items */
@@ -2174,9 +2178,9 @@ body.sidebar-open-mobile {
         margin-bottom: 3px !important; 
     }
     
-    /* CHAT INPUT - MOBILE FIXED */
+    /* ===== CHAT INPUT - COMPLETE MOBILE FIX ===== */
     .chat-input-container {
-        padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 8px)) 10px !important;
+        padding: 8px 12px 8px 10px !important;
         background: var(--bg-tertiary) !important;
         border-top: 1px solid var(--border) !important;
         position: relative !important;
@@ -2184,8 +2188,15 @@ body.sidebar-open-mobile {
         width: 100% !important;
         box-sizing: border-box !important;
         flex-shrink: 0 !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
+        /* Remove backdrop-filter to prevent rendering issues with keyboard */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        /* Ensure it stays at bottom */
+        margin-top: auto !important;
+        bottom: 0 !important;
+        /* Add safe area insets */
+        padding-bottom: max(8px, constant(safe-area-inset-bottom, 8px)) !important;
+        padding-bottom: max(8px, env(safe-area-inset-bottom, 8px)) !important;
     }
     
     .chat-form { 
@@ -2201,6 +2212,8 @@ body.sidebar-open-mobile {
         flex: 1 1 auto !important; 
         min-width: 0 !important;
         position: relative !important;
+        /* Ensure wrapper doesn't overflow */
+        max-width: calc(100% - 60px) !important;
     }
     
     .chat-input {
@@ -2223,6 +2236,10 @@ body.sidebar-open-mobile {
         -webkit-appearance: none !important;
         appearance: none !important;
         caret-color: var(--purple) !important;
+        /* Ensure text is visible */
+        opacity: 1 !important;
+        /* Remove any transforms that might affect positioning */
+        transform: none !important;
     }
     
     .chat-input:focus {
@@ -2230,6 +2247,8 @@ body.sidebar-open-mobile {
         background: rgba(0,0,0,0.6) !important;
         outline: none !important;
         box-shadow: 0 0 0 3px rgba(139,92,246,0.2) !important;
+        /* Ensure focus doesn't change positioning */
+        transform: none !important;
     }
     
     .chat-input::placeholder {
@@ -2242,7 +2261,7 @@ body.sidebar-open-mobile {
         right: 8px !important;
         bottom: 8px !important;
         display: flex !important;
-        gap: 4px !important;
+        gap: 2px !important;
         z-index: 35 !important;
         background: transparent !important;
         pointer-events: auto !important;
@@ -2264,8 +2283,8 @@ body.sidebar-open-mobile {
         -webkit-tap-highlight-color: transparent !important;
         padding: 0 !important;
         line-height: 1 !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
+        /* Don't use min-width/height that might cause overflow */
+        flex-shrink: 0 !important;
     }
     
     .chat-input-btn:active {
@@ -2295,8 +2314,9 @@ body.sidebar-open-mobile {
         position: relative !important;
         z-index: 30 !important;
         -webkit-tap-highlight-color: transparent !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
+        /* Ensure send button stays visible */
+        opacity: 1 !important;
+        visibility: visible !important;
     }
     
     .send-btn span { 
@@ -2345,45 +2365,11 @@ body.sidebar-open-mobile {
         border-radius: 20px !important;
     }
     
-    /* Modals on Mobile */
-    div[style*="position: fixed"][style*="inset: 0"][style*="padding: 20px"],
-    div[style*="position: fixed"][style*="inset: 0"][style*="padding:20px"] {
-        padding: 0 !important;
-        align-items: flex-end !important;
-    }
-    
-    div[style*="position: fixed"][style*="inset: 0"] > div[style*="background: #1f2024"],
-    div[style*="position: fixed"][style*="inset: 0"] > div[style*="background:#1f2024"] {
-        border-radius: 16px 16px 0 0 !important;
-        max-height: 88vh !important;
-        max-width: 100% !important;
-        width: 100% !important;
-    }
-    
-    div[style*="position: fixed"][style*="inset: 0"] div[style*="display: flex"][style*="gap: 12px"] > div,
-    div[style*="position: fixed"][style*="inset: 0"] div[style*="display:flex"][style*="gap:12px"] > div {
-        flex: 1 1 100% !important;
-    }
-    
-    /* Emoji/GIF Pickers on Mobile */
-    .gif-picker, .emoji-picker { 
-        position: fixed; 
-        left: 0; 
-        right: 0; 
-        bottom: 0; 
-        width: 100%; 
-        border-radius: 24px 24px 0 0; 
-        z-index: 1500; 
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
-    
-    .gif-picker { max-height: 70vh; }
-    .emoji-picker { height: 60vh; }
-    
-    /* Keyboard Open States */
+    /* ===== KEYBOARD OPEN STATES ===== */
+    /* When keyboard is open, ensure chat input stays visible */
     @media (max-height: 600px) {
         .chat-messages {
-            max-height: calc(100dvh - 48px - 64px) !important;
+            max-height: calc(100dvh - 48px - 70px) !important;
         }
         
         .journal-floating-btn {
@@ -2391,7 +2377,10 @@ body.sidebar-open-mobile {
         }
         
         .chat-input-container {
-            padding: 4px 10px calc(4px + env(safe-area-inset-bottom, 0px)) 10px !important;
+            padding: 4px 10px 4px 10px !important;
+            /* Reduce padding when keyboard is open to save space */
+            padding-bottom: max(4px, constant(safe-area-inset-bottom, 4px)) !important;
+            padding-bottom: max(4px, env(safe-area-inset-bottom, 4px)) !important;
         }
         
         .chat-input {
@@ -2409,11 +2398,10 @@ body.sidebar-open-mobile {
         .chat-input-btn {
             width: 28px !important;
             height: 28px !important;
-            min-width: 40px !important;
-            min-height: 40px !important;
         }
     }
     
+    /* Very short screens - ensure everything fits */
     @media (max-height: 400px) {
         .chat-input-container {
             padding: 2px 8px 2px 8px !important;
