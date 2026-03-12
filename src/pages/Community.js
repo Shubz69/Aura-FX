@@ -1428,23 +1428,25 @@ const isPremiumUser = currentUserRole === 'premium';
 const isEliteUser = currentUserRole === 'a7fx' || currentUserRole === 'elite';
   
 
-  // Helper to check if user can access a channel based on its access level
+   // Helper to check if user can access a channel based on its access level
 const canAccessChannelByTier = (channel) => {
     // Admins always have access
     if (isAdminOrSuperForChannels) return true;
     
     const accessLevel = (channel.accessLevel || channel.access_level || 'free').toLowerCase();
     
-    // Elite users can see everything
-    if (isEliteUser) return true;
-    
-    // Premium users - can see everything EXCEPT a7fx/elite
+    // CRITICAL: Premium users can see ALL channels EXCEPT a7fx/elite
     if (isPremiumUser) {
-        // Premium users CANNOT see a7fx/elite channels
+        // Premium users cannot see a7fx/elite channels
         if (accessLevel === 'a7fx' || accessLevel === 'elite') {
             return false;
         }
-        // Premium users CAN see all other channels (free, open, premium)
+        // Premium users can see all other channels (free, open, premium)
+        return true;
+    }
+    
+    // Elite users can see everything
+    if (isEliteUser) {
         return true;
     }
     
@@ -1453,8 +1455,8 @@ const canAccessChannelByTier = (channel) => {
         return accessLevel === 'free' || accessLevel === 'open';
     }
     
-    // Default fallback
-    return false;
+    // Default: free access
+    return true;
 };
 
     const buildPreparedFromServer = (serverList) => {
@@ -2094,7 +2096,61 @@ const renderMessageContent = (content, messageFile) => {
    // Channels free users can always see
 const FREE_CHANNEL_ALLOWLIST = new Set(['general', 'welcome', 'announcements', 'levels', 'notifications']);
 
-    
+    // Check if user can access channel (view)
+    // Channel access levels: 'premium' (premium + a7fx), 'a7fx' (a7fx only), 'admin-only' (admins only)
+    const canUserAccessChannel = (channel) => {
+        const userRole = getCurrentUserRole();
+        const channelId = (channel.id || channel.name || '').toString().toLowerCase();
+        const accessLevel = (channel.accessLevel || 'premium').toLowerCase(); // Default to premium instead of open
+
+        // FREE users: can see and read allowlist channels (general, welcome, announcements, levels, notifications)
+        // Posting is still restricted by canUserPostInChannel (only admins can post in announcements)
+        if (FREE_CHANNEL_ALLOWLIST.has(channelId)) {
+            return true;
+        }
+        
+        // Admin-only channels: only admins can see
+        if (accessLevel === 'admin-only') {
+            return userRole === 'admin' || userRole === 'super_admin' || isAdminUser || isSuperAdminUser;
+        }
+        
+        // CRITICAL: Admins and premium role users ALWAYS have access to all channels
+        // Check premium role first (before subscription check)
+        const hasPremiumRole = userRole === 'premium' || userRole === 'a7fx' || userRole === 'elite';
+        if (isAdminUser || isSuperAdminUser || hasPremiumRole) {
+            // Admins and premium users can see all channels (except admin-only which is handled above)
+            if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+                // A7FX channels: only a7fx/elite users and admins
+                return userRole === 'a7fx' || userRole === 'elite' || isAdminUser || isSuperAdminUser;
+            }
+            // All other channels: admins and premium users have access
+            return true;
+        }
+        
+        // For non-admin, non-premium users: check subscription for non-allowlist channels
+        const hasActiveSubscription = subscriptionStatus 
+            ? (subscriptionStatus.hasActiveSubscription && !subscriptionStatus.paymentFailed)
+            : checkSubscription();
+        
+        // If no subscription, deny access to paid channels only (allowlist already handled above)
+        if (!hasActiveSubscription) {
+            return false;
+        }
+        
+        // Premium channels: users with active subscription can see
+        if (accessLevel === 'premium' || accessLevel === 'open' || accessLevel === 'free') {
+            return hasActiveSubscription;
+        }
+        
+        // A7FX channels: only a7fx/elite role users (already checked above) or active subscription with a7fx plan
+        if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+            return false; // Non-premium users without a7fx role cannot access
+        }
+        
+        // Default: require active subscription
+        return hasActiveSubscription;
+    };
+
     // Check if user can post in channel
     // PAID ONLY - All channels require subscription (premium or a7fx)
     // Posting permissions follow same access level rules as viewing
@@ -3320,25 +3376,25 @@ if (window.requestAnimationFrame) {
         refreshChannelList({ selectChannelId: channelFromQuery || channelIdParam || undefined });
     }, [refreshChannelList, location.search, channelIdParam]);
 
-   // Periodically refresh channels so new ones appear for everyone
-// useEffect(() => {
-//     if (!isAuthenticated) return;
-// 
-//     // Refresh channel list less frequently to improve performance
-//     // Initial load happens immediately, then refresh every 60 seconds
-//     const intervalId = setInterval(() => {
-//         // Only refresh if API is working to avoid spam
-//         checkApiConnectivity().then((apiWorking) => {
-//             if (apiWorking) {
-//                 refreshChannelList().catch((err) => {
-//                     console.warn('Failed to refresh channel list:', err.message);
-//                 });
-//             }
-//         });
-//     }, 60000); // Reduced from 30s to 60s
-// 
-//     return () => clearInterval(intervalId);
-// }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
+    // Periodically refresh channels so new ones appear for everyone
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        // Refresh channel list less frequently to improve performance
+        // Initial load happens immediately, then refresh every 60 seconds
+        const intervalId = setInterval(() => {
+            // Only refresh if API is working to avoid spam
+            checkApiConnectivity().then((apiWorking) => {
+                if (apiWorking) {
+                    refreshChannelList().catch((err) => {
+                        console.warn('Failed to refresh channel list:', err.message);
+                    });
+                }
+            });
+        }, 60000); // Reduced from 30s to 60s
+
+        return () => clearInterval(intervalId);
+    }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
 
     // Generate smoothed online count variation (gradual changes over time)
     // This is purely cosmetic for early-stage UX polish - no storage used
@@ -5330,7 +5386,7 @@ if (!isAuthenticated && !hasToken) {
                                     {channels.map((channel, channelIndex) => {
                                         // Only hide admin-only channels from non-admins
                                         // All other channels are visible to everyone
-                                        const canAccess = channel.canSee !== true;
+                                        const canAccess = channel.canSee !== false;
                                         const accessLevel = (channel.accessLevel || 'open').toLowerCase();
                                         const isAdminOnly = accessLevel === 'admin-only';
                                         if (!canAccess) return null;
