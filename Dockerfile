@@ -3,9 +3,9 @@ FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Install deps (include devDependencies for build)
+# Install deps (include devDependencies for build); fallback to npm install if no lockfile
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Build React app (increase memory for build)
 ENV NODE_OPTIONS=--max-old-space-size=4096
@@ -20,9 +20,9 @@ FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
-# Production deps only
+# Production deps only; fallback if no lockfile
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
 
 # Copy built app and server (from builder so context is not required)
 COPY --from=builder /app/build ./build
