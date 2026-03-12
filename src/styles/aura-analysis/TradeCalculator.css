@@ -323,6 +323,74 @@
   min-height: 80px;
 }
 
+/* Session dropdown: custom list so options are always visible */
+.trade-calc-session-wrap {
+  position: relative;
+}
+
+.trade-calc-session-dropdown {
+  position: relative;
+}
+
+.trade-calc-session-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.trade-calc-session-arrow {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.trade-calc-session-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0 0;
+  padding: 6px 0;
+  list-style: none;
+  background: #1a1a24;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.trade-calc-session-list li {
+  margin: 0;
+}
+
+.trade-calc-session-option {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.trade-calc-session-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.trade-calc-session-option.selected {
+  background: rgba(139, 92, 246, 0.25);
+  color: #fff;
+}
+
 .trade-calc-calc-body {
   min-height: 200px;
   padding: 20px 0;

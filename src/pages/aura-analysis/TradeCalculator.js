@@ -32,20 +32,48 @@ export default function TradeCalculator() {
     notes: '',
   });
   const [pairDropdownOpen, setPairDropdownOpen] = useState(false);
+  const [sessionDropdownOpen, setSessionDropdownOpen] = useState(false);
   const pairDropdownRef = useRef(null);
+  const sessionDropdownRef = useRef(null);
+  const userChosenStopLossRef = useRef(null);
+  const hadManualPositionSizeRef = useRef(false);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (pairDropdownRef.current && !pairDropdownRef.current.contains(e.target)) {
         setPairDropdownOpen(false);
       }
+      if (sessionDropdownRef.current && !sessionDropdownRef.current.contains(e.target)) {
+        setSessionDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const hasManualPositionSize = Boolean(String(form.positionSize).trim() && Number(form.positionSize) > 0);
+
+  // When position size is empty, remember current SL as the user's choice (so we can restore it when they clear manual size).
+  useEffect(() => {
+    if (!hasManualPositionSize) {
+      const sl = Number(form.stopLoss);
+      if (Number.isFinite(sl)) userChosenStopLossRef.current = form.stopLoss;
+    }
+  }, [hasManualPositionSize, form.stopLoss]);
+
   // When position size is manually set, derive SL so risk (balance × risk %) stays constant.
   useEffect(() => {
+    if (!hasManualPositionSize) {
+      if (hadManualPositionSizeRef.current) {
+        hadManualPositionSizeRef.current = false;
+        const restore = userChosenStopLossRef.current;
+        if (restore != null && String(restore).trim() !== '') {
+          setForm((f) => ({ ...f, stopLoss: String(restore) }));
+        }
+      }
+      return;
+    }
+    hadManualPositionSizeRef.current = true;
     const manual = Number(form.positionSize);
     const entry = Number(form.entryPrice) || 0;
     const balance = Number(form.accountBalance) || 0;
@@ -64,7 +92,7 @@ export default function TradeCalculator() {
     if (Math.abs(current - rounded) > 1e-9) {
       setForm((f) => ({ ...f, stopLoss: String(rounded) }));
     }
-  }, [form.positionSize, form.entryPrice, form.accountBalance, form.riskPercent, form.direction, form.pair]);
+  }, [hasManualPositionSize, form.positionSize, form.entryPrice, form.accountBalance, form.riskPercent, form.direction, form.pair]);
 
   const calcInput = useMemo(
     () => ({
@@ -326,19 +354,41 @@ export default function TradeCalculator() {
             </div>
           </div>
 
-          <div className="trade-calc-field">
+          <div className="trade-calc-field trade-calc-session-wrap" ref={sessionDropdownRef}>
             <label>Session (optional)</label>
-            <select
-              value={form.session}
-              onChange={(e) => setForm((f) => ({ ...f, session: e.target.value }))}
-              className="trade-calc-input"
-            >
-              {SESSIONS.map((s) => (
-                <option key={s.value || 'session'} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+            <div className="trade-calc-session-dropdown">
+              <button
+                type="button"
+                className="trade-calc-input trade-calc-session-trigger"
+                onClick={() => setSessionDropdownOpen((o) => !o)}
+                aria-expanded={sessionDropdownOpen}
+                aria-haspopup="listbox"
+                aria-label="Select session"
+              >
+                <span>{SESSIONS.find((s) => s.value === form.session)?.label ?? 'Select session'}</span>
+                <span className="trade-calc-session-arrow" aria-hidden>{sessionDropdownOpen ? '▲' : '▼'}</span>
+              </button>
+              {sessionDropdownOpen && (
+                <ul className="trade-calc-session-list" role="listbox" aria-label="Session list">
+                  {SESSIONS.map((s) => (
+                    <li key={s.value || 'session'}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={form.session === s.value}
+                        className={`trade-calc-session-option ${form.session === s.value ? 'selected' : ''}`}
+                        onClick={() => {
+                          setForm((f) => ({ ...f, session: s.value }));
+                          setSessionDropdownOpen(false);
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           <div className="trade-calc-field">
