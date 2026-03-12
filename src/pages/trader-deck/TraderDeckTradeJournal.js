@@ -35,6 +35,25 @@ function getDisplayGrade(t) {
   return '—';
 }
 
+/** PnL string for Edit Outcome when result is win/loss/breakeven/open (from calculator potential profit/loss). */
+function getPnlForResult(trade, result) {
+  if (!trade) return '';
+  const profit = trade.potentialProfit ?? trade.potential_profit;
+  const loss = trade.potentialLoss ?? trade.potential_loss;
+  const p = Number(profit);
+  const l = Number(loss);
+  switch (String(result).toLowerCase()) {
+    case 'win':
+      return Number.isFinite(p) && p >= 0 ? String(p) : '';
+    case 'loss':
+      return Number.isFinite(l) && l >= 0 ? String(-l) : '';
+    case 'breakeven':
+      return '0';
+    default:
+      return '';
+  }
+}
+
 export default function TraderDeckTradeJournal() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,9 +111,10 @@ export default function TraderDeckTradeJournal() {
   }, [trades, search, filterPair, filterResult, filterAsset, filterGrade, filterSession]);
 
   const openEdit = (t) => {
+    const result = (t.result || 'open').toLowerCase();
     setEditTrade(t);
-    setEditResult((t.result || 'open').toLowerCase());
-    setEditPnl(t.pnl != null ? String(t.pnl) : '');
+    setEditResult(result);
+    setEditPnl(t.pnl != null ? String(t.pnl) : getPnlForResult(t, result));
     setSaveError(null);
   };
 
@@ -285,7 +305,14 @@ export default function TraderDeckTradeJournal() {
             <div className="td-journal-modal-form">
               <label>
                 Result
-                <select value={editResult} onChange={(e) => setEditResult(e.target.value)}>
+                <select
+                  value={editResult}
+                  onChange={(e) => {
+                    const newResult = e.target.value;
+                    setEditResult(newResult);
+                    setEditPnl(getPnlForResult(editTrade, newResult));
+                  }}
+                >
                   <option value="open">Open</option>
                   <option value="win">Win</option>
                   <option value="loss">Loss</option>
@@ -293,7 +320,7 @@ export default function TraderDeckTradeJournal() {
                 </select>
               </label>
               <label>
-                PnL ($)
+                PnL ($) — auto-filled for Win/Loss, editable
                 <input
                   type="number"
                   step="0.01"
