@@ -348,27 +348,39 @@
   padding: 0 0 12px 0;
 }
 
-/* Grid uses full width and responds earlier so more fits on one page */
+/* Grid: full width, panels wider so content isn’t elongated */
 .td-deck-content .td-mi-grid {
   width: 100%;
   max-width: none;
+  gap: 20px;
 }
 
-/* Wider grid at lower breakpoints so Market Outlook fits on one page */
-@media (min-width: 600px) {
+/* Panels: no forced min-height so they don’t look tall and narrow */
+.td-deck-content .td-mi-panel {
+  min-height: 0;
+  padding: 18px 20px;
+}
+
+.td-deck-content .td-mi-panel--wide {
+  min-height: 0;
+}
+
+/* 4 columns from 640px – each panel at least half width, uses horizontal space */
+@media (min-width: 640px) {
   .td-deck-content .td-mi-grid {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
   }
-  .td-deck-content .td-mi-panel--regime { grid-column: 1; }
-  .td-deck-content .td-mi-panel--pulse { grid-column: 2; }
-  .td-deck-content .td-mi-panel--drivers { grid-column: 1; }
-  .td-deck-content .td-mi-panel--signals { grid-column: 2; }
-  .td-deck-content .td-mi-panel--changes { grid-column: 1; }
-  .td-deck-content .td-mi-panel--focus { grid-column: 1; }
-  .td-deck-content .td-mi-panel--radar { grid-column: 2; }
+  .td-deck-content .td-mi-panel--regime { grid-column: 1 / span 3; }
+  .td-deck-content .td-mi-panel--pulse { grid-column: 4; }
+  .td-deck-content .td-mi-panel--drivers { grid-column: 1 / span 2; }
+  .td-deck-content .td-mi-panel--signals { grid-column: 3 / span 2; }
+  .td-deck-content .td-mi-panel--changes { grid-column: 1 / span 2; }
+  .td-deck-content .td-mi-panel--focus { grid-column: 3 / span 2; }
+  .td-deck-content .td-mi-panel--radar { grid-column: 1 / span 4; }
 }
 
+/* 6 columns at 960px – drivers/signals/changes/focus each get 3 cols (half width) */
 @media (min-width: 960px) {
   .td-deck-content .td-mi-grid {
     grid-template-columns: repeat(6, 1fr);
@@ -376,11 +388,25 @@
   }
   .td-deck-content .td-mi-panel--regime { grid-column: 1 / span 4; }
   .td-deck-content .td-mi-panel--pulse { grid-column: 5 / span 2; }
-  .td-deck-content .td-mi-panel--drivers { grid-column: 1 / span 2; }
-  .td-deck-content .td-mi-panel--signals { grid-column: 3 / span 2; }
-  .td-deck-content .td-mi-panel--changes { grid-column: 5 / span 2; }
-  .td-deck-content .td-mi-panel--focus { grid-column: 1 / span 3; }
-  .td-deck-content .td-mi-panel--radar { grid-column: 4 / span 3; }
+  .td-deck-content .td-mi-panel--drivers { grid-column: 1 / span 3; }
+  .td-deck-content .td-mi-panel--signals { grid-column: 4 / span 3; }
+  .td-deck-content .td-mi-panel--changes { grid-column: 1 / span 3; }
+  .td-deck-content .td-mi-panel--focus { grid-column: 4 / span 3; }
+  .td-deck-content .td-mi-panel--radar { grid-column: 1 / span 6; }
+}
+
+/* List content visible: allow wrap, no truncation */
+.td-deck-content .td-mi-list-main {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.td-deck-content .td-mi-list-item {
+  flex-wrap: wrap;
+}
+
+.td-deck-content .td-mi-panel-body {
+  min-width: 0;
 }
 
 /* Legacy main box (kept for reference, unused) */
