@@ -139,36 +139,38 @@ export default function TraderDeck() {
           </nav>
         </header>
 
-        {/* Divider row: left line | calendar selector (centered) | right line */}
-        <div className="td-deck-divider-row">
-          <div className="td-deck-header-line-left" aria-hidden="true" />
-          <div className="td-deck-calendar-bar-wrap">
-            <nav className="td-deck-sub-tabs td-deck-sub-tabs-left" aria-label="Period">
-              <button
-                type="button"
-                className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
-                onClick={() => setSubTab('daily')}
-              >
-                Daily
-              </button>
-              <button
-                type="button"
-                className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
-                onClick={() => setSubTab('weekly')}
-              >
-                Weekly
-              </button>
-            </nav>
-            <TraderDeckCalendarBar
-              selectedDate={selectedDate}
-              calendarMonth={calendarMonth}
-              period={subTab}
-              onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
-              onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
-              onOpenCalendar={() => setCalendarOverlayOpen(true)}
-            />
+        {/* Row under header: Daily/Weekly left (under MARKET OUTLOOK) | divider line | date+arrows | divider line */}
+        <div className="td-deck-below-header">
+          <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left" aria-label="Period">
+            <button
+              type="button"
+              className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
+              onClick={() => setSubTab('daily')}
+            >
+              Daily
+            </button>
+            <button
+              type="button"
+              className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
+              onClick={() => setSubTab('weekly')}
+            >
+              Weekly
+            </button>
+          </nav>
+          <div className="td-deck-divider-row">
+            <div className="td-deck-header-line-left" aria-hidden="true" />
+            <div className="td-deck-calendar-bar-wrap">
+              <TraderDeckCalendarBar
+                selectedDate={selectedDate}
+                calendarMonth={calendarMonth}
+                period={subTab}
+                onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
+                onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
+                onOpenCalendar={() => setCalendarOverlayOpen(true)}
+              />
+            </div>
+            <div className="td-deck-header-line-right" aria-hidden="true" />
           </div>
-          <div className="td-deck-header-line-right" aria-hidden="true" />
         </div>
 
         {/* Content below date selector: centered max-width container, then tab content */}
