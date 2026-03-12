@@ -154,26 +154,28 @@ export default function TraderDeck() {
           />
         </div>
 
-        {/* Content area: one full-width box, Market Outlook / Intelligence inside */}
+        {/* Content below date selector: centered max-width container, then tab content */}
         <div className="td-deck-content">
           <div className="td-deck-content-box">
             <div className="td-deck-body td-deck-body-single">
               <main className="td-deck-main">
                 <div className="td-deck-main-inner">
-                {mainTab === 'outlook' && (
-                  <MarketOutlookView
-                    selectedDate={selectedDate}
-                    period={subTab}
-                    canEdit={canEdit}
-                  />
-                )}
-                {mainTab === 'intelligence' && (
-                  <MarketIntelligenceBriefsView
-                    selectedDate={selectedDate}
-                    period={subTab}
-                    canEdit={canEdit}
-                  />
-                )}
+                  <div className="td-deck-dashboard-wrap">
+                    {mainTab === 'outlook' && (
+                      <MarketOutlookView
+                        selectedDate={selectedDate}
+                        period={subTab}
+                        canEdit={canEdit}
+                      />
+                    )}
+                    {mainTab === 'intelligence' && (
+                      <MarketIntelligenceBriefsView
+                        selectedDate={selectedDate}
+                        period={subTab}
+                        canEdit={canEdit}
+                      />
+                    )}
+                  </div>
                 </div>
               </main>
             </div>

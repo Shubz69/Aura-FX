@@ -302,8 +302,8 @@
   flex-direction: column;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 28px 32px 32px;
+  border-radius: 16px;
+  padding: 20px 24px 24px;
   box-sizing: border-box;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -326,26 +326,17 @@
     0 24px 60px rgba(0, 0, 0, 0.4);
 }
 
-/* Shell inside the box: full width, visible but not double-border – soften shell when inside content box */
-.td-deck-content .td-mi-shell {
+/* Content below date selector: centered max-width container (no margin hacks) */
+.td-deck-content .td-deck-main-inner {
+  max-width: 100%;
   width: 100%;
-  max-width: none;
+}
+
+.td-deck-dashboard-wrap {
+  width: 100%;
+  max-width: 1520px;
+  margin: 0 auto;
   padding: 0;
-  background: none;
-  box-shadow: none;
-  border: none;
-}
-
-.td-deck-content .td-mi-shell-glow {
-  display: none;
-}
-
-.td-deck-content .td-mi-shell-inner {
-  width: 100%;
-  max-width: none;
-  background: transparent;
-  border: none;
-  padding: 0 0 12px 0;
 }
 
 /* Grid: full width, panels wider so content isn’t elongated */

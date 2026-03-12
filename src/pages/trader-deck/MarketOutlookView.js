@@ -5,7 +5,6 @@
 import React, { useState, useEffect } from 'react';
 import Api from '../../services/Api';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
-import TraderDeckDashboardShell from '../../components/trader-deck/TraderDeckDashboardShell';
 import DashboardPanel from '../../components/trader-deck/DashboardPanel';
 import RegimeRows from '../../components/trader-deck/RegimeRows';
 import MarketPulseGauge from '../../components/trader-deck/MarketPulseGauge';
@@ -298,36 +297,74 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     </div>
   );
 
+  const periodLabel = period === 'weekly' ? 'Weekly' : 'Daily';
+  const displayDate = (() => {
+    const d = new Date(selectedDate + 'T12:00:00');
+    return isNaN(d.getTime()) ? selectedDate : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  })();
+  const mainTitle = `Market Outlook — ${periodLabel} (${displayDate})`;
+
   return (
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
       {saveSuccess && <p className="td-mi-save-success" role="status">{saveSuccess}</p>}
-      <TraderDeckDashboardShell
-        title={`Market Outlook — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${selectedDate})`}
-        canEdit={canEdit}
-        editMode={editMode}
-        onEditToggle={handleEditToggle}
-        onSave={handleSave}
-        onCancel={handleCancel}
-      >
-        <DashboardPanel title="▲ Aurax Market Regime" className="td-mi-panel--regime">{renderRegime()}</DashboardPanel>
-        <DashboardPanel title="Aurax Market Pulse" className="td-mi-panel--pulse">{renderPulse()}</DashboardPanel>
-        <DashboardPanel title="Key Market Drivers" className="td-mi-panel--drivers">
-          {editMode && editDraft ? renderDriversEdit() : <><p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p><DriverList drivers={keyDrivers} /></>}
-        </DashboardPanel>
-        <DashboardPanel title="Cross-Asset Signals" className="td-mi-panel--signals">
-          {editMode && editDraft ? renderSignalsEdit() : <><p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p><SignalList signals={crossAssetSignals} /></>}
-        </DashboardPanel>
-        <DashboardPanel title="Market Change Today" className="td-mi-panel--changes">
-          {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : <ChangeList items={marketChangesToday} />}
-        </DashboardPanel>
-        <DashboardPanel title="Trader Focus" wide className="td-mi-panel--focus">
-          {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : <FocusList items={traderFocus} />}
-        </DashboardPanel>
-        <DashboardPanel title="Risk Radar" wide className="td-mi-panel--radar">
-          {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event') : <><p className="td-mi-source td-mi-source--readonly">Upcoming news (FMP). Refreshes at midnight.</p><RiskRadarList items={riskRadar} /></>}
-        </DashboardPanel>
-      </TraderDeckDashboardShell>
+      <div className="td-outlook-dashboard">
+        <aside className="td-outlook-sidebar" aria-label="Market summary">
+          <DashboardPanel title="▲ Aurax Market Regime" className="td-mi-panel--regime td-outlook-card">{renderRegime()}</DashboardPanel>
+          <DashboardPanel title="Aurax Market Pulse" className="td-mi-panel--pulse td-outlook-card td-outlook-card--pulse">{renderPulse()}</DashboardPanel>
+          <DashboardPanel title="Key Market Drivers" className="td-mi-panel--drivers td-outlook-card">
+            {editMode && editDraft ? renderDriversEdit() : <><p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p><DriverList drivers={keyDrivers} /></>}
+          </DashboardPanel>
+          <DashboardPanel title="Cross-Asset Signals" className="td-mi-panel--signals td-outlook-card">
+            {editMode && editDraft ? renderSignalsEdit() : <><p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p><SignalList signals={crossAssetSignals} /></>}
+          </DashboardPanel>
+        </aside>
+        <div className="td-outlook-main">
+          <div className="td-outlook-main-card">
+            <header className="td-outlook-main-header">
+              <h1 className="td-outlook-main-title">{mainTitle}</h1>
+              {canEdit && (
+                <div className="td-mi-shell-actions">
+                  {!editMode ? (
+                    <button type="button" className="td-mi-btn td-mi-btn-edit" onClick={handleEditToggle} aria-label="Edit content">Edit</button>
+                  ) : (
+                    <>
+                      <button type="button" className="td-mi-btn td-mi-btn-save" onClick={handleSave}>Save</button>
+                      <button type="button" className="td-mi-btn td-mi-btn-cancel" onClick={handleCancel}>Cancel</button>
+                    </>
+                  )}
+                </div>
+              )}
+            </header>
+            <div className="td-outlook-divider" aria-hidden />
+            <div className="td-outlook-sections">
+              <section className="td-outlook-section" aria-labelledby="outlook-changes-heading">
+                <h2 id="outlook-changes-heading" className="td-outlook-section-title">Market Change Today</h2>
+                <div className="td-outlook-section-body">
+                  {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : (marketChangesToday && marketChangesToday.length > 0 ? <ChangeList items={marketChangesToday} /> : <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>)}
+                </div>
+              </section>
+              <section className="td-outlook-section" aria-labelledby="outlook-focus-heading">
+                <h2 id="outlook-focus-heading" className="td-outlook-section-title">Trader Focus</h2>
+                <div className="td-outlook-section-body">
+                  {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : (traderFocus && traderFocus.length > 0 ? <FocusList items={traderFocus} /> : <p className="td-outlook-empty">No focus items. Use Edit to add.</p>)}
+                </div>
+              </section>
+              <section className="td-outlook-section" aria-labelledby="outlook-radar-heading">
+                <h2 id="outlook-radar-heading" className="td-outlook-section-title">Risk Radar</h2>
+                <div className="td-outlook-section-body">
+                  {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event') : (
+                    <>
+                      <p className="td-mi-source td-mi-source--readonly">Upcoming news (FMP). Refreshes at midnight.</p>
+                      {riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>}
+                    </>
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
