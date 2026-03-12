@@ -253,15 +253,18 @@ export const WebSocketProvider = ({ children }) => {
   const subscribeChannel = useCallback((channelId, onMessage) => {
     onMessageRef.current = onMessage;
     currentChannelRef.current = channelId;
+    const client = clientRef.current;
+    const ws = client?.webSocket;
     if (subscriptionRef.current) {
-      try {
-        subscriptionRef.current.unsubscribe();
-      } catch (e) {
-        // ignore
+      if (ws && ws.readyState === 1) {
+        try {
+          subscriptionRef.current.unsubscribe();
+        } catch (e) {
+          // ignore (e.g. already CLOSING/CLOSED)
+        }
       }
       subscriptionRef.current = null;
     }
-    const client = clientRef.current;
     if (!client?.connected || !channelId) return;
     subscriptionRef.current = client.subscribe(`/topic/chat/${channelId}`, (msg) => {
       try {
@@ -276,14 +279,16 @@ export const WebSocketProvider = ({ children }) => {
   }, []);
 
   const unsubscribeChannel = useCallback(() => {
-    if (subscriptionRef.current) {
+    const client = clientRef.current;
+    const ws = client?.webSocket;
+    if (subscriptionRef.current && ws && ws.readyState === 1) {
       try {
         subscriptionRef.current.unsubscribe();
       } catch (e) {
-        // ignore
+        // ignore (e.g. already CLOSING/CLOSED)
       }
-      subscriptionRef.current = null;
     }
+    subscriptionRef.current = null;
     currentChannelRef.current = null;
     onMessageRef.current = null;
   }, []);

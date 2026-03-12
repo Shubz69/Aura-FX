@@ -716,7 +716,9 @@ const Api = {
             });
             return response.data;
         } catch (error) {
-            console.error('Error checking subscription:', error);
+            const is500 = error?.response?.status === 500;
+            const isNetwork = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error';
+            if (!is500 && !isNetwork) console.error('Error checking subscription:', error);
             throw error;
         }
     },

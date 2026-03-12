@@ -3068,7 +3068,9 @@ if (window.requestAnimationFrame) {
             }
             return false;
         } catch (error) {
-            console.error('Error checking subscription from database:', error);
+            const is500 = error?.response?.status === 500;
+            const isNetwork = error?.code === 'ERR_NETWORK' || (error?.message || '').includes('Network');
+            if (!is500 && !isNetwork) console.warn('Error checking subscription from database:', error?.message || error);
             // Fallback to localStorage check
             return checkSubscriptionLocal();
         }
