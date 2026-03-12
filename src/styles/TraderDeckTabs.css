@@ -70,15 +70,46 @@
   gap: 8px;
 }
 
-/* Line under header + date row – sits exactly below tabs and date for a clean break */
-.td-deck-header-line {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  margin: 0 0 20px 0;
+/* Divider row: left line | calendar (centered) | right line – gap in middle for calendar */
+.td-deck-divider-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 4px;
+  margin-bottom: 20px;
   width: 100%;
 }
 
-/* Calendar bar row: date + arrows; no box */
+.td-deck-header-line-left,
+.td-deck-header-line-right {
+  flex: 1;
+  min-width: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  align-self: center;
+}
+
+.td-deck-header-line-left {
+  max-width: 100%;
+}
+
+/* Calendar bar: fixed middle, no stretch – keeps gap consistent */
+.td-deck-divider-row .td-deck-calendar-bar-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 16px;
+  position: relative;
+  min-width: 0;
+}
+.td-deck-divider-row .td-deck-calendar-bar-wrap .td-deck-calendar-bar {
+  flex: 0 0 auto;
+}
+
+/* Calendar bar row when not in divider row (fallback) */
 .td-deck-calendar-bar-wrap {
   display: flex;
   flex-wrap: wrap;
