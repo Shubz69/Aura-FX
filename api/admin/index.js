@@ -567,13 +567,29 @@ module.exports = async (req, res) => {
       }
 
       try {
+        // Check base columns (some DBs may have name instead of username or different schema)
+        let hasUsername = false;
+        let hasName = false;
+        try {
+          await db.execute('SELECT id, email, username, role FROM users LIMIT 1');
+          hasUsername = true;
+        } catch (e) {
+          try {
+            await db.execute('SELECT id, email, name, role FROM users LIMIT 1');
+            hasName = true;
+          } catch (e2) {
+            console.error('Admin users: missing base columns (id, email, username/name, role):', e?.message || e2?.message);
+            if (db && typeof db.end === 'function') await db.end();
+            return res.status(500).json({ success: false, message: 'Database schema error: users table missing required columns' });
+          }
+        }
+
         // Check if metadata column exists
         let hasMetadata = false;
         try {
           await db.execute('SELECT metadata FROM users LIMIT 1');
           hasMetadata = true;
         } catch (e) {
-          // Column doesn't exist, that's okay
           hasMetadata = false;
         }
 
@@ -585,7 +601,6 @@ module.exports = async (req, res) => {
           hasCreatedAt = true;
           hasLastSeen = true;
         } catch (e) {
-          // Check individually
           try {
             await db.execute('SELECT created_at FROM users LIMIT 1');
             hasCreatedAt = true;
@@ -626,7 +641,13 @@ module.exports = async (req, res) => {
         } catch (e) {}
 
         // Build query based on available columns
-        let query = 'SELECT id, email, username, role';
+        let query = 'SELECT id, email, role';
+        if (hasUsername) {
+          query += ', username';
+        }
+        if (hasName && !hasUsername) {
+          query += ', name';
+        }
         if (hasMetadata) {
           query += ', JSON_EXTRACT(metadata, "$.capabilities") as capabilities';
         }
@@ -674,10 +695,14 @@ module.exports = async (req, res) => {
             subscription_expiry: hasSubscriptionExpiry ? (user.subscription_expiry || null) : null
           };
 
-          // Parse capabilities if metadata exists
-          if (hasMetadata && user.capabilities) {
+          // Parse capabilities if metadata exists (driver may return string or object)
+          if (hasMetadata && user.capabilities != null) {
             try {
-              formatted.capabilities = JSON.parse(user.capabilities);
+              formatted.capabilities = typeof user.capabilities === 'string'
+                ? JSON.parse(user.capabilities)
+                : Array.isArray(user.capabilities)
+                  ? user.capabilities
+                  : [];
             } catch (e) {
               formatted.capabilities = [];
             }
