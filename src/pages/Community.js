@@ -804,16 +804,16 @@ const MessageItem = React.memo(({
         
         window.addEventListener('xpUpdated', handleXPUpdate);
         
-        // Fetch latest user data from API periodically (every 5 seconds for live updates)
+        // Fetch latest user data from API periodically (avoid ERR_INSUFFICIENT_RESOURCES: don't poll too fast)
         let xpCheckInterval;
         if (userId) {
             // Initial fetch on mount
             fetchLatestUserData(userId);
             
-            // Then check periodically
+            // Then check periodically (30s to reduce request volume and browser resource exhaustion)
             xpCheckInterval = setInterval(() => {
                 fetchLatestUserData(userId);
-            }, 5000); // Check every 5 seconds for live updates
+            }, 30000);
         } else {
             // Fallback to localStorage check if userId not available yet
             xpCheckInterval = setInterval(() => {
@@ -3489,8 +3489,8 @@ if (window.requestAnimationFrame) {
         // Update immediately
         updateConnectionStatus();
         
-        // Update status every 2 seconds for real-time updates (optimized for production)
-        const statusCheckInterval = setInterval(updateConnectionStatus, 2000);
+        // Update status every 10 seconds (reduces request volume; 2s was contributing to ERR_INSUFFICIENT_RESOURCES)
+        const statusCheckInterval = setInterval(updateConnectionStatus, 10000);
         
         return () => clearInterval(statusCheckInterval);
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
@@ -3552,14 +3552,12 @@ if (window.requestAnimationFrame) {
         }
     }, [selectedChannel?.id, clearChannelBadge]);
 
-    // Poll for new messages - Fast delivery even under high traffic
-    // When WebSocket is down: poll every 200ms for near-instant fallback
-    // When WebSocket is connected: backup poll every 400ms to catch missed messages (multi-device reliability)
+    // Poll for new messages when WebSocket is unavailable (avoid ERR_INSUFFICIENT_RESOURCES: throttle polling)
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Poll interval: 200ms when WS down, 400ms backup when WS connected (faster delivery)
-        const pollInterval = isConnected ? 400 : 200;
+        // Poll interval: 2s when WS down, 5s backup when WS connected (reduces request storm and browser resource exhaustion)
+        const pollInterval = isConnected ? 5000 : 2000;
         
         // Start polling immediately
         const pollMessages = async () => {

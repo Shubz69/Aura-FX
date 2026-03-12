@@ -16,7 +16,7 @@ const MAX_QUERY_TIMES = 100;
 
 // Connection error codes/messages that warrant pool reset (e.g. Vercel serverless + MySQL)
 const CONNECTION_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'PROTOCOL_CONNECTION_LOST', 'ER_CON_COUNT_ERROR']);
-const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT', 'Pool is closed'];
+const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT', 'Pool is closed', 'Too many connections', 'Queue limit reached'];
 
 function isConnectionError(error) {
   if (!error) return false;
@@ -39,9 +39,12 @@ const getDbPool = () => {
     return null;
   }
 
-  // Serverless-friendly: smaller limit to avoid holding many idle connections; connectTimeout to avoid long hangs
-  const connectionLimit = process.env.VERCEL ? 10 : 100;
-  const queueLimit = process.env.VERCEL ? 20 : 500;
+  // Pool size: per serverless instance. Total DB connections ≈ instances × connectionLimit.
+  // Set MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT in Vercel when you raise Railway max_connections (e.g. for 500+ users).
+  const defaultLimit = process.env.VERCEL ? 5 : 100;
+  const defaultQueue = process.env.VERCEL ? 10 : 500;
+  const connectionLimit = Math.max(1, parseInt(process.env.MYSQL_POOL_SIZE, 10) || defaultLimit);
+  const queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
 
   pool = mysql.createPool({
     host: process.env.MYSQL_HOST,

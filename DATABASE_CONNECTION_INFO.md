@@ -95,5 +95,39 @@ To check what's actually in the database:
 4. Run: `SELECT COUNT(*) FROM users;` - Count users
 5. Run: `SELECT COUNT(*) FROM channels;` - Count channels
 
+---
+
+## Scaling for 500+ Users (Why You See Connection Limits)
+
+**The limit is your database’s max connections, not “one connection per user.”**
+
+- **What uses connections:** Each *concurrent* API request that talks to the DB holds one connection for a short time (milliseconds). So 500 users might only create 30–100 concurrent requests at once (e.g. polling every 30s, page loads).
+- **Where the cap comes from:** Railway’s MySQL has a **max_connections** setting. If the app opens more connections than that, you get “Too many connections.” The app uses a **pool** so it reuses connections instead of opening a new one per request.
+
+**What we did in code:**
+- All user/community APIs use one shared pool and release connections when done (no leaks).
+- On Vercel we default to a small pool per instance (5 connections, queue 10) so many serverless instances don’t exceed your DB limit. You can increase this when your DB allows more.
+
+**To support 500+ users:**
+
+1. **Raise Railway’s MySQL max connections**  
+   In Railway → your MySQL service → **Variables** (or **Settings**), add:
+   - `MYSQL_CONFIG=max_connections=200`  
+   Or use the short form: `MYSQL_CONFIG=mc=200`.  
+   Then redeploy the MySQL service. (Default is often low; 100–200 is typical for this size.)
+
+2. **Optionally increase the app pool size**  
+   In Vercel → Project → **Settings** → **Environment Variables**, add (only after step 1):
+   - `MYSQL_POOL_SIZE=10`  
+   - `MYSQL_QUEUE_LIMIT=20`  
+   This allows each serverless instance to use up to 10 connections. With e.g. 10 instances, that’s up to 100 connections, so `max_connections=200` is safe.
+
+3. **Keep polling reasonable**  
+   Community/user polling is already throttled (e.g. 30s for user, 2–5s for messages). That keeps concurrent requests (and thus connections) manageable even with many users.
+
+**Summary:** Limit issues happen when *concurrent* connections exceed the DB’s **max_connections**. Fix: (1) raise `max_connections` on Railway, (2) optionally set `MYSQL_POOL_SIZE` in Vercel, (3) keep using the shared pool (already in place). Then 500+ users can be supported without connection errors.
+
+
+
 
 

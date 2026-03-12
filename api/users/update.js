@@ -1,38 +1,14 @@
-const mysql = require('mysql2/promise');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
 
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    console.error('Missing MySQL environment variables for user update');
-    return null;
+// Use shared pool from api/db.js – do not create new connections (causes "Too many connections")
+// Always release with connection.release() when done (never .end())
+function releaseDb(db) {
+  if (db && typeof db.release === 'function') {
+    try { db.release(); } catch (_) {}
   }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000,
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    await connection.ping();
-    return connection;
-  } catch (error) {
-    console.error('Database connection error in user update:', error.message);
-    return null;
-  }
-};
+}
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -205,31 +181,31 @@ const { name, username, email, phone, address, bio, avatar, updateUsername, avat
           
           // Length check
           if (trimmedUsername.length < 3) {
-            await db.end();
+            releaseDb(db);
             return res.status(400).json({ success: false, message: 'Username must be at least 3 characters long' });
           }
           
           if (trimmedUsername.length > 30) {
-            await db.end();
+            releaseDb(db);
             return res.status(400).json({ success: false, message: 'Username must be 30 characters or less' });
           }
           
           // Check for valid characters (letters, numbers, spaces, hyphens, underscores)
           const validPattern = /^[a-zA-Z0-9\s_-]+$/;
           if (!validPattern.test(trimmedUsername)) {
-            await db.end();
+            releaseDb(db);
             return res.status(400).json({ success: false, message: 'Username can only contain letters, numbers, spaces, hyphens, and underscores' });
           }
           
           // Check for consecutive spaces
           if (/\s{2,}/.test(trimmedUsername)) {
-            await db.end();
+            releaseDb(db);
             return res.status(400).json({ success: false, message: 'Username cannot contain consecutive spaces' });
           }
           
           // Check for spaces at start/end
           if (trimmedUsername.startsWith(' ') || trimmedUsername.endsWith(' ')) {
-            await db.end();
+            releaseDb(db);
             return res.status(400).json({ success: false, message: 'Username cannot start or end with a space' });
           }
           
@@ -246,7 +222,7 @@ const { name, username, email, phone, address, bio, avatar, updateUsername, avat
           const lowerUsername = trimmedUsername.toLowerCase();
           const containsInappropriate = inappropriateWords.some(word => lowerUsername.includes(word));
           if (containsInappropriate) {
-            await db.end();
+            releaseDb(db);
             return res.status(400).json({ success: false, message: 'Username contains inappropriate content. Please choose a family-friendly username.' });
           }
           
@@ -274,7 +250,7 @@ const { name, username, email, phone, address, bio, avatar, updateUsername, avat
                 const daysRemaining = 30 - daysSinceChange;
                 
                 if (daysRemaining > 0) {
-                  await db.end();
+                  releaseDb(db);
                   return res.status(400).json({ 
                     success: false, 
                     message: `You can change your username in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.` 
@@ -378,7 +354,7 @@ if (req.body.banner !== undefined) {
 }
 
         if (updates.length === 0) {
-          await db.end();
+          releaseDb(db);
           return res.status(400).json({ success: false, message: 'No fields to update' });
         }
 if (avatarColor !== undefined) {
@@ -398,7 +374,7 @@ const [updatedRows] = await db.execute(
   [userId]
 );
 
-        await db.end();
+        releaseDb(db);
 
         if (updatedRows.length === 0) {
           return res.status(404).json({ success: false, message: 'User not found' });
@@ -411,7 +387,7 @@ const [updatedRows] = await db.execute(
         });
       } catch (dbError) {
         console.error('Database error updating user:', dbError);
-        if (db && !db.ended) await db.end();
+        releaseDb(db);
         return res.status(500).json({
           success: false,
           message: 'Failed to update profile',
@@ -510,7 +486,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
         }
 
         if (rows.length === 0) {
-          if (db && typeof db.end === 'function' && !db.ended) await db.end();
+          releaseDb(db);
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
@@ -572,10 +548,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
           }
         }
         
-        // Close connection (using createConnection, not pool)
-        if (db && typeof db.end === 'function' && !db.ended) {
-          await db.end();
-        }
+        releaseDb(db);
         
         // Return user data with formatted dates
        const responseData = {
@@ -624,14 +597,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
           sqlMessage: dbError.sqlMessage
         });
         
-        // Close connection (using createConnection, not pool)
-        if (db && typeof db.end === 'function' && !db.ended) {
-          try {
-            await db.end();
-          } catch (endError) {
-            console.error('Error closing DB connection:', endError);
-          }
-        }
+        releaseDb(db);
         
         return res.status(500).json({
           success: false,
