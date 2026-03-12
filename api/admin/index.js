@@ -137,8 +137,11 @@ module.exports = async (req, res) => {
     pathname = req.url ? req.url.split('?')[0] : '';
   }
 
-  // Handle /api/subscription/check
+  // Handle /api/subscription/check (uses shared pool to avoid connection exhaustion)
   if ((pathname.includes('/subscription/check') || pathname.endsWith('/subscription/check')) && (req.method === 'GET' || req.method === 'POST')) {
+    const { getDbConnection: getPoolConnection } = require('../db');
+    const releaseDb = (conn) => { if (conn && typeof conn.release === 'function') { try { conn.release(); } catch (_) {} } };
+    let db = null;
     try {
       const userId = req.method === 'GET' ? req.query.userId : req.body.userId;
       
@@ -146,36 +149,39 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'User ID is required' });
       }
 
-      const db = await getDbConnection();
+      db = await getPoolConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
       }
 
+      // Check if subscription columns exist, add if not
       try {
-        // Check if subscription columns exist, add if not
-        try {
-          await db.execute('SELECT subscription_status FROM users LIMIT 1');
-        } catch (e) {
-          await db.execute('ALTER TABLE users ADD COLUMN subscription_status VARCHAR(50) DEFAULT NULL');
-        }
-        
-        try {
-          await db.execute('SELECT subscription_expiry FROM users LIMIT 1');
-        } catch (e) {
-          await db.execute('ALTER TABLE users ADD COLUMN subscription_expiry DATETIME DEFAULT NULL');
-        }
-        
-        try {
-          await db.execute('SELECT payment_failed FROM users LIMIT 1');
-        } catch (e) {
-          await db.execute('ALTER TABLE users ADD COLUMN payment_failed BOOLEAN DEFAULT FALSE');
-        }
+        await db.execute('SELECT subscription_status FROM users LIMIT 1');
+      } catch (e) {
+        await db.execute('ALTER TABLE users ADD COLUMN subscription_status VARCHAR(50) DEFAULT NULL');
+      }
+      try {
+        await db.execute('SELECT subscription_expiry FROM users LIMIT 1');
+      } catch (e) {
+        await db.execute('ALTER TABLE users ADD COLUMN subscription_expiry DATETIME DEFAULT NULL');
+      }
+      try {
+        await db.execute('SELECT payment_failed FROM users LIMIT 1');
+      } catch (e) {
+        await db.execute('ALTER TABLE users ADD COLUMN payment_failed BOOLEAN DEFAULT FALSE');
+      }
+      try {
+        await db.execute('SELECT subscription_plan FROM users LIMIT 1');
+      } catch (e) {
+        await db.execute('ALTER TABLE users ADD COLUMN subscription_plan VARCHAR(50) DEFAULT NULL');
+      }
 
-        const [rows] = await db.execute(
-          'SELECT subscription_status, subscription_expiry, payment_failed, role, subscription_plan FROM users WHERE id = ?',
-          [userId]
-        );
-        await db.end();
+      const [rows] = await db.execute(
+        'SELECT subscription_status, subscription_expiry, payment_failed, role, subscription_plan FROM users WHERE id = ?',
+        [userId]
+      );
+      releaseDb(db);
+      db = null;
 
         if (rows.length === 0) {
           return res.status(404).json({ success: false, message: 'User not found' });
@@ -263,11 +269,12 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error checking subscription:', dbError);
-        if (db && !db.ended) await db.end();
+        releaseDb(db);
         return res.status(500).json({ success: false, message: 'Failed to check subscription status' });
       }
     } catch (error) {
       console.error('Error in subscription check:', error);
+      releaseDb(db);
       return res.status(500).json({ success: false, message: 'An error occurred' });
     }
   }

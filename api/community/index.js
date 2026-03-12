@@ -27,6 +27,10 @@ async function ensureSchema() {
   try {
     await addColumnIfNotExists('users', 'last_seen', 'DATETIME DEFAULT NULL');
     await addColumnIfNotExists('users', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
+    await addColumnIfNotExists('users', 'subscription_status', 'VARCHAR(50) DEFAULT NULL');
+    await addColumnIfNotExists('users', 'subscription_expiry', 'DATETIME DEFAULT NULL');
+    await addColumnIfNotExists('users', 'payment_failed', 'TINYINT(1) DEFAULT 0');
+    await addColumnIfNotExists('users', 'subscription_plan', 'VARCHAR(50) DEFAULT NULL');
     schemaMigrated = true;
   } catch (e) {
     // Non-blocking - continue even if migration fails
