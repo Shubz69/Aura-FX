@@ -41,6 +41,22 @@ export default function TraderDeck() {
     if (selectedDate.slice(0, 7) !== next) setSelectedDate(getMonthStart(next));
   }, [calendarMonth, selectedDate]);
 
+  const handlePrevWeek = useCallback(() => {
+    const d = new Date(selectedDate + 'T12:00:00');
+    d.setDate(d.getDate() - 7);
+    const next = d.toISOString().slice(0, 10);
+    setSelectedDate(next);
+    setCalendarMonth(next.slice(0, 7));
+  }, [selectedDate]);
+
+  const handleNextWeek = useCallback(() => {
+    const d = new Date(selectedDate + 'T12:00:00');
+    d.setDate(d.getDate() + 7);
+    const next = d.toISOString().slice(0, 10);
+    setSelectedDate(next);
+    setCalendarMonth(next.slice(0, 7));
+  }, [selectedDate]);
+
   const handleSelectDate = useCallback((date) => {
     setSelectedDate(date);
     setCalendarMonth(date.slice(0, 7));
@@ -110,9 +126,9 @@ export default function TraderDeck() {
         {/* Line under header */}
         <div className="td-deck-header-line" />
 
-        {/* Compact calendar bar (gap): month/year with arrows; click opens full calendar */}
+        {/* Compact calendar bar: centered. Daily = full date, Weekly = week range (e.g. 20th - 27th March 2026). Click opens full calendar. */}
         <div className="td-deck-calendar-bar-wrap">
-          <nav className="td-deck-sub-tabs" aria-label="Period">
+          <nav className="td-deck-sub-tabs td-deck-sub-tabs-left" aria-label="Period">
             <button
               type="button"
               className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
@@ -129,15 +145,17 @@ export default function TraderDeck() {
             </button>
           </nav>
           <TraderDeckCalendarBar
+            selectedDate={selectedDate}
             calendarMonth={calendarMonth}
-            onPrevMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
+            period={subTab}
+            onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevMonth}
+            onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextMonth}
             onOpenCalendar={() => setCalendarOverlayOpen(true)}
           />
         </div>
 
-        {/* Single full-width content box (calendar-style), no sidebar */}
-        <div className="td-deck-main-box">
+        {/* Content area: no box, full width, bigger */}
+        <div className="td-deck-content">
           <div className="td-deck-body td-deck-body-single">
             <main className="td-deck-main">
               <div className="td-deck-main-inner">
