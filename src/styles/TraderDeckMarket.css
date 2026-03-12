@@ -806,7 +806,102 @@
   flex: 1;
 }
 
-/* Right panel: full width of grid column, content visible (no clipping) */
+/* Right side: grid of panels (journal-style boxes, same colours as sidebar) */
+.td-outlook-main-grid-wrap {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.td-outlook-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .td-outlook-main-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  .td-outlook-main-panel--full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Each panel = journal-style card (same as second image layout, journal colours) */
+.td-outlook-main-panel {
+  min-height: 0;
+  padding: 0 !important;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(28, 28, 36, 0.98) 0%, rgba(18, 18, 24, 0.98) 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.td-outlook-main-panel:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  background: linear-gradient(180deg, rgba(32, 32, 42, 0.98) 0%, rgba(22, 22, 30, 0.98) 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+    0 0 0 1px rgba(139, 92, 246, 0.12),
+    0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+.td-outlook-main-panel .td-mi-panel-title {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.td-outlook-main-panel .td-mi-panel-body {
+  padding: 14px 16px 18px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.td-outlook-main-panel .td-mi-panel-body .td-mi-bullet-item,
+.td-outlook-main-panel .td-mi-panel-body .td-mi-list-item {
+  padding: 6px 0 6px 16px;
+  font-size: 0.875rem;
+}
+
+.td-outlook-main-panel .td-mi-panel-body .td-mi-bullet-item::before {
+  color: rgba(139, 92, 246, 0.85);
+}
+
+.td-outlook-main-panel .td-mi-source {
+  font-size: 0.7rem;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.td-outlook-main-panel .td-outlook-empty {
+  margin: 0;
+  padding: 12px 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+
+/* Single main card (Market Intelligence tab – one box with sections) */
 .td-outlook-main-card {
   flex: 1;
   min-height: 0;
@@ -822,19 +917,6 @@
   padding: 20px 24px 24px;
   position: relative;
   overflow: visible;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.td-outlook-main-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.6) 0%, rgba(139, 92, 246, 0.2) 100%);
-  border-radius: 3px 0 0 3px;
-  pointer-events: none;
 }
 
 .td-outlook-main-card:hover {
@@ -933,12 +1015,14 @@
   border: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
-/* Terminal-grade actions in main panel */
+/* Header actions (Outlook grid wrap + Intelligence main card) */
+.td-outlook-main-grid-wrap .td-mi-shell-actions,
 .td-outlook-main-card .td-mi-shell-actions {
   display: flex;
   gap: 6px;
 }
 
+.td-outlook-main-grid-wrap .td-mi-btn,
 .td-outlook-main-card .td-mi-btn {
   padding: 6px 12px;
   font-size: 0.78rem;
@@ -949,16 +1033,19 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+.td-outlook-main-grid-wrap .td-mi-btn-edit:hover,
 .td-outlook-main-card .td-mi-btn-edit:hover {
   background: rgba(139, 92, 246, 0.2);
   border-color: rgba(139, 92, 246, 0.4);
 }
 
+.td-outlook-main-grid-wrap .td-mi-btn-save,
 .td-outlook-main-card .td-mi-btn-save {
   background: rgba(139, 92, 246, 0.35);
   border-color: rgba(139, 92, 246, 0.5);
 }
 
+.td-outlook-main-grid-wrap .td-mi-btn-cancel,
 .td-outlook-main-card .td-mi-btn-cancel {
   color: rgba(255, 255, 255, 0.65);
 }

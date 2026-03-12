@@ -320,7 +320,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           </DashboardPanel>
         </aside>
         <div className="td-outlook-main">
-          <div className="td-outlook-main-card">
+          <div className="td-outlook-main-grid-wrap">
             <header className="td-outlook-main-header">
               <h1 className="td-outlook-main-title">{mainTitle}</h1>
               {canEdit && (
@@ -336,31 +336,21 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                 </div>
               )}
             </header>
-            <div className="td-outlook-divider" aria-hidden />
-            <div className="td-outlook-sections">
-              <section className="td-outlook-section" aria-labelledby="outlook-changes-heading">
-                <h2 id="outlook-changes-heading" className="td-outlook-section-title">Market Change Today</h2>
-                <div className="td-outlook-section-body">
-                  {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : (marketChangesToday && marketChangesToday.length > 0 ? <ChangeList items={marketChangesToday} /> : <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>)}
-                </div>
-              </section>
-              <section className="td-outlook-section" aria-labelledby="outlook-focus-heading">
-                <h2 id="outlook-focus-heading" className="td-outlook-section-title">Trader Focus</h2>
-                <div className="td-outlook-section-body">
-                  {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : (traderFocus && traderFocus.length > 0 ? <FocusList items={traderFocus} /> : <p className="td-outlook-empty">No focus items. Use Edit to add.</p>)}
-                </div>
-              </section>
-              <section className="td-outlook-section" aria-labelledby="outlook-radar-heading">
-                <h2 id="outlook-radar-heading" className="td-outlook-section-title">Risk Radar</h2>
-                <div className="td-outlook-section-body">
-                  {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event') : (
-                    <>
-                      <p className="td-mi-source td-mi-source--readonly">Upcoming news (FMP). Refreshes at midnight.</p>
-                      {riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>}
-                    </>
-                  )}
-                </div>
-              </section>
+            <div className="td-outlook-main-grid">
+              <DashboardPanel title="Market Change Today" className="td-outlook-card td-outlook-main-panel td-outlook-main-panel--full">
+                {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : (marketChangesToday && marketChangesToday.length > 0 ? <ChangeList items={marketChangesToday} /> : <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>)}
+              </DashboardPanel>
+              <DashboardPanel title="Trader Focus" className="td-outlook-card td-outlook-main-panel">
+                {editMode && editDraft ? renderListEdit(editDraft.traderFocus, 'traderFocus', 'Focus item') : (traderFocus && traderFocus.length > 0 ? <FocusList items={traderFocus} /> : <p className="td-outlook-empty">No focus items. Use Edit to add.</p>)}
+              </DashboardPanel>
+              <DashboardPanel title="Risk Radar" className="td-outlook-card td-outlook-main-panel">
+                {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event') : (
+                  <>
+                    <p className="td-mi-source td-mi-source--readonly">Upcoming news (FMP). Refreshes at midnight.</p>
+                    {riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>}
+                  </>
+                )}
+              </DashboardPanel>
             </div>
           </div>
         </div>
