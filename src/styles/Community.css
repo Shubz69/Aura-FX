@@ -2206,7 +2206,7 @@ body.sidebar-open-mobile {
         position: relative !important;
         display: flex !important;
         flex-direction: row !important;
-        bottom: 9px;
+        bottom: 13px;
     }
     
     .chat-input-wrapper { 
@@ -2214,7 +2214,7 @@ body.sidebar-open-mobile {
         min-width: 0 !important;
         position: relative !important;
         /* Ensure wrapper doesn't overflow */
-        max-width: calc(100% - 60px) !important;
+         max-width: calc(100% - 0px) !important;
     }
     
     .chat-input {
