@@ -1743,6 +1743,7 @@ return newMessages;
 
     const messagesRef = useRef(messages);
     messagesRef.current = messages;
+    const messagesPollInFlightRef = useRef(false);
 
     useEffect(() => {
         if (!addReconnectListener) return;
@@ -3565,11 +3566,12 @@ if (window.requestAnimationFrame) {
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Poll interval: 2s when WS down, 5s backup when WS connected (reduces request storm and browser resource exhaustion)
-        const pollInterval = isConnected ? 5000 : 2000;
+        // Slower intervals to prevent ERR_INSUFFICIENT_RESOURCES (10s when WS up, 6s when down)
+        const pollInterval = isConnected ? 10000 : 6000;
         
-        // Start polling immediately
         const pollMessages = async () => {
+            if (messagesPollInFlightRef.current) return;
+            messagesPollInFlightRef.current = true;
             try {
                 const msgs = messagesRef.current || [];
                 const numericIds = msgs
@@ -3661,16 +3663,21 @@ if (window.requestAnimationFrame) {
                 }
             } catch (err) {
                 // Silently handle errors to avoid console spam
+            } finally {
+                messagesPollInFlightRef.current = false;
             }
         };
         
-        // Poll immediately on mount/channel change
-        pollMessages();
+        // Poll after short delay on mount/channel change (avoid stacking with other requests)
+        const initialDelayId = setTimeout(() => pollMessages(), 2000);
         
         // Then poll at regular intervals
         const pollTimer = setInterval(pollMessages, pollInterval);
 
-        return () => clearInterval(pollTimer);
+        return () => {
+            clearTimeout(initialDelayId);
+            clearInterval(pollTimer);
+        };
     }, [selectedChannel?.id, isAuthenticated, isConnected, selectedChannel, storedUser, userId, updateChannelBadge]);
 
     // Pusher realtime subscription (production - when configured)

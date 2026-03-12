@@ -463,12 +463,14 @@ const Api = {
                 }
             });
             return response;
-        } catch (error) {
-            console.error(`Error fetching messages for channel ${channelId}:`, error);
+} catch (error) {
+            // Avoid flooding console on network/resource errors (polling will retry)
+            const isNetworkError = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error';
+            if (!isNetworkError) console.error(`Error fetching messages for channel ${channelId}:`, error);
             throw error;
         }
     },
-    
+
     sendMessage: async (channelId, messageData) => {
         if (process.env.NODE_ENV === 'development') console.log(`Attempting to send message to channel ${channelId}`);
         
