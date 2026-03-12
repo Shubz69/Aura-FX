@@ -58,7 +58,7 @@ async function ensureTradesTable(db) {
       checklist_score INT DEFAULT 0,
       checklist_total INT DEFAULT 0,
       checklist_percent DECIMAL(8,2) DEFAULT 0,
-      trade_grade VARCHAR(10) DEFAULT NULL,
+      trade_grade VARCHAR(80) DEFAULT NULL,
       notes TEXT DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -68,6 +68,11 @@ async function ensureTradesTable(db) {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  try {
+    await db.execute(`ALTER TABLE aura_analysis_trades MODIFY COLUMN trade_grade VARCHAR(80) DEFAULT NULL`);
+  } catch (_) {
+    /* column may already be 80 or table just created */
+  }
 }
 
 function mapRow(r) {
@@ -232,7 +237,7 @@ module.exports = async (req, res) => {
       const checklistScore = Number(body.checklistScore ?? body.checklist_score ?? 0);
       const checklistTotal = Number(body.checklistTotal ?? body.checklist_total ?? 0);
       const checklistPercent = body.checklistPercent != null || body.checklist_percent != null ? Number(body.checklistPercent ?? body.checklist_percent) : 0;
-      const tradeGrade = (body.tradeGrade ?? body.trade_grade ?? null) != null ? String(body.tradeGrade ?? body.trade_grade).slice(0, 10) : null;
+      const tradeGrade = (body.tradeGrade ?? body.trade_grade ?? null) != null ? String(body.tradeGrade ?? body.trade_grade).trim().slice(0, 80) : null;
       const notes = body.notes != null ? String(body.notes).slice(0, 4096) : null;
       const session = body.session != null ? String(body.session).trim().slice(0, 50) : null;
       const assetClass = (body.assetClass ?? body.asset_class ?? 'forex').toString().slice(0, 50);

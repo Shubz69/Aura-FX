@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Api from '../../services/Api';
+import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import '../../styles/aura-analysis/AuraAnalytics.css';
 
 function formatPnL(n) {
@@ -57,6 +58,16 @@ function computeAnalyticsKpis(trades = [], pnlData = {}) {
 
   const consistencyScore = totalTrades > 0 ? Math.round(Math.min(100, Math.max(0, 50 + (winRate - 50) * 0.4))) : 0;
 
+  const scoreValues = trades
+    .map((t) => {
+      if (t.checklistScore != null && Number.isFinite(Number(t.checklistScore))) return Number(t.checklistScore);
+      if (t.checklistPercent != null && Number.isFinite(Number(t.checklistPercent))) return Number(t.checklistPercent) * 2;
+      return null;
+    })
+    .filter((v) => v != null);
+  const avgScore = scoreValues.length ? scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length : null;
+  const averageGrade = avgScore != null ? getScoreLabel(Math.round(avgScore)) : null;
+
   return {
     totalTrades,
     winRate,
@@ -69,6 +80,7 @@ function computeAnalyticsKpis(trades = [], pnlData = {}) {
     longestWinStreak: longestWin,
     longestLossStreak: longestLoss,
     avgChecklistPct,
+    averageGrade,
   };
 }
 
@@ -200,6 +212,12 @@ export default function AuraAnalytics() {
           <span className="aura-analytics-kpi-label">Avg checklist %</span>
           <span className="aura-analytics-kpi-value">
             {kpis.avgChecklistPct != null ? `${kpis.avgChecklistPct.toFixed(2)}%` : '—'}
+          </span>
+        </div>
+        <div className="aura-analytics-kpi-card">
+          <span className="aura-analytics-kpi-label">Average grade</span>
+          <span className="aura-analytics-kpi-value">
+            {kpis.averageGrade || '—'}
           </span>
         </div>
       </div>

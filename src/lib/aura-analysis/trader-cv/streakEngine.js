@@ -8,8 +8,13 @@
  * @param {Array<{ createdAt: string, checklistPercent?: number }>} trades
  * @returns {{ journalStreak: number, ruleAdherenceStreak: number, disciplinedDaysStreak: number }}
  */
+function safeInt(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
+}
+
 export function computeStreaks(user, trades) {
-  const journalStreak = Math.max(0, Number(user?.login_streak) ?? 0);
+  const journalStreak = safeInt(user?.login_streak, 0);
   if (!trades || trades.length === 0) {
     return { journalStreak, ruleAdherenceStreak: 0, disciplinedDaysStreak: 0 };
   }
@@ -31,7 +36,11 @@ export function computeStreaks(user, trades) {
     if (sortedDates.includes(d)) disciplinedDaysStreak++;
     else break;
   }
-  return { journalStreak, ruleAdherenceStreak, disciplinedDaysStreak };
+  return {
+    journalStreak,
+    ruleAdherenceStreak: safeInt(ruleAdherenceStreak, 0),
+    disciplinedDaysStreak: safeInt(disciplinedDaysStreak, 0),
+  };
 }
 
 export const RANK_TITLES = [

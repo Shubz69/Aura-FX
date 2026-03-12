@@ -585,6 +585,16 @@
   font-size: 0.85rem;
 }
 
+.td-mi-save-success {
+  margin: 0 0 12px 0;
+  padding: 8px 14px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.85rem;
+}
+
 .td-mi-updated {
   margin: 16px 0 0 0;
   font-size: 0.8rem;

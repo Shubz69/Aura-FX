@@ -10,6 +10,11 @@ import '../../styles/aura-analysis/TraderCV.css';
 
 const MIN_TRADES_FOR_FULL = 5;
 
+function formatStreak(value) {
+  const n = typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
+  return `${n}d`;
+}
+
 export default function TraderCVTab() {
   const { user } = useAuth();
   const [trades, setTrades] = useState([]);
@@ -116,8 +121,8 @@ export default function TraderCVTab() {
             <h2 className="trader-cv-hero-name">{user?.name || user?.username || 'Trader'}</h2>
             <p className="trader-cv-hero-rank">{rankTitle}</p>
             <div className="trader-cv-hero-score-wrap">
-              <div className="trader-cv-hero-ring" style={{ '--score': auraxScore }}>
-                <span className="trader-cv-hero-score-value">{auraxScore}</span>
+              <div className="trader-cv-hero-ring" style={{ '--score': Number.isFinite(auraxScore) ? auraxScore : 0 }}>
+                <span className="trader-cv-hero-score-value">{Number.isFinite(auraxScore) ? auraxScore : 0}</span>
               </div>
               <span className="trader-cv-hero-score-label">Aurax Score</span>
             </div>
@@ -148,9 +153,9 @@ export default function TraderCVTab() {
                 <span className="trader-cv-breakdown-weight">{weight}</span>
               </div>
               <div className="trader-cv-breakdown-bar-wrap">
-                <div className="trader-cv-breakdown-bar" style={{ width: `${breakdown[key] ?? 0}%` }} />
+                <div className="trader-cv-breakdown-bar" style={{ width: `${Math.max(0, Math.min(100, Number(breakdown[key]) || 0))}%` }} />
               </div>
-              <p className="trader-cv-breakdown-score">{Math.round(breakdown[key] ?? 0)}</p>
+              <p className="trader-cv-breakdown-score">{Math.round(Number(breakdown[key]) || 0)}</p>
               <p className="trader-cv-breakdown-message">{behaviour.messages?.[key] ?? '—'}</p>
             </div>
           ))}
@@ -203,14 +208,14 @@ export default function TraderCVTab() {
       <section className="trader-cv-section">
         <h3 className="trader-cv-section-title">Streaks & Progress</h3>
         <div className="trader-cv-streaks">
-          <div className="trader-cv-streak-card"><span className="trader-cv-streak-value">{streaks.journalStreak}</span><span className="trader-cv-streak-label">Journal streak</span></div>
-          <div className="trader-cv-streak-card"><span className="trader-cv-streak-value">{streaks.ruleAdherenceStreak}</span><span className="trader-cv-streak-label">Rule adherence streak</span></div>
-          <div className="trader-cv-streak-card"><span className="trader-cv-streak-value">{streaks.disciplinedDaysStreak}</span><span className="trader-cv-streak-label">Disciplined days</span></div>
+          <div className="trader-cv-streak-card"><span className="trader-cv-streak-value">{Number.isFinite(streaks.journalStreak) ? streaks.journalStreak : 0}</span><span className="trader-cv-streak-label">Journal streak</span></div>
+          <div className="trader-cv-streak-card"><span className="trader-cv-streak-value">{Number.isFinite(streaks.ruleAdherenceStreak) ? streaks.ruleAdherenceStreak : 0}</span><span className="trader-cv-streak-label">Rule adherence streak</span></div>
+          <div className="trader-cv-streak-card"><span className="trader-cv-streak-value">{Number.isFinite(streaks.disciplinedDaysStreak) ? streaks.disciplinedDaysStreak : 0}</span><span className="trader-cv-streak-label">Disciplined days</span></div>
         </div>
         <div className="trader-cv-rank-bar">
           <span className="trader-cv-rank-title">Rank</span>
           <span className="trader-cv-rank-value">{rankTitle}</span>
-          <div className="trader-cv-rank-progress"><div className="trader-cv-rank-fill" style={{ width: `${auraxScore}%` }} /></div>
+          <div className="trader-cv-rank-progress"><div className="trader-cv-rank-fill" style={{ width: `${Number.isFinite(auraxScore) ? Math.max(0, Math.min(100, auraxScore)) : 0}%` }} /></div>
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Api from '../../services/Api';
+import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import '../../styles/trader-deck/TraderDeckTradeJournal.css';
 
 function formatDate(d) {
@@ -22,6 +23,16 @@ function formatPnL(n) {
 function formatNum(v, decimals = 2) {
   if (v == null || Number.isNaN(Number(v))) return '—';
   return Number(v).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+/** Grade for display: use stored tradeGrade, or derive from checklist score (0–200) / checklist % (0–100). */
+function getDisplayGrade(t) {
+  if (t.tradeGrade && String(t.tradeGrade).trim()) return t.tradeGrade;
+  const score = t.checklistScore != null ? Number(t.checklistScore) : null;
+  if (score != null && Number.isFinite(score)) return getScoreLabel(score);
+  const pct = t.checklistPercent != null ? Number(t.checklistPercent) : null;
+  if (pct != null && Number.isFinite(pct)) return getScoreLabel(Math.round(pct * 2));
+  return '—';
 }
 
 export default function TraderDeckTradeJournal() {
@@ -57,7 +68,7 @@ export default function TraderDeckTradeJournal() {
     return Array.from(set).sort();
   }, [trades]);
   const grades = useMemo(() => {
-    const set = new Set(trades.map((t) => t.tradeGrade || '').filter(Boolean));
+    const set = new Set(trades.map((t) => getDisplayGrade(t)).filter((g) => g && g !== '—'));
     return Array.from(set).sort();
   }, [trades]);
 
@@ -73,7 +84,7 @@ export default function TraderDeckTradeJournal() {
       if (filterResult === 'loss' && res !== 'loss') return false;
       if (filterResult === 'breakeven' && res !== 'breakeven') return false;
       if (filterAsset !== 'all' && (t.assetClass || t.asset_class || '') !== filterAsset) return false;
-      if (filterGrade !== 'all' && (t.tradeGrade || '') !== filterGrade) return false;
+      if (filterGrade !== 'all' && getDisplayGrade(t) !== filterGrade) return false;
       if (filterSession !== 'all' && (t.session || '') !== filterSession) return false;
       return true;
     });
@@ -245,7 +256,7 @@ export default function TraderDeckTradeJournal() {
                       </td>
                       <td>{t.rMultiple != null ? formatNum(t.rMultiple, 2) : t.rr != null ? formatNum(t.rr, 2) : '—'}</td>
                       <td>{t.session || '—'}</td>
-                      <td>{t.tradeGrade || '—'}</td>
+                      <td>{getDisplayGrade(t)}</td>
                       <td>
                         <button type="button" className="td-journal-action-link" onClick={() => openEdit(t)}>
                           Edit Outcome

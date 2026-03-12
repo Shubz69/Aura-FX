@@ -53,6 +53,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editDraft, setEditDraft] = useState(null);
 
@@ -60,7 +61,9 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Api.getTraderDeckContent(type, selectedDate)
+    setSaveSuccess(null);
+    const dateStr = String(selectedDate).trim().slice(0, 10);
+    Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
         if (cancelled) return;
         const payload = res.data?.payload;
@@ -105,6 +108,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
 
   const handleSave = () => {
     if (!editDraft) return;
+    const dateStr = String(selectedDate).trim().slice(0, 10);
     const payload = {
       marketRegime: editDraft.marketRegime,
       marketPulse: { score: editDraft.marketPulse.score, label: editDraft.marketPulse.label },
@@ -113,14 +117,18 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       marketChangesToday: editDraft.marketChangesToday,
       traderFocus: editDraft.traderFocus,
       riskRadar: editDraft.riskRadar,
-      riskRadarDate: selectedDate,
+      riskRadarDate: dateStr,
       updatedAt: new Date().toISOString(),
     };
-    Api.putTraderDeckContent(type, selectedDate, payload)
+    setError(null);
+    setSaveSuccess(null);
+    Api.putTraderDeckContent(type, dateStr, payload)
       .then(() => {
         setData(normalizeForUI(payload));
         setEditMode(false);
         setEditDraft(null);
+        setSaveSuccess(`Saved for ${dateStr}`);
+        setTimeout(() => setSaveSuccess(null), 3000);
       })
       .catch((err) => setError(err.response?.data?.message || 'Failed to save'));
   };
@@ -293,6 +301,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   return (
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
+      {saveSuccess && <p className="td-mi-save-success" role="status">{saveSuccess}</p>}
       <TraderDeckDashboardShell
         title={`Market Outlook — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${selectedDate})`}
         canEdit={canEdit}

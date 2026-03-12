@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllInstruments, getInstrumentsByCategory } from '../../lib/aura-analysis/instruments';
+import { getAllInstruments, getInstrumentsByCategory, getInstrumentOrFallback, getPriceExamples } from '../../lib/aura-analysis/instruments';
 import { calculateRisk, deriveStopLossFromRiskAndPositionSize } from '../../lib/aura-analysis/calculators/calculateRisk';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
@@ -14,6 +14,8 @@ const SESSIONS = [
   { value: 'New York', label: 'New York' },
   { value: 'Sydney', label: 'Sydney' },
 ];
+
+const RISK_WARNING_PCT = 5;
 
 export default function TradeCalculator() {
   const [form, setForm] = useState({
@@ -114,6 +116,14 @@ export default function TradeCalculator() {
     if (bal <= 0 || pct <= 0) return 0;
     return (bal * pct) / 100;
   }, [form.accountBalance, form.riskPercent]);
+
+  const riskPctNum = Number(form.riskPercent) || 0;
+  const showHighRiskWarning = riskPctNum > RISK_WARNING_PCT;
+
+  const priceExamples = useMemo(() => {
+    const inst = getInstrumentOrFallback(form.pair);
+    return getPriceExamples(inst);
+  }, [form.pair]);
 
   const handlePairSelect = (inst) => {
     setForm((f) => ({ ...f, pair: inst.symbol, pairLabel: inst.displayName }));
@@ -237,14 +247,22 @@ export default function TradeCalculator() {
 
           <div className="trade-calc-field">
             <label>Risk %</label>
+            <p className="trade-calc-risk-notice">
+              Risk above {RISK_WARNING_PCT}% per trade is generally not recommended.
+            </p>
             <input
               type="number"
               min="0.1"
               step="0.1"
-              className="trade-calc-input"
+              className={`trade-calc-input${showHighRiskWarning ? ' trade-calc-input--high-risk' : ''}`}
               value={form.riskPercent}
               onChange={(e) => setForm((f) => ({ ...f, riskPercent: e.target.value }))}
             />
+            {showHighRiskWarning && (
+              <div className="trade-calc-risk-warning" role="alert">
+                High risk: {riskPctNum}% per trade is above the recommended {RISK_WARNING_PCT}% limit. Consider reducing risk to protect your capital.
+              </div>
+            )}
           </div>
 
           <div className="trade-calc-field">
@@ -276,10 +294,10 @@ export default function TradeCalculator() {
                   step="0.00001"
                   className="trade-calc-input"
                   value={form.entryPrice || ''}
-                  placeholder="0"
+                  placeholder={priceExamples.entryStr}
                   onChange={(e) => setForm((f) => ({ ...f, entryPrice: e.target.value }))}
                 />
-                <span className="trade-calc-eg">e.g. 1.005</span>
+                <span className="trade-calc-eg">e.g. {priceExamples.entryStr}</span>
               </div>
               <div className="trade-calc-esp">
                 <label className="trade-calc-esp-label">Stop loss</label>
@@ -288,10 +306,10 @@ export default function TradeCalculator() {
                   step="0.00001"
                   className="trade-calc-input"
                   value={form.stopLoss || ''}
-                  placeholder="0"
+                  placeholder={priceExamples.slStr}
                   onChange={(e) => setForm((f) => ({ ...f, stopLoss: e.target.value }))}
                 />
-                <span className="trade-calc-eg">e.g. 1.003</span>
+                <span className="trade-calc-eg">e.g. {priceExamples.slStr}</span>
               </div>
               <div className="trade-calc-esp">
                 <label className="trade-calc-esp-label">Take profit</label>
@@ -300,10 +318,10 @@ export default function TradeCalculator() {
                   step="0.00001"
                   className="trade-calc-input"
                   value={form.takeProfit || ''}
-                  placeholder="0"
+                  placeholder={priceExamples.tpStr}
                   onChange={(e) => setForm((f) => ({ ...f, takeProfit: e.target.value }))}
                 />
-                <span className="trade-calc-eg">e.g. 1.09</span>
+                <span className="trade-calc-eg">e.g. {priceExamples.tpStr}</span>
               </div>
             </div>
           </div>

@@ -374,6 +374,48 @@ export function getInstrument(symbol) {
   return bySymbol.get(String(symbol).toUpperCase()) ?? null;
 }
 
+/**
+ * Round a number to the given decimal places (0 = integer).
+ * @param {number} n
+ * @param {number} decimals
+ * @returns {number}
+ */
+function roundToPrecision(n, decimals) {
+  if (!Number.isFinite(n)) return 0;
+  if (decimals === 0) return Math.round(n);
+  const f = 10 ** decimals;
+  return Math.round(n * f) / f;
+}
+
+/**
+ * Get example Entry, Stop loss, and Take profit values for the given instrument,
+ * for use in placeholders / "e.g." hints. Values are in the instrument's typical range
+ * and rounded to its pricePrecision.
+ * @param {InstrumentSpec|null} instrument - from getInstrument(symbol) or getInstrumentOrFallback(symbol)
+ * @returns {{ entry: number, sl: number, tp: number, entryStr: string, slStr: string, tpStr: string }}
+ */
+export function getPriceExamples(instrument) {
+  const fallback = { entry: 1.05, sl: 1.048, tp: 1.06, entryStr: '1.05', slStr: '1.048', tpStr: '1.06' };
+  if (!instrument) return fallback;
+  const min = Number(instrument.minReasonablePrice) || 0.5;
+  const max = Number(instrument.maxReasonablePrice) || 3;
+  const prec = Math.max(0, Math.min(8, Math.floor(Number(instrument.pricePrecision) || 2)));
+  const mid = (min + max) / 2;
+  const range = Math.max(max - min, min * 0.01);
+  const entry = roundToPrecision(mid, prec);
+  const sl = roundToPrecision(Math.max(min, entry - range * 0.002), prec);
+  const tp = roundToPrecision(Math.min(max, entry + range * 0.006), prec);
+  const toStr = (n) => (prec === 0 ? String(Math.round(n)) : n.toFixed(prec));
+  return {
+    entry,
+    sl,
+    tp,
+    entryStr: toStr(entry),
+    slStr: toStr(sl),
+    tpStr: toStr(tp),
+  };
+}
+
 export function getInstrumentOrFallback(symbol) {
   const known = getInstrument(symbol);
   if (known) return known;

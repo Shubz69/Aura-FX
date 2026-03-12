@@ -14,6 +14,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [briefs, setBriefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [addSuccess, setAddSuccess] = useState(null);
   const [previewId, setPreviewId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
@@ -24,7 +25,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Api.getTraderDeckContent(type, selectedDate)
+    setAddSuccess(null);
+    const dateStr = String(selectedDate).trim().slice(0, 10);
+    Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
         if (cancelled) return;
         setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
@@ -52,13 +55,17 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     const url = (uploadUrl || '').trim();
     const title = (uploadTitle || 'Brief').trim() || 'Brief';
     if (!url) return;
+    const dateStr = String(selectedDate).trim().slice(0, 10);
     setUploading(true);
     setError(null);
-    Api.uploadTraderDeckBrief({ date: selectedDate, period, title, fileUrl: url })
+    setAddSuccess(null);
+    Api.uploadTraderDeckBrief({ date: dateStr, period, title, fileUrl: url })
       .then(() => {
         setUploadTitle('');
         setUploadUrl('');
-        return Api.getTraderDeckContent(type, selectedDate);
+        setAddSuccess(`Added for ${dateStr}`);
+        setTimeout(() => setAddSuccess(null), 3000);
+        return Api.getTraderDeckContent(type, dateStr);
       })
       .then((res) => setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []))
       .catch((err) => setError(err.response?.data?.message || 'Failed to add link'))
@@ -74,13 +81,15 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       return;
     }
     const title = uploadTitle.trim() || file.name.replace(/\.[^/.]+$/, '') || 'Brief';
+    const dateStr = String(selectedDate).trim().slice(0, 10);
     setUploading(true);
     setError(null);
+    setAddSuccess(null);
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = typeof reader.result === 'string' ? reader.result.replace(/^data:[^;]+;base64,/, '') : '';
       Api.uploadTraderDeckBrief({
-        date: selectedDate,
+        date: dateStr,
         period,
         title,
         fileBase64: base64,
@@ -89,7 +98,9 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       })
         .then(() => {
           setUploadTitle('');
-          return Api.getTraderDeckContent(type, selectedDate);
+          setAddSuccess(`Added for ${dateStr}`);
+          setTimeout(() => setAddSuccess(null), 3000);
+          return Api.getTraderDeckContent(type, dateStr);
         })
         .then((res) => setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []))
         .catch((err) => setError(err.response?.data?.message || 'Upload failed'))
@@ -117,6 +128,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   return (
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
+      {addSuccess && <p className="td-mi-save-success" role="status">{addSuccess}</p>}
       <TraderDeckDashboardShell
         title={`Market Intelligence — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${selectedDate})`}
         canEdit={false}
