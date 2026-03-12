@@ -422,9 +422,10 @@
   padding: 24px;
 }
 
-/* Body: single full-width column (no sidebar), bigger and wider */
-.td-deck-body-single {
+/* Body: single full-width column (no sidebar) – must override .td-deck-body grid below */
+.td-deck-body.td-deck-body-single {
   display: block;
+  width: 100%;
   padding: 16px 0;
   max-width: none;
 }
@@ -432,14 +433,16 @@
 .td-deck-body-single .td-deck-main {
   max-width: none;
   width: 100%;
+  min-width: 0;
 }
 
 .td-deck-body-single .td-deck-main-inner {
   max-width: none;
   width: 100%;
+  min-width: 0;
 }
 
-/* Body: sidebar + main (legacy two-column, unused in new layout) */
+/* Body: sidebar + main (legacy two-column – only when NOT .td-deck-body-single) */
 .td-deck-body {
   display: grid;
   grid-template-columns: 280px 1fr;
