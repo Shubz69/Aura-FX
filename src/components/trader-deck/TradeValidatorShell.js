@@ -9,6 +9,7 @@ const TABS = [
   { path: `${BASE}/calculator`, label: 'Trade Calculator' },
   { path: `${BASE}/journal`, label: 'Trade Journal' },
   { path: `${BASE}/analytics`, label: 'Analytics' },
+  { path: `${BASE}/trader-cv`, label: 'Trader CV' },
   { path: `${BASE}/leaderboard`, label: 'Leaderboard' },
 ];
 
