@@ -397,17 +397,24 @@ const Api = {
             });
             return response;
         } catch (error) {
-            console.error('Error fetching channels:', error);
+            const isNetwork = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error';
+            if (!isNetwork) console.error('Error fetching channels:', error);
             throw error;
         }
     },
     /** Single request: channels + categoryOrder + channelOrder for faster load */
     getChannelsBootstrap: async (customHeaders = {}) => {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_BASE_URL}/api/community/channels?bootstrap=true`, {
-            headers: { 'Authorization': `Bearer ${token}`, ...customHeaders }
-        });
-        return response;
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${API_BASE_URL}/api/community/channels?bootstrap=true`, {
+                headers: { 'Authorization': `Bearer ${token}`, ...customHeaders }
+            });
+            return response;
+        } catch (error) {
+            const isNetwork = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error';
+            if (!isNetwork) console.error('Error fetching channels (bootstrap):', error);
+            throw error;
+        }
     },
     
     createChannel: async (channelData) => {

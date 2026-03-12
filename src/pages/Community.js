@@ -1001,6 +1001,8 @@ const [journalLoading, setJournalLoading] = useState(false);
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
     const isSendingGifRef = useRef(false);
+    const channelsFetchInFlightRef = useRef(false);
+    const channelsLastFailureRef = useRef(0);
     
 
     // Close context menu when clicking outside
@@ -1413,6 +1415,13 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     if (!isAuthenticated) {
         return channelListRef.current;
     }
+    if (channelsFetchInFlightRef.current) {
+        return channelListRef.current;
+    }
+    const CHANNELS_BACKOFF_MS = 45000;
+    if (channelsLastFailureRef.current && (Date.now() - channelsLastFailureRef.current) < CHANNELS_BACKOFF_MS) {
+        return channelListRef.current;
+    }
 
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const cachedChannelsKey = `community_channels_cache_${u.id || 'anon'}`;
@@ -1526,8 +1535,10 @@ const canAccessChannelByTier = (channel) => {
         }
     }
 
+    channelsFetchInFlightRef.current = true;
     try {
         const response = await Api.getChannelsBootstrap();
+        channelsLastFailureRef.current = 0;
         const data = response?.data;
         if (data?.success && Array.isArray(data.channels)) {
             channelsFromServer = data.channels;
@@ -1545,15 +1556,20 @@ const canAccessChannelByTier = (channel) => {
     } catch (_) {
         try {
             const response = await Api.getChannels();
+            channelsLastFailureRef.current = 0;
             if (Array.isArray(response?.data)) {
                 channelsFromServer = response.data;
             } else if (Array.isArray(response?.data?.channels)) {
                 channelsFromServer = response.data.channels;
             }
         } catch (error) {
-            console.warn('Failed to fetch channels from API:', error?.message || error);
+            channelsLastFailureRef.current = Date.now();
+            const isNetwork = (error?.code === 'ERR_NETWORK') || (error?.message || '').includes('Network');
+            if (!isNetwork) console.warn('Failed to fetch channels from API:', error?.message || error);
             if (cachedChannels.length > 0) return channelListRef.current;
         }
+    } finally {
+        channelsFetchInFlightRef.current = false;
     }
 
     if (channelsFromServer.length > 0) {
@@ -3393,18 +3409,13 @@ if (window.requestAnimationFrame) {
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Refresh channel list less frequently to improve performance
-        // Initial load happens immediately, then refresh every 60 seconds
+        // Refresh channel list less frequently to avoid ERR_INSUFFICIENT_RESOURCES
+        // Initial load is from mount effect; here we refresh every 90s and only if not in backoff
         const intervalId = setInterval(() => {
-            // Only refresh if API is working to avoid spam
             checkApiConnectivity().then((apiWorking) => {
-                if (apiWorking) {
-                    refreshChannelList().catch((err) => {
-                        console.warn('Failed to refresh channel list:', err.message);
-                    });
-                }
+                if (apiWorking) refreshChannelList().catch(() => {});
             });
-        }, 60000); // Reduced from 30s to 60s
+        }, 90000);
 
         return () => clearInterval(intervalId);
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
