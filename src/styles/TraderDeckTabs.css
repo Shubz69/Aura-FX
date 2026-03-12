@@ -20,6 +20,39 @@
   width: 100%;
 }
 
+/* Header: MARKET OUTLOOK (left) | Trader Desk (center) | MARKET INTELLIGENCE (right) */
+.td-deck-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 0;
+  padding-bottom: 12px;
+}
+
+.td-deck-header-left {
+  justify-self: start;
+}
+
+.td-deck-header-right {
+  justify-self: end;
+}
+
+.td-deck-header-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.td-deck-page-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
 .td-deck-main-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -31,18 +64,142 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.td-deck-page-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(1.25rem, 3vw, 1.5rem);
-  font-weight: 600;
-  color: #fff;
-  margin: 0;
-  letter-spacing: 0.02em;
-}
-
 .td-deck-tabs {
   display: flex;
   gap: 8px;
+}
+
+.td-deck-header-line {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+
+/* Compact calendar bar row: Daily/Weekly left, month bar (clickable) right/center */
+.td-deck-calendar-bar-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.td-deck-calendar-bar-wrap .td-deck-sub-tabs {
+  margin-right: auto;
+}
+
+/* Compact calendar bar: dark bar, MARCH 2026, < > arrows – click opens full calendar */
+.td-deck-calendar-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.06) inset;
+}
+
+.td-deck-calendar-bar:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.12) inset;
+}
+
+.td-deck-calendar-bar-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.td-deck-calendar-bar-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #fff;
+}
+
+.td-deck-calendar-bar-btn:active {
+  transform: scale(0.96);
+}
+
+.td-deck-calendar-bar-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+}
+
+/* Full-screen calendar overlay */
+.td-deck-calendar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: td-overlay-fade 0.2s ease;
+}
+
+.td-deck-calendar-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+}
+
+.td-deck-calendar-overlay-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.td-deck-calendar-overlay-content .journal-calendar {
+  margin-bottom: 0;
+}
+
+.td-deck-calendar-overlay-close {
+  padding: 10px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.td-deck-calendar-overlay-close:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+@keyframes td-overlay-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .td-deck-tab {
@@ -52,8 +209,9 @@
   background: rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.8);
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition: all 0.25s ease;
 }
@@ -169,7 +327,17 @@
   padding: 24px;
 }
 
-/* Body: sidebar + main (Journal-style two-column) */
+/* Body: single full-width column (no sidebar) */
+.td-deck-body-single {
+  display: block;
+  padding: 24px;
+}
+
+.td-deck-body-single .td-deck-main {
+  max-width: none;
+}
+
+/* Body: sidebar + main (legacy two-column, unused in new layout) */
 .td-deck-body {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -184,6 +352,17 @@
   .td-deck-sidebar {
     order: 0;
     max-width: 360px;
+  }
+  .td-deck-header {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .td-deck-header-left,
+  .td-deck-header-right {
+    justify-self: center;
+  }
+  .td-deck-calendar-bar {
+    max-width: none;
   }
 }
 

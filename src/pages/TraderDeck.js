@@ -3,6 +3,7 @@ import CosmicBackground from '../components/CosmicBackground';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
 import TraderDeckCalendar from '../components/trader-deck/TraderDeckCalendar';
+import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarBar';
 import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
 import '../styles/Journal.css';
@@ -24,6 +25,7 @@ export default function TraderDeck() {
   const [subTab, setSubTab] = useState('daily');
   const [selectedDate, setSelectedDate] = useState(today());
   const [calendarMonth, setCalendarMonth] = useState(today().slice(0, 7));
+  const [calendarOverlayOpen, setCalendarOverlayOpen] = useState(false);
 
   const handlePrevMonth = useCallback(() => {
     const [y, m] = calendarMonth.split('-').map(Number);
@@ -39,35 +41,77 @@ export default function TraderDeck() {
     if (selectedDate.slice(0, 7) !== next) setSelectedDate(getMonthStart(next));
   }, [calendarMonth, selectedDate]);
 
+  const handleSelectDate = useCallback((date) => {
+    setSelectedDate(date);
+    setCalendarMonth(date.slice(0, 7));
+    setCalendarOverlayOpen(false);
+  }, []);
+
   const datesWithContent = useMemo(() => ({}), []);
 
   return (
     <div className="td-layout-page td-deck-with-tabs">
       <CosmicBackground />
+
+      {/* Full-screen calendar overlay: click bar to open, pick date to close */}
+      {calendarOverlayOpen && (
+        <div
+          className="td-deck-calendar-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Pick a date"
+        >
+          <div className="td-deck-calendar-overlay-backdrop" onClick={() => setCalendarOverlayOpen(false)} />
+          <div className="td-deck-calendar-overlay-content">
+            <TraderDeckCalendar
+              selectedDate={selectedDate}
+              onSelectDate={handleSelectDate}
+              calendarMonth={calendarMonth}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
+              datesWithContent={datesWithContent}
+            />
+            <button
+              type="button"
+              className="td-deck-calendar-overlay-close"
+              onClick={() => setCalendarOverlayOpen(false)}
+              aria-label="Close calendar"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="td-deck-layout">
-        {/* Main tabs */}
-        <header className="td-deck-main-tabs">
-          <h1 className="td-deck-page-title">Trader Desk</h1>
-          <nav className="td-deck-tabs" aria-label="Trader Desk sections">
+        {/* Header: MARKET OUTLOOK (left) | Trader Desk (center) | MARKET INTELLIGENCE (right) */}
+        <header className="td-deck-header">
+          <nav className="td-deck-header-nav td-deck-header-left" aria-label="Trader Desk sections">
             <button
               type="button"
               className={`td-deck-tab${mainTab === 'outlook' ? ' td-deck-tab--active' : ''}`}
               onClick={() => setMainTab('outlook')}
             >
-              Market Outlook
+              MARKET OUTLOOK
             </button>
+          </nav>
+          <h1 className="td-deck-page-title">Trader Desk</h1>
+          <nav className="td-deck-header-nav td-deck-header-right" aria-label="Trader Desk sections">
             <button
               type="button"
               className={`td-deck-tab${mainTab === 'intelligence' ? ' td-deck-tab--active' : ''}`}
               onClick={() => setMainTab('intelligence')}
             >
-              Market Intelligence
+              MARKET INTELLIGENCE
             </button>
           </nav>
         </header>
 
-        {/* Sub-tabs */}
-        <div className="td-deck-sub-tabs-wrap">
+        {/* Line under header */}
+        <div className="td-deck-header-line" />
+
+        {/* Compact calendar bar (gap): month/year with arrows; click opens full calendar */}
+        <div className="td-deck-calendar-bar-wrap">
           <nav className="td-deck-sub-tabs" aria-label="Period">
             <button
               type="button"
@@ -84,23 +128,17 @@ export default function TraderDeck() {
               Weekly
             </button>
           </nav>
+          <TraderDeckCalendarBar
+            calendarMonth={calendarMonth}
+            onPrevMonth={handlePrevMonth}
+            onNextMonth={handleNextMonth}
+            onOpenCalendar={() => setCalendarOverlayOpen(true)}
+          />
         </div>
 
-        {/* Single main box (calendar-style): fills page, contains calendar + content */}
+        {/* Single full-width content box (calendar-style), no sidebar */}
         <div className="td-deck-main-box">
-          <div className="td-deck-body">
-            <aside className="td-deck-sidebar">
-              <div className="td-deck-sidebar-inner">
-                <TraderDeckCalendar
-                  selectedDate={selectedDate}
-                  onSelectDate={setSelectedDate}
-                  calendarMonth={calendarMonth}
-                  onPrevMonth={handlePrevMonth}
-                  onNextMonth={handleNextMonth}
-                  datesWithContent={datesWithContent}
-                />
-              </div>
-            </aside>
+          <div className="td-deck-body td-deck-body-single">
             <main className="td-deck-main">
               <div className="td-deck-main-inner">
                 {mainTab === 'outlook' && (
