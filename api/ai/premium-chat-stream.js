@@ -332,13 +332,22 @@ module.exports = async (req, res) => {
   // Read from parsed body
   const message = typeof body.message === 'string' ? body.message : '';
   const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : [];
-  const images = Array.isArray(body.images) ? body.images : [];
+  const rawImages = Array.isArray(body.images) ? body.images : [];
+
+  // Normalize images: only valid data URLs or https URLs (OpenAI vision). Max 2, skip invalid or oversized.
+  const MAX_IMAGE_URL_LENGTH = 5_000_000; // ~3.75MB base64 to avoid timeouts/limits
+  const images = rawImages.slice(0, 2).map((img) => {
+    const url = typeof img === 'string' ? img : (img && typeof img.url === 'string' ? img.url : null);
+    if (!url || (url.length > MAX_IMAGE_URL_LENGTH)) return null;
+    if (url.startsWith('data:image/') || url.startsWith('https://')) return url;
+    return null;
+  }).filter(Boolean);
 
   if (!message.trim() && images.length === 0) {
-    return res.status(400).json({ success: false, message: 'Message required' });
+    return res.status(400).json({ success: false, message: 'Message or at least one valid image required' });
   }
-  
-  log(requestId, 'info', 'Request started', { userId, messageLength: message?.length });
+
+  log(requestId, 'info', 'Request started', { userId, messageLength: message?.length, imageCount: images.length });
   
   // Set up SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
@@ -353,10 +362,10 @@ module.exports = async (req, res) => {
     // Fetch data in parallel while preparing OpenAI call
     const dataPromise = fetchAllData(message, requestId);
     
-    // Trim conversation history
+    // Trim conversation history (OpenAI expects string content for history)
     const trimmedHistory = conversationHistory.slice(-CONFIG.MAX_HISTORY).map(msg => ({
       role: msg.role,
-      content: typeof msg.content === 'string' ? msg.content.slice(0, 1000) : ''
+      content: typeof msg.content === 'string' ? String(msg.content).slice(0, 1000) : ''
     }));
     
     // Wait for data
@@ -404,14 +413,15 @@ module.exports = async (req, res) => {
       }
     ];
     
-    // Handle images
+    // Handle images (multimodal content: text + image_url parts)
     if (images.length > 0) {
       const lastMessage = openaiMessages[openaiMessages.length - 1];
+      const textPart = lastMessage.content != null ? String(lastMessage.content) : '';
       lastMessage.content = [
-        { type: 'text', text: lastMessage.content },
-        ...images.slice(0, 2).map(img => ({
+        { type: 'text', text: textPart },
+        ...images.map((url) => ({
           type: 'image_url',
-          image_url: { url: img, detail: 'low' }
+          image_url: { url: String(url), detail: 'low' }
         }))
       ];
     }
@@ -446,11 +456,17 @@ module.exports = async (req, res) => {
     clearTimeout(timeout);
     
     if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
+      let errorText = '';
+      try {
+        errorText = await openaiResponse.text();
+        if (errorText.length > 2000) errorText = errorText.slice(0, 2000) + '…';
+      } catch (_) {}
       log(requestId, 'error', 'OpenAI error', { status: openaiResponse.status, error: errorText });
-      
+
       if (openaiResponse.status === 429) {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service is busy. Please try again in a moment.' })}\n\n`);
+      } else if (openaiResponse.status === 400 && /image|content|invalid/i.test(errorText)) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: 'Image could not be processed. Try a smaller or different image.' })}\n\n`);
       } else {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service temporarily unavailable' })}\n\n`);
       }
@@ -508,12 +524,16 @@ module.exports = async (req, res) => {
     res.end();
     
   } catch (error) {
-    log(requestId, 'error', 'Stream error', { error: error.message });
-    
+    log(requestId, 'error', 'Stream error', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+
     try {
-      res.write(`data: ${JSON.stringify({ 
-        type: 'error', 
-        message: error.name === 'AbortError' 
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        message: error.name === 'AbortError'
           ? 'Request timed out. Please try again.'
           : 'An error occurred. Please try again.'
       })}\n\n`);
