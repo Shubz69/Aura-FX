@@ -673,6 +673,34 @@ const Api = {
         return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`);
     },
 
+    getTraderDeckContent: (type, date) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-deck/content`, {
+            params: { type, date },
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+    },
+    putTraderDeckContent: (type, date, payload) => {
+        const token = localStorage.getItem('token');
+        return axios.put(`${API_BASE_URL}/api/trader-deck/content`, { type, date, payload }, {
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+        });
+    },
+    uploadTraderDeckBrief: (body) => {
+        const token = localStorage.getItem('token');
+        return axios.post(`${API_BASE_URL}/api/trader-deck/brief-upload`, body, {
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+        });
+    },
+    deleteTraderDeckBrief: (id) => {
+        const token = localStorage.getItem('token');
+        return axios.delete(`${API_BASE_URL}/api/trader-deck/brief-delete`, {
+            params: { id },
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+    },
+    getTraderDeckBriefPreviewUrl: (id) => `${getApiBaseUrl()}/api/trader-deck/brief-preview?id=${encodeURIComponent(id)}`,
+
     getJournalDaily: (date) => {
         return axios.get(`${API_BASE_URL}/api/journal/daily`, { params: { date } });
     },

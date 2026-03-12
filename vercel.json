@@ -459,6 +459,22 @@
     {
       "source": "/api/trader-deck/market-intelligence",
       "destination": "/api/trader-deck/market-intelligence.js"
+    },
+    {
+      "source": "/api/trader-deck/content",
+      "destination": "/api/trader-deck/content.js"
+    },
+    {
+      "source": "/api/trader-deck/brief-upload",
+      "destination": "/api/trader-deck/brief-upload.js"
+    },
+    {
+      "source": "/api/trader-deck/brief-preview",
+      "destination": "/api/trader-deck/brief-preview.js"
+    },
+    {
+      "source": "/api/trader-deck/brief-delete",
+      "destination": "/api/trader-deck/brief-delete.js"
     }
   ],
   "crons": [
