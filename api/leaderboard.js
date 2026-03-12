@@ -401,7 +401,8 @@ async function queryLeaderboard(timeframe, limit, logger, includeDemo = true) {
   const demoFilter = includeDemo ? '' : 'AND (u.is_demo IS NULL OR u.is_demo = FALSE)';
   
   if (timeframe === 'all-time') {
-    // All-time: rank by users.xp (canonical total). SUM(xp_events) can lag if inserts fail.
+    // All-time: rank by users.xp (canonical total). Includes all roles (admin/super_admin included).
+    // No role filter – admins/superadmins with high XP appear like any other user.
     query = `
       SELECT 
         u.id, u.username, u.name, u.email, 
@@ -511,7 +512,7 @@ module.exports = async (req, res) => {
     
     // Check cache
     const cacheTTL = timeframe === 'all-time' ? DEFAULT_TTLS.LEADERBOARD_ALLTIME : DEFAULT_TTLS.LEADERBOARD;
-    const cacheKey = `leaderboard_v9_${timeframe}_${limit}_${prizeEligibleOnly}`;
+    const cacheKey = `leaderboard_v10_${timeframe}_${limit}_${prizeEligibleOnly}`;
     const coalesceKey = `lb_query_${timeframe}_${limit}`;
     
     const cached = getCached(cacheKey, cacheTTL);
