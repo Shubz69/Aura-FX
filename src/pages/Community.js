@@ -1350,6 +1350,48 @@ useEffect(() => {
         });
     }, [categoryOrder]);
 
+// Get user's role - check subscription status and plan
+const getCurrentUserRole = useCallback(() => {
+    if (isSuperAdminUser) return 'super_admin';
+    if (isAdminUser) return 'admin';
+    
+    // Check subscription status and plan from user object
+    const subStatus = storedUser?.subscription_status;
+    const subPlan = storedUser?.subscription_plan;
+    const userRole = storedUser?.role?.toLowerCase() || 'free';
+    
+    // If user has active subscription, ensure role matches plan
+    if (subStatus === 'active') {
+        if (subPlan === 'a7fx' || subPlan === 'elite' || subPlan === 'A7FX') {
+            return 'a7fx';
+        }
+        if (subPlan === 'aura' || subPlan === 'premium') {
+            return 'premium';
+        }
+        // If no plan specified but has active subscription, check role
+        if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
+            return userRole;
+        }
+        // Default to premium if subscription is active but no plan specified
+        return 'premium';
+    }
+    
+    // If subscription is inactive/expired, downgrade to free
+    if (subStatus === 'inactive' || subStatus === 'cancelled' || subStatus === 'expired') {
+        return 'free';
+    }
+    
+    // Check entitlements context for tier information
+    if (entitlements?.tier) {
+        const tier = entitlements.tier.toLowerCase();
+        if (tier === 'elite' || tier === 'a7fx') return 'a7fx';
+        if (tier === 'premium' || tier === 'aura') return 'premium';
+    }
+    
+    // Return stored role or default to free
+    return userRole || 'free';
+}, [isSuperAdminUser, isAdminUser, storedUser, entitlements]);
+
 const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     if (!isAuthenticated) {
         return channelListRef.current;
@@ -1379,49 +1421,43 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
 
     // Get current user's subscription tier
-    const currentUserRole = (() => {
-        if (isAdminOrSuperForChannels) return 'admin';
-        if (storedUser?.subscription_status === 'active') {
-            if (storedUser?.subscription_plan === 'a7fx' || storedUser?.subscription_plan === 'elite') return 'a7fx';
-            if (storedUser?.subscription_plan === 'aura' || storedUser?.subscription_plan === 'premium') return 'premium';
-        }
-        return storedUser?.role?.toLowerCase() || 'free';
-    })();
-    
-    const isFreeUser = currentUserRole === 'free';
-    const isPremiumUser = currentUserRole === 'premium';
-    const isEliteUser = currentUserRole === 'a7fx' || currentUserRole === 'elite';
+  // Get current user's subscription tier using the proper function
+const currentUserRole = getCurrentUserRole();
+const isFreeUser = currentUserRole === 'free';
+const isPremiumUser = currentUserRole === 'premium';
+const isEliteUser = currentUserRole === 'a7fx' || currentUserRole === 'elite';
+  
 
-    // Helper to check if user can access a channel based on its access level
-    const canAccessChannelByTier = (channel) => {
-        // Admins always have access
-        if (isAdminOrSuperForChannels) return true;
-        
-        const accessLevel = (channel.accessLevel || channel.access_level || 'free').toLowerCase();
-        
-        // Free channels - everyone can access
-        if (accessLevel === 'free' || accessLevel === 'open') {
-            return true;
-        }
-        
-        // Premium channels - only premium and elite users
-        if (accessLevel === 'premium') {
-            return isPremiumUser || isEliteUser;
-        }
-        
-        // A7FX/Elite channels - only elite users
+   // Helper to check if user can access a channel based on its access level
+const canAccessChannelByTier = (channel) => {
+    // Admins always have access
+    if (isAdminOrSuperForChannels) return true;
+    
+    const accessLevel = (channel.accessLevel || channel.access_level || 'free').toLowerCase();
+    
+    // CRITICAL: Premium users can see ALL channels EXCEPT a7fx/elite
+    if (isPremiumUser) {
+        // Premium users cannot see a7fx/elite channels
         if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-            return isEliteUser;
-        }
-        
-        // Admin-only channels - only admins (already handled above)
-        if (accessLevel === 'admin-only') {
             return false;
         }
-        
-        // Default: free access
+        // Premium users can see all other channels (free, open, premium)
         return true;
-    };
+    }
+    
+    // Elite users can see everything
+    if (isEliteUser) {
+        return true;
+    }
+    
+    // Free users - only free/open channels
+    if (isFreeUser) {
+        return accessLevel === 'free' || accessLevel === 'open';
+    }
+    
+    // Default: free access
+    return true;
+};
 
     const buildPreparedFromServer = (serverList) => {
         if (!Array.isArray(serverList) || serverList.length === 0) return [];
@@ -1544,7 +1580,7 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     }
 
     return sortedChannels;
-}, [isAuthenticated, sortChannels]);
+}, [isAuthenticated, sortChannels, getCurrentUserRole]);
     
     // Initialize WebSocket connection for real-time messaging
     const enableRealtime = useMemo(() => {
@@ -2051,48 +2087,6 @@ const renderMessageContent = (content, messageFile) => {
     };
     
     // XP calculation is now handled by the imported calculateMessageXP function from xpSystem.js
-
-    // Get user's role - check subscription status and plan
-const getCurrentUserRole = () => {
-    if (isSuperAdminUser) return 'super_admin';
-    if (isAdminUser) return 'admin';
-    
-    // Check subscription status and plan from user object
-    const subscriptionStatus = storedUser?.subscription_status;
-    const subscriptionPlan = storedUser?.subscription_plan;
-    const userRole = storedUser?.role?.toLowerCase() || 'free';
-    
-    // If user has active subscription, ensure role matches plan
-    if (subscriptionStatus === 'active') {
-        if (subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'A7FX') {
-            return 'a7fx';
-        }
-        if (subscriptionPlan === 'aura' || subscriptionPlan === 'premium') {
-            return 'premium';
-        }
-        // If no plan specified but has active subscription, check role
-        if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
-            return userRole;
-        }
-        // Default to premium if subscription is active but no plan specified
-        return 'premium';
-    }
-    
-    // If subscription is inactive/expired, downgrade to free
-    if (subscriptionStatus === 'inactive' || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') {
-        return 'free';
-    }
-    
-    // Check entitlements context for tier information
-    if (entitlements?.tier) {
-        const tier = entitlements.tier.toLowerCase();
-        if (tier === 'elite' || tier === 'a7fx') return 'a7fx';
-        if (tier === 'premium' || tier === 'aura') return 'premium';
-    }
-    
-    // Return stored role or default to free
-    return userRole || 'free';
-};
 
     // Get user's courses
     const getUserCourses = () => {
