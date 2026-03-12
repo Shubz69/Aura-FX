@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllInstruments, getInstrumentsByCategory } from '../../lib/aura-analysis/instruments';
-import { calculateRisk } from '../../lib/aura-analysis/calculators/calculateRisk';
+import { calculateRisk, deriveStopLossFromRiskAndPositionSize } from '../../lib/aura-analysis/calculators/calculateRisk';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
 const INSTRUMENTS_LIST = getAllInstruments();
@@ -41,6 +41,28 @@ export default function TradeCalculator() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // When position size is manually set, derive SL so risk (balance × risk %) stays constant.
+  useEffect(() => {
+    const manual = Number(form.positionSize);
+    const entry = Number(form.entryPrice) || 0;
+    const balance = Number(form.accountBalance) || 0;
+    const riskPct = Number(form.riskPercent) || 0;
+    if (manual <= 0 || entry <= 0 || balance <= 0 || riskPct <= 0) return;
+    const derived = deriveStopLossFromRiskAndPositionSize(form.pair, {
+      accountBalance: balance,
+      riskPercent: riskPct,
+      entry,
+      direction: form.direction,
+      positionSize: manual,
+    });
+    if (derived == null) return;
+    const rounded = Math.round(derived * 100000) / 100000;
+    const current = Number(form.stopLoss) || 0;
+    if (Math.abs(current - rounded) > 1e-9) {
+      setForm((f) => ({ ...f, stopLoss: String(rounded) }));
+    }
+  }, [form.positionSize, form.entryPrice, form.accountBalance, form.riskPercent, form.direction, form.pair]);
 
   const calcInput = useMemo(
     () => ({
@@ -226,21 +248,21 @@ export default function TradeCalculator() {
           </div>
 
           <div className="trade-calc-field">
-            <label>Position size</label>
+            <label>Position size (optional)</label>
             <input
               type="number"
               min="0"
               step="0.01"
               className="trade-calc-input"
               value={form.positionSize}
-              placeholder="0"
+              placeholder="Auto from risk % and SL"
               onChange={(e) => setForm((f) => ({ ...f, positionSize: e.target.value }))}
             />
             <button type="button" className="trade-calc-suggest" onClick={suggestFromRisk}>
               Suggest from risk %
             </button>
             <span className="trade-calc-helper">
-              Fixed size used for P/L. Changing SL only affects loss; changing TP only affects profit.
+              Leave empty to use size from risk % and stop loss. If you enter a size, stop loss is adjusted so your risk stays the same.
             </span>
           </div>
 

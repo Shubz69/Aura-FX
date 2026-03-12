@@ -82,3 +82,66 @@ export function calculateRisk(symbol, input) {
       return calculateForex(input, spec);
   }
 }
+
+/**
+ * Derive stop loss price so that risk (balance × risk %) is preserved for a given position size.
+ * When user enters position size manually, call this to get the SL that keeps risk constant.
+ * @param {string} symbol
+ * @param {{ accountBalance: number, riskPercent: number, entry: number, direction: 'buy'|'sell', positionSize: number }} input
+ * @returns {number|null} Stop loss price, or null if invalid (e.g. positionSize <= 0 or entry <= 0).
+ */
+export function deriveStopLossFromRiskAndPositionSize(symbol, input) {
+  const riskAmount = (input.accountBalance * input.riskPercent) / 100;
+  const { entry, direction, positionSize } = input;
+  if (!entry || positionSize <= 0 || riskAmount <= 0) return null;
+
+  const spec = getInstrumentOrFallback(symbol);
+  const mode = spec.calculationMode;
+  let stopDistancePrice = 0;
+
+  switch (mode) {
+    case 'forex': {
+      const pipSize = spec.pipSize ?? 0.0001;
+      let pipValuePerLot = (spec.contractSize ?? 100_000) * pipSize;
+      if (spec.quoteCurrency === 'JPY') pipValuePerLot = pipValuePerLot / entry;
+      if (pipValuePerLot <= 0) return null;
+      const stopPips = riskAmount / (positionSize * pipValuePerLot);
+      stopDistancePrice = stopPips * pipSize;
+      break;
+    }
+    case 'commodity': {
+      const contractSize = spec.contractSize ?? 100;
+      if (contractSize <= 0) return null;
+      stopDistancePrice = riskAmount / (positionSize * contractSize);
+      break;
+    }
+    case 'index_cfd': {
+      const pointSize = spec.pointSize ?? 1;
+      const valuePerPoint = spec.valuePerPointPerLot ?? 1;
+      if (valuePerPoint <= 0) return null;
+      const stopPoints = riskAmount / (positionSize * valuePerPoint);
+      stopDistancePrice = stopPoints * pointSize;
+      break;
+    }
+    case 'stock_share':
+      stopDistancePrice = riskAmount / positionSize;
+      break;
+    case 'future_contract': {
+      const tickSize = spec.tickSize > 0 ? spec.tickSize : 0.25;
+      const tickValue = spec.tickValuePerLot ?? 10;
+      if (tickValue <= 0) return null;
+      const stopTicks = riskAmount / (positionSize * tickValue);
+      stopDistancePrice = stopTicks * tickSize;
+      break;
+    }
+    case 'crypto_units':
+    case 'crypto_lot':
+      stopDistancePrice = riskAmount / positionSize;
+      break;
+    default:
+      return null;
+  }
+
+  if (stopDistancePrice <= 0) return null;
+  return direction === 'buy' ? entry - stopDistancePrice : entry + stopDistancePrice;
+}
