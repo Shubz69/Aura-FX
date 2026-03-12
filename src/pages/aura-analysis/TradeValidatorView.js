@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCheckSquare } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
@@ -49,8 +49,12 @@ function SectionCard({ section, timeframes, items, checked, onToggle }) {
   );
 }
 
+/** Minimum confluence % required to submit a trade. Trade cannot go through unless checklist is filled in and score meets this. */
+const MIN_CONFLUENCE_PCT = 70;
+
 export default function TradeValidatorView() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isEmbedded = location.pathname.startsWith('/trader-deck/trade-validator');
   const [checked, setChecked] = useState(() => {
     try {
@@ -105,7 +109,7 @@ export default function TradeValidatorView() {
 
   const scorePercent = TOTAL_POINTS > 0 ? Math.round((checklistScore / TOTAL_POINTS) * 100) : 0;
   const scoreGrade = getScoreLabel(checklistScore);
-  const canProceed = scorePercent >= 70;
+  const canProceed = scorePercent >= MIN_CONFLUENCE_PCT;
 
   const calcInput = useMemo(
     () => ({
@@ -137,6 +141,11 @@ export default function TradeValidatorView() {
 
   const handleSaveTrade = async () => {
     if (saving) return;
+    // Trade cannot go through unless the checklist has been filled in and confluence score is at least MIN_CONFLUENCE_PCT.
+    if (scorePercent < MIN_CONFLUENCE_PCT) {
+      toast.error(`A minimum confluence score of ${MIN_CONFLUENCE_PCT}% is required to submit a trade. Complete more checklist items.`);
+      return;
+    }
     const payload = {
       pair: form.pair,
       direction: form.direction,
@@ -171,9 +180,11 @@ export default function TradeValidatorView() {
       await Api.createAuraAnalysisTrade(payload);
       toast.success('Trade saved');
       setChecked(new Set());
+      setShowTradeForm(false);
       Api.getAuraAnalysisPnl().then((res) => {
         if (res?.data?.success) setPnl({ dailyPnl: res.data.dailyPnl ?? 0, weeklyPnl: res.data.weeklyPnl ?? 0, monthlyPnl: res.data.monthlyPnl ?? 0 });
       });
+      navigate('/trader-deck/trade-validator/journal');
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed to save trade');
     } finally {
@@ -277,15 +288,13 @@ export default function TradeValidatorView() {
 
         <div className="tv-bottom-bar">
           <div className={`tv-bottom-msg ${canProceed ? 'tv-bottom-msg-ok' : ''}`}>
-            {canProceed ? 'Score meets minimum requirement (70%).' : 'Reach 70% to use the calculator or save.'}
+            {canProceed ? `Score meets minimum requirement (${MIN_CONFLUENCE_PCT}%).` : 'Complete the checklist to save a trade.'}
           </div>
           <div className="tv-bottom-actions">
             <Link to="/trader-deck/trade-validator/calculator" className="tv-btn-calc">Use in Trade Calculator</Link>
-            {canProceed && (
-              <button type="button" className="tv-btn-save" onClick={() => setShowTradeForm(true)} disabled={saving}>
-                {saving ? 'Saving…' : 'Save trade'}
-              </button>
-            )}
+            <button type="button" className="tv-btn-save" onClick={() => setShowTradeForm(true)} disabled={saving}>
+              {saving ? 'Saving…' : 'Save trade'}
+            </button>
           </div>
         </div>
 

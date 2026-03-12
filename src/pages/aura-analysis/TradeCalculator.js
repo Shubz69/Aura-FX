@@ -177,10 +177,10 @@ export default function TradeCalculator() {
 
       <div className="trade-calc-banner">
         <p className="trade-calc-banner-text">
-          Complete Trade Validator before submitting a trade. A minimum confluence score of 70% is required to execute trades.
+          Complete the checklist before using the Trade Validator.
         </p>
         <Link to="/trader-deck/trade-validator/checklist" className="trade-calc-banner-btn">
-          Go to Trade Validator
+          Go to Checklist
         </Link>
       </div>
 
