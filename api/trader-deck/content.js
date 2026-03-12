@@ -10,18 +10,23 @@ const { verifyToken } = require('../utils/auth');
 const VALID_TYPES = ['outlook-daily', 'outlook-weekly', 'intel-daily', 'intel-weekly'];
 const VALID_PERIODS = ['daily', 'weekly'];
 
-function parseBody(req) {
-  if (req.body && typeof req.body === 'object') return req.body;
-  return {};
+/** Normalize date to YYYY-MM-DD (accepts YYYYMMDD or YYYY-MM-DD). */
+function normalizeDate(str) {
+  if (!str || typeof str !== 'string') return '';
+  const s = str.trim().replace(/\D/g, '');
+  if (s.length === 8) return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  return str.trim().slice(0, 10);
 }
 
-function getPathname(req) {
-  if (!req.url) return '';
-  const path = req.url.split('?')[0];
-  if (path.startsWith('http')) {
-    try { return new URL(path).pathname; } catch { return path; }
+function parseBody(req) {
+  if (req.body == null) return {};
+  if (typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
+  try {
+    const raw = typeof req.body === 'string' ? req.body : req.body.toString();
+    return JSON.parse(raw || '{}');
+  } catch {
+    return {};
   }
-  return path;
 }
 
 async function ensureTables() {
@@ -90,10 +95,59 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Database error' });
   }
 
-  const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
-  const type = (url.searchParams.get('type') || '').toLowerCase();
-  const date = (url.searchParams.get('date') || '').trim().slice(0, 10);
+  let url;
+  try {
+    url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+  } catch (urlErr) {
+    return res.status(400).json({ success: false, message: 'Invalid request URL' });
+  }
+  const queryType = (url.searchParams.get('type') || '').toLowerCase();
+  const queryDate = normalizeDate(url.searchParams.get('date') || '');
 
+  if (req.method === 'PUT') {
+    const body = parseBody(req);
+    const putType = (body.type || queryType || '').toLowerCase();
+    const putDate = normalizeDate(body.date || queryDate || '');
+    if (!VALID_TYPES.includes(putType) || !/^\d{4}-\d{2}-\d{2}$/.test(putDate)) {
+      return res.status(400).json({ success: false, message: 'Invalid type or date. Use type=outlook-daily|outlook-weekly|intel-daily|intel-weekly and date=YYYY-MM-DD' });
+    }
+    let admin;
+    try {
+      admin = await requireAdmin(req);
+    } catch (authErr) {
+      console.error('Trader deck content requireAdmin:', authErr.message);
+      return res.status(500).json({ success: false, message: 'Authentication error' });
+    }
+    if (!admin.ok) return res.status(admin.status).json({ success: false, message: admin.message });
+
+    if (putType.startsWith('outlook')) {
+      const payload = body.payload;
+      if (payload === undefined || payload === null) {
+        return res.status(400).json({ success: false, message: 'payload required' });
+      }
+      try {
+        const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+        const putPeriod = typeToPeriod(putType);
+        await executeQuery(
+          `INSERT INTO trader_deck_outlook (date, period, payload) VALUES (?, ?, ?)
+           ON DUPLICATE KEY UPDATE payload = VALUES(payload), updated_at = CURRENT_TIMESTAMP`,
+          [putDate, putPeriod, payloadStr]
+        );
+        return res.status(200).json({ success: true, date: putDate, type: putType });
+      } catch (err) {
+        console.error('Trader deck content PUT error:', err.message);
+        return res.status(500).json({ success: false, message: 'Failed to save outlook' });
+      }
+    }
+
+    if (putType.startsWith('intel')) {
+      return res.status(400).json({ success: false, message: 'Use POST /api/trader-deck/brief-upload to add briefs; DELETE /api/trader-deck/brief to remove.' });
+    }
+    return res.status(400).json({ success: false, message: 'Invalid type' });
+  }
+
+  const type = queryType;
+  const date = queryDate;
   if (!VALID_TYPES.includes(type) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return res.status(400).json({ success: false, message: 'Invalid type or date. Use type=outlook-daily|outlook-weekly|intel-daily|intel-weekly and date=YYYY-MM-DD' });
   }
@@ -137,39 +191,6 @@ module.exports = async (req, res) => {
       }));
       return res.status(200).json({ success: true, briefs, date, type });
     }
-    return res.status(400).json({ success: false, message: 'Invalid type' });
-  }
-
-  if (req.method === 'PUT') {
-    const admin = await requireAdmin(req);
-    if (!admin.ok) return res.status(admin.status).json({ success: false, message: admin.message });
-
-    const body = parseBody(req);
-    const putType = (body.type || type).toLowerCase();
-    const putDate = (body.date || date).trim().slice(0, 10);
-    if (!VALID_TYPES.includes(putType) || !/^\d{4}-\d{2}-\d{2}$/.test(putDate)) {
-      return res.status(400).json({ success: false, message: 'Invalid type or date' });
-    }
-    const putPeriod = typeToPeriod(putType);
-
-    if (putType.startsWith('outlook')) {
-      const payload = body.payload;
-      if (payload === undefined || payload === null) {
-        return res.status(400).json({ success: false, message: 'payload required' });
-      }
-      const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
-      await executeQuery(
-        `INSERT INTO trader_deck_outlook (date, period, payload) VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE payload = VALUES(payload), updated_at = CURRENT_TIMESTAMP`,
-        [putDate, putPeriod, payloadStr]
-      );
-      return res.status(200).json({ success: true, date: putDate, type: putType });
-    }
-
-    if (putType.startsWith('intel')) {
-      return res.status(400).json({ success: false, message: 'Use POST /api/trader-deck/brief-upload to add briefs; DELETE /api/trader-deck/brief to remove.' });
-    }
-
     return res.status(400).json({ success: false, message: 'Invalid type' });
   }
 

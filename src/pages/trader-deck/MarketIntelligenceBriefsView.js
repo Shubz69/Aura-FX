@@ -7,8 +7,6 @@ import Api from '../../services/Api';
 import TraderDeckDashboardShell from '../../components/trader-deck/TraderDeckDashboardShell';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
-const MAX_FILE_MB = 4;
-
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
   const type = period === 'weekly' ? 'intel-weekly' : 'intel-daily';
   const [briefs, setBriefs] = useState([]);
@@ -76,10 +74,6 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      setError(`File too large (max ${MAX_FILE_MB}MB). Use a smaller file or add an external link.`);
-      return;
-    }
     const title = uploadTitle.trim() || file.name.replace(/\.[^/.]+$/, '') || 'Brief';
     const dateStr = String(selectedDate).trim().slice(0, 10);
     setUploading(true);
@@ -160,7 +154,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
                   onClick={handleUploadClick}
                   disabled={uploading}
                 >
-                  <FaPlus /> {uploading ? 'Uploading…' : 'Add brief (max 4MB)'}
+                  <FaPlus /> {uploading ? 'Uploading…' : 'Add brief'}
                 </button>
               </div>
               <div className="td-intel-upload-row td-intel-upload-row--url">

@@ -48,6 +48,7 @@ export default function TraderDeckTradeJournal() {
   const [editResult, setEditResult] = useState('open');
   const [editPnl, setEditPnl] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     Api.getAuraAnalysisTrades()
@@ -94,17 +95,20 @@ export default function TraderDeckTradeJournal() {
     setEditTrade(t);
     setEditResult((t.result || 'open').toLowerCase());
     setEditPnl(t.pnl != null ? String(t.pnl) : '');
+    setSaveError(null);
   };
 
   const closeEdit = () => {
     setEditTrade(null);
     setEditResult('open');
     setEditPnl('');
+    setSaveError(null);
   };
 
   const saveEdit = async () => {
     if (!editTrade?.id) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await Api.updateAuraAnalysisTrade(editTrade.id, {
         result: editResult,
@@ -119,7 +123,9 @@ export default function TraderDeckTradeJournal() {
       );
       closeEdit();
     } catch (e) {
-      console.error(e);
+      const msg = e.response?.data?.message || e.message || 'Failed to save';
+      setSaveError(msg);
+      console.error('Trade outcome save failed:', e);
     } finally {
       setSaving(false);
     }
@@ -297,6 +303,7 @@ export default function TraderDeckTradeJournal() {
                 />
               </label>
             </div>
+            {saveError && <p className="td-journal-modal-error" role="alert">{saveError}</p>}
             <div className="td-journal-modal-actions">
               <button type="button" className="td-journal-modal-btn primary" onClick={saveEdit} disabled={saving}>
                 {saving ? 'Saving…' : 'Save'}

@@ -7,15 +7,14 @@ const { getDbConnection } = require('../db');
 const { verifyToken } = require('../utils/auth');
 
 function parseBody(req) {
-  if (req.body && typeof req.body === 'object') return req.body;
-  if (typeof req.body === 'string') {
-    try {
-      return JSON.parse(req.body);
-    } catch {
-      return {};
-    }
+  if (req.body == null) return {};
+  if (typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
+  try {
+    const raw = typeof req.body === 'string' ? req.body : req.body.toString();
+    return JSON.parse(raw || '{}');
+  } catch {
+    return {};
   }
-  return {};
 }
 
 function getPathname(req) {
@@ -124,7 +123,7 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, message: 'Authentication required' });
   }
   const userId = Number(decoded.id);
-  const pathname = getPathname(req);
+  const pathname = getPathname(req).replace(/\/+$/, '');
   const idMatch = pathname.match(/\/api\/aura-analysis\/trades\/(\d+)$/i);
   const tradeId = idMatch ? Number(idMatch[1]) : null;
 

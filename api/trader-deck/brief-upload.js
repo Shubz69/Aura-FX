@@ -1,13 +1,12 @@
 /**
  * Trader Deck brief upload (admin only).
  * POST body: { date, period, title, fileBase64, fileName, mimeType }
- * File stored in trader_deck_briefs.file_data (LONGBLOB). Max ~4MB for serverless.
+ * File stored in trader_deck_briefs.file_data (LONGBLOB). No size limit for admins.
+ * Note: Vercel/serverless may enforce request body limits (e.g. 4.5MB–50MB); increase in project settings if needed.
  */
 
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
-
-const MAX_BASE64_SIZE = 4 * 1024 * 1024; // 4MB
 
 async function ensureBriefsTable() {
   await executeQuery(`
@@ -39,8 +38,14 @@ async function requireAdmin(req) {
 }
 
 function parseBody(req) {
-  if (req.body && typeof req.body === 'object') return req.body;
-  return {};
+  if (req.body == null) return {};
+  if (typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
+  try {
+    const raw = typeof req.body === 'string' ? req.body : req.body.toString();
+    return JSON.parse(raw || '{}');
+  } catch {
+    return {};
+  }
 }
 
 module.exports = async (req, res) => {
@@ -76,9 +81,6 @@ module.exports = async (req, res) => {
   let fileBuffer = null;
   if (fileBase64 && typeof fileBase64 === 'string') {
     const base64 = fileBase64.replace(/^data:[^;]+;base64,/, '');
-    if (Buffer.byteLength(base64, 'base64') > MAX_BASE64_SIZE) {
-      return res.status(400).json({ success: false, message: 'File too large (max 4MB). Use a smaller file or external link.' });
-    }
     try {
       fileBuffer = Buffer.from(base64, 'base64');
     } catch (e) {
