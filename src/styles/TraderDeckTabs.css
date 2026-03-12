@@ -70,19 +70,14 @@
   gap: 8px;
 }
 
-.td-deck-header-line {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  margin-bottom: 16px;
-}
-
-/* Calendar bar row: Daily/Weekly left, date bar centered in the middle */
+/* Calendar bar row: date + arrows where the line was; no line, no box */
 .td-deck-calendar-bar-wrap {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 16px;
+  margin-top: 4px;
   margin-bottom: 20px;
   position: relative;
 }
@@ -98,48 +93,45 @@
   flex: 0 0 auto;
 }
 
-/* Compact calendar bar: centered, full date (Daily) or week range (Weekly), < > arrows – click opens full calendar */
+/* Date + arrows only: no box, no line – clean under title */
 .td-deck-calendar-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.022);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  gap: 10px;
+  min-height: auto;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   cursor: pointer;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-  min-width: 220px;
-  max-width: 420px;
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.06) inset;
+  transition: opacity 0.2s ease;
+  min-width: 0;
+  max-width: none;
+  box-shadow: none;
 }
 
 .td-deck-calendar-bar:hover {
-  border-color: rgba(139, 92, 246, 0.25);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.12) inset;
+  opacity: 0.9;
 }
 
 .td-deck-calendar-bar-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.25rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.35rem;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .td-deck-calendar-bar-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 

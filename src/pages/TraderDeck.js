@@ -123,10 +123,7 @@ export default function TraderDeck() {
           </nav>
         </header>
 
-        {/* Line under header */}
-        <div className="td-deck-header-line" />
-
-        {/* Compact calendar bar: centered. Daily = full date, Weekly = week range (e.g. 20th - 27th March 2026). Click opens full calendar. */}
+        {/* Date + arrows where the line was: no line, no box – clean. */}
         <div className="td-deck-calendar-bar-wrap">
           <nav className="td-deck-sub-tabs td-deck-sub-tabs-left" aria-label="Period">
             <button
