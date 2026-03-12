@@ -154,11 +154,12 @@ export default function TraderDeck() {
           />
         </div>
 
-        {/* Content area: no box, full width, bigger */}
+        {/* Content area: one full-width box, Market Outlook / Intelligence inside */}
         <div className="td-deck-content">
-          <div className="td-deck-body td-deck-body-single">
-            <main className="td-deck-main">
-              <div className="td-deck-main-inner">
+          <div className="td-deck-content-box">
+            <div className="td-deck-body td-deck-body-single">
+              <main className="td-deck-main">
+                <div className="td-deck-main-inner">
                 {mainTab === 'outlook' && (
                   <MarketOutlookView
                     selectedDate={selectedDate}
@@ -173,8 +174,9 @@ export default function TraderDeck() {
                     canEdit={canEdit}
                   />
                 )}
-              </div>
-            </main>
+                </div>
+              </main>
+            </div>
           </div>
         </div>
       </div>

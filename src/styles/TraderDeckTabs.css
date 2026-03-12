@@ -270,7 +270,7 @@
   color: #fff;
 }
 
-/* Content area: no box, full width, bigger – Trader Desk */
+/* Content area: single box, full width – Trader Desk */
 .td-deck-content {
   flex: 1;
   min-height: 0;
@@ -286,13 +286,52 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 16px 0;
+  padding: 20px 0;
 }
 
-/* No box behind Market Outlook / Market Intelligence: shell is transparent, content full width */
-.td-deck-content .td-mi-shell {
-  background: none;
+/* Outer box behind Market Outlook / Market Intelligence: full-width glass-style container */
+.td-deck-content .td-deck-body-single {
   padding: 0;
+}
+
+.td-deck-content-box {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 28px 32px 32px;
+  box-sizing: border-box;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.08) inset,
+    0 24px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.td-deck-content-box .td-deck-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.td-deck-content-box:hover {
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.12) inset,
+    0 24px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* Shell inside the box: full width, visible but not double-border – soften shell when inside content box */
+.td-deck-content .td-mi-shell {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  background: none;
   box-shadow: none;
   border: none;
 }
@@ -302,9 +341,46 @@
 }
 
 .td-deck-content .td-mi-shell-inner {
+  width: 100%;
+  max-width: none;
   background: transparent;
   border: none;
-  padding: 0 0 8px 0;
+  padding: 0 0 12px 0;
+}
+
+/* Grid uses full width and responds earlier so more fits on one page */
+.td-deck-content .td-mi-grid {
+  width: 100%;
+  max-width: none;
+}
+
+/* Wider grid at lower breakpoints so Market Outlook fits on one page */
+@media (min-width: 600px) {
+  .td-deck-content .td-mi-grid {
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+  .td-deck-content .td-mi-panel--regime { grid-column: 1; }
+  .td-deck-content .td-mi-panel--pulse { grid-column: 2; }
+  .td-deck-content .td-mi-panel--drivers { grid-column: 1; }
+  .td-deck-content .td-mi-panel--signals { grid-column: 2; }
+  .td-deck-content .td-mi-panel--changes { grid-column: 1; }
+  .td-deck-content .td-mi-panel--focus { grid-column: 1; }
+  .td-deck-content .td-mi-panel--radar { grid-column: 2; }
+}
+
+@media (min-width: 960px) {
+  .td-deck-content .td-mi-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 22px;
+  }
+  .td-deck-content .td-mi-panel--regime { grid-column: 1 / span 4; }
+  .td-deck-content .td-mi-panel--pulse { grid-column: 5 / span 2; }
+  .td-deck-content .td-mi-panel--drivers { grid-column: 1 / span 2; }
+  .td-deck-content .td-mi-panel--signals { grid-column: 3 / span 2; }
+  .td-deck-content .td-mi-panel--changes { grid-column: 5 / span 2; }
+  .td-deck-content .td-mi-panel--focus { grid-column: 1 / span 3; }
+  .td-deck-content .td-mi-panel--radar { grid-column: 4 / span 3; }
 }
 
 /* Legacy main box (kept for reference, unused) */
