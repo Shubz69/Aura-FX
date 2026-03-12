@@ -170,6 +170,7 @@ export default function TradeValidatorView() {
     try {
       await Api.createAuraAnalysisTrade(payload);
       toast.success('Trade saved');
+      setChecked(new Set());
       Api.getAuraAnalysisPnl().then((res) => {
         if (res?.data?.success) setPnl({ dailyPnl: res.data.dailyPnl ?? 0, weeklyPnl: res.data.weeklyPnl ?? 0, monthlyPnl: res.data.monthlyPnl ?? 0 });
       });
