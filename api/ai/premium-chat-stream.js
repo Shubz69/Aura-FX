@@ -139,17 +139,18 @@ async function getMarketNews() {
 async function fetchAllData(message, requestId) {
   const startTime = Date.now();
   const results = { market: null, news: null, sources: [], errors: [] };
-  
+  const text = typeof message === 'string' ? message : '';
+
   // Detect symbols in message
   const symbolPatterns = [
     /\b(BTCUSD|ETHUSD|BTC|ETH|XAU|GOLD|EUR\/USD|EURUSD|GBP\/USD|GBPUSD)\b/gi,
     /\b(SPY|QQQ|AAPL|MSFT|NVDA|TSLA|AMZN|GOOGL|META)\b/gi,
     /\b(US500|SPX|NAS100|NDX|US30|DJI)\b/gi
   ];
-  
+
   const symbols = new Set();
   for (const pattern of symbolPatterns) {
-    const matches = message.match(pattern) || [];
+    const matches = text.match(pattern) || [];
     matches.forEach(m => symbols.add(m.toUpperCase()));
   }
   
@@ -173,7 +174,7 @@ async function fetchAllData(message, requestId) {
   
   // Fetch news if message seems news-related
   const newsKeywords = /news|headlines|market|today|what.*happening|update|latest/i;
-  if (newsKeywords.test(message)) {
+  if (newsKeywords.test(text)) {
     fetches.push(
       getMarketNews()
         .then(data => {
@@ -249,30 +250,47 @@ function decodeToken(token) {
 module.exports = async (req, res) => {
   const requestId = generateRequestId();
   const startTime = Date.now();
-  
+
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
-  
+
+  // Parse body safely (Vercel/serverless may send string or buffer)
+  let body;
+  try {
+    if (req.body == null) {
+      body = {};
+    } else if (typeof req.body === 'string') {
+      body = JSON.parse(req.body || '{}');
+    } else if (Buffer.isBuffer(req.body)) {
+      body = JSON.parse((req.body.toString() || '{}'));
+    } else {
+      body = typeof req.body === 'object' ? req.body : {};
+    }
+  } catch (e) {
+    log(requestId, 'error', 'Invalid request body', { error: e.message });
+    return res.status(400).json({ success: false, message: 'Invalid request body' });
+  }
+
   // Auth
   const token = req.headers.authorization?.replace('Bearer ', '');
   const decoded = decodeToken(token);
-  
+
   if (!decoded) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
-  
+
   const userId = decoded.id || decoded.userId;
-  
+
   // Verify premium access
   let db;
   try {
@@ -280,41 +298,43 @@ module.exports = async (req, res) => {
     if (!db) {
       return res.status(500).json({ success: false, message: 'Database error' });
     }
-    
+
     const [users] = await db.execute(
       'SELECT id, email, role, subscription_status, subscription_plan FROM users WHERE id = ?',
       [userId]
     );
-    
+
     if (users.length === 0) {
       if (db.release) db.release();
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    
+
     const user = users[0];
     const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
     const isSuperAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-    
+
     const hasAccess = isSuperAdmin ||
       ['premium', 'a7fx', 'elite', 'admin', 'super_admin'].includes(user.role) ||
       (user.subscription_status === 'active' && ['aura', 'a7fx'].includes(user.subscription_plan));
-    
+
     if (!hasAccess) {
       if (db.release) db.release();
       return res.status(403).json({ success: false, message: 'Premium subscription required' });
     }
-    
+
     if (db.release) db.release();
   } catch (error) {
     log(requestId, 'error', 'Auth error', { error: error.message });
     if (db?.release) db.release();
     return res.status(500).json({ success: false, message: 'Authentication error' });
   }
-  
-  // Parse request
-  const { message, conversationHistory = [], images = [] } = req.body;
-  
-  if (!message?.trim() && images.length === 0) {
+
+  // Read from parsed body
+  const message = typeof body.message === 'string' ? body.message : '';
+  const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : [];
+  const images = Array.isArray(body.images) ? body.images : [];
+
+  if (!message.trim() && images.length === 0) {
     return res.status(400).json({ success: false, message: 'Message required' });
   }
   

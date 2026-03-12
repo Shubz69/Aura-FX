@@ -320,6 +320,39 @@ const PremiumAI = () => {
     setPreviews(p => { URL.revokeObjectURL(p[i]); return p.filter((_, x) => x !== i); });
   };
 
+  /* paste: support pasting images and text into the message box */
+  const onPaste = async e => {
+    const dt = e.clipboardData;
+    if (!dt) return;
+    const items = Array.from(dt.items).filter(item => item.type.startsWith('image/'));
+    if (!items.length) return; // text-only paste: let default behavior run
+    e.preventDefault();
+    // If clipboard also has text (e.g. copy image from web), append it to input
+    if (dt.types.includes('text/plain')) {
+      const text = dt.getData('text/plain');
+      if (text && text.trim()) setInput(prev => (prev ? prev + '\n' + text : text));
+    }
+    const slotsLeft = 4 - selImages.length;
+    if (slotsLeft <= 0) {
+      toast.error('Maximum 4 images. Remove one to add more.');
+      return;
+    }
+    const files = items.slice(0, slotsLeft).map(item => item.getAsFile()).filter(Boolean);
+    for (const f of files) {
+      if (!f.type.startsWith('image/')) { toast.error(`${f.name || 'File'} is not an image`); continue; }
+      if (f.size > 20 * 1024 * 1024) { toast.error(`${f.name || 'Image'} exceeds 20 MB`); continue; }
+    }
+    if (!files.length) return;
+    try {
+      const b64 = await Promise.all(files.map(f => new Promise((res, rej) => {
+        const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f);
+      })));
+      setSelImages(p => [...p, ...b64]);
+      setPreviews(p => [...p, ...files.map(f => URL.createObjectURL(f))]);
+      toast.info('Image(s) added. You can type a message and send.');
+    } catch { toast.error('Failed to process pasted image(s)'); }
+  };
+
   /* voice toggle */
   const toggleRec = () => {
     if (!recRef.current) { toast.error('Voice not supported in this browser'); return; }
@@ -588,6 +621,7 @@ const PremiumAI = () => {
               rows={1}
               onChange={e => setInput(e.target.value)}
               onKeyDown={onKey}
+              onPaste={onPaste}
               placeholder={isRec ? 'Listening…' : 'Ask AURA anything about trading…'}
               disabled={isLoading}
               className={isRec ? 'recording' : ''}
