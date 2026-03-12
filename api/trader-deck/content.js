@@ -4,7 +4,7 @@
  * PUT (admin) body: { type, date, payload } for outlook; intel briefs are managed via brief-upload + list.
  */
 
-const { executeQuery } = require('../db');
+const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
 
 const VALID_TYPES = ['outlook-daily', 'outlook-weekly', 'intel-daily', 'intel-weekly'];
@@ -53,11 +53,7 @@ async function ensureTables() {
       INDEX idx_tdb_date_period (date, period)
     )
   `);
-  try {
-    await executeQuery(`
-      ALTER TABLE trader_deck_briefs ADD COLUMN file_data LONGBLOB DEFAULT NULL
-    `);
-  } catch (_) { /* column may exist */ }
+  await addColumnIfNotExists('trader_deck_briefs', 'file_data', 'LONGBLOB DEFAULT NULL');
 }
 
 function typeToPeriod(type) {

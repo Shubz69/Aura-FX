@@ -249,16 +249,15 @@ const indexExists = async (tableName, indexName) => {
  */
 const addColumnIfNotExists = async (tableName, columnName, columnDef) => {
   const exists = await columnExists(tableName, columnName);
-  if (exists) {
-    console.log(`Column ${tableName}.${columnName} already exists`);
-    return false;
-  }
-  
+  if (exists) return false;
+
   try {
     await executeQuery(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDef}`);
     console.log(`Added column ${tableName}.${columnName}`);
     return true;
   } catch (error) {
+    const msg = (error.message || '').toString();
+    if (/duplicate column|already exists/i.test(msg)) return false;
     console.error(`Error adding column ${tableName}.${columnName}:`, error.message);
     return false;
   }

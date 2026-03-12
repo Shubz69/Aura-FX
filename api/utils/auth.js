@@ -15,6 +15,7 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_SIGNING_KEY;
 let jwtSecretWarned = false;
+let jwtSignWarned = false;
 
 /**
  * Verify JWT token from Authorization header.
@@ -75,7 +76,10 @@ function signToken(payload, expiresIn = '24h') {
   if (JWT_SECRET && JWT_SECRET.length >= 16) {
     return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256', expiresIn });
   }
-  console.warn('JWT_SECRET not set - using legacy unsigned token. Set JWT_SECRET for production.');
+  if (!jwtSignWarned) {
+    jwtSignWarned = true;
+    console.warn('JWT_SECRET not set - using legacy unsigned token. Set JWT_SECRET for production.');
+  }
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const exp = typeof expiresIn === 'string' ? (expiresIn === '24h' ? Math.floor(Date.now() / 1000) + 86400 : Math.floor(Date.now() / 1000) + 3600) : (Math.floor(Date.now() / 1000) + (expiresIn || 86400));
   const pl = { ...payload, exp };

@@ -143,6 +143,7 @@ module.exports = async (req, res) => {
     const releaseDb = (conn) => { if (conn && typeof conn.release === 'function') { try { conn.release(); } catch (_) {} } };
     let db = null;
     try {
+      try {
       const userId = req.method === 'GET' ? req.query.userId : req.body.userId;
       
       if (!userId) {
@@ -305,29 +306,37 @@ module.exports = async (req, res) => {
         await ensureUserColumn('last_seen DATETIME DEFAULT NULL', 'SELECT last_seen FROM users LIMIT 1');
         await ensureUserColumn('created_at DATETIME DEFAULT CURRENT_TIMESTAMP', 'SELECT created_at FROM users LIMIT 1');
 
-        // Consider users online if they were active in the last 5 minutes
+        // Build SELECT from columns that exist (username/name/avatar may be missing)
+        let hasUsername = false;
+        let hasName = false;
+        let hasAvatar = false;
+        try { await db.execute('SELECT username FROM users LIMIT 1'); hasUsername = true; } catch (_) {}
+        try { await db.execute('SELECT name FROM users LIMIT 1'); hasName = true; } catch (_) {}
+        try { await db.execute('SELECT avatar FROM users LIMIT 1'); hasAvatar = true; } catch (_) {}
+        let selectCols = 'id, email, role, last_seen, created_at';
+        if (hasUsername) selectCols += ', username';
+        if (hasName) selectCols += ', name';
+        if (hasAvatar) selectCols += ', avatar';
+
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        
         const [rows] = await db.execute(
-          `SELECT id, username, email, name, avatar, role, last_seen, created_at
+          `SELECT ${selectCols}
            FROM users 
            WHERE (last_seen IS NOT NULL AND last_seen >= ?)
               OR (last_seen IS NULL AND created_at IS NOT NULL AND created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE))
            ORDER BY COALESCE(last_seen, created_at) DESC`,
           [fiveMinutesAgo]
         );
-        
-        // Get total users count (including deleted/banned status)
         const [allUsers] = await db.execute('SELECT COUNT(*) as total FROM users');
         await db.end();
 
         const onlineUsers = rows.map(row => ({
           id: row.id,
-          username: row.username,
-          email: row.email,
-          name: row.name,
-          avatar: row.avatar ?? null,
-          role: row.role,
+          username: hasUsername ? (row.username || '') : (row.name || ''),
+          email: row.email || '',
+          name: hasName ? (row.name || '') : (row.username || ''),
+          avatar: hasAvatar ? (row.avatar ?? null) : null,
+          role: row.role || 'free',
           lastSeen: row.last_seen
         }));
 

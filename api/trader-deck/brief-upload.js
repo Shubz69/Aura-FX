@@ -5,7 +5,7 @@
  * Note: Vercel/serverless may enforce request body limits (e.g. 4.5MB–50MB); increase in project settings if needed.
  */
 
-const { executeQuery } = require('../db');
+const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
 
 async function ensureBriefsTable() {
@@ -21,9 +21,7 @@ async function ensureBriefsTable() {
       INDEX idx_tdb_date_period (date, period)
     )
   `);
-  try {
-    await executeQuery(`ALTER TABLE trader_deck_briefs ADD COLUMN file_data LONGBLOB DEFAULT NULL`);
-  } catch (_) { /* exists */ }
+  await addColumnIfNotExists('trader_deck_briefs', 'file_data', 'LONGBLOB DEFAULT NULL');
 }
 
 async function requireAdmin(req) {
