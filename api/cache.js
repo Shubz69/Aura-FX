@@ -24,7 +24,7 @@ const stats = {
 // Default TTLs by category
 const DEFAULT_TTLS = {
   LEADERBOARD: 60000,      // 1 minute
-  LEADERBOARD_ALLTIME: 300000, // 5 minutes
+  LEADERBOARD_ALLTIME: 60000,  // 1 minute (match other leaderboard timeframes)
   CHANNELS: 120000,        // 2 minutes
   ONLINE_COUNT: 30000,     // 30 seconds
   USER_SUMMARY: 60000,     // 1 minute

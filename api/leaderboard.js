@@ -5,7 +5,7 @@
  * - daily: XP earned since start of today (midnight UTC)
  * - weekly: XP earned since start of ISO week (Monday 00:00 UTC)
  * - monthly: XP earned since start of month (1st 00:00 UTC)
- * - all-time: Total lifetime XP (SUM of all xp_events)
+ * - all-time: Total lifetime XP (users.xp – canonical source; xp_events not used for rank)
  * 
  * INVARIANT: For any user in the same month: month_xp >= week_xp >= day_xp
  * This is guaranteed because all tabs query the same xp_events table with
@@ -401,7 +401,7 @@ async function queryLeaderboard(timeframe, limit, logger, includeDemo = true) {
   const demoFilter = includeDemo ? '' : 'AND (u.is_demo IS NULL OR u.is_demo = FALSE)';
   
   if (timeframe === 'all-time') {
-    // All-time: SUM of ALL xp_events (no date filter)
+    // All-time: rank by users.xp (canonical total). SUM(xp_events) can lag if inserts fail.
     query = `
       SELECT 
         u.id, u.username, u.name, u.email, 
@@ -409,12 +409,10 @@ async function queryLeaderboard(timeframe, limit, logger, includeDemo = true) {
         COALESCE(u.level, 1) as level, 
         u.avatar, u.role,
         COALESCE(u.is_demo, FALSE) as is_demo,
-        COALESCE(SUM(e.amount), COALESCE(u.xp, 0)) as period_xp,
-        MAX(e.created_at) as last_xp_time
+        COALESCE(u.xp, 0) as period_xp,
+        (SELECT MAX(e.created_at) FROM xp_events e WHERE e.user_id = u.id) as last_xp_time
       FROM users u
-      LEFT JOIN xp_events e ON u.id = e.user_id
       WHERE COALESCE(u.xp, 0) > 0 ${demoFilter}
-      GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo
       ORDER BY period_xp DESC, last_xp_time DESC
       LIMIT ${limit}
     `;
@@ -513,7 +511,7 @@ module.exports = async (req, res) => {
     
     // Check cache
     const cacheTTL = timeframe === 'all-time' ? DEFAULT_TTLS.LEADERBOARD_ALLTIME : DEFAULT_TTLS.LEADERBOARD;
-    const cacheKey = `leaderboard_v8_${timeframe}_${limit}_${prizeEligibleOnly}`;
+    const cacheKey = `leaderboard_v9_${timeframe}_${limit}_${prizeEligibleOnly}`;
     const coalesceKey = `lb_query_${timeframe}_${limit}`;
     
     const cached = getCached(cacheKey, cacheTTL);
