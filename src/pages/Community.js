@@ -728,6 +728,7 @@ const MessageItem = React.memo(({
            JSON.stringify(nextProps.messageReactions[nextProps.message.id]);
 });
     const userDataFetchInFlightRef = useRef(false);
+    const userDataLastFailureRef = useRef(0);
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
@@ -776,12 +777,16 @@ const MessageItem = React.memo(({
                     return prevLevel !== newLevel ? newLevel : prevLevel;
                 });
                 
+                userDataLastFailureRef.current = 0;
                 return updatedUser;
             } else {
+                userDataLastFailureRef.current = Date.now();
                 console.warn('Failed to fetch latest user data:', response.status);
             }
         } catch (error) {
-            console.error('Error fetching latest user data:', error);
+            userDataLastFailureRef.current = Date.now();
+            const isNetwork = (error?.message || '').includes('fetch') || (error?.name === 'TypeError');
+            if (!isNetwork) console.warn('Error fetching latest user data:', error?.message || error);
         } finally {
             userDataFetchInFlightRef.current = false;
         }
@@ -811,12 +816,15 @@ const MessageItem = React.memo(({
         // Fetch latest user data from API periodically (avoid ERR_INSUFFICIENT_RESOURCES: don't poll too fast)
         let xpCheckInterval;
         if (userId) {
-            // Initial fetch after short delay so we don't stack with other mount-time requests
-            const initialDelayId = setTimeout(() => fetchLatestUserData(userId), 3000);
-            // Then check every 60s to reduce load and browser resource exhaustion
+            // Initial fetch after delay so we don't stack with subscription/notifications/channels
+            const initialDelayId = setTimeout(() => fetchLatestUserData(userId), 5000);
+            // Poll every 90s; skip if we had a recent failure (backoff 2 min)
+            const POLL_MS = 90000;
+            const BACKOFF_MS = 120000;
             xpCheckInterval = setInterval(() => {
+                if (userDataLastFailureRef.current && (Date.now() - userDataLastFailureRef.current) < BACKOFF_MS) return;
                 fetchLatestUserData(userId);
-            }, 60000);
+            }, POLL_MS);
             return () => {
                 window.removeEventListener('xpUpdated', handleXPUpdate);
                 clearTimeout(initialDelayId);
@@ -827,7 +835,7 @@ const MessageItem = React.memo(({
             // Fallback to localStorage check if userId not available yet
             xpCheckInterval = setInterval(() => {
                 const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
-                if (storedUserData.xp !== undefined && storedUserData.level !== undefined) {
+                if (storedUserData?.xp !== undefined && storedUserData?.level !== undefined) {
                     const currentXP = parseFloat(storedUserData.xp || 0);
                     const currentLevel = parseInt(storedUserData.level || 1);
                     
@@ -852,7 +860,7 @@ const MessageItem = React.memo(({
                         return prevLevel !== currentLevel ? currentLevel : prevLevel;
                     });
                 }
-            }, 2000);
+            }, 5000);
         }
         
         return () => {
@@ -2690,7 +2698,8 @@ if (window.requestAnimationFrame) {
             if (cachedMessages.length > 0) {
                 setMessages(cachedMessages);
             } else {
-                console.warn('Backend API unavailable, no cached messages:', apiError.message);
+                const isNetwork = (apiError?.message || '').includes('fetch') || (apiError?.message || '').includes('Network');
+                if (!isNetwork) console.warn('Backend API unavailable, no cached messages:', apiError.message);
             }
         }
     } finally {
@@ -3298,13 +3307,7 @@ if (window.requestAnimationFrame) {
             // Set user level
             setUserLevel(calculatedLevel);
             
-            // Fetch latest user data from API to ensure XP/level are up-to-date
-            if (storedUserData.id) {
-                // Small delay to ensure component is ready
-                setTimeout(() => {
-                    fetchLatestUserData(storedUserData.id);
-                }, 500);
-            }
+            // (User data is polled by 5s initial + 90s interval in XP effect; no extra fetch here to avoid request storm)
             
             // If coming from payment success, immediately check subscription status from DB
             if ((paymentSuccess || sessionId) && storedUserData.id) {
@@ -3314,7 +3317,7 @@ if (window.requestAnimationFrame) {
                 }, 500);
             }
         }
-    }, [navigate, authUser, checkSubscriptionFromDB, fetchLatestUserData, refreshEntitlements, refreshChannelList]);
+    }, [navigate, authUser, checkSubscriptionFromDB, refreshEntitlements, refreshChannelList]);
 
     // Prevent page scrolling on Community only - Discord-like behavior; always restore on unmount/route
     useEffect(() => {
@@ -3566,8 +3569,8 @@ if (window.requestAnimationFrame) {
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Slower intervals to prevent ERR_INSUFFICIENT_RESOURCES (10s when WS up, 6s when down)
-        const pollInterval = isConnected ? 10000 : 6000;
+        // Slower intervals to prevent ERR_INSUFFICIENT_RESOURCES (15s when WS up, 10s when down)
+        const pollInterval = isConnected ? 15000 : 10000;
         
         const pollMessages = async () => {
             if (messagesPollInFlightRef.current) return;

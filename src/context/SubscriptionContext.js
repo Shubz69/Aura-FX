@@ -100,7 +100,8 @@ export const SubscriptionProvider = ({ children }) => {
         }
       }
     } catch (err) {
-      console.error('Subscription fetch error:', err);
+      const isNetwork = (err?.message || '').toLowerCase().includes('fetch') || err?.name === 'TypeError';
+      if (!isNetwork) console.error('Subscription fetch error:', err);
       setError(err.message);
       
       // FALLBACK: admins/super admin by email should always have access if API fails

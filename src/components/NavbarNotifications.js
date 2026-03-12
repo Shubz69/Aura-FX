@@ -13,11 +13,14 @@ const NavbarNotifications = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const bellRef = useRef(null);
+  const fetchInFlightRef = useRef(false);
   const token = localStorage.getItem('token');
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   const fetchUnreadCount = useCallback(async () => {
     if (!token || !user) return;
+    if (fetchInFlightRef.current) return;
+    fetchInFlightRef.current = true;
     try {
       const res = await fetch(`${baseUrl}/api/notifications?limit=1`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -29,14 +32,17 @@ const NavbarNotifications = () => {
         }
       }
     } catch (e) {
-      console.warn('Failed to fetch notification count:', e.message);
+      // Avoid console spam on network errors
+      if ((e?.message || '').indexOf('fetch') === -1) console.warn('Failed to fetch notification count:', e?.message);
+    } finally {
+      fetchInFlightRef.current = false;
     }
   }, [token, user, baseUrl]);
 
   useEffect(() => {
     if (!user) return;
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 15000); // poll every 15s for fresher badge
+    const interval = setInterval(fetchUnreadCount, 45000); // poll every 45s to reduce ERR_INSUFFICIENT_RESOURCES
     const onFocus = () => fetchUnreadCount();
     window.addEventListener('focus', onFocus);
     return () => {
