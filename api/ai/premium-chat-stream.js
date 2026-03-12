@@ -247,7 +247,7 @@ function decodeToken(token) {
 // Main Handler - SSE Streaming
 // ============================================================================
 
-module.exports = async (req, res) => {
+async function handler(req, res) {
   const requestId = generateRequestId();
   const startTime = Date.now();
 
@@ -291,31 +291,53 @@ module.exports = async (req, res) => {
 
   const userId = decoded.id || decoded.userId;
 
-  // Verify premium access
+  // Verify premium access (resilient to missing columns or DB errors)
   let db;
   try {
     db = await getDbConnection();
     if (!db) {
-      return res.status(500).json({ success: false, message: 'Database error' });
+      log(requestId, 'error', 'No DB connection');
+      return res.status(503).json({ success: false, message: 'Service temporarily unavailable. Please try again.' });
     }
 
-    const [users] = await db.execute(
-      'SELECT id, email, role, subscription_status, subscription_plan FROM users WHERE id = ?',
-      [userId]
-    );
+    let users;
+    try {
+      [users] = await db.execute(
+        'SELECT id, email, role, subscription_status, subscription_plan FROM users WHERE id = ?',
+        [userId]
+      );
+    } catch (queryErr) {
+      const isUnknownColumn = (queryErr.code === 'ER_BAD_FIELD_ERROR' || (queryErr.message || '').includes('Unknown column'));
+      if (isUnknownColumn) {
+        try {
+          [users] = await db.execute('SELECT id, email, role FROM users WHERE id = ?', [userId]);
+        } catch (fallbackErr) {
+          log(requestId, 'error', 'Auth fallback query error', { error: fallbackErr.message });
+          if (db.release) db.release();
+          return res.status(503).json({ success: false, message: 'Service temporarily unavailable. Please try again.' });
+        }
+      } else {
+        log(requestId, 'error', 'Auth query error', { error: queryErr.message, code: queryErr.code });
+        if (db.release) db.release();
+        return res.status(503).json({ success: false, message: 'Service temporarily unavailable. Please try again.' });
+      }
+    }
 
-    if (users.length === 0) {
+    if (!users || users.length === 0) {
       if (db.release) db.release();
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     const user = users[0];
     const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
-    const isSuperAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    const isSuperAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    const subStatus = (user.subscription_status || '').toLowerCase();
+    const subPlan = (user.subscription_plan || '').toLowerCase();
 
     const hasAccess = isSuperAdmin ||
-      ['premium', 'a7fx', 'elite', 'admin', 'super_admin'].includes(user.role) ||
-      (user.subscription_status === 'active' && ['aura', 'a7fx'].includes(user.subscription_plan));
+      ['premium', 'a7fx', 'elite', 'admin', 'super_admin'].includes(role) ||
+      (subStatus === 'active' && ['aura', 'a7fx'].includes(subPlan));
 
     if (!hasAccess) {
       if (db.release) db.release();
@@ -324,7 +346,7 @@ module.exports = async (req, res) => {
 
     if (db.release) db.release();
   } catch (error) {
-    log(requestId, 'error', 'Auth error', { error: error.message });
+    log(requestId, 'error', 'Auth error', { error: error.message, stack: error.stack });
     if (db?.release) db.release();
     return res.status(500).json({ success: false, message: 'Authentication error' });
   }
@@ -540,6 +562,27 @@ module.exports = async (req, res) => {
       res.end();
     } catch {
       // Response already ended
+    }
+  }
+}
+
+// Top-level catch: if handler throws before sending, return 500 with body so client gets a proper error
+module.exports = async (req, res) => {
+  try {
+    await handler(req, res);
+  } catch (err) {
+    const requestId = (req && req.headers && req.headers['x-vercel-id']) || 'unknown';
+    console.error(JSON.stringify({
+      requestId,
+      level: 'error',
+      message: 'Unhandled error in premium-chat-stream',
+      error: err.message,
+      stack: err.stack,
+      timestamp: new Date().toISOString()
+    }));
+    if (!res.headersSent) {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ success: false, message: 'An error occurred. Please try again.' });
     }
   }
 };

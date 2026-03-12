@@ -179,6 +179,10 @@ export default function TradeValidatorView() {
     try {
       await Api.createAuraAnalysisTrade(payload);
       toast.success('Trade saved');
+      // Clear checklist state and localStorage so it resets when user returns to Checklist
+      try {
+        localStorage.removeItem('aura-trade-validator-checked');
+      } catch {}
       setChecked(new Set());
       setShowTradeForm(false);
       Api.getAuraAnalysisPnl().then((res) => {

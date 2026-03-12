@@ -4,8 +4,8 @@ import '../../styles/aura-analysis/AuraAnalysisShell.css';
 
 const BASE = '/trader-deck/trade-validator';
 const TABS = [
-  { path: `${BASE}/checklist`, label: 'Checklist' },
   { path: `${BASE}/overview`, label: 'Overview' },
+  { path: `${BASE}/checklist`, label: 'Checklist' },
   { path: `${BASE}/calculator`, label: 'Trade Calculator' },
   { path: `${BASE}/journal`, label: 'Trade Journal' },
   { path: `${BASE}/analytics`, label: 'Analytics' },
