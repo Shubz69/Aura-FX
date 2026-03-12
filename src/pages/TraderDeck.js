@@ -151,6 +151,9 @@ export default function TraderDeck() {
           />
         </div>
 
+        {/* Line under header + date row (clean separator before content) */}
+        <div className="td-deck-header-line" />
+
         {/* Content below date selector: centered max-width container, then tab content */}
         <div className="td-deck-content">
           <div className="td-deck-content-box">

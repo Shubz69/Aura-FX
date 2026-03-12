@@ -70,7 +70,15 @@
   gap: 8px;
 }
 
-/* Calendar bar row: date + arrows where the line was; no line, no box */
+/* Line under header + date row – sits exactly below tabs and date for a clean break */
+.td-deck-header-line {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 0 20px 0;
+  width: 100%;
+}
+
+/* Calendar bar row: date + arrows; no box */
 .td-deck-calendar-bar-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -78,7 +86,7 @@
   justify-content: center;
   gap: 16px;
   margin-top: 4px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   position: relative;
 }
 
