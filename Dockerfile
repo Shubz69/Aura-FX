@@ -24,9 +24,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 
-# Copy built app and server
+# Copy built app and server (from builder so context is not required)
 COPY --from=builder /app/build ./build
-COPY server.js ./
+COPY --from=builder /app/server.js ./
 
 ENV NODE_ENV=production
 EXPOSE 8080
