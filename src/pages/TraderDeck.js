@@ -86,40 +86,40 @@ export default function TraderDeck() {
           </nav>
         </div>
 
-        <div className="td-deck-body">
-          {/* Sidebar: calendar (same UI/UX as Journal) */}
-          <aside className="td-deck-sidebar">
-            <div className="td-deck-sidebar-inner">
-              <TraderDeckCalendar
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-                calendarMonth={calendarMonth}
-                onPrevMonth={handlePrevMonth}
-                onNextMonth={handleNextMonth}
-                datesWithContent={datesWithContent}
-              />
-            </div>
-          </aside>
-
-          {/* Main content */}
-          <main className="td-deck-main">
-            <div className="td-deck-main-inner">
-              {mainTab === 'outlook' && (
-                <MarketOutlookView
+        {/* Single main box (calendar-style): fills page, contains calendar + content */}
+        <div className="td-deck-main-box">
+          <div className="td-deck-body">
+            <aside className="td-deck-sidebar">
+              <div className="td-deck-sidebar-inner">
+                <TraderDeckCalendar
                   selectedDate={selectedDate}
-                  period={subTab}
-                  canEdit={canEdit}
+                  onSelectDate={setSelectedDate}
+                  calendarMonth={calendarMonth}
+                  onPrevMonth={handlePrevMonth}
+                  onNextMonth={handleNextMonth}
+                  datesWithContent={datesWithContent}
                 />
-              )}
-              {mainTab === 'intelligence' && (
-                <MarketIntelligenceBriefsView
-                  selectedDate={selectedDate}
-                  period={subTab}
-                  canEdit={canEdit}
-                />
-              )}
-            </div>
-          </main>
+              </div>
+            </aside>
+            <main className="td-deck-main">
+              <div className="td-deck-main-inner">
+                {mainTab === 'outlook' && (
+                  <MarketOutlookView
+                    selectedDate={selectedDate}
+                    period={subTab}
+                    canEdit={canEdit}
+                  />
+                )}
+                {mainTab === 'intelligence' && (
+                  <MarketIntelligenceBriefsView
+                    selectedDate={selectedDate}
+                    period={subTab}
+                    canEdit={canEdit}
+                  />
+                )}
+              </div>
+            </main>
+          </div>
         </div>
       </div>
     </div>
