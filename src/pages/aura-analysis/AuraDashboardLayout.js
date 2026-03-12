@@ -3,7 +3,6 @@ import { NavLink, Outlet, Link } from 'react-router-dom';
 import '../../styles/aura-analysis/AuraDashboard.css';
 
 const TABS = [
-  { path: 'overview', label: 'Overview' },
   { path: 'performance', label: 'Performance' },
   { path: 'risk-lab', label: 'Risk Lab' },
   { path: 'edge-analyzer', label: 'Edge Analyzer' },
@@ -29,7 +28,7 @@ export default function AuraDashboardLayout() {
                 key={path}
                 to={`${base}/${path}`}
                 className={({ isActive }) => `aura-dashboard-tab ${isActive ? 'active' : ''}`}
-                end={path === 'overview'}
+                end={path === 'performance'}
               >
                 {label}
               </NavLink>

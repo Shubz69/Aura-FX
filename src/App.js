@@ -219,10 +219,9 @@ function AppRoutes() {
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
                             <Route index element={<Navigate to="/aura-analysis/ai" replace />} />
                             <Route path="ai" element={<ConnectionHub />} />
-                            <Route path="overview" element={<Navigate to="/aura-analysis/dashboard/overview" replace />} />
+                            <Route path="overview" element={<Navigate to="/aura-analysis/dashboard/performance" replace />} />
                             <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
-                                <Route index element={<Navigate to="overview" replace />} />
-                                <Route path="overview" element={<AuraOverview />} />
+                                <Route index element={<Navigate to="performance" replace />} />
                                 <Route path="performance" element={<AuraPerformance />} />
                                 <Route path="risk-lab" element={<AuraRiskLab />} />
                                 <Route path="edge-analyzer" element={<AuraEdgeAnalyzer />} />

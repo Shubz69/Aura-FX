@@ -102,7 +102,7 @@ export default function ConnectionHub() {
 
   const handleTransitionComplete = () => {
     setTransitioning(false);
-    navigate('/aura-analysis/dashboard/overview', { state: { fromTransition: true } });
+    navigate('/aura-analysis/dashboard/performance', { state: { fromTransition: true } });
   };
 
   // Format currency
