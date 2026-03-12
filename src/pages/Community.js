@@ -727,10 +727,12 @@ const MessageItem = React.memo(({
            JSON.stringify(prevProps.messageReactions[prevProps.message.id]) === 
            JSON.stringify(nextProps.messageReactions[nextProps.message.id]);
 });
+    const userDataFetchInFlightRef = useRef(false);
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
-        
+        if (userDataFetchInFlightRef.current) return null;
+        userDataFetchInFlightRef.current = true;
         try {
             const API_BASE_URL = window.location.origin;
             const token = localStorage.getItem('token');
@@ -780,6 +782,8 @@ const MessageItem = React.memo(({
             }
         } catch (error) {
             console.error('Error fetching latest user data:', error);
+        } finally {
+            userDataFetchInFlightRef.current = false;
         }
         
         return null;
@@ -807,14 +811,19 @@ const MessageItem = React.memo(({
         // Fetch latest user data from API periodically (avoid ERR_INSUFFICIENT_RESOURCES: don't poll too fast)
         let xpCheckInterval;
         if (userId) {
-            // Initial fetch on mount
-            fetchLatestUserData(userId);
-            
-            // Then check periodically (30s to reduce request volume and browser resource exhaustion)
+            // Initial fetch after short delay so we don't stack with other mount-time requests
+            const initialDelayId = setTimeout(() => fetchLatestUserData(userId), 3000);
+            // Then check every 60s to reduce load and browser resource exhaustion
             xpCheckInterval = setInterval(() => {
                 fetchLatestUserData(userId);
-            }, 30000);
-        } else {
+            }, 60000);
+            return () => {
+                window.removeEventListener('xpUpdated', handleXPUpdate);
+                clearTimeout(initialDelayId);
+                if (xpCheckInterval) clearInterval(xpCheckInterval);
+            };
+        }
+        if (!userId) {
             // Fallback to localStorage check if userId not available yet
             xpCheckInterval = setInterval(() => {
                 const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');

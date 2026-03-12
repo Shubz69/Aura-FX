@@ -40,9 +40,9 @@ const getDbPool = () => {
   }
 
   // Pool size: per serverless instance. Total DB connections ≈ instances × connectionLimit.
-  // Set MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT in Vercel when you raise Railway max_connections (e.g. for 500+ users).
-  const defaultLimit = process.env.VERCEL ? 5 : 100;
-  const defaultQueue = process.env.VERCEL ? 10 : 500;
+  // Set MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT in Vercel if you need more (Railway max_connections=200 supports this).
+  const defaultLimit = process.env.VERCEL ? 8 : 100;
+  const defaultQueue = process.env.VERCEL ? 16 : 500;
   const connectionLimit = Math.max(1, parseInt(process.env.MYSQL_POOL_SIZE, 10) || defaultLimit);
   const queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
 
