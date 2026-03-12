@@ -1,5 +1,5 @@
-# Use Node 20 LTS - bypasses Nixpacks Node 18 EOL issue on Railway
-FROM node:20-alpine AS builder
+# Use Node 20 LTS (Debian) - native deps (bcrypt, mysql2) build without extra tools
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Production image
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
