@@ -395,6 +395,10 @@
   padding: 0;
 }
 
+.td-deck-dashboard-wrap:has(.td-trader-desk-shell) {
+  max-width: 1700px;
+}
+
 /* Grid: full width, panels wider so content isn’t elongated */
 .td-deck-content .td-mi-grid {
   width: 100%;
