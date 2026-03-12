@@ -1,174 +1,211 @@
 /**
- * Market Data Adapter
- * Fetches real-time prices from multiple sources with caching and circuit breakers
+ * Market Data Adapter – data-first, provider priority with retry and fallback.
+ * Order: Twelve Data (primary) → Finnhub → Alpha Vantage → Yahoo.
+ * Uses central symbol registry and validators. Never returns fabricated prices.
  */
 
 const axios = require('axios');
 const { DataAdapter, CONFIG } = require('../index');
 const { getCached, setCached } = require('../../../cache');
+const { toCanonical, forProvider, getAssetClass } = require('../../utils/symbol-registry');
+const { withRetry } = require('../../utils/retries');
+const { validateQuote } = require('../../utils/validators');
+
+const PROVIDER_ORDER = ['twelvedata', 'finnhub', 'alphavantage', 'yahoo'];
 
 class MarketDataAdapter extends DataAdapter {
   constructor() {
     super('MarketData', { timeout: CONFIG.TIMEOUTS.ADAPTER_DEFAULT });
-    this.sources = ['yahoo', 'finnhub', 'alphavantage', 'twelvedata'];
+    this.sources = PROVIDER_ORDER;
     this.sourceCircuits = new Map();
-    
-    // Initialize circuit breakers for each source
     this.sources.forEach(source => {
-      this.sourceCircuits.set(source, {
-        failures: 0,
-        lastFailure: null,
-        state: 'CLOSED'
-      });
+      this.sourceCircuits.set(source, { failures: 0, lastFailure: null, state: 'CLOSED' });
     });
   }
 
-  // Symbol normalization
   normalizeSymbol(symbol) {
-    const normalized = symbol.trim().toUpperCase().replace(/\s+/g, '');
-    
-    const mappings = {
-      'GOLD': 'XAUUSD', 'XAU': 'XAUUSD',
-      'SILVER': 'XAGUSD', 'XAG': 'XAGUSD',
-      'BITCOIN': 'BTCUSD', 'BTC': 'BTCUSD',
-      'ETHEREUM': 'ETHUSD', 'ETH': 'ETHUSD',
-      'OIL': 'CL=F', 'CRUDE': 'CL=F', 'WTI': 'CL=F',
-      'SP500': '^GSPC', 'SPX': '^GSPC',
-      'DOW': '^DJI', 'NASDAQ': '^IXIC'
-    };
-
-    return mappings[normalized] || normalized;
+    return toCanonical(symbol || '');
   }
 
-  // Detect instrument type
   getInstrumentType(symbol) {
-    const normalized = this.normalizeSymbol(symbol);
-    
-    if (normalized.includes('XAU') || normalized.includes('XAG')) return 'commodity';
-    if (/^[A-Z]{6}$/.test(normalized) && (normalized.includes('USD') || normalized.includes('EUR'))) return 'forex';
-    if (normalized.includes('BTC') || normalized.includes('ETH')) return 'crypto';
-    if (normalized.startsWith('^') || normalized === 'SPY' || normalized === 'QQQ') return 'index';
-    if (normalized.endsWith('=F')) return 'futures';
-    return 'stock';
+    return getAssetClass(symbol || '');
   }
 
-  // Fetch from Yahoo Finance
-  async fetchYahoo(symbol) {
-    const normalized = this.normalizeSymbol(symbol);
-    let yahooSymbol = normalized;
-    
-    // Convert to Yahoo format
-    if (normalized === 'XAUUSD') yahooSymbol = 'GC=F';
-    else if (normalized === 'XAGUSD') yahooSymbol = 'SI=F';
-    else if (normalized.length === 6 && this.getInstrumentType(symbol) === 'forex') {
-      yahooSymbol = `${normalized}=X`;
-    } else if (normalized.includes('BTC')) yahooSymbol = 'BTC-USD';
-    else if (normalized.includes('ETH')) yahooSymbol = 'ETH-USD';
+  /** Twelve Data – primary for live prices, candles, intraday. */
+  async fetchTwelveData(symbol) {
+    const apiKey = process.env.TWELVE_DATA_API_KEY;
+    if (!apiKey) return null;
+    const canonical = toCanonical(symbol);
+    const tdSymbol = forProvider(canonical, 'twelvedata');
 
-    const response = await axios.get(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`,
-      { params: { interval: '1m', range: '1d' }, timeout: 4000 }
-    );
+    const response = await axios.get('https://api.twelvedata.com/price', {
+      params: { symbol: tdSymbol, apikey: apiKey },
+      timeout: 5000
+    });
 
-    if (response.data?.chart?.result?.[0]?.meta?.regularMarketPrice) {
-      const meta = response.data.chart.result[0].meta;
-      return {
-        symbol: normalized,
-        price: meta.regularMarketPrice,
-        open: meta.regularMarketOpen || meta.previousClose,
-        high: meta.regularMarketDayHigh,
-        low: meta.regularMarketDayLow,
-        previousClose: meta.previousClose,
-        change: meta.regularMarketPrice - meta.previousClose,
-        changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100).toFixed(2),
-        volume: meta.regularMarketVolume || 0,
-        timestamp: Date.now(),
-        source: 'Yahoo Finance'
-      };
+    if (response.data?.price != null) {
+      const price = parseFloat(response.data.price);
+      if (Number.isFinite(price) && price > 0) {
+        return {
+          symbol: canonical,
+          price,
+          open: response.data.open != null ? parseFloat(response.data.open) : undefined,
+          high: response.data.high != null ? parseFloat(response.data.high) : undefined,
+          low: response.data.low != null ? parseFloat(response.data.low) : undefined,
+          previousClose: response.data.close != null ? parseFloat(response.data.close) : undefined,
+          timestamp: Date.now(),
+          source: 'Twelve Data'
+        };
+      }
     }
     return null;
   }
 
-  // Fetch from Finnhub
+  /** Finnhub – secondary quotes, tick data. */
   async fetchFinnhub(symbol) {
     const apiKey = process.env.FINNHUB_API_KEY;
     if (!apiKey) return null;
-
-    const normalized = this.normalizeSymbol(symbol);
-    let finnhubSymbol = normalized;
-    
-    // Convert to Finnhub format
-    if (normalized === 'XAUUSD') finnhubSymbol = 'OANDA:XAU_USD';
-    else if (normalized === 'XAGUSD') finnhubSymbol = 'OANDA:XAG_USD';
-    else if (this.getInstrumentType(symbol) === 'forex') {
-      finnhubSymbol = `OANDA:${normalized.slice(0,3)}_${normalized.slice(3)}`;
-    }
+    const canonical = toCanonical(symbol);
+    const finnhubSymbol = forProvider(canonical, 'finnhub');
 
     const response = await axios.get('https://finnhub.io/api/v1/quote', {
       params: { symbol: finnhubSymbol, token: apiKey },
-      timeout: 4000
+      timeout: 5000
     });
 
     if (response.data?.c > 0) {
       const q = response.data;
       return {
-        symbol: normalized,
+        symbol: canonical,
         price: q.c,
         open: q.o,
         high: q.h,
         low: q.l,
         previousClose: q.pc,
         change: q.c - q.pc,
-        changePercent: ((q.c - q.pc) / q.pc * 100).toFixed(2),
-        timestamp: Date.now(),
+        changePercent: q.pc ? ((q.c - q.pc) / q.pc * 100).toFixed(2) : undefined,
+        timestamp: (q.t && q.t > 1e9 ? q.t : Date.now() / 1000) * 1000,
         source: 'Finnhub'
       };
     }
     return null;
   }
 
-  // Main fetch function - tries sources in parallel with circuit breakers
+  /** Alpha Vantage – backup indicators and market feeds. */
+  async fetchAlphaVantage(symbol) {
+    const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+    if (!apiKey || apiKey === 'demo') return null;
+    const canonical = toCanonical(symbol);
+    const avSymbol = forProvider(canonical, 'alphavantage');
+
+    const response = await axios.get('https://www.alphavantage.co/query', {
+      params: { function: 'GLOBAL_QUOTE', symbol: avSymbol, apikey: apiKey },
+      timeout: 6000
+    });
+
+    const quote = response.data?.['Global Quote'];
+    if (quote && !response.data.Note) {
+      const price = parseFloat(quote['05. price']);
+      if (Number.isFinite(price) && price > 0) {
+        return {
+          symbol: (quote['01. symbol'] || '').replace('FX:', '') || canonical,
+          price,
+          open: parseFloat(quote['02. open']),
+          high: parseFloat(quote['03. high']),
+          low: parseFloat(quote['04. low']),
+          previousClose: parseFloat(quote['08. previous close']),
+          change: parseFloat(quote['09. change']),
+          timestamp: Date.now(),
+          source: 'Alpha Vantage'
+        };
+      }
+    }
+    return null;
+  }
+
+  /** Yahoo Finance – fallback. */
+  async fetchYahoo(symbol) {
+    const canonical = toCanonical(symbol);
+    const yahooSymbol = forProvider(canonical, 'yahoo');
+
+    const response = await axios.get(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`,
+      { params: { interval: '1m', range: '1d' }, timeout: 5000 }
+    );
+
+    const meta = response.data?.chart?.result?.[0]?.meta;
+    if (meta?.regularMarketPrice > 0) {
+      const prev = meta.previousClose || meta.chartPreviousClose || meta.regularMarketPrice;
+      return {
+        symbol: canonical,
+        price: meta.regularMarketPrice,
+        open: meta.regularMarketOpen || prev,
+        high: meta.regularMarketDayHigh,
+        low: meta.regularMarketDayLow,
+        previousClose: prev,
+        change: meta.regularMarketPrice - prev,
+        changePercent: prev ? ((meta.regularMarketPrice - prev) / prev * 100).toFixed(2) : undefined,
+        volume: meta.regularMarketVolume || 0,
+        timestamp: meta.regularMarketTime ? meta.regularMarketTime * 1000 : Date.now(),
+        source: 'Yahoo Finance'
+      };
+    }
+    return null;
+  }
+
+  async _trySource(sourceName, symbol) {
+    const circuit = this.sourceCircuits.get(sourceName);
+    if (circuit?.state === 'OPEN' && circuit.lastFailure && (Date.now() - circuit.lastFailure) < 30000) {
+      return null;
+    }
+    let result = null;
+    try {
+      if (sourceName === 'twelvedata') result = await this.fetchTwelveData(symbol);
+      else if (sourceName === 'finnhub') result = await this.fetchFinnhub(symbol);
+      else if (sourceName === 'alphavantage') result = await this.fetchAlphaVantage(symbol);
+      else if (sourceName === 'yahoo') result = await this.fetchYahoo(symbol);
+      if (result?.price > 0) {
+        if (circuit) { circuit.failures = 0; circuit.state = 'CLOSED'; }
+        return result;
+      }
+    } catch (e) {
+      if (circuit) { circuit.failures = (circuit.failures || 0) + 1; circuit.lastFailure = Date.now(); if (circuit.failures >= 3) circuit.state = 'OPEN'; }
+    }
+    return null;
+  }
+
   async fetch(params) {
     const { symbol } = params;
     if (!symbol) return null;
 
-    const cacheKey = `market_data:${this.normalizeSymbol(symbol)}`;
+    const canonical = toCanonical(symbol);
+    const cacheKey = `market_data:${canonical}`;
     const cached = getCached(cacheKey, CONFIG.CACHE_TTL.MARKET_DATA);
-    if (cached) {
-      return { ...cached, cached: true };
+    if (cached && cached.price > 0) {
+      const validation = validateQuote(cached);
+      if (validation.valid) return { ...cached, cached: true };
     }
 
-    // Try sources in parallel
-    const fetchPromises = [];
-    
-    // Yahoo Finance (most reliable, free)
-    fetchPromises.push(
-      this.fetchYahoo(symbol).catch(e => null)
-    );
-    
-    // Finnhub (good for forex/commodities)
-    if (process.env.FINNHUB_API_KEY) {
-      fetchPromises.push(
-        this.fetchFinnhub(symbol).catch(e => null)
-      );
-    }
-
-    const results = await Promise.allSettled(fetchPromises);
-    
-    // Return first successful result
-    for (const result of results) {
-      if (result.status === 'fulfilled' && result.value?.price > 0) {
-        const data = result.value;
-        setCached(cacheKey, data);
-        return data;
+    // Primary then fallbacks: try each source with 1 retry
+    for (const sourceName of PROVIDER_ORDER) {
+      const { ok, data } = await withRetry(async () => {
+        const r = await this._trySource(sourceName, symbol);
+        if (r && r.price > 0) return r;
+        throw new Error('No data');
+      }, { maxAttempts: 2 });
+      if (ok && data && data.price > 0) {
+        const validation = validateQuote(data);
+        if (validation.valid) {
+          setCached(cacheKey, data);
+          return data;
+        }
       }
     }
 
-    // Return safe default
     return {
-      symbol: this.normalizeSymbol(symbol),
+      symbol: canonical,
       price: 0,
-      error: 'Data temporarily unavailable',
+      error: 'Live market data temporarily unavailable. Analysis will use general market context.',
       timestamp: Date.now(),
       source: 'fallback'
     };

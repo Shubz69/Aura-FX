@@ -10,6 +10,9 @@
  */
 
 const { getDbConnection } = require('../db');
+const MarketDataAdapter = require('./data-layer/adapters/market-data-adapter');
+
+const marketDataAdapter = new MarketDataAdapter();
 
 // ============================================================================
 // Configuration
@@ -70,36 +73,34 @@ async function fetchWithTimeout(url, options = {}, timeout = CONFIG.ADAPTER_TIME
   }
 }
 
+/**
+ * Fetch market data via central adapter (single source of truth).
+ * Uses symbol registry, validators, and provider fallback; never fabricates prices.
+ */
 async function getMarketData(symbol) {
-  const cacheKey = `market_${symbol}`;
-  const cached = getCached(cacheKey);
-  if (cached) return { ...cached, fromCache: true };
-  
   try {
-    const response = await fetchWithTimeout(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`
-    );
-    
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    const quote = data.chart?.result?.[0];
-    if (!quote) return null;
-    
-    const result = {
-      symbol,
-      price: quote.meta?.regularMarketPrice,
-      previousClose: quote.meta?.previousClose,
-      change: quote.meta?.regularMarketPrice - quote.meta?.previousClose,
-      changePercent: ((quote.meta?.regularMarketPrice - quote.meta?.previousClose) / quote.meta?.previousClose * 100).toFixed(2),
-      high: quote.meta?.regularMarketDayHigh,
-      low: quote.meta?.regularMarketDayLow
+    const result = await marketDataAdapter.fetch({ symbol });
+    if (!result || result.price == null || result.price <= 0) {
+      return { symbol, price: 0, unavailable: true };
+    }
+    const prev = result.previous_close;
+    const change = prev != null ? result.price - prev : null;
+    const changePercent = (change != null && prev != null && prev !== 0)
+      ? ((change / prev) * 100).toFixed(2)
+      : null;
+    return {
+      symbol: result.symbol,
+      price: result.price,
+      previousClose: prev,
+      change,
+      changePercent,
+      high: result.high,
+      low: result.low,
+      source: result.source,
+      fromCache: result.cached || false
     };
-    
-    setCache(cacheKey, result);
-    return result;
   } catch (error) {
-    return null;
+    return { symbol, price: 0, unavailable: true };
   }
 }
 
@@ -152,31 +153,18 @@ async function fetchAllData(message, requestId) {
     matches.forEach(m => symbols.add(m.toUpperCase()));
   }
   
-  // Symbol mapping for Yahoo Finance
-  const symbolMap = {
-    'BTCUSD': 'BTC-USD', 'BTC': 'BTC-USD',
-    'ETHUSD': 'ETH-USD', 'ETH': 'ETH-USD',
-    'XAUUSD': 'GC=F', 'GOLD': 'GC=F', 'XAU': 'GC=F',
-    'EURUSD': 'EURUSD=X', 'EUR/USD': 'EURUSD=X',
-    'GBPUSD': 'GBPUSD=X', 'GBP/USD': 'GBPUSD=X',
-    'US500': '^GSPC', 'SPX': '^GSPC', 'SPY': 'SPY',
-    'NAS100': '^NDX', 'NDX': '^NDX', 'QQQ': 'QQQ',
-    'US30': '^DJI', 'DJI': '^DJI'
-  };
-  
   const fetches = [];
   
-  // Fetch market data for detected symbols
-  const symbolsToFetch = Array.from(symbols).slice(0, 3); // Max 3 symbols
+  // Fetch market data for detected symbols (canonical symbols; adapter handles provider mapping)
+  const symbolsToFetch = Array.from(symbols).slice(0, 3);
   for (const sym of symbolsToFetch) {
-    const yahooSymbol = symbolMap[sym] || sym;
     fetches.push(
-      getMarketData(yahooSymbol)
+      getMarketData(sym)
         .then(data => {
           if (data) {
             results.market = results.market || [];
             results.market.push(data);
-            results.sources.push({ type: 'market', symbol: sym, cached: data.fromCache });
+            results.sources.push({ type: 'market', symbol: data.symbol, cached: data.fromCache });
           }
         })
         .catch(() => results.errors.push(`Market data for ${sym} unavailable`))
@@ -225,7 +213,7 @@ const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant. You he
 
 **Position sizing & risk**: When asked about position size, use the formula: (Account × Risk%) / (Entry - Stop Loss in price units). For forex use pips (0.0001 for most pairs, 0.01 for JPY). Always show the calculation step-by-step. Recommend 1-2% risk per trade.
 
-**Response style**: Be direct and actionable. Use **bold** for key levels and numbers. Structure with clear steps or sections when explaining concepts. Include specific figures when data is provided. Keep explanations tight—avoid filler. If data is unavailable, use general market knowledge and note it.
+**Response style**: Be direct and actionable. Use **bold** for key levels and numbers. Structure with clear steps or sections when explaining concepts. Include specific figures only when provided in the context above. Every price, level, or number in your response MUST come from the Live Market Data or context provided—never invent or estimate values. If data is unavailable, say so clearly and do not fabricate numbers.
 
 **Format**: Use compact bullet points and numbered steps. Avoid large gaps between sections. Be thorough but concise.`;
 
@@ -363,12 +351,17 @@ module.exports = async (req, res) => {
       })}\n\n`);
     }
     
-    // Build context
+    // Build context (only verified prices; never fabricate)
     let context = '';
     if (fetchedData.market?.length > 0) {
-      context += '\n**Live Market Data:**\n';
+      context += '\n**Live Market Data (verified):**\n';
       for (const m of fetchedData.market) {
-        context += `- ${m.symbol}: $${m.price?.toFixed(2)} (${m.change >= 0 ? '+' : ''}${m.changePercent}%)\n`;
+        if (m.unavailable || m.price == null || m.price <= 0) {
+          context += `- ${m.symbol}: Live market data temporarily unavailable.\n`;
+        } else {
+          const ch = m.change != null ? (m.change >= 0 ? '+' : '') + (m.changePercent ?? '') + '%' : 'N/A';
+          context += `- ${m.symbol}: ${m.price.toFixed(2)} (${ch})\n`;
+        }
       }
     }
     if (fetchedData.news?.length > 0) {

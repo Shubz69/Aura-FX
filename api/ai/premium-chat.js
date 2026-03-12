@@ -181,6 +181,9 @@ module.exports = async (req, res) => {
         assertPricesMatchLiveQuotes,
         logPriceAssertion
       } = require('./price-validator');
+      const dataService = require('./data-layer/data-service');
+      const { buildMarketContext, formatContextForPrompt } = require('./market-context-builder');
+      const { runWithQuoteOnly, marketMemory } = require('./engines');
       
       // Track citations from knowledge base searches
       let responseCitations = [];
@@ -225,11 +228,49 @@ module.exports = async (req, res) => {
       
       // Generate strict pricing instructions from quote context
       const pricingInstructions = generatePricingInstructions(quoteContext);
-      
+
+      // Data-first: build verified market context for primary instrument (market + calendar + news)
+      let verifiedMarketContextBlock = '';
+      let lowConfidenceWarning = '';
+      const primarySymbol = allDetectedInstruments.length > 0 ? allDetectedInstruments[0] : null;
+      if (primarySymbol) {
+        try {
+          const { marketData, calendar, news } = await dataService.getAllDataForSymbol(primarySymbol);
+          const engineResults = runWithQuoteOnly(marketData, {
+            calendarEvents: calendar?.events || [],
+            newsHeadlines: (news?.news || []).map(n => n.headline || n.summary || ''),
+            symbol: primarySymbol
+          });
+          if (calendar?.events?.length) calendar.events.slice(0, 3).forEach(e => marketMemory.recordMacroEvent(e));
+          if (marketData?.price > 0 && marketData?.previousClose != null) marketMemory.maybeRecordMove(primarySymbol, marketData.previousClose, marketData.price);
+          const context = buildMarketContext(marketData, calendar, news, { symbol: primarySymbol, engineResults });
+          verifiedMarketContextBlock = formatContextForPrompt(context);
+          structuredLog(requestId, 'info', 'Trading intelligence context built', {
+            symbol: primarySymbol,
+            hasStructure: !!engineResults.marketStructure?.summary,
+            hasEventRisk: !!engineResults.eventRisk?.warning,
+            hasSentiment: !!engineResults.sentiment?.summary,
+            dataConfidence: context.data_confidence_score
+          });
+          const warnMsg = context.data_confidence_warning;
+          if (warnMsg) lowConfidenceWarning = `\n\n**DATA CONFIDENCE WARNING**: ${warnMsg}`;
+        } catch (ctxErr) {
+          structuredLog(requestId, 'warn', 'Market context build failed', { error: ctxErr.message });
+        }
+      }
+
+      const analystFormatBlock = `
+**ANALYST BRIEFING FORMAT** (when providing market analysis or trade briefings):
+Structure your response with these sections where relevant: **Key Levels**, **Market Structure**, **Liquidity Zones**, **Macro Drivers**, **Technical Structure**, **Session Behaviour**, **Bullish Scenario**, **Bearish Scenario**, **Risk Factors**. For trade-focused answers you may also include when relevant: **Trap Risk**, **Breakout Risk**, **Scenario Planning**, **Invalidation**, **Execution Quality**, **Decision Support**; and if conditions are poor, **No-Trade Condition**. Do not force every section in every reply—only include what is relevant. Explain WHY (e.g. "Bullish breakout probability is elevated because resistance has been tested multiple times, volatility is expanding, and London session liquidity is supporting momentum")—not just conclusions. Use ONLY the data from the VERIFIED MARKET CONTEXT and TRADING INTELLIGENCE below; never invent or assume prices or economic figures. If live data is unavailable, say so clearly and do not fabricate numbers.
+**MARKET EDUCATION MODE**: If the user asks what something means (e.g. "What is a liquidity sweep?", "What is an order block?"), explain the concept clearly and concisely, then relate it to current context if relevant.`;
+
       // Build conversation context with system prompt - Ultimate Multi-Market Trading AI
       const systemPrompt = `You are AURA AI, a professional trading assistant powered by GPT-4. You're knowledgeable, conversational, helpful, and engaging - just like ChatGPT. Your goal is to help traders succeed by providing clear analysis, actionable insights, and natural conversations.
 
 ${pricingInstructions}
+${verifiedMarketContextBlock ? '\n\n' + verifiedMarketContextBlock : ''}
+${analystFormatBlock}
+${lowConfidenceWarning}
 
 **YOUR PRIMARY DIRECTIVE**: Be helpful, conversational, and answer questions naturally. You're like ChatGPT - you can discuss anything, provide insights, teach concepts, and have real conversations. Don't refuse to answer questions - be helpful and engaging.
 
@@ -2350,7 +2391,9 @@ User's subscription tier: ${user.role === 'a7fx' || user.role === 'elite' ? 'A7F
       structuredLog(requestId, 'info', 'Request completed successfully', { 
         timings, 
         responseLength: validatedResponse.length,
-        priceValidation: priceValidationResult
+        priceValidation: priceValidationResult,
+        primarySymbol: primarySymbol || null,
+        messageLength: (message || '').length
       });
 
       // Release database connection back to pool
