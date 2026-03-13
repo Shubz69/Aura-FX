@@ -70,38 +70,13 @@
   gap: 8px;
 }
 
-/* Row under header: same grid as header – Daily/Weekly left (red box), divider row center+right */
-.td-deck-below-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 16px;
-  margin-top: 4px;
-  margin-bottom: 20px;
-  width: 100%;
-}
-
-.td-deck-below-header .td-deck-divider-row {
-  grid-column: 2 / -1;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-/* Daily/Weekly under MARKET OUTLOOK (left column) */
-.td-deck-sub-tabs-under-left {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-self: start;
-}
-
-/* Divider row: left line | calendar (centered) | right line – gap in middle for calendar */
+/* Divider row: directly under header – left line | gap | right line (above Daily/Weekly and calendar) */
 .td-deck-divider-row {
   display: flex;
   align-items: center;
   gap: 0;
-  margin-top: 4px;
-  margin-bottom: 20px;
+  margin-top: 0;
+  margin-bottom: 14px;
   width: 100%;
 }
 
@@ -114,24 +89,37 @@
   align-self: center;
 }
 
-.td-deck-header-line-left {
-  max-width: 100%;
+.td-deck-divider-gap {
+  flex: 0 0 auto;
+  width: 220px;
+  min-width: 180px;
 }
 
-/* Calendar bar: fixed middle, no stretch – keeps gap consistent */
-.td-deck-divider-row .td-deck-calendar-bar-wrap {
-  flex: 0 0 auto;
+/* Row below divider: Daily/Weekly left | calendar center */
+.td-deck-below-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.td-deck-calendar-bar-outer {
+  grid-column: 2 / -1;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 0 16px;
-  position: relative;
   min-width: 0;
 }
-.td-deck-divider-row .td-deck-calendar-bar-wrap .td-deck-calendar-bar {
-  flex: 0 0 auto;
+
+/* Daily/Weekly under MARKET OUTLOOK (left column) */
+.td-deck-sub-tabs-under-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-self: start;
 }
 
 /* Calendar bar row when not in divider row (fallback) */

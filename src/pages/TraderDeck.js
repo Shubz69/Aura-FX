@@ -139,7 +139,14 @@ export default function TraderDeck() {
           </nav>
         </header>
 
-        {/* Row under header: Daily/Weekly left (under MARKET OUTLOOK) | divider line | date+arrows | divider line */}
+        {/* Divider row: directly under header (under buttons + title), above Daily/Weekly and calendar */}
+        <div className="td-deck-divider-row">
+          <div className="td-deck-header-line-left" aria-hidden="true" />
+          <div className="td-deck-divider-gap" aria-hidden="true" />
+          <div className="td-deck-header-line-right" aria-hidden="true" />
+        </div>
+
+        {/* Row below divider: Daily/Weekly left | calendar + arrows center */}
         <div className="td-deck-below-header">
           <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left" aria-label="Period">
             <button
@@ -157,8 +164,7 @@ export default function TraderDeck() {
               Weekly
             </button>
           </nav>
-          <div className="td-deck-divider-row">
-            <div className="td-deck-header-line-left" aria-hidden="true" />
+          <div className="td-deck-calendar-bar-outer">
             <div className="td-deck-calendar-bar-wrap">
               <TraderDeckCalendarBar
                 selectedDate={selectedDate}
@@ -169,7 +175,6 @@ export default function TraderDeck() {
                 onOpenCalendar={() => setCalendarOverlayOpen(true)}
               />
             </div>
-            <div className="td-deck-header-line-right" aria-hidden="true" />
           </div>
         </div>
 
