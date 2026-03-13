@@ -1454,7 +1454,7 @@ const isPremiumUser = currentUserRole === 'premium';
 const isEliteUser = currentUserRole === 'a7fx' || currentUserRole === 'elite';
   
 
-   // Helper to check if user can access a channel based on its access level
+  // Helper to check if user can access a channel based on its access level
 const canAccessChannelByTier = (channel) => {
     // Admins always have access
     if (isAdminOrSuperForChannels) return true;
@@ -1478,6 +1478,10 @@ const canAccessChannelByTier = (channel) => {
     
     // Free users - only free/open channels
     if (isFreeUser) {
+        // Free users can see free/open channels AND allowlist channels
+        if (FREE_CHANNEL_ALLOWLIST.has(String(channel.id || channel.name || '').toLowerCase())) {
+            return true;
+        }
         return accessLevel === 'free' || accessLevel === 'open';
     }
     
