@@ -309,14 +309,14 @@ function getChannelPermissions(entitlements, channel) {
   }
 
   const category = (channel?.category || '').toString().toLowerCase();
-  const ALWAYS_VISIBLE_IDS = new Set(['welcome', 'announcements', 'levels', 'notifications']);
+  const ALWAYS_VISIBLE_IDS = new Set(['welcome', 'announcements', 'levels', 'notifications', 'general']);
 
   if (tier === 'PREMIUM') {
-    canSee = ALWAYS_VISIBLE_IDS.has(id) || accessLevel === 'premium' || category === 'premium';
+    canSee = ALWAYS_VISIBLE_IDS.has(id) || ACCESS_LEVELS_PREMIUM.has(accessLevel) || accessLevel === 'premium' || category === 'premium';
   } else if (tier === 'A7FX') {
-    canSee = ALWAYS_VISIBLE_IDS.has(id) || accessLevel === 'a7fx' || category === 'a7fx';
+    canSee = ALWAYS_VISIBLE_IDS.has(id) || ACCESS_LEVELS_ELITE.has(accessLevel) || accessLevel === 'a7fx' || category === 'a7fx';
   } else if (tier === 'ELITE') {
-    canSee = ACCESS_LEVELS_ELITE.has(accessLevel);
+    canSee = ALWAYS_VISIBLE_IDS.has(id) || ACCESS_LEVELS_ELITE.has(accessLevel);
   } else {
     canSee = false;
   }

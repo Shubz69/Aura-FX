@@ -71,6 +71,7 @@ export const WebSocketProvider = ({ children }) => {
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef(null);
   const reconnectListenersRef = useRef(new Set());
+  const disconnectingRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
   const [reconnectBanner, setReconnectBanner] = useState(false);
@@ -93,6 +94,7 @@ export const WebSocketProvider = ({ children }) => {
     const client = clientRef.current;
     clientRef.current = null;
     connectingRef.current = false;
+    disconnectingRef.current = true;
     setIsConnected(false);
     if (typeof window !== 'undefined') {
       window.wsConnection = null;
@@ -104,6 +106,7 @@ export const WebSocketProvider = ({ children }) => {
         // ignore - socket may already be CLOSING/CLOSED
       }
     }
+    disconnectingRef.current = false;
   }, []);
 
   const connect = useCallback(() => {
@@ -294,6 +297,7 @@ export const WebSocketProvider = ({ children }) => {
   }, []);
 
   const sendMessage = useCallback((channelId, message) => {
+    if (disconnectingRef.current) return false;
     const client = clientRef.current;
     if (!ENABLED || !channelId || !token) return false;
     if (!client?.connected) return false;

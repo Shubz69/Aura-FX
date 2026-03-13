@@ -749,7 +749,7 @@ const MessageItem = React.memo(({
             if (response.ok) {
                 const userData = await response.json();
                 
-                // Update localStorage with latest data
+                // Update localStorage with latest data (keep payload small to avoid quota)
                 const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
                 const updatedUser = {
                     ...currentUser,
@@ -757,7 +757,21 @@ const MessageItem = React.memo(({
                     xp: parseFloat(userData.xp || 0),
                     level: parseInt(userData.level || 1)
                 };
-                localStorage.setItem('user', JSON.stringify(updatedUser));
+                try {
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                } catch (e) {
+                    if (e.name === 'QuotaExceededError' || e.code === 22) {
+                        const minimal = {
+                            id: updatedUser.id,
+                            email: updatedUser.email,
+                            role: updatedUser.role,
+                            xp: updatedUser.xp,
+                            level: updatedUser.level,
+                            username: updatedUser.username
+                        };
+                        try { localStorage.setItem('user', JSON.stringify(minimal)); } catch (_) {}
+                    }
+                }
                 
                 // Update state only if values actually changed
                 setStoredUser(prev => {
@@ -1996,15 +2010,17 @@ const renderMessageContent = (content, messageFile) => {
                 totalMessages: (currentUser.totalMessages || 0) + 1
             };
             
-            // Save to localStorage immediately
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            
-            // Update state and persist so sidebar shows new level immediately
-            setStoredUser(updatedUser);
-            setUserLevel(newLevel);
+            // Save to localStorage immediately (guard quota)
             try {
                 localStorage.setItem('user', JSON.stringify(updatedUser));
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    const minimal = { id: updatedUser.id, email: updatedUser.email, role: updatedUser.role, xp: updatedUser.xp, level: updatedUser.level, username: updatedUser.username };
+                    try { localStorage.setItem('user', JSON.stringify(minimal)); } catch (_) {}
+                }
+            }
+            setStoredUser(updatedUser);
+            setUserLevel(newLevel);
             
             // Check if user leveled up
             const leveledUp = newLevel > oldLevel;
@@ -3307,9 +3323,16 @@ if (window.requestAnimationFrame) {
                 totalMessages: storedUserData.totalMessages || 0
             };
             
-            // Save back to localStorage if we added new fields
+            // Save back to localStorage if we added new fields (guard quota)
             if (!storedUserData.xp || !storedUserData.level) {
-                localStorage.setItem('user', JSON.stringify(enhancedUser));
+                try {
+                    localStorage.setItem('user', JSON.stringify(enhancedUser));
+                } catch (e) {
+                    if (e.name === 'QuotaExceededError' || e.code === 22) {
+                        const minimal = { id: enhancedUser.id, email: enhancedUser.email, role: enhancedUser.role, xp: enhancedUser.xp, level: enhancedUser.level, username: enhancedUser.username };
+                        try { localStorage.setItem('user', JSON.stringify(minimal)); } catch (_) {}
+                    }
+                }
             }
             
             setStoredUser(enhancedUser);
