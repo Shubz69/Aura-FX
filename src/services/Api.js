@@ -1068,15 +1068,17 @@ const Api = {
         }
     },
 
-    // Messaging/Thread functions
-    ensureAdminThread: async () => {
+    // Messaging/Thread functions (optional userIdFromAuth: pass from useAuth().user?.id when available)
+    ensureAdminThread: async (userIdFromAuth = null) => {
         try {
             const token = localStorage.getItem('token');
-            const userJson = localStorage.getItem('user');
-            const user = userJson ? JSON.parse(userJson) : null;
-            const userId = user?.id || null;
+            const userId = userIdFromAuth != null ? userIdFromAuth : (() => {
+                const userJson = localStorage.getItem('user');
+                const user = userJson ? JSON.parse(userJson) : null;
+                return user?.id ?? null;
+            })();
             
-            if (!userId) {
+            if (userId == null || userId === '') {
                 throw new Error('User ID not available');
             }
             

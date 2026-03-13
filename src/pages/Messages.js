@@ -16,7 +16,7 @@ const Messages = () => {
     const loadMessages = React.useCallback(async () => {
         if (!user) return;
         try {
-            const threadResponse = await Api.ensureAdminThread();
+            const threadResponse = await Api.ensureAdminThread(user.id);
             const threadId = threadResponse.data?.thread?.id;
             if (threadId) {
                 const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
@@ -78,7 +78,7 @@ const Messages = () => {
         // Send message to admin via API
         try {
             // Ensure admin thread exists
-            const threadResponse = await Api.ensureAdminThread();
+            const threadResponse = await Api.ensureAdminThread(user.id);
             const threadId = threadResponse.data?.thread?.id;
             
             if (threadId) {

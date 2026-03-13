@@ -12,7 +12,50 @@ class NewsAdapter extends DataAdapter {
     super('MarketNews', { timeout: CONFIG.TIMEOUTS.ADAPTER_DEFAULT });
   }
 
-  // Fetch from Finnhub news
+  // Fetch from News API (primary - financial/macro headlines)
+  async fetchNewsAPI(symbol, category = 'general') {
+    const apiKey = process.env.NEWS_API_KEY;
+    if (!apiKey) return null;
+
+    const to = new Date();
+    const from = new Date(to.getTime() - 24 * 60 * 60 * 1000); // last 24h
+    const q = symbol
+      ? `(${symbol} OR forex OR "interest rate" OR "central bank" OR inflation OR GDP OR NFP)`
+      : '(forex OR stocks OR "interest rate" OR "central bank" OR inflation OR markets)';
+
+    try {
+      const response = await axios.get('https://newsapi.org/v2/everything', {
+        params: {
+          q,
+          from: from.toISOString().split('T')[0],
+          to: to.toISOString().split('T')[0],
+          sortBy: 'publishedAt',
+          pageSize: 10,
+          language: 'en',
+          apiKey
+        },
+        timeout: 5000
+      });
+
+      if (!response.data || response.data.status !== 'ok' || !Array.isArray(response.data.articles)) {
+        return null;
+      }
+
+      return response.data.articles.filter(a => a.title).slice(0, 10).map(a => ({
+        headline: a.title,
+        summary: a.description || '',
+        source: a.source?.name || 'News API',
+        url: a.url,
+        datetime: a.publishedAt || new Date().toISOString(),
+        provider: 'News API'
+      }));
+    } catch (e) {
+      console.warn('News API error:', e.message);
+      return null;
+    }
+  }
+
+  // Fetch from Finnhub news (fallback)
   async fetchFinnhubNews(symbol, category = 'general') {
     const apiKey = process.env.FINNHUB_API_KEY;
     if (!apiKey) return null;
@@ -102,17 +145,13 @@ class NewsAdapter extends DataAdapter {
       return { news: cached.slice(0, limit), cached: true, source: 'cache' };
     }
 
-    // Try to fetch news
-    let news = null;
-
-    // If symbol provided, try company-specific news first
-    if (symbol) {
-      news = await this.fetchCompanyNews(symbol);
-    }
-
-    // Fallback to general news
+    // Primary: News API (financial/macro). Fallback: Finnhub (general then company)
+    let news = await this.fetchNewsAPI(symbol, category);
     if (!news || news.length === 0) {
-      news = await this.fetchFinnhubNews(symbol, category);
+      if (symbol) news = await this.fetchCompanyNews(symbol);
+      if (!news || news.length === 0) {
+        news = await this.fetchFinnhubNews(symbol, category);
+      }
     }
 
     // Final fallback

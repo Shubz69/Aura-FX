@@ -998,6 +998,7 @@
 
 .aura-best-worst .label { color: var(--ov-muted); min-width: 80px; }
 .aura-best-worst .positive { color: var(--ov-green); font-weight: 600; }
+.aura-best-worst .negative { color: var(--ov-red); font-weight: 600; }
 
 .aura-risk-donut {
   margin-top: 12px;

@@ -17,7 +17,7 @@ const API_BASE_URL = getApiBaseUrl();
 const AdminApi = {
     getAllUsers: () => {
         const token = localStorage.getItem('token');
-        return axios.get(`${API_BASE_URL}/api/users`, {
+        return axios.get(`${API_BASE_URL}/api/admin/users`, {
             headers: { 
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
@@ -27,7 +27,7 @@ const AdminApi = {
     
     deleteUser: (userId) => {
         const token = localStorage.getItem('token');
-        return axios.delete(`${API_BASE_URL}/api/users/${userId}`, {
+        return axios.delete(`${API_BASE_URL}/api/admin/users/${userId}`, {
             headers: { 
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'

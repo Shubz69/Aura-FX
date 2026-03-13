@@ -139,14 +139,23 @@ export default function TraderDeck() {
           </nav>
         </header>
 
-        {/* Divider row: directly under header (under buttons + title), above Daily/Weekly and calendar */}
+        {/* Divider row: left line | calendar selector (in gap) | right line */}
         <div className="td-deck-divider-row">
           <div className="td-deck-header-line-left" aria-hidden="true" />
-          <div className="td-deck-divider-gap" aria-hidden="true" />
+          <div className="td-deck-calendar-bar-wrap">
+            <TraderDeckCalendarBar
+              selectedDate={selectedDate}
+              calendarMonth={calendarMonth}
+              period={subTab}
+              onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
+              onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
+              onOpenCalendar={() => setCalendarOverlayOpen(true)}
+            />
+          </div>
           <div className="td-deck-header-line-right" aria-hidden="true" />
         </div>
 
-        {/* Row below divider: Daily/Weekly left | calendar + arrows center */}
+        {/* Row below divider: Daily / Weekly only */}
         <div className="td-deck-below-header">
           <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left" aria-label="Period">
             <button
@@ -164,18 +173,6 @@ export default function TraderDeck() {
               Weekly
             </button>
           </nav>
-          <div className="td-deck-calendar-bar-outer">
-            <div className="td-deck-calendar-bar-wrap">
-              <TraderDeckCalendarBar
-                selectedDate={selectedDate}
-                calendarMonth={calendarMonth}
-                period={subTab}
-                onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
-                onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
-                onOpenCalendar={() => setCalendarOverlayOpen(true)}
-              />
-            </div>
-          </div>
         </div>
 
         {/* Content below date selector: centered max-width container, then tab content */}

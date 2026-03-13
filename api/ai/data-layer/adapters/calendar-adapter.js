@@ -18,10 +18,51 @@ class CalendarAdapter extends DataAdapter {
     return `calendar:${d.toISOString().split('T')[0]}`;
   }
 
-  // Fetch from Trading Economics (if API key available)
+  // Fetch from Trading Economics (primary macro/calendar provider)
   async fetchTradingEconomics(date) {
-    // Trading Economics requires paid API - implement if key available
-    return null;
+    const apiKey = process.env.TRADING_ECONOMICS_API_KEY;
+    if (!apiKey) return null;
+
+    const d = date ? new Date(date) : new Date();
+    const initDate = d.toISOString().split('T')[0];
+    const endDate = new Date(d.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // +7 days
+
+    try {
+      // Calendar by date range: /calendar/country/all/initDate/endDate
+      const url = `https://api.tradingeconomics.com/calendar/country/all/${initDate}/${endDate}`;
+      const response = await axios.get(url, {
+        params: { c: apiKey, f: 'json' },
+        timeout: this.timeout || 8000
+      });
+
+      if (!response.data || !Array.isArray(response.data)) return null;
+
+      const events = response.data.slice(0, 50).map(item => {
+        const importance = item.Importance != null ? Number(item.Importance) : 2;
+        let impact = 'Medium';
+        if (importance === 1) impact = 'Low';
+        else if (importance === 3) impact = 'High';
+        const eventDate = item.Date ? new Date(item.Date) : null;
+        return {
+          time: eventDate ? eventDate.toTimeString().slice(0, 5) : '',
+          event: item.Event || item.Category || 'Economic release',
+          currency: item.Currency || (item.Country && item.Country.slice(0, 3).toUpperCase()) || '',
+          impact,
+          date: eventDate ? eventDate.toISOString().split('T')[0] : initDate,
+          actual: item.Actual ?? null,
+          forecast: item.Forecast ?? null,
+          previous: item.Previous ?? null,
+          country: item.Country || null,
+          source: 'Trading Economics'
+        };
+      });
+
+      return events.length > 0 ? events : null;
+    } catch (e) {
+      if (this.logger) this.logger.warn('Trading Economics calendar failed', { error: e.message });
+      else console.warn('Trading Economics calendar error:', e.message);
+      return null;
+    }
   }
 
   // Generate realistic economic calendar based on date patterns

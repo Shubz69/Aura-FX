@@ -63,6 +63,7 @@ const TraderDeck = lazy(() => import('./pages/TraderDeck'));
 const ConnectionHub = lazy(() => import('./pages/aura-analysis/ConnectionHub'));
 const AuraDashboardLayout = lazy(() => import('./pages/aura-analysis/AuraDashboardLayout'));
 const AuraOverview = lazy(() => import('./pages/aura-analysis/tabs/Overview'));
+const AuraOverviewDashboard = lazy(() => import('./pages/aura-analysis/tabs/OverviewDashboard'));
 const AuraPerformance = lazy(() => import('./pages/aura-analysis/tabs/PerformanceAnalytics'));
 const AuraRiskLab = lazy(() => import('./pages/aura-analysis/tabs/RiskLab'));
 const AuraEdgeAnalyzer = lazy(() => import('./pages/aura-analysis/tabs/EdgeAnalyzer'));
@@ -217,11 +218,12 @@ function AppRoutes() {
                         <Route path="/messages" element={<AuthenticatedGuard><Messages /></AuthenticatedGuard>} />
                         {/* Aura Analysis = MT5 only (Connection Hub + dashboard). No Trade Validator. */}
                         <Route path="/aura-analysis" element={<AuthenticatedGuard><AuraAnalysis /></AuthenticatedGuard>}>
-                            <Route index element={<Navigate to="/aura-analysis/ai" replace />} />
+                            <Route index element={<Navigate to="/aura-analysis/dashboard" replace />} />
                             <Route path="ai" element={<ConnectionHub />} />
-                            <Route path="overview" element={<Navigate to="/aura-analysis/dashboard/performance" replace />} />
+                            <Route path="overview" element={<Navigate to="/aura-analysis/dashboard/overview" replace />} />
                             <Route path="dashboard" element={<AuraDashboardGuard><AuraDashboardLayout /></AuraDashboardGuard>}>
-                                <Route index element={<Navigate to="performance" replace />} />
+                                <Route index element={<Navigate to="overview" replace />} />
+                                <Route path="overview" element={<AuraOverviewDashboard />} />
                                 <Route path="performance" element={<AuraPerformance />} />
                                 <Route path="risk-lab" element={<AuraRiskLab />} />
                                 <Route path="edge-analyzer" element={<AuraEdgeAnalyzer />} />

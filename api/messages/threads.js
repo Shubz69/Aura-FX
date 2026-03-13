@@ -12,12 +12,13 @@ try {
   createNotification = null;
 }
 
-// Parse body for Vercel (sometimes passed as string)
+// Parse body for Vercel (sometimes passed as string or buffer)
 function parseBody(req) {
-  if (!req.body) return {};
-  if (typeof req.body === 'object') return req.body;
+  if (req.body == null) return {};
+  if (typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
   try {
-    return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : {};
+    const raw = typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString() : '');
+    return JSON.parse(raw || '{}');
   } catch (e) {
     return {};
   }
@@ -35,34 +36,35 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Extract pathname
   let pathname = '';
   try {
     if (req.url) {
-      // Handle relative URLs properly without triggering url.parse() deprecation
       if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
         const url = new URL(req.url);
         pathname = url.pathname;
       } else {
-        // For relative URLs, extract pathname directly
-        pathname = req.url.split('?')[0]; // Remove query string
+        pathname = req.url.split('?')[0];
       }
     } else if (req.path) {
       pathname = req.path;
     }
   } catch (e) {
-    pathname = req.url || '';
+    pathname = (req.url || '').split('?')[0];
   }
 
-  // Get auth token
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  
   if (!token) {
     return res.status(401).json({ success: false, message: 'Authentication required' });
   }
 
-  const decoded = verifyToken(req.headers.authorization);
+  let decoded;
+  try {
+    decoded = verifyToken(req.headers.authorization);
+  } catch (authErr) {
+    console.error('messages/threads verifyToken error:', authErr && authErr.message);
+    return res.status(401).json({ success: false, message: 'Invalid token' });
+  }
   if (!decoded || !decoded.id) {
     return res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
@@ -110,10 +112,11 @@ module.exports = async (req, res) => {
     // Handle /api/messages/threads/ensure-admin - Create or get user's admin thread
     if (pathname.includes('/ensure-admin') && req.method === 'POST') {
       const body = parseBody(req);
-      const userId = body.userId || null;
-      
-      if (!userId) {
-        db.release && db.release();
+      const userIdRaw = body.userId != null ? body.userId : (body.user_id != null ? body.user_id : null);
+      const userId = userIdRaw != null ? parseInt(userIdRaw, 10) : NaN;
+
+      if (!Number.isFinite(userId) || userId < 1) {
+        if (db && db.release) db.release();
         return res.status(400).json({ success: false, message: 'User ID required in request body' });
       }
 
@@ -124,7 +127,7 @@ module.exports = async (req, res) => {
       );
 
       if (existing.length > 0) {
-        db.release && db.release();
+        if (db.release) db.release();
         return res.status(200).json({ success: true, thread: existing[0] });
       }
 
@@ -136,7 +139,7 @@ module.exports = async (req, res) => {
       const insertId = insertResult.insertId;
 
       const [newThreadRows] = await db.execute('SELECT * FROM threads WHERE id = ?', [insertId]);
-      db.release && db.release();
+      if (db.release) db.release();
       return res.status(200).json({ success: true, thread: newThreadRows[0] });
     }
     
