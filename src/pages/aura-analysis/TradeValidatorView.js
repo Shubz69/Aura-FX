@@ -4,16 +4,12 @@ import { FaArrowLeft, FaCheckSquare } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import {
-  CHECKLIST_SECTIONS,
-  isPatternSection,
-  getSectionScore,
-} from '../../lib/aura-analysis/validator/checklistSections';
-import {
   CHECKLIST_TABS,
   CHECKLIST_TAB_META,
   CHECKLIST_BY_TAB,
   getMaxPointsForTab,
 } from '../../lib/aura-analysis/validator/checklistTabsData';
+import { CHECKLIST_SECTIONS, getSectionScore } from '../../lib/aura-analysis/validator/checklistSections';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import { getAllInstruments } from '../../lib/aura-analysis/instruments';
 import { calculateRisk } from '../../lib/aura-analysis/calculators/calculateRisk';
@@ -154,6 +150,14 @@ export default function TradeValidatorView() {
   const scoreGrade = getScoreLabel(Math.round(normalizedScore));
   const canProceed = scorePercent >= MIN_CONFLUENCE_PCT;
 
+  const formationSection = useMemo(() => CHECKLIST_SECTIONS.find((s) => s.id === 'setup-formation'), []);
+  const setupFormationScore = useMemo(() => {
+    if (!formationSection || !formationSection.subPatterns) return 0;
+    const score = getSectionScore(formationSection, formationChecked);
+    const max = formationSection.maxPoints;
+    return max > 0 ? Math.round((score / max) * 100) : 0;
+  }, [formationSection, formationChecked]);
+
   const calcInput = useMemo(
     () => ({
       accountBalance: Number(form.accountBalance) || 0,
@@ -246,15 +250,6 @@ export default function TradeValidatorView() {
       setSaving(false);
     }
   };
-
-  const formationSection = useMemo(() => CHECKLIST_SECTIONS.find((s) => s.id === 'setup-formation'), []);
-  const setupFormationScore = useMemo(() => {
-    if (!formationSection || !formationSection.subPatterns) return 0;
-    const items = formationSection.subPatterns.flatMap((sub) => sub.items);
-    const max = formationSection.maxPoints;
-    const score = items.reduce((s, i) => s + (formationChecked.has(i.id) ? i.points : 0), 0);
-    return max > 0 ? Math.round((score / max) * 100) : 0;
-  }, [formationSection, formationChecked]);
 
   const meta = CHECKLIST_TAB_META[activeTab] || {};
   const tabCards = CHECKLIST_BY_TAB[activeTab] || [];
