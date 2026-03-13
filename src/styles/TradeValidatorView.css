@@ -82,6 +82,52 @@
   margin: 0;
 }
 
+/* Secondary tab row: Scalp | Intra Day | Swing – below nav, above score card */
+.tv-tab-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 12px 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.tv-tab-btn {
+  flex: 1;
+  max-width: 200px;
+  padding: 14px 20px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--tv-muted);
+  background: var(--tv-card);
+  border: 1px solid var(--tv-border);
+  border-radius: var(--tv-radius);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tv-tab-btn:hover {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: var(--tv-border-h);
+  background: var(--tv-card-h);
+}
+
+.tv-tab-btn-active {
+  color: #fff;
+  background: rgba(139, 92, 246, 0.25);
+  border-color: var(--tv-border-accent);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+.tv-tab-btn-active:hover {
+  background: rgba(139, 92, 246, 0.3);
+  border-color: var(--tv-accent);
+}
+
 /* Trade Score card */
 .tv-score-card {
   display: flex;
@@ -313,6 +359,31 @@
 .tv-section-score-value {
   font-weight: 700;
   color: var(--tv-accent);
+}
+
+/* Tab checklist content – title + 3 cards */
+.tv-checklist-tab-content {
+  margin-top: 28px;
+}
+
+.tv-checklist-tab-content .tv-block-title {
+  margin-bottom: 6px;
+}
+
+.tv-checklist-tab-content .tv-block-sub {
+  margin-bottom: 24px;
+}
+
+.tv-checklist-tab-cards {
+  margin-bottom: 0;
+}
+
+.tv-checklist-tab-card {
+  padding: 22px 20px;
+}
+
+.tv-checklist-tab-card .tv-section-card-title {
+  margin-bottom: 14px;
 }
 
 /* SETUP FORMATION CHECKLIST */
@@ -746,9 +817,24 @@
 }
 
 @media (max-width: 900px) {
-  .tv-core-grid,
   .tv-cards-grid {
     grid-template-columns: 1fr;
+  }
+  .tv-tab-row {
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+  .tv-tab-btn {
+    max-width: none;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .tv-tab-btn {
+    padding: 12px 14px;
+    font-size: 0.88rem;
   }
 }
 

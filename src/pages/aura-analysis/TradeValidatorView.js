@@ -5,43 +5,47 @@ import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import {
   CHECKLIST_SECTIONS,
-  TOTAL_POINTS,
-  getPointsByItemId,
   isPatternSection,
   getSectionScore,
 } from '../../lib/aura-analysis/validator/checklistSections';
+import {
+  CHECKLIST_TABS,
+  CHECKLIST_TAB_META,
+  CHECKLIST_BY_TAB,
+  getMaxPointsForTab,
+} from '../../lib/aura-analysis/validator/checklistTabsData';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import { getAllInstruments } from '../../lib/aura-analysis/instruments';
 import { calculateRisk } from '../../lib/aura-analysis/calculators/calculateRisk';
 import '../../styles/TradeValidatorView.css';
 
-const POINTS_BY_ID = getPointsByItemId();
+const STORAGE_KEY_CHECKED = 'aura-trade-validator-checked-by-tab';
+const STORAGE_KEY_FORMATION = 'aura-trade-validator-formation-checked';
 
 const INSTRUMENTS_LIST = getAllInstruments();
 
-function ChecklistItem({ item, checked, onToggle }) {
+function ChecklistItemRow({ item, checked, onToggle }) {
   return (
     <label className="tv-checklist-item">
       <input type="checkbox" checked={checked.has(item.id)} onChange={() => onToggle(item.id)} />
       <span className="tv-checkmark" aria-hidden />
       <span className="tv-item-label">{item.label}</span>
-      <span className="tv-item-pct">+{item.points} pts</span>
+      <span className="tv-item-pct">+{item.points}</span>
     </label>
   );
 }
 
-function SectionCard({ section, timeframes, items, checked, onToggle }) {
-  const score = items.reduce((s, i) => s + (checked.has(i.id) ? i.points : 0), 0);
-  const max = items.reduce((s, i) => s + i.points, 0);
+function ChecklistCard({ card, checked, onToggle }) {
+  const score = card.items.reduce((s, i) => s + (checked.has(i.id) ? i.points : 0), 0);
+  const max = card.items.reduce((s, i) => s + i.points, 0);
   const pct = max > 0 ? Math.round((score / max) * 100) : 0;
   return (
-    <div className="tv-section-card">
+    <div className="tv-section-card tv-checklist-tab-card">
       <div className="tv-section-card-icon" aria-hidden />
-      <h3 className="tv-section-card-title">{section}</h3>
-      <p className="tv-section-timeframes">{timeframes}</p>
+      <h3 className="tv-section-card-title">{card.cardTitle}</h3>
       <div className="tv-section-list">
-        {items.map((item) => (
-          <ChecklistItem key={item.id} item={item} checked={checked} onToggle={onToggle} />
+        {card.items.map((item) => (
+          <ChecklistItemRow key={item.id} item={item} checked={checked} onToggle={onToggle} />
         ))}
       </div>
       <p className="tv-section-score">Section score <span className="tv-section-score-value">{pct}%</span></p>
@@ -52,13 +56,43 @@ function SectionCard({ section, timeframes, items, checked, onToggle }) {
 /** Minimum confluence % required to submit a trade. Trade cannot go through unless checklist is filled in and score meets this. */
 const MIN_CONFLUENCE_PCT = 70;
 
+function parseCheckedByTab(raw) {
+  try {
+    const data = raw ? JSON.parse(raw) : null;
+    if (!data || typeof data !== 'object') return { scalp: new Set(), intraDay: new Set(), swing: new Set() };
+    return {
+      scalp: new Set(Array.isArray(data.scalp) ? data.scalp : []),
+      intraDay: new Set(Array.isArray(data.intraDay) ? data.intraDay : []),
+      swing: new Set(Array.isArray(data.swing) ? data.swing : []),
+    };
+  } catch {
+    return { scalp: new Set(), intraDay: new Set(), swing: new Set() };
+  }
+}
+
+function serializeCheckedByTab(checkedByTab) {
+  return JSON.stringify({
+    scalp: Array.from(checkedByTab.scalp),
+    intraDay: Array.from(checkedByTab.intraDay),
+    swing: Array.from(checkedByTab.swing),
+  });
+}
+
 export default function TradeValidatorView() {
   const location = useLocation();
   const navigate = useNavigate();
   const isEmbedded = location.pathname.startsWith('/trader-deck/trade-validator');
-  const [checked, setChecked] = useState(() => {
+  const [activeTab, setActiveTab] = useState('scalp');
+  const [checkedByTab, setCheckedByTab] = useState(() => {
     try {
-      const raw = localStorage.getItem('aura-trade-validator-checked');
+      return parseCheckedByTab(localStorage.getItem(STORAGE_KEY_CHECKED));
+    } catch {
+      return { scalp: new Set(), intraDay: new Set(), swing: new Set() };
+    }
+  });
+  const [formationChecked, setFormationChecked] = useState(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_FORMATION);
       if (!raw) return new Set();
       const arr = JSON.parse(raw);
       return new Set(Array.isArray(arr) ? arr : []);
@@ -83,9 +117,15 @@ export default function TradeValidatorView() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('aura-trade-validator-checked', JSON.stringify(Array.from(checked)));
+      localStorage.setItem(STORAGE_KEY_CHECKED, serializeCheckedByTab(checkedByTab));
     } catch {}
-  }, [checked]);
+  }, [checkedByTab]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_FORMATION, JSON.stringify(Array.from(formationChecked)));
+    } catch {}
+  }, [formationChecked]);
 
   useEffect(() => {
     Api.getAuraAnalysisPnl()
@@ -101,14 +141,17 @@ export default function TradeValidatorView() {
       .catch(() => {});
   }, []);
 
+  const activeChecked = checkedByTab[activeTab] ?? new Set();
+  const maxPointsActive = useMemo(() => getMaxPointsForTab(activeTab), [activeTab]);
   const checklistScore = useMemo(() => {
-    let sum = 0;
-    checked.forEach((id) => { sum += POINTS_BY_ID[id] ?? 0; });
-    return sum;
-  }, [checked]);
-
-  const scorePercent = TOTAL_POINTS > 0 ? Math.round((checklistScore / TOTAL_POINTS) * 100) : 0;
-  const scoreGrade = getScoreLabel(checklistScore);
+    const cards = CHECKLIST_BY_TAB[activeTab];
+    if (!cards) return 0;
+    return cards.reduce((sum, card) => sum + card.items.reduce((s, i) => s + (activeChecked.has(i.id) ? i.points : 0), 0), 0);
+  }, [activeTab, activeChecked]);
+  const scorePercent = maxPointsActive > 0 ? Math.round((checklistScore / maxPointsActive) * 100) : 0;
+  /** Normalize to 0–200 scale for grade labels */
+  const normalizedScore = maxPointsActive > 0 ? (checklistScore / maxPointsActive) * 200 : 0;
+  const scoreGrade = getScoreLabel(Math.round(normalizedScore));
   const canProceed = scorePercent >= MIN_CONFLUENCE_PCT;
 
   const calcInput = useMemo(
@@ -130,8 +173,18 @@ export default function TradeValidatorView() {
   const rr = calcResult.riskReward;
   const positionUnitLabel = calcResult.positionUnitLabel || 'lots';
 
-  const handleToggle = (id) => {
-    setChecked((prev) => {
+  const handleTabToggle = (tabId, itemId) => {
+    setCheckedByTab((prev) => {
+      const next = { ...prev, [tabId]: new Set(prev[tabId]) };
+      const set = next[tabId];
+      if (set.has(itemId)) set.delete(itemId);
+      else set.add(itemId);
+      return next;
+    });
+  };
+
+  const handleFormationToggle = (id) => {
+    setFormationChecked((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -141,7 +194,6 @@ export default function TradeValidatorView() {
 
   const handleSaveTrade = async () => {
     if (saving) return;
-    // Trade cannot go through unless the checklist has been filled in and confluence score is at least MIN_CONFLUENCE_PCT.
     if (scorePercent < MIN_CONFLUENCE_PCT) {
       toast.error(`A minimum confluence score of ${MIN_CONFLUENCE_PCT}% is required to submit a trade. Complete more checklist items.`);
       return;
@@ -165,7 +217,7 @@ export default function TradeValidatorView() {
       pnl: 0,
       rMultiple: 0,
       checklistScore,
-      checklistTotal: TOTAL_POINTS,
+      checklistTotal: maxPointsActive,
       checklistPercent: scorePercent,
       tradeGrade: scoreGrade,
       notes: (form.notes || '').trim() || null,
@@ -179,11 +231,10 @@ export default function TradeValidatorView() {
     try {
       await Api.createAuraAnalysisTrade(payload);
       toast.success('Trade saved');
-      // Clear checklist state and localStorage so it resets when user returns to Checklist
       try {
-        localStorage.removeItem('aura-trade-validator-checked');
+        localStorage.removeItem(STORAGE_KEY_CHECKED);
       } catch {}
-      setChecked(new Set());
+      setCheckedByTab({ scalp: new Set(), intraDay: new Set(), swing: new Set() });
       setShowTradeForm(false);
       Api.getAuraAnalysisPnl().then((res) => {
         if (res?.data?.success) setPnl({ dailyPnl: res.data.dailyPnl ?? 0, weeklyPnl: res.data.weeklyPnl ?? 0, monthlyPnl: res.data.monthlyPnl ?? 0 });
@@ -196,15 +247,17 @@ export default function TradeValidatorView() {
     }
   };
 
-  const coreSections = useMemo(() => CHECKLIST_SECTIONS.filter((s) => s.layer === 'core' && !isPatternSection(s)), []);
   const formationSection = useMemo(() => CHECKLIST_SECTIONS.find((s) => s.id === 'setup-formation'), []);
   const setupFormationScore = useMemo(() => {
     if (!formationSection || !formationSection.subPatterns) return 0;
     const items = formationSection.subPatterns.flatMap((sub) => sub.items);
     const max = formationSection.maxPoints;
-    const score = items.reduce((s, i) => s + (checked.has(i.id) ? i.points : 0), 0);
+    const score = items.reduce((s, i) => s + (formationChecked.has(i.id) ? i.points : 0), 0);
     return max > 0 ? Math.round((score / max) * 100) : 0;
-  }, [formationSection, checked]);
+  }, [formationSection, formationChecked]);
+
+  const meta = CHECKLIST_TAB_META[activeTab] || {};
+  const tabCards = CHECKLIST_BY_TAB[activeTab] || [];
 
   const handlePairChange = (e) => {
     const v = e.target.value;
@@ -228,10 +281,25 @@ export default function TradeValidatorView() {
           </header>
         )}
 
+        <div className="tv-tab-row" role="tablist" aria-label="Execution style">
+          {CHECKLIST_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              className={`tv-tab-btn ${activeTab === tab.id ? 'tv-tab-btn-active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <section className="tv-score-card">
           <div className="tv-score-left">
             <span className="tv-score-label">Trade Score</span>
-            <span className="tv-score-value">{checklistScore} / {TOTAL_POINTS} ({scorePercent}%)</span>
+            <span className="tv-score-value">{checklistScore} / {maxPointsActive} ({scorePercent}%)</span>
             <span className="tv-score-status">Status</span>
             <span className="tv-score-grade">{scoreGrade}</span>
           </div>
@@ -239,35 +307,6 @@ export default function TradeValidatorView() {
             <div className="tv-score-bar" style={{ width: `${scorePercent}%` }} />
           </div>
         </section>
-
-        <section className="tv-block">
-          <h2 className="tv-block-title">CORE CONFLUENCE CHECKLIST</h2>
-          <p className="tv-block-sub">This is the main decision layer</p>
-          <div className="tv-core-grid">
-            {coreSections.slice(0, 3).map((col) => (
-              <div key={col.id} className="tv-core-col">
-                <h3 className="tv-core-col-title">{col.title}</h3>
-                <p className="tv-core-col-time">{col.timeframeLabel}</p>
-                {col.items.map((item) => (
-                  <ChecklistItem key={item.id} item={item} checked={checked} onToggle={handleToggle} />
-                ))}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <div className="tv-cards-grid">
-          {coreSections.slice(3, 6).map((card) => (
-            <SectionCard
-              key={card.id}
-              section={card.title}
-              timeframes={card.timeframeLabel}
-              items={card.items}
-              checked={checked}
-              onToggle={handleToggle}
-            />
-          ))}
-        </div>
 
         {formationSection && formationSection.subPatterns && (
           <section className="tv-block tv-setup-block">
@@ -281,7 +320,7 @@ export default function TradeValidatorView() {
                 <div key={sub.id} className="tv-setup-cat">
                   <h4 className="tv-setup-cat-name">{sub.title}</h4>
                   {sub.items.map((item) => (
-                    <ChecklistItem key={item.id} item={item} checked={checked} onToggle={handleToggle} />
+                    <ChecklistItemRow key={item.id} item={item} checked={formationChecked} onToggle={handleFormationToggle} />
                   ))}
                 </div>
               ))}
@@ -289,6 +328,21 @@ export default function TradeValidatorView() {
             </div>
           </section>
         )}
+
+        <section className="tv-block tv-checklist-tab-content">
+          <h2 className="tv-block-title">{meta.title}</h2>
+          <p className="tv-block-sub">{meta.subtitle}</p>
+          <div className="tv-cards-grid tv-checklist-tab-cards">
+            {tabCards.map((card) => (
+              <ChecklistCard
+                key={card.id}
+                card={card}
+                checked={activeChecked}
+                onToggle={(itemId) => handleTabToggle(activeTab, itemId)}
+              />
+            ))}
+          </div>
+        </section>
 
         <div className="tv-bottom-bar">
           <div className={`tv-bottom-msg ${canProceed ? 'tv-bottom-msg-ok' : ''}`}>
