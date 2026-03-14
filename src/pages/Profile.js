@@ -148,7 +148,7 @@ useEffect(() => {
     const userBannerKey = userKey(user.id, 'banner');
     
     
-    const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || dedicatedBanner || '';
+    const localBanner = storedUser?.id === user?.id ? storedUser?.banner || '' : '';
     
     // Try multiple sources for avatar
     const dedicatedAvatar = localStorage.getItem(`user_avatar_${user.id}`) || '';
