@@ -91,10 +91,23 @@ body.community-page-active .journal-modal-footer {
     overflow: visible !important;
 }
 
-body.community-page-active,
+/*
+   KEYBOARD FIX — html/body height chain:
+   When the virtual keyboard opens on mobile, the browser
+   shrinks the visual viewport. For the layout to respond
+   correctly (messages scroll up, input stays visible),
+   html and body MUST NOT be position:fixed or overflow:hidden
+   on mobile — that prevents the shrink from propagating.
+   We handle this per-breakpoint below.
+*/
 html.community-page-active {
     overflow: hidden !important;
-    height: 100% !important;          /* FIX: was 100vh — causes scroll on iOS */
+    height: 100% !important;
+}
+
+body.community-page-active {
+    overflow: hidden !important;
+    height: 100% !important;
 }
 
 /* Global reset */
@@ -1952,35 +1965,66 @@ body.sidebar-open-mobile {
    MOBILE STYLES (≤767px)
    ============================================================
 
-   KEY FIXES FOR REAL DEVICES:
-   ───────────────────────────
-   1. Container: 100dvh instead of 100vh
-      - 100vh on iOS Safari includes the address bar and bottom toolbar
-        area, making the container taller than the visible screen.
-      - 100dvh updates dynamically when the browser UI shows/hides.
+   THE KEYBOARD BUG — ROOT CAUSE & FIX:
+   ──────────────────────────────────────
+   Previous version used position:fixed on .community-container
+   for mobile. This is the EXACT cause of both bugs:
 
-   2. Chat input: padding-bottom with env(safe-area-inset-bottom)
-      - On iPhone with home indicator, this gives us the actual safe
-        area (typically 34px on iPhone X+).
-      - On Android with software nav bar, this gives us the nav height.
-      - Falls back to 0px on devices without these.
+   iPhone (Image 1) — black gap below input when keyboard opens:
+   → position:fixed elements don't respond to the virtual keyboard.
+     The container stays full-screen height, the keyboard overlays
+     the bottom half, creating a black gap between messages and keyboard.
 
-   3. Journal FAB: positioned above safe area
-      - Bottom is calculated to clear both our input AND the browser chrome.
+   Android (Image 2) — messages hidden behind keyboard:
+   → Same reason. The fixed container doesn't shrink when keyboard
+     appears, so messages at the bottom are hidden behind the keyboard
+     and you can't scroll to see them.
+
+   THE FIX: On mobile, switch to a height:100% chain:
+     html → 100% height
+     body → 100% height
+     .community-container → 100% height, position:relative (NOT fixed)
+
+   When keyboard opens, the browser shrinks the body height, which
+   shrinks the container, which pushes the input up above the keyboard.
+   The messages flex-area shrinks too, keeping everything visible.
+
+   The navbar offset is handled by margin-top instead of top:fixed.
 */
 
 @media (max-width: 767px) {
+
+    /* Step 1: Allow html/body to shrink with keyboard */
+    html.community-page-active,
+    body.community-page-active {
+        overflow: hidden !important;
+        height: 100% !important;
+        position: static !important;   /* NOT fixed — allows keyboard resize */
+        width: 100% !important;
+    }
+
     /* ── Main Container ─────────────────────────────────── */
     .community-container {
         display: flex !important;
         flex-direction: column !important;
-        top: var(--navbar-h) !important;
-        /* FIX: 100dvh dynamically excludes browser chrome on real devices */
+
+        /* KEY FIX: Not position:fixed — use height:100% so keyboard resize works */
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+
+        /* Height fills the body which shrinks with keyboard */
+        height: 100dvh !important;
+        height: 100vh !important;           /* fallback */
+        /* Subtract navbar */
         height: calc(100dvh - var(--navbar-h)) !important;
         max-height: calc(100dvh - var(--navbar-h)) !important;
+
         width: 100vw !important;
         overflow: hidden !important;
-        position: fixed !important;
+        margin-top: 0 !important;
     }
 
     .community-sidebar:not(.mobile-sidebar) {
@@ -2486,10 +2530,19 @@ body.sidebar-open-mobile {
 /* iOS Safari specific */
 @supports (-webkit-touch-callout: none) {
     @media (max-width: 767px) {
+        /*
+           iOS Safari keyboard resize fix:
+           interactiveWidget=resizes-visual must be set in the viewport meta tag.
+           Add this to your HTML <head>:
+           <meta name="viewport" content="width=device-width, initial-scale=1,
+                 viewport-fit=cover, interactive-widget=resizes-visual">
+
+           Without that meta tag, iOS Safari won't shrink the layout viewport
+           when the keyboard opens. The CSS below handles the rest.
+        */
         .community-container {
-            /* Use -webkit-fill-available as ultimate fallback on old iOS */
-            height: -webkit-fill-available;
-            height: calc(100dvh - var(--navbar-h));
+            /* -webkit-fill-available respects the keyboard on old iOS */
+            height: -webkit-fill-available !important;
         }
 
         .chat-input {
@@ -2499,11 +2552,16 @@ body.sidebar-open-mobile {
 }
 
 /* ── Body Lock States ─────────────────────────────────────── */
+/*
+   IMPORTANT: Do NOT use position:fixed on body for mobile.
+   position:fixed on body prevents the layout from shrinking
+   when the virtual keyboard opens, causing the black gap / hidden
+   messages bug seen on iPhone and Android.
+   Desktop keeps overflow:hidden to prevent background scroll.
+*/
 body.community-page-active {
     overflow: hidden !important;
-    height: 100% !important;       /* FIX: was 100vh */
-    position: fixed !important;    /* FIX: prevents iOS bounce scroll */
-    width: 100% !important;
+    height: 100% !important;
 }
 
 html.community-page-active {
@@ -2511,11 +2569,11 @@ html.community-page-active {
     height: 100% !important;
 }
 
+/* Sidebar open on mobile — only lock scroll on the body */
 body.sidebar-open-mobile {
-    overflow: hidden;
-    width: 100%;
-    height: 100%;
-    position: fixed !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* ── Anti-Flash & Touch Optimisations ────────────────────── */
