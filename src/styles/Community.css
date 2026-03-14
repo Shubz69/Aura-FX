@@ -1997,10 +1997,11 @@ body.sidebar-open-mobile {
     /* Step 1: Allow html/body to shrink with keyboard */
     html.community-page-active,
     body.community-page-active {
-        overflow: hidden !important;
         height: 100% !important;
         position: static !important;   /* NOT fixed — allows keyboard resize */
         width: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
     }
 
     /* ── Main Container ─────────────────────────────────── */
@@ -2018,13 +2019,19 @@ body.sidebar-open-mobile {
         /* Height fills the body which shrinks with keyboard */
         height: 100dvh !important;
         height: 100vh !important;           /* fallback */
-        /* Subtract navbar */
+        /* Subtract navbar height that margin-top consumes */
         height: calc(100dvh - var(--navbar-h)) !important;
         max-height: calc(100dvh - var(--navbar-h)) !important;
 
         width: 100vw !important;
         overflow: hidden !important;
-        margin-top: 0 !important;
+        /*
+           NAVBAR OFFSET FIX:
+           Desktop uses position:fixed; top: var(--navbar-h).
+           Since mobile is now position:relative, use margin-top instead
+           so the container sits below the navbar correctly.
+        */
+        margin-top: var(--navbar-h) !important;
     }
 
     .community-sidebar:not(.mobile-sidebar) {
@@ -2600,3 +2607,4 @@ body.sidebar-open-mobile {
 .chat-input:focus {
     scroll-margin-bottom: 20px !important;
 }
+
