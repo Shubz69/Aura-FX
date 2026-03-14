@@ -1,6 +1,6 @@
 // api/admin/change-subscription.js
 
-const { getDbConnection } = require('../../db');
+const { getDbConnection } = require('../db');
 require('../../utils/suppress-warnings');
 
 const log = (level, message, data = {}) => {
