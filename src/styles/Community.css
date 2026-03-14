@@ -483,13 +483,12 @@ html.community-page-active {
     backface-visibility: hidden;
     will-change: transform, box-shadow;
 }
-
 /* ============================================================
-   CHAT INPUT - COMPLETE FIX FOR ALL DEVICES
+   CHAT INPUT - COMPLETE FIX FOR ALL DEVICES (IPAD LANDSCAPE FIXED)
    ============================================================ */
 
 .chat-input-container {
-    padding: 14px 80px 14px 16px !important;
+    padding: 14px 16px !important;
     background: var(--bg-tertiary) !important;
     border-top: 1px solid var(--border) !important;
     flex-shrink: 0 !important;
@@ -508,6 +507,7 @@ html.community-page-active {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    position: relative !important;
 }
 
 .chat-input-wrapper {
@@ -520,7 +520,7 @@ html.community-page-active {
 
 .chat-input {
     width: 100% !important;
-    padding: 13px 108px 13px 16px !important;
+    padding: 13px 16px !important; /* REMOVED the large right padding */
     border-radius: 14px !important;
     border: 1px solid var(--border) !important;
     background: rgba(255,255,255,0.04) !important;
@@ -537,23 +537,11 @@ html.community-page-active {
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
 }
 
-.chat-input:focus {
-    border-color: var(--purple) !important;
-    background: rgba(255,255,255,0.06) !important;
-    box-shadow: 0 0 0 3px rgba(139,92,246,0.15) !important;
-    outline: none !important;
-}
-
-.chat-input::placeholder { color: var(--text-dim) !important; }
-.chat-input:disabled { opacity: 0.4 !important; cursor: not-allowed !important; }
-
-/* Icon buttons - inside textarea */
+/* Icon buttons - MOVED OUTSIDE the textarea */
 .chat-input-buttons {
     position: absolute !important;
-    right: 10px !important;
-    bottom: 10px !important;
-    top: auto !important;
-    left: auto !important;
+    right: 16px !important; /* Align with container padding */
+    bottom: 14px !important; /* Align with container padding */
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -2032,7 +2020,7 @@ body.sidebar-open-mobile {
 }
 
 /* ============================================================
-   TABLET STYLES (768px - 1024px)
+   TABLET STYLES (768px - 1024px) - FIXED
    ============================================================ */
 
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -2047,20 +2035,21 @@ body.sidebar-open-mobile {
         visibility: visible !important; opacity: 1 !important; transform: none !important;
     }
     
-    div[style*="position: fixed"][style*="inset: 0"] > div[style*="background: #1f2024"],
-    div[style*="position: fixed"][style*="inset: 0"] > div[style*="background:#1f2024"] {
-        max-width: 480px !important;
-    }
-    
+    /* FIXED: Tablet chat input styles */
     .chat-input-container {
-        padding: 12px 72px 12px 14px !important;
+        padding: 12px 16px !important;
     }
     
     .chat-input {
-        padding: 11px 100px 11px 14px !important;
+        padding: 11px 16px !important;
         font-size: 0.875rem !important;
         min-height: 48px !important;
         border-radius: 12px !important;
+    }
+    
+    .chat-input-buttons {
+        right: 24px !important;
+        bottom: 12px !important;
     }
     
     .chat-input-btn {
@@ -2180,7 +2169,7 @@ body.sidebar-open-mobile {
     
     /* ===== CHAT INPUT - COMPLETE MOBILE FIX ===== */
     .chat-input-container {
-        padding: 8px 12px 8px 10px !important;
+        padding: 8px 12px !important;
         background: var(--bg-tertiary) !important;
         border-top: 1px solid var(--border) !important;
         position: relative !important;
@@ -2188,39 +2177,34 @@ body.sidebar-open-mobile {
         width: 100% !important;
         box-sizing: border-box !important;
         flex-shrink: 0 !important;
-        /* Remove backdrop-filter to prevent rendering issues with keyboard */
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        /* Ensure it stays at bottom */
         margin-top: auto !important;
         bottom: 0 !important;
-        /* Add safe area insets */
         padding-bottom: max(8px, constant(safe-area-inset-bottom, 8px)) !important;
         padding-bottom: max(8px, env(safe-area-inset-bottom, 8px)) !important;
     }
     
-    .chat-form { 
+   .chat-form { 
         gap: 6px !important; 
         align-items: flex-end !important; 
         width: 100% !important;
         position: relative !important;
         display: flex !important;
         flex-direction: row !important;
-        bottom: 13px;
     }
     
     .chat-input-wrapper { 
         flex: 1 1 auto !important; 
         min-width: 0 !important;
         position: relative !important;
-        /* Ensure wrapper doesn't overflow */
-         max-width: calc(100% - 0px) !important;
+        max-width: calc(100% - 0px) !important;
     }
     
-    .chat-input {
+       .chat-input {
         width: 100% !important;
-        padding: 12px 44px 12px 14px !important;
-        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 12px 16px !important; /* REMOVED the right padding */
+        font-size: 16px !important;
         min-height: 48px !important;
         max-height: 120px !important;
         border-radius: 24px !important;
@@ -2237,11 +2221,10 @@ body.sidebar-open-mobile {
         -webkit-appearance: none !important;
         appearance: none !important;
         caret-color: var(--purple) !important;
-        /* Ensure text is visible */
         opacity: 1 !important;
-        /* Remove any transforms that might affect positioning */
         transform: none !important;
     }
+    
     
     .chat-input:focus {
         border-color: var(--purple) !important;
