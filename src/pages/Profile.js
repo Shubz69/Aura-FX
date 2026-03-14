@@ -147,9 +147,7 @@ useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     const userBannerKey = userKey(user.id, 'banner');
     
-    // Try multiple sources for banner
-    const scopedBanner = localStorage.getItem(userBannerKey) || '';
-    const dedicatedBanner = localStorage.getItem(`user_banner_${user.id}`) || '';
+    
     const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || dedicatedBanner || '';
     
     // Try multiple sources for avatar
@@ -489,13 +487,7 @@ useEffect(() => {
                     avatar: resizedBase64,
                     id: user?.id 
                 };
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-                
-                // Also save to dedicated avatar storage
-                if (user?.id) {
-                    localStorage.setItem(`user_avatar_${user.id}`, resizedBase64);
-                }
-
+              
                 resolve();
             };
         });
@@ -555,21 +547,6 @@ const handleBannerChange = async (e) => {
                 setFormData(prev => ({ ...prev, banner: resizedBase64 }));
                 setEditedUserData(prev => ({ ...prev, banner: resizedBase64 }));
 
-                if (user?.id) {
-                    const userBannerKey = userKey(user.id, 'banner');
-                    localStorage.setItem(userBannerKey, resizedBase64);
-                }
-
-                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                const updatedUser = { 
-                    ...storedUser, 
-                    banner: resizedBase64, 
-                    id: user?.id 
-                };
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-
-                // Also save to a dedicated banner storage
-                localStorage.setItem(`user_banner_${user?.id}`, resizedBase64);
 
                 resolve();
             };
@@ -713,13 +690,7 @@ const handleSaveChanges = async () => {
             const updatedStoredUser = { ...storedUser, ...updatedData };
             localStorage.setItem('user', JSON.stringify(updatedStoredUser));
 
-            if (savedBanner) {
-                localStorage.setItem(userBannerKey, savedBanner);
-                localStorage.setItem(`user_banner_${user.id}`, savedBanner);
-            }
-            if (savedAvatar) {
-                localStorage.setItem(`user_avatar_${user.id}`, savedAvatar);
-            }
+         
 
             if (setUser) {
                 setUser(updatedStoredUser);
