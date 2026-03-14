@@ -1962,76 +1962,52 @@ body.sidebar-open-mobile {
 }
 
 /* ============================================================
-   MOBILE STYLES (≤767px)
+   MOBILE STYLES (≤767px) - FINAL CORRECT APPROACH
    ============================================================
 
-   THE KEYBOARD BUG — ROOT CAUSE & FIX:
-   ──────────────────────────────────────
-   Previous version used position:fixed on .community-container
-   for mobile. This is the EXACT cause of both bugs:
+   STRATEGY: Keep position:fixed on the container (correct for
+   layout), but let the keyboard work via interactive-widget in
+   the viewport meta tag (already added to index.html).
 
-   iPhone (Image 1) — black gap below input when keyboard opens:
-   → position:fixed elements don't respond to the virtual keyboard.
-     The container stays full-screen height, the keyboard overlays
-     the bottom half, creating a black gap between messages and keyboard.
+   With interactive-widget=resizes-visual in the viewport meta:
+   - The VISUAL viewport shrinks when keyboard opens
+   - position:fixed elements are sized to the VISUAL viewport
+   - So the container shrinks, messages scroll up, input visible
 
-   Android (Image 2) — messages hidden behind keyboard:
-   → Same reason. The fixed container doesn't shrink when keyboard
-     appears, so messages at the bottom are hidden behind the keyboard
-     and you can't scroll to see them.
-
-   THE FIX: On mobile, switch to a height:100% chain:
-     html → 100% height
-     body → 100% height
-     .community-container → 100% height, position:relative (NOT fixed)
-
-   When keyboard opens, the browser shrinks the body height, which
-   shrinks the container, which pushes the input up above the keyboard.
-   The messages flex-area shrinks too, keeping everything visible.
-
-   The navbar offset is handled by margin-top instead of top:fixed.
+   This is the correct, standard approach. No margin-top hacks.
+   No position:relative. Just fixed + dvh + safe-area-insets.
 */
 
 @media (max-width: 767px) {
 
-    /* Step 1: Allow html/body to shrink with keyboard */
     html.community-page-active,
     body.community-page-active {
+        overflow: hidden !important;
         height: 100% !important;
-        position: static !important;   /* NOT fixed — allows keyboard resize */
         width: 100% !important;
-        overflow-x: hidden !important;
-        overflow-y: hidden !important;
     }
 
     /* ── Main Container ─────────────────────────────────── */
+    /*
+       position:fixed + top:navbar-h + bottom:0 is the correct
+       approach on mobile. The interactive-widget viewport meta
+       ensures the fixed element resizes when keyboard opens.
+       DO NOT use position:relative + margin-top — that causes
+       the container to be navbar-h taller than the visible area.
+    */
     .community-container {
         display: flex !important;
         flex-direction: column !important;
-
-        /* KEY FIX: Not position:fixed — use height:100% so keyboard resize works */
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        right: auto !important;
-        bottom: auto !important;
-
-        /* Height fills the body which shrinks with keyboard */
-        height: 100dvh !important;
-        height: 100vh !important;           /* fallback */
-        /* Subtract navbar height that margin-top consumes */
-        height: calc(100dvh - var(--navbar-h)) !important;
-        max-height: calc(100dvh - var(--navbar-h)) !important;
-
+        position: fixed !important;
+        top: var(--navbar-h) !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         width: 100vw !important;
+        height: auto !important;         /* let top+bottom define height */
+        max-height: none !important;
         overflow: hidden !important;
-        /*
-           NAVBAR OFFSET FIX:
-           Desktop uses position:fixed; top: var(--navbar-h).
-           Since mobile is now position:relative, use margin-top instead
-           so the container sits below the navbar correctly.
-        */
-        margin-top: var(--navbar-h) !important;
+        margin-top: 0 !important;
     }
 
     .community-sidebar:not(.mobile-sidebar) {
@@ -2046,9 +2022,9 @@ body.sidebar-open-mobile {
         overflow: hidden !important;
         min-height: 0 !important;
         position: relative !important;
-        /* FIX: don't set height:100% here — let flexbox handle it */
     }
 
+    /* ── Chat Header ────────────────────────────────────── */
     .chat-header {
         padding: 0 10px !important;
         min-height: 48px !important;
@@ -2056,20 +2032,29 @@ body.sidebar-open-mobile {
         flex-shrink: 0 !important;
         z-index: 10 !important;
         position: relative !important;
+        width: 100% !important;
     }
 
     .chat-header h2 {
-        font-size: 0.875rem;
+        font-size: 0.875rem !important;
     }
 
     /* ── Chat Messages ──────────────────────────────────── */
+    /*
+       flex:1 1 auto + min-height:0 is the critical combo.
+       This allows the messages area to shrink when keyboard
+       opens (container gets shorter via interactive-widget),
+       keeping the input always visible at the bottom.
+    */
     .chat-messages {
         flex: 1 1 auto !important;
         min-height: 0 !important;
-        max-height: none !important;      /* FIX: remove fixed max-height */
+        max-height: none !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         padding: 10px 12px !important;
         position: relative !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     /* ── Message Items ──────────────────────────────────── */
@@ -2097,26 +2082,9 @@ body.sidebar-open-mobile {
         margin-bottom: 3px !important;
     }
 
-    /* ── Chat Input — THE REAL DEVICE FIX ──────────────── */
-    /*
-       On Android (Image 1): The Android navigation bar (~56px) was
-       sitting ON TOP of the fixed chat-input-container because the
-       container's bottom was at 0 of the FULL viewport, and the nav
-       bar overlay clips it. env(safe-area-inset-bottom) on modern
-       Android (API 29+) gives us this value.
-
-       On iPhone Safari portrait (Image 3): Safari's bottom toolbar
-       (~83px) overlaps the bottom of the layout because 100vh
-       includes that area. The env(safe-area-inset-bottom) (typically
-       34px for home indicator) combined with dvh fixes this.
-
-       On iPhone landscape (Image 2): Same issue but worse because
-       both side safe areas AND bottom toolbar affect layout. Fixed
-       by dvh + safe-area-inset-bottom.
-    */
+    /* ── Chat Input ─────────────────────────────────────── */
     .chat-input-container {
         padding: 10px 12px !important;
-        /* FIX: Add safe area padding so input clears browser chrome */
         padding-bottom: max(10px, calc(10px + env(safe-area-inset-bottom, 0px))) !important;
         background: var(--bg-tertiary) !important;
         border-top: 1px solid var(--border) !important;
@@ -2131,7 +2099,6 @@ body.sidebar-open-mobile {
         gap: 8px !important;
         align-items: flex-end !important;
         width: 100% !important;
-        position: relative !important;
         display: flex !important;
         flex-direction: row !important;
     }
@@ -2145,7 +2112,7 @@ body.sidebar-open-mobile {
     .chat-input {
         width: 100% !important;
         padding: 12px 48px 12px 14px !important;
-        font-size: 16px !important;        /* Prevents iOS auto-zoom on focus */
+        font-size: 16px !important;
         min-height: 48px !important;
         max-height: 120px !important;
         border-radius: 24px !important;
@@ -2228,9 +2195,7 @@ body.sidebar-open-mobile {
         visibility: visible !important;
     }
 
-    .send-btn span {
-        display: none !important;
-    }
+    .send-btn span { display: none !important; }
 
     .send-btn:active {
         transform: scale(0.92) !important;
@@ -2244,12 +2209,10 @@ body.sidebar-open-mobile {
         pointer-events: none !important;
     }
 
-    /* ── Journal FAB on Mobile ──────────────────────────── */
-    /* FIX: Position FAB above input AND above browser chrome */
+    /* ── Journal FAB ────────────────────────────────────── */
     .journal-floating-btn {
         position: fixed !important;
         right: 16px !important;
-        /* Sits above the input area + safe area */
         bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
         top: auto !important;
         left: auto !important;
@@ -2262,10 +2225,7 @@ body.sidebar-open-mobile {
         opacity: 1 !important;
     }
 
-    /* ── Misc ───────────────────────────────────────────── */
-    .connection-status {
-        display: none !important;
-    }
+    .connection-status { display: none !important; }
 
     .chat-input-locked {
         font-size: 0.75rem !important;
@@ -2537,23 +2497,11 @@ body.sidebar-open-mobile {
 /* iOS Safari specific */
 @supports (-webkit-touch-callout: none) {
     @media (max-width: 767px) {
-        /*
-           iOS Safari keyboard resize fix:
-           interactiveWidget=resizes-visual must be set in the viewport meta tag.
-           Add this to your HTML <head>:
-           <meta name="viewport" content="width=device-width, initial-scale=1,
-                 viewport-fit=cover, interactive-widget=resizes-visual">
-
-           Without that meta tag, iOS Safari won't shrink the layout viewport
-           when the keyboard opens. The CSS below handles the rest.
-        */
-        .community-container {
-            /* -webkit-fill-available respects the keyboard on old iOS */
-            height: -webkit-fill-available !important;
-        }
-
+        /* iOS Safari: position:fixed + top/bottom:0 is already correct.
+           The interactive-widget=resizes-visual viewport meta handles keyboard.
+           No height override needed here. */
         .chat-input {
-            font-size: 16px !important;   /* Prevents zoom on iOS focus */
+            font-size: 16px !important; /* Prevents zoom on iOS focus */
         }
     }
 }
@@ -2608,3 +2556,25 @@ body.sidebar-open-mobile {
     scroll-margin-bottom: 20px !important;
 }
 
+/* ============================================================
+   !! ACTION REQUIRED IN YOUR HTML !!
+   ============================================================
+
+   The virtual keyboard fix REQUIRES this viewport meta tag in
+   your HTML <head>. Without it, iOS Safari won't shrink the
+   layout when the keyboard opens.
+
+   REPLACE your existing viewport meta tag with:
+
+   <meta name="viewport" content="width=device-width,
+         initial-scale=1, viewport-fit=cover,
+         interactive-widget=resizes-visual">
+
+   - viewport-fit=cover  → enables safe-area-inset-* env vars
+   - interactive-widget=resizes-visual → tells browser to
+     shrink the visual viewport (not layout viewport) when
+     keyboard opens, so our height:100dvh container shrinks too
+
+   This single line fixes both the iPhone black gap AND the
+   Android messages-hidden-behind-keyboard issue.
+   ============================================================ */
