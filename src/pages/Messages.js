@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Messages.css';
@@ -12,8 +12,11 @@ const Messages = () => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
+    const isFirstLoad = useRef(true);
+    const prevMessagesLength = useRef(0);
 
-    const loadMessages = React.useCallback(async () => {
+    const loadMessages = useCallback(async () => {
         if (!user) return;
         try {
             const threadResponse = await Api.ensureAdminThread(user.id);
@@ -51,9 +54,36 @@ const Messages = () => {
         return () => clearInterval(pollInterval);
     }, [user, navigate, loadMessages]);
 
+    // Control scrolling behavior
     useEffect(() => {
-        // Scroll to bottom when messages change
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        // Don't scroll on first load
+        if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            return;
+        }
+
+        // Check if new messages were added
+        const hasNewMessages = messages.length > prevMessagesLength.current;
+        
+        // Only auto-scroll if:
+        // 1. There are new messages AND
+        // 2. The user was already at the bottom OR it's a new message from the current user
+        if (hasNewMessages && messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+            
+            // Get the last message
+            const lastMessage = messages[messages.length - 1];
+            
+            // Scroll if user was at bottom OR if the new message is from the user (optimistic update)
+            if (isAtBottom || (lastMessage && lastMessage.sender === 'user')) {
+                setTimeout(() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            }
+        }
+        
+        prevMessagesLength.current = messages.length;
     }, [messages]);
 
     const handleSendMessage = async (e) => {
@@ -77,14 +107,11 @@ const Messages = () => {
 
         // Send message to admin via API
         try {
-            // Ensure admin thread exists
             const threadResponse = await Api.ensureAdminThread(user.id);
             const threadId = threadResponse.data?.thread?.id;
             
             if (threadId) {
-                // Send message to thread
                 await Api.sendThreadMessage(threadId, newMessage);
-                // Reload messages to get server response
                 const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
                 const apiMessages = messagesResponse.data?.messages || [];
                 const formattedMessages = apiMessages.map(msg => ({
@@ -99,7 +126,6 @@ const Messages = () => {
             }
         } catch (error) {
             console.error('Error sending message to admin:', error);
-            // Message is still saved locally, so user can see it
         }
     };
 
@@ -118,7 +144,6 @@ const Messages = () => {
         return date.toLocaleDateString();
     };
 
-    /** Returns "Today", "Yesterday", or exact date (e.g. "Feb 20, 2025") for date separators. */
     const getDateLabel = (timestamp) => {
         const d = new Date(timestamp);
         const today = new Date();
@@ -130,10 +155,9 @@ const Messages = () => {
         return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
-    /** Group messages by calendar day (local date key) for date separators. */
-    const messagesWithDateGroups = React.useMemo(() => {
+    const messagesWithDateGroups = useMemo(() => {
         if (!messages.length) return [];
-        const groups = new Map(); // dateKey -> { label, messages }
+        const groups = new Map();
         for (const msg of messages) {
             const ts = msg.timestamp ? new Date(msg.timestamp) : new Date();
             const dateKey = `${ts.getFullYear()}-${ts.getMonth()}-${ts.getDate()}`;
@@ -175,7 +199,10 @@ const Messages = () => {
                 </div>
 
                 <div className="messages-page-content">
-                    <div className="messages-list">
+                    <div 
+                        className="messages-list" 
+                        ref={messagesContainerRef}
+                    >
                         {messages.length === 0 ? (
                             <div className="empty-messages-state">
                                 <div className="empty-icon-wrapper">
@@ -244,4 +271,3 @@ const Messages = () => {
 };
 
 export default Messages;
-
