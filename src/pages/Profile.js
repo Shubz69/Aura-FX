@@ -107,7 +107,10 @@ const Profile = () => {
     const [journalStatsLoading, setJournalStatsLoading] = useState(true);
 
     const initialLoadDone = useRef(false);
-
+// Add near your other helper functions
+const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
     // Handle color selection
     const handleColorSelect = (color) => {
         if (!user?.id) return;
@@ -431,72 +434,87 @@ useEffect(() => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-        setStatus("Avatar image must be less than 5MB");
+    const maxSize = isMobile() ? 3 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        setStatus(`Avatar image must be less than ${isMobile() ? '3MB' : '5MB'}`);
         return;
     }
 
     try {
-        const base64 = await convertToBase64(file);
-        const img = new Image();
-        img.src = base64;
-
-        await new Promise((resolve) => {
+        setStatus("Processing...");
+        
+        // Use FileReader directly (works better on mobile)
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+            const base64 = event.target.result;
+            
+            // Create image to resize
+            const img = new Image();
+            img.src = base64;
+            
             img.onload = () => {
+                // Simple resize
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const maxSize = 512;
-                let { width, height } = img;
-
-                // Calculate new dimensions while maintaining aspect ratio
+                
+                // Max 256px for avatar
+                let width = img.width;
+                let height = img.height;
+                
                 if (width > height) {
-                    if (width > maxSize) {
-                        height = (height * maxSize) / width;
-                        width = maxSize;
+                    if (width > 256) {
+                        height = (height * 256) / width;
+                        width = 256;
                     }
                 } else {
-                    if (height > maxSize) {
-                        width = (width * maxSize) / height;
-                        height = maxSize;
+                    if (height > 256) {
+                        width = (width * 256) / height;
+                        height = 256;
                     }
                 }
-
+                
                 canvas.width = Math.round(width);
                 canvas.height = Math.round(height);
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
+                
+                // Draw and compress
                 ctx.drawImage(img, 0, 0, width, height);
-
-                // Use JPEG with quality 0.9 for better compression
-                const resizedBase64 = canvas.toDataURL('image/jpeg', 0.9);
-
+                const resizedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Update state
                 setAvatarPreview(resizedBase64);
                 setFormData(prev => ({ ...prev, avatar: resizedBase64 }));
                 setEditedUserData(prev => ({ ...prev, avatar: resizedBase64 }));
-
-                // Clear any saved avatar color since we now have a real image
+                
+                // Clear color if exists
                 if (user?.id) {
                     localStorage.removeItem(`avatar_color_${user.id}`);
                     setAvatarColor(null);
                 }
-
-                // Save to localStorage
-                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-                const updatedUser = { 
-                    ...storedUser, 
-                    avatar: resizedBase64,
-                    id: user?.id 
-                };
-              
-                resolve();
+                
+                // Clean up if needed (though base64 doesn't need cleanup)
+                if (img.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(img.src);
+                }
+                
+                setStatus("Avatar ready to save");
+                setTimeout(() => setStatus(""), 2000);
             };
-        });
-
-        setStatus("Avatar ready to save. Click 'Save Profile' to update permanently.");
-        setTimeout(() => setStatus(""), 3000);
+            
+            img.onerror = () => {
+                setStatus("Failed to load image");
+            };
+        };
+        
+        reader.onerror = () => {
+            setStatus("Failed to read file");
+        };
+        
+        reader.readAsDataURL(file);
+        
     } catch (error) {
-        console.error('Avatar processing error:', error);
-        setStatus("Failed to process avatar image");
+        console.error('Avatar error:', error);
+        setStatus("Failed to process avatar");
     }
 };
 
@@ -549,6 +567,7 @@ const handleBannerChange = async (e) => {
 
 
                 resolve();
+                
             };
         });
 
@@ -616,19 +635,24 @@ const handleSaveChanges = async () => {
         const scopedBanner = localStorage.getItem(userBannerKey) || '';
         const currentBanner = bannerPreview || formData.banner || scopedBanner || '';
 
-        // Determine the avatar to save
-        let avatarToSave = formData.avatar || storedUser.avatar || '';
-        
-        // If we have a preview, use that
-        if (avatarPreview) {
-            avatarToSave = avatarPreview;
-        }
-        
-        // If no custom avatar but we have a color, create SVG
-        if (!avatarToSave && avatarColor) {
-            avatarToSave = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='${encodeURIComponent(avatarColor)}'/%3E%3C/svg%3E`;
-        }
+       // In handleSaveChanges function, replace this section:
+let avatarToSave = formData.avatar || storedUser.avatar || '';
 
+// If we have a preview, use that
+if (avatarPreview) {
+    avatarToSave = avatarPreview;
+}
+
+// Add validation for mobile
+if (avatarToSave && avatarToSave.length < 100) {
+    console.warn('Invalid avatar data');
+    avatarToSave = ''; // Reset if invalid
+}
+
+// If no custom avatar but we have a color, create SVG
+if (!avatarToSave && avatarColor) {
+    avatarToSave = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='${encodeURIComponent(avatarColor)}'/%3E%3C/svg%3E`;
+}
         // Prepare data to save
         const dataToSave = {
             id: user.id,
