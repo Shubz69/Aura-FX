@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FaPaperclip, FaPaperPlane, FaSearch } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
@@ -42,8 +42,64 @@ const AdminInbox = () => {
   const [ensuringThread, setEnsuringThread] = useState(false);
   const [userSupportThreadId, setUserSupportThreadId] = useState(null); // non-admin: their support thread
   const endRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const isFirstLoad = useRef(true);
+  const prevMessagesLength = useRef(0);
+  const isUserScrolling = useRef(false);
+  const scrollTimeout = useRef(null);
 
-  const scrollToBottom = () => endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior = 'smooth') => {
+    endRef.current?.scrollIntoView({ behavior });
+  };
+
+  // Detect when user is manually scrolling
+  const handleScroll = useCallback(() => {
+    isUserScrolling.current = true;
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+    scrollTimeout.current = setTimeout(() => {
+      isUserScrolling.current = false;
+    }, 150);
+  }, []);
+
+  // Smart scroll effect
+  useEffect(() => {
+    // Don't scroll on first load
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
+
+    // If user is manually scrolling, don't auto-scroll
+    if (isUserScrolling.current) {
+      return;
+    }
+
+    // Check if this is a new message
+    const hasNewMessages = messages.length > prevMessagesLength.current;
+    
+    if (hasNewMessages && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+      
+      // Get the last message to check if it's from the current user
+      const lastMessage = messages[messages.length - 1];
+      const isOwnMessage = lastMessage && String(lastMessage.senderId) === String(user?.id);
+      
+      // Scroll if:
+      // 1. User was already at the bottom, OR
+      // 2. The new message is from the current user (optimistic update)
+      if (isAtBottom || isOwnMessage) {
+        // Use a small timeout to ensure DOM is updated
+        setTimeout(() => {
+          scrollToBottom('smooth');
+        }, 100);
+      }
+    }
+    
+    prevMessagesLength.current = messages.length;
+  }, [messages, user?.id]);
 
   const activeThread = useMemo(() => threads.find(t => t.id === activeThreadId), [threads, activeThreadId]);
   const activeUser = useMemo(() => {
@@ -230,7 +286,7 @@ useEffect(() => {
         if (!mounted || threadId !== activeThreadId) return;
         setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message]);
         if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? { ...t, ...thread, adminUnreadCount: 0 } : t));
-        scrollToBottom();
+        // Don't auto-scroll here - let the useEffect handle it
       });
       WebSocketService.onThreadRead(({ thread }) => {
         if (!mounted) return;
@@ -266,7 +322,8 @@ useEffect(() => {
     setMessages(prev => [...prev, optimistic]);
     setInput('');
     setFile(null);
-    scrollToBottom();
+    // Force scroll for own messages
+    setTimeout(() => scrollToBottom('smooth'), 100);
     try {
       if (hasText) {
         const resp = await Api.sendThreadMessage(activeThreadId, body);
@@ -335,6 +392,9 @@ useEffect(() => {
     setActiveThreadId(null);
     setSelectedUserId(null);
     setMessages([]);
+    // Reset scroll-related refs when changing tabs
+    isFirstLoad.current = true;
+    prevMessagesLength.current = 0;
   };
 
   const displayName = (u) => u?.username || u?.name || u?.email || `User ${u?.id}`;
@@ -358,9 +418,6 @@ useEffect(() => {
     threads.reduce((sum, t) => sum + (t.adminUnreadCount || 0), 0),
     [threads]
   );
-
-  /* ── Scroll on new message ── */
-  useEffect(() => { scrollToBottom(); }, [messages.length]);
 
   return (
     <>
@@ -556,8 +613,12 @@ useEffect(() => {
               )}
             </div>
 
-            {/* Messages */}
-            <div className="admin-inbox-messages-wrap">
+            {/* Messages - Add ref and scroll handler */}
+            <div 
+              className="admin-inbox-messages-wrap" 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+            >
               {ensuringThread && selectedUserId && !activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
                   <div className="admin-inbox-conversation-empty-icon">✦</div>
