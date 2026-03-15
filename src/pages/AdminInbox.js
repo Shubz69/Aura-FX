@@ -41,84 +41,72 @@ const AdminInbox = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [ensuringThread, setEnsuringThread] = useState(false);
   const [userSupportThreadId, setUserSupportThreadId] = useState(null);
+  
   const endRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const isFirstLoad = useRef(true);
-  const isInitialMessagesLoad = useRef(true);
+  const isThreadChanging = useRef(false);
+  const shouldScrollToBottom = useRef(false);
   const prevMessagesLength = useRef(0);
-  const isUserScrolling = useRef(false);
-  const scrollTimeout = useRef(null);
 
-  const scrollToBottom = (behavior = 'smooth') => {
-    // Only scroll if we have messages
-    if (messages.length > 0) {
-      endRef.current?.scrollIntoView({ behavior });
+  // Scroll to bottom function - only called when explicitly needed
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    if (messages.length > 0 && shouldScrollToBottom.current) {
+      setTimeout(() => {
+        endRef.current?.scrollIntoView({ behavior });
+      }, 100);
     }
-  };
+  }, [messages.length]);
 
-  // Detect when user is manually scrolling
-  const handleScroll = useCallback(() => {
-    isUserScrolling.current = true;
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
-    scrollTimeout.current = setTimeout(() => {
-      isUserScrolling.current = false;
-    }, 150);
-  }, []);
-
-  // Smart scroll effect - ONLY for new messages, not initial load
+  // Reset scroll flags when thread changes
   useEffect(() => {
-    // Don't scroll on first load of the component
+    if (activeThreadId) {
+      isThreadChanging.current = true;
+      shouldScrollToBottom.current = false;
+      
+      // Reset scroll position to top when switching threads
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = 0;
+      }
+    }
+  }, [activeThreadId]);
+
+  // Handle message updates - ONLY auto-scroll for new messages from user or when user is at bottom
+  useEffect(() => {
+    // Skip on first load
     if (isFirstLoad.current) {
       isFirstLoad.current = false;
       return;
     }
 
-    // Don't scroll on initial messages load for a thread
-    if (isInitialMessagesLoad.current) {
-      isInitialMessagesLoad.current = false;
+    // Skip if thread is changing
+    if (isThreadChanging.current) {
+      isThreadChanging.current = false;
       return;
     }
 
-    // If user is manually scrolling, don't auto-scroll
-    if (isUserScrolling.current) {
-      return;
-    }
-
-    // Check if this is a new message (not just initial load)
+    // Check if we have new messages
     const hasNewMessages = messages.length > prevMessagesLength.current;
     
     if (hasNewMessages && messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
       
-      // Get the last message to check if it's from the current user
+      // Get the last message
       const lastMessage = messages[messages.length - 1];
       const isOwnMessage = lastMessage && String(lastMessage.senderId) === String(user?.id);
       
-      // Scroll if:
-      // 1. User was already at the bottom, OR
-      // 2. The new message is from the current user (optimistic update)
-      if (isAtBottom || isOwnMessage) {
-        setTimeout(() => {
-          scrollToBottom('smooth');
-        }, 100);
+      // Only auto-scroll if:
+      // 1. The new message is from the current user (optimistic update), OR
+      // 2. User was already at the bottom when message arrived
+      if (isOwnMessage || isAtBottom) {
+        shouldScrollToBottom.current = true;
+        scrollToBottom('smooth');
       }
     }
     
     prevMessagesLength.current = messages.length;
-  }, [messages, user?.id]);
-
-  // Reset the initial messages load flag when thread changes
-  useEffect(() => {
-    isInitialMessagesLoad.current = true;
-    // Don't auto-scroll when switching threads
-    if (messagesContainerRef.current) {
-      // Scroll to top when switching threads
-      messagesContainerRef.current.scrollTop = 0;
-    }
-  }, [activeThreadId]);
+  }, [messages, user?.id, scrollToBottom]);
 
   const activeThread = useMemo(() => threads.find(t => t.id === activeThreadId), [threads, activeThreadId]);
   const activeUser = useMemo(() => {
@@ -288,9 +276,9 @@ useEffect(() => {
     if (!canLoad || !activeThreadId) return;
     let mounted = true;
     
-    // Reset messages and scroll flags when loading new thread
-    setMessages([]);
-    isInitialMessagesLoad.current = true;
+    // Mark that thread is changing
+    isThreadChanging.current = true;
+    shouldScrollToBottom.current = false;
     
     const loadMessages = async () => {
       try {
@@ -352,8 +340,11 @@ useEffect(() => {
     setMessages(prev => [...prev, optimistic]);
     setInput('');
     setFile(null);
-    // Force scroll for own messages
-    setTimeout(() => scrollToBottom('smooth'), 100);
+    
+    // Force scroll for own messages immediately
+    shouldScrollToBottom.current = true;
+    scrollToBottom('smooth');
+    
     try {
       if (hasText) {
         const resp = await Api.sendThreadMessage(activeThreadId, body);
@@ -423,12 +414,13 @@ useEffect(() => {
     setActiveThreadId(null);
     setSelectedUserId(null);
     setMessages([]);
-    // Reset scroll-related refs when changing tabs
+    // Reset all scroll flags
     isFirstLoad.current = true;
-    isInitialMessagesLoad.current = true;
+    isThreadChanging.current = false;
+    shouldScrollToBottom.current = false;
     prevMessagesLength.current = 0;
     
-    // Scroll to top of messages container if it exists
+    // Scroll to top
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = 0;
     }
@@ -650,11 +642,10 @@ useEffect(() => {
               )}
             </div>
 
-            {/* Messages - Add ref and scroll handler */}
+            {/* Messages */}
             <div 
               className="admin-inbox-messages-wrap" 
               ref={messagesContainerRef}
-              onScroll={handleScroll}
             >
               {ensuringThread && selectedUserId && !activeThreadId ? (
                 <div className="admin-inbox-conversation-empty">
