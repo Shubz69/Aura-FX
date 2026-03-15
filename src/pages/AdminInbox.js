@@ -27,7 +27,7 @@ const AdminInbox = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const threadFromUrl = searchParams.get('thread');
-  const [activeTab, setActiveTab] = useState('admin'); // 'admin' | 'friends'
+  const [activeTab, setActiveTab] = useState('admin');
   const [users, setUsers] = useState([]);
   const [threads, setThreads] = useState([]);
   const [friends, setFriends] = useState([]);
@@ -40,16 +40,20 @@ const AdminInbox = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [ensuringThread, setEnsuringThread] = useState(false);
-  const [userSupportThreadId, setUserSupportThreadId] = useState(null); // non-admin: their support thread
+  const [userSupportThreadId, setUserSupportThreadId] = useState(null);
   const endRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const isFirstLoad = useRef(true);
+  const isInitialMessagesLoad = useRef(true);
   const prevMessagesLength = useRef(0);
   const isUserScrolling = useRef(false);
   const scrollTimeout = useRef(null);
 
   const scrollToBottom = (behavior = 'smooth') => {
-    endRef.current?.scrollIntoView({ behavior });
+    // Only scroll if we have messages
+    if (messages.length > 0) {
+      endRef.current?.scrollIntoView({ behavior });
+    }
   };
 
   // Detect when user is manually scrolling
@@ -63,11 +67,17 @@ const AdminInbox = () => {
     }, 150);
   }, []);
 
-  // Smart scroll effect
+  // Smart scroll effect - ONLY for new messages, not initial load
   useEffect(() => {
-    // Don't scroll on first load
+    // Don't scroll on first load of the component
     if (isFirstLoad.current) {
       isFirstLoad.current = false;
+      return;
+    }
+
+    // Don't scroll on initial messages load for a thread
+    if (isInitialMessagesLoad.current) {
+      isInitialMessagesLoad.current = false;
       return;
     }
 
@@ -76,7 +86,7 @@ const AdminInbox = () => {
       return;
     }
 
-    // Check if this is a new message
+    // Check if this is a new message (not just initial load)
     const hasNewMessages = messages.length > prevMessagesLength.current;
     
     if (hasNewMessages && messagesContainerRef.current) {
@@ -91,7 +101,6 @@ const AdminInbox = () => {
       // 1. User was already at the bottom, OR
       // 2. The new message is from the current user (optimistic update)
       if (isAtBottom || isOwnMessage) {
-        // Use a small timeout to ensure DOM is updated
         setTimeout(() => {
           scrollToBottom('smooth');
         }, 100);
@@ -100,6 +109,16 @@ const AdminInbox = () => {
     
     prevMessagesLength.current = messages.length;
   }, [messages, user?.id]);
+
+  // Reset the initial messages load flag when thread changes
+  useEffect(() => {
+    isInitialMessagesLoad.current = true;
+    // Don't auto-scroll when switching threads
+    if (messagesContainerRef.current) {
+      // Scroll to top when switching threads
+      messagesContainerRef.current.scrollTop = 0;
+    }
+  }, [activeThreadId]);
 
   const activeThread = useMemo(() => threads.find(t => t.id === activeThreadId), [threads, activeThreadId]);
   const activeUser = useMemo(() => {
@@ -268,6 +287,11 @@ useEffect(() => {
     const canLoad = adminCanLoad || friendsCanLoad;
     if (!canLoad || !activeThreadId) return;
     let mounted = true;
+    
+    // Reset messages and scroll flags when loading new thread
+    setMessages([]);
+    isInitialMessagesLoad.current = true;
+    
     const loadMessages = async () => {
       try {
         const resp = await Api.getThreadMessages(activeThreadId, { limit: 50 });
@@ -279,6 +303,7 @@ useEffect(() => {
         if (mounted) console.error('Load messages failed', e);
       }
     };
+    
     WebSocketService.connect({ userId: user.id, role: user.role }, async () => {
       WebSocketService.offThreadEvents();
       WebSocketService.joinThread(activeThreadId);
@@ -286,7 +311,6 @@ useEffect(() => {
         if (!mounted || threadId !== activeThreadId) return;
         setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message]);
         if (thread) setThreads(prev => prev.map(t => t.id === thread.id ? { ...t, ...thread, adminUnreadCount: 0 } : t));
-        // Don't auto-scroll here - let the useEffect handle it
       });
       WebSocketService.onThreadRead(({ thread }) => {
         if (!mounted) return;
@@ -294,6 +318,7 @@ useEffect(() => {
       });
       await loadMessages();
     });
+    
     const pollInterval = setInterval(() => {
       if (!mounted || !activeThreadId) return;
       Api.getThreadMessages(activeThreadId, { limit: 50 }).then((resp) => {
@@ -301,7 +326,12 @@ useEffect(() => {
         setMessages(resp.data.messages || []);
       }).catch(() => {});
     }, 8000);
-    return () => { clearInterval(pollInterval); WebSocketService.offThreadEvents(); mounted = false; };
+    
+    return () => { 
+      clearInterval(pollInterval); 
+      WebSocketService.offThreadEvents(); 
+      mounted = false; 
+    };
   }, [user, activeThreadId, activeTab, userSupportThreadId]);
 
   /* ── Send message ── */
@@ -384,9 +414,10 @@ useEffect(() => {
     return list.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
   }, [friends, searchTerm]);
 
-  const showAdminTab = true; // All users can see Admin tab (message admin)
-  const showFriendsTab = true; // Show to all; content gated for Premium/Elite only
+  const showAdminTab = true;
+  const showFriendsTab = true;
   const canUseFriendsTab = isFriendsAllowed(user?.role);
+  
   const onTabChange = (tab) => {
     setActiveTab(tab);
     setActiveThreadId(null);
@@ -394,7 +425,13 @@ useEffect(() => {
     setMessages([]);
     // Reset scroll-related refs when changing tabs
     isFirstLoad.current = true;
+    isInitialMessagesLoad.current = true;
     prevMessagesLength.current = 0;
+    
+    // Scroll to top of messages container if it exists
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = 0;
+    }
   };
 
   const displayName = (u) => u?.username || u?.name || u?.email || `User ${u?.id}`;
