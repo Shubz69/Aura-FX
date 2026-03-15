@@ -1962,102 +1962,259 @@ body.sidebar-open-mobile {
 }
 
 /* ============================================================
-   MOBILE STYLES (≤767px) - FINAL CORRECT APPROACH
-   ============================================================
-
-   STRATEGY: Keep position:fixed on the container (correct for
-   layout), but let the keyboard work via interactive-widget in
-   the viewport meta tag (already added to index.html).
-
-   With interactive-widget=resizes-visual in the viewport meta:
-   - The VISUAL viewport shrinks when keyboard opens
-   - position:fixed elements are sized to the VISUAL viewport
-   - So the container shrinks, messages scroll up, input visible
-
-   This is the correct, standard approach. No margin-top hacks.
-   No position:relative. Just fixed + dvh + safe-area-insets.
-*/
+   MOBILE STYLES (≤767px)
+   ============================================================ */
 
 @media (max-width: 767px) {
 
+    /* ── html/body: simple overflow lock, no position:fixed ── */
     html.community-page-active,
     body.community-page-active {
         overflow: hidden !important;
         height: 100% !important;
         width: 100% !important;
+        position: static !important;
     }
 
-    /* ── Main Container ─────────────────────────────────── */
-    /*
-       position:fixed + top:navbar-h + bottom:0 is the correct
-       approach on mobile. The interactive-widget viewport meta
-       ensures the fixed element resizes when keyboard opens.
-       DO NOT use position:relative + margin-top — that causes
-       the container to be navbar-h taller than the visible area.
-    */
+    /* ─────────────────────────────────────────────────────────
+       CONTAINER
+       position:fixed fills from below-navbar to screen bottom.
+       top + bottom define height — no explicit height needed.
+       interactive-widget=resizes-visual (in index.html viewport
+       meta) makes bottom:0 rise with the keyboard, shrinking
+       the container and keeping input visible.
+    ──────────────────────────────────────────────────────────── */
     .community-container {
-        display: flex !important;
-        flex-direction: column !important;
         position: fixed !important;
         top: var(--navbar-h) !important;
         left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
-        width: 100vw !important;
-        height: auto !important;         /* let top+bottom define height */
+        /* DO NOT set height or max-height — top+bottom define it */
+        height: auto !important;
         max-height: none !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
         overflow: hidden !important;
-        margin-top: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        /* grid override from desktop */
+        grid-template-columns: none !important;
+        background: var(--bg-tertiary) !important;
     }
 
     .community-sidebar:not(.mobile-sidebar) {
         display: none !important;
     }
 
-    /* ── Chat Main Area ─────────────────────────────────── */
+    /* ─────────────────────────────────────────────────────────
+       CHAT-MAIN
+       Must fill the entire container as a flex column.
+       Explicit height:100% ensures it fills when container
+       uses top+bottom positioning (height:auto parent).
+    ──────────────────────────────────────────────────────────── */
     .chat-main {
-        flex: 1 1 auto !important;
         display: flex !important;
         flex-direction: column !important;
-        overflow: hidden !important;
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        /* Explicit height so children can use flex correctly */
+        height: 100% !important;
         min-height: 0 !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
         position: relative !important;
+        background: var(--bg-tertiary) !important;
     }
 
-    /* ── Chat Header ────────────────────────────────────── */
+    /* ─────────────────────────────────────────────────────────
+       CHAT HEADER — pinned top, never hidden
+    ──────────────────────────────────────────────────────────── */
     .chat-header {
-        padding: 0 10px !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        width: 100% !important;
         min-height: 48px !important;
         height: 48px !important;
-        flex-shrink: 0 !important;
-        z-index: 10 !important;
+        padding: 0 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
         position: relative !important;
-        width: 100% !important;
+        z-index: 10 !important;
+        box-sizing: border-box !important;
+        background: rgba(17,17,20,0.97) !important;
+        border-bottom: 1px solid var(--border) !important;
     }
 
     .chat-header h2 {
         font-size: 0.875rem !important;
+        margin: 0 !important;
     }
 
-    /* ── Chat Messages ──────────────────────────────────── */
-    /*
-       flex:1 1 auto + min-height:0 is the critical combo.
-       This allows the messages area to shrink when keyboard
-       opens (container gets shorter via interactive-widget),
-       keeping the input always visible at the bottom.
-    */
+    /* ─────────────────────────────────────────────────────────
+       CHAT MESSAGES — flex:1 absorbs all remaining space.
+       When keyboard opens, dvh shrinks → container shrinks →
+       this area shrinks. Header and input are flex-shrink:0
+       so they stay fully visible. Messages just scroll less.
+    ──────────────────────────────────────────────────────────── */
     .chat-messages {
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         max-height: none !important;
+        width: 100% !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        padding: 10px 12px !important;
-        position: relative !important;
         -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+        padding: 10px 12px !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
-    /* ── Message Items ──────────────────────────────────── */
+    /* ─────────────────────────────────────────────────────────
+       CHAT INPUT CONTAINER — pinned bottom, never hidden.
+       safe-area-inset-bottom ensures it clears the home
+       indicator on iPhone and gesture bar on Android.
+    ──────────────────────────────────────────────────────────── */
+    .chat-input-container {
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        width: 100% !important;
+        padding: 10px 12px !important;
+        padding-bottom: max(10px, calc(10px + env(safe-area-inset-bottom, 0px))) !important;
+        background: var(--bg-tertiary) !important;
+        border-top: 1px solid var(--border) !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        z-index: 20 !important;
+        overflow: visible !important;
+    }
+
+    .chat-form {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-end !important;
+        gap: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .chat-input-wrapper {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+    }
+
+    .chat-input {
+        display: block !important;
+        width: 100% !important;
+        min-height: 48px !important;
+        max-height: 120px !important;
+        padding: 12px 48px 12px 14px !important;
+        font-size: 16px !important;
+        line-height: 1.4 !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        border-radius: 24px !important;
+        border: 1.5px solid rgba(255,255,255,0.1) !important;
+        background: rgba(0,0,0,0.4) !important;
+        color: var(--text) !important;
+        resize: none !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        caret-color: var(--purple) !important;
+        outline: none !important;
+    }
+
+    .chat-input:focus {
+        border-color: var(--purple) !important;
+        background: rgba(0,0,0,0.55) !important;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.2) !important;
+    }
+
+    .chat-input::placeholder {
+        color: rgba(255,255,255,0.3) !important;
+    }
+
+    .chat-input-buttons {
+        position: absolute !important;
+        right: 10px !important;
+        bottom: 9px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 4px !important;
+        z-index: 5 !important;
+        pointer-events: auto !important;
+    }
+
+    .chat-input-btn {
+        width: 30px !important;
+        height: 30px !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255,255,255,0.08) !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        border-radius: 8px !important;
+        color: rgba(255,255,255,0.6) !important;
+        font-size: 0.9rem !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .chat-input-btn:active {
+        background: var(--purple-dim) !important;
+        border-color: var(--purple) !important;
+        color: #fff !important;
+        transform: scale(0.9) !important;
+    }
+
+    .send-btn {
+        flex-shrink: 0 !important;
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+        border: none !important;
+        color: #fff !important;
+        font-size: 1.2rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(139,92,246,0.4) !important;
+        -webkit-tap-highlight-color: transparent !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        align-self: flex-end !important;
+    }
+
+    .send-btn span { display: none !important; }
+
+    .send-btn:active {
+        transform: scale(0.92) !important;
+        box-shadow: 0 2px 8px rgba(139,92,246,0.5) !important;
+    }
+
+    .send-btn:disabled {
+        opacity: 0.4 !important;
+        transform: none !important;
+        box-shadow: none !important;
+        pointer-events: none !important;
+    }
+
+    /* ── Message layout ─────────────────────────────────── */
     .message-item {
         padding: 2px 8px 2px 60px !important;
     }
@@ -2082,138 +2239,11 @@ body.sidebar-open-mobile {
         margin-bottom: 3px !important;
     }
 
-    /* ── Chat Input ─────────────────────────────────────── */
-    .chat-input-container {
-        padding: 10px 12px !important;
-        padding-bottom: max(10px, calc(10px + env(safe-area-inset-bottom, 0px))) !important;
-        background: var(--bg-tertiary) !important;
-        border-top: 1px solid var(--border) !important;
-        position: relative !important;
-        z-index: 30 !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        flex-shrink: 0 !important;
-    }
-
-    .chat-form {
-        gap: 8px !important;
-        align-items: flex-end !important;
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: row !important;
-    }
-
-    .chat-input-wrapper {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        position: relative !important;
-    }
-
-    .chat-input {
-        width: 100% !important;
-        padding: 12px 48px 12px 14px !important;
-        font-size: 16px !important;
-        min-height: 48px !important;
-        max-height: 120px !important;
-        border-radius: 24px !important;
-        border: 1.5px solid rgba(255,255,255,0.1) !important;
-        background: rgba(0,0,0,0.4) !important;
-        color: var(--text) !important;
-        line-height: 1.4 !important;
-        resize: none !important;
-        overflow-y: auto !important;
-        box-sizing: border-box !important;
-        display: block !important;
-        -webkit-appearance: none !important;
-        appearance: none !important;
-        caret-color: var(--purple) !important;
-    }
-
-    .chat-input:focus {
-        border-color: var(--purple) !important;
-        background: rgba(0,0,0,0.6) !important;
-        outline: none !important;
-        box-shadow: 0 0 0 3px rgba(139,92,246,0.2) !important;
-    }
-
-    .chat-input::placeholder {
-        color: rgba(255,255,255,0.3) !important;
-        font-size: 15px !important;
-    }
-
-    .chat-input-buttons {
-        position: absolute !important;
-        right: 10px !important;
-        bottom: 9px !important;
-        display: flex !important;
-        gap: 4px !important;
-        z-index: 5 !important;
-        pointer-events: auto !important;
-    }
-
-    .chat-input-btn {
-        width: 30px !important;
-        height: 30px !important;
-        background: rgba(255,255,255,0.08) !important;
-        border: 1px solid rgba(255,255,255,0.06) !important;
-        border-radius: 8px !important;
-        color: rgba(255,255,255,0.6) !important;
-        font-size: 0.9rem !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        -webkit-tap-highlight-color: transparent !important;
-        padding: 0 !important;
-        flex-shrink: 0 !important;
-    }
-
-    .chat-input-btn:active {
-        background: var(--purple-dim) !important;
-        border-color: var(--purple) !important;
-        color: #fff !important;
-        transform: scale(0.9) !important;
-    }
-
-    .send-btn {
-        width: 48px !important;
-        height: 48px !important;
-        padding: 0 !important;
-        border-radius: 50% !important;
-        flex-shrink: 0 !important;
-        background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
-        border: none !important;
-        color: #fff !important;
-        font-size: 1.2rem !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(139,92,246,0.4) !important;
-        -webkit-tap-highlight-color: transparent !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-
-    .send-btn span { display: none !important; }
-
-    .send-btn:active {
-        transform: scale(0.92) !important;
-        box-shadow: 0 2px 8px rgba(139,92,246,0.5) !important;
-    }
-
-    .send-btn:disabled {
-        opacity: 0.4 !important;
-        transform: none !important;
-        box-shadow: none !important;
-        pointer-events: none !important;
-    }
-
     /* ── Journal FAB ────────────────────────────────────── */
     .journal-floating-btn {
         position: fixed !important;
         right: 16px !important;
-        bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
         top: auto !important;
         left: auto !important;
         width: 48px !important;
@@ -2223,8 +2253,10 @@ body.sidebar-open-mobile {
         z-index: 100 !important;
         visibility: visible !important;
         opacity: 1 !important;
+        animation: jm-float 4s ease-in-out infinite !important;
     }
 
+    /* ── Misc ───────────────────────────────────────────── */
     .connection-status { display: none !important; }
 
     .chat-input-locked {
@@ -2233,6 +2265,12 @@ body.sidebar-open-mobile {
         margin: 0 10px 5px !important;
         background: rgba(255,255,255,0.05) !important;
         border-radius: 20px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .ws-reconnect-banner {
+        flex-shrink: 0 !important;
+        margin: 4px 10px !important;
     }
 }
 
@@ -2241,8 +2279,10 @@ body.sidebar-open-mobile {
    ============================================================ */
 
 @media (max-width: 480px) {
+    /* Container uses top+bottom positioning — no height needed */
     .community-container {
-        height: calc(100dvh - var(--navbar-h)) !important;
+        height: auto !important;
+        max-height: none !important;
     }
 
     .chat-input-container {
@@ -2458,9 +2498,10 @@ body.sidebar-open-mobile {
    the SIDES too. We also need to add horizontal padding.
 */
 @media (max-width: 767px) and (orientation: landscape) {
+    /* Container uses top:navbar + bottom:0 — no height override needed */
     .community-container {
-        height: 100dvh !important;       /* No navbar offset in landscape? adjust if needed */
-        height: calc(100dvh - var(--navbar-h)) !important;
+        height: auto !important;
+        max-height: none !important;
     }
 
     .chat-messages {
