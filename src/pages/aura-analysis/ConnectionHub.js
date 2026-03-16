@@ -7,6 +7,91 @@ import CosmicBackground from '../../components/CosmicBackground';
 import AuraEnterTransition from '../../components/aura-analysis/AuraEnterTransition';
 import '../../styles/aura-analysis/ConnectionHub.css';
 
+// ── Credential Modal ────────────────────────────────────────────────────────
+function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
+  const [fields, setFields] = useState({});
+  const [showSecret, setShowSecret] = useState({});
+
+  const handleChange = (key, value) => setFields((prev) => ({ ...prev, [key]: value }));
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(fields);
+  };
+
+  return (
+    <div className="chub-modal-overlay" onClick={onClose}>
+      <div className="chub-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="chub-modal-header">
+          <span className="chub-modal-icon">{PLATFORM_ICONS[platform.id] || '📊'}</span>
+          <div>
+            <div className="chub-modal-title">Connect {platform.name}</div>
+            <div className="chub-modal-sub">Enter your credentials — encrypted before storage</div>
+          </div>
+          <button className="chub-modal-close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+
+        {(platform.id === 'mt5' || platform.id === 'mt4') && (
+          <div className="chub-modal-info">
+            <i className="fas fa-info-circle" />
+            <span>Uses <strong>MetaAPI</strong>. Get your Account ID + API Token from <a href="https://app.metaapi.cloud" target="_blank" rel="noopener noreferrer">app.metaapi.cloud</a></span>
+          </div>
+        )}
+
+        <form className="chub-modal-form" onSubmit={handleSubmit}>
+          {platform.fields.map((f) => (
+            <div className="chub-modal-field" key={f.key}>
+              <label>{f.label}</label>
+              <div className="chub-modal-input-wrap">
+                <input
+                  type={f.secret && !showSecret[f.key] ? 'password' : 'text'}
+                  placeholder={f.placeholder}
+                  value={fields[f.key] || ''}
+                  onChange={(e) => handleChange(f.key, e.target.value)}
+                  required
+                  autoComplete="off"
+                />
+                {f.secret && (
+                  <button
+                    type="button"
+                    className="chub-modal-eye"
+                    onClick={() => setShowSecret((p) => ({ ...p, [f.key]: !p[f.key] }))}
+                    tabIndex={-1}
+                  >
+                    <i className={`fas fa-eye${showSecret[f.key] ? '-slash' : ''}`} />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {error && (
+            <div className="chub-modal-error">
+              <i className="fas fa-exclamation-triangle" /> {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className={`chub-modal-submit${connecting ? ' loading' : ''}`}
+            disabled={connecting}
+          >
+            {connecting ? (
+              <><i className="fas fa-spinner fa-spin" /> Connecting…</>
+            ) : (
+              <><i className="fas fa-link" /> Connect {platform.name}</>
+            )}
+          </button>
+        </form>
+
+        <div className="chub-modal-security">
+          <i className="fas fa-lock" />
+          <span>Credentials are AES-256-GCM encrypted and never exposed to the client</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const PLATFORM_ICONS = {
   mt5: '📊',
   mt4: '📈',
@@ -62,37 +147,48 @@ const Particles = () => {
 export default function ConnectionHub() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { platforms, connections, getConnection, addConnection, removeConnection } = useAuraConnection();
+  const { platforms, connections, getConnection, connectPlatform, disconnectPlatform } = useAuraConnection();
   const canEnter = useCanEnterAuraDashboard(user);
   const superAdmin = user && isSuperAdmin(user);
-  const [connecting, setConnecting] = useState(null);
+  const [modalPlatform, setModalPlatform] = useState(null);
+  const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState('');
   const [transitioning, setTransitioning] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
-  const [successAnimation, setSuccessAnimation] = useState(null);
+  const [successPlatform, setSuccessPlatform] = useState(null);
+  const [disconnecting, setDisconnecting] = useState(null);
 
-  const connectedCount = Object.keys(connections).length;
+  const connectedCount = connections.length;
 
-  const handleConnect = (platformId) => {
-    setConnecting(platformId);
-    
-    // Simulate connection process
-    setTimeout(() => {
-      addConnection(platformId, {
-        balance: 10000 + Math.floor(Math.random() * 50000),
-        currency: 'USD',
-        health: 'ok',
-        lastSync: new Date().toISOString(),
-        trades: Math.floor(Math.random() * 100),
-        winRate: Math.floor(Math.random() * 30 + 60),
-      });
-      setConnecting(null);
-      setSuccessAnimation(platformId);
-      
-      // Remove success animation after delay
-      setTimeout(() => {
-        setSuccessAnimation(null);
-      }, 2000);
-    }, 1500);
+  const openModal = (platform) => {
+    setConnectError('');
+    setModalPlatform(platform);
+  };
+
+  const handleModalSubmit = async (fields) => {
+    setConnecting(true);
+    setConnectError('');
+    try {
+      await connectPlatform(modalPlatform.id, fields);
+      setModalPlatform(null);
+      setSuccessPlatform(modalPlatform.id);
+      setTimeout(() => setSuccessPlatform(null), 2500);
+    } catch (err) {
+      setConnectError(err.message || 'Connection failed. Check your credentials.');
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async (platformId) => {
+    setDisconnecting(platformId);
+    try {
+      await disconnectPlatform(platformId);
+    } catch {
+      // silently ignore
+    } finally {
+      setDisconnecting(null);
+    }
   };
 
   const handleEnterDashboard = () => {
@@ -102,38 +198,36 @@ export default function ConnectionHub() {
 
   const handleTransitionComplete = () => {
     setTransitioning(false);
-    navigate('/aura-analysis/dashboard/performance', { state: { fromTransition: true } });
+    navigate('/aura-analysis/dashboard/overview', { state: { fromTransition: true } });
   };
 
-  // Format currency
-  const formatCurrency = (value, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const fmt$ = (value, currency = 'USD') =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
   return (
     <div className="connection-hub-page">
       <Particles />
-      {transitioning && (
-        <AuraEnterTransition onComplete={handleTransitionComplete} />
+      {transitioning && <AuraEnterTransition onComplete={handleTransitionComplete} />}
+      {modalPlatform && (
+        <ConnectModal
+          platform={modalPlatform}
+          onClose={() => { if (!connecting) setModalPlatform(null); }}
+          onSubmit={handleModalSubmit}
+          connecting={connecting}
+          error={connectError}
+        />
       )}
       <CosmicBackground />
-      
+
       <div className="connection-hub-container">
         <header className="connection-hub-header">
-  <h1 className="connection-hub-title">
-    Connection Hub
-  </h1>
-  <p className="connection-hub-sub">
-    Securely connect your trading platforms to unlock unified analytics, 
-    real-time sync, and AI-powered insights. All data remains encrypted 
-    and under your control.
-  </p>
-</header>
+          <h1 className="connection-hub-title">Connection Hub</h1>
+          <p className="connection-hub-sub">
+            Securely connect your trading platforms to unlock unified analytics,
+            real-time sync, and AI-powered insights. Credentials are AES-256-GCM
+            encrypted — never stored in plain text.
+          </p>
+        </header>
 
         {/* Stats Strip */}
         {connectedCount > 0 && (
@@ -144,22 +238,20 @@ export default function ConnectionHub() {
             </div>
             <div className="hub-stat">
               <span className="hub-stat-number">
-                {Object.values(connections).reduce((sum, conn) => sum + (conn.balance || 0), 0) > 0 
-                  ? '⟠' 
-                  : '—'}
+                {(() => {
+                  const total = connections.reduce((s, c) => s + (c.accountInfo?.balance || 0), 0);
+                  return total > 0 ? fmt$(total) : '—';
+                })()}
               </span>
-              <span className="hub-stat-label">Total Value</span>
+              <span className="hub-stat-label">Total Balance</span>
             </div>
             <div className="hub-stat">
-              <span className="hub-stat-number">
-                {Object.values(connections).filter(c => c.health === 'ok').length}
-              </span>
-              <span className="hub-stat-label">Healthy Connections</span>
+              <span className="hub-stat-number">{connectedCount}</span>
+              <span className="hub-stat-label">Live Connections</span>
             </div>
           </div>
         )}
 
-        {/* Platform Grid Label */}
         <div className="connection-hub-section-label">
           <span>Available Platforms</span>
         </div>
@@ -168,25 +260,24 @@ export default function ConnectionHub() {
           {platforms.map((p) => {
             const conn = getConnection(p.id);
             const isConn = !!conn;
-            const isConnecting = connecting === p.id;
-            const showSuccess = successAnimation === p.id;
-            
+            const isSuccess = successPlatform === p.id;
+            const isDisconnecting = disconnecting === p.id;
+            const info = conn?.accountInfo || {};
+
             return (
-              <div 
-                key={p.id} 
-                className={`connection-card ${isConn ? 'connected' : ''} ${isConnecting ? 'connecting' : ''}`}
+              <div
+                key={p.id}
+                className={`connection-card ${isConn ? 'connected' : ''}`}
                 onMouseEnter={() => setHoveredCard(p.id)}
                 onMouseLeave={() => setHoveredCard(null)}
                 style={{ '--platform-color': PLATFORM_COLORS[p.id] || '#8b5cf6' }}
               >
                 <div className="connection-card-header">
-                  <span className="connection-card-icon">
-                    {PLATFORM_ICONS[p.id] || '📊'}
-                  </span>
+                  <span className="connection-card-icon">{PLATFORM_ICONS[p.id] || '📊'}</span>
                   <span className="connection-card-name">{p.name}</span>
                   <span className="connection-card-badge">{p.category}</span>
                 </div>
-                
+
                 {isConn ? (
                   <>
                     <div className="connection-card-status">
@@ -199,33 +290,33 @@ export default function ConnectionHub() {
                         </span>
                       )}
                     </div>
-                    
                     <div className="connection-card-meta">
-                      <span>
-                        <i className="fas fa-wallet" />
-                        Balance: {formatCurrency(conn.balance, conn.currency)}
-                      </span>
-                      <span>
-                        <i className="fas fa-chart-line" />
-                        Trades: {conn.trades || '—'}
-                      </span>
-                      <span>
-                        <i className="fas fa-chart-pie" />
-                        Win Rate: {conn.winRate ? `${conn.winRate}%` : '—'}
-                      </span>
+                      {info.balance != null && (
+                        <span><i className="fas fa-wallet" /> Balance: {fmt$(info.balance, info.currency || 'USD')}</span>
+                      )}
+                      {info.equity != null && info.equity !== info.balance && (
+                        <span><i className="fas fa-chart-line" /> Equity: {fmt$(info.equity, info.currency || 'USD')}</span>
+                      )}
+                      {info.name && (
+                        <span><i className="fas fa-user" /> {info.name}</span>
+                      )}
+                      {info.server && (
+                        <span><i className="fas fa-server" /> {info.server}</span>
+                      )}
                       <span className="health">
-                        <i className="fas fa-heartbeat" />
-                        Health: <span className="health-ok">{conn.health}</span>
+                        <i className="fas fa-heartbeat" /> Health: <span className="health-ok">Live</span>
                       </span>
                     </div>
-                    
                     <button
                       type="button"
                       className="connection-card-disconnect"
-                      onClick={() => removeConnection(p.id)}
+                      disabled={isDisconnecting}
+                      onClick={() => handleDisconnect(p.id)}
                     >
-                      <i className="fas fa-unlink" style={{ marginRight: 8 }} />
-                      Disconnect
+                      {isDisconnecting
+                        ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />Disconnecting…</>
+                        : <><i className="fas fa-unlink" style={{ marginRight: 8 }} />Disconnect</>
+                      }
                     </button>
                   </>
                 ) : (
@@ -257,20 +348,13 @@ export default function ConnectionHub() {
                     
                     <button
                       type="button"
-                      className={`connection-card-connect ${isConnecting ? 'loading' : ''} ${showSuccess ? 'success' : ''}`}
-                      onClick={() => handleConnect(p.id)}
-                      disabled={isConnecting}
+                      className={`connection-card-connect${isSuccess ? ' success' : ''}`}
+                      onClick={() => openModal(p)}
                     >
-                      {isConnecting ? (
-                        'Connecting...'
-                      ) : showSuccess ? (
-                        <><i className="fas fa-check connection-success-icon" /> Connected!</>
-                      ) : (
-                        <>
-                          <i className="fas fa-link" style={{ marginRight: 8 }} />
-                          Connect Platform
-                        </>
-                      )}
+                      {isSuccess
+                        ? <><i className="fas fa-check connection-success-icon" /> Connected!</>
+                        : <><i className="fas fa-link" style={{ marginRight: 8 }} />Connect Platform</>
+                      }
                     </button>
                   </>
                 )}

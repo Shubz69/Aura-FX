@@ -1,82 +1,75 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { isSuperAdmin } from '../utils/roles';
+import Api from '../services/Api';
 
 const AuraConnectionContext = createContext(null);
 
-const STORAGE_KEY = 'aura_connections';
-
-const PLATFORMS = [
-  { id: 'mt5', name: 'MetaTrader 5', category: 'MT' },
-  { id: 'mt4', name: 'MetaTrader 4', category: 'MT' },
-  { id: 'ctrader', name: 'cTrader', category: 'Platform' },
-  { id: 'dxtrade', name: 'DXtrade', category: 'Platform' },
-  { id: 'tradovate', name: 'Tradovate', category: 'Futures' },
-  { id: 'binance', name: 'Binance', category: 'Exchange' },
-  { id: 'bybit', name: 'Bybit', category: 'Exchange' },
-  { id: 'kraken', name: 'Kraken', category: 'Exchange' },
-  { id: 'coinbase', name: 'Coinbase', category: 'Exchange' },
+export const PLATFORMS = [
+  { id: 'mt5',       name: 'MetaTrader 5', category: 'MT',       fields: [{ key: 'accountId', label: 'MetaAPI Account ID', placeholder: 'e.g. abc123...' }, { key: 'token', label: 'MetaAPI API Token', placeholder: 'Your MetaAPI token', secret: true }] },
+  { id: 'mt4',       name: 'MetaTrader 4', category: 'MT',       fields: [{ key: 'accountId', label: 'MetaAPI Account ID', placeholder: 'e.g. abc123...' }, { key: 'token', label: 'MetaAPI API Token', placeholder: 'Your MetaAPI token', secret: true }] },
+  { id: 'ctrader',   name: 'cTrader',      category: 'Platform', fields: [{ key: 'accountId', label: 'cTrader Account ID', placeholder: 'Your account ID' }, { key: 'accessToken', label: 'Access Token', placeholder: 'OAuth access token', secret: true }] },
+  { id: 'dxtrade',   name: 'DXtrade',      category: 'Platform', fields: [{ key: 'server', label: 'Server URL', placeholder: 'https://your-broker.dxtrade.com' }, { key: 'login', label: 'Login', placeholder: 'Account login' }, { key: 'password', label: 'Password', placeholder: 'Account password', secret: true }] },
+  { id: 'tradovate', name: 'Tradovate',    category: 'Futures',  fields: [{ key: 'username', label: 'Username', placeholder: 'Tradovate username' }, { key: 'password', label: 'Password', placeholder: 'Tradovate password', secret: true }] },
+  { id: 'binance',   name: 'Binance',      category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Binance API key' }, { key: 'apiSecret', label: 'API Secret', placeholder: 'Your Binance secret', secret: true }] },
+  { id: 'bybit',     name: 'Bybit',        category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Bybit API key' }, { key: 'apiSecret', label: 'API Secret', placeholder: 'Your Bybit secret', secret: true }] },
+  { id: 'kraken',    name: 'Kraken',       category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Kraken API key' }, { key: 'apiSecret', label: 'Private Key (base64)', placeholder: 'Your Kraken private key', secret: true }] },
+  { id: 'coinbase',  name: 'Coinbase',     category: 'Exchange', fields: [{ key: 'apiKey', label: 'API Key', placeholder: 'Your Coinbase API key' }, { key: 'apiSecret', label: 'API Secret', placeholder: 'Your Coinbase secret', secret: true }] },
 ];
 
-function loadConnections() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveConnections(connections) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(connections));
-  } catch (e) {
-    console.warn('AuraConnectionContext: save failed', e);
-  }
-}
-
 export function AuraConnectionProvider({ children }) {
-  const [connections, setConnections] = useState(loadConnections);
+  const [connections, setConnections] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const addConnection = useCallback((platformId, data = {}) => {
+  // Load connections from backend on mount
+  useEffect(() => {
+    Api.getAuraPlatformConnections()
+      .then((r) => {
+        if (r.data?.success) setConnections(r.data.connections || []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  /** Connect a platform — calls backend with real credentials */
+  const connectPlatform = useCallback(async (platformId, credentials) => {
+    const r = await Api.connectAuraPlatform(platformId, credentials);
+    if (!r.data?.success) throw new Error(r.data?.error || 'Connection failed');
+    const accountInfo = r.data.accountInfo || {};
     setConnections((prev) => {
       const next = prev.filter((c) => c.platformId !== platformId);
       next.push({
         platformId,
+        label: credentials.accountId || credentials.apiKey?.slice(0, 8) + '...' || platformId,
+        accountInfo,
         connectedAt: new Date().toISOString(),
         lastSync: new Date().toISOString(),
-        balance: data.balance ?? 0,
-        currency: data.currency ?? 'USD',
-        health: data.health ?? 'ok',
-        ...data,
+        status: 'active',
       });
-      saveConnections(next);
       return next;
     });
+    return accountInfo;
   }, []);
 
-  const removeConnection = useCallback((platformId) => {
-    setConnections((prev) => {
-      const next = prev.filter((c) => c.platformId !== platformId);
-      saveConnections(next);
-      return next;
-    });
+  /** Disconnect a platform */
+  const disconnectPlatform = useCallback(async (platformId) => {
+    await Api.disconnectAuraPlatform(platformId);
+    setConnections((prev) => prev.filter((c) => c.platformId !== platformId));
   }, []);
-
-  const hasAnyConnection = connections.length > 0;
 
   const getConnection = useCallback(
     (platformId) => connections.find((c) => c.platformId === platformId),
     [connections]
   );
 
+  const hasAnyConnection = connections.length > 0;
+
   const value = {
     connections,
     platforms: PLATFORMS,
     hasAnyConnection,
-    addConnection,
-    removeConnection,
+    loading,
+    connectPlatform,
+    disconnectPlatform,
     getConnection,
   };
 

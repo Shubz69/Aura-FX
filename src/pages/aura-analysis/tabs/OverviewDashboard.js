@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Api from '../../../services/Api';
+import { useAuraConnection } from '../../../context/AuraConnectionContext';
 import { computeStreaks } from '../../../lib/aura-analysis/trader-cv/streakEngine';
 import '../../../styles/aura-analysis/Overview.css';
 
@@ -351,8 +352,11 @@ function DonutChart({ pct, size = 120, strokeW = 13, color = '#a78bfa', bg = 'rg
 }
 
 export default function OverviewDashboard() {
+  const { connections } = useAuraConnection();
+  const primaryPlatformId = connections[0]?.platformId || null;
+
   const [trades, setTrades] = useState([]);
-  const [pnlData, setPnlData] = useState({});
+  const [accountInfo, setAccountInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(() => new Date());
   const [equityView, setEquityView] = useState('Day');
@@ -361,18 +365,19 @@ export default function OverviewDashboard() {
   const [mounted, setMounted] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      Api.getAuraAnalysisTrades().then((r) => (r.data?.trades ?? r.data?.data ?? [])),
-      Api.getAuraAnalysisPnl().then((r) => ({
-        dailyPnl: r.data?.dailyPnl ?? 0,
-        weeklyPnl: r.data?.weeklyPnl ?? 0,
-        monthlyPnl: r.data?.monthlyPnl ?? 0,
-      })),
+  const fetchPlatformData = useCallback((platformId) => {
+    if (!platformId) {
+      setLoading(false);
+      setTimeout(() => setMounted(true), 50);
+      return;
+    }
+    return Promise.all([
+      Api.getAuraPlatformHistory(platformId, 90).then((r) => r.data?.trades ?? []),
+      Api.getAuraPlatformAccount(platformId).then((r) => r.data?.account ?? null),
     ])
-      .then(([t, p]) => {
+      .then(([t, acc]) => {
         setTrades(Array.isArray(t) ? t : []);
-        setPnlData(typeof p === 'object' ? p : {});
+        setAccountInfo(acc);
       })
       .catch(() => {})
       .finally(() => {
@@ -381,23 +386,24 @@ export default function OverviewDashboard() {
       });
   }, []);
 
+  useEffect(() => {
+    fetchPlatformData(primaryPlatformId);
+  }, [primaryPlatformId, fetchPlatformData]);
+
   const handleRefresh = useCallback(() => {
+    if (!primaryPlatformId) return;
     setRefreshing(true);
     Promise.all([
-      Api.getAuraAnalysisTrades().then((r) => (r.data?.trades ?? r.data?.data ?? [])),
-      Api.getAuraAnalysisPnl().then((r) => ({
-        dailyPnl: r.data?.dailyPnl ?? 0,
-        weeklyPnl: r.data?.weeklyPnl ?? 0,
-        monthlyPnl: r.data?.monthlyPnl ?? 0,
-      })),
+      Api.getAuraPlatformHistory(primaryPlatformId, 90).then((r) => r.data?.trades ?? []),
+      Api.getAuraPlatformAccount(primaryPlatformId).then((r) => r.data?.account ?? null),
     ])
-      .then(([t, p]) => { setTrades(Array.isArray(t) ? t : []); setPnlData(typeof p === 'object' ? p : {}); })
+      .then(([t, acc]) => { setTrades(Array.isArray(t) ? t : []); setAccountInfo(acc); })
       .catch(() => {})
       .finally(() => setRefreshing(false));
-  }, []);
+  }, [primaryPlatformId]);
 
   // ── Computed metrics ───────────────────────────────────────
-  const totalPnL = pnlData.monthlyPnl != null ? pnlData.monthlyPnl : trades.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+  const totalPnL = trades.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
   const wins = trades.filter((t) => (Number(t.pnl) || 0) > 0).length;
   const losses = trades.filter((t) => (Number(t.pnl) || 0) < 0).length;
   const winRate = trades.length ? Math.round((wins / trades.length) * 100) : 0;
@@ -407,10 +413,12 @@ export default function OverviewDashboard() {
   const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? '99' : '0');
   const avgR = trades.length ? (trades.reduce((s, t) => s + (Number(t.rMultiple) || Number(t.rr) || 0), 0) / trades.length) : 0;
   const expectancy = trades.length ? totalPnL / trades.length : 0;
-  const startBalance = 10000;
+  const startBalance = accountInfo?.balance != null ? accountInfo.balance - totalPnL : 10000;
   const equity = startBalance + totalPnL;
-  const todayPct = pnlData.dailyPnl != null && equity ? ((pnlData.dailyPnl / (equity - (pnlData.dailyPnl || 0))) * 100).toFixed(1) : '0.0';
-  const totalPct = ((totalPnL / startBalance) * 100).toFixed(2);
+  const today = new Date().toDateString();
+  const todayPnL = trades.filter((t) => new Date(t.closeTime || t.openTime || t.created_at).toDateString() === today).reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+  const todayPct = equity ? ((todayPnL / (equity - todayPnL || 1)) * 100).toFixed(1) : '0.0';
+  const totalPct = startBalance > 0 ? ((totalPnL / startBalance) * 100).toFixed(2) : '0.00';
 
   // Pairs unique count
   const uniquePairs = useMemo(() => new Set(trades.map(t => t.pair).filter(Boolean)).size, [trades]);

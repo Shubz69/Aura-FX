@@ -663,6 +663,18 @@ const Api = {
     updateAuraAnalysisTrade: (id, body) => {
         return axios.put(`${API_BASE_URL}/api/aura-analysis/trades/${id}`, body);
     },
+    // Platform connections (real MT5/exchange APIs — no relation to Trade Validator)
+    getAuraPlatformConnections: () =>
+        axios.get(`${API_BASE_URL}/api/aura-analysis/platform-connect`),
+    connectAuraPlatform: (platformId, credentials) =>
+        axios.post(`${API_BASE_URL}/api/aura-analysis/platform-connect`, { platformId, credentials }),
+    disconnectAuraPlatform: (platformId) =>
+        axios.delete(`${API_BASE_URL}/api/aura-analysis/platform-connect`, { params: { platformId } }),
+    getAuraPlatformAccount: (platformId) =>
+        axios.get(`${API_BASE_URL}/api/aura-analysis/platform-account`, { params: { platformId } }),
+    getAuraPlatformHistory: (platformId, days = 90) =>
+        axios.get(`${API_BASE_URL}/api/aura-analysis/platform-history`, { params: { platformId, days } }),
+
     getAuraAnalysisLeaderboard: (sortBy = 'pnl', order = 'desc') => {
         return axios.get(`${API_BASE_URL}/api/aura-analysis/leaderboard`, {
             params: { sortBy, order }
