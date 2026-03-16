@@ -1155,3 +1155,920 @@
   margin-left: 4px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ============================================================
+   OV2 — Image 2 Redesign Styles
+   ============================================================ */
+
+/* ── Page shell ───────────────────────────────────────────── */
+.ov2-page {
+  width: 100%;
+  min-height: 100%;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 0 0 48px;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.ov2-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 40vh;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.9rem;
+}
+
+.ov2-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(139,92,246,0.2);
+  border-top-color: #a78bfa;
+  border-radius: 50%;
+  animation: ov2-spin 0.8s linear infinite;
+}
+
+@keyframes ov2-spin { to { transform: rotate(360deg); } }
+
+/* ── Grid ─────────────────────────────────────────────────── */
+.ov2-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr 240px;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: start;
+}
+
+.ov2-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+@media (max-width: 1280px) {
+  .ov2-grid { grid-template-columns: 200px 1fr 220px; }
+}
+@media (max-width: 1024px) {
+  .ov2-grid { grid-template-columns: 1fr 1fr; }
+  .ov2-col-right { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+}
+@media (max-width: 640px) {
+  .ov2-grid { grid-template-columns: 1fr; }
+  .ov2-col-right { grid-column: 1; display: flex; flex-direction: column; }
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+.ov2-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 16px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.ov2-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.55) 50%, transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.ov2-card:hover {
+  border-color: rgba(139,92,246,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(139,92,246,0.06);
+}
+
+.ov2-card:hover::before { opacity: 1; }
+
+.ov2-card-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin: 0 0 12px;
+}
+
+.ov2-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ov2-card-head .ov2-card-title { margin: 0; }
+
+.ov2-card-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ov2-date-range {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.04em;
+}
+
+.ov2-date-sub {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.06em;
+}
+
+/* ── View / filter buttons ────────────────────────────────── */
+.ov2-view-btn, .ov2-filter-btn {
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-family: 'Space Grotesk', sans-serif;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+
+.ov2-view-btn:hover, .ov2-filter-btn:hover {
+  background: rgba(139,92,246,0.12);
+  border-color: rgba(139,92,246,0.3);
+  color: rgba(255,255,255,0.85);
+}
+
+.ov2-view-btn.active, .ov2-filter-btn.active {
+  background: rgba(139,92,246,0.2);
+  border-color: rgba(139,92,246,0.5);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(139,92,246,0.2);
+}
+
+/* ── Overview / equity stats ─────────────────────────────── */
+.ov2-equity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.ov2-equity-label {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ov2-equity-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.ov2-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+}
+
+.ov2-badge-up {
+  background: rgba(16,185,129,0.15);
+  color: #4ade80;
+  border: 1px solid rgba(16,185,129,0.3);
+}
+
+.ov2-equity-amount {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.ov2-equity-pcts {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ov2-pct-green {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4ade80;
+  background: rgba(16,185,129,0.12);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.ov2-pct-green2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #86efac;
+  background: rgba(16,185,129,0.08);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* 2x2 stat grid */
+.ov2-stat-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.ov2-stat-cell { display: flex; flex-direction: column; gap: 3px; }
+
+.ov2-stat-label {
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ov2-stat-val {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ov2-stat-val.green { color: #4ade80; }
+.ov2-stat-val.red   { color: #f87171; }
+
+.ov2-risk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ov2-risk-icon { font-size: 1.1rem; opacity: 0.8; }
+
+.ov2-risk-val {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ov2-risk-pct {
+  color: #a78bfa;
+  margin-left: 4px;
+}
+
+/* ── Calendar ─────────────────────────────────────────────── */
+.ov2-cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ov2-cal-month-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ov2-cal-month {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ov2-nav-btn, .ov2-cal-refresh {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ov2-nav-btn:hover, .ov2-cal-refresh:hover {
+  background: rgba(139,92,246,0.12);
+  border-color: rgba(139,92,246,0.35);
+  color: #fff;
+}
+
+.ov2-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 10px;
+}
+
+.ov2-cal-dow {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.ov2-cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: background 0.2s;
+  overflow: hidden;
+}
+
+.ov2-cal-empty { background: transparent; cursor: default; pointer-events: none; }
+
+.ov2-cal-win {
+  background: rgba(16,185,129,0.15);
+  border: 1px solid rgba(16,185,129,0.25);
+}
+
+.ov2-cal-loss {
+  background: rgba(139,92,246,0.15);
+  border: 1px solid rgba(139,92,246,0.22);
+}
+
+.ov2-cal-num {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+}
+
+.ov2-cal-pnl {
+  font-size: 0.5rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ov2-cal-pnl.green { color: #4ade80; }
+.ov2-cal-pnl.red   { color: #c4b5fd; }
+
+.ov2-cal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.ov2-cal-drawdown {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.35);
+}
+
+.ov2-cal-enter {
+  font-size: 0.65rem;
+  padding: 3px 10px;
+  background: rgba(139,92,246,0.15);
+  border: 1px solid rgba(139,92,246,0.35);
+  color: #c4b5fd;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all 0.2s;
+}
+
+.ov2-cal-enter:hover {
+  background: rgba(139,92,246,0.3);
+  color: #fff;
+}
+
+/* ── Key Stats ────────────────────────────────────────────── */
+.ov2-stat-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ov2-badge-tag {
+  font-size: 0.58rem;
+  color: #4ade80;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+
+.ov2-badge-num {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08);
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+
+.ov2-badge-num2 {
+  font-size: 0.6rem;
+  color: #a78bfa;
+  background: rgba(139,92,246,0.1);
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+
+.ov2-key-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 10px;
+}
+
+.ov2-ks-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.72rem;
+}
+
+.ov2-ks-row:last-child { border-bottom: none; }
+
+.ov2-ks-label { color: rgba(255,255,255,0.45); }
+.ov2-ks-mid   { color: rgba(255,255,255,0.35); font-size: 0.65rem; }
+.ov2-ks-val   { font-weight: 600; color: #fff; text-align: right; }
+.ov2-ks-val.green { color: #4ade80; }
+
+.ov2-ks-mini-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 36px;
+  margin: 8px 0 6px;
+}
+
+.ov2-ks-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  min-height: 4px;
+  transition: opacity 0.2s;
+}
+
+.ov2-ks-bar.win  { background: linear-gradient(180deg, #a78bfa, rgba(139,92,246,0.3)); }
+.ov2-ks-bar.loss { background: linear-gradient(180deg, #f87171, rgba(239,68,68,0.2)); }
+
+.ov2-ks-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ov2-ks-tag {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+}
+
+.ov2-ks-tag.purple { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
+.ov2-ks-tag.teal   { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+.ov2-ks-tag.blue   { background: rgba(59,130,246,0.12); color: #93c5fd; border: 1px solid rgba(59,130,246,0.25); }
+.ov2-ks-tag.dim    { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
+
+/* ── Charts ───────────────────────────────────────────────── */
+.ov2-chart-wrap {
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.ov2-equity-chart { height: 200px; }
+.ov2-daily-chart  { height: 110px; }
+
+.ov2-chart-wrap svg {
+  display: block;
+  width: 100%;
+}
+
+/* ── Daily header ─────────────────────────────────────────── */
+.ov2-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ov2-daily-pct {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.ov2-daily-pct.green { background: rgba(16,185,129,0.12); color: #4ade80; }
+.ov2-daily-pct.red   { background: rgba(239,68,68,0.12);  color: #f87171; }
+
+.ov2-daily-filters { display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* ── Sessions ─────────────────────────────────────────────── */
+.ov2-session-cols-hdr {
+  display: flex;
+  gap: 12px;
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ov2-sessions { display: flex; flex-direction: column; gap: 0; }
+
+.ov2-session-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 72px 60px 80px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.78rem;
+}
+
+.ov2-session-row:last-child { border-bottom: none; }
+
+.ov2-sess-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.ov2-sess-pnl { font-weight: 700; font-size: 0.88rem; }
+.ov2-sess-pnl.green { color: #4ade80; }
+.ov2-sess-pnl.red   { color: #f87171; }
+
+.ov2-sess-maxr, .ov2-sess-risk {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.ov2-rr-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ov2-rr-dot.green { background: #4ade80; box-shadow: 0 0 4px #4ade80; }
+
+.ov2-risk-arrow { color: #4ade80; font-size: 0.7rem; }
+
+.ov2-sess-pair {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.55);
+  font-weight: 500;
+}
+
+.ov2-pair-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #6366f1);
+  flex-shrink: 0;
+}
+
+.ov2-empty { font-size: 0.78rem; color: rgba(255,255,255,0.3); padding: 12px 0; }
+
+/* ── Trade log ────────────────────────────────────────────── */
+.ov2-trade-log-card { padding-bottom: 12px; }
+
+.ov2-tl-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.ov2-tl-badge {
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.04em;
+}
+
+.ov2-tl-wrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+
+.ov2-tl-wrap::-webkit-scrollbar { height: 4px; }
+.ov2-tl-wrap::-webkit-scrollbar-thumb {
+  background: rgba(139,92,246,0.3);
+  border-radius: 4px;
+}
+
+.ov2-tl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.ov2-tl th {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+
+.ov2-tl td {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.8);
+  white-space: nowrap;
+  transition: background 0.15s;
+  vertical-align: middle;
+}
+
+.ov2-tl tbody tr:hover td { background: rgba(139,92,246,0.05); }
+.ov2-tl tbody tr:last-child td { border-bottom: none; }
+
+.ov2-tl .green { color: #4ade80; font-weight: 600; }
+.ov2-tl .red   { color: #f87171; font-weight: 600; }
+
+.ov2-tl-date { color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; }
+
+.ov2-pair-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.ov2-pair-flag {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ov2-pair-flag.green { background: #4ade80; box-shadow: 0 0 5px rgba(74,222,128,0.6); }
+.ov2-pair-flag.red   { background: #f87171; box-shadow: 0 0 5px rgba(248,113,113,0.6); }
+
+.ov2-result-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ov2-result-badge.win  { background: rgba(16,185,129,0.15);  color: #4ade80; border: 1px solid rgba(16,185,129,0.3); }
+.ov2-result-badge.loss { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+.ov2-tl-notes { color: rgba(255,255,255,0.4); max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
+.ov2-tl-dim   { color: rgba(255,255,255,0.2); }
+
+.ov2-proof-link {
+  text-decoration: none;
+  font-size: 0.85rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.ov2-proof-link:hover { opacity: 1; }
+.ov2-empty-row { text-align: center; color: rgba(255,255,255,0.25); padding: 20px !important; }
+
+/* ── Donut ────────────────────────────────────────────────── */
+.ov-donut-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ov-donut-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.ov-donut-pct {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.ov-donut-sub {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.04em;
+}
+
+/* ── Win/Loss cards ───────────────────────────────────────── */
+.ov2-wl-top { text-align: center; }
+
+.ov2-wl-center { display: flex; justify-content: center; margin: 8px 0 10px; }
+
+.ov2-wl-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ov2-wl-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.ov2-wl-dot.purple { background: #a78bfa; box-shadow: 0 0 6px rgba(167,139,250,0.6); }
+.ov2-wl-dot.red    { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.6); }
+
+.ov2-wl-delta {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.ov2-wl-delta.green {
+  background: rgba(16,185,129,0.12);
+  color: #4ade80;
+  border: 1px solid rgba(16,185,129,0.25);
+}
+
+.ov2-wl-pcts {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.ov2-wl-big {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.ov2-wl-big.green { color: #4ade80; }
+.ov2-wl-big.red   { color: #f87171; }
+
+.ov2-wl-days { margin-bottom: 14px; }
+
+.ov2-wl-day-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.72rem;
+}
+
+.ov2-wl-day-row:last-child { border-bottom: none; }
+
+.ov2-wl-day-label { color: rgba(255,255,255,0.4); }
+
+.ov2-wl-day-val { font-weight: 600; font-size: 0.82rem; }
+.ov2-wl-day-val.green { color: #4ade80; }
+.ov2-wl-day-val.red   { color: #f87171; }
+
+.ov2-compliance-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.ov2-compliance-text { flex: 1; min-width: 0; }
+
+.ov2-compliance-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.ov2-compliance-sub {
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.4;
+}
+
+/* ── Trade Distribution ───────────────────────────────────── */
+.ov2-dist-label {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.06em;
+}
+
+.ov2-dist-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 72px;
+  margin-bottom: 6px;
+}
+
+.ov2-dist-bar {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: opacity 0.2s;
+}
+
+.ov2-dist-bar.win  { background: linear-gradient(180deg, #a78bfa 0%, rgba(139,92,246,0.25) 100%); }
+.ov2-dist-bar.loss { background: linear-gradient(180deg, #f87171 0%, rgba(239,68,68,0.2) 100%); }
+
+.ov2-dist-bar:hover { opacity: 0.8; }
+
+.ov2-dist-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.04em;
+}
+
+/* ── Streaks ──────────────────────────────────────────────── */
+.ov2-streaks { display: flex; flex-direction: column; gap: 0; }
+
+.ov2-streak-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.ov2-streak-row:last-child { border-bottom: none; }
+
+.ov2-streak-icon { font-size: 0.95rem; flex-shrink: 0; width: 20px; text-align: center; }
+
+.ov2-streak-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ov2-streak-label { font-size: 0.72rem; color: rgba(255,255,255,0.7); }
+
+.ov2-streak-tag {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.3);
+}
+
+.ov2-streak-val {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ov2-streak-num {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.ov2-streak-num.green  { color: #4ade80; }
+.ov2-streak-num.muted  { color: rgba(255,255,255,0.3); }
+.ov2-streak-arrow.green { color: #4ade80; font-size: 0.65rem; }
+.ov2-streak-arrow.muted { color: rgba(255,255,255,0.2); font-size: 0.65rem; }

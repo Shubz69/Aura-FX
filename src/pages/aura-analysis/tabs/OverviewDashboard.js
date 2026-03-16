@@ -1,17 +1,24 @@
 /**
- * Aura Analysis Dashboard — Overview tab: full grid layout (Equity, Calendar, Key Stats,
- * Equity Curve, Daily, Sessions, Trade Log, Win/Loss Ratio, Trade Distribution, Streaks).
- * Uses styles from Overview.css (aura-overview-grid, aura-card, etc.).
+ * Aura Analysis — Overview tab (Image 2 redesign)
+ * Three-column luxury dark grid: left stats/calendar, centre charts/log, right ratios/streaks.
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import Api from '../../../services/Api';
 import { computeStreaks } from '../../../lib/aura-analysis/trader-cv/streakEngine';
 import '../../../styles/aura-analysis/Overview.css';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-function formatPnL(n) {
-  if (n == null || Number.isNaN(n)) return '$0';
+function fmt$(n, alwaysSign = true) {
+  if (n == null || Number.isNaN(Number(n))) return '$0';
+  const v = Number(n);
+  const abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  if (alwaysSign) return v >= 0 ? `+$${abs}` : `-$${abs}`;
+  return `$${abs}`;
+}
+
+function fmtPnL(n) {
+  if (n == null || Number.isNaN(Number(n))) return '$0';
   const v = Number(n);
   const abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return v >= 0 ? `+$${abs}` : `-$${abs}`;
@@ -32,14 +39,20 @@ function buildSessionPerformance(trades) {
   const bySession = {};
   trades.forEach((t) => {
     const session = (t.session || 'Unknown').trim() || 'Unknown';
-    if (!bySession[session]) bySession[session] = { pnl: 0, count: 0, maxR: 0 };
+    if (!bySession[session]) bySession[session] = { pnl: 0, count: 0, maxR: 0, totalR: 0, pairs: {} };
     const pnl = Number(t.pnl) || 0;
     bySession[session].pnl += pnl;
     bySession[session].count += 1;
-    const r = Number(t.rMultiple) ?? Number(t.rr) ?? 0;
-    if (Math.abs(r) > bySession[session].maxR) bySession[session].maxR = r;
+    const r = Number(t.rMultiple) || Number(t.rr) || 0;
+    if (Math.abs(r) > bySession[session].maxR) bySession[session].maxR = Math.abs(r);
+    bySession[session].totalR += r;
+    if (t.pair) bySession[session].pairs[t.pair] = (bySession[session].pairs[t.pair] || 0) + 1;
   });
-  return Object.entries(bySession).map(([session, d]) => ({ session, pnl: d.pnl, count: d.count, maxR: d.maxR })).sort((a, b) => b.pnl - a.pnl);
+  return Object.entries(bySession).map(([session, d]) => {
+    const topPair = Object.entries(d.pairs).sort((a, b) => b[1] - a[1])[0];
+    const avgRisk = d.count > 0 ? (d.totalR / d.count) : 0;
+    return { session, pnl: d.pnl, count: d.count, maxR: d.maxR, avgRisk, topPair: topPair ? topPair[0] : '—' };
+  }).sort((a, b) => b.pnl - a.pnl);
 }
 
 function buildDailyPnL(trades) {
@@ -53,7 +66,7 @@ function buildDailyPnL(trades) {
   return Object.entries(byDay).map(([date, pnl]) => ({ date, pnl })).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function buildDistributionBuckets(trades, numBuckets = 10) {
+function buildDistributionBuckets(trades, numBuckets = 20) {
   if (!trades.length) return [];
   const sorted = [...trades].sort((a, b) => new Date(a.created_at || a.createdAt) - new Date(b.created_at || b.createdAt));
   const step = Math.max(1, Math.ceil(sorted.length / numBuckets));
@@ -61,9 +74,134 @@ function buildDistributionBuckets(trades, numBuckets = 10) {
   for (let i = 0; i < sorted.length; i += step) {
     const chunk = sorted.slice(i, i + step);
     const total = chunk.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
-    out.push(total);
+    out.push({ value: total, isWin: total >= 0 });
   }
   return out;
+}
+
+// SVG polyline from equity curve data
+function EquitySVG({ data, width = 500, height = 180 }) {
+  if (!data || data.length < 2) {
+    return (
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+        <text x={width / 2} y={height / 2} fill="rgba(255,255,255,0.2)" textAnchor="middle" fontSize="12">No data yet</text>
+      </svg>
+    );
+  }
+  const minE = Math.min(...data.map(d => d.equity));
+  const maxE = Math.max(...data.map(d => d.equity));
+  const range = maxE - minE || 1;
+  const pad = { t: 16, b: 24, l: 8, r: 8 };
+  const W = width - pad.l - pad.r;
+  const H = height - pad.t - pad.b;
+  const pts = data.map((d, i) => {
+    const x = pad.l + (i / (data.length - 1)) * W;
+    const y = pad.t + (1 - (d.equity - minE) / range) * H;
+    return [x, y];
+  });
+  const polyline = pts.map(p => p.join(',')).join(' ');
+  // Fill area under curve
+  const fillPath = `M${pts[0][0]},${pad.t + H} L${pts.map(p => p.join(',')).join(' L')} L${pts[pts.length - 1][0]},${pad.t + H} Z`;
+  // Dot every ~10% of points
+  const dotStep = Math.max(1, Math.floor(data.length / 10));
+  const dots = pts.filter((_, i) => i % dotStep === 0 || i === pts.length - 1);
+
+  return (
+    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="ov-equity-svg">
+      <defs>
+        <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.0" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      {/* Grid lines */}
+      {[0.25, 0.5, 0.75].map(f => (
+        <line key={f} x1={pad.l} x2={pad.l + W} y1={pad.t + f * H} y2={pad.t + f * H}
+          stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+      ))}
+      {/* Fill */}
+      <path d={fillPath} fill="url(#eqGrad)" />
+      {/* Line */}
+      <polyline points={polyline} fill="none" stroke="#a78bfa" strokeWidth="2.5"
+        strokeLinejoin="round" strokeLinecap="round" filter="url(#glow)" />
+      {/* Glowing dots */}
+      {dots.map(([x, y], i) => (
+        <g key={i}>
+          <circle cx={x} cy={y} r="5" fill="#0d0d1a" stroke="#a78bfa" strokeWidth="2" />
+          <circle cx={x} cy={y} r="3" fill="#a78bfa" opacity="0.9" />
+        </g>
+      ))}
+      {/* Y labels */}
+      <text x={pad.l + W - 4} y={pad.t + 10} fill="rgba(255,255,255,0.35)" fontSize="9" textAnchor="end">${(maxE / 1000).toFixed(1)}k</text>
+      <text x={pad.l + W - 4} y={pad.t + H} fill="rgba(255,255,255,0.35)" fontSize="9" textAnchor="end">${(minE / 1000).toFixed(1)}k</text>
+    </svg>
+  );
+}
+
+// SVG for the daily mini chart
+function DailySVG({ data, width = 500, height = 120 }) {
+  if (!data || data.length < 2) return (
+    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+      <text x={width/2} y={height/2} fill="rgba(255,255,255,0.2)" textAnchor="middle" fontSize="11">No daily data</text>
+    </svg>
+  );
+  const vals = data.map(d => d.pnl);
+  const minV = Math.min(...vals, 0);
+  const maxV = Math.max(...vals, 0);
+  const range = maxV - minV || 1;
+  const pad = { t: 12, b: 12, l: 6, r: 6 };
+  const W = width - pad.l - pad.r;
+  const H = height - pad.t - pad.b;
+  const zeroY = pad.t + (1 - (0 - minV) / range) * H;
+  const pts = vals.map((v, i) => {
+    const x = pad.l + (i / (vals.length - 1)) * W;
+    const y = pad.t + (1 - (v - minV) / range) * H;
+    return [x, y];
+  });
+  const polyline = pts.map(p => p.join(',')).join(' ');
+  return (
+    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="ov-daily-svg">
+      <defs>
+        <linearGradient id="dailyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+        </linearGradient>
+        <filter id="glowG">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      <line x1={pad.l} x2={pad.l+W} y1={zeroY} y2={zeroY} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+      <path d={`M${pts[0][0]},${zeroY} L${pts.map(p=>p.join(',')).join(' L')} L${pts[pts.length-1][0]},${zeroY} Z`} fill="url(#dailyGrad)" />
+      <polyline points={polyline} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" filter="url(#glowG)" />
+    </svg>
+  );
+}
+
+// SVG donut
+function DonutChart({ pct, size = 120, strokeW = 13, color = '#a78bfa', bg = 'rgba(255,255,255,0.07)', label, sub }) {
+  const r = (size - strokeW) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  const cx = size / 2;
+  return (
+    <div className="ov-donut-wrap" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke={bg} strokeWidth={strokeW} />
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke={color} strokeWidth={strokeW}
+          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+          style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
+      </svg>
+      <div className="ov-donut-inner">
+        {label && <span className="ov-donut-pct">{label}</span>}
+        {sub && <span className="ov-donut-sub">{sub}</span>}
+      </div>
+    </div>
+  );
 }
 
 export default function OverviewDashboard() {
@@ -71,6 +209,8 @@ export default function OverviewDashboard() {
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(() => new Date());
+  const [equityView, setEquityView] = useState('Day');
+  const [dailyFilter, setDailyFilter] = useState('En');
 
   useEffect(() => {
     Promise.all([
@@ -89,27 +229,33 @@ export default function OverviewDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  // ── Computed metrics ───────────────────────────────────────
   const totalPnL = pnlData.monthlyPnl != null ? pnlData.monthlyPnl : trades.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
   const wins = trades.filter((t) => (Number(t.pnl) || 0) > 0).length;
   const losses = trades.filter((t) => (Number(t.pnl) || 0) < 0).length;
   const winRate = trades.length ? Math.round((wins / trades.length) * 100) : 0;
+  const lossRate = 100 - winRate;
   const grossProfit = trades.filter((t) => (Number(t.pnl) || 0) > 0).reduce((s, t) => s + Number(t.pnl), 0);
   const grossLoss = Math.abs(trades.filter((t) => (Number(t.pnl) || 0) < 0).reduce((s, t) => s + Number(t.pnl), 0));
   const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? '99' : '0');
-  const avgR = trades.length ? trades.reduce((s, t) => s + (Number(t.rMultiple) ?? Number(t.rr) ?? 0), 0) / trades.length : 0;
+  const avgR = trades.length ? (trades.reduce((s, t) => s + (Number(t.rMultiple) || Number(t.rr) || 0), 0) / trades.length) : 0;
   const expectancy = trades.length ? totalPnL / trades.length : 0;
   const startBalance = 10000;
   const equity = startBalance + totalPnL;
+  const todayPct = pnlData.dailyPnl != null && equity ? ((pnlData.dailyPnl / (equity - (pnlData.dailyPnl || 0))) * 100).toFixed(1) : '0.0';
+  const totalPct = ((totalPnL / startBalance) * 100).toFixed(2);
 
+  // Pairs unique count
+  const uniquePairs = useMemo(() => new Set(trades.map(t => t.pair).filter(Boolean)).size, [trades]);
+
+  // ── Charts data ─────────────────────────────────────────────
   const equityCurve = useMemo(() => buildEquityCurve(trades, startBalance), [trades]);
   const sessionPerformance = useMemo(() => buildSessionPerformance(trades), [trades]);
   const dailyPnL = useMemo(() => buildDailyPnL(trades), [trades]);
-  const distributionBuckets = useMemo(() => buildDistributionBuckets(trades), [trades]);
+  const distributionBuckets = useMemo(() => buildDistributionBuckets(trades, 24), [trades]);
   const streaks = useMemo(() => computeStreaks({}, trades), [trades]);
 
-  const equityMin = equityCurve.length ? Math.min(...equityCurve.map((p) => p.equity)) : 0;
-  const equityMax = equityCurve.length ? Math.max(...equityCurve.map((p) => p.equity)) : 1;
-  const distMax = distributionBuckets.length ? Math.max(...distributionBuckets.map(Math.abs), 1) : 1;
+  const distMax = distributionBuckets.length ? Math.max(...distributionBuckets.map(b => Math.abs(b.value)), 1) : 1;
 
   const bestDay = useMemo(() => {
     if (!dailyPnL.length) return null;
@@ -120,14 +266,24 @@ export default function OverviewDashboard() {
     return dailyPnL.reduce((a, b) => (a.pnl <= b.pnl ? a : b), { date: '', pnl: Infinity });
   }, [dailyPnL]);
 
+  // Win/loss profitable days
+  const winDays = dailyPnL.filter(d => d.pnl > 0).length;
+  const allTradeDays = dailyPnL.length;
+  const winDayRate = allTradeDays ? Math.round((winDays / allTradeDays) * 100) : 0;
+  const lossDayRate = 100 - winDayRate;
+
+  // Compliance (proportion of trades with riskPercent ≤ 2%)
+  const complianceTrades = trades.filter(t => t.riskPercent != null && Number(t.riskPercent) <= 2).length;
+  const compliance = trades.length ? Math.round((complianceTrades / trades.length) * 100) : 84;
+
+  // ── Calendar ────────────────────────────────────────────────
   const yearMonth = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
-  const monthTrades = useMemo(
-    () =>
-      trades.filter((t) => {
-        const d = t.created_at || t.createdAt || t.date;
-        if (!d) return false;
-        return new Date(d).toISOString().slice(0, 7) === yearMonth;
-      }),
+  const monthTrades = useMemo(() =>
+    trades.filter((t) => {
+      const d = t.created_at || t.createdAt || t.date;
+      if (!d) return false;
+      return new Date(d).toISOString().slice(0, 7) === yearMonth;
+    }),
     [trades, yearMonth]
   );
   const byDay = useMemo(() => {
@@ -140,6 +296,7 @@ export default function OverviewDashboard() {
     });
     return o;
   }, [monthTrades]);
+
   const calendarDays = useMemo(() => {
     const y = viewDate.getFullYear();
     const m = viewDate.getMonth();
@@ -162,242 +319,415 @@ export default function OverviewDashboard() {
   const nextMonth = () => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1));
   const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
-  const recentTrades = useMemo(() => [...trades].sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)).slice(0, 12), [trades]);
+  // Drawdown pct for calendar footer
+  const calMonthPnl = monthTrades.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+  const calMonthPct = equity > 0 ? ((calMonthPnl / equity) * 100).toFixed(1) : '0.0';
+
+  const recentTrades = useMemo(() => [...trades]
+    .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt))
+    .slice(0, 12), [trades]);
 
   if (loading) {
     return (
-      <div className="aura-overview-page">
-        <p className="aura-overview-muted">Loading…</p>
+      <div className="ov2-page">
+        <div className="ov2-loading">
+          <div className="ov2-spinner" />
+          <p>Loading analytics…</p>
+        </div>
       </div>
     );
   }
 
+  const streakItems = [
+    { icon: '🔥', label: 'Profit streaks', value: streaks.journalStreak || 0, tag: `top ${Math.min(streaks.journalStreak || 0, 25)}` },
+    { icon: '📉', label: 'Drawdown treat', value: streaks.ruleAdherenceStreak || 0, tag: `$0.${Math.abs(streaks.ruleAdherenceStreak || 0) * 25}` },
+    { icon: '⚡', label: 'Edge recovery', value: streaks.disciplinedDaysStreak || 0, tag: `$${(streaks.disciplinedDaysStreak || 0) * 20}` },
+    { icon: '🎯', label: 'Consistency', value: winDayRate, tag: `${winDayRate}%` },
+  ];
+
   return (
-    <div className="aura-overview-page">
-      <div className="aura-overview-grid">
-        {/* Left column */}
-        <div className="aura-overview-col">
-          <div className="aura-card">
-            <h3 className="aura-card-title">Overview</h3>
-            <div className="aura-summary-list">
-              <div className="aura-summary-row">
-                <span className="aura-summary-label">Equity</span>
-                <span className="aura-summary-value positive">{formatPnL(equity)}</span>
-                <span className="aura-summary-meta">4.64% today · 9.29%</span>
+    <div className="ov2-page">
+      <div className="ov2-grid">
+
+        {/* ── LEFT COLUMN ─────────────────────────────────── */}
+        <div className="ov2-col ov2-col-left">
+
+          {/* Overview card */}
+          <div className="ov2-card">
+            <div className="ov2-card-title">Overview</div>
+
+            <div className="ov2-equity-row">
+              <div className="ov2-equity-label">Equity</div>
+              <div className="ov2-equity-badges">
+                <span className="ov2-badge ov2-badge-up">▲ {Math.abs(todayPct)}% today</span>
               </div>
-              <div className="aura-summary-row">
-                <span className="aura-summary-label">Net P/L</span>
-                <span className={`aura-summary-value ${totalPnL >= 0 ? 'positive' : ''}`}>{formatPnL(totalPnL)}</span>
+            </div>
+            <div className="ov2-equity-amount">${Math.abs(equity).toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+            <div className="ov2-equity-pcts">
+              <span className="ov2-pct-green">{todayPct}%</span>
+              <span className="ov2-pct-green2">{totalPct}%</span>
+            </div>
+
+            <div className="ov2-stat-grid2">
+              <div className="ov2-stat-cell">
+                <div className="ov2-stat-label">Net P/L</div>
+                <div className={`ov2-stat-val ${totalPnL >= 0 ? 'green' : 'red'}`}>{fmtPnL(totalPnL)}</div>
               </div>
-              <div className="aura-summary-row">
-                <span className="aura-summary-label">Win Rate</span>
-                <span className="aura-summary-value">{winRate}%</span>
+              <div className="ov2-stat-cell">
+                <div className="ov2-stat-label">Win Rate</div>
+                <div className="ov2-stat-val green">{winRate}%</div>
               </div>
-              <div className="aura-summary-row">
-                <span className="aura-summary-label">Profit Factor</span>
-                <span className="aura-summary-value">{profitFactor}</span>
+              <div className="ov2-stat-cell">
+                <div className="ov2-stat-label">Profit Factor</div>
+                <div className="ov2-stat-val">{profitFactor}</div>
               </div>
-              <div className="aura-summary-row">
-                <span className="aura-summary-label">Expectancy</span>
-                <span className={`aura-summary-value ${expectancy >= 0 ? 'positive' : ''}`}>{formatPnL(expectancy)} / Trade</span>
+              <div className="ov2-stat-cell">
+                <div className="ov2-stat-label">Expectancy</div>
+                <div className={`ov2-stat-val ${expectancy >= 0 ? 'green' : 'red'}`}>{expectancy >= 0 ? '+' : ''}{fmtPnL(expectancy).replace('+', '')} / Trade</div>
               </div>
-              <div className="aura-summary-row">
-                <span className="aura-summary-label">Risk Score</span>
-                <span className="aura-summary-value purple">Low Risk 1.5% *</span>
+            </div>
+
+            <div className="ov2-risk-row">
+              <span className="ov2-risk-icon">🛡</span>
+              <div>
+                <div className="ov2-stat-label">Risk Score</div>
+                <div className="ov2-risk-val">Low Risk <span className="ov2-risk-pct">1.5%</span></div>
               </div>
             </div>
           </div>
 
-          <div className="aura-card">
-            <div className="aura-card-head">
-              <h3 className="aura-card-title">Calendar</h3>
-              <div className="aura-card-controls">
-                <button type="button" className="aura-btn-ghost" onClick={prevMonth} aria-label="Previous month">‹</button>
-                <span className="aura-date-range">{monthLabel}</span>
-                <button type="button" className="aura-btn-ghost" onClick={nextMonth} aria-label="Next month">›</button>
-              </div>
+          {/* Calendar */}
+          <div className="ov2-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title">Calendar</div>
+              <div className="ov2-date-sub">{monthLabel}</div>
             </div>
-            <div className="aura-calendar-grid">
-              {WEEKDAYS.map((d) => (
-                <div key={d} className="aura-calendar-dow">{d}</div>
+            <div className="ov2-cal-nav">
+              <button className="ov2-nav-btn" onClick={prevMonth}>‹</button>
+              <div className="ov2-cal-month-row">
+                <span className="ov2-cal-month">{viewDate.toLocaleString('en-US', { month: 'long' })}</span>
+                <button className="ov2-cal-refresh">↺</button>
+              </div>
+              <button className="ov2-nav-btn" onClick={nextMonth}>›</button>
+            </div>
+            <div className="ov2-cal-grid">
+              {WEEKDAYS_SHORT.map((d, i) => (
+                <div key={i} className="ov2-cal-dow">{d}</div>
               ))}
               {calendarDays.map((cell, i) =>
                 cell.day === '' ? (
-                  <div key={`e-${i}`} className="aura-calendar-day" />
+                  <div key={`e-${i}`} className="ov2-cal-cell ov2-cal-empty" />
                 ) : (
-                  <div
-                    key={cell.day}
-                    className={`aura-calendar-day ${cell.pnl != null ? (cell.pnl >= 0 ? 'green' : 'purple') : ''}`}
-                  >
-                    {cell.day}
+                  <div key={cell.day} className={`ov2-cal-cell${cell.pnl != null ? (cell.pnl >= 0 ? ' ov2-cal-win' : ' ov2-cal-loss') : ''}`}>
+                    <span className="ov2-cal-num">{cell.day}</span>
+                    {cell.pnl != null && (
+                      <span className={`ov2-cal-pnl ${cell.pnl >= 0 ? 'green' : 'red'}`}>
+                        {cell.pnl >= 0 ? '+' : ''}{Math.round(cell.pnl)}
+                      </span>
+                    )}
                   </div>
                 )
               )}
             </div>
+            <div className="ov2-cal-footer">
+              <span className="ov2-cal-drawdown">{monthLabel.split(' ')[0]} {calMonthPct}%</span>
+              <button className="ov2-cal-enter">Enter</button>
+            </div>
           </div>
 
-          <div className="aura-card">
-            <h3 className="aura-card-title">Key Stats</h3>
-            <div className="aura-key-stats-bar" aria-hidden />
-            <div className="aura-key-stats-list">
-              <div className="aura-key-stat"><span>Trade Range</span><span>{trades.length}</span></div>
-              <div className="aura-key-stat"><span>Win rate</span><span>{winRate}%</span></div>
-              <div className="aura-key-stat"><span>Avg RR</span><span>{avgR > 0 ? avgR.toFixed(1) + 'R' : '—'}</span></div>
+          {/* Key Stats */}
+          <div className="ov2-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title">Key Stats</div>
+              <div className="ov2-stat-badges-row">
+                <span className="ov2-badge-tag">▲ 1st only</span>
+                <span className="ov2-badge-num">517</span>
+                <span className="ov2-badge-num2">$30</span>
+              </div>
+            </div>
+            <div className="ov2-key-stats">
+              <div className="ov2-ks-row">
+                <span className="ov2-ks-label">Trade Range</span>
+                <span className="ov2-ks-mid">Normal Risks</span>
+                <span className="ov2-ks-val">{trades.length}</span>
+              </div>
+              <div className="ov2-ks-row">
+                <span className="ov2-ks-label">Total Pairs</span>
+                <span className="ov2-ks-mid">Left in Trades</span>
+                <span className="ov2-ks-val">{uniquePairs}</span>
+              </div>
+              <div className="ov2-ks-row">
+                <span className="ov2-ks-label">Win Gate</span>
+                <span className="ov2-ks-mid">Secure Footins</span>
+                <span className="ov2-ks-val green">{winRate}%</span>
+              </div>
+              <div className="ov2-ks-row">
+                <span className="ov2-ks-label">B/k Expect.</span>
+                <span className="ov2-ks-mid">{trades.length} (0.1%)</span>
+                <span className="ov2-ks-val">{profitFactor}</span>
+              </div>
+              <div className="ov2-ks-row">
+                <span className="ov2-ks-label">Avg RR</span>
+                <span className="ov2-ks-mid">{avgR > 0 ? avgR.toFixed(1) + 'R' : '—'}</span>
+                <span className="ov2-ks-val">{wins > 0 ? (grossProfit / wins).toFixed(0) : '—'}</span>
+              </div>
+            </div>
+            {/* Mini sparkline bar */}
+            <div className="ov2-ks-mini-bars">
+              {distributionBuckets.slice(0, 8).map((b, i) => (
+                <div key={i} className={`ov2-ks-bar ${b.isWin ? 'win' : 'loss'}`}
+                  style={{ height: `${Math.max(4, (Math.abs(b.value) / distMax) * 32)}px` }} />
+              ))}
+            </div>
+            <div className="ov2-ks-tags">
+              <span className="ov2-ks-tag purple">JT</span>
+              <span className="ov2-ks-tag teal">D&amp;N</span>
+              <span className="ov2-ks-tag blue">LEND</span>
+              <span className="ov2-ks-tag dim">5th</span>
             </div>
           </div>
         </div>
 
-        {/* Middle column */}
-        <div className="aura-overview-col">
-          <div className="aura-card">
-            <div className="aura-card-head">
-              <h3 className="aura-card-title">Equity Curve</h3>
-              <span className="aura-date-range">Apr 1 – 2024</span>
-              <select className="aura-select" defaultValue="day"><option value="day">Day</option><option value="week">Week</option></select>
+        {/* ── MIDDLE COLUMN ───────────────────────────────── */}
+        <div className="ov2-col ov2-col-mid">
+
+          {/* Equity Curve */}
+          <div className="ov2-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title">Equity Curve</div>
+              <div className="ov2-card-controls">
+                <span className="ov2-date-range">
+                  {equityCurve.length > 1
+                    ? `${new Date(equityCurve[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(equityCurve[equityCurve.length - 1].date).getFullYear()}`
+                    : 'Apr 1 – 2024'}
+                </span>
+                {['Day', 'Week'].map(v => (
+                  <button key={v} className={`ov2-view-btn ${equityView === v ? 'active' : ''}`} onClick={() => setEquityView(v)}>{v}</button>
+                ))}
+              </div>
             </div>
-            <div className="aura-chart-placeholder aura-equity-chart">
-              {equityCurve.length > 1 && (
-                <>
-                  <span className="aura-chart-y">${(equityMax / 1000).toFixed(0)}k</span>
-                  <span className="aura-chart-y">${(equityMin / 1000).toFixed(0)}k</span>
-                  <div
-                    className="aura-chart-line"
-                    style={{
-                      bottom: `${22 + (1 - (equityCurve[equityCurve.length - 1]?.equity - equityMin) / (equityMax - equityMin || 1)) * 70}%`,
-                    }}
-                  />
-                  <span className="aura-chart-x">
-                    {new Date(equityCurve[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })} –{' '}
-                    {new Date(equityCurve[equityCurve.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
-                  </span>
-                </>
-              )}
+            <div className="ov2-chart-wrap ov2-equity-chart">
+              <EquitySVG data={equityCurve} width={520} height={200} />
             </div>
           </div>
 
-          <div className="aura-card">
-            <h3 className="aura-card-title">Daily</h3>
-            <div className="aura-chart-placeholder aura-daily-chart">
-              {dailyPnL.length > 0 && <div className="aura-chart-line" style={{ bottom: '30%' }} />}
+          {/* Daily */}
+          <div className="ov2-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title-row">
+                <span className="ov2-card-title">Daily</span>
+                <span className="ov2-daily-pct green">{winDayRate}%</span>
+                <span className="ov2-daily-pct red">{lossDayRate}%</span>
+              </div>
+              <div className="ov2-daily-filters">
+                {['En', 'Back', 'Wmtr', 'Entrony'].map(f => (
+                  <button key={f} className={`ov2-filter-btn ${dailyFilter === f ? 'active' : ''}`} onClick={() => setDailyFilter(f)}>{f}</button>
+                ))}
+              </div>
             </div>
-            <div className="aura-daily-buttons">
-              <span className="aura-pct positive">61%</span>
-              <span className="aura-pct" style={{ color: 'var(--ov-red)' }}>75%</span>
+            <div className="ov2-chart-wrap ov2-daily-chart">
+              <DailySVG data={dailyPnL} width={520} height={110} />
             </div>
           </div>
 
-          <div className="aura-card">
-            <h3 className="aura-card-title">Sessions</h3>
-            <div className="aura-sessions-list">
-              {sessionPerformance.length ? (
-                sessionPerformance.map(({ session, pnl, maxR }) => (
-                  <div key={session} className="aura-session">
-                    <span className="aura-session-name">{session}</span>
-                    <span className={`aura-session-value ${pnl >= 0 ? 'positive' : ''}`}>{formatPnL(pnl)}</span>
-                    <span className="aura-session-meta">Max RR {maxR ? maxR.toFixed(1) + 'R' : '—'} · Avg Risk 1.2%</span>
+          {/* Sessions */}
+          <div className="ov2-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title">Sessions</div>
+              <div className="ov2-session-cols-hdr">
+                <span>Max RR</span>
+                <span>Avg Risk</span>
+                <span>{trades.length} Trades</span>
+              </div>
+            </div>
+            {sessionPerformance.length ? (
+              <div className="ov2-sessions">
+                {sessionPerformance.map(({ session, pnl, maxR, avgRisk, count, topPair }) => (
+                  <div key={session} className="ov2-session-row">
+                    <div className="ov2-sess-name">{session}</div>
+                    <div className={`ov2-sess-pnl ${pnl >= 0 ? 'green' : 'red'}`}>{fmtPnL(pnl)}</div>
+                    <div className="ov2-sess-maxr">
+                      <span className="ov2-rr-dot green" />
+                      <span className="ov2-rr-dot green" />
+                      {maxR > 0 ? `${maxR.toFixed(1)}R` : '—'}
+                    </div>
+                    <div className="ov2-sess-risk">
+                      <span className="ov2-risk-arrow">↑</span>
+                      {avgRisk > 0 ? `${avgRisk.toFixed(2)}%` : '—'}
+                    </div>
+                    <div className="ov2-sess-pair">
+                      <span className="ov2-pair-dot" />
+                      {topPair}
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="aura-session-meta">No session data yet</p>
-              )}
-            </div>
-            {trades.length > 0 && <p className="aura-sessions-meta">{trades.length} Trades</p>}
+                ))}
+              </div>
+            ) : (
+              <p className="ov2-empty">No session data yet</p>
+            )}
           </div>
 
-          <div className="aura-card aura-trade-log-card">
-            <h3 className="aura-card-title">Trade Log</h3>
-            <div className="aura-trade-log-wrap">
-              <table className="aura-trade-log">
+          {/* Trade Log */}
+          <div className="ov2-card ov2-trade-log-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title">Trade Log</div>
+              <div className="ov2-tl-actions">
+                <span className="ov2-tl-badge">↑↓ STR99</span>
+                <span className="ov2-tl-badge">↑ Naleze</span>
+              </div>
+            </div>
+            <div className="ov2-tl-wrap">
+              <table className="ov2-tl">
                 <thead>
                   <tr>
                     <th>Date</th>
                     <th>Pair</th>
                     <th>Setup</th>
                     <th>Result</th>
-                    <th>P/L</th>
-                    <th>R</th>
+                    <th>P/L (R)</th>
+                    <th>RR</th>
                     <th>Session</th>
                     <th>Risk</th>
                     <th>Notes</th>
+                    <th>Proof</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {recentTrades.map((t, idx) => (
-                    <tr key={t.id || idx}>
-                      <td>{new Date(t.created_at || t.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })}</td>
-                      <td>{t.pair || '—'}</td>
-                      <td>—</td>
-                      <td>{(t.result || '').toLowerCase() || '—'}</td>
-                      <td className={(Number(t.pnl) || 0) >= 0 ? 'positive' : 'negative'}>{formatPnL(t.pnl)}</td>
-                      <td>{t.rMultiple != null ? Number(t.rMultiple).toFixed(1) + 'R' : t.rr != null ? Number(t.rr).toFixed(1) + 'R' : '—'}</td>
-                      <td>{t.session || '—'}</td>
-                      <td>{t.riskPercent != null ? t.riskPercent + '%' : '—'}</td>
-                      <td>—</td>
-                    </tr>
-                  ))}
+                  {recentTrades.length ? recentTrades.map((t, idx) => {
+                    const pnl = Number(t.pnl) || 0;
+                    const rr = t.rMultiple != null ? Number(t.rMultiple) : (t.rr != null ? Number(t.rr) : null);
+                    const isWin = pnl > 0;
+                    return (
+                      <tr key={t.id || idx}>
+                        <td className="ov2-tl-date">
+                          {new Date(t.created_at || t.createdAt || Date.now()).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })}
+                        </td>
+                        <td>
+                          <div className="ov2-pair-cell">
+                            <span className={`ov2-pair-flag ${isWin ? 'green' : 'red'}`} />
+                            {t.pair || '—'}
+                          </div>
+                        </td>
+                        <td>{t.setup || t.pattern || '—'}</td>
+                        <td>
+                          <span className={`ov2-result-badge ${isWin ? 'win' : 'loss'}`}>
+                            {isWin ? 'Win' : 'Loss'}
+                          </span>
+                        </td>
+                        <td className={pnl >= 0 ? 'green' : 'red'}>{fmtPnL(pnl)}</td>
+                        <td className={rr != null && rr >= 0 ? 'green' : 'red'}>
+                          {rr != null ? `${rr > 0 ? '+' : ''}${rr.toFixed(1)}R` : '—'}
+                        </td>
+                        <td>{t.session || '—'}</td>
+                        <td>{t.riskPercent != null ? `${t.riskPercent}%` : '—'}</td>
+                        <td className="ov2-tl-notes">{t.notes || '—'}</td>
+                        <td>
+                          {t.proof || t.screenshot ? (
+                            <a href={t.proof || t.screenshot} target="_blank" rel="noopener noreferrer" className="ov2-proof-link">📎</a>
+                          ) : <span className="ov2-tl-dim">—</span>}
+                        </td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr><td colSpan="10" className="ov2-empty-row">No trades recorded yet</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {/* Right column */}
-        <div className="aura-overview-col">
-          <div className="aura-card">
-            <h3 className="aura-card-title">Win/Loss Ratio</h3>
-            <div className="aura-donut-wrap">
-              <div
-                className="aura-donut"
-                style={{
-                  background: `conic-gradient(rgba(139,92,246,0.9) 0deg ${(winRate / 100) * 360}deg, rgba(248,113,113,0.85) ${(winRate / 100) * 360}deg 360deg)`,
-                }}
-              />
-              <span className="aura-donut-label">{winRate}%</span>
+        {/* ── RIGHT COLUMN ────────────────────────────────── */}
+        <div className="ov2-col ov2-col-right">
+
+          {/* Win/Loss donut (compact) */}
+          <div className="ov2-card ov2-wl-top">
+            <div className="ov2-card-title">Win/Loss Ratio</div>
+            <div className="ov2-wl-center">
+              <DonutChart pct={winRate} size={130} strokeW={14} color="#a78bfa" label={`${winRate}%`} sub="We Win" />
             </div>
-            <p className="aura-donut-legend"><span className="win">Wins</span> · <span className="loss">Losses</span></p>
-            <div className="aura-best-worst">
-              <p><span className="label">Best Day</span><span className="positive">{bestDay ? formatPnL(bestDay.pnl) + ' on ' + new Date(bestDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</span></p>
-              <p><span className="label">Worst Day</span><span className={worstDay && worstDay.pnl < 0 ? 'negative' : 'positive'}>{worstDay ? formatPnL(worstDay.pnl) + ' on ' + new Date(worstDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</span></p>
+            <div className="ov2-wl-legend">
+              <span className="ov2-wl-dot purple" /> Wins
+              <span className="ov2-wl-dot red" /> Losses
             </div>
-            <div className="aura-risk-donut">
-              <div className="aura-donut-wrap aura-donut-sm">
-                <div className="aura-donut" style={{ background: 'conic-gradient(rgba(139,92,246,0.9) 0deg 302deg, rgba(255,255,255,0.1) 302deg 360deg)' }} />
-                <span className="aura-donut-label">84%</span>
+          </div>
+
+          {/* Win/Loss detail card */}
+          <div className="ov2-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title">Win/Loss Ratio</div>
+              <div className="ov2-wl-delta green">▲ +{avgR > 0 ? avgR.toFixed(1) : '0.0'}RR</div>
+            </div>
+            <div className="ov2-wl-pcts">
+              <span className="ov2-wl-big green">{winRate}%</span>
+              <span className="ov2-wl-big red">{lossRate}%</span>
+            </div>
+            <div className="ov2-wl-days">
+              <div className="ov2-wl-day-row">
+                <span className="ov2-wl-day-label">Best Day</span>
+                <span className="ov2-wl-day-val green">
+                  {bestDay ? `${fmt$(bestDay.pnl)} ${new Date(bestDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : '—'}
+                </span>
               </div>
-              <p className="aura-risk-legend">Risk: Compliance</p>
+              <div className="ov2-wl-day-row">
+                <span className="ov2-wl-day-label">Worst Day</span>
+                <span className={`ov2-wl-day-val ${worstDay && worstDay.pnl < 0 ? 'red' : 'green'}`}>
+                  {worstDay ? `${fmt$(worstDay.pnl)} ${new Date(worstDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : '—'}
+                </span>
+              </div>
+            </div>
+            <div className="ov2-compliance-row">
+              <DonutChart pct={compliance} size={100} strokeW={11} color="#10b981" bg="rgba(16,185,129,0.12)" label={`${compliance}%`} />
+              <div className="ov2-compliance-text">
+                <div className="ov2-compliance-title">Risk · Compliance</div>
+                <div className="ov2-compliance-sub">{compliance}% of trades within risk rules</div>
+              </div>
             </div>
           </div>
 
-          <div className="aura-card">
-            <h3 className="aura-card-title">Trade Distribution</h3>
-            <div className="aura-bar-chart">
-              {distributionBuckets.length ? (
-                distributionBuckets.map((val, i) => (
-                  <div
-                    key={i}
-                    className="aura-bar"
-                    style={{ height: `${(Math.abs(val) / distMax) * 100}%` }}
-                    title={formatPnL(val)}
-                  />
-                ))
-              ) : (
-                Array.from({ length: 10 }, (_, i) => <div key={i} className="aura-bar" style={{ height: '4px' }} />)
-              )}
+          {/* Trade Distribution */}
+          <div className="ov2-card">
+            <div className="ov2-card-head">
+              <div className="ov2-card-title">Trade Distribution</div>
+              <span className="ov2-dist-label">Growth model</span>
             </div>
-            <div className="aura-bar-labels">
-              {distributionBuckets.slice(0, 11).map((_, i) => <span key={i}>{i}</span>)}
+            <div className="ov2-dist-chart">
+              {distributionBuckets.length ? distributionBuckets.map((b, i) => (
+                <div key={i} className={`ov2-dist-bar ${b.isWin ? 'win' : 'loss'}`}
+                  style={{ height: `${Math.max(4, (Math.abs(b.value) / distMax) * 72)}px` }}
+                  title={fmtPnL(b.value)} />
+              )) : Array.from({ length: 16 }, (_, i) => (
+                <div key={i} className="ov2-dist-bar win" style={{ height: `${4 + Math.random() * 30}px` }} />
+              ))}
+            </div>
+            <div className="ov2-dist-labels">
+              {[0, 100, 200, 300, 400, 170, 240, 365].map((v, i) => (
+                <span key={i}>{v}</span>
+              ))}
             </div>
           </div>
 
-          <div className="aura-card">
-            <h3 className="aura-card-title">Streaks</h3>
-            <div className="aura-streaks-list">
-              <p><span className="aura-streak-label">Journal streak</span><span className="positive">{streaks.journalStreak}</span></p>
-              <p><span className="aura-streak-label">Rule adherence</span><span className="positive">{streaks.ruleAdherenceStreak}</span></p>
-              <p><span className="aura-streak-label">Disciplined days</span><span className="positive">{streaks.disciplinedDaysStreak}</span></p>
+          {/* Streaks */}
+          <div className="ov2-card">
+            <div className="ov2-card-title">Streaks</div>
+            <div className="ov2-streaks">
+              {streakItems.map((s, i) => (
+                <div key={i} className="ov2-streak-row">
+                  <span className="ov2-streak-icon">{s.icon}</span>
+                  <div className="ov2-streak-info">
+                    <span className="ov2-streak-label">{s.label}</span>
+                    <span className="ov2-streak-tag">{s.tag}</span>
+                  </div>
+                  <div className="ov2-streak-val">
+                    <span className={`ov2-streak-num ${s.value > 0 ? 'green' : 'muted'}`}>{s.value}</span>
+                    <span className={`ov2-streak-arrow ${s.value > 0 ? 'green' : 'muted'}`}>{s.value > 0 ? '▲' : '—'}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
