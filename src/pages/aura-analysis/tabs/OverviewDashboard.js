@@ -1,13 +1,34 @@
 /**
- * Aura Analysis — Overview tab (Image 2 redesign)
+ * Aura Analysis — Overview tab (Image 2 redesign, fully interactive)
  * Three-column luxury dark grid: left stats/calendar, centre charts/log, right ratios/streaks.
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Api from '../../../services/Api';
 import { computeStreaks } from '../../../lib/aura-analysis/trader-cv/streakEngine';
 import '../../../styles/aura-analysis/Overview.css';
 
 const WEEKDAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+// ── Animated counter hook ─────────────────────────────────────
+function useCountUp(target, duration = 1100) {
+  const [val, setVal] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    const from = prev.current;
+    prev.current = target;
+    let startTs = null;
+    const tick = (ts) => {
+      if (!startTs) startTs = ts;
+      const p = Math.min((ts - startTs) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setVal(from + (target - from) * ease);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    const id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [target, duration]);
+  return val;
+}
 
 function fmt$(n, alwaysSign = true) {
   if (n == null || Number.isNaN(Number(n))) return '$0';
@@ -79,8 +100,11 @@ function buildDistributionBuckets(trades, numBuckets = 20) {
   return out;
 }
 
-// SVG polyline from equity curve data
-function EquitySVG({ data, width = 500, height = 180 }) {
+// SVG equity chart with hover tooltip
+function EquitySVG({ data, width = 520, height = 200 }) {
+  const [tooltip, setTooltip] = useState(null);
+  const svgRef = useRef(null);
+
   if (!data || data.length < 2) {
     return (
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
@@ -88,105 +112,224 @@ function EquitySVG({ data, width = 500, height = 180 }) {
       </svg>
     );
   }
+
   const minE = Math.min(...data.map(d => d.equity));
   const maxE = Math.max(...data.map(d => d.equity));
   const range = maxE - minE || 1;
-  const pad = { t: 16, b: 24, l: 8, r: 8 };
+  const pad = { t: 20, b: 28, l: 10, r: 52 };
   const W = width - pad.l - pad.r;
   const H = height - pad.t - pad.b;
+
   const pts = data.map((d, i) => {
-    const x = pad.l + (i / (data.length - 1)) * W;
+    const x = pad.l + (i / Math.max(1, data.length - 1)) * W;
     const y = pad.t + (1 - (d.equity - minE) / range) * H;
     return [x, y];
   });
   const polyline = pts.map(p => p.join(',')).join(' ');
-  // Fill area under curve
-  const fillPath = `M${pts[0][0]},${pad.t + H} L${pts.map(p => p.join(',')).join(' L')} L${pts[pts.length - 1][0]},${pad.t + H} Z`;
-  // Dot every ~10% of points
+  const fillPath = `M${pts[0][0]},${pad.t + H} L${pts.map(p => p.join(',')).join(' L')} L${pts[pts.length-1][0]},${pad.t + H} Z`;
   const dotStep = Math.max(1, Math.floor(data.length / 10));
   const dots = pts.filter((_, i) => i % dotStep === 0 || i === pts.length - 1);
 
+  // Y-axis labels (4 levels)
+  const yLabels = [0, 0.33, 0.66, 1].map(f => ({
+    y: pad.t + (1 - f) * H,
+    val: minE + f * range,
+  }));
+
+  const handleMouseMove = (e) => {
+    if (!svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = width / rect.width;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const idx = Math.round(((mouseX - pad.l) / W) * (data.length - 1));
+    const clamped = Math.max(0, Math.min(data.length - 1, idx));
+    const pt = pts[clamped];
+    const d = data[clamped];
+    if (pt && d) {
+      const dateStr = d.date ? new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      setTooltip({ x: pt[0], y: pt[1], date: dateStr, equity: d.equity });
+    }
+  };
+
+  const handleMouseLeave = () => setTooltip(null);
+
+  const tooltipW = 90;
+  const tooltipH = 34;
+  const tx = tooltip ? Math.min(Math.max(tooltip.x - tooltipW / 2, pad.l), pad.l + W - tooltipW) : 0;
+  const ty = tooltip ? Math.max(tooltip.y - tooltipH - 10, pad.t) : 0;
+
   return (
-    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="ov-equity-svg">
+    <svg ref={svgRef} width="100%" height={height} viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none" className="ov-equity-svg"
+      onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}
+      style={{ cursor: 'crosshair' }}>
       <defs>
-        <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.35" />
+        <linearGradient id="eqGrad2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.4" />
+          <stop offset="60%" stopColor="#a78bfa" stopOpacity="0.08" />
           <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.0" />
         </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="blur" />
+        <filter id="eqGlow">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
+
       {/* Grid lines */}
-      {[0.25, 0.5, 0.75].map(f => (
-        <line key={f} x1={pad.l} x2={pad.l + W} y1={pad.t + f * H} y2={pad.t + f * H}
-          stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+      {yLabels.map((l, i) => (
+        <line key={i} x1={pad.l} x2={pad.l + W} y1={l.y} y2={l.y}
+          stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="4 4" />
       ))}
+
       {/* Fill */}
-      <path d={fillPath} fill="url(#eqGrad)" />
+      <path d={fillPath} fill="url(#eqGrad2)" />
+
       {/* Line */}
       <polyline points={polyline} fill="none" stroke="#a78bfa" strokeWidth="2.5"
-        strokeLinejoin="round" strokeLinecap="round" filter="url(#glow)" />
-      {/* Glowing dots */}
+        strokeLinejoin="round" strokeLinecap="round" filter="url(#eqGlow)" />
+
+      {/* Y-axis labels (right side) */}
+      {yLabels.map((l, i) => (
+        <text key={i} x={pad.l + W + 4} y={l.y + 4}
+          fill="rgba(255,255,255,0.3)" fontSize="8" textAnchor="start">
+          ${(l.val / 1000).toFixed(1)}k
+        </text>
+      ))}
+
+      {/* Dots */}
       {dots.map(([x, y], i) => (
         <g key={i}>
-          <circle cx={x} cy={y} r="5" fill="#0d0d1a" stroke="#a78bfa" strokeWidth="2" />
-          <circle cx={x} cy={y} r="3" fill="#a78bfa" opacity="0.9" />
+          <circle cx={x} cy={y} r="6" fill="transparent" stroke="transparent" />
+          <circle cx={x} cy={y} r="4.5" fill="#0d0d1a" stroke="#a78bfa" strokeWidth="2" />
+          <circle cx={x} cy={y} r="2.5" fill="#a78bfa" opacity="0.9" />
         </g>
       ))}
-      {/* Y labels */}
-      <text x={pad.l + W - 4} y={pad.t + 10} fill="rgba(255,255,255,0.35)" fontSize="9" textAnchor="end">${(maxE / 1000).toFixed(1)}k</text>
-      <text x={pad.l + W - 4} y={pad.t + H} fill="rgba(255,255,255,0.35)" fontSize="9" textAnchor="end">${(minE / 1000).toFixed(1)}k</text>
+
+      {/* Crosshair line */}
+      {tooltip && (
+        <line x1={tooltip.x} x2={tooltip.x} y1={pad.t} y2={pad.t + H}
+          stroke="rgba(167,139,250,0.35)" strokeWidth="1" strokeDasharray="3 3" />
+      )}
+
+      {/* Tooltip */}
+      {tooltip && (
+        <g>
+          <rect x={tx} y={ty} width={tooltipW} height={tooltipH}
+            rx="5" fill="rgba(20,15,35,0.95)" stroke="rgba(139,92,246,0.5)" strokeWidth="1" />
+          <text x={tx + tooltipW / 2} y={ty + 12} fill="rgba(255,255,255,0.55)"
+            fontSize="8" textAnchor="middle">{tooltip.date}</text>
+          <text x={tx + tooltipW / 2} y={ty + 26} fill="#c4b5fd"
+            fontSize="10" fontWeight="600" textAnchor="middle">
+            ${Math.round(tooltip.equity).toLocaleString()}
+          </text>
+        </g>
+      )}
     </svg>
   );
 }
 
-// SVG for the daily mini chart
-function DailySVG({ data, width = 500, height = 120 }) {
+// SVG daily chart with hover tooltip
+function DailySVG({ data, width = 520, height = 110 }) {
+  const [tooltip, setTooltip] = useState(null);
+  const svgRef = useRef(null);
+
   if (!data || data.length < 2) return (
     <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
       <text x={width/2} y={height/2} fill="rgba(255,255,255,0.2)" textAnchor="middle" fontSize="11">No daily data</text>
     </svg>
   );
+
   const vals = data.map(d => d.pnl);
   const minV = Math.min(...vals, 0);
   const maxV = Math.max(...vals, 0);
   const range = maxV - minV || 1;
-  const pad = { t: 12, b: 12, l: 6, r: 6 };
+  const pad = { t: 10, b: 10, l: 6, r: 6 };
   const W = width - pad.l - pad.r;
   const H = height - pad.t - pad.b;
   const zeroY = pad.t + (1 - (0 - minV) / range) * H;
   const pts = vals.map((v, i) => {
-    const x = pad.l + (i / (vals.length - 1)) * W;
+    const x = pad.l + (i / Math.max(1, vals.length - 1)) * W;
     const y = pad.t + (1 - (v - minV) / range) * H;
     return [x, y];
   });
   const polyline = pts.map(p => p.join(',')).join(' ');
+
+  const handleMouseMove = (e) => {
+    if (!svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = width / rect.width;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const idx = Math.round(((mouseX - pad.l) / W) * (data.length - 1));
+    const clamped = Math.max(0, Math.min(data.length - 1, idx));
+    const pt = pts[clamped];
+    const d = data[clamped];
+    if (pt && d) setTooltip({ x: pt[0], y: pt[1], date: d.date, pnl: d.pnl });
+  };
+
   return (
-    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="ov-daily-svg">
+    <svg ref={svgRef} width="100%" height={height} viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none" className="ov-daily-svg"
+      onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}
+      style={{ cursor: 'crosshair' }}>
       <defs>
-        <linearGradient id="dailyGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+        <linearGradient id="dailyGrad2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
           <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
         </linearGradient>
-        <filter id="glowG">
-          <feGaussianBlur stdDeviation="2.5" result="blur" />
+        <filter id="glowG2">
+          <feGaussianBlur stdDeviation="2" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
-      <line x1={pad.l} x2={pad.l+W} y1={zeroY} y2={zeroY} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-      <path d={`M${pts[0][0]},${zeroY} L${pts.map(p=>p.join(',')).join(' L')} L${pts[pts.length-1][0]},${zeroY} Z`} fill="url(#dailyGrad)" />
-      <polyline points={polyline} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" filter="url(#glowG)" />
+      <line x1={pad.l} x2={pad.l+W} y1={zeroY} y2={zeroY}
+        stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+      <path d={`M${pts[0][0]},${zeroY} L${pts.map(p=>p.join(',')).join(' L')} L${pts[pts.length-1][0]},${zeroY} Z`}
+        fill="url(#dailyGrad2)" />
+      <polyline points={polyline} fill="none" stroke="#10b981" strokeWidth="2"
+        strokeLinejoin="round" filter="url(#glowG2)" />
+      {/* Crosshair */}
+      {tooltip && (
+        <line x1={tooltip.x} x2={tooltip.x} y1={pad.t} y2={pad.t + H}
+          stroke="rgba(16,185,129,0.3)" strokeWidth="1" strokeDasharray="3 3" />
+      )}
+      {/* Active dot */}
+      {tooltip && (
+        <circle cx={tooltip.x} cy={tooltip.y} r="4" fill="#10b981"
+          stroke="#08080f" strokeWidth="2" />
+      )}
+      {/* Tooltip */}
+      {tooltip && (() => {
+        const tw = 80; const th = 32;
+        const tx = Math.min(Math.max(tooltip.x - tw/2, pad.l), pad.l + W - tw);
+        const ty = Math.max(tooltip.y - th - 8, pad.t);
+        const isPos = tooltip.pnl >= 0;
+        return (
+          <g>
+            <rect x={tx} y={ty} width={tw} height={th} rx="4"
+              fill="rgba(10,8,20,0.95)" stroke={isPos ? 'rgba(16,185,129,0.5)' : 'rgba(248,113,113,0.5)'} strokeWidth="1" />
+            <text x={tx + tw/2} y={ty + 11} fill="rgba(255,255,255,0.5)"
+              fontSize="7" textAnchor="middle">{tooltip.date}</text>
+            <text x={tx + tw/2} y={ty + 24} fill={isPos ? '#4ade80' : '#f87171'}
+              fontSize="9" fontWeight="700" textAnchor="middle">
+              {isPos ? '+' : ''}{Math.round(tooltip.pnl).toLocaleString()}
+            </text>
+          </g>
+        );
+      })()}
     </svg>
   );
 }
 
-// SVG donut
+// Animated donut chart
 function DonutChart({ pct, size = 120, strokeW = 13, color = '#a78bfa', bg = 'rgba(255,255,255,0.07)', label, sub }) {
+  const [animPct, setAnimPct] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setAnimPct(pct), 80);
+    return () => clearTimeout(t);
+  }, [pct]);
   const r = (size - strokeW) / 2;
   const circ = 2 * Math.PI * r;
-  const dash = (pct / 100) * circ;
+  const dash = (animPct / 100) * circ;
   const cx = size / 2;
   return (
     <div className="ov-donut-wrap" style={{ width: size, height: size }}>
@@ -194,7 +337,10 @@ function DonutChart({ pct, size = 120, strokeW = 13, color = '#a78bfa', bg = 'rg
         <circle cx={cx} cy={cx} r={r} fill="none" stroke={bg} strokeWidth={strokeW} />
         <circle cx={cx} cy={cx} r={r} fill="none" stroke={color} strokeWidth={strokeW}
           strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-          style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
+          style={{
+            filter: `drop-shadow(0 0 8px ${color})`,
+            transition: 'stroke-dasharray 1.2s cubic-bezier(0.34,1.56,0.64,1)'
+          }} />
       </svg>
       <div className="ov-donut-inner">
         {label && <span className="ov-donut-pct">{label}</span>}
@@ -211,6 +357,9 @@ export default function OverviewDashboard() {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [equityView, setEquityView] = useState('Day');
   const [dailyFilter, setDailyFilter] = useState('En');
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [mounted, setMounted] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -226,7 +375,25 @@ export default function OverviewDashboard() {
         setPnlData(typeof p === 'object' ? p : {});
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setTimeout(() => setMounted(true), 50);
+      });
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([
+      Api.getAuraAnalysisTrades().then((r) => (r.data?.trades ?? r.data?.data ?? [])),
+      Api.getAuraAnalysisPnl().then((r) => ({
+        dailyPnl: r.data?.dailyPnl ?? 0,
+        weeklyPnl: r.data?.weeklyPnl ?? 0,
+        monthlyPnl: r.data?.monthlyPnl ?? 0,
+      })),
+    ])
+      .then(([t, p]) => { setTrades(Array.isArray(t) ? t : []); setPnlData(typeof p === 'object' ? p : {}); })
+      .catch(() => {})
+      .finally(() => setRefreshing(false));
   }, []);
 
   // ── Computed metrics ───────────────────────────────────────
@@ -327,6 +494,10 @@ export default function OverviewDashboard() {
     .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt))
     .slice(0, 12), [trades]);
 
+  // Animated equity value
+  const equityAnimated = useCountUp(equity, 1200);
+  const winRateAnimated = useCountUp(winRate, 900);
+
   if (loading) {
     return (
       <div className="ov2-page">
@@ -337,6 +508,9 @@ export default function OverviewDashboard() {
       </div>
     );
   }
+
+  const cardClass = (delay = 0) =>
+    `ov2-card${mounted ? ' ov2-card-in' : ''}${delay ? ` ov2-card-delay-${delay}` : ''}`;
 
   const streakItems = [
     { icon: '🔥', label: 'Profit streaks', value: streaks.journalStreak || 0, tag: `top ${Math.min(streaks.journalStreak || 0, 25)}` },
@@ -353,7 +527,7 @@ export default function OverviewDashboard() {
         <div className="ov2-col ov2-col-left">
 
           {/* Overview card */}
-          <div className="ov2-card">
+          <div className={cardClass(0)}>
             <div className="ov2-card-title">Overview</div>
 
             <div className="ov2-equity-row">
@@ -362,7 +536,7 @@ export default function OverviewDashboard() {
                 <span className="ov2-badge ov2-badge-up">▲ {Math.abs(todayPct)}% today</span>
               </div>
             </div>
-            <div className="ov2-equity-amount">${Math.abs(equity).toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+            <div className="ov2-equity-amount">${Math.abs(Math.round(equityAnimated)).toLocaleString('en-US')}</div>
             <div className="ov2-equity-pcts">
               <span className="ov2-pct-green">{todayPct}%</span>
               <span className="ov2-pct-green2">{totalPct}%</span>
@@ -375,7 +549,7 @@ export default function OverviewDashboard() {
               </div>
               <div className="ov2-stat-cell">
                 <div className="ov2-stat-label">Win Rate</div>
-                <div className="ov2-stat-val green">{winRate}%</div>
+                <div className="ov2-stat-val green">{Math.round(winRateAnimated)}%</div>
               </div>
               <div className="ov2-stat-cell">
                 <div className="ov2-stat-label">Profit Factor</div>
@@ -397,7 +571,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Calendar */}
-          <div className="ov2-card">
+          <div className={cardClass(1)}>
             <div className="ov2-card-head">
               <div className="ov2-card-title">Calendar</div>
               <div className="ov2-date-sub">{monthLabel}</div>
@@ -406,7 +580,7 @@ export default function OverviewDashboard() {
               <button className="ov2-nav-btn" onClick={prevMonth}>‹</button>
               <div className="ov2-cal-month-row">
                 <span className="ov2-cal-month">{viewDate.toLocaleString('en-US', { month: 'long' })}</span>
-                <button className="ov2-cal-refresh">↺</button>
+                <button className={`ov2-cal-refresh${refreshing ? ' ov2-spinning' : ''}`} onClick={handleRefresh} title="Refresh data">↺</button>
               </div>
               <button className="ov2-nav-btn" onClick={nextMonth}>›</button>
             </div>
@@ -436,7 +610,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Key Stats */}
-          <div className="ov2-card">
+          <div className={cardClass(2)}>
             <div className="ov2-card-head">
               <div className="ov2-card-title">Key Stats</div>
               <div className="ov2-stat-badges-row">
@@ -492,7 +666,7 @@ export default function OverviewDashboard() {
         <div className="ov2-col ov2-col-mid">
 
           {/* Equity Curve */}
-          <div className="ov2-card">
+          <div className={cardClass(0)}>
             <div className="ov2-card-head">
               <div className="ov2-card-title">Equity Curve</div>
               <div className="ov2-card-controls">
@@ -512,7 +686,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Daily */}
-          <div className="ov2-card">
+          <div className={cardClass(1)}>
             <div className="ov2-card-head">
               <div className="ov2-card-title-row">
                 <span className="ov2-card-title">Daily</span>
@@ -531,7 +705,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Sessions */}
-          <div className="ov2-card">
+          <div className={cardClass(2)}>
             <div className="ov2-card-head">
               <div className="ov2-card-title">Sessions</div>
               <div className="ov2-session-cols-hdr">
@@ -568,7 +742,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Trade Log */}
-          <div className="ov2-card ov2-trade-log-card">
+          <div className={`${cardClass(3)} ov2-trade-log-card`}>
             <div className="ov2-card-head">
               <div className="ov2-card-title">Trade Log</div>
               <div className="ov2-tl-actions">
@@ -597,36 +771,58 @@ export default function OverviewDashboard() {
                     const pnl = Number(t.pnl) || 0;
                     const rr = t.rMultiple != null ? Number(t.rMultiple) : (t.rr != null ? Number(t.rr) : null);
                     const isWin = pnl > 0;
+                    const isExpanded = expandedRow === (t.id || idx);
                     return (
-                      <tr key={t.id || idx}>
-                        <td className="ov2-tl-date">
-                          {new Date(t.created_at || t.createdAt || Date.now()).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })}
-                        </td>
-                        <td>
-                          <div className="ov2-pair-cell">
-                            <span className={`ov2-pair-flag ${isWin ? 'green' : 'red'}`} />
-                            {t.pair || '—'}
-                          </div>
-                        </td>
-                        <td>{t.setup || t.pattern || '—'}</td>
-                        <td>
-                          <span className={`ov2-result-badge ${isWin ? 'win' : 'loss'}`}>
-                            {isWin ? 'Win' : 'Loss'}
-                          </span>
-                        </td>
-                        <td className={pnl >= 0 ? 'green' : 'red'}>{fmtPnL(pnl)}</td>
-                        <td className={rr != null && rr >= 0 ? 'green' : 'red'}>
-                          {rr != null ? `${rr > 0 ? '+' : ''}${rr.toFixed(1)}R` : '—'}
-                        </td>
-                        <td>{t.session || '—'}</td>
-                        <td>{t.riskPercent != null ? `${t.riskPercent}%` : '—'}</td>
-                        <td className="ov2-tl-notes">{t.notes || '—'}</td>
-                        <td>
-                          {t.proof || t.screenshot ? (
-                            <a href={t.proof || t.screenshot} target="_blank" rel="noopener noreferrer" className="ov2-proof-link">📎</a>
-                          ) : <span className="ov2-tl-dim">—</span>}
-                        </td>
-                      </tr>
+                      <React.Fragment key={t.id || idx}>
+                        <tr
+                          onClick={() => setExpandedRow(isExpanded ? null : (t.id || idx))}
+                          style={{ cursor: 'pointer' }}
+                          className={isExpanded ? 'ov2-tl-row-active' : ''}
+                        >
+                          <td className="ov2-tl-date">
+                            {new Date(t.created_at || t.createdAt || Date.now()).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })}
+                          </td>
+                          <td>
+                            <div className="ov2-pair-cell">
+                              <span className={`ov2-pair-flag ${isWin ? 'green' : 'red'}`} />
+                              {t.pair || '—'}
+                            </div>
+                          </td>
+                          <td>{t.setup || t.pattern || '—'}</td>
+                          <td>
+                            <span className={`ov2-result-badge ${isWin ? 'win' : 'loss'}`}>
+                              {isWin ? 'Win' : 'Loss'}
+                            </span>
+                          </td>
+                          <td className={pnl >= 0 ? 'green' : 'red'}>{fmtPnL(pnl)}</td>
+                          <td className={rr != null && rr >= 0 ? 'green' : 'red'}>
+                            {rr != null ? `${rr > 0 ? '+' : ''}${rr.toFixed(1)}R` : '—'}
+                          </td>
+                          <td>{t.session || '—'}</td>
+                          <td>{t.riskPercent != null ? `${t.riskPercent}%` : '—'}</td>
+                          <td className="ov2-tl-notes">{t.notes || '—'}</td>
+                          <td>
+                            {t.proof || t.screenshot ? (
+                              <a href={t.proof || t.screenshot} target="_blank" rel="noopener noreferrer" className="ov2-proof-link" onClick={e => e.stopPropagation()}>📎</a>
+                            ) : <span className="ov2-tl-dim">—</span>}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="ov2-tl-expanded">
+                            <td colSpan="10">
+                              <div className="ov2-tl-expand-body">
+                                <div className="ov2-tl-expand-item"><span>Entry</span><strong>{t.entryPrice || '—'}</strong></div>
+                                <div className="ov2-tl-expand-item"><span>SL</span><strong className="red">{t.stopLoss || '—'}</strong></div>
+                                <div className="ov2-tl-expand-item"><span>TP</span><strong className="green">{t.takeProfit || '—'}</strong></div>
+                                <div className="ov2-tl-expand-item"><span>Lot Size</span><strong>{t.positionSize || '—'}</strong></div>
+                                <div className="ov2-tl-expand-item"><span>Risk $</span><strong>{t.riskAmount ? `$${Number(t.riskAmount).toFixed(0)}` : '—'}</strong></div>
+                                <div className="ov2-tl-expand-item"><span>Direction</span><strong>{t.direction?.toUpperCase() || '—'}</strong></div>
+                                {t.notes && <div className="ov2-tl-expand-notes"><span>Notes:</span> {t.notes}</div>}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   }) : (
                     <tr><td colSpan="10" className="ov2-empty-row">No trades recorded yet</td></tr>
@@ -641,7 +837,7 @@ export default function OverviewDashboard() {
         <div className="ov2-col ov2-col-right">
 
           {/* Win/Loss donut (compact) */}
-          <div className="ov2-card ov2-wl-top">
+          <div className={`${cardClass(0)} ov2-wl-top`}>
             <div className="ov2-card-title">Win/Loss Ratio</div>
             <div className="ov2-wl-center">
               <DonutChart pct={winRate} size={130} strokeW={14} color="#a78bfa" label={`${winRate}%`} sub="We Win" />
@@ -653,7 +849,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Win/Loss detail card */}
-          <div className="ov2-card">
+          <div className={cardClass(1)}>
             <div className="ov2-card-head">
               <div className="ov2-card-title">Win/Loss Ratio</div>
               <div className="ov2-wl-delta green">▲ +{avgR > 0 ? avgR.toFixed(1) : '0.0'}RR</div>
@@ -686,7 +882,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Trade Distribution */}
-          <div className="ov2-card">
+          <div className={cardClass(2)}>
             <div className="ov2-card-head">
               <div className="ov2-card-title">Trade Distribution</div>
               <span className="ov2-dist-label">Growth model</span>
@@ -708,7 +904,7 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Streaks */}
-          <div className="ov2-card">
+          <div className={cardClass(3)}>
             <div className="ov2-card-title">Streaks</div>
             <div className="ov2-streaks">
               {streakItems.map((s, i) => (

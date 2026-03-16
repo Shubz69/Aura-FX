@@ -2072,3 +2072,171 @@
 .ov2-streak-num.muted  { color: rgba(255,255,255,0.3); }
 .ov2-streak-arrow.green { color: #4ade80; font-size: 0.65rem; }
 .ov2-streak-arrow.muted { color: rgba(255,255,255,0.2); font-size: 0.65rem; }
+
+/* ══════════════════════════════════════════════════════════
+   CARD ENTRANCE ANIMATIONS
+   ══════════════════════════════════════════════════════════ */
+@keyframes ov2-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ov2-card {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.ov2-card.ov2-card-in {
+  animation: ov2-card-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.ov2-card.ov2-card-in.ov2-card-delay-1 { animation-delay: 0.08s; }
+.ov2-card.ov2-card-in.ov2-card-delay-2 { animation-delay: 0.16s; }
+.ov2-card.ov2-card-in.ov2-card-delay-3 { animation-delay: 0.24s; }
+
+/* Card hover lift */
+.ov2-card {
+  transition: box-shadow 0.22s, transform 0.22s;
+}
+.ov2-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(139,92,246,0.15);
+  transform: translateY(-1px);
+}
+.ov2-card.ov2-card-in:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Spinning refresh button ────────────────────────────── */
+@keyframes ov2-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.ov2-cal-refresh.ov2-spinning {
+  animation: ov2-spin 0.7s linear infinite;
+}
+
+/* ══════════════════════════════════════════════════════════
+   EXPANDABLE TRADE LOG ROWS
+   ══════════════════════════════════════════════════════════ */
+.ov2-tl tbody tr {
+  transition: background 0.15s;
+}
+
+.ov2-tl tbody tr:hover {
+  background: rgba(139,92,246,0.08) !important;
+}
+
+.ov2-tl-row-active {
+  background: rgba(139,92,246,0.12) !important;
+  border-bottom: none !important;
+}
+
+.ov2-tl-row-active td {
+  border-bottom: none !important;
+}
+
+.ov2-tl-expanded td {
+  padding: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+.ov2-tl-expand-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 10px 14px 12px;
+  background: rgba(10,8,22,0.6);
+  border-top: 1px solid rgba(139,92,246,0.15);
+  animation: ov2-card-enter 0.22s ease forwards;
+}
+
+.ov2-tl-expand-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 70px;
+}
+
+.ov2-tl-expand-item span {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ov2-tl-expand-item strong {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+}
+
+.ov2-tl-expand-item strong.green { color: #4ade80; }
+.ov2-tl-expand-item strong.red   { color: #f87171; }
+
+.ov2-tl-expand-notes {
+  width: 100%;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 4px;
+}
+
+.ov2-tl-expand-notes span {
+  color: rgba(255,255,255,0.3);
+  margin-right: 6px;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+}
+
+/* ── Distribution bar hover ─────────────────────────────── */
+.ov2-dist-bar {
+  transition: opacity 0.15s, transform 0.15s;
+  cursor: default;
+}
+
+.ov2-dist-bar:hover {
+  opacity: 0.85;
+  transform: scaleY(1.08);
+  transform-origin: bottom;
+}
+
+/* ── Session row hover ──────────────────────────────────── */
+.ov2-session-row {
+  transition: background 0.15s;
+}
+
+.ov2-session-row:hover {
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+}
+
+/* ── Calendar cell hover ────────────────────────────────── */
+.ov2-cal-cell {
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: default;
+}
+
+.ov2-cal-cell:not(.ov2-cal-empty):hover {
+  transform: scale(1.08);
+  z-index: 1;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+}
+
+/* ── Streak row hover ───────────────────────────────────── */
+.ov2-streak-row {
+  transition: background 0.15s;
+}
+
+.ov2-streak-row:hover {
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+}
