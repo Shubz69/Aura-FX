@@ -6,6 +6,29 @@
 const { getFinnhubData } = require('./services/finnhubService');
 const { getFmpData } = require('./services/fmpService');
 const { getFredData } = require('./services/fredService');
+const { fetchWithTimeout } = require('./services/fetchWithTimeout');
+
+async function getTwelveDataQuote(symbol) {
+  const apiKey = process.env.TWELVE_DATA_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
+    const res = await fetchWithTimeout(url, {}, 7000);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data && data.close && !data.code) {
+      const close = parseFloat(data.close);
+      const prev = parseFloat(data.previous_close);
+      if (isNaN(close) || close <= 0) return null;
+      const d = isNaN(prev) ? 0 : close - prev;
+      const dp = isNaN(prev) || prev === 0 ? 0 : (d / prev) * 100;
+      return { c: close, pc: prev, d, dp };
+    }
+  } catch (e) {
+    console.warn('[trader-deck] Twelve Data quote error:', symbol, e.message || e);
+  }
+  return null;
+}
 
 // --- Internal helpers (direction from change) ---
 function directionFromChange(prev, curr) {
@@ -33,13 +56,13 @@ function getTreasury10y(fred, fmp) {
 }
 
 // --- Regime logic ---
-function buildMarketRegime(fred, finnhub, fmp) {
+function buildMarketRegime(fred, finnhub, fmp, spxQuote) {
   const treasury = getTreasury10y(fred, fmp);
   const hasRates = treasury != null && !Number.isNaN(treasury);
   const regime = hasRates && treasury > 4 ? 'Rate Sensitivity' : hasRates && treasury < 3.5 ? 'Growth / Low Rates' : 'Mixed';
   const primary = hasRates ? 'Bond Yields' : 'Macro Data';
   const secondary = 'US Economic Data';
-  const pulseScore = buildMarketPulse(fred, finnhub, fmp).score;
+  const pulseScore = buildMarketPulse(fred, finnhub, fmp, spxQuote).score;
   const marketSentiment = sentimentFromScore(pulseScore);
   return {
     currentRegime: regime,
@@ -50,11 +73,12 @@ function buildMarketRegime(fred, finnhub, fmp) {
 }
 
 // --- Pulse logic ---
-function buildMarketPulse(fred, finnhub, fmp) {
+function buildMarketPulse(fred, finnhub, fmp, spxQuote) {
   let score = 50;
   const treasury = getTreasury10y(fred, fmp);
   const eurUsd = finnhub.forex && finnhub.forex.eurUsd ? finnhub.forex.eurUsd : null;
   const gold = finnhub.forex && finnhub.forex.gold ? finnhub.forex.gold : null;
+  const oil = finnhub.forex && finnhub.forex.oil ? finnhub.forex.oil : null;
 
   if (eurUsd && eurUsd.dp != null) {
     if (eurUsd.dp > 0) score -= 8;
@@ -66,6 +90,16 @@ function buildMarketPulse(fred, finnhub, fmp) {
   }
   if (treasury != null && treasury > 4.2) score -= 5;
   else if (treasury != null && treasury < 3.5) score += 5;
+  if (spxQuote && spxQuote.dp != null) {
+    if (spxQuote.dp > 0.5) score += 8;
+    else if (spxQuote.dp < -0.5) score -= 8;
+    else if (spxQuote.dp > 0) score += 3;
+    else if (spxQuote.dp < 0) score -= 3;
+  }
+  if (oil && oil.dp != null) {
+    if (oil.dp > 2) score -= 3;
+    else if (oil.dp < -2) score += 3;
+  }
 
   score = Math.max(0, Math.min(100, score));
   const state = sentimentFromScore(score);
@@ -74,11 +108,11 @@ function buildMarketPulse(fred, finnhub, fmp) {
 }
 
 // --- Key drivers ---
-function buildKeyDrivers(fred, finnhub, fmp) {
+function buildKeyDrivers(fred, finnhub, fmp, spxQuote) {
   const drivers = [];
   const treasury = getTreasury10y(fred, fmp);
   const eurUsd = finnhub.forex && finnhub.forex.eurUsd ? finnhub.forex.eurUsd : null;
-  const gold = finnhub.forex && finnhub.forex.gold ? finnhub.forex.gold : null;
+  const oil = finnhub.forex && finnhub.forex.oil ? finnhub.forex.oil : null;
 
   drivers.push({
     name: 'Bond Yields',
@@ -93,27 +127,33 @@ function buildKeyDrivers(fred, finnhub, fmp) {
     impact: 'medium',
     biasLabel: eurUsd && eurUsd.dp != null ? (eurUsd.dp < 0 ? 'Strong' : 'Weak') : '—',
   });
+  const oilDp = oil && oil.dp != null ? oil.dp : null;
+  const oilPrice = oil && oil.c != null ? oil.c : null;
   drivers.push({
     name: 'Oil Prices',
-    direction: 'neutral',
-    impact: 'low',
-    biasLabel: '—',
-  });
-  drivers.push({
-    name: 'Geopolitical Risk',
-    direction: 'neutral',
+    direction: oilDp != null ? (oilDp > 0.3 ? 'up' : oilDp < -0.3 ? 'down' : 'neutral') : 'neutral',
     impact: 'medium',
-    biasLabel: 'Monitor',
+    biasLabel: oilDp != null ? (oilDp > 0.3 ? 'Rising' : oilDp < -0.3 ? 'Falling' : 'Stable') : '—',
+    value: oilPrice != null ? `$${Number(oilPrice).toFixed(2)}` : undefined,
+  });
+  const spxDp = spxQuote && spxQuote.dp != null ? spxQuote.dp : null;
+  drivers.push({
+    name: 'Equity Markets',
+    direction: spxDp != null ? (spxDp > 0.3 ? 'up' : spxDp < -0.3 ? 'down' : 'neutral') : 'neutral',
+    impact: 'high',
+    biasLabel: spxDp != null ? (spxDp > 0.5 ? 'Bullish' : spxDp < -0.5 ? 'Bearish' : 'Flat') : '—',
+    value: spxQuote && spxQuote.c ? `${Number(spxQuote.c).toFixed(0)}` : undefined,
   });
   return drivers;
 }
 
 // --- Cross-asset signals ---
-function buildCrossAssetSignals(fred, finnhub, fmp) {
+function buildCrossAssetSignals(fred, finnhub, fmp, spxQuote) {
   const signals = [];
   const treasury = getTreasury10y(fred, fmp);
   const eurUsd = finnhub.forex && finnhub.forex.eurUsd ? finnhub.forex.eurUsd : null;
   const gold = finnhub.forex && finnhub.forex.gold ? finnhub.forex.gold : null;
+  const oil = finnhub.forex && finnhub.forex.oil ? finnhub.forex.oil : null;
 
   signals.push({
     asset: 'Yields',
@@ -131,8 +171,18 @@ function buildCrossAssetSignals(fred, finnhub, fmp) {
     signal: gold && gold.dp != null ? (gold.dp > 0 ? 'Bullish' : gold.dp < 0 ? 'Bearish' : 'Neutral') : 'Neutral',
     direction: gold && gold.dp != null ? (gold.dp > 0 ? 'up' : gold.dp < 0 ? 'down' : 'neutral') : 'neutral',
   });
-  signals.push({ asset: 'Stocks', signal: 'Neutral', direction: 'neutral' });
-  signals.push({ asset: 'Oil', signal: '—', direction: 'neutral' });
+  const spxDp = spxQuote && spxQuote.dp != null ? spxQuote.dp : null;
+  signals.push({
+    asset: 'Stocks',
+    signal: spxDp != null ? (spxDp > 0.5 ? 'Bullish' : spxDp < -0.5 ? 'Bearish' : spxDp > 0 ? 'Mildly Bullish' : 'Mildly Bearish') : 'Neutral',
+    direction: spxDp != null ? (spxDp > 0.2 ? 'up' : spxDp < -0.2 ? 'down' : 'neutral') : 'neutral',
+  });
+  const oilDp = oil && oil.dp != null ? oil.dp : null;
+  signals.push({
+    asset: 'Oil',
+    signal: oilDp != null ? (oilDp > 0.5 ? 'Rising' : oilDp < -0.5 ? 'Falling' : 'Stable') : 'Neutral',
+    direction: oilDp != null ? (oilDp > 0.3 ? 'up' : oilDp < -0.3 ? 'down' : 'neutral') : 'neutral',
+  });
   return signals;
 }
 
@@ -212,11 +262,11 @@ function buildRiskRadar(fmp) {
 }
 
 // --- Main engine ---
-function buildPayload(fred, finnhub, fmp) {
-  const marketPulse = buildMarketPulse(fred, finnhub, fmp);
-  const marketRegime = buildMarketRegime(fred, finnhub, fmp);
-  const keyDrivers = buildKeyDrivers(fred, finnhub, fmp);
-  const crossAssetSignals = buildCrossAssetSignals(fred, finnhub, fmp);
+function buildPayload(fred, finnhub, fmp, spxQuote) {
+  const marketPulse = buildMarketPulse(fred, finnhub, fmp, spxQuote);
+  const marketRegime = buildMarketRegime(fred, finnhub, fmp, spxQuote);
+  const keyDrivers = buildKeyDrivers(fred, finnhub, fmp, spxQuote);
+  const crossAssetSignals = buildCrossAssetSignals(fred, finnhub, fmp, spxQuote);
   const marketChangesToday = buildMarketChangesToday(finnhub, fmp);
   const traderFocus = buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals);
   const riskRadar = buildRiskRadar(fmp);
@@ -234,13 +284,14 @@ function buildPayload(fred, finnhub, fmp) {
 }
 
 async function runEngine() {
-  const [finnhub, fmp, fred] = await Promise.all([
+  const [finnhub, fmp, fred, spxQuote] = await Promise.all([
     getFinnhubData().catch((e) => ({ news: [], forex: {}, errors: [e.message] })),
     getFmpData().catch((e) => ({ economicCalendar: [], news: [], treasury: null, errors: [e.message] })),
     getFredData().catch((e) => ({ treasury10y: null, cpi: null, unemployment: null, raw: {}, errors: [e.message] })),
+    getTwelveDataQuote('SPX').catch(() => null),
   ]);
 
-  return buildPayload(fred, finnhub, fmp);
+  return buildPayload(fred, finnhub, fmp, spxQuote);
 }
 
 module.exports = { runEngine, buildPayload };

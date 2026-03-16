@@ -59,16 +59,21 @@ async function getQuote(symbol) {
 }
 
 async function getFinnhubData() {
-  const [news, quoteUsdEur, quoteGold] = await Promise.all([
+  const [news, quoteUsdEur, quoteGold, quoteOil] = await Promise.all([
     getMarketNews(),
     getQuote('OANDA:EUR_USD'),
     getQuote('OANDA:XAU_USD'),
+    getQuote('OANDA:USOIL_USD'),
   ]);
 
   return {
     news: news.data || [],
-    forex: { eurUsd: quoteUsdEur.data, gold: quoteGold.data },
-    errors: [news.error, quoteUsdEur.error, quoteGold.error].filter(Boolean),
+    forex: {
+      eurUsd: quoteUsdEur.data,
+      gold: quoteGold.data,
+      oil: quoteOil.data,
+    },
+    errors: [news.error, quoteUsdEur.error, quoteGold.error, quoteOil.error].filter(Boolean),
   };
 }
 

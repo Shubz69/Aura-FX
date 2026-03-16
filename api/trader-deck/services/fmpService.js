@@ -100,6 +100,38 @@ async function getTreasuryRates() {
   }
 }
 
+async function getTradingEconomicsCalendar() {
+  const teKey = process.env.TRADING_ECONOMICS_API_KEY;
+  if (!teKey) return { ok: false, data: [], error: 'Trading Economics key not configured' };
+
+  const from = new Date();
+  const to = new Date(from);
+  to.setDate(to.getDate() + 14);
+  const fromStr = from.toISOString().slice(0, 10);
+  const toStr = to.toISOString().slice(0, 10);
+
+  try {
+    const url = `https://api.tradingeconomics.com/calendar/country/all/${fromStr}/${toStr}?c=${encodeURIComponent(teKey)}&f=json`;
+    const res = await fetchWithTimeout(url, {}, 10000);
+    if (!res.ok) return { ok: false, data: [], error: `Trading Economics ${res.status}` };
+    const raw = await res.json();
+    if (!Array.isArray(raw)) return { ok: false, data: [], error: 'Invalid TE response' };
+    const data = raw.slice(0, 50).map((item) => {
+      const importance = item.Importance != null ? Number(item.Importance) : 2;
+      return {
+        name: item.Event || item.Category || 'Economic release',
+        date: item.Date || '',
+        country: item.Country || item.Currency || '',
+        importance,
+      };
+    }).filter(Boolean);
+    return { ok: true, data };
+  } catch (e) {
+    console.warn('[trader-deck] Trading Economics calendar error:', e.message || e);
+    return { ok: false, data: [], error: e.message || 'TE request failed' };
+  }
+}
+
 async function getFmpData() {
   const [calendar, news, treasury] = await Promise.all([
     getEconomicCalendar(),
@@ -107,12 +139,19 @@ async function getFmpData() {
     getTreasuryRates(),
   ]);
 
+  let calendarData = calendar.data || [];
+
+  if (calendarData.length === 0) {
+    const te = await getTradingEconomicsCalendar();
+    if (te.ok && te.data.length > 0) calendarData = te.data;
+  }
+
   return {
-    economicCalendar: calendar.data || [],
+    economicCalendar: calendarData,
     news: news.data || [],
     treasury: treasury.data || null,
     errors: [calendar.error, news.error, treasury.error].filter(Boolean),
   };
 }
 
-module.exports = { getEconomicCalendar, getMarketNews, getTreasuryRates, getFmpData };
+module.exports = { getEconomicCalendar, getMarketNews, getTreasuryRates, getTradingEconomicsCalendar, getFmpData };
