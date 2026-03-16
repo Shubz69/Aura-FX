@@ -469,6 +469,14 @@
       "destination": "/api/markets/snapshot.js"
     },
     {
+      "source": "/api/trader-deck/economic-calendar",
+      "destination": "/api/trader-deck/economic-calendar.js"
+    },
+    {
+      "source": "/api/trader-deck/news",
+      "destination": "/api/trader-deck/news.js"
+    },
+    {
       "source": "/api/trader-deck/market-intelligence",
       "destination": "/api/trader-deck/market-intelligence.js"
     },

@@ -94,15 +94,15 @@ const DECIMALS = {
   'AAPL': 2, 'MSFT': 2, 'NVDA': 2, 'AMZN': 2, 'GOOGL': 2, 'META': 2, 'TSLA': 2
 };
 
-// Realistic fallback prices (when all providers fail) - updated for accuracy
+// Realistic fallback prices (when all providers fail) - updated Mar 2026
 const FALLBACK_PRICES = {
-  'BTCUSD': 70500, 'ETHUSD': 3550, 'SOLUSD': 175, 'XRPUSD': 1.47,
-  'BNBUSD': 655, 'ADAUSD': 0.27, 'DOGEUSD': 0.098, 'EURUSD': 1.0810,
-  'GBPUSD': 1.2680, 'USDJPY': 157.20, 'USDCHF': 0.8970, 'AUDUSD': 0.6520,
-  'USDCAD': 1.3680, 'NZDUSD': 0.6020, 'XAUUSD': 2655, 'XAGUSD': 31.20,
-  'WTI': 72.50, 'BRENT': 76.80, 'SPX': 6050, 'NDX': 21200, 'DJI': 43500,
-  'DAX': 21000, 'FTSE': 8550, 'NIKKEI': 42500, 'DXY': 104.8, 'US10Y': 4.21, 'VIX': 15.5,
-  'AAPL': 228, 'MSFT': 425, 'NVDA': 138, 'AMZN': 198, 'GOOGL': 175, 'META': 565, 'TSLA': 385
+  'BTCUSD': 84500, 'ETHUSD': 1920, 'SOLUSD': 132, 'XRPUSD': 2.38,
+  'BNBUSD': 590, 'ADAUSD': 0.72, 'DOGEUSD': 0.175, 'EURUSD': 1.0840,
+  'GBPUSD': 1.2920, 'USDJPY': 149.50, 'USDCHF': 0.8840, 'AUDUSD': 0.6270,
+  'USDCAD': 1.4380, 'NZDUSD': 0.5720, 'XAUUSD': 3035, 'XAGUSD': 33.80,
+  'WTI': 68.40, 'BRENT': 72.10, 'SPX': 5650, 'NDX': 19600, 'DJI': 41800,
+  'DAX': 22300, 'FTSE': 8650, 'NIKKEI': 37200, 'DXY': 103.6, 'US10Y': 4.32, 'VIX': 20.4,
+  'AAPL': 214, 'MSFT': 388, 'NVDA': 112, 'AMZN': 196, 'GOOGL': 163, 'META': 590, 'TSLA': 248
 };
 
 function getDecimals(symbol) {

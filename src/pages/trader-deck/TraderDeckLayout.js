@@ -4,11 +4,15 @@ import CosmicBackground from '../../components/CosmicBackground';
 import TraderDeckOverview from './TraderDeckOverview';
 import MarketIntelligenceDashboard from './MarketIntelligenceDashboard';
 import TraderDeckTradeJournal from './TraderDeckTradeJournal';
+import EconomicCalendarView from './EconomicCalendarView';
+import NewsFeedView from './NewsFeedView';
 import '../../styles/trader-deck/TraderDeckLayout.css';
 
 const MAIN_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'market-intelligence', label: 'Market Intelligence' },
+  { id: 'economic-calendar', label: 'Economic Calendar' },
+  { id: 'news', label: 'News' },
   { id: 'trade-journal', label: 'Trade Journal' },
 ];
 
@@ -106,6 +110,8 @@ export default function TraderDeckLayout({ initialTab = 'overview', onBack }) {
             {activeTab === 'market-intelligence' && (
               <MarketIntelligenceDashboard embedded mode={miSemi} />
             )}
+            {activeTab === 'economic-calendar' && <EconomicCalendarView />}
+            {activeTab === 'news' && <NewsFeedView />}
             {activeTab === 'trade-journal' && <TraderDeckTradeJournal />}
           </main>
         </div>

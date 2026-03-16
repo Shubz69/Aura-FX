@@ -1,0 +1,220 @@
+.nf-page {
+  padding: 0;
+  color: var(--text, #e2e8f0);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.nf-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.nf-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px;
+}
+
+.nf-sub {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  margin: 0;
+}
+
+.nf-updated { color: rgba(255,255,255,0.3); }
+
+.nf-search {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+.nf-search:focus { border-color: rgba(139,92,246,0.5); }
+.nf-search::placeholder { color: rgba(255,255,255,0.2); }
+
+.nf-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.nf-filter-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  border-radius: 6px;
+  padding: 5px 13px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nf-filter-btn.active,
+.nf-filter-btn:hover { background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.5); color: #c4b5fd; }
+
+.nf-count {
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+}
+
+.nf-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.85rem;
+  justify-content: center;
+}
+
+.nf-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(139,92,246,0.3);
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: nf-spin 0.8s linear infinite;
+}
+@keyframes nf-spin { to { transform: rotate(360deg); } }
+
+.nf-error, .nf-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.85rem;
+}
+.nf-error { color: #fca5a5; }
+
+.nf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.nf-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+.nf-card:hover {
+  background: rgba(255,255,255,0.056);
+  border-color: rgba(139,92,246,0.3);
+  transform: translateY(-1px);
+}
+
+.nf-card-img-wrap {
+  height: 120px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+}
+
+.nf-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+}
+
+.nf-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+}
+
+.nf-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nf-card-cat {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(139,92,246,0.15);
+  color: #a78bfa;
+}
+.nf-card-cat--forex { background: rgba(14,165,233,0.12); color: #7dd3fc; }
+.nf-card-cat--crypto { background: rgba(234,179,8,0.12); color: #fde047; }
+.nf-card-cat--market { background: rgba(139,92,246,0.15); color: #a78bfa; }
+
+.nf-card-time {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+  margin-left: auto;
+}
+
+.nf-card-headline {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nf-card-summary {
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.nf-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.nf-card-source {
+  font-size: 0.67rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nf-card-read {
+  font-size: 0.68rem;
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .nf-grid { grid-template-columns: 1fr; }
+  .nf-search { width: 160px; }
+  .nf-header { flex-direction: column; }
+}

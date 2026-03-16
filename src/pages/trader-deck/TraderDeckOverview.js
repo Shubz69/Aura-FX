@@ -82,18 +82,22 @@ export default function TraderDeckOverview() {
   const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      Api.getAuraAnalysisTrades().then((r) => (r.data?.trades ?? r.data?.data ?? [])),
-      Api.getAuraAnalysisPnl().then((r) => ({
-        totalPnL: r.data?.totalPnL ?? r.data?.monthlyPnl ?? 0,
-        dailyPnl: r.data?.dailyPnl,
-        weeklyPnl: r.data?.weeklyPnl,
-        monthlyPnl: r.data?.monthlyPnl,
-      })),
-    ])
-      .then(([t, p]) => {
-        setTrades(Array.isArray(t) ? t : []);
-        setPnlData(typeof p === 'object' ? p : {});
+    Api.getJournalTrades()
+      .then((r) => {
+        const raw = r.data?.trades ?? r.data?.data ?? [];
+        const normalized = (Array.isArray(raw) ? raw : []).map((t) => ({
+          ...t,
+          pnl: t.pnl ?? t.dollarResult ?? 0,
+          rMultiple: t.rMultiple ?? t.rResult ?? 0,
+          rr: t.rr ?? t.rResult ?? 0,
+          result: t.result ?? ((Number(t.dollarResult ?? t.pnl) >= 0) ? 'win' : 'loss'),
+          direction: t.direction ?? t.tradeType ?? '',
+          created_at: t.created_at ?? t.createdAt ?? t.date,
+          session: t.session ?? '',
+        }));
+        setTrades(normalized);
+        const totalPnL = normalized.reduce((s, tr) => s + (Number(tr.pnl) || 0), 0);
+        setPnlData({ totalPnL });
       })
       .catch(() => {})
       .finally(() => setLoading(false));
