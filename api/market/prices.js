@@ -354,6 +354,136 @@ async function fetchTwelveDataPrice(symbol) {
   }
 }
 
+// Polygon.io symbol mapping for US stocks and indices
+const POLYGON_SYMBOLS = {
+  'AAPL': 'AAPL', 'MSFT': 'MSFT', 'NVDA': 'NVDA', 'AMZN': 'AMZN',
+  'GOOGL': 'GOOGL', 'META': 'META', 'TSLA': 'TSLA',
+  'SPX': 'I:SPX', 'NDX': 'I:NDX', 'DJI': 'I:DJI'
+};
+
+/**
+ * Fetch from Polygon.io (US stocks / indices – 15-min delayed on free tier)
+ * Requires POLYGON_API_KEY environment variable
+ */
+async function fetchPolygonPrice(symbol) {
+  const apiKey = process.env.POLYGON_API_KEY;
+  if (!apiKey) return null;
+  const polygonSymbol = POLYGON_SYMBOLS[symbol];
+  if (!polygonSymbol) return null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const response = await axios.get(
+      `https://api.polygon.io/v2/aggs/ticker/${polygonSymbol}/prev`,
+      {
+        params: { adjusted: true, apiKey },
+        timeout: REQUEST_TIMEOUT,
+        signal: controller.signal
+      }
+    );
+    clearTimeout(timeoutId);
+    const result = response.data?.results?.[0];
+    if (result && result.c > 0) {
+      const price = result.c;
+      const previousClose = result.vw || result.o || price;
+      const change = price - previousClose;
+      const changePercent = previousClose ? ((change / previousClose) * 100) : 0;
+      return {
+        symbol,
+        price: formatPrice(price, symbol),
+        rawPrice: price,
+        previousClose: formatPrice(previousClose, symbol),
+        change: formatPrice(Math.abs(change), symbol),
+        changeSign: change >= 0 ? '+' : '-',
+        changePercent: Math.abs(changePercent).toFixed(2),
+        isUp: change >= 0,
+        high: result.h,
+        low: result.l,
+        open: result.o,
+        timestamp: Date.now(),
+        source: 'polygon',
+        delayed: true
+      };
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// CoinMarketCap symbol mapping (strip USD suffix)
+const CMC_SYMBOLS = {
+  'BTCUSD': 'BTC', 'ETHUSD': 'ETH', 'SOLUSD': 'SOL', 'XRPUSD': 'XRP',
+  'BNBUSD': 'BNB', 'ADAUSD': 'ADA', 'DOGEUSD': 'DOGE'
+};
+
+let cmcCache = {};
+let cmcCacheTime = 0;
+const CMC_CACHE_TTL = 30000; // 30s
+
+/**
+ * Fetch crypto from CoinMarketCap (paid key, higher reliability than CoinGecko free)
+ * Requires COINMARKETCAP_API_KEY environment variable
+ */
+async function fetchCoinMarketCapPrice(symbol) {
+  const apiKey = process.env.COINMARKETCAP_API_KEY;
+  if (!apiKey) return null;
+  const cmcSymbol = CMC_SYMBOLS[symbol];
+  if (!cmcSymbol) return null;
+
+  if (Date.now() - cmcCacheTime < CMC_CACHE_TTL && cmcCache[symbol]) {
+    return cmcCache[symbol];
+  }
+
+  try {
+    const allSymbols = Object.values(CMC_SYMBOLS).join(',');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const response = await axios.get(
+      'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest',
+      {
+        params: { symbol: allSymbols, convert: 'USD' },
+        headers: { 'X-CMC_PRO_API_KEY': apiKey, 'Accept': 'application/json' },
+        timeout: REQUEST_TIMEOUT,
+        signal: controller.signal
+      }
+    );
+    clearTimeout(timeoutId);
+    const data = response.data?.data;
+    if (!data) return null;
+    const now = Date.now();
+    Object.entries(CMC_SYMBOLS).forEach(([sym, cmc]) => {
+      const entry = data[cmc];
+      if (entry && entry.quote && entry.quote.USD) {
+        const q = entry.quote.USD;
+        const price = q.price;
+        if (price && price > 0) {
+          const changePercent = q.percent_change_24h || 0;
+          const previousClose = price / (1 + changePercent / 100);
+          const change = price - previousClose;
+          cmcCache[sym] = {
+            symbol: sym,
+            price: formatPrice(price, sym),
+            rawPrice: price,
+            previousClose: formatPrice(previousClose, sym),
+            change: formatPrice(Math.abs(change), sym),
+            changeSign: change >= 0 ? '+' : '-',
+            changePercent: Math.abs(changePercent).toFixed(2),
+            isUp: change >= 0,
+            timestamp: now,
+            source: 'coinmarketcap',
+            delayed: false
+          };
+        }
+      }
+    });
+    cmcCacheTime = now;
+    return cmcCache[symbol] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 /**
  * Get fallback price data when all providers fail
  * Uses cached data or static fallback prices - NEVER returns 0.00
@@ -416,8 +546,9 @@ async function fetchPrice(symbol) {
   let result = null;
 
   if (CRYPTO_SYMBOLS.has(symbol)) {
-    // Crypto: CoinGecko (free, accurate) -> Finnhub -> Twelve Data -> Yahoo
+    // Crypto: CoinGecko (free) -> CoinMarketCap -> Finnhub -> Twelve Data -> Yahoo
     result = await fetchCoinGeckoPrice(symbol);
+    if (!result) result = await fetchCoinMarketCapPrice(symbol);
     if (!result) result = await fetchFinnhubPrice(symbol);
     if (!result) result = await fetchTwelveDataPrice(symbol);
     if (!result) result = await fetchYahooPrice(symbol);
@@ -427,8 +558,9 @@ async function fetchPrice(symbol) {
     if (!result) result = await fetchTwelveDataPrice(symbol);
     if (!result) result = await fetchYahooPrice(symbol);
   } else {
-    // Stocks, indices, DXY, etc: Yahoo first
+    // Stocks, indices, DXY, etc: Yahoo -> Polygon.io -> Finnhub -> Twelve Data
     result = await fetchYahooPrice(symbol);
+    if (!result) result = await fetchPolygonPrice(symbol);
     if (!result) result = await fetchFinnhubPrice(symbol);
     if (!result) result = await fetchTwelveDataPrice(symbol);
   }

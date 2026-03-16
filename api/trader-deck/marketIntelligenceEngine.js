@@ -30,6 +30,45 @@ async function getTwelveDataQuote(symbol) {
   return null;
 }
 
+async function getFearAndGreedIndex() {
+  try {
+    const url = 'https://api.alternative.me/fng/?limit=1&format=json';
+    const res = await fetchWithTimeout(url, {}, 6000);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json && json.data && json.data[0]) {
+      const val = parseInt(json.data[0].value, 10);
+      const classification = json.data[0].value_classification || '';
+      if (!isNaN(val) && val >= 0 && val <= 100) return { score: val, classification };
+    }
+  } catch (e) {
+    console.warn('[trader-deck] Fear & Greed error:', e.message || e);
+  }
+  return null;
+}
+
+async function getAlphaVantageRSI() {
+  const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = `https://www.alphavantage.co/query?function=RSI&symbol=SPY&interval=daily&time_period=14&series_type=close&apikey=${encodeURIComponent(apiKey)}`;
+    const res = await fetchWithTimeout(url, {}, 8000);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const analysis = json && json['Technical Analysis: RSI'];
+    if (analysis) {
+      const keys = Object.keys(analysis);
+      if (keys.length > 0) {
+        const rsi = parseFloat(analysis[keys[0]]['RSI']);
+        if (!isNaN(rsi) && rsi > 0) return rsi;
+      }
+    }
+  } catch (e) {
+    console.warn('[trader-deck] Alpha Vantage RSI error:', e.message || e);
+  }
+  return null;
+}
+
 // --- Internal helpers (direction from change) ---
 function directionFromChange(prev, curr) {
   if (curr == null || prev == null) return 'neutral';
@@ -56,13 +95,13 @@ function getTreasury10y(fred, fmp) {
 }
 
 // --- Regime logic ---
-function buildMarketRegime(fred, finnhub, fmp, spxQuote) {
+function buildMarketRegime(fred, finnhub, fmp, spxQuote, fng) {
   const treasury = getTreasury10y(fred, fmp);
   const hasRates = treasury != null && !Number.isNaN(treasury);
   const regime = hasRates && treasury > 4 ? 'Rate Sensitivity' : hasRates && treasury < 3.5 ? 'Growth / Low Rates' : 'Mixed';
   const primary = hasRates ? 'Bond Yields' : 'Macro Data';
   const secondary = 'US Economic Data';
-  const pulseScore = buildMarketPulse(fred, finnhub, fmp, spxQuote).score;
+  const pulseScore = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng).score;
   const marketSentiment = sentimentFromScore(pulseScore);
   return {
     currentRegime: regime,
@@ -73,7 +112,7 @@ function buildMarketRegime(fred, finnhub, fmp, spxQuote) {
 }
 
 // --- Pulse logic ---
-function buildMarketPulse(fred, finnhub, fmp, spxQuote) {
+function buildMarketPulse(fred, finnhub, fmp, spxQuote, fng) {
   let score = 50;
   const treasury = getTreasury10y(fred, fmp);
   const eurUsd = finnhub.forex && finnhub.forex.eurUsd ? finnhub.forex.eurUsd : null;
@@ -100,11 +139,14 @@ function buildMarketPulse(fred, finnhub, fmp, spxQuote) {
     if (oil.dp > 2) score -= 3;
     else if (oil.dp < -2) score += 3;
   }
+  if (fng && fng.score != null) {
+    score = Math.round(score * 0.65 + fng.score * 0.35);
+  }
 
   score = Math.max(0, Math.min(100, score));
   const state = sentimentFromScore(score);
   const label = state === 'Risk On' ? 'RISK ON' : state === 'Risk Off' ? 'RISK OFF' : 'NEUTRAL';
-  return { state, score, label };
+  return { state, score, label, fng: fng || null };
 }
 
 // --- Key drivers ---
@@ -148,7 +190,7 @@ function buildKeyDrivers(fred, finnhub, fmp, spxQuote) {
 }
 
 // --- Cross-asset signals ---
-function buildCrossAssetSignals(fred, finnhub, fmp, spxQuote) {
+function buildCrossAssetSignals(fred, finnhub, fmp, spxQuote, rsi) {
   const signals = [];
   const treasury = getTreasury10y(fred, fmp);
   const eurUsd = finnhub.forex && finnhub.forex.eurUsd ? finnhub.forex.eurUsd : null;
@@ -183,6 +225,13 @@ function buildCrossAssetSignals(fred, finnhub, fmp, spxQuote) {
     signal: oilDp != null ? (oilDp > 0.5 ? 'Rising' : oilDp < -0.5 ? 'Falling' : 'Stable') : 'Neutral',
     direction: oilDp != null ? (oilDp > 0.3 ? 'up' : oilDp < -0.3 ? 'down' : 'neutral') : 'neutral',
   });
+  if (rsi != null) {
+    signals.push({
+      asset: 'RSI(SPY)',
+      signal: rsi > 70 ? `Overbought (${rsi.toFixed(1)})` : rsi < 30 ? `Oversold (${rsi.toFixed(1)})` : `Neutral (${rsi.toFixed(1)})`,
+      direction: rsi > 70 ? 'down' : rsi < 30 ? 'up' : 'neutral',
+    });
+  }
   return signals;
 }
 
@@ -262,11 +311,11 @@ function buildRiskRadar(fmp) {
 }
 
 // --- Main engine ---
-function buildPayload(fred, finnhub, fmp, spxQuote) {
-  const marketPulse = buildMarketPulse(fred, finnhub, fmp, spxQuote);
-  const marketRegime = buildMarketRegime(fred, finnhub, fmp, spxQuote);
+function buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi) {
+  const marketPulse = buildMarketPulse(fred, finnhub, fmp, spxQuote, fng);
+  const marketRegime = buildMarketRegime(fred, finnhub, fmp, spxQuote, fng);
   const keyDrivers = buildKeyDrivers(fred, finnhub, fmp, spxQuote);
-  const crossAssetSignals = buildCrossAssetSignals(fred, finnhub, fmp, spxQuote);
+  const crossAssetSignals = buildCrossAssetSignals(fred, finnhub, fmp, spxQuote, rsi);
   const marketChangesToday = buildMarketChangesToday(finnhub, fmp);
   const traderFocus = buildTraderFocus(fred, finnhub, keyDrivers, crossAssetSignals);
   const riskRadar = buildRiskRadar(fmp);
@@ -284,14 +333,16 @@ function buildPayload(fred, finnhub, fmp, spxQuote) {
 }
 
 async function runEngine() {
-  const [finnhub, fmp, fred, spxQuote] = await Promise.all([
+  const [finnhub, fmp, fred, spxQuote, fng, rsi] = await Promise.all([
     getFinnhubData().catch((e) => ({ news: [], forex: {}, errors: [e.message] })),
     getFmpData().catch((e) => ({ economicCalendar: [], news: [], treasury: null, errors: [e.message] })),
     getFredData().catch((e) => ({ treasury10y: null, cpi: null, unemployment: null, raw: {}, errors: [e.message] })),
     getTwelveDataQuote('SPX').catch(() => null),
+    getFearAndGreedIndex().catch(() => null),
+    getAlphaVantageRSI().catch(() => null),
   ]);
 
-  return buildPayload(fred, finnhub, fmp, spxQuote);
+  return buildPayload(fred, finnhub, fmp, spxQuote, fng, rsi);
 }
 
 module.exports = { runEngine, buildPayload };

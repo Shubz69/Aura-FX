@@ -115,6 +115,40 @@ module.exports = async (req, res) => {
       );
     }
     
+    // Source 4: Marketaux (financial news with sentiment scoring per article)
+    const MARKETAUX_API_KEY = process.env.MARKETAUX_API_KEY;
+    if (MARKETAUX_API_KEY) {
+      newsPromises.push(
+        axios.get('https://api.marketaux.com/v1/news/all', {
+          params: {
+            language: 'en',
+            filter_entities: true,
+            must_have_entities: true,
+            published_after: new Date(Date.now() - 86400000).toISOString().slice(0, 19),
+            api_token: MARKETAUX_API_KEY,
+            limit: 20
+          },
+          timeout: 8000
+        }).then(response => {
+          if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            return response.data.data.map(item => ({
+              title: item.title,
+              url: item.url,
+              source: item.source,
+              time: item.published_at,
+              summary: item.description || item.snippet || '',
+              sentiment: item.entities && item.entities[0] ? item.entities[0].sentiment_score : null,
+              sentimentLabel: item.entities && item.entities[0] ? item.entities[0].sentiment : null
+            }));
+          }
+          return [];
+        }).catch(err => {
+          console.log('Marketaux news error:', err.message);
+          return [];
+        })
+      );
+    }
+
     // Wait for ALL promises - use first successful result, combine all results
     if (newsPromises.length > 0) {
       const results = await Promise.allSettled(newsPromises);
