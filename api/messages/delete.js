@@ -14,26 +14,11 @@
  */
 
 const { getDbConnection, executeQuery } = require('../db');
-const jwt = require('jsonwebtoken');
+const { verifyToken } = require('../utils/auth');
 
-// Decode JWT token
+// Decode JWT token using centralized auth utility
 function decodeToken(authHeader) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-  
-  const token = authHeader.substring(7);
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    return decoded;
-  } catch (e) {
-    // Try decode without verification for development
-    try {
-      return jwt.decode(token);
-    } catch (e2) {
-      return null;
-    }
-  }
+  return verifyToken(authHeader);
 }
 
 // Check if user can delete a message
