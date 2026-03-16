@@ -276,14 +276,13 @@ const handler = async (req, res) => {
       const result = await executeQuery(`
         SELECT 
           n.*,
-          u.username as from_username,
-          u.avatar as from_avatar
+          u.username as from_username
         FROM notifications n
         LEFT JOIN users u ON n.from_user_id = u.id
         ${whereClause}
-        ORDER BY created_at DESC
-        LIMIT ${limit + 1}
-      `, params);
+        ORDER BY n.created_at DESC
+        LIMIT ?
+      `, [...params, limit + 1]);
       
       const rows = getRows(result);
       const hasMore = rows.length > limit;
@@ -312,7 +311,12 @@ const handler = async (req, res) => {
       return res.status(200).json({
         success: true,
         items: items.map(n => {
-          const meta = n.meta != null ? (typeof n.meta === 'string' ? JSON.parse(n.meta) : n.meta) : null;
+          let meta = null;
+          if (n.meta != null) {
+            try {
+              meta = typeof n.meta === 'string' ? JSON.parse(n.meta) : n.meta;
+            } catch (_) { /* ignore invalid JSON */ }
+          }
           return {
           id: n.id,
           type: n.type,
@@ -322,7 +326,7 @@ const handler = async (req, res) => {
           messageId: n.message_id,
           fromUserId: n.from_user_id,
           fromUsername: n.from_username,
-          fromAvatar: n.from_avatar,
+          fromAvatar: null,
           friendRequestId: n.friend_request_id,
           status: n.status,
           actionStatus: n.action_status,

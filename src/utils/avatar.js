@@ -23,11 +23,22 @@ export function hasRealAvatar(avatar) {
     return true;
 }
 
+/** Minimal valid data URL has comma (e.g. data:image/jpeg;base64,xxxx). Truncated/invalid data URLs cause ERR_INVALID_URL. */
+export function isValidDataUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    if (!url.startsWith('data:image')) return true; // non-data URLs validated elsewhere
+    return url.includes(',') && url.length > 30;
+}
+
 /** Returns URL for <img src> when hasRealAvatar(avatar); otherwise null (render placeholder). */
 export function resolveAvatarUrl(avatar, baseUrl = '') {
     if (!hasRealAvatar(avatar)) return null;
     const v = (avatar || '').trim();
-    if (v.startsWith('data:image') || v.startsWith('http')) return v;
+    if (v.startsWith('data:image')) {
+        if (!isValidDataUrl(v)) return null;
+        return v;
+    }
+    if (v.startsWith('http')) return v;
     if (v.startsWith('/')) return baseUrl ? `${baseUrl.replace(/\/$/, '')}${v}` : v;
     return baseUrl ? `${baseUrl.replace(/\/$/, '')}/avatars/${v}` : `/avatars/${v}`;
 }

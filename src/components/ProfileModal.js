@@ -17,7 +17,7 @@ import {
     FaQuoteRight, FaPen
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { resolveAvatarUrl, getPlaceholderColor } from '../utils/avatar';
+import { resolveAvatarUrl, getPlaceholderColor, isValidDataUrl } from '../utils/avatar';
 import '../styles/ProfileModal.css';
 
 const getModalRoot = () => {
@@ -245,9 +245,14 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         let endpoint = '', method = 'POST', body = {};
         
         switch (action) {
-            case 'add': 
-                endpoint = '/api/friends/request'; 
-                body = { receiverUserId: userId }; 
+            case 'add':
+                if (userId == null || userId === '' || Number.isNaN(Number(userId)) || Number(userId) < 1) {
+                    toast.error('Cannot send request: invalid user');
+                    setFriendLoading(false);
+                    return;
+                }
+                endpoint = '/api/friends/request';
+                body = { receiverUserId: Number(userId) };
                 break;
             case 'cancel': 
                 endpoint = '/api/friends/cancel'; 
@@ -581,7 +586,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     height: 'clamp(120px, 20vw, 170px)',
                     background: getBannerGradient(level), borderRadius: '22px 22px 0 0', overflow: 'hidden', flexShrink: 0
                 }}>
-                    {profile.banner && (
+                    {profile.banner && (profile.banner.startsWith('http') || (profile.banner.startsWith('data:image') && isValidDataUrl(profile.banner))) && (
                         <img 
                             src={profile.banner} 
                             alt="Banner" 

@@ -133,9 +133,9 @@ const PublicProfile = () => {
 
                 {/* Profile Banner */}
                 <div className="profile-banner-section">
-                    {profile.banner ? (
+                    {profile.banner && (profile.banner.startsWith('http') || (profile.banner.startsWith('data:image') && profile.banner.includes(',') && profile.banner.length > 30)) ? (
                         <img 
-                            src={profile.banner.startsWith('data:image') ? profile.banner : profile.banner} 
+                            src={profile.banner} 
                             alt="Banner" 
                             className="profile-banner"
                             loading="lazy"

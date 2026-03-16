@@ -130,7 +130,14 @@ class MarketDataAdapter extends DataAdapter {
 
     const response = await axios.get(
       `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`,
-      { params: { interval: '1m', range: '1d' }, timeout: 5000 }
+      {
+        params: { interval: '1m', range: '1d' },
+        timeout: 5000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json'
+        }
+      }
     );
 
     const meta = response.data?.chart?.result?.[0]?.meta;

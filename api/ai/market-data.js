@@ -434,7 +434,11 @@ module.exports = async (req, res) => {
             interval: '1m',
             range: '1d'
           },
-          timeout: 6000 // Faster timeout for real-time accuracy
+          timeout: 6000, // Faster timeout for real-time accuracy
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json'
+          }
         }).then(response => {
           if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
             const result = response.data.chart.result[0];
@@ -581,7 +585,11 @@ module.exports = async (req, res) => {
             interval: '1m',
             range: '1d'
           },
-          timeout: 6000 // Faster timeout for real-time
+          timeout: 6000, // Faster timeout for real-time
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json'
+          }
         }).then(response => {
           if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
             const result = response.data.chart.result[0];
@@ -700,7 +708,11 @@ module.exports = async (req, res) => {
         
         const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
           params: { interval: '1m', range: '1d' },
-          timeout: 6000 // Faster timeout for real-time accuracy
+          timeout: 6000, // Faster timeout for real-time accuracy
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json'
+          }
         });
 
         if (response.data && response.data.chart && response.data.chart.result && response.data.chart.result.length > 0) {
@@ -748,7 +760,11 @@ module.exports = async (req, res) => {
         try {
           const yahooResponse = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/XAG=X`, {
             params: { interval: '1m', range: '1d' },
-            timeout: 5000
+            timeout: 5000,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'application/json'
+            }
           });
           
           if (yahooResponse.data && yahooResponse.data.chart && yahooResponse.data.chart.result && yahooResponse.data.chart.result.length > 0) {

@@ -149,14 +149,6 @@
       "destination": "/api/stripe/index.js"
     },
     {
-      "source": "/api/stripe/create-subscription",
-      "destination": "/api/stripe/index.js"
-    },
-    {
-      "source": "/api/stripe/direct-checkout",
-      "destination": "/api/stripe/index.js"
-    },
-    {
       "source": "/api/stripe/create-payment-intent",
       "destination": "/api/stripe/index.js"
     },

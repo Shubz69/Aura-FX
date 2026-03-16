@@ -360,14 +360,15 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, errorCode: 'INVALID_BODY', message: parseError, requestId });
       }
       
-      // Accept multiple field names
-      const receiverId = parseInt(body.receiverUserId || body.friendId || body.userId || body.targetUserId);
+      // Accept multiple field names (receiverUserId, friendId, userId, targetUserId, receiverId)
+      const rawReceiver = body.receiverUserId ?? body.friendId ?? body.userId ?? body.targetUserId ?? body.receiverId;
+      const receiverId = rawReceiver != null ? parseInt(rawReceiver, 10) : NaN;
       
-      if (!receiverId || isNaN(receiverId)) {
+      if (!Number.isInteger(receiverId) || receiverId < 1) {
         return res.status(400).json({
           success: false,
           errorCode: 'MISSING_RECEIVER',
-          message: 'receiverUserId is required',
+          message: 'receiverUserId is required (positive integer)',
           hint: 'Send { "receiverUserId": <userId> }',
           requestId
         });
