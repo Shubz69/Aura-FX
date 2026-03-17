@@ -21,7 +21,6 @@ import {
   FaUsers,
   FaPhone,
   FaRobot,
-  FaLink,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -84,7 +83,6 @@ const Navbar = () => {
             <li><Link to="/leaderboard" onClick={closeMobileMenu}><FaTrophy className="dropdown-icon" /> Leaderboard</Link></li>
             <li><Link to="/community" onClick={closeMobileMenu}><FaUsers className="dropdown-icon" /> Community</Link></li>
             <li><Link to="/admin/inbox" onClick={closeMobileMenu}><FaEnvelope className="dropdown-icon" /> Messages</Link></li>
-            <li><Link to="/affiliation" onClick={closeMobileMenu}><FaLink className="dropdown-icon" /> Affiliation</Link></li>
             <li><Link to="/contact" onClick={closeMobileMenu}><FaPhone className="dropdown-icon" /> Contact Us</Link></li>
             {(isAdmin(user) || isSuperAdmin(user)) && (
               <li><Link to="/settings" onClick={closeMobileMenu}><FaSlidersH className="dropdown-icon" /> Settings</Link></li>
@@ -199,9 +197,6 @@ const Navbar = () => {
                       </Link>
                       <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaEnvelope className="dropdown-icon" /> Messages
-                      </Link>
-                      <Link to="/affiliation" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaLink className="dropdown-icon" /> Affiliation
                       </Link>
                       <Link to="/contact" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaPhone className="dropdown-icon" /> Contact Us
