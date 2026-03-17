@@ -7,7 +7,6 @@ import "../styles/UserDropdown.css";
 import {
   FaUserCircle,
   FaSignOutAlt,
-  FaBook,
   FaTrophy,
   FaCog,
   FaHeadset,
@@ -15,9 +14,6 @@ import {
   FaTimes,
   FaEnvelope,
   FaSlidersH,
-  FaChartLine,
-  FaThLarge,
-  FaCheckSquare,
   FaUsers,
   FaPhone,
   FaRobot,
@@ -67,23 +63,18 @@ const Navbar = () => {
         <>
           <div className="mobile-user-email">{user.email}</div>
           <ul className="mobile-nav-links">
-            {/* PRIMARY NAV — required order */}
-            <li><Link to="/trader-deck" onClick={closeMobileMenu}><FaThLarge className="dropdown-icon" /> Trader Desk</Link></li>
-            <li><Link to="/journal" onClick={closeMobileMenu}><FaBook className="dropdown-icon" /> Journal</Link></li>
-            <li><Link to="/trader-deck/trade-validator" onClick={closeMobileMenu}><FaCheckSquare className="dropdown-icon" /> Trade Validator</Link></li>
-            <li><Link to="/aura-analysis" onClick={closeMobileMenu}><FaChartLine className="dropdown-icon" /> Aura Analysis</Link></li>
-            {/* Aura AI — ALWAYS visible on mobile */}
+            <li><Link to="/" onClick={closeMobileMenu}>Home</Link></li>
+            <li><Link to="/community" onClick={closeMobileMenu}><FaUsers className="dropdown-icon" /> Community</Link></li>
             <li>
               <Link to={auraAiHref} onClick={closeMobileMenu} className="mobile-aura-ai-link">
                 <FaRobot className="dropdown-icon" /> {auraAiLabel}
               </Link>
             </li>
+            <li><Link to="/leaderboard" onClick={closeMobileMenu}><FaTrophy className="dropdown-icon" /> Leaderboard</Link></li>
+            <li><Link to="/contact" onClick={closeMobileMenu}><FaPhone className="dropdown-icon" /> Contact Us</Link></li>
             {/* SECONDARY NAV */}
             <li><Link to="/profile" onClick={closeMobileMenu}><FaUserCircle className="dropdown-icon" /> Profile</Link></li>
-            <li><Link to="/leaderboard" onClick={closeMobileMenu}><FaTrophy className="dropdown-icon" /> Leaderboard</Link></li>
-            <li><Link to="/community" onClick={closeMobileMenu}><FaUsers className="dropdown-icon" /> Community</Link></li>
             <li><Link to="/admin/inbox" onClick={closeMobileMenu}><FaEnvelope className="dropdown-icon" /> Messages</Link></li>
-            <li><Link to="/contact" onClick={closeMobileMenu}><FaPhone className="dropdown-icon" /> Contact Us</Link></li>
             {(isAdmin(user) || isSuperAdmin(user)) && (
               <li><Link to="/settings" onClick={closeMobileMenu}><FaSlidersH className="dropdown-icon" /> Settings</Link></li>
             )}
@@ -136,16 +127,15 @@ const Navbar = () => {
         <ul className="nav-links">
           {user ? (
             <>
-              <li><Link to="/trader-deck" className={isActive("/trader-deck") && !isActive("/trader-deck/trade-validator") ? "active" : ""}>Trader Desk</Link></li>
-              <li><Link to="/journal" className={isActive("/journal") ? "active" : ""}>Journal</Link></li>
-              <li><Link to="/trader-deck/trade-validator" className={isActive("/trader-deck/trade-validator") ? "active" : ""}>Trade Validator</Link></li>
-              <li><Link to="/aura-analysis" className={isActive("/aura-analysis") ? "active" : ""}>Aura Analysis</Link></li>
-              {/* Aura AI — always in desktop nav */}
+              <li><Link to="/" className={isActive("/") && location.pathname === "/" ? "active" : ""}>Home</Link></li>
+              <li><Link to="/community" className={isActive("/community") ? "active" : ""}>Community</Link></li>
               <li>
                 <Link to={auraAiHref} className={`nav-aura-ai${isActive("/premium-ai") ? " active" : ""}`}>
                   🤖 Aura AI
                 </Link>
               </li>
+              <li><Link to="/leaderboard" className={isActive("/leaderboard") ? "active" : ""}>Leaderboard</Link></li>
+              <li><Link to="/contact" className={isActive("/contact") ? "active" : ""}>Contact Us</Link></li>
             </>
           ) : (
             <>
