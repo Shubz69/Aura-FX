@@ -15,7 +15,7 @@ const NavbarNotifications = () => {
   const bellRef = useRef(null);
   const fetchInFlightRef = useRef(false);
   const token = localStorage.getItem('token');
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const baseUrl = process.env.REACT_APP_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
   const fetchUnreadCount = useCallback(async () => {
     if (!token || !user) return;

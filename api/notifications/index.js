@@ -273,41 +273,43 @@ const handler = async (req, res) => {
         params.push(cursor);
       }
       
-      const result = await executeQuery(`
-        SELECT 
-          n.*,
-          u.username as from_username
-        FROM notifications n
-        LEFT JOIN users u ON n.from_user_id = u.id
-        ${whereClause}
-        ORDER BY n.created_at DESC
-        LIMIT ?
-      `, [...params, limit + 1]);
-      
-      const rows = getRows(result);
+      let rows = [], unreadCount = 0;
+      try {
+        const result = await executeQuery(`
+          SELECT 
+            n.*,
+            u.username as from_username
+          FROM notifications n
+          LEFT JOIN users u ON n.from_user_id = u.id
+          ${whereClause.replace('WHERE user_id', 'WHERE n.user_id')}
+          ORDER BY n.created_at DESC
+          LIMIT ?
+        `, [...params, limit + 1]);
+        rows = getRows(result);
+      } catch (qErr) {
+        logger.warn('Notifications query failed, returning empty', { error: qErr.message });
+      }
+
+      try {
+        unreadCount = await coalesceRequest(
+          `notif_unread_${userId}`,
+          async () => {
+            const countResult = await executeQueryWithTimeout(
+              'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
+              [userId, 'UNREAD'],
+              5000,
+              requestId
+            );
+            return getRows(countResult)[0]?.count || 0;
+          },
+          100
+        );
+      } catch (_) { unreadCount = 0; }
+
       const hasMore = rows.length > limit;
       const items = rows.slice(0, limit);
-      
-      // Get next cursor
-      const nextCursor = hasMore && items.length > 0 
-        ? items[items.length - 1].created_at 
-        : null;
-      
-      // Get unread count with coalescing (prevent N concurrent queries)
-      const unreadCount = await coalesceRequest(
-        `notif_unread_${userId}`,
-        async () => {
-          const countResult = await executeQueryWithTimeout(
-            'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
-            [userId, 'UNREAD'],
-            5000,
-            requestId
-          );
-          return getRows(countResult)[0]?.count || 0;
-        },
-        100 // 100ms coalescing window
-      );
-      
+      const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].created_at : null;
+
       return res.status(200).json({
         success: true,
         items: items.map(n => {
@@ -318,23 +320,23 @@ const handler = async (req, res) => {
             } catch (_) { /* ignore invalid JSON */ }
           }
           return {
-          id: n.id,
-          type: n.type,
-          title: n.title,
-          body: n.body,
-          channelId: (meta && meta.channelId != null) ? meta.channelId : n.channel_id,
-          messageId: n.message_id,
-          fromUserId: n.from_user_id,
-          fromUsername: n.from_username,
-          fromAvatar: null,
-          friendRequestId: n.friend_request_id,
-          status: n.status,
-          actionStatus: n.action_status,
-          createdAt: n.created_at,
-          readAt: n.read_at,
-          scheduledForUTC: n.scheduled_for_utc ?? null,
-          localDate: n.local_date ?? null,
-          meta: meta
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            body: n.body,
+            channelId: (meta && meta.channelId != null) ? meta.channelId : n.channel_id,
+            messageId: n.message_id,
+            fromUserId: n.from_user_id,
+            fromUsername: n.from_username,
+            fromAvatar: null,
+            friendRequestId: n.friend_request_id,
+            status: n.status,
+            actionStatus: n.action_status,
+            createdAt: n.created_at,
+            readAt: n.read_at,
+            scheduledForUTC: n.scheduled_for_utc ?? null,
+            localDate: n.local_date ?? null,
+            meta: meta
           };
         }),
         nextCursor,
