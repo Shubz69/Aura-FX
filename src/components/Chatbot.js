@@ -18,8 +18,8 @@ const Chatbot = () => {
     useEffect(() => {
         if (isOpen) {
             const welcomeMessage = isAuthenticated 
-                ? `<p>Welcome back, ${user?.username || user?.name || 'there'}! I'm your AURA FX assistant. I can help with general questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href="/premium-ai" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Aura AI</a> - our advanced AI assistant that provides professional trading analysis, market insights, and personalized trading strategies.</p><p>Choose a question below or ask me anything!</p>`
-                : "<p>Welcome to <strong>AURA FX</strong>! I'm your free assistant. I can help with questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href=\"/premium-ai\" style=\"color: #ffffff; text-decoration: underline; font-weight: 500;\">Aura AI</a> - our advanced AI assistant for professional trading analysis and strategies.</p><p><a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a> to get started!</p><p>Choose a question below or ask me anything!</p>";
+                ? `<p>Welcome back, ${user?.username || user?.name || 'there'}! I'm your AURA TERMINAL assistant. I can help with general questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href="/premium-ai" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Aura AI</a> - our advanced AI assistant that provides professional trading analysis, market insights, and personalized trading strategies.</p><p>Choose a question below or ask me anything!</p>`
+                : "<p>Welcome to <strong>AURA TERMINAL</strong>! I'm your free assistant. I can help with questions about our platform, courses, and subscriptions.</p><p>💡 <strong>Upgrade to Premium</strong> to unlock <a href=\"/premium-ai\" style=\"color: #ffffff; text-decoration: underline; font-weight: 500;\">Aura AI</a> - our advanced AI assistant for professional trading analysis and strategies.</p><p><a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a> to get started!</p><p>Choose a question below or ask me anything!</p>";
             
             setMessages([
                 {
@@ -195,17 +195,17 @@ const Chatbot = () => {
         if (!isAuthenticated) {
             // Greetings
             if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.match(/^hi$/) || msg.match(/^hey$/)) {
-                return "Hello! Welcome to AURA FX! 👋 I can answer questions about trading and our platform. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a> to access full features!";
+                return "Hello! Welcome to AURA TERMINAL! 👋 I can answer questions about trading and our platform. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a> to access full features!";
             }
             
             // Simple platform info
             if (msg.includes("what") && (msg.includes("aura") || msg.includes("platform") || msg.includes("website"))) {
-                return "AURA FX is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> to access our courses!";
+                return "AURA TERMINAL is a professional trading education platform. We teach Forex, Stocks, Crypto, and Options trading with expert strategies and 1-to-1 mentorship. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> to access our courses!";
             }
             
             // Trading questions
             if (msg.includes("trade") || msg.includes("trading") || msg.includes("forex") || msg.includes("crypto") || msg.includes("stock")) {
-                return "AURA FX specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>Courses page</a> to learn more. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> to get started!";
+                return "AURA TERMINAL specializes in trading education. We offer courses in Forex, Stocks, Crypto, and Options trading. Visit our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>Courses page</a> to learn more. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Sign up</a> to get started!";
             }
             
             // Courses info
@@ -215,7 +215,7 @@ const Chatbot = () => {
             
             // Pricing
             if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription")) {
-                return "We offer AURA FX subscription at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for details. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Create an account</a> to get started!";
+                return "We offer AURA TERMINAL subscription at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for details. <a href='/register' style='color: #ffffff; text-decoration: underline;'>Create an account</a> to get started!";
             }
             
             // Sign up/Login
@@ -229,45 +229,45 @@ const Chatbot = () => {
             }
             
             // Default for non-logged in users
-            return "I can help with questions about trading and the AURA FX platform. For personalized assistance, please <a href='/register' style='color: #ffffff; text-decoration: underline;'>sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a>!";
+            return "I can help with questions about trading and the AURA TERMINAL platform. For personalized assistance, please <a href='/register' style='color: #ffffff; text-decoration: underline;'>sign up</a> or <a href='/login' style='color: #ffffff; text-decoration: underline;'>log in</a>!";
         }
         
         // If logged in, provide trading-focused responses
         // Greetings
         if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.match(/^hi$/) || msg.match(/^hey$/)) {
-            return `Hello ${user?.username || user?.name || 'there'}! 👋 I'm the AURA FX trading assistant. I can help you with questions about trading, our courses, and the platform. What would you like to know?`;
+            return `Hello ${user?.username || user?.name || 'there'}! 👋 I'm the AURA TERMINAL trading assistant. I can help you with questions about trading, our courses, and the platform. What would you like to know?`;
         }
         
         // Trading questions - PRIMARY FOCUS
         if (msg.includes("trade") || msg.includes("trading") || msg.includes("forex") || msg.includes("crypto") || msg.includes("stock") || msg.includes("option") || msg.includes("market") || msg.includes("chart") || msg.includes("strategy") || msg.includes("signal")) {
             if (msg.includes("forex")) {
-                return "Forex trading involves trading currency pairs. AURA FX teaches technical analysis, risk management, and proven strategies for Forex trading. Check our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a> for detailed lessons.";
+                return "Forex trading involves trading currency pairs. AURA TERMINAL teaches technical analysis, risk management, and proven strategies for Forex trading. Check our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a> for detailed lessons.";
             }
             if (msg.includes("crypto")) {
                 return "Cryptocurrency trading requires understanding market volatility and technical indicators. Our 1-to-1 mentorship covers crypto trading strategies. Visit our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a> page.";
             }
             if (msg.includes("stock")) {
-                return "Stock trading involves buying and selling shares. AURA FX provides education on fundamental and technical analysis for stocks. Check our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a>.";
+                return "Stock trading involves buying and selling shares. AURA TERMINAL provides education on fundamental and technical analysis for stocks. Check our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a>.";
             }
             if (msg.includes("beginner") || msg.includes("start") || msg.includes("learn")) {
                 return "For beginners, we recommend starting with our 1-to-1 mentorship program. It provides personalized guidance tailored to your experience level. Visit our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a> page to learn more.";
             }
-            return "AURA FX specializes in trading education covering Forex, Stocks, Crypto, and Options. Our 1-to-1 mentorship provides personalized trading guidance. Check our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a> for details.";
+            return "AURA TERMINAL specializes in trading education covering Forex, Stocks, Crypto, and Options. Our 1-to-1 mentorship provides personalized trading guidance. Check our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>courses</a> for details.";
         }
         
         // Course related queries
         if (msg.includes("course") || msg.includes("learn") || msg.includes("study") || msg.includes("tutorial") || msg.includes("mentorship")) {
-            return "AURA FX offers 1-to-1 trading mentorship. This personalized program provides expert guidance tailored to your trading goals. Visit our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>Courses page</a> to learn more.";
+            return "AURA TERMINAL offers 1-to-1 trading mentorship. This personalized program provides expert guidance tailored to your trading goals. Visit our <a href='/courses' style='color: #ffffff; text-decoration: underline;'>Courses page</a> to learn more.";
         }
         
         // Pricing related queries
         if (msg.includes("price") || msg.includes("cost") || msg.includes("subscription") || msg.includes("pay") || msg.includes("fee")) {
-            return "AURA FX offers two subscription plans: AURA FX at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for full details.";
+            return "AURA TERMINAL offers two subscription plans: AURA TERMINAL at £99/month and A7FX Elite at £250/month. Visit our <a href='/subscription' style='color: #ffffff; text-decoration: underline;'>Subscription page</a> for full details.";
         }
         
         // Platform features
         if (msg.includes("feature") || msg.includes("tool") || msg.includes("function") || msg.includes("what") || msg.includes("about")) {
-            return "AURA FX is a professional trading education platform. We offer 1-to-1 mentorship, trading courses, community access, and expert strategies for Forex, Stocks, Crypto, and Options trading.";
+            return "AURA TERMINAL is a professional trading education platform. We offer 1-to-1 mentorship, trading courses, community access, and expert strategies for Forex, Stocks, Crypto, and Options trading.";
         }
         
         // Community related
@@ -291,7 +291,7 @@ const Chatbot = () => {
         }
         
         // Default response - recommend premium AI for advanced questions
-        return "I can help with general questions about AURA FX, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href='/subscription' style='color: #ffffff; text-decoration: underline; font-weight: 500;'>upgrade to Premium</a> to access <a href='/premium-ai' style='color: #ffffff; text-decoration: underline; font-weight: 500;'>Aura AI</a> - our professional AI trading assistant. What would you like to know?";
+        return "I can help with general questions about AURA TERMINAL, our courses, and subscriptions. For advanced trading analysis, market insights, and personalized strategies, <a href='/subscription' style='color: #ffffff; text-decoration: underline; font-weight: 500;'>upgrade to Premium</a> to access <a href='/premium-ai' style='color: #ffffff; text-decoration: underline; font-weight: 500;'>Aura AI</a> - our professional AI trading assistant. What would you like to know?";
     };
 
     const handleOption = (message) => {
@@ -321,14 +321,14 @@ const Chatbot = () => {
             "How long is the mentorship program?",
         ],
         "Subscriptions": [
-            "What's included in the AURA FX subscription?",
-            "What's the difference between AURA FX and A7FX?",
+            "What's included in the AURA TERMINAL subscription?",
+            "What's the difference between AURA TERMINAL and A7FX?",
             "How much does A7FX Elite cost?",
             "Can I cancel my subscription anytime?",
             "What payment methods are accepted?",
         ],
         "Platform & Support": [
-            "What is AURA FX?",
+            "What is AURA TERMINAL?",
             "How do I access the trading community?",
             "How do I contact support?",
             "What trading markets do you cover?",
@@ -352,7 +352,7 @@ const Chatbot = () => {
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px' }}>
                                     <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H6L4 18V4H20V16Z" fill="currentColor"/>
                                 </svg>
-                                <span>AURA FX Assistant</span>
+                                <span>AURA TERMINAL Assistant</span>
                             </div>
                             {connectError && <span className="offline-indicator">Offline Mode</span>}
                         </div>

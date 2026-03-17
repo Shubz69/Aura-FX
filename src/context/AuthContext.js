@@ -470,7 +470,12 @@ export const AuthProvider = ({ children }) => {
         
         // ============= SINGLE SOURCE OF TRUTH: /api/me =============
         // Use /api/me entitlements for redirect (same as RouteGuards and Community)
-        let canAccessCommunity = false;
+        const userRole = (data.role || '').toLowerCase();
+        const isAdminUser = userRole === 'admin' || userRole === 'super_admin' ||
+          (data.email || '').toLowerCase() === 'shubzfx@gmail.com';
+        let canAccessCommunity = isAdminUser; // admins always have access as fallback
+        const meController = new AbortController();
+        const meTimeout = setTimeout(() => meController.abort(), 3000);
         try {
           const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
           const meResponse = await fetch(`${API_BASE_URL}/api/me`, {
@@ -479,8 +484,10 @@ export const AuthProvider = ({ children }) => {
               'Authorization': `Bearer ${data.token}`,
               'Content-Type': 'application/json'
             },
-            cache: 'no-store'
+            cache: 'no-store',
+            signal: meController.signal
           });
+          clearTimeout(meTimeout);
           if (meResponse.ok) {
             const meData = await meResponse.json();
             if (meData.success && meData.entitlements) {
@@ -494,7 +501,9 @@ export const AuthProvider = ({ children }) => {
             }
           }
         } catch (meError) {
-          console.error('Error fetching /api/me on login:', meError);
+          clearTimeout(meTimeout);
+          if (meError.name !== 'AbortError') console.error('Error fetching /api/me on login:', meError);
+          // canAccessCommunity already set from role fallback above
         }
         
         // ============= DETERMINISTIC ROUTING =============

@@ -1,0 +1,123 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { FaExternalLinkAlt, FaNewspaper, FaSyncAlt } from 'react-icons/fa';
+import '../styles/NewsHeadlines.css';
+
+const API_BASE = typeof window !== 'undefined' ? window.location.origin : '';
+const CACHE_KEY = 'at_news_cache';
+const CACHE_TTL = 15 * 60 * 1000;
+
+const timeAgo = (iso) => {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+};
+
+const NewsHeadlines = () => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastFetch, setLastFetch] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchNews = useCallback(async (force = false) => {
+    if (!force) {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && Date.now() - cached.ts < CACHE_TTL) {
+          setArticles(cached.data);
+          setLastFetch(new Date(cached.ts));
+          setLoading(false);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    force ? setRefreshing(true) : setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/news`);
+      const json = await res.json();
+      if (json.success && json.articles) {
+        setArticles(json.articles);
+        const now = Date.now();
+        setLastFetch(new Date(now));
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.articles, ts: now })); } catch (_) {}
+      } else {
+        setError('Could not load headlines.');
+      }
+    } catch (e) {
+      setError('Unable to fetch news at this time.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchNews(); }, [fetchNews]);
+
+  return (
+    <div className="news-headlines">
+      <div className="news-headlines__header">
+        <span className="news-headlines__icon"><FaNewspaper /></span>
+        <h3 className="news-headlines__title">Market Headlines</h3>
+        <div className="news-headlines__meta">
+          {lastFetch && <span className="news-headlines__updated">Updated {timeAgo(lastFetch)}</span>}
+          <button
+            className={`news-headlines__refresh ${refreshing ? 'spinning' : ''}`}
+            onClick={() => fetchNews(true)}
+            disabled={refreshing}
+            title="Refresh headlines"
+          >
+            <FaSyncAlt />
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="news-headlines__loading">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="news-headlines__skeleton">
+              <div className="skeleton-line skeleton-line--title" />
+              <div className="skeleton-line skeleton-line--meta" />
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="news-headlines__error">
+          <span>{error}</span>
+          <button onClick={() => fetchNews(true)} className="news-headlines__retry">Retry</button>
+        </div>
+      ) : (
+        <ul className="news-headlines__list">
+          {articles.map((a, i) => (
+            <li key={i} className="news-headlines__item">
+              <a
+                href={a.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="news-headlines__link"
+              >
+                <div className="news-headlines__item-content">
+                  <span className="news-headlines__item-title">{a.title}</span>
+                  <div className="news-headlines__item-meta">
+                    <span className="news-headlines__source">{a.source}</span>
+                    <span className="news-headlines__dot">·</span>
+                    <span className="news-headlines__time">{timeAgo(a.publishedAt)}</span>
+                    <FaExternalLinkAlt className="news-headlines__ext-icon" />
+                  </div>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+export default NewsHeadlines;

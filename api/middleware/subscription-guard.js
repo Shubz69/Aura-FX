@@ -147,7 +147,7 @@ function getErrorMessage(errorCode) {
     case 'USER_NOT_FOUND':
       return 'User account not found.';
     case 'NO_SUBSCRIPTION':
-      return 'An active Aura FX or A7FX Elite subscription is required to access the Community.';
+      return 'An active Aura Terminal or A7FX Elite subscription is required to access the Community.';
     case 'PAYMENT_FAILED':
       return 'Your subscription payment has failed. Please update your payment method.';
     case 'SERVER_ERROR':

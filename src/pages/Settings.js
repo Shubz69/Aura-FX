@@ -467,7 +467,7 @@ const Settings = () => {
                     <option value="all">All Subscriptions</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
-                    <option value="premium">Premium (AURA FX)</option>
+                    <option value="premium">Premium (AURA TERMINAL)</option>
                     <option value="a7fx">A7FX Elite</option>
                     <option value="expired">Expired</option>
                     <option value="cancelled">Cancelled</option>
@@ -570,7 +570,7 @@ const Settings = () => {
                     disabled={selectedUser.email === SUPER_ADMIN_EMAIL}
                   >
                     <option value="free">Free</option>
-                    <option value="premium">Premium (AURA FX)</option>
+                    <option value="premium">Premium (AURA TERMINAL)</option>
                     <option value="a7fx">A7FX Elite</option>
                     <option value="admin">Admin</option>
                     {superAdmin && <option value="super_admin">Super Admin</option>}
@@ -779,7 +779,7 @@ const Settings = () => {
                     value={subscriptionPlan} 
                     onChange={(e) => setSubscriptionPlan(e.target.value)}
                   >
-                    <option value="aura">AURA FX (£99/month)</option>
+                    <option value="aura">AURA TERMINAL (£99/month)</option>
                     <option value="a7fx">A7FX Elite (£250/month)</option>
                     <option value="">None (Free)</option>
                   </select>

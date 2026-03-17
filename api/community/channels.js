@@ -314,7 +314,7 @@ module.exports = async (req, res) => {
     try {
       // Default channels (fallback) - include canSee/canRead so free users see them
       const defaultChannels = [
-        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA FX community!', canSee: true, canRead: true, canWrite: false },
+        { id: 'welcome', name: 'welcome', displayName: 'Welcome', category: 'announcements', description: 'Welcome to AURA TERMINAL community!', canSee: true, canRead: true, canWrite: false },
         { id: 'announcements', name: 'announcements', displayName: 'Announcements', category: 'announcements', description: 'Important announcements', canSee: true, canRead: true, canWrite: false },
         { id: 'levels', name: 'levels', displayName: 'Levels', category: 'announcements', description: 'Level-up celebrations', canSee: true, canRead: true, canWrite: false },
         { id: 'general', name: 'general', displayName: 'General', category: 'general', description: 'General discussion', canSee: true, canRead: true, canWrite: true }
@@ -456,8 +456,8 @@ module.exports = async (req, res) => {
             };
 
             // Ensure welcome, announcements, levels, and general exist (visible to all / free subscribers)
-            await safeInsertChannel('welcome', 'welcome', 'announcements', 'Welcome to AURA FX Community. Read the rules and click the checkmark below to unlock your channels.', 'open');
-            await safeInsertChannel('announcements', 'announcements', 'announcements', 'Important announcements from AURA FX.', 'open');
+            await safeInsertChannel('welcome', 'welcome', 'announcements', 'Welcome to AURA TERMINAL Community. Read the rules and click the checkmark below to unlock your channels.', 'open');
+            await safeInsertChannel('announcements', 'announcements', 'announcements', 'Important announcements from AURA TERMINAL.', 'open');
             await safeInsertChannel('levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open');
             await safeInsertChannel('general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open');
 

@@ -33,8 +33,9 @@ const BOOTSTRAP_CONFIG = {
   MIN_REAL_USERS: parseInt(process.env.LEADERBOARD_MIN_REAL_USERS) || 50,
   MIN_REAL_EVENTS_7D: parseInt(process.env.LEADERBOARD_MIN_EVENTS_7D) || 500,
   FORCE_BOOTSTRAP: process.env.LEADERBOARD_FORCE_BOOTSTRAP === 'true',
-  FORCE_DISABLE_BOOTSTRAP: process.env.LEADERBOARD_DISABLE_BOOTSTRAP === 'true',
-  FAKE_ONLINE_COUNT: parseInt(process.env.LEADERBOARD_FAKE_ONLINE) || 0
+  // Bootstrap/demo mode is DISABLED by default — only re-enable via env var explicitly set to 'false'
+  FORCE_DISABLE_BOOTSTRAP: process.env.LEADERBOARD_DISABLE_BOOTSTRAP !== 'false',
+  FAKE_ONLINE_COUNT: 0
 };
 
 // Demo user profiles – realistic online usernames, no underscores, all get avatars via dicebear (seed = id)
@@ -388,7 +389,7 @@ async function seedDemoUsers() {
  * Query leaderboard for a specific timeframe.
  * ALL timeframes use the xp_events ledger with different date filters.
  */
-async function queryLeaderboard(timeframe, limit, logger, includeDemo = true) {
+async function queryLeaderboard(timeframe, limit, logger, includeDemo = false) {
   const boundaries = getTimeframeBoundaries(timeframe);
   const startDate = toMySQLDatetime(boundaries.start);
   

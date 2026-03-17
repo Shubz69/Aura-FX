@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
       success: false,
       errorCode: accessResult.error,
       message: accessResult.error === 'NO_SUBSCRIPTION' 
-        ? 'An active Aura FX or A7FX Elite subscription is required to access the Community.'
+        ? 'An active Aura Terminal or A7FX Elite subscription is required to access the Community.'
         : 'Access denied.',
       requiresSubscription: accessResult.error === 'NO_SUBSCRIPTION',
       requestId

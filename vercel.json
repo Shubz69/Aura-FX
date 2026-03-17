@@ -117,6 +117,10 @@
       "destination": "/api/admin/index.js"
     },
     {
+      "source": "/api/contact/:id",
+      "destination": "/api/admin/index.js"
+    },
+    {
       "source": "/api/community/update-presence",
       "destination": "/api/community/index.js"
     },
@@ -191,6 +195,18 @@
     {
       "source": "/api/admin/change-subscription",
       "destination": "/api/admin/change-subscription.js"
+    },
+    {
+      "source": "/api/admin/trial-expiry",
+      "destination": "/api/admin/trial-expiry.js"
+    },
+    {
+      "source": "/api/news",
+      "destination": "/api/news.js"
+    },
+    {
+      "source": "/api/push/subscribe",
+      "destination": "/api/push/subscribe.js"
     },
     {
       "source": "/api/leaderboard",

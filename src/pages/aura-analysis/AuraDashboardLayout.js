@@ -129,7 +129,7 @@ function AuraDashboardInner() {
         <div className="aura-dashboard-tabs-inner">
           <Link to="/aura-analysis/ai" className="aura-dashboard-brand" title="Back to Connection Hub">
             <span className="aura-db-brand-slash">/</span>
-            <span className="aura-db-brand-name">AURA FX</span>
+            <span className="aura-db-brand-name">AURA TERMINAL</span>
           </Link>
 
           <nav className="aura-dashboard-tabs" aria-label="MT5 Dashboard sections">

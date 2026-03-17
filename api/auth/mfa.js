@@ -147,10 +147,10 @@ module.exports = async (req, res) => {
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: emailLower,
-        subject: 'AURA FX - MFA Verification Code',
+        subject: 'AURA TERMINAL - MFA Verification Code',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #ffffff;">AURA FX - MFA Verification</h2>
+            <h2 style="color: #ffffff;">AURA TERMINAL - MFA Verification</h2>
             <p>Your MFA verification code is:</p>
             <div style="background: #1a1a1a; color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 8px; border: 1px solid #ffffff;">
               ${mfaCode}

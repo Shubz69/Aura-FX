@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-      // Decode token (custom format used by AURA FX - base64url encoded)
+      // Decode token (custom format used by AURA TERMINAL - base64url encoded)
       // The system uses a custom token format: header.payload.signature
       let decoded;
       try {

@@ -177,7 +177,7 @@ useEffect(() => {
           const supportThread = {
             ...thread,
             username: 'Support',
-            name: 'AURA FX Support',
+            name: 'AURA TERMINAL Support',
             email: ''
           };
           setThreads([supportThread]);

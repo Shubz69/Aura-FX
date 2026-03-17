@@ -26,7 +26,7 @@ const TRADING_RANKS = {
     860: 'Risk Immortal', 870: 'Chart Immortal', 880: 'Institutional Immortal', 890: 'Trading Immortal',
     900: 'Trading God', 910: 'Market God', 920: 'Liquidity God', 930: 'Alpha God',
     940: 'Capital God', 950: 'Strategy God', 960: 'Risk God', 970: 'Chart God',
-    980: 'Institutional God', 990: 'Supreme Trader', 1000: 'Aura FX Legend'
+    980: 'Institutional God', 990: 'Supreme Trader', 1000: 'Aura Terminal Legend'
 };
 
 const getRankTitle = (level) => {

@@ -976,6 +976,33 @@ const [journalLoading, setJournalLoading] = useState(false);
             localStorage.setItem(`channelBadges_${userId}`, JSON.stringify(channelBadges));
         }
     }, [channelBadges, userId]);
+
+    // Muted channels: Set of channel IDs — announcements channel always notifies regardless
+    const [mutedChannels, setMutedChannels] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`mutedChannels_${userId || 'anon'}`);
+            return new Set(saved ? JSON.parse(saved) : []);
+        } catch { return new Set(); }
+    });
+
+    useEffect(() => {
+        if (userId) {
+            localStorage.setItem(`mutedChannels_${userId}`, JSON.stringify([...mutedChannels]));
+        }
+    }, [mutedChannels, userId]);
+
+    const toggleMuteChannel = useCallback((channelId, channelCategory) => {
+        if (channelCategory === 'announcements') return; // announcements always notify
+        setMutedChannels(prev => {
+            const next = new Set(prev);
+            if (next.has(String(channelId))) {
+                next.delete(String(channelId));
+            } else {
+                next.add(String(channelId));
+            }
+            return next;
+        });
+    }, []);
     
     // Helper to update channel badge
     const updateChannelBadge = useCallback((channelId, type, increment = true) => {
@@ -1696,31 +1723,34 @@ const {
     
     // Trigger notifications and update badges
     if (!isCurrentChannel && !isOwnMessage) {
+      const msgChannel = channelList.find(c => String(c.id) === String(messageChannelId));
+      const isAnnouncements = msgChannel?.category === 'announcements';
+      const isMuted = mutedChannels.has(String(messageChannelId));
+
+      // Always update badge (even muted channels show badge count)
       updateChannelBadge(messageChannelId, 'unread');
-      if (isMentioned) {
-        updateChannelBadge(messageChannelId, 'mentions');
-      }
-      
-      const channelName = channelList.find(c => 
-        String(c.id) === String(messageChannelId)
-      )?.name || 'a channel';
-      
-      if (isMentioned) {
-        triggerNotification(
-          'mention',
-          `You were mentioned in #${channelName}`,
-          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-          userId
-        );
-      } else {
-        triggerNotification(
-          'message',
-          `New message in #${channelName}`,
-          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-          null
-        );
+      if (isMentioned) updateChannelBadge(messageChannelId, 'mentions');
+
+      // Only send toast notification if not muted, OR always for announcements/mentions
+      if (!isMuted || isAnnouncements || isMentioned) {
+        const channelName = msgChannel?.name || 'a channel';
+        if (isMentioned) {
+          triggerNotification(
+            'mention',
+            `You were mentioned in #${channelName}`,
+            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+            userId
+          );
+        } else if (!isMuted) {
+          triggerNotification(
+            'message',
+            `New message in #${channelName}`,
+            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+            null
+          );
+        }
       }
     } else if (isCurrentChannel && isMentioned && !isOwnMessage) {
       triggerNotification(
@@ -3792,7 +3822,7 @@ if (window.requestAnimationFrame) {
         const welcomeMessage = {
             id: 'welcome-message',
             channelId: selectedChannel.id,
-            content: `🎉 WELCOME TO AURA FX COMMUNITY! 🎉
+            content: `🎉 WELCOME TO AURA TERMINAL COMMUNITY! 🎉
 
 Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
 
@@ -3864,7 +3894,7 @@ Click the ✅ below to acknowledge you've read and agree to follow these rules, 
 Let's build generational wealth together! 💰🚀`,
                     sender: {
                         id: 'system',
-                        username: 'AURA FX',
+                        username: 'AURA TERMINAL',
                         avatar: null,
                         role: 'admin'
                     },
@@ -3892,14 +3922,14 @@ Let's build generational wealth together! 💰🚀`,
             channelId: selectedChannel.id,
             content: `📢 **ANNOUNCEMENTS**
 
-Important updates and news from AURA FX will appear here.
+Important updates and news from AURA TERMINAL will appear here.
 
 Check back regularly for:
 • New features and platform updates
 • Trading insights and market analysis
 • Community events and challenges
 • Course updates and new content`,
-            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
+            sender: { id: 'system', username: 'AURA TERMINAL', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -3931,7 +3961,7 @@ Earn XP by:
 • Sharing files and insights
 • Being active in discussions
 • Completing courses`,
-            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
+            sender: { id: 'system', username: 'AURA TERMINAL', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -5710,6 +5740,23 @@ if (!isAuthenticated && !hasToken) {
                                                         {channel.displayName || channel.name}
                                                     </span>
                                                 </span>
+                                                {channel.category !== 'announcements' && isAuthenticated && (
+                                                    <button
+                                                        title={mutedChannels.has(String(channel.id)) ? 'Unmute channel' : 'Mute channel'}
+                                                        onClick={(e) => { e.stopPropagation(); toggleMuteChannel(channel.id, channel.category); }}
+                                                        style={{
+                                                            background: 'none', border: 'none', cursor: 'pointer',
+                                                            color: mutedChannels.has(String(channel.id)) ? '#ef4444' : 'transparent',
+                                                            padding: '2px 4px', borderRadius: '4px', fontSize: '0.7rem',
+                                                            opacity: 0,
+                                                            transition: 'opacity 0.15s, color 0.15s'
+                                                        }}
+                                                        className="channel-mute-btn"
+                                                        aria-label={mutedChannels.has(String(channel.id)) ? 'Unmute' : 'Mute'}
+                                                    >
+                                                        <FaBell />
+                                                    </button>
+                                                )}
                                                 {(hasUnread || hasMentions) && (
                                                     <span className="channel-badge" style={{
                                                         minWidth: '20px',
@@ -5969,7 +6016,7 @@ if (!isAuthenticated && !hasToken) {
                                     let price = '';
                                     
                                     if (accessLevel === 'premium') {
-                                        subscriptionType = 'Aura FX Premium';
+                                        subscriptionType = 'Aura Terminal Premium';
                                         price = '£99/month';
                                     } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
                                         subscriptionType = 'A7FX Elite';
@@ -6361,7 +6408,7 @@ if (!isAuthenticated && !hasToken) {
                                                         const userId = message.sender?.id || message.userId;
                                                         if (!userId) return;
                                                         if (String(userId).toLowerCase() === 'system') {
-                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA TERMINAL' });
                                                             setShowProfileModal(true);
                                                             return;
                                                         }
@@ -6428,7 +6475,7 @@ if (!isAuthenticated && !hasToken) {
                                                                     const userId = message.sender?.id || message.userId;
                                                                     if (!userId) return;
                                                                     if (String(userId).toLowerCase() === 'system') {
-                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA TERMINAL' });
                                                                         setShowProfileModal(true);
                                                                         return;
                                                                     }
@@ -7248,7 +7295,7 @@ if (!isAuthenticated && !hasToken) {
                     </>
                 ) : (
                     <div className="no-channel-selected">
-                        <h2>Welcome to AURA FX Community</h2>
+                        <h2>Welcome to AURA TERMINAL Community</h2>
                         <p>Select a channel to start chatting</p>
                     </div>
                 )}
@@ -7388,7 +7435,7 @@ if (!isAuthenticated && !hasToken) {
                                         <option value="open">Open - Everyone can view and post</option>
                                         <option value="read-only">Read Only - View only</option>
                                         <option value="admin-only">Admin Only</option>
-                                        <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
+                                        <option value="premium">Premium - Subscription required (Aura Terminal £99/mo)</option>
                                         <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
                                     </select>
                                 </div>
@@ -7884,7 +7931,7 @@ if (!isAuthenticated && !hasToken) {
                                 <option value="open">Open - Everyone can view and post</option>
                                 <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
                                 <option value="admin-only">Admin-Only - Only admins can view and post</option>
-                                <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
+                                <option value="premium">Premium - Subscription required (Aura Terminal £99/mo)</option>
                                 <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
                             </select>
                         </div>
@@ -8097,7 +8144,7 @@ if (!isAuthenticated && !hasToken) {
                                 marginBottom: '24px'
                             }}>
                                 <p style={{ color: '#fff', margin: 0, fontSize: '0.9rem' }}>
-                                    <strong>💡 This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura FX Premium (£99/month)' : 'A7FX Elite (£250/month)'}
+                                    <strong>💡 This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura Terminal Premium (£99/month)' : 'A7FX Elite (£250/month)'}
                                 </p>
                             </div>
                         )}
@@ -8170,7 +8217,7 @@ if (!isAuthenticated && !hasToken) {
                                 </button>
                             </div>
 
-                            {/* Aura FX Premium Plan */}
+                            {/* Aura Terminal Premium Plan */}
                             <div style={{
                                 padding: '24px',
                                 background: requiredSubscriptionType === 'premium' 
@@ -8197,7 +8244,7 @@ if (!isAuthenticated && !hasToken) {
                                         fontWeight: 'bold'
                                     }}>REQUIRED</div>
                                 )}
-                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura FX</h3>
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura Terminal</h3>
                                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
@@ -8246,7 +8293,7 @@ if (!isAuthenticated && !hasToken) {
                                         e.target.style.transform = 'translateY(0)';
                                     }}
                                 >
-                                    Select Aura FX
+                                    Select Aura Terminal
                                 </button>
                             </div>
 
@@ -8286,7 +8333,7 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>✅ Everything in Aura FX</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Everything in Aura Terminal</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Elite-only channels</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Direct founder access</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Daily Briefs</li>
@@ -8612,7 +8659,7 @@ if (!isAuthenticated && !hasToken) {
                                         lineHeight: '1.6',
                                         margin: '0 0 16px 0'
                                     }}>
-                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura FX Premium</strong> subscription (£99/month) to access.
+                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura Terminal Premium</strong> subscription (£99/month) to access.
                                     </p>
                                     {lockedChannelInfo.currentRole === 'free' ? (
                                         <div style={{

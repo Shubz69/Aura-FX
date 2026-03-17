@@ -91,7 +91,7 @@ module.exports = async (req, res) => {
       invalidateEntitlementsCache(userId);
       return res.status(200).json({
         success: true,
-        message: 'Your subscription will switch to ' + (targetPlanId === 'free' ? 'Free' : 'Aura FX') + ' at the end of your current period. You keep your current access until then.',
+        message: 'Your subscription will switch to ' + (targetPlanId === 'free' ? 'Free' : 'Aura Terminal') + ' at the end of your current period. You keep your current access until then.',
         subscription: { planId: currentPlan, downgradeToPlanId: targetPlanId, atPeriodEnd: true }
       });
     }

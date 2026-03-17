@@ -1,5 +1,5 @@
 /* ============================================================
-   HOME.CSS — AURA FX | Premium Fintech Redesign - FULLY RESPONSIVE
+   HOME.CSS — AURA TERMINAL | Premium Fintech Redesign - FULLY RESPONSIVE
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -208,9 +208,14 @@ html, body {
     color: var(--text);
     text-transform: uppercase;
     margin: 0;
-    line-height: 1.1;
+    line-height: 1.0;
     animation: brandNameFadeIn 1.2s ease-out 0.2s both;
     text-shadow: 0 0 60px rgba(139,92,246,0.25), 0 0 120px rgba(99,179,237,0.1);
+    text-align: center;
+}
+
+.brand-name-line {
+    display: block;
 }
 
 .powered-by-glitch {

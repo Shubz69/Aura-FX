@@ -237,6 +237,23 @@ body.loading-active .navbar {
   background: linear-gradient(90deg, var(--cta-from), var(--cta-to));
 }
 
+/* Aura AI nav link — always visible, special accent */
+.nav-links li a.nav-aura-ai {
+  color: #a78bfa;
+  font-weight: 500;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+}
+.nav-links li a.nav-aura-ai:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.55);
+  color: #c4b5fd;
+}
+.mobile-aura-ai-link {
+  color: #a78bfa !important;
+  font-weight: 500 !important;
+}
+
 /* ──────────────────────────────────────────
    NAV BUTTONS
 ────────────────────────────────────────── */

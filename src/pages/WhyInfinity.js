@@ -44,7 +44,7 @@ const VSCard = ({ type, items }) => {
                 </div>
                 <div>
                     <div className="vs-card__title">
-                        {isTypical ? "Typical Community" : "AURA FX"}
+                        {isTypical ? "Typical Community" : "AURA TERMINAL"}
                     </div>
                     <div className="vs-card__label">
                         {isTypical ? "What you usually get" : "The standard we hold ourselves to"}
@@ -125,7 +125,7 @@ const WhyInfinity = () => {
             <div className="content-wrapper">
                 {/* Header Section */}
                 <header className="why-header">
-                    <h1 className="why-main-title">Why Aura FX</h1>
+                    <h1 className="why-main-title">Why Aura Terminal</h1>
                     <MarketTicker 
                         compact={true}
                         showTabs={false}
@@ -137,16 +137,16 @@ const WhyInfinity = () => {
                 {/* Main Content - Split Layout */}
                 <div className="why-main-content">
                     <div className="why-text-section">
-                        <h2 className="why-subtitle">Why Choose AURA FX</h2>
+                        <h2 className="why-subtitle">Why Choose AURA TERMINAL</h2>
                         <div className="why-divider"></div>
                         <p className="why-text">
-                            AURA FX is an institutional-grade trading education and intelligence platform built by professional traders, for serious traders. Our team brings together 35+ years of real, live market experience, spanning Forex, Indices, Futures, Stocks, Commodities, and Crypto, with each educator specialising exclusively in their respective market. We are accredited by multiple industry bodies and operate with full transparency. Our work is backed by verifiable proof: real trades, real funded accounts, real results, and real students who have gone on to perform consistently in live market conditions.
+                            AURA TERMINAL is an institutional-grade trading education and intelligence platform built by professional traders, for serious traders. Our team brings together 35+ years of real, live market experience, spanning Forex, Indices, Futures, Stocks, Commodities, and Crypto, with each educator specialising exclusively in their respective market. We are accredited by multiple industry bodies and operate with full transparency. Our work is backed by verifiable proof: real trades, real funded accounts, real results, and real students who have gone on to perform consistently in live market conditions.
                         </p>
                         <p className="why-text">
-                            Unlike typical trading communities built around recycled YouTube content or surface-level Twitter analysis, AURA FX operates live. Our trading is broadcast publicly on Twitch, allowing anyone to observe real-time decision-making, execution, and risk management. There is no editing, no cherry-picking, and no post-hoc justification. Only disciplined, professional trading in live market conditions. Everything we teach has been executed, tested, and refined in real markets with real capital at risk.
+                            Unlike typical trading communities built around recycled YouTube content or surface-level Twitter analysis, AURA TERMINAL operates live. Our trading is broadcast publicly on Twitch, allowing anyone to observe real-time decision-making, execution, and risk management. There is no editing, no cherry-picking, and no post-hoc justification. Only disciplined, professional trading in live market conditions. Everything we teach has been executed, tested, and refined in real markets with real capital at risk.
                         </p>
                         <p className="why-text">
-                            We do not train dependency. Our sole objective is to build independent, self-sufficient traders capable of making high-quality decisions without reliance on signals or external confirmation. We place risk management first, followed by execution, and teach traders to operate with the mindset and discipline required for long-term consistency. If you are a serious trader seeking professional-grade education and a community built for sustained profitability, AURA FX is where you belong.
+                            We do not train dependency. Our sole objective is to build independent, self-sufficient traders capable of making high-quality decisions without reliance on signals or external confirmation. We place risk management first, followed by execution, and teach traders to operate with the mindset and discipline required for long-term consistency. If you are a serious trader seeking professional-grade education and a community built for sustained profitability, AURA TERMINAL is where you belong.
                         </p>
                         <button className="why-cta-button" onClick={() => navigate('/register')}>
                             Apply for Access <FaArrowRight />
@@ -195,7 +195,7 @@ const WhyInfinity = () => {
                     className={`why-additional-features ${visibleSections['additional-features'] ? 'fade-in-up' : ''}`}
                     ref={el => sectionRefs.current.additionalFeatures = el}
                 >
-                    <h2 className="why-section-heading">The AURA FX Advantage</h2>
+                    <h2 className="why-section-heading">The AURA TERMINAL Advantage</h2>
                     
                     <div className="why-features-grid">
                         <div className="why-platform-feature">
@@ -244,7 +244,7 @@ const WhyInfinity = () => {
                             </div>
                             <h3>Professional Environment & Security</h3>
                             <p>
-                                AURA FX is professionally moderated by experienced administrators. Market discussions are structured, separated by asset class, and designed for meaningful learning. All user data and payment information are protected using secure, professional-grade infrastructure ensuring confidentiality and reliability at scale.
+                                AURA TERMINAL is professionally moderated by experienced administrators. Market discussions are structured, separated by asset class, and designed for meaningful learning. All user data and payment information are protected using secure, professional-grade infrastructure ensuring confidentiality and reliability at scale.
                             </p>
                         </div>
                         
@@ -254,30 +254,30 @@ const WhyInfinity = () => {
                             </div>
                             <h3>Our Commitment</h3>
                             <p>
-                                AURA FX exists to create disciplined, profitable traders. With consistent effort, adherence to our frameworks, and professional discipline, traders who fully engage with the platform will develop the skills required to achieve sustained profitability within six months. Not a promise of shortcuts, but a commitment to real growth and real results.
+                                AURA TERMINAL exists to create disciplined, profitable traders. With consistent effort, adherence to our frameworks, and professional discipline, traders who fully engage with the platform will develop the skills required to achieve sustained profitability within six months. Not a promise of shortcuts, but a commitment to real growth and real results.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Why AURA FX Is NOT For You Section */}
+                {/* Why AURA TERMINAL Is NOT For You Section */}
                 <div className="why-not-for-you-box fade-in-up">
-                    <h2 className="why-section-heading">Why AURA FX Is NOT For You</h2>
+                    <h2 className="why-section-heading">Why AURA TERMINAL Is NOT For You</h2>
                     <div className="why-not-for-you-inner">
                         <p className="why-text">
-                            AURA FX is not designed for everyone, and that is intentional.
+                            AURA TERMINAL is not designed for everyone, and that is intentional.
                         </p>
                         <p className="why-text">
-                            This platform is not for traders looking for shortcuts, guaranteed profits, or passive income without effort. We do not sell hype, unrealistic promises, or instant results. If you are seeking signals to blindly follow without understanding risk, process, or accountability, AURA FX is not the right environment.
+                            This platform is not for traders looking for shortcuts, guaranteed profits, or passive income without effort. We do not sell hype, unrealistic promises, or instant results. If you are seeking signals to blindly follow without understanding risk, process, or accountability, AURA TERMINAL is not the right environment.
                         </p>
                         <p className="why-text">
-                            AURA FX is also not suitable for traders who are unwilling to be disciplined, patient, and consistent. Long-term profitability requires structure, emotional control, and respect for risk. If you are not prepared to review mistakes, follow rules, and improve incrementally, this platform will not deliver value to you.
+                            AURA TERMINAL is also not suitable for traders who are unwilling to be disciplined, patient, and consistent. Long-term profitability requires structure, emotional control, and respect for risk. If you are not prepared to review mistakes, follow rules, and improve incrementally, this platform will not deliver value to you.
                         </p>
                         <p className="why-text">
                             We are not a casual Discord group or entertainment-based trading community. Discussions are structured, analysis is professional, and standards are maintained. Traders who prefer unmoderated environments, noise, or speculative gambling will not benefit here.
                         </p>
                         <p className="why-text">
-                            AURA FX is built for individuals who take trading seriously as a skill, a business, and a long-term pursuit, not as a quick opportunity.
+                            AURA TERMINAL is built for individuals who take trading seriously as a skill, a business, and a long-term pursuit, not as a quick opportunity.
                         </p>
                         <p className="why-not-for-you-close">
                             If that describes you, we welcome you to apply.
@@ -288,9 +288,9 @@ const WhyInfinity = () => {
                     </div>
                 </div>
 
-                {/* ── AURA FX vs Typical Trading Communities ─────────────── */}
+                {/* ── AURA TERMINAL vs Typical Trading Communities ─────────────── */}
                 <div className="why-additional-features fade-in-up vs-section-wrapper">
-                    <h2 className="why-section-heading">AURA FX vs Typical Trading Communities</h2>
+                    <h2 className="why-section-heading">AURA TERMINAL vs Typical Trading Communities</h2>
 
                     <div className="vs-grid">
                         {/* Left — Typical */}
@@ -303,7 +303,7 @@ const WhyInfinity = () => {
                             <div className="vs-line" />
                         </div>
 
-                        {/* Right — AURA FX */}
+                        {/* Right — AURA TERMINAL */}
                         <VSCard type="aura" items={auraItems} />
                     </div>
                 </div>

@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaEnvelope, FaMapMarkerAlt, FaGlobe } from 'react-icons/fa';
+import { FaEnvelope, FaMapMarkerAlt, FaGlobe, FaShieldAlt } from 'react-icons/fa';
 import { IoSend } from 'react-icons/io5';
 import '../styles/ContactUs.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
+import { useAuth } from '../context/AuthContext';
+
+const ROLE_LABEL = { free: 'Free', premium: 'Premium', elite: 'Elite', a7fx: 'A7FX', admin: 'Admin', super_admin: 'Super Admin' };
+const ROLE_COLOR = { free: '#6b7280', premium: '#8b5cf6', elite: '#f59e0b', a7fx: '#ec4899', admin: '#10b981', super_admin: '#ef4444' };
 
 const ContactUs = () => {
     const location = useLocation();
+    const { user } = useAuth();
     const form = useRef();
     const sectionRef = useRef();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -17,6 +22,17 @@ const ContactUs = () => {
     const [visible, setVisible] = useState(false);
     const [activeField, setActiveField] = useState(null);
     const [charCount, setCharCount] = useState(0);
+
+    // Auto-fill from auth context for logged-in users
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                name: prev.name || user.name || user.username || '',
+                email: prev.email || user.email || ''
+            }));
+        }
+    }, [user]);
 
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
@@ -48,9 +64,15 @@ const ContactUs = () => {
         setSubmitting(true);
         setSubmitStatus(null);
         try {
-            await Api.submitContactForm({ name: formData.name, email: formData.email, message: formData.message });
+            await Api.submitContactForm({
+                name: formData.name,
+                email: formData.email,
+                message: formData.message,
+                user_id: user?.id || null,
+                user_role: user?.role || null
+            });
             setSubmitStatus({ type: 'success', message: 'Message transmitted successfully. Our team will respond shortly.' });
-            setFormData({ name: '', email: '', message: '' });
+            setFormData(prev => ({ name: user?.name || user?.username || '', email: user?.email || '', message: '' }));
             setCharCount(0);
         } catch (error) {
             setSubmitStatus({ type: 'error', message: 'Transmission failed. Please try again or contact us directly.' });
@@ -99,6 +121,19 @@ const ContactUs = () => {
                         <div className="contact-form-header">
                             <h2>Send a Message</h2>
                             <p>We typically respond within 2 hours</p>
+                            {user && user.role && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8 }}>
+                                    <FaShieldAlt style={{ color: ROLE_COLOR[user.role.toLowerCase()] || '#6b7280', fontSize: '0.8rem' }} />
+                                    <span style={{
+                                        fontSize: '0.78rem',
+                                        color: ROLE_COLOR[user.role.toLowerCase()] || '#6b7280',
+                                        fontWeight: 600,
+                                        letterSpacing: '0.03em'
+                                    }}>
+                                        Submitting as {ROLE_LABEL[user.role.toLowerCase()] || user.role} member
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         <form className="contact-form" ref={form} onSubmit={handleSubmit}>
@@ -196,7 +231,7 @@ const ContactUs = () => {
 
                             <div className="direct-email-option">
                                 <span className="direct-email-option__line" />
-                                <p>Or reach us at <a href="mailto:Support@auraxfx.com">Support@auraxfx.com</a></p>
+                                <p>Or reach us at <a href="mailto:support@auraterminal.com">support@auraterminal.com</a></p>
                                 <span className="direct-email-option__line" />
                             </div>
                         </form>
@@ -211,8 +246,8 @@ const ContactUs = () => {
                                 {
                                     icon: <FaEnvelope />,
                                     label: 'Email',
-                                    value: 'Support@auraxfx.com',
-                                    href: 'mailto:Support@auraxfx.com',
+                                    value: 'support@auraterminal.com',
+                                    href: 'mailto:support@auraterminal.com',
                                     tag: 'Primary'
                                 },
                                 {
@@ -254,7 +289,7 @@ const ContactUs = () => {
                             </div>
                             <div className="contact-map__frame">
                                 <iframe
-                                    title="AURA FX London Office"
+                                    title="AURA TERMINAL London Office"
                                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d158857.83989158905!2d-0.24168154759218046!3d51.52877184051532!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s&style=feature:all|element:labels.text.fill|color:0xffffff&style=feature:all|element:labels.text.stroke|color:0x000000"
                                     width="100%"
                                     height="100%"

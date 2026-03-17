@@ -86,7 +86,7 @@ const Home = () => {
                 <div className="loading-screen">
                     <CosmicBackground />
                     <div className="loading-content">
-                        <span className="loading-brand-text">Aura FX</span>
+                        <span className="loading-brand-text">Aura Terminal</span>
                         <div className="loading-subtitle">INITIALIZING SYSTEM...</div>
                         <div className="loading-dots-container">
                             <span className="loading-dot"></span>
@@ -107,7 +107,10 @@ const Home = () => {
                         <div className="home-logo-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
                             <A7Logo />
                             <div className="brand-name-container">
-                                <h1 className="brand-name">Aura FX</h1>
+                                <h1 className="brand-name">
+                                    <span className="brand-name-line">Aura</span>
+                                    <span className="brand-name-line">Terminal</span>
+                                </h1>
                                 <p className="powered-by-glitch">powered by <strong>The Glitch</strong></p>
                             </div>
 
@@ -183,7 +186,7 @@ const Home = () => {
 
                             {/* Why Choose Section */}
                             <div className="why-choose-section">
-                                <h2 className="section-title">Why Choose AURA FX</h2>
+                                <h2 className="section-title">Why Choose AURA TERMINAL</h2>
                                 <div className="why-grid">
                                     <div className="why-item">
                                         <div className="why-icon">✓</div>

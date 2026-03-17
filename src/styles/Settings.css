@@ -1,5 +1,5 @@
 /* ============================================================
-   SETTINGS.CSS — AURA FX  |  Premium Admin Settings Redesign
+   SETTINGS.CSS — AURA TERMINAL  |  Premium Admin Settings Redesign
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -1137,7 +1137,7 @@
   .btn-primary, .btn-secondary, .btn-danger { width: 100%; justify-content: center; }
 }
 /* ============================================================
-   SETTINGS FILTERS PANEL PATCH — AURA FX
+   SETTINGS FILTERS PANEL PATCH — AURA TERMINAL
    Add this to the bottom of Settings.css
    ============================================================ */
 

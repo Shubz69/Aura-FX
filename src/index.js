@@ -40,6 +40,14 @@ if (process.env.NODE_ENV === 'production') {
   };
 }
 
+// Register service worker for PWA push notifications
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
 const container = document.getElementById("root");
 
 if (container) {

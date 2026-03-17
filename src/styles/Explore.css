@@ -1,5 +1,5 @@
 /* ============================================================
-   EXPLORE.CSS — AURA FX | Unique Premium Design - FIXED SCROLLING
+   EXPLORE.CSS — AURA TERMINAL | Unique Premium Design - FIXED SCROLLING
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -112,7 +112,7 @@ html, body {
 
 /* Eyebrow pill label */
 .explore-header::before {
-  content: 'AURA FX PLATFORM';
+  content: 'AURA TERMINAL PLATFORM';
   display: block;
   margin: 0 auto 1.5rem;
   width: fit-content;

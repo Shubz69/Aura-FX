@@ -205,9 +205,9 @@ const Courses = () => {
                         </button>
                     </div>
 
-                    {/* AURA FX (Premium) – second */}
+                    {/* AURA TERMINAL (Premium) – second */}
                     <div className="subscription-plan-card premium">
-                        <h3 className="subscription-plan-title">AURA FX</h3>
+                        <h3 className="subscription-plan-title">AURA TERMINAL</h3>
                         <div className="subscription-pricing-container">
                             <div className="promotional-pricing">
                                 <div className="promo-price">£0</div>

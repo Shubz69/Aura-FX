@@ -39,14 +39,19 @@ export const EntitlementsProvider = ({ children }) => {
     fetchInFlight.current = true;
     setLoading(true);
     setError(null);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     try {
-      const base = typeof window !== 'undefined' && window.location?.origin
-        ? window.location.origin
-        : (process.env.REACT_APP_API_URL || '');
+      const base = process.env.REACT_APP_API_URL ||
+        (typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : '');
       const res = await fetch(`${base}/api/me`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        cache: 'no-store'
+        cache: 'no-store',
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       if (!res.ok) {
         if (res.status === 401) {
           setData(null);
@@ -71,7 +76,8 @@ export const EntitlementsProvider = ({ children }) => {
         setData(null);
       }
     } catch (err) {
-      setError(err.message);
+      clearTimeout(timeoutId);
+      if (err.name !== 'AbortError') setError(err.message);
       setData(null);
     } finally {
       setLoading(false);

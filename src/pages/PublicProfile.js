@@ -142,7 +142,7 @@ const PublicProfile = () => {
                         />
                     ) : (
                         <div className="profile-banner-placeholder">
-                            <div className="banner-text">Welcome to AURA FX</div>
+                            <div className="banner-text">Welcome to AURA TERMINAL</div>
                         </div>
                     )}
                     

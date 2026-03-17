@@ -196,7 +196,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         setTimeout(() => setMounted(true), 50);
         
         if (isSystemUser) { 
-            setProfile(userData || { username: 'AURA FX', id: 'system' }); 
+            setProfile(userData || { username: 'AURA TERMINAL', id: 'system' }); 
             setLoading(false); 
             return; 
         }

@@ -1,5 +1,5 @@
 /* ============================================================
-   AURA FX Community — Complete CSS
+   AURA TERMINAL Community — Complete CSS
    FIXED: Real device viewport issues (Android/iPhone/iPad)
    ROOT CAUSE FIXED: 100vh vs dvh, browser chrome overlap,
    safe-area-insets, iOS Safari bottom toolbar, Android nav bar
@@ -266,6 +266,10 @@ body.community-page-active {
 .channel-item.active { background: rgba(139,92,246,0.12); color: #fff; font-weight: 600; }
 .channel-item.active::before { height: 24px; background: var(--purple); }
 .channel-item.unread { color: #fff; font-weight: 600; }
+
+.channel-mute-btn { opacity: 0 !important; }
+.channel-item:hover .channel-mute-btn { opacity: 1 !important; color: #64748b !important; }
+.channel-mute-btn[aria-label="Unmute"] { opacity: 1 !important; color: #ef4444 !important; }
 
 .channel-icon { flex-shrink: 0; font-size: 0.95rem; color: var(--text-dim); transition: color var(--transition); width: 18px; text-align: center; }
 .channel-item:hover .channel-icon,
@@ -1884,7 +1888,7 @@ body.sidebar-open-mobile {
     margin: 0; font-family: 'Space Grotesk', sans-serif;
     font-size: 0.78rem; font-weight: 300; color: rgba(255,255,255,0.7);
     line-height: 1.55; word-break: break-word;
-    display: -webkit-box; -webkit-line-clamp: 2;
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
 }
 
@@ -2431,7 +2435,7 @@ body.sidebar-open-mobile {
     .mini-task-title { font-size: 0.78rem; }
     .mini-task-xp    { font-size: 0.5rem; padding: 2px 6px; }
     .mini-note-item  { padding: 8px 12px; }
-    .mini-note-item p { font-size: 0.74rem; -webkit-line-clamp: 2; }
+    .mini-note-item p { font-size: 0.74rem; -webkit-line-clamp: 2; line-clamp: 2; }
 
     .go-to-journal-btn { padding: 12px 20px !important; font-size: 0.7rem !important; letter-spacing: 0.2em; }
     .jmodal-empty     { padding: 14px 10px; font-size: 0.6rem; }

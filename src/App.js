@@ -77,6 +77,7 @@ const AuraAnalytics = lazy(() => import('./pages/aura-analysis/AuraAnalytics'));
 const AuraLeaderboard = lazy(() => import('./pages/aura-analysis/AuraLeaderboard'));
 const TraderCVTab = lazy(() => import('./pages/aura-analysis/TraderCVTab'));
 const TraderDeckTradeJournal = lazy(() => import('./pages/trader-deck/TraderDeckTradeJournal'));
+const Affiliation = lazy(() => import('./pages/Affiliation'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
@@ -197,6 +198,7 @@ function AppRoutes() {
                                 <Subscription />
                             </SubscriptionPageGuard>
                         } />
+                        <Route path="/affiliation" element={<AuthenticatedGuard><Affiliation /></AuthenticatedGuard>} />
                         <Route path="/terms" element={<Terms />} />
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/community" element={

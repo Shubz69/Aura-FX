@@ -12,7 +12,7 @@
     filter: brightness(0) invert(1); /* Makes the logo white */
 }
 
-/* For navbar - larger size to match AURA FX text */
+/* For navbar - larger size to match AURA TERMINAL text */
 .navbar-logo-wrapper .a7-logo-image {
     width: 42px;
     height: 42px;

@@ -4,14 +4,12 @@ import { savePostAuthRedirect } from '../utils/postAuthRedirect';
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
 const getApiBaseUrl = () => {
-    if (typeof window !== 'undefined' && window.location?.origin) {
-        return window.location.origin;
-    }
-
     if (process.env.REACT_APP_API_URL) {
         return process.env.REACT_APP_API_URL;
     }
-    
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+    }
     return '';
 };
 
@@ -745,6 +743,32 @@ const Api = {
     
     submitContactForm: (contactData) => {
         return axios.post(`${API_BASE_URL}/api/contact`, contactData);
+    },
+
+    patchContactMessage: (id, data) => {
+        return axios.patch(`${API_BASE_URL}/api/contact/${id}`, data);
+    },
+
+    getReferralStats: () => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/referral/stats`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+
+    savePushSubscription: (subscription) => {
+        const token = localStorage.getItem('token');
+        return axios.post(`${API_BASE_URL}/api/push/subscribe`, { subscription }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+
+    removePushSubscription: (endpoint) => {
+        const token = localStorage.getItem('token');
+        return axios.delete(`${API_BASE_URL}/api/push/subscribe`, {
+            data: { endpoint },
+            headers: { Authorization: `Bearer ${token}` }
+        });
     },
     
     // Subscription

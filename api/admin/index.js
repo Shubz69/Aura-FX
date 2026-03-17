@@ -52,7 +52,7 @@ const sendContactEmail = async ({ name, email, subject, message }) => {
         <p><strong>Message:</strong></p>
         <p>${(message || '').replace(/\n/g, '<br>')}</p>
         <hr />
-        <p style="font-size: 12px; color: #666;">Submitted via AURA FX contact form.</p>
+        <p style="font-size: 12px; color: #666;">Submitted via AURA TERMINAL contact form.</p>
       `
     });
 
@@ -367,6 +367,38 @@ module.exports = async (req, res) => {
                           (req.url && req.url.includes('/contact'));
 
   if (isContactRequest) {
+    const ensureContactTable = async (db) => {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS contact_messages (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          subject VARCHAR(255),
+          message TEXT NOT NULL,
+          user_id INT DEFAULT NULL,
+          user_role VARCHAR(64) DEFAULT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          \`read\` BOOLEAN DEFAULT FALSE,
+          dealt_with BOOLEAN DEFAULT FALSE,
+          INDEX idx_email (email),
+          INDEX idx_created (created_at)
+        )
+      `);
+      // Idempotent column additions
+      const extras = [
+        ["user_id", "INT DEFAULT NULL"],
+        ["user_role", "VARCHAR(64) DEFAULT NULL"],
+        ["dealt_with", "BOOLEAN DEFAULT FALSE"]
+      ];
+      for (const [col, def] of extras) {
+        try {
+          await db.execute(`ALTER TABLE contact_messages ADD COLUMN ${col} ${def}`);
+        } catch (e) {
+          if (!e.message.includes('Duplicate column')) throw e;
+        }
+      }
+    };
+
     // GET - Fetch all contact messages (admin only)
     if (req.method === 'GET') {
       try {
@@ -377,20 +409,7 @@ module.exports = async (req, res) => {
         }
 
         try {
-          await db.execute(`
-            CREATE TABLE IF NOT EXISTS contact_messages (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              name VARCHAR(255) NOT NULL,
-              email VARCHAR(255) NOT NULL,
-              subject VARCHAR(255),
-              message TEXT NOT NULL,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              \`read\` BOOLEAN DEFAULT FALSE,
-              INDEX idx_email (email),
-              INDEX idx_created (created_at)
-            )
-          `);
-
+          await ensureContactTable(db);
           const [rows] = await db.execute(
             'SELECT * FROM contact_messages ORDER BY created_at DESC'
           );
@@ -402,32 +421,56 @@ module.exports = async (req, res) => {
             email: row.email,
             subject: row.subject,
             message: row.message,
+            userRole: row.user_role || null,
+            userId: row.user_id || null,
             createdAt: row.created_at,
-            read: row.read === 1 || row.read === true
+            read: row.read === 1 || row.read === true,
+            dealtWith: row.dealt_with === 1 || row.dealt_with === true
           }));
 
           return res.status(200).json(messages);
         } catch (dbError) {
           console.error('Database error fetching contact messages:', dbError.message);
           if (db && !db.ended) await db.end();
-          return res.status(500).json({
-            success: false,
-            message: 'Failed to fetch contact messages'
-          });
+          return res.status(500).json({ success: false, message: 'Failed to fetch contact messages' });
         }
       } catch (error) {
         console.error('Error in contact GET:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to fetch contact messages'
-        });
+        return res.status(500).json({ success: false, message: 'Failed to fetch contact messages' });
+      }
+    }
+
+    // PATCH - Mark contact message as dealt with (admin only)
+    if (req.method === 'PATCH') {
+      try {
+        const parts = pathname.split('/');
+        const messageId = parts[parts.length - 1];
+        if (!messageId || isNaN(parseInt(messageId))) {
+          return res.status(400).json({ success: false, message: 'Message ID required' });
+        }
+        const db = await getDbConnection();
+        if (!db) return res.status(500).json({ success: false, message: 'Database connection error' });
+        try {
+          const dealtWith = req.body?.dealt_with !== false;
+          await db.execute(
+            'UPDATE contact_messages SET dealt_with = ? WHERE id = ?',
+            [dealtWith ? 1 : 0, parseInt(messageId)]
+          );
+          await db.end();
+          return res.status(200).json({ success: true, dealtWith });
+        } catch (dbError) {
+          if (db && !db.ended) await db.end();
+          return res.status(500).json({ success: false, message: dbError.message });
+        }
+      } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
       }
     }
 
     // POST - Submit new contact message
     if (req.method === 'POST') {
       try {
-        const { name, email, subject, message } = req.body || {};
+        const { name, email, subject, message, user_id, user_role } = req.body || {};
 
         if (!name || !email || !message) {
           return res.status(400).json({
@@ -441,21 +484,10 @@ module.exports = async (req, res) => {
 
         try {
           if (db) {
-            await db.execute(`
-            CREATE TABLE IF NOT EXISTS contact_messages (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              name VARCHAR(255) NOT NULL,
-              email VARCHAR(255) NOT NULL,
-              subject VARCHAR(255),
-              message TEXT NOT NULL,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              \`read\` BOOLEAN DEFAULT FALSE
-            )
-          `);
-
+            await ensureContactTable(db);
             await db.execute(
-              'INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)',
-              [name, email, subject || '', message]
+              'INSERT INTO contact_messages (name, email, subject, message, user_id, user_role) VALUES (?, ?, ?, ?, ?, ?)',
+              [name, email, subject || '', message, user_id || null, user_role || null]
             );
             await db.end();
           } else {

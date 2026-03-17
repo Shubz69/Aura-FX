@@ -5,7 +5,7 @@
  * - Live price updates with green/red flash
  * - Auto-scrolling ticker tape (TradingView style)
  * - Category tabs for filtering
- * - "View All Markets" modal with live prices — premium AURA FX redesign
+ * - "View All Markets" modal with live prices — premium AURA TERMINAL redesign
  * - Never shows 0.00 - shows loading or delayed indicator
  * - Stale data indicator
  * - Responsive design with proper height/padding
@@ -98,7 +98,7 @@ const MarketItem = memo(({
   );
 });
 
-// View All Markets Modal — AURA FX premium redesign
+// View All Markets Modal — AURA TERMINAL premium redesign
 const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
   if (!isOpen) return null;
 

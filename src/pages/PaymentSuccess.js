@@ -38,7 +38,7 @@ const PaymentSuccess = () => {
             if (planParam === "a7fx") {
                 purchaseName = "A7FX Elite subscription";
             } else {
-                purchaseName = "AURA FX subscription";
+                purchaseName = "AURA TERMINAL subscription";
             }
             setMessage(`Purchasing ${purchaseName}...`);
         } else {
@@ -156,7 +156,7 @@ const PaymentSuccess = () => {
                                             localStorage.setItem('subscriptionExpiry', retryResponse.data.expiry);
                                         }
                                         const user = JSON.parse(localStorage.getItem('user') || '{}');
-                                        // Set role based on plan: 'elite' for A7FX Elite, 'premium' for AURA FX
+                                        // Set role based on plan: 'elite' for A7FX Elite, 'premium' for AURA TERMINAL
                                         if (planParam === 'a7fx' || planParam === 'A7FX' || planParam === 'elite') {
                                             user.role = 'elite'; // A7FX purchases get Elite role
                                         } else {

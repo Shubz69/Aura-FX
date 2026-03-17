@@ -66,6 +66,13 @@ export const CommunityGuard = ({ children }) => {
   if (!user || !token) {
     return <Navigate to="/signup" state={{ from: location, redirectAfter: '/choose-plan' }} replace />;
   }
+
+  // Admins always have access — skip entitlements loading entirely
+  const role = (user?.role || '').toLowerCase();
+  const isAdminUser = role === 'admin' || role === 'super_admin' ||
+    (user?.email || '').toLowerCase() === 'shubzfx@gmail.com';
+  if (isAdminUser) return children;
+
   if (authLoading || entLoading) {
     return <LoadingSpinner />;
   }

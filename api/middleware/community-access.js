@@ -79,12 +79,12 @@ async function checkCommunityAccess(userId) {
       return { hasAccess: true, accessType: 'A7FX_ELITE_ACTIVE', reason: 'A7FX Elite role' };
     }
     
-    // Aura FX check (£99)
+    // Aura Terminal check (£99)
     if (isSubscriptionActive && ['aura', 'premium'].includes(user.subscription_plan)) {
-      return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Aura FX subscription active' };
+      return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Aura Terminal subscription active' };
     }
     
-    // Role-based Aura FX check (fallback)
+    // Role-based Aura Terminal check (fallback)
     if (user.role === 'premium') {
       return { hasAccess: true, accessType: 'AURA_FX_ACTIVE', reason: 'Premium role' };
     }

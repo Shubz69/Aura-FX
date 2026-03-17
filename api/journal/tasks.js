@@ -12,25 +12,85 @@ const { XP, awardOnce } = require('./xp-helper');
 /** Mandatory tasks per tier: key, title, description. A7FX treated as ELITE. */
 const MANDATORY_TASKS = {
   FREE: [
-    { key: 'free_plan', title: 'Plan Before You Trade', description: 'Write your daily bias and one clear reason why you expect price to move in that direction before placing any trade.' },
-    { key: 'free_risk', title: 'Risk With Discipline', description: 'Risk no more than 1–2% per trade and take a maximum of 3 trades.' },
-    { key: 'free_study', title: 'Complete 20 Minutes of Study', description: 'Study one trading concept daily and write 3 key points you learned.' },
-    { key: 'free_move', title: 'Move Your Body', description: 'Do at least 20 minutes of exercise (walk, gym, stretch) to improve focus and reduce stress.' },
-    { key: 'free_reflect', title: 'Reflect Before Bed', description: 'Write one mistake you made today (trading or life) and how you will improve tomorrow.' },
+    {
+      key: 'free_plan',
+      title: 'Plan Before You Trade',
+      description: 'Before opening any chart, write your daily bias (bullish/bearish/neutral), the specific asset you plan to trade, one key level to watch, and your reason for the directional bias. No bias = no trade.'
+    },
+    {
+      key: 'free_risk',
+      title: 'Risk With Discipline',
+      description: 'Set a hard limit of 1% risk per trade and maximum 2 trades today. After each trade, write the exact entry, stop loss, take profit, and R:R before you close the platform.'
+    },
+    {
+      key: 'free_study',
+      title: '20-Minute Focused Study',
+      description: 'Choose one concept (structure, liquidity, supply & demand, or session timing). Study it for 20 minutes and write 2 key takeaways you can apply immediately to your charts.'
+    },
+    {
+      key: 'free_move',
+      title: 'Move Your Body',
+      description: 'Complete at least 20 minutes of physical activity — walk, gym, stretch, or bodyweight training. Physical movement directly improves focus, emotional regulation, and decision-making.'
+    },
+    {
+      key: 'free_reflect',
+      title: 'End-of-Day Reflection',
+      description: 'Before sleep, write one specific mistake you made today (in trading or thinking) and one concrete action you will take tomorrow to fix it. Vague reflections do not count.'
+    },
   ],
   PREMIUM: [
-    { key: 'premium_morning', title: 'Morning Focus Routine', description: 'Spend 10 minutes in silence (breathing or journaling) before checking charts to control emotional state.' },
-    { key: 'premium_session', title: 'Structured Session Plan', description: 'Write your London and New York session expectations before trading begins.' },
-    { key: 'premium_discipline', title: 'Execution Discipline Score', description: 'After trading, score your discipline out of 10 and explain why.' },
-    { key: 'premium_health', title: 'Health & Energy Control', description: 'Eat clean for the day and avoid junk or sugar before trading hours.' },
-    { key: 'premium_skill', title: 'Skill Compounding', description: 'Spend 30 minutes improving one skill daily (chart study, macro research, psychology, or reviewing old trades).' },
+    {
+      key: 'premium_morning',
+      title: 'Pre-Market Mental Routine',
+      description: 'Before touching the charts, spend 10 minutes in silence — no phone, no news. Breathe and write your emotional state (0–10 confidence, 0–10 focus). Only trade if both are above 6.'
+    },
+    {
+      key: 'premium_session',
+      title: 'Session-by-Session Trade Plan',
+      description: 'Write your London Open plan (key levels, bias, risk budget) before 8:00 AM UTC. Write your New York Open plan before 1:30 PM UTC. Execution without a written plan is gambling.'
+    },
+    {
+      key: 'premium_discipline',
+      title: 'Execution Score',
+      description: 'After each trade or at day end, score your execution out of 10 across three areas: (1) entry precision, (2) stop loss placement, (3) target management. Write the total and reason.'
+    },
+    {
+      key: 'premium_health',
+      title: 'Performance Nutrition',
+      description: 'Track what you ate today. Avoid processed food, sugar, or excessive caffeine during trading hours. Write whether your energy was stable or unstable, and how it affected your decisions.'
+    },
+    {
+      key: 'premium_skill',
+      title: '30-Minute Skill Block',
+      description: 'Dedicate 30 minutes to one skill: chart markup, macro analysis, psychology study, or reviewing a past trade in detail. Write the specific skill worked on and one improvement identified.'
+    },
   ],
   ELITE: [
-    { key: 'elite_identity', title: 'Define Your Daily Identity', description: 'Write one sentence every morning: "Today I trade like a professional by ______." This rewires behaviour.' },
-    { key: 'elite_emotional', title: 'Emotional Awareness Tracking', description: 'After every win or loss, write how your confidence level changed (up, down, stable) and why.' },
-    { key: 'elite_deepwork', title: 'Deep Work Block', description: 'Complete one 60-minute distraction-free session focused only on market study or review. No phone. No notifications.' },
-    { key: 'elite_physical', title: 'Physical & Mental Optimisation', description: 'Train your body (gym or intense movement) and drink 2–3L of water to maintain cognitive performance.' },
-    { key: 'elite_ceo', title: 'End-of-Day CEO Review', description: 'Ask yourself: Did I act like a disciplined fund manager or an emotional retail trader today? Write a 3–5 sentence answer.' },
+    {
+      key: 'elite_identity',
+      title: 'Daily Professional Identity Statement',
+      description: 'Write this sentence every morning and complete it fully: "Today I trade like a professional by ______." Be specific — not "being disciplined" but "only entering on confirmed structure breaks with a 1:2 minimum R:R."'
+    },
+    {
+      key: 'elite_emotional',
+      title: 'Emotional P&L Tracking',
+      description: 'After every win, loss, or breakeven, log: (1) your emotional state before the trade, (2) whether emotion influenced the entry or exit, (3) confidence change. Patterns here reveal your psychological edge.'
+    },
+    {
+      key: 'elite_deepwork',
+      title: '60-Minute Deep Work Block',
+      description: 'Complete one uninterrupted 60-minute block on one market task: backtest a setup, analyse a session replay, review 10 past trades for a pattern, or study a macro driver. Phone off. No interruptions.'
+    },
+    {
+      key: 'elite_physical',
+      title: 'Elite Physical Protocol',
+      description: 'Train with intent today (gym, sprint intervals, or 45+ min cardio). Drink minimum 2.5L of water. Log sleep quality (hours + quality out of 10). Cognitive performance is inseparable from physical state.'
+    },
+    {
+      key: 'elite_ceo',
+      title: 'CEO-Level Daily Debrief',
+      description: 'Write a 5-sentence end-of-day debrief answering: (1) Did I follow my rules fully? (2) What was my best decision today? (3) What was my worst decision? (4) What will I do differently tomorrow? (5) Would a fund manager be proud of today?'
+    },
   ],
 };
 

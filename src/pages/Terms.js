@@ -17,7 +17,7 @@ const Terms = () => {
                     <section>
                         <h2>1. Agreement to terms</h2>
                         <p>
-                            By accessing or using AURA FX ("we," "us," or "our"), you agree to be bound by these Terms and Conditions. 
+                            By accessing or using AURA TERMINAL ("we," "us," or "our"), you agree to be bound by these Terms and Conditions. 
                             If you disagree with any part of these terms, you may not access the service.
                         </p>
                     </section>
@@ -25,13 +25,13 @@ const Terms = () => {
                     <section>
                         <h2>2. Use license</h2>
                         <p>
-                            Permission is granted to temporarily access the materials on AURA FX's website for personal, non-commercial 
+                            Permission is granted to temporarily access the materials on AURA TERMINAL's website for personal, non-commercial 
                             transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
                         </p>
                         <ul>
                             <li>Modify or copy the materials</li>
                             <li>Use the materials for any commercial purpose or for any public display</li>
-                            <li>Attempt to reverse engineer any software contained on AURA FX's website</li>
+                            <li>Attempt to reverse engineer any software contained on AURA TERMINAL's website</li>
                             <li>Remove any copyright or other proprietary notations from the materials</li>
                             <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
                         </ul>
@@ -52,7 +52,7 @@ const Terms = () => {
                     <section>
                         <h2>4. Subscription and payment</h2>
                         <p>
-                            AURA FX offers subscription-based services. By subscribing, you agree to pay the subscription fees as indicated 
+                            AURA TERMINAL offers subscription-based services. By subscribing, you agree to pay the subscription fees as indicated 
                             on the platform. Subscription fees are billed in advance on a monthly basis and are non-refundable.
                         </p>
                         <p>
@@ -64,7 +64,7 @@ const Terms = () => {
                     <section>
                         <h2>5. Trading and financial disclaimer</h2>
                         <p>
-                            AURA FX provides educational content and trading tools. We do not provide financial advice, and all trading 
+                            AURA TERMINAL provides educational content and trading tools. We do not provide financial advice, and all trading 
                             decisions are your own responsibility. Trading involves substantial risk of loss and is not suitable for all investors.
                         </p>
                         <p>
@@ -76,7 +76,7 @@ const Terms = () => {
                         <h2>6. Intellectual property</h2>
                         <p>
                             The service and its original content, features, and functionality are and will remain the exclusive property of 
-                            AURA FX and its licensors. The service is protected by copyright, trademark, and other laws.
+                            AURA TERMINAL and its licensors. The service is protected by copyright, trademark, and other laws.
                         </p>
                     </section>
 
@@ -103,7 +103,7 @@ const Terms = () => {
                     <section>
                         <h2>9. Limitation of liability</h2>
                         <p>
-                            In no event shall AURA FX, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for 
+                            In no event shall AURA TERMINAL, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for 
                             any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, 
                             use, goodwill, or other intangible losses, resulting from your use of the service.
                         </p>
@@ -112,7 +112,7 @@ const Terms = () => {
                     <section>
                         <h2>10. Governing law</h2>
                         <p>
-                            These Terms shall be interpreted and governed by the laws of the jurisdiction in which AURA FX operates, without 
+                            These Terms shall be interpreted and governed by the laws of the jurisdiction in which AURA TERMINAL operates, without 
                             regard to its conflict of law provisions.
                         </p>
                     </section>

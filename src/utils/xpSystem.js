@@ -1,39 +1,39 @@
 /**
- * AURA FX XP System
+ * AURA TERMINAL XP System
  * Premium gamified XP and leveling system with trading-focused ranks
  */
 
-// XP Rewards
+// XP Rewards — decimal-based, hard to earn. Quality over quantity.
 export const XP_REWARDS = {
-    MESSAGE: 10,
-    FILE_ATTACHMENT: 5,
-    EMOJI_BONUS: 0.1,
-    DAILY_LOGIN: 25, // Base XP, scales with streak (see calculateLoginXP function)
-    COURSE_COMPLETION: 50,
-    HELPING_USER: 100,
-    JOURNAL_ENTRY: 15,
-    RULE_VIOLATION: -200
+    MESSAGE: 0.05,          // Small reward per message (cooldown enforced)
+    FILE_ATTACHMENT: 0.10,  // Bonus for attaching a file/image
+    EMOJI_BONUS: 0.01,      // Tiny bonus per emoji (capped)
+    DAILY_LOGIN: 0.50,      // Base daily login XP, scales with streak
+    COURSE_COMPLETION: 2.0, // Completing a course module
+    HELPING_USER: 0.50,     // Recognising/helping another user (30-min cooldown)
+    JOURNAL_ENTRY: 0.25,    // Completing a journal task (once per day)
+    RULE_VIOLATION: -5.0    // Penalty for breaking platform rules
 };
 
 /**
  * Calculate XP reward based on login streak
- * Base: 25 XP, scales with streak length
- * +5 XP bonus per 7 days (capped at 100 bonus XP = 20 weeks)
+ * Base: 0.5 XP, scales with streak length
+ * +0.05 XP bonus per 7 days (capped at 2.0 bonus XP = 40 weeks)
  */
 export const calculateLoginXP = (streak) => {
-    const baseXP = 25;
-    // Bonus XP increases with streak: +5 XP per 7 days (capped at 100 bonus)
-    const bonusMultiplier = Math.min(Math.floor(streak / 7), 20); // Max 20 bonuses = 100 bonus XP
-    const bonusXP = bonusMultiplier * 5;
-    return baseXP + bonusXP;
+    const baseXP = 0.5;
+    // Bonus XP increases with streak: +0.05 per 7 days (capped at 2.0 bonus XP = 40 weeks)
+    const bonusMultiplier = Math.min(Math.floor(streak / 7), 40);
+    const bonusXP = bonusMultiplier * 0.05;
+    return Math.round((baseXP + bonusXP) * 100) / 100;
 };
 
 // Cooldowns (in milliseconds) - Anti-spam protection
 export const XP_COOLDOWNS = {
-    MESSAGE: 5000, // 5 seconds between messages
+    MESSAGE: 60000,       // 1 minute between XP-eligible messages
     DAILY_LOGIN: 86400000, // 24 hours
-    JOURNAL_ENTRY: 3600000, // 1 hour
-    HELPING_USER: 300000 // 5 minutes
+    JOURNAL_ENTRY: 86400000, // 24 hours — once per day
+    HELPING_USER: 1800000   // 30 minutes
 };
 
 // Trading Rank Titles (Every 10 levels from 1-1000)
@@ -156,7 +156,7 @@ export const TRADING_RANKS = {
     970: 'Chart God',
     980: 'Institutional God',
     990: 'Supreme Trader',
-    1000: 'AURA FX Legend'
+    1000: 'AURA TERMINAL Legend'
 };
 
 /**

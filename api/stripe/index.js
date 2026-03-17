@@ -81,12 +81,12 @@ const sendSubscriptionCancellationEmail = async (userEmail, userName) => {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: userEmail,
-      subject: '⚠️ Your AURA FX Subscription Has Been Cancelled',
+      subject: '⚠️ Your AURA TERMINAL Subscription Has Been Cancelled',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #d32f2f;">⚠️ Subscription Cancelled</h2>
           <p>Dear ${userName || 'Valued Member'},</p>
-          <p>We regret to inform you that your AURA FX subscription has been cancelled due to a payment failure.</p>
+          <p>We regret to inform you that your AURA TERMINAL subscription has been cancelled due to a payment failure.</p>
           <p><strong>What this means:</strong></p>
           <ul>
             <li>Your access to the community has been temporarily suspended</li>
@@ -102,7 +102,7 @@ const sendSubscriptionCancellationEmail = async (userEmail, userName) => {
           <p>If you believe this is an error or need assistance, please contact our support team immediately.</p>
           <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
             Best regards,<br>
-            The AURA FX Team
+            The AURA TERMINAL Team
           </p>
         </div>
       `
@@ -238,7 +238,7 @@ module.exports = async (req, res) => {
           userRole = 'elite';
         } else if (planType === 'free') {
           userRole = 'user'; // Free tier: allowlist only (General, Welcome, Announcements)
-        } else if (planType === 'aura' || planType === 'Aura FX') {
+        } else if (planType === 'aura' || planType === 'Aura Terminal') {
           userRole = 'premium';
         }
 

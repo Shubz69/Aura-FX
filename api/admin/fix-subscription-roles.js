@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
         `SELECT id, email, role, subscription_status, subscription_plan 
          FROM users 
          WHERE subscription_status = 'active' 
-         AND subscription_plan IN ('aura', 'Aura FX', 'premium')
+         AND subscription_plan IN ('aura', 'Aura Terminal', 'premium')
          AND role != 'premium'`
       );
 

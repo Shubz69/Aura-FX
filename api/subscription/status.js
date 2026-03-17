@@ -51,12 +51,12 @@ function decodeToken(authHeader) {
 
 // Plan display names
 const PLAN_NAMES = {
-  'aura': 'Aura FX Standard',
+  'aura': 'Aura Terminal Standard',
   'a7fx': 'A7FX Elite',
   'A7FX': 'A7FX Elite',
   'elite': 'A7FX Elite',
   'free': 'Free',
-  'premium': 'Aura FX Standard'
+  'premium': 'Aura Terminal Standard'
 };
 
 // Plan prices
@@ -240,7 +240,7 @@ module.exports = async (req, res) => {
       tier = 'A7FX';
       logger.info('Access granted: A7FX_ELITE_ACTIVE', { userId, role: userRole, plan: userPlan });
     }
-    // 3. Aura FX role or subscription (£99)
+    // 3. Aura Terminal role or subscription (£99)
     else if (userRole === 'premium' || 
              (isActive && ['aura', 'premium'].includes(userPlan))) {
       hasCommunityAccess = true;

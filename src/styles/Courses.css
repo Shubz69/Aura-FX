@@ -1,5 +1,5 @@
 /* ============================================================
-   COURSES.CSS — AURA FX PREMIUM EDUCATION EDITION
+   COURSES.CSS — AURA TERMINAL PREMIUM EDUCATION EDITION
    FIXED SCROLLING ISSUE - Like contact.css
    ============================================================ */
 
@@ -106,7 +106,7 @@ html, body {
 
 /* Eyebrow pill label */
 .courses-header::before {
-    content: 'AURA FX EDUCATION';
+    content: 'AURA TERMINAL EDUCATION';
     display: block;
     margin: 0 auto 1.5rem;
     width: fit-content;

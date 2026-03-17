@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import Api from "../services/Api";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
 import CosmicBackground from '../components/CosmicBackground';
@@ -81,6 +82,7 @@ const RingProgress = ({ pct, color, value, label, size = 80 }) => {
 
 const Profile = () => {
     const { user, setUser } = useAuth();
+    const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, permission: pushPermission, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
     const [activeTab, setActiveTab] = useState('overview');
     const [status, setStatus] = useState("");
     const [formData, setFormData] = useState({
@@ -1102,6 +1104,36 @@ if (!avatarToSave && avatarColor) {
                                 </select>
                             </div>
 
+                            {pushSupported && (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                                    borderRadius: 10, padding: '12px 16px', marginBottom: 16
+                                }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0' }}>Push Notifications</div>
+                                        <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
+                                            {pushPermission === 'denied' ? 'Blocked — enable in browser settings' :
+                                             pushSubscribed ? 'Active — you will receive alerts for mentions and announcements' :
+                                             'Get alerts for mentions, announcements, and new messages'}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={pushSubscribed ? disablePush : enablePush}
+                                        disabled={pushLoading || pushPermission === 'denied'}
+                                        style={{
+                                            background: pushSubscribed ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+                                            border: pushSubscribed ? '1px solid rgba(239,68,68,0.3)' : 'none',
+                                            color: pushSubscribed ? '#ef4444' : '#fff',
+                                            borderRadius: 8, padding: '7px 14px', fontSize: '0.78rem',
+                                            fontWeight: 600, cursor: pushLoading ? 'wait' : 'pointer',
+                                            opacity: pushLoading ? 0.7 : 1, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 12
+                                        }}
+                                    >
+                                        {pushLoading ? '…' : pushSubscribed ? 'Disable' : 'Enable'}
+                                    </button>
+                                </div>
+                            )}
                             <button className="pf-save-btn" onClick={handleSaveChanges}>Save Profile</button>
                         </div>
                     )}

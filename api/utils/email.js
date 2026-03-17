@@ -40,9 +40,9 @@ const sendSignupNotification = async ({ email, name, username, userCount }) => {
     await transporter.sendMail({
       from,
       to: SUPPORT_EMAIL,
-      subject: `[AURA FX] New signup – ${nth} user (total: ${userCount})`,
+      subject: `[AURA TERMINAL] New signup – ${nth} user (total: ${userCount})`,
       html: `
-        <h2>New signup on AURA FX</h2>
+        <h2>New signup on AURA TERMINAL</h2>
         <p><strong>Total user count:</strong> ${userCount} (this is the ${nth} user)</p>
         <p><strong>Email:</strong> ${email || 'N/A'}</p>
         <p><strong>Name:</strong> ${name || 'N/A'}</p>
@@ -84,7 +84,7 @@ const sendWeeklySignupReport = async ({ signups }) => {
     if (!plan) return 'None';
     const p = (plan || '').toString().toLowerCase();
     if (p === 'free') return 'Free';
-    if (p === 'aura' || p === 'premium') return 'Aura FX (Premium)';
+    if (p === 'aura' || p === 'premium') return 'Aura Terminal (Premium)';
     if (p === 'a7fx' || p === 'elite') return 'A7FX (Elite)';
     return plan;
   };
@@ -106,7 +106,7 @@ const sendWeeklySignupReport = async ({ signups }) => {
     await transporter.sendMail({
       from,
       to: SUPPORT_EMAIL,
-      subject: `[AURA FX] Weekly Signup Report – ${signups.length} new signup${signups.length !== 1 ? 's' : ''} this week`,
+      subject: `[AURA TERMINAL] Weekly Signup Report – ${signups.length} new signup${signups.length !== 1 ? 's' : ''} this week`,
       html: `
         <h2>Weekly Signup Report</h2>
         <p><strong>Week ending:</strong> ${formatDate(new Date())}</p>

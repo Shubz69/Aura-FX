@@ -12,7 +12,7 @@
     --bg-medium: #1a1a1a;
     --bg-light: #252525;
     
-    /* Fonts - same as navbar "AURA FX" logo everywhere */
+    /* Fonts - same as navbar "AURA TERMINAL" logo everywhere */
     --font-main: 'Space Grotesk', sans-serif;
     --font-secondary: 'Space Grotesk', sans-serif;
     
@@ -152,7 +152,7 @@ html {
     min-height: 100%;
 }
 
-/* Site-wide font: same as navbar "AURA FX" logo (Space Grotesk) - skinny weight to match logo */
+/* Site-wide font: same as navbar "AURA TERMINAL" logo (Space Grotesk) - skinny weight to match logo */
 body,
 body * {
     font-family: 'Space Grotesk', sans-serif;
@@ -163,7 +163,7 @@ pre, code, .md-pre, .md-code,
 [class*="monospace"], [class*="code-block"] {
     font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
 }
-/* Site-wide: all titles first letter capital only, skinny font (match AURA FX logo) */
+/* Site-wide: all titles first letter capital only, skinny font (match AURA TERMINAL logo) */
 h1, h2, h3, h4, h5, h6,
 .nav-links a, .leaderboard-main-title, .courses-title,
 .section-title, .journal-sidebar-title, .journal-section-title,
@@ -185,7 +185,7 @@ h1, h2, h3, h4, h5, h6,
 .subscription-title, .privacy-title, .terms-title, .footer-brand {
     text-transform: none !important;
 }
-/* All titles: skinny font like AURA FX logo */
+/* All titles: skinny font like AURA TERMINAL logo */
 h1, h2, h3, h4, h5, h6,
 .section-title, .tab-btn, .leaderboard-main-title, .courses-title,
 .journal-main-title, .journal-sidebar-title, .journal-section-title,
@@ -193,7 +193,7 @@ h1, h2, h3, h4, h5, h6,
 .messages-title, .community-title, .premium-ai-title, .subscription-title {
     font-weight: 200;
 }
-/* Keep navbar logo "AURA FX" with skinny weight and brand caps */
+/* Keep navbar logo "AURA TERMINAL" with skinny weight and brand caps */
 .logo {
     font-weight: 200 !important;
 }

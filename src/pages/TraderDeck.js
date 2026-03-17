@@ -6,6 +6,7 @@ import TraderDeckCalendar from '../components/trader-deck/TraderDeckCalendar';
 import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarBar';
 import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
+import NewsHeadlines from '../components/NewsHeadlines';
 import '../styles/Journal.css';
 import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
@@ -196,6 +197,7 @@ export default function TraderDeck() {
                         canEdit={canEdit}
                       />
                     )}
+                    <NewsHeadlines />
                   </div>
                 </div>
               </main>
