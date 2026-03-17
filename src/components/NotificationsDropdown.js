@@ -58,7 +58,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
   const listRef = useRef(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const baseUrl = window.location.origin;
+  const baseUrl = process.env.REACT_APP_API_URL || window.location.origin;
 
   // Fetch notifications
   const fetchNotifications = useCallback(async (cursor = null, append = false) => {

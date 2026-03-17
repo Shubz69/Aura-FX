@@ -247,7 +247,16 @@ async function ensureSchema() {
     if (getRows(colResult).length === 0) {
       await executeQuery(`ALTER TABLE users ADD COLUMN is_demo BOOLEAN DEFAULT FALSE`);
     }
-    
+
+    // Remove all demo/seeded users from leaderboard permanently
+    try {
+      await executeQuery(`DELETE FROM xp_events WHERE user_id IN (SELECT id FROM users WHERE is_demo = TRUE OR email LIKE '%@aurafx.demo')`);
+      await executeQuery(`DELETE FROM users WHERE is_demo = TRUE OR email LIKE '%@aurafx.demo'`);
+      console.log('Demo users cleaned up from leaderboard');
+    } catch (cleanupErr) {
+      console.log('Demo cleanup (non-fatal):', cleanupErr.message);
+    }
+
     schemaChecked = true;
   } catch (e) {
     console.log('Schema setup:', e.message);
@@ -554,9 +563,8 @@ module.exports = async (req, res) => {
       
       logger.endTimer('db_setup');
       
-      // Query (include demo users in public leaderboard unless prize-eligible)
-      const includeDemo = !prizeEligibleOnly;
-      return queryLeaderboard(timeframe, limit, logger, includeDemo);
+      // Never show demo users in the public leaderboard
+      return queryLeaderboard(timeframe, limit, logger, false);
     };
     
     const rawLeaderboard = await coalesceRequest(coalesceKey, fetchLeaderboard, 200);

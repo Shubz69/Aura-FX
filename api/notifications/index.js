@@ -287,7 +287,16 @@ const handler = async (req, res) => {
         `, [...params, limit + 1]);
         rows = getRows(result);
       } catch (qErr) {
-        logger.warn('Notifications query failed, returning empty', { error: qErr.message });
+        logger.warn('Notifications JOIN failed, trying without JOIN', { error: qErr.message });
+        try {
+          const fallback = await executeQuery(
+            `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`,
+            [userId, limit + 1]
+          );
+          rows = getRows(fallback).map(n => ({ ...n, from_username: null }));
+        } catch (qErr2) {
+          logger.warn('Notifications fallback also failed', { error: qErr2.message });
+        }
       }
 
       try {
