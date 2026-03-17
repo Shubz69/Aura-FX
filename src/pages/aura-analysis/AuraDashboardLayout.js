@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { AuraAnalysisProvider, useAuraAnalysis, DATE_RANGE_OPTIONS } from '../../context/AuraAnalysisContext';
 import '../../styles/aura-analysis/AuraDashboard.css';
 
 const TABS = [
@@ -20,13 +21,93 @@ function getActiveLabel(pathname) {
   return match ? match.label : 'Dashboard';
 }
 
-export default function AuraDashboardLayout() {
+/** Filter + refresh bar — rendered inside the provider so it can read context */
+function AuraFilterBar() {
+  const {
+    daysFilter, setDaysFilter,
+    symbolFilter, setSymbolFilter, symbolOptions,
+    refreshing, lastUpdatedStr, refresh,
+    activePlatformId, connections, setActivePlatformId,
+  } = useAuraAnalysis();
+
+  return (
+    <div className="aura-db-filterbar">
+      <div className="aura-db-filterbar-inner">
+
+        {/* Platform selector (only if multiple connections) */}
+        {connections.length > 1 && (
+          <select
+            className="aura-db-filter-select"
+            value={activePlatformId || ''}
+            onChange={e => setActivePlatformId(e.target.value)}
+            title="Active platform"
+          >
+            {connections.map(c => (
+              <option key={c.platformId} value={c.platformId}>
+                {c.platformId.toUpperCase()}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {/* Date range */}
+        <div className="aura-db-filter-pills">
+          {DATE_RANGE_OPTIONS.map(opt => (
+            <button
+              key={opt.days}
+              type="button"
+              className={`aura-db-filter-pill${daysFilter === opt.days ? ' active' : ''}`}
+              onClick={() => setDaysFilter(opt.days)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Symbol filter */}
+        {symbolOptions.length > 2 && (
+          <select
+            className="aura-db-filter-select"
+            value={symbolFilter}
+            onChange={e => setSymbolFilter(e.target.value)}
+            title="Filter by symbol"
+          >
+            {symbolOptions.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Refresh + last-updated */}
+        <div className="aura-db-refresh-group">
+          {lastUpdatedStr && (
+            <span className="aura-db-last-updated">
+              <i className="fas fa-clock" /> {lastUpdatedStr}
+            </span>
+          )}
+          <button
+            type="button"
+            className={`aura-db-refresh-btn${refreshing ? ' spinning' : ''}`}
+            onClick={refresh}
+            disabled={refreshing}
+            title="Refresh data"
+          >
+            <i className="fas fa-sync-alt" />
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function AuraDashboardInner() {
   const { user } = useAuth();
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [time, setTime] = useState(new Date());
 
-  const displayName = user?.displayName || user?.username || user?.name || 'Admin';
+  const displayName = user?.displayName || user?.username || user?.name || 'Trader';
   const xp = user?.xp || user?.experience || 0;
   const avatar = user?.avatar || user?.profilePicture || null;
   const initial = displayName.charAt(0).toUpperCase();
@@ -46,14 +127,11 @@ export default function AuraDashboardLayout() {
       {/* ══ Primary Tab Header ══ */}
       <div className="aura-dashboard-tabs-wrap">
         <div className="aura-dashboard-tabs-inner">
-
-          {/* Brand */}
           <Link to="/aura-analysis/ai" className="aura-dashboard-brand" title="Back to Connection Hub">
             <span className="aura-db-brand-slash">/</span>
             <span className="aura-db-brand-name">AURA FX</span>
           </Link>
 
-          {/* Tab Nav */}
           <nav className="aura-dashboard-tabs" aria-label="MT5 Dashboard sections">
             {TABS.map(({ path, label, icon }) => (
               <NavLink
@@ -68,7 +146,6 @@ export default function AuraDashboardLayout() {
             ))}
           </nav>
 
-          {/* Right controls */}
           <div className="aura-db-right">
             <div className="aura-db-clock">
               <span className="aura-db-time">{timeStr}</span>
@@ -85,17 +162,12 @@ export default function AuraDashboardLayout() {
             </button>
             <div className="aura-db-user">
               <div className="aura-db-avatar">
-                {avatar
-                  ? <img src={avatar} alt={displayName} />
-                  : <span>{initial}</span>
-                }
+                {avatar ? <img src={avatar} alt={displayName} /> : <span>{initial}</span>}
                 <span className="aura-db-avatar-ring" />
               </div>
               <div className="aura-db-user-info">
                 <span className="aura-db-user-name">{displayName}</span>
-                <span className="aura-db-xp">
-                  {xp.toLocaleString()} <span className="aura-db-xp-gem">◆</span>
-                </span>
+                <span className="aura-db-xp">{xp.toLocaleString()} <span className="aura-db-xp-gem">◆</span></span>
               </div>
             </div>
           </div>
@@ -130,10 +202,21 @@ export default function AuraDashboardLayout() {
         </div>
       </div>
 
+      {/* ══ Filter / Refresh bar ══ */}
+      <AuraFilterBar />
+
       {/* ══ Content ══ */}
       <main className="aura-dashboard-content">
         <Outlet />
       </main>
     </div>
+  );
+}
+
+export default function AuraDashboardLayout() {
+  return (
+    <AuraAnalysisProvider>
+      <AuraDashboardInner />
+    </AuraAnalysisProvider>
   );
 }

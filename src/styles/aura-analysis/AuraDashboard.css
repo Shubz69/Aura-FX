@@ -424,16 +424,110 @@ html, body, #root {
 }
 
 /* ══════════════════════════════════════════════════════════
-   CONTENT AREA
+   FILTER / REFRESH BAR
    ══════════════════════════════════════════════════════════ */
-.aura-dashboard-content {
+.aura-db-filterbar {
+  width: 100%;
+  background: rgba(8,8,15,0.7);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.aura-db-filterbar-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 20px 20px 48px;
-  box-sizing: border-box;
-  width: 100%;
-  background: transparent;
+  padding: 0 20px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+
+.aura-db-filterbar-inner::-webkit-scrollbar { display: none; }
+
+.aura-db-filter-pills {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.aura-db-filter-pill {
+  padding: 3px 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  color: rgba(255,255,255,0.35);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.aura-db-filter-pill:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); }
+.aura-db-filter-pill.active { color: #c4b5fd; background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.35); }
+
+.aura-db-filter-select {
+  appearance: none;
+  background: rgba(255,255,255,0.04) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.3)'/%3E%3C/svg%3E") no-repeat right 7px center;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 7px;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.65rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  padding: 3px 24px 3px 9px;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.aura-db-filter-select:hover { border-color: rgba(139,92,246,0.35); }
+.aura-db-filter-select option { background: #0f0e1a; color: #fff; }
+
+.aura-db-refresh-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.aura-db-last-updated {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.aura-db-refresh-btn {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.68rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.aura-db-refresh-btn:hover:not(:disabled) {
+  background: rgba(139,92,246,0.12);
+  border-color: rgba(139,92,246,0.3);
+  color: #c4b5fd;
+}
+
+.aura-db-refresh-btn.spinning i { animation: aura-spin-r 0.7s linear infinite; }
+@keyframes aura-spin-r { to { transform: rotate(360deg); } }
 
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE

@@ -92,6 +92,14 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
+  // Handle /api/users/:userId/courses — no enrollment system yet, return empty array
+  if (req.url && req.url.includes('/courses')) {
+    if (req.method !== 'GET') {
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+    return res.status(200).json([]);
+  }
+
   // Handle PUT request for updating user profile
   if (req.method === 'PUT') {
     try {

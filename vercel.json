@@ -165,6 +165,10 @@
       "destination": "/api/admin/index.js"
     },
     {
+      "source": "/api/admin/users/:userId/subscription",
+      "destination": "/api/admin/index.js"
+    },
+    {
       "source": "/api/admin/users/:userId",
       "destination": "/api/admin/index.js"
     },
@@ -183,6 +187,10 @@
     {
       "source": "/api/admin/migrate-level-up-messages",
       "destination": "/api/admin/migrate-level-up-messages.js"
+    },
+    {
+      "source": "/api/admin/change-subscription",
+      "destination": "/api/admin/change-subscription.js"
     },
     {
       "source": "/api/leaderboard",
@@ -242,6 +250,10 @@
     },
     {
       "source": "/api/users/:userId/update",
+      "destination": "/api/users/update.js?userId=:userId"
+    },
+    {
+      "source": "/api/users/:userId/courses",
       "destination": "/api/users/update.js?userId=:userId"
     },
     {
