@@ -19,6 +19,10 @@ const DIRECTION_OPTIONS = ['Buy', 'Sell', 'Unsure'];
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE_MB = 10;
 
+const TIMEFRAME_OPTIONS = ['Monthly','Weekly','Daily','4H','2H','1H','30M','15M','5M','1M'];
+const TF_DEFAULTS      = ['1H','15M','4H','Daily'];
+const makeSlot = (tf = '1H') => ({ id: `${Date.now()}-${Math.random()}`, timeframe: tf, image: null });
+
 function ScoreDial({ score }) {
   const clamp = Math.max(0, Math.min(100, score));
   const color = clamp >= 80 ? '#10b981' : clamp >= 60 ? '#f59e0b' : clamp >= 40 ? '#f97316' : '#ef4444';
@@ -218,61 +222,77 @@ function ResultPanel({ result, onReset }) {
 export default function AiChartCheckTab() {
   const { token } = useAuth();
 
-  // Upload state
-  const [image, setImage] = useState(null);       // { base64, mimeType, previewUrl, name, sizeMB }
-  const [dragOver, setDragOver] = useState(false);
-  const [uploadError, setUploadError] = useState('');
+  // Upload state — multi-slot
+  const [slots, setSlots]               = useState(() => [makeSlot('1H')]);
+  const [activeSlotId, setActiveSlotId] = useState(null);
+  const [dragOverId, setDragOverId]     = useState(null);
+  const [uploadError, setUploadError]   = useState('');
   const fileInputRef = useRef();
 
   // Form state
   const [checklistType, setChecklistType] = useState('intraDay');
-  const [pair, setPair] = useState('');
-  const [timeframe, setTimeframe] = useState('');
+  const [pair, setPair]     = useState('');
   const [direction, setDirection] = useState('');
-  const [note, setNote] = useState('');
+  const [note, setNote]     = useState('');
 
   // Analysis state
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  const processFile = useCallback((file) => {
+  const processFile = useCallback((file, slotId) => {
     setUploadError('');
     if (!file) return;
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setUploadError('Unsupported file type. Please upload a JPEG, PNG, or WebP image.');
+      setUploadError('Unsupported file type. Please upload JPEG, PNG, or WebP.');
       return;
     }
     const sizeMB = file.size / (1024 * 1024);
     if (sizeMB > MAX_SIZE_MB) {
-      setUploadError(`File too large (${sizeMB.toFixed(1)}MB). Maximum is ${MAX_SIZE_MB}MB.`);
+      setUploadError(`File too large (${sizeMB.toFixed(1)}MB). Max is ${MAX_SIZE_MB}MB.`);
       return;
     }
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target.result;
       const base64 = dataUrl.split(',')[1];
-      setImage({ base64, mimeType: file.type, previewUrl: dataUrl, name: file.name, sizeMB: sizeMB.toFixed(1) });
+      setSlots(prev => prev.map(s =>
+        s.id === slotId
+          ? { ...s, image: { base64, mimeType: file.type, previewUrl: dataUrl, name: file.name, sizeMB: sizeMB.toFixed(1) } }
+          : s
+      ));
       setResult(null);
       setError('');
     };
     reader.readAsDataURL(file);
   }, []);
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
-  }, [processFile]);
-
   const handleFileInput = (e) => {
-    processFile(e.target.files?.[0]);
+    if (activeSlotId) processFile(e.target.files?.[0], activeSlotId);
     e.target.value = '';
   };
 
+  const addSlot = () => {
+    if (slots.length >= 4) return;
+    setSlots(prev => [...prev, makeSlot(TF_DEFAULTS[prev.length] || '15M')]);
+  };
+
+  const removeSlot = (id) => {
+    setSlots(prev => prev.length > 1 ? prev.filter(s => s.id !== id) : prev);
+  };
+
+  const updateSlotTf = (id, tf) => {
+    setSlots(prev => prev.map(s => s.id === id ? { ...s, timeframe: tf } : s));
+  };
+
+  const openFilePicker = (slotId) => {
+    setActiveSlotId(slotId);
+    fileInputRef.current?.click();
+  };
+
   const handleAnalyse = async () => {
-    if (!image) return;
+    const filled = slots.filter(s => s.image);
+    if (!filled.length) return;
     setLoading(true);
     setError('');
     setResult(null);
@@ -284,11 +304,9 @@ export default function AiChartCheckTab() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          image: image.base64,
-          mimeType: image.mimeType,
+          images: filled.map(s => ({ base64: s.image.base64, mimeType: s.image.mimeType, timeframe: s.timeframe })),
           checklistType,
           pair: pair.trim() || undefined,
-          timeframe: timeframe.trim() || undefined,
           direction: direction || undefined,
           note: note.trim() || undefined,
         }),
@@ -304,15 +322,16 @@ export default function AiChartCheckTab() {
   };
 
   const handleReset = () => {
-    setImage(null);
+    setSlots([makeSlot('1H')]);
     setResult(null);
     setError('');
     setUploadError('');
     setPair('');
-    setTimeframe('');
     setDirection('');
     setNote('');
   };
+
+  const filledCount = slots.filter(s => s.image).length;
 
   if (result) return <ResultPanel result={result} onReset={handleReset} />;
 
@@ -334,50 +353,69 @@ export default function AiChartCheckTab() {
       </div>
 
       <div className="acc-layout">
-        {/* Upload zone */}
+        {/* Multi-image upload grid */}
         <div className="acc-card acc-upload-card">
-          <h3 className="acc-card-title">Chart Image</h3>
-          {!image ? (
-            <div
-              className={`acc-dropzone ${dragOver ? 'acc-dropzone--over' : ''}`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
-              aria-label="Upload chart image"
-            >
-              <div className="acc-dropzone-icon">📈</div>
-              <p className="acc-dropzone-text">
-                Drag & drop your chart here, or <span className="acc-dropzone-link">click to browse</span>
-              </p>
-              <p className="acc-dropzone-hint">JPEG, PNG, WebP · Max {MAX_SIZE_MB}MB</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ALLOWED_TYPES.join(',')}
-                onChange={handleFileInput}
-                style={{ display: 'none' }}
-              />
-            </div>
-          ) : (
-            <div className="acc-preview-wrap">
-              <img src={image.previewUrl} alt="Chart preview" className="acc-preview-img" />
-              <div className="acc-preview-meta">
-                <span className="acc-preview-name">{image.name}</span>
-                <span className="acc-preview-size">{image.sizeMB}MB</span>
-                <button
-                  className="acc-btn acc-btn--ghost acc-remove-btn"
-                  onClick={() => setImage(null)}
-                  type="button"
-                >
-                  ✕ Remove
-                </button>
+          <div className="acc-upload-card-head">
+            <h3 className="acc-card-title">Chart Images</h3>
+            <span className="acc-card-hint">Up to 4 timeframes — AI analyses them together</span>
+          </div>
+          <div className="acc-slots-grid">
+            {slots.map(slot => (
+              <div
+                key={slot.id}
+                className={`acc-slot${slot.image ? ' acc-slot--filled' : ''}${dragOverId === slot.id ? ' acc-slot--dragover' : ''}`}
+                onDragOver={e => { e.preventDefault(); setDragOverId(slot.id); }}
+                onDragLeave={() => setDragOverId(null)}
+                onDrop={e => { e.preventDefault(); setDragOverId(null); processFile(e.dataTransfer.files?.[0], slot.id); }}
+              >
+                <div className="acc-slot-tf-row">
+                  <select
+                    className="acc-slot-tf-select"
+                    value={slot.timeframe}
+                    onChange={e => updateSlotTf(slot.id, e.target.value)}
+                  >
+                    {TIMEFRAME_OPTIONS.map(tf => <option key={tf} value={tf}>{tf}</option>)}
+                  </select>
+                  {slots.length > 1 && (
+                    <button type="button" className="acc-slot-remove-btn" onClick={() => removeSlot(slot.id)}>✕</button>
+                  )}
+                </div>
+                {!slot.image ? (
+                  <div
+                    className="acc-slot-empty"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openFilePicker(slot.id)}
+                    onKeyDown={e => e.key === 'Enter' && openFilePicker(slot.id)}
+                  >
+                    <span className="acc-slot-plus">+</span>
+                    <span className="acc-slot-add-label">Upload Chart</span>
+                    <span className="acc-slot-add-hint">Drag & drop or click</span>
+                  </div>
+                ) : (
+                  <div className="acc-slot-preview">
+                    <img src={slot.image.previewUrl} alt={`${slot.timeframe} chart`} className="acc-slot-img" />
+                    <div className="acc-slot-overlay">
+                      <button type="button" className="acc-slot-overlay-btn" onClick={() => openFilePicker(slot.id)}>↺ Change</button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            ))}
+            {slots.length < 4 && (
+              <button type="button" className="acc-slot acc-slot--add-new" onClick={addSlot}>
+                <span className="acc-slot-plus">+</span>
+                <span>Add Timeframe</span>
+              </button>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ALLOWED_TYPES.join(',')}
+            onChange={handleFileInput}
+            style={{ display: 'none' }}
+          />
           {uploadError && <p className="acc-field-error">{uploadError}</p>}
         </div>
 
@@ -414,16 +452,6 @@ export default function AiChartCheckTab() {
               />
             </div>
             <div className="acc-field">
-              <label className="acc-field-label">Timeframe <span className="acc-optional">optional</span></label>
-              <input
-                className="acc-input"
-                type="text"
-                placeholder="e.g. 15m, 1H, 4H"
-                value={timeframe}
-                onChange={e => setTimeframe(e.target.value)}
-              />
-            </div>
-            <div className="acc-field">
               <label className="acc-field-label">Direction Idea <span className="acc-optional">optional</span></label>
               <div className="acc-dir-pills">
                 {DIRECTION_OPTIONS.map(d => (
@@ -455,7 +483,7 @@ export default function AiChartCheckTab() {
           <button
             className="acc-btn acc-btn--primary acc-analyse-btn"
             onClick={handleAnalyse}
-            disabled={!image || loading}
+            disabled={!filledCount || loading}
             type="button"
           >
             {loading ? (
@@ -464,14 +492,14 @@ export default function AiChartCheckTab() {
                 Analysing chart…
               </>
             ) : (
-              <>🔍 Analyse Chart</>
+              <>{filledCount > 1 ? `🔍 Analyse ${filledCount} Charts` : '🔍 Analyse Chart'}</>
             )}
           </button>
 
           {loading && (
             <p className="acc-loading-hint">
               The AI is reviewing your chart against the {CHECKLIST_TYPES.find(t => t.id === checklistType)?.label} checklist.
-              This may take 10–20 seconds.
+              This may take 15–30 seconds.
             </p>
           )}
         </div>

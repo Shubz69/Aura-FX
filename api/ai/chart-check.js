@@ -235,15 +235,31 @@ Rules:
 }`;
 }
 
-async function callOpenAIVision(base64Image, mimeType, systemPrompt) {
+// imagesArr: [{ base64, mimeType, timeframe }]
+async function callOpenAIVision(imagesArr, systemPrompt) {
   const url = 'https://api.openai.com/v1/chat/completions';
+  const isMulti = imagesArr.length > 1;
+
+  const imageContent = imagesArr.map(img => ({
+    type: 'image_url',
+    image_url: {
+      url: `data:${img.mimeType};base64,${img.base64}`,
+      detail: 'high',
+    },
+  }));
+
+  const tfSummary = imagesArr.map((img, i) => `Chart ${i + 1}: ${img.timeframe || 'Unknown TF'}`).join(' | ');
+
+  const userText = isMulti
+    ? `Timeframes provided: ${tfSummary}. Analyze these ${imagesArr.length} charts for multi-timeframe context. Step 1: start with the HIGHEST timeframe chart to establish overall bias and structure, then work down to lower timeframes for entry precision and confirmation. Identify trend, drawn annotations, and structural events on each chart. Step 2: score each criterion individually (PASS=20, PARTIAL=10, FAIL=0, UNCLEAR=5), using multi-TF alignment where relevant — agreement across timeframes is a strong signal. Step 3: sum criterion scores for section scores, average for overall score. Return only the JSON object.`
+    : `Timeframe: ${imagesArr[0]?.timeframe || 'N/A'}. Analyze this trading chart. Step 1: identify the asset, timeframe, trend direction (HH/HL or LH/LL), all drawn annotations (boxes, trendlines, horizontal levels), the implied trade direction from the annotations, and any structural events visible. Step 2: using those findings, score each criterion individually (PASS=20, PARTIAL=10, FAIL=0, UNCLEAR=5). Step 3: sum criterion scores for each section score, then average section scores for the overall score. Return only the JSON object.`;
 
   const body = {
     model: OPENAI_MODEL,
-    max_tokens: 2500,
-    temperature: 0.1,       // Near-deterministic — same image → same analysis
-    seed: 7741,             // Fixed seed for reproducibility across identical inputs
-    response_format: { type: 'json_object' }, // Enforce JSON — no markdown wrapping
+    max_tokens: isMulti ? 3200 : 2500,
+    temperature: 0.1,
+    seed: 7741,
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
@@ -252,17 +268,8 @@ async function callOpenAIVision(base64Image, mimeType, systemPrompt) {
       {
         role: 'user',
         content: [
-          {
-            type: 'image_url',
-            image_url: {
-              url: `data:${mimeType};base64,${base64Image}`,
-              detail: 'high',
-            },
-          },
-          {
-            type: 'text',
-            text: 'Analyze this trading chart. Step 1: identify the asset, timeframe, trend direction (HH/HL or LH/LL), all drawn annotations (boxes, trendlines, horizontal levels), the implied trade direction from the annotations, and any structural events visible. Step 2: using those findings, score each criterion individually (PASS=20, PARTIAL=10, FAIL=0, UNCLEAR=5). Step 3: sum criterion scores for each section score, then average section scores for the overall score. Return only the JSON object.',
-          },
+          ...imageContent,
+          { type: 'text', text: userText },
         ],
       },
     ],
@@ -336,29 +343,49 @@ module.exports = async (req, res) => {
   if (!decoded?.id) return res.status(401).json({ success: false, message: 'Authentication required' });
   const userId = decoded.id;
 
-  const { image, mimeType, checklistType, pair, timeframe, direction, note } = req.body || {};
+  const { image, mimeType, images: imagesBody, checklistType, pair, timeframe, direction, note } = req.body || {};
 
-  // Validate
-  if (!image || typeof image !== 'string') {
-    return res.status(400).json({ success: false, message: 'image (base64) is required' });
-  }
   if (!['scalp', 'intraDay', 'swing'].includes(checklistType)) {
     return res.status(400).json({ success: false, message: 'checklistType must be scalp, intraDay, or swing' });
   }
 
   const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-  const resolvedMime = allowedMimeTypes.includes(mimeType) ? mimeType : 'image/jpeg';
 
-  // Size guard (~10MB base64)
-  if (image.length > 14_000_000) {
-    return res.status(400).json({ success: false, message: 'Image too large. Maximum size is 10MB.' });
+  // Build normalised images array — supports both new multi-image format and legacy single-image format
+  let imagesArr = [];
+  if (Array.isArray(imagesBody) && imagesBody.length > 0) {
+    imagesArr = imagesBody
+      .filter(img => img?.base64 && typeof img.base64 === 'string')
+      .slice(0, 4)
+      .map(img => ({
+        base64:    img.base64,
+        mimeType:  allowedMimeTypes.includes(img.mimeType) ? img.mimeType : 'image/jpeg',
+        timeframe: img.timeframe || 'N/A',
+      }));
+  } else if (image && typeof image === 'string') {
+    imagesArr = [{
+      base64:    image,
+      mimeType:  allowedMimeTypes.includes(mimeType) ? mimeType : 'image/jpeg',
+      timeframe: timeframe || 'N/A',
+    }];
+  }
+
+  if (!imagesArr.length) {
+    return res.status(400).json({ success: false, message: 'At least one chart image is required' });
+  }
+
+  // Size guard (~10MB base64 per image)
+  for (const img of imagesArr) {
+    if (img.base64.length > 14_000_000) {
+      return res.status(400).json({ success: false, message: 'One or more images exceed the 10MB limit.' });
+    }
   }
 
   try {
     const rubric = CHECKLIST_RUBRIC[checklistType];
     const systemPrompt = buildSystemPrompt(rubric, { pair, timeframe, direction, note });
 
-    const rawAI = await callOpenAIVision(image, resolvedMime, systemPrompt);
+    const rawAI = await callOpenAIVision(imagesArr, systemPrompt);
     const result = parseAIResponse(rawAI);
 
     const overallScore = typeof result.overallScore === 'number' ? result.overallScore : 0;

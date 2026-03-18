@@ -78,7 +78,165 @@
   margin: 0 0 16px;
 }
 
-/* ── Upload zone ──────────────────────────────────────────────────── */
+/* ── Multi-image slot grid ────────────────────────────────────────── */
+.acc-upload-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.acc-upload-card-head .acc-card-title { margin-bottom: 0; }
+.acc-card-hint {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.28);
+}
+
+.acc-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (max-width: 500px) { .acc-slots-grid { grid-template-columns: 1fr; } }
+
+/* Individual slot */
+.acc-slot {
+  border: 1px solid var(--acc-border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,0.02);
+  transition: border-color 0.2s;
+}
+.acc-slot--dragover { border-color: var(--acc-accent); background: var(--acc-accent-soft); }
+
+/* TF selector row */
+.acc-slot-tf-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--acc-border);
+  background: rgba(255,255,255,0.03);
+}
+.acc-slot-tf-select {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  padding: 2px 0;
+}
+.acc-slot-tf-select option { background: #1a1225; color: #fff; }
+.acc-slot-remove-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.acc-slot-remove-btn:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+/* Empty slot drop area */
+.acc-slot-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px 10px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 90px;
+  transition: background 0.15s;
+}
+.acc-slot-empty:hover { background: rgba(139,92,246,0.06); }
+.acc-slot-plus {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: rgba(139,92,246,0.6);
+  line-height: 1;
+}
+.acc-slot-add-label { font-size: 0.78rem; color: rgba(255,255,255,0.45); font-weight: 600; }
+.acc-slot-add-hint  { font-size: 0.68rem; color: rgba(255,255,255,0.22); }
+
+/* Filled slot — image preview */
+.acc-slot--filled { border-color: rgba(139,92,246,0.3); }
+.acc-slot-preview {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 90px;
+}
+.acc-slot-img {
+  width: 100%;
+  height: 100%;
+  min-height: 90px;
+  max-height: 150px;
+  object-fit: cover;
+  display: block;
+  background: rgba(0,0,0,0.4);
+}
+.acc-slot-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.acc-slot-preview:hover .acc-slot-overlay { opacity: 1; }
+.acc-slot-overlay-btn {
+  background: rgba(139,92,246,0.85);
+  border: none;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Add-timeframe slot button */
+.acc-slot--add-new {
+  border: 1px dashed rgba(139,92,246,0.25);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 20px 10px;
+  min-height: 120px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 10px;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.acc-slot--add-new:hover {
+  border-color: var(--acc-accent);
+  background: var(--acc-accent-soft);
+  color: #c4b5fd;
+}
+.acc-slot--add-new .acc-slot-plus { font-size: 1.6rem; color: inherit; }
+
+/* ── Upload zone (legacy single-image, kept for safety) ───────────── */
 .acc-dropzone {
   border: 2px dashed rgba(139,92,246,0.3);
   border-radius: 12px;
