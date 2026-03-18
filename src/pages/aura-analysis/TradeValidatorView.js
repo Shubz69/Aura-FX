@@ -113,8 +113,6 @@ export default function TradeValidatorView() {
     return cards.reduce((sum, card) => sum + card.items.reduce((s, i) => s + (activeChecked.has(i.id) ? i.points : 0), 0), 0);
   }, [activeTab, activeChecked]);
   const scorePercent = maxPointsActive > 0 ? Math.round((checklistScore / maxPointsActive) * 100) : 0;
-  const normalizedForLabel = scorePercent * 2;
-  const scoreGrade = getScoreLabel(Math.round(normalizedForLabel));
   const canProceed = scorePercent >= MIN_CONFLUENCE_PCT;
 
   useEffect(() => {
@@ -128,6 +126,10 @@ export default function TradeValidatorView() {
     const score = getSectionScore(formationSection, formationChecked);
     return formationMax > 0 ? Math.round((score / formationMax) * 100) : 0;
   }, [formationSection, formationChecked]);
+
+  // Combined score: execution (0-100) + setup formation bonus (0-100) = 0-200
+  const combinedScore = scorePercent + setupFormationScore;
+  const scoreGrade = getScoreLabel(combinedScore);
 
   const handleTabToggle = (tabId, itemId) => {
     setCheckedByTab((prev) => {
@@ -156,6 +158,8 @@ export default function TradeValidatorView() {
           checklistScore,
           checklistTotal: maxPointsActive,
           checklistPercent: scorePercent,
+          setupFormationScore,
+          combinedScore,
           sessionType: activeTab,
           tradeGrade: scoreGrade,
         })
@@ -226,38 +230,20 @@ export default function TradeValidatorView() {
         <section className="tv-score-card">
           <div className="tv-score-left">
             <span className="tv-score-label">Trade score</span>
-            <span className="tv-score-value tv-score-pct-main">{scorePercent}%</span>
-            <span className="tv-score-sub">{checklistScore} / {maxPointsActive} points · {CHECKLIST_TABS.find((t) => t.id === activeTab)?.label}</span>
+            <span className="tv-score-value tv-score-pct-main">{combinedScore}%</span>
+            <span className="tv-score-sub">
+              {checklistScore} / {maxPointsActive} pts · {CHECKLIST_TABS.find((t) => t.id === activeTab)?.label}
+              {setupFormationScore > 0 && (
+                <span className="tv-score-bonus"> + {setupFormationScore}% setup bonus</span>
+              )}
+            </span>
             <span className="tv-score-status">Status</span>
             <span className="tv-score-grade">{scoreGrade}</span>
           </div>
           <div className="tv-score-bar-wrap">
-            <div className="tv-score-bar" style={{ width: `${scorePercent}%` }} />
+            <div className="tv-score-bar" style={{ width: `${Math.min(combinedScore / 2, 100)}%` }} />
           </div>
         </section>
-
-        {formationSection && formationSection.subPatterns && (
-          <section className="tv-block tv-setup-block">
-            <h2 className="tv-block-title">SETUP FORMATION CHECKLIST</h2>
-            <p className="tv-block-sub">Supporting confirmation, not primary · max 100%</p>
-            <div className="tv-setup-chart" aria-hidden />
-            <div className="tv-setup-section">
-              <h3 className="tv-setup-section-title">{formationSection.title}</h3>
-              <p className="tv-setup-section-time">Timeframes: {formationSection.timeframeLabel}</p>
-              {formationSection.subPatterns.map((sub) => (
-                <div key={sub.id} className="tv-setup-cat">
-                  <h4 className="tv-setup-cat-name">{sub.title}</h4>
-                  {sub.items.map((item) => (
-                    <ChecklistItemRow key={item.id} item={item} checked={formationChecked} onToggle={handleFormationToggle} />
-                  ))}
-                </div>
-              ))}
-              <p className="tv-setup-section-score">
-                Section score <span className="tv-section-score-value">{setupFormationScore}%</span>
-              </p>
-            </div>
-          </section>
-        )}
 
         <section className="tv-block tv-checklist-tab-content">
           <h2 className="tv-block-title">{meta.title}</h2>
@@ -273,6 +259,29 @@ export default function TradeValidatorView() {
             ))}
           </div>
         </section>
+
+        {formationSection && formationSection.subPatterns && (
+          <section className="tv-block tv-setup-block">
+            <h2 className="tv-block-title">SETUP FORMATION CHECKLIST</h2>
+            <p className="tv-block-sub">Adds bonus points on top of your execution score · max +100%</p>
+            <div className="tv-setup-chart" aria-hidden />
+            <div className="tv-setup-section">
+              <h3 className="tv-setup-section-title">{formationSection.title}</h3>
+              <p className="tv-setup-section-time">Timeframes: {formationSection.timeframeLabel}</p>
+              {formationSection.subPatterns.map((sub) => (
+                <div key={sub.id} className="tv-setup-cat">
+                  <h4 className="tv-setup-cat-name">{sub.title}</h4>
+                  {sub.items.map((item) => (
+                    <ChecklistItemRow key={item.id} item={item} checked={formationChecked} onToggle={handleFormationToggle} />
+                  ))}
+                </div>
+              ))}
+              <p className="tv-setup-section-score">
+                Setup bonus <span className="tv-section-score-value">+{setupFormationScore}%</span>
+              </p>
+            </div>
+          </section>
+        )}
 
         <div className="tv-bottom-bar">
           <div className={`tv-bottom-msg ${canProceed ? 'tv-bottom-msg-ok' : ''}`}>
