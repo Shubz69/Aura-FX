@@ -160,6 +160,30 @@
   color: rgba(167, 139, 250, 1);
 }
 
+.td-journal-actions {
+  white-space: nowrap;
+}
+
+.td-journal-action-sep {
+  color: rgba(255, 255, 255, 0.25);
+  margin: 0 6px;
+  user-select: none;
+}
+
+.td-journal-action-delete {
+  color: rgba(248, 113, 113, 0.95) !important;
+  text-decoration: underline;
+}
+
+.td-journal-action-delete:hover:not(:disabled) {
+  color: #fca5a5 !important;
+}
+
+.td-journal-action-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .td-journal-empty {
   text-align: center;
   color: rgba(255, 255, 255, 0.5);

@@ -110,7 +110,7 @@ function mapRow(r) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -167,6 +167,20 @@ module.exports = async (req, res) => {
       const [rows] = await db.execute('SELECT * FROM aura_analysis_trades WHERE id = ?', [tradeId]);
       db.release && db.release();
       return res.status(200).json({ success: true, trade: mapRow(rows[0]) });
+    }
+
+    // DELETE /api/aura-analysis/trades/:id
+    if (req.method === 'DELETE' && tradeId) {
+      const [delResult] = await db.execute(
+        'DELETE FROM aura_analysis_trades WHERE id = ? AND user_id = ?',
+        [tradeId, userId]
+      );
+      db.release && db.release();
+      const affected = delResult?.affectedRows ?? 0;
+      if (affected === 0) {
+        return res.status(404).json({ success: false, message: 'Trade not found' });
+      }
+      return res.status(200).json({ success: true, message: 'Trade deleted' });
     }
 
     // GET /api/aura-analysis/trades – list my trades; optional dateFrom, dateTo, and pnl=1 for daily/weekly/monthly summary

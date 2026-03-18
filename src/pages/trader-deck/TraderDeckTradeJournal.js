@@ -68,6 +68,7 @@ export default function TraderDeckTradeJournal() {
   const [editPnl, setEditPnl] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     Api.getAuraAnalysisTrades()
@@ -148,6 +149,22 @@ export default function TraderDeckTradeJournal() {
       console.error('Trade outcome save failed:', e);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (t) => {
+    if (!t?.id) return;
+    const ok = window.confirm(`Delete this ${t.pair || 'trade'} trade? This cannot be undone.`);
+    if (!ok) return;
+    setDeletingId(t.id);
+    try {
+      await Api.deleteAuraAnalysisTrade(t.id);
+      setTrades((prev) => prev.filter((x) => x.id !== t.id));
+      if (editTrade?.id === t.id) closeEdit();
+    } catch (e) {
+      window.alert(e.response?.data?.message || e.message || 'Failed to delete trade');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -283,9 +300,18 @@ export default function TraderDeckTradeJournal() {
                       <td>{t.rMultiple != null ? formatNum(t.rMultiple, 2) : t.rr != null ? formatNum(t.rr, 2) : '—'}</td>
                       <td>{t.session || '—'}</td>
                       <td>{getDisplayGrade(t)}</td>
-                      <td>
+                      <td className="td-journal-actions">
                         <button type="button" className="td-journal-action-link" onClick={() => openEdit(t)}>
                           Edit Outcome
+                        </button>
+                        <span className="td-journal-action-sep" aria-hidden>·</span>
+                        <button
+                          type="button"
+                          className="td-journal-action-link td-journal-action-delete"
+                          onClick={() => handleDelete(t)}
+                          disabled={deletingId === t.id}
+                        >
+                          {deletingId === t.id ? 'Deleting…' : 'Delete'}
                         </button>
                       </td>
                     </tr>

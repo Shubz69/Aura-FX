@@ -662,6 +662,9 @@ const Api = {
     updateAuraAnalysisTrade: (id, body) => {
         return axios.put(`${API_BASE_URL}/api/aura-analysis/trades/${id}`, body);
     },
+    deleteAuraAnalysisTrade: (id) => {
+        return axios.delete(`${API_BASE_URL}/api/aura-analysis/trades/${id}`);
+    },
     // Platform connections (real MT5/exchange APIs — no relation to Trade Validator)
     getAuraPlatformConnections: () =>
         axios.get(`${API_BASE_URL}/api/aura-analysis/platform-connect`),
