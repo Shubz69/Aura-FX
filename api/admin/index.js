@@ -1407,154 +1407,151 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Handle /api/admin/give-xp - Give XP points to a user
+  // Handle /api/admin/give-xp — must write xp_events or cron syncUserXpFromLedger overwrites users.xp
   if ((pathname.includes('/give-xp') || pathname.endsWith('/give-xp')) && req.method === 'POST') {
     try {
-      const { userId, xpAmount } = req.body || {};
+      const { invalidatePattern } = require('../cache');
+      const { userId, xpAmount: rawAmt } = req.body || {};
+      const xpAmount = parseFloat(rawAmt);
 
       if (!userId) {
-        return res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
+        return res.status(400).json({ success: false, message: 'User ID is required' });
       }
-
-      if (!xpAmount || xpAmount <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid XP amount is required (must be greater than 0)'
-        });
+      if (Number.isNaN(xpAmount) || xpAmount === 0) {
+        return res.status(400).json({ success: false, message: 'Enter a non-zero XP amount' });
       }
 
       const db = await getDbConnection();
       if (!db) {
-        return res.status(500).json({
-          success: false,
-          message: 'Database connection error'
-        });
+        return res.status(500).json({ success: false, message: 'Database connection error' });
       }
 
+      const getLevelFromXP = (xp) => {
+        if (xp <= 0) return 1;
+        if (xp >= 1000000) return 1000;
+        if (xp < 500) return Math.floor(Math.sqrt(xp / 50)) + 1;
+        if (xp < 5000) return 10 + Math.floor(Math.sqrt((xp - 500) / 100)) + 1;
+        if (xp < 20000) return 50 + Math.floor(Math.sqrt((xp - 5000) / 200)) + 1;
+        if (xp < 100000) return 100 + Math.floor(Math.sqrt((xp - 20000) / 500)) + 1;
+        if (xp < 500000) return 200 + Math.floor(Math.sqrt((xp - 100000) / 1000)) + 1;
+        return Math.min(1000, 500 + Math.floor(Math.sqrt((xp - 500000) / 2000)) + 1);
+      };
+
       try {
-        // Check if XP column exists, if not add it
         try {
           await db.execute('SELECT xp FROM users LIMIT 1');
         } catch (e) {
-          console.log('XP column does not exist, adding it...');
-          await db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(10, 2) DEFAULT 0');
+          await db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(12, 2) DEFAULT 0');
         }
-
-        // Check if level column exists, if not add it
         try {
           await db.execute('SELECT level FROM users LIMIT 1');
         } catch (e) {
-          console.log('Level column does not exist, adding it...');
           await db.execute('ALTER TABLE users ADD COLUMN level INT DEFAULT 1');
         }
 
-        // Get current XP
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS xp_events (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            amount DECIMAL(12, 2) NOT NULL,
+            source VARCHAR(50) NOT NULL,
+            meta JSON,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_id (user_id),
+            INDEX idx_created_at (created_at)
+          )
+        `);
+
         const [userRows] = await db.execute('SELECT xp, level FROM users WHERE id = ?', [userId]);
         if (userRows.length === 0) {
           await db.end();
-          return res.status(404).json({
-            success: false,
-            message: 'User not found'
-          });
+          return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const currentXP = parseFloat(userRows[0].xp || 0);
-        const currentLevel = parseInt(userRows[0].level || 1);
-        const newXP = Math.max(0, currentXP + parseFloat(xpAmount)); // Prevent negative XP
+        const currentLevel = parseInt(userRows[0].level || 1, 10);
 
-        // Use the new XP system level calculation
-        // Import the function (we'll need to require it properly)
-        const getLevelFromXP = (xp) => {
-            if (xp <= 0) return 1;
-            if (xp >= 1000000) return 1000;
-            
-            if (xp < 500) {
-                return Math.floor(Math.sqrt(xp / 50)) + 1;
-            } else if (xp < 5000) {
-                const baseLevel = 10;
-                const remainingXP = xp - 500;
-                return baseLevel + Math.floor(Math.sqrt(remainingXP / 100)) + 1;
-            } else if (xp < 20000) {
-                const baseLevel = 50;
-                const remainingXP = xp - 5000;
-                return baseLevel + Math.floor(Math.sqrt(remainingXP / 200)) + 1;
-            } else if (xp < 100000) {
-                const baseLevel = 100;
-                const remainingXP = xp - 20000;
-                return baseLevel + Math.floor(Math.sqrt(remainingXP / 500)) + 1;
-            } else if (xp < 500000) {
-                const baseLevel = 200;
-                const remainingXP = xp - 100000;
-                return baseLevel + Math.floor(Math.sqrt(remainingXP / 1000)) + 1;
-            } else {
-                const baseLevel = 500;
-                const remainingXP = xp - 500000;
-                return Math.min(1000, baseLevel + Math.floor(Math.sqrt(remainingXP / 2000)) + 1);
-            }
-        };
-        
-        const newLevel = getLevelFromXP(newXP);
-        const leveledUp = newLevel > currentLevel;
-
-        // Update user XP and level
-        await db.execute(
-            'UPDATE users SET xp = ?, level = ? WHERE id = ?',
-            [newXP, newLevel, userId]
-        );
-
-        // If user leveled up, send notification
-        if (leveledUp) {
-            try {
-                // Get username
-                const [userInfo] = await db.execute('SELECT username, name FROM users WHERE id = ?', [userId]);
-                const username = userInfo[0]?.username || userInfo[0]?.name || 'User';
-                
-                // Send level-up notification (async, don't wait)
-                fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : (process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:3000')}/api/users/level-up-notification`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: userId,
-                        oldLevel: currentLevel,
-                        newLevel: newLevel,
-                        username: username
-                    })
-                }).catch(err => console.error('Failed to send level-up notification:', err));
-            } catch (notifError) {
-                console.error('Error sending level-up notification:', notifError);
-            }
+        // Full reset (matches AdminPanel "Reset XP")
+        if (xpAmount <= -999999) {
+          await db.execute('DELETE FROM xp_events WHERE user_id = ?', [userId]);
+          await db.execute('UPDATE users SET xp = 0, level = 1 WHERE id = ?', [userId]);
+          await db.end();
+          try {
+            invalidatePattern('leaderboard_v*');
+          } catch (_) {}
+          return res.status(200).json({
+            success: true,
+            message: 'XP reset',
+            newXP: 0,
+            newLevel: 1
+          });
         }
 
-        await db.execute(
-          'UPDATE users SET xp = ?, level = ? WHERE id = ?',
-          [newXP, newLevel, userId]
+        const [[ledgerRow]] = await db.execute(
+          'SELECT COALESCE(SUM(amount), 0) AS s FROM xp_events WHERE user_id = ?',
+          [userId]
         );
+        const ledgerSum = parseFloat(ledgerRow?.s || 0);
+
+        const newXP = Math.max(0, currentXP + xpAmount);
+        const ledgerDelta = Math.round((newXP - ledgerSum) * 100) / 100;
+
+        if (Math.abs(ledgerDelta) > 0.0001) {
+          const src = xpAmount > 0 ? 'admin_grant' : 'admin_adjust';
+          await db.execute(
+            'INSERT INTO xp_events (user_id, amount, source, meta) VALUES (?, ?, ?, ?)',
+            [userId, ledgerDelta, src, JSON.stringify({ admin: true, requestedDelta: xpAmount })]
+          );
+        }
+
+        const [[cntRow]] = await db.execute(
+          'SELECT COUNT(*) AS c, COALESCE(SUM(amount), 0) AS s FROM xp_events WHERE user_id = ?',
+          [userId]
+        );
+        const finalXP =
+          parseInt(cntRow.c, 10) > 0
+            ? Math.max(0, parseFloat(cntRow.s || 0))
+            : newXP;
+        const newLevel = getLevelFromXP(finalXP);
+        const leveledUp = newLevel > currentLevel;
+
+        await db.execute('UPDATE users SET xp = ?, level = ? WHERE id = ?', [finalXP, newLevel, userId]);
+
+        if (leveledUp) {
+          try {
+            const [userInfo] = await db.execute('SELECT username, name FROM users WHERE id = ?', [userId]);
+            const username = userInfo[0]?.username || userInfo[0]?.name || 'User';
+            const base = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : (process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:3000');
+            fetch(`${base}/api/users/level-up-notification`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId, oldLevel: currentLevel, newLevel, username })
+            }).catch(() => {});
+          } catch (_) {}
+        }
 
         await db.end();
+        try {
+          invalidatePattern('leaderboard_v*');
+        } catch (_) {}
 
+        const msg = xpAmount > 0
+          ? `Awarded ${xpAmount} XP (ledger synced)`
+          : `Adjusted XP by ${xpAmount}`;
         return res.status(200).json({
           success: true,
-          message: `Successfully awarded ${xpAmount} XP points`,
-          newXP: newXP,
-          newLevel: newLevel
+          message: msg,
+          newXP: finalXP,
+          newLevel
         });
       } catch (dbError) {
         console.error('Database error giving XP:', dbError);
         if (db && !db.ended) await db.end();
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to give XP points'
-        });
+        return res.status(500).json({ success: false, message: 'Failed to give XP points' });
       }
     } catch (error) {
       console.error('Error giving XP:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
 

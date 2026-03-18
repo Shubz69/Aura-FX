@@ -70,24 +70,43 @@ module.exports = async (req, res) => {
             // Get previous XP to calculate gain
             const [userRows] = await db.execute('SELECT xp FROM users WHERE id = ?', [userId]);
             const previousXP = userRows.length > 0 ? parseFloat(userRows[0].xp || 0) : 0;
-            const xpGain = parseFloat(xp) - previousXP;
+            let rawGain = parseFloat(xp) - previousXP;
+            const PLAYER_XP_MULT = Number(process.env.XP_PLAYER_GAIN_MULT || 0.55);
+            let adjustedXP = parseFloat(xp);
+            let adjustedLevel = parseInt(level, 10);
+            if (rawGain > 0 && PLAYER_XP_MULT > 0 && PLAYER_XP_MULT < 1) {
+                const scaledGain = Math.round(rawGain * PLAYER_XP_MULT * 100) / 100;
+                adjustedXP = Math.max(0, previousXP + scaledGain);
+                const getLevelFromXP = (x) => {
+                    if (x <= 0) return 1;
+                    if (x >= 1000000) return 1000;
+                    if (x < 500) return Math.floor(Math.sqrt(x / 50)) + 1;
+                    if (x < 5000) return 10 + Math.floor(Math.sqrt((x - 500) / 100)) + 1;
+                    if (x < 20000) return 50 + Math.floor(Math.sqrt((x - 5000) / 200)) + 1;
+                    if (x < 100000) return 100 + Math.floor(Math.sqrt((x - 20000) / 500)) + 1;
+                    if (x < 500000) return 200 + Math.floor(Math.sqrt((x - 100000) / 1000)) + 1;
+                    return Math.min(1000, 500 + Math.floor(Math.sqrt((x - 500000) / 2000)) + 1);
+                };
+                adjustedLevel = getLevelFromXP(adjustedXP);
+                rawGain = scaledGain;
+            }
 
             // Update user XP and level
             const [updateResult] = await db.execute(
                 'UPDATE users SET xp = ?, level = ? WHERE id = ?',
-                [parseFloat(xp), parseInt(level), userId]
+                [adjustedXP, adjustedLevel, userId]
             );
             
             // Log XP transaction if there was a gain
-            if (xpGain > 0) {
+            if (rawGain > 0) {
                 const logActionType = actionType || 'system_update';
-                const logDescription = description || `XP updated from ${previousXP} to ${xp}`;
+                const logDescription = description || `XP updated from ${previousXP} to ${adjustedXP}`;
                 
                 // Log to xp_logs (legacy)
                 try {
                     await db.execute(
                         'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
-                        [userId, xpGain, logActionType, logDescription]
+                        [userId, rawGain, logActionType, logDescription]
                     );
                 } catch (logError) {
                     console.warn('Failed to log XP to xp_logs:', logError.message);
@@ -109,14 +128,14 @@ module.exports = async (req, res) => {
                     `);
                     await db.execute(
                         'INSERT INTO xp_events (user_id, amount, source, meta) VALUES (?, ?, ?, ?)',
-                        [userId, xpGain, logActionType, JSON.stringify({ description: logDescription })]
+                        [userId, rawGain, logActionType, JSON.stringify({ description: logDescription })]
                     );
                 } catch (evtError) {
                     console.warn('Failed to log XP to xp_events:', evtError.message);
                 }
             }
             
-            console.log(`✅ XP updated for user ${userId}: ${xp} XP, Level ${level}`, updateResult);
+            console.log(`✅ XP updated for user ${userId}: ${adjustedXP} XP, Level ${adjustedLevel}`, updateResult);
 
             // Release connection (don't use db.end() if using pool)
             if (db && typeof db.release === 'function') {
@@ -128,8 +147,8 @@ module.exports = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: 'XP and level updated successfully',
-                xp: parseFloat(xp),
-                level: parseInt(level)
+                xp: adjustedXP,
+                level: adjustedLevel
             });
         } catch (dbError) {
             console.error('❌ Database error updating XP:', dbError);

@@ -75,9 +75,11 @@ module.exports = async (req, res) => {
 
     // 1. Clean up old XP events (keep last 90 days)
     try {
+      // Keep admin grants & daily_login forever-ish; other events after 2y (ledger drives users.xp on sync)
       const cleanResult = await executeQuery(`
         DELETE FROM xp_events 
-        WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY)
+        WHERE created_at < DATE_SUB(NOW(), INTERVAL 730 DAY)
+          AND source NOT IN ('admin_grant', 'admin_adjust', 'daily_login')
       `);
       results.cleanedEvents = cleanResult?.affectedRows || 0;
     } catch (e) {

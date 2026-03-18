@@ -17,11 +17,34 @@ const withTimeout = (promise, timeoutMs = 2000) => {
  * Base: 25 XP, scales with streak length
  */
 const calculateLoginXP = (streak) => {
-  const baseXP = 25;
+  const baseXP = 12;
   const bonusMultiplier = Math.min(Math.floor(streak / 7), 20);
-  const bonusXP = bonusMultiplier * 5;
+  const bonusXP = bonusMultiplier * 2;
   return baseXP + bonusXP;
 };
+
+async function logDailyLoginXpEvent(executeQuery, userId, xpReward, desc) {
+  try {
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS xp_events (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        amount DECIMAL(12, 2) NOT NULL,
+        source VARCHAR(50) NOT NULL,
+        meta JSON,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        INDEX idx_created_at (created_at)
+      )
+    `);
+    await executeQuery(
+      'INSERT INTO xp_events (user_id, amount, source, meta) VALUES (?, ?, ?, ?)',
+      [userId, xpReward, 'daily_login', JSON.stringify({ description: desc || 'daily_login' })]
+    );
+  } catch (e) {
+    console.warn('daily-login xp_events:', e.message);
+  }
+}
 
 /**
  * Calculate level from XP (same as XP system)
@@ -168,6 +191,7 @@ module.exports = async (req, res) => {
           'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
           [userId, xpReward, 'daily_login', 'Daily login — streak reset after gap (1 day)']
         ).catch(err => console.warn('XP log failed (non-blocking):', err.message));
+        logDailyLoginXpEvent(executeQuery, userId, xpReward, 'streak_reset_day');
 
         return res.status(200).json({
           success: true,
@@ -225,6 +249,7 @@ module.exports = async (req, res) => {
         'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
         [userId, xpReward, 'daily_login', `Daily login - ${newStreak} day streak`]
       ).catch(err => console.warn('XP log failed (non-blocking):', err.message));
+      logDailyLoginXpEvent(executeQuery, userId, xpReward, `streak_${newStreak}`);
 
       if (leveledUp) {
         console.log(`User ${userId} leveled up to ${newLevel} from daily login`);

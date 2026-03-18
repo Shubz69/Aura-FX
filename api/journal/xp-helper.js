@@ -5,13 +5,14 @@
 
 const { executeQuery } = require('../db');
 
+const J = 0.55;
 const XP = {
-  ADD_TASK: 5,
-  SAVE_NOTE: 5,
-  COMPLETE_WITH_PROOF: 25,
-  DAY_PCT_MAX: 10,
-  WEEK_PCT_MAX: 30,
-  MONTH_PCT_MAX: 50,
+  ADD_TASK: Math.round(5 * J),
+  SAVE_NOTE: Math.round(5 * J),
+  COMPLETE_WITH_PROOF: Math.round(25 * J),
+  DAY_PCT_MAX: Math.round(10 * J),
+  WEEK_PCT_MAX: Math.round(30 * J),
+  MONTH_PCT_MAX: Math.round(50 * J),
 };
 
 function getLevelFromXP(xp) {
