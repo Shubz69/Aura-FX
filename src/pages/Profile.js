@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import CosmicBackground from '../components/CosmicBackground';
 import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
 import { getPlaceholderColor, setPlaceholderColor as savePlaceholderColor, PLACEHOLDER_COLORS } from '../utils/avatar';
+import { setUserInLocalStorage } from '../utils/userLocalStorage';
 import {
     getRankTitle,
     getTierName,
@@ -318,18 +319,11 @@ useEffect(() => {
                         ...storedUser,
                         ...backendData,
                         id: user.id,
-                        banner: finalBanner 
                     };
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
-
                     if (finalBanner) {
                         localStorage.setItem(userBannerKey, finalBanner);
-                          // Also save banner to user object in localStorage for redundancy
-    if (finalBanner && updatedUser) {
-        updatedUser.banner = finalBanner;
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
                     }
+                    setUserInLocalStorage(updatedUser);
 
                     // Daily login check
                     const currentUserId = user?.id || userData.id;
@@ -360,7 +354,7 @@ useEffect(() => {
                                         xp: loginResponse.data.newXP,
                                         level: loginResponse.data.newLevel ?? updatedUser.level
                                     };
-                                    localStorage.setItem('user', JSON.stringify(updatedUserWithXP));
+                                    setUserInLocalStorage(updatedUserWithXP);
                                 }
                             }
                         } catch (error) {
@@ -381,8 +375,7 @@ useEffect(() => {
             try {
                 const u = JSON.parse(localStorage.getItem('user') || '{}');
                 if (u.id) {
-                    const updatedUser = { ...u, xp: newXP, level: newLevel };
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    setUserInLocalStorage({ ...u, xp: newXP, level: newLevel });
                 }
             } catch (_) {}
         };
@@ -693,7 +686,7 @@ if (!avatarToSave && avatarColor) {
         console.log('Avatar length:', avatarToSave?.length || 0);
         console.log('Avatar color:', avatarColor);
 
-        localStorage.setItem('user', JSON.stringify({ ...storedUser, ...dataToSave }));
+        setUserInLocalStorage({ ...storedUser, ...dataToSave });
 
         const response = await axios.put(
             `${resolveApiBaseUrl()}/api/users/${user.id}`,
@@ -730,9 +723,7 @@ if (!avatarToSave && avatarColor) {
             }
 
             const updatedStoredUser = { ...storedUser, ...updatedData };
-            localStorage.setItem('user', JSON.stringify(updatedStoredUser));
-
-         
+            setUserInLocalStorage(updatedStoredUser);
 
             if (setUser) {
                 setUser(updatedStoredUser);
@@ -1122,7 +1113,7 @@ if (!avatarToSave && avatarColor) {
 
                                                 const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
                                                 const updatedUser = { ...storedUser, timezone: val || null };
-                                                localStorage.setItem('user', JSON.stringify(updatedUser));
+                                                setUserInLocalStorage(updatedUser);
 
                                                 if (setUser) setUser(updatedUser);
 

@@ -157,6 +157,10 @@
       "destination": "/api/stripe/index.js"
     },
     {
+      "source": "/api/admin/purge-aurafx-com-users",
+      "destination": "/api/admin/purge-aurafx-com-users.js"
+    },
+    {
       "source": "/api/admin",
       "destination": "/api/admin/index.js"
     },
@@ -203,6 +207,10 @@
     {
       "source": "/api/news",
       "destination": "/api/news.js"
+    },
+    {
+      "source": "/api/referral/stats",
+      "destination": "/api/referral/stats.js"
     },
     {
       "source": "/api/push/subscribe",

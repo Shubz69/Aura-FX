@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 
 const CACHE_MS = 45 * 1000; // 45s cache for near-instant repeat loads, fresh enough for tier/onboarding
 
@@ -66,10 +67,9 @@ export const EntitlementsProvider = ({ children }) => {
         cachedAt.current = Date.now();
         // Keep localStorage user in sync so sidebar/profile show correct level/xp
         try {
-          const existing = JSON.parse(localStorage.getItem('user') || '{}');
+          const existing = sanitizeUserForLocalStorage(JSON.parse(localStorage.getItem('user') || '{}'));
           if (existing.id === json.user.id && (json.user.level != null || json.user.xp != null)) {
-            const merged = { ...existing, level: json.user.level, xp: json.user.xp };
-            localStorage.setItem('user', JSON.stringify(merged));
+            setUserInLocalStorage({ ...existing, level: json.user.level, xp: json.user.xp });
           }
         } catch (_) {}
       } else {

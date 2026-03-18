@@ -67,7 +67,14 @@ export default function Affiliation() {
     setLoading(true);
     try {
       const res = await Api.getReferralStats?.();
-      if (res?.data) setStats(res.data);
+      const d = res?.data;
+      if (d && typeof d === 'object') {
+        setStats({
+          referrals: Number(d.referrals) || 0,
+          active: Number(d.active) || 0,
+          earned: Number(d.earned) || 0,
+        });
+      }
     } catch (_) {}
     finally { setLoading(false); }
   }, [user]);

@@ -141,13 +141,15 @@ const Register = () => {
                 return;
             }
             setSuccess("Creating your account...");
+            const refParam = new URLSearchParams(location.search).get('ref');
             const submitData = {
                 username: formData.username.trim(),
                 email: formData.email.trim().toLowerCase(),
                 phone: formData.phone.trim(),
                 password: formData.password,
                 name: (formData.name || '').trim(),
-                avatar: null
+                avatar: null,
+                ...(refParam && refParam.trim() ? { referralCode: refParam.trim() } : {})
             };
             localStorage.setItem('newSignup', 'true');
             localStorage.setItem('pendingSubscription', 'true');

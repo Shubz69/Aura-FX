@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Api from '../services/Api';
 import { jwtDecode } from 'jwt-decode';
 import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
+import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 
 // Create the context
 const AuthContext = createContext(null);
@@ -77,35 +78,25 @@ export const AuthProvider = ({ children }) => {
 
   const persistUser = useCallback((userInfo) => {
     const fullUser = resolveUserInfo(userInfo);
+    let av = fullUser.avatar;
+    if (typeof av === 'string' && av.startsWith('data:image') && av.length > 2500) av = null;
     const safeUser = {
       id: fullUser.id,
       username: fullUser.username,
       email: fullUser.email,
       name: fullUser.name,
-      avatar: fullUser.avatar,
+      avatar: av,
       role: fullUser.role,
       mfaVerified: fullUser.mfaVerified,
       level: fullUser.level != null ? fullUser.level : undefined,
       xp: fullUser.xp != null ? fullUser.xp : undefined,
       timezone: fullUser.timezone ?? undefined
     };
-    try {
-      // Merge with existing user so we preserve level/xp (and other fields) set by Community/Profile
-      const existing = JSON.parse(localStorage.getItem('user') || '{}');
-      const merged = { ...existing, ...safeUser };
-      if (merged.level === undefined && existing.level != null) merged.level = existing.level;
-      if (merged.xp === undefined && existing.xp != null) merged.xp = existing.xp;
-      localStorage.setItem('user', JSON.stringify(merged));
-    } catch (e) {
-      if (e.name === 'QuotaExceededError' || e.code === 22) {
-        try {
-          localStorage.removeItem('user');
-          localStorage.setItem('user', JSON.stringify({ id: fullUser.id, email: fullUser.email, role: fullUser.role }));
-        } catch (_) {
-          // Minimal fallback failed; still set in-memory user so login succeeds
-        }
-      }
-    }
+    const existing = sanitizeUserForLocalStorage(JSON.parse(localStorage.getItem('user') || '{}'));
+    const merged = { ...existing, ...safeUser };
+    if (merged.level === undefined && existing.level != null) merged.level = existing.level;
+    if (merged.xp === undefined && existing.xp != null) merged.xp = existing.xp;
+    setUserInLocalStorage(merged);
     setUser(fullUser);
     return fullUser;
   }, []);

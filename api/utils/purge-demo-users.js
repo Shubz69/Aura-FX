@@ -1,6 +1,8 @@
 /**
  * Permanently removes demo / seeded users from the database.
  * Matches: is_demo = TRUE or email ending with @aurafx.demo
+ *
+ * Also exports deleteUsersByIds for bulk deletes (same FK cleanup order).
  */
 
 function getRows(result) {
@@ -23,23 +25,17 @@ function affectedRows(execResult) {
  * @param {{ log?: Function }} [opts]
  * @returns {Promise<{ userIds: number[], deletedUsers: number, steps: string[] }>}
  */
-async function purgeDemoUsers(executeQuery, opts = {}) {
+async function deleteUsersByIds(executeQuery, ids, opts = {}) {
   const log = opts.log || (() => {});
   const steps = [];
-
-  const [idResult] = await executeQuery(`
-    SELECT id FROM users
-    WHERE is_demo = TRUE OR is_demo = 1 OR email LIKE '%@aurafx.demo'
-  `);
-  const ids = getRows(idResult).map((r) => r.id).filter(Boolean);
-  if (ids.length === 0) {
-    steps.push('no_demo_users_found');
-    return { userIds: [], deletedUsers: 0, steps };
+  const idList = (ids || []).map(Number).filter((n) => n > 0);
+  if (idList.length === 0) {
+    return { userIds: [], deletedUsers: 0, steps: ['no_ids'] };
   }
 
-  const ph = ids.map(() => '?').join(',');
-  const p = [...ids];
-  const p2 = [...ids, ...ids];
+  const ph = idList.map(() => '?').join(',');
+  const p = [...idList];
+  const p2 = [...idList, ...idList];
 
   const run = async (label, sql, params = p) => {
     try {
@@ -76,7 +72,24 @@ async function purgeDemoUsers(executeQuery, opts = {}) {
     steps.push(`users_error:${e.message}`);
   }
 
-  return { userIds: ids, deletedUsers, steps };
+  return { userIds: idList, deletedUsers, steps };
 }
 
-module.exports = { purgeDemoUsers, getRows };
+async function purgeDemoUsers(executeQuery, opts = {}) {
+  const log = opts.log || (() => {});
+  const steps = [];
+
+  const [idResult] = await executeQuery(`
+    SELECT id FROM users
+    WHERE is_demo = TRUE OR is_demo = 1 OR email LIKE '%@aurafx.demo'
+  `);
+  const ids = getRows(idResult).map((r) => r.id).filter(Boolean);
+  if (ids.length === 0) {
+    steps.push('no_demo_users_found');
+    return { userIds: [], deletedUsers: 0, steps };
+  }
+
+  return deleteUsersByIds(executeQuery, ids, { log });
+}
+
+module.exports = { purgeDemoUsers, deleteUsersByIds, getRows };

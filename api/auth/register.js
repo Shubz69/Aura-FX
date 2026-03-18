@@ -107,7 +107,7 @@ module.exports = async (req, res) => {
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { return res.status(400).json({ success: false, message: 'Invalid JSON' }); }
     }
-    const { username, email, password, name, phone, avatar } = body;
+    const { username, email, password, name, phone, avatar, referralCode, ref } = body;
 
     // Validate required fields
     if (!username || !email || !password) {
@@ -196,6 +196,28 @@ module.exports = async (req, res) => {
       }
 
       const userId = result.insertId;
+
+      const refRaw = (referralCode || ref || '').toString().trim();
+      let referredBy = null;
+      const refMatch = refRaw.match(/^AT-(\d+)$/i);
+      if (refMatch) {
+        referredBy = parseInt(refMatch[1], 10);
+        if (referredBy === userId || referredBy < 1) referredBy = null;
+        else {
+          const [refRows] = await db.execute('SELECT id FROM users WHERE id = ? LIMIT 1', [referredBy]);
+          if (!refRows || refRows.length === 0) referredBy = null;
+        }
+      }
+      if (referredBy) {
+        try {
+          await db.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referredBy, userId]);
+        } catch (colErr) {
+          if (colErr.code === 'ER_BAD_FIELD_ERROR') {
+            await db.execute('ALTER TABLE users ADD COLUMN referred_by INT NULL DEFAULT NULL');
+            await db.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referredBy, userId]);
+          }
+        }
+      }
 
       // Notify support with signup count (for milestones e.g. 10th user prize)
       try {
