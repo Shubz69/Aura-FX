@@ -1002,3 +1002,85 @@
 .td-outlook-main-card .td-mi-btn-cancel {
   color: rgba(255, 255, 255, 0.65);
 }
+
+/* ── Risk Radar – Forex Factory-style event table ─────────────────────────── */
+.rr-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.rr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.rr-th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  white-space: nowrap;
+}
+.rr-th--num { text-align: right; }
+.rr-th--time { width: 56px; }
+.rr-th--cur  { width: 44px; }
+.rr-th--impact { width: 62px; text-align: center; }
+
+.rr-row {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.12s;
+}
+.rr-row:last-child { border-bottom: none; }
+.rr-row:hover { background: rgba(139,92,246,0.05); }
+
+.rr-td {
+  padding: 10px 12px;
+  color: rgba(255,255,255,0.82);
+  vertical-align: middle;
+}
+.rr-td--time {
+  color: rgba(255,255,255,0.4);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.rr-td--event {
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+}
+.rr-td--impact { text-align: center; }
+.rr-td--num { text-align: right; font-variant-numeric: tabular-nums; font-size: 0.76rem; }
+
+/* Currency badge */
+.rr-currency {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(99,102,241,0.15);
+  color: #818cf8;
+}
+
+/* Impact dots */
+.rr-impact {
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  font-family: inherit;
+}
+.rr-impact--high   { color: #f87171; }
+.rr-impact--medium { color: #fb923c; }
+.rr-impact--low    { color: #facc15; }
+.rr-impact--none   { color: rgba(255,255,255,0.2); }
+
+/* Forecast / previous values */
+.rr-forecast { color: #a78bfa; }
+.rr-previous { color: rgba(255,255,255,0.45); }

@@ -860,3 +860,293 @@
     flex-wrap: wrap;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PREMIUM VISUAL ENHANCEMENTS – Journal-matching polish
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Outer gradient border shell (matches Market Intelligence panel) */
+.trade-validator-inner.tv-new-layout {
+  border: 1px solid rgba(139,92,246,0.3);
+  background: rgba(14,12,20,0.97) !important;
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.18),
+    0 8px 40px rgba(0,0,0,0.45),
+    0 0 60px rgba(139,92,246,0.06);
+}
+
+/* Header – gradient title */
+.tv-title {
+  background: linear-gradient(135deg, #e2d9f3 0%, #c4b5fd 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Tab row – compact pill style with indicator */
+.tv-tab-row {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 6px;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 auto 28px;
+}
+
+.tv-tab-btn {
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 0.875rem;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255,255,255,0.45);
+  transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.tv-tab-btn:hover {
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+}
+.tv-tab-btn-active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(139,92,246,0.35) 0%, rgba(124,58,237,0.3) 100%);
+  border-color: rgba(139,92,246,0.55);
+  box-shadow: 0 0 16px rgba(139,92,246,0.25), inset 0 0 8px rgba(139,92,246,0.1);
+}
+
+/* Score card – accent gradient border + glow */
+.tv-score-card {
+  background: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(99,102,241,0.06) 100%) !important;
+  border-color: rgba(139,92,246,0.3) !important;
+  box-shadow: 0 0 20px rgba(139,92,246,0.08);
+  padding: 22px 28px;
+  gap: 24px;
+}
+
+.tv-score-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+.tv-score-value {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #6ee7b7, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.tv-score-grade {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a78bfa;
+  -webkit-text-fill-color: #a78bfa;
+}
+
+/* Progress bar – animated shimmer */
+.tv-score-bar-wrap {
+  height: 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  overflow: visible;
+  position: relative;
+}
+.tv-score-bar {
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #059669, #10b981, #34d399);
+  background-size: 200% 100%;
+  animation: tv-bar-shimmer 2.4s linear infinite;
+  box-shadow: 0 0 10px rgba(16,185,129,0.4);
+}
+@keyframes tv-bar-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Section block headers */
+.tv-block-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(139,92,246,0.2);
+  margin-bottom: 8px !important;
+}
+.tv-block-sub {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 22px !important;
+}
+
+/* Section cards – left accent border + glow on hover */
+.tv-section-card,
+.tv-checklist-tab-card {
+  border-left: 3px solid rgba(139,92,246,0.4);
+  position: relative;
+  overflow: hidden;
+}
+.tv-section-card::before,
+.tv-checklist-tab-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(139,92,246,0.5), transparent);
+}
+.tv-section-card:hover,
+.tv-checklist-tab-card:hover {
+  border-left-color: rgba(139,92,246,0.75);
+  box-shadow: 0 4px 24px rgba(139,92,246,0.12);
+}
+
+/* Card titles – accent color */
+.tv-section-card-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #c4b5fd !important;
+  letter-spacing: 0.02em;
+}
+
+/* Icon placeholder – replace empty div with gradient circle */
+.tv-section-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(99,102,241,0.2));
+  border: 1px solid rgba(139,92,246,0.3);
+  margin-bottom: 12px;
+}
+
+/* Checklist items – polished rows */
+.tv-checklist-item {
+  padding: 11px 14px;
+  margin: 0 -14px;
+  border-radius: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.86rem;
+  gap: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.tv-checklist-item:hover { background: rgba(139,92,246,0.07); }
+.tv-checkmark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+}
+.tv-checklist-item input:checked + .tv-checkmark {
+  background: linear-gradient(135deg, #059669, #10b981);
+  border-color: #10b981;
+  box-shadow: 0 0 8px rgba(16,185,129,0.3);
+}
+.tv-item-pct {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(139,92,246,0.7);
+  background: rgba(139,92,246,0.1);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Setup formation – remove plain placeholder chart box */
+.tv-setup-chart { display: none; }
+
+.tv-setup-section {
+  border-left: 3px solid rgba(99,102,241,0.4);
+}
+.tv-setup-section-title { color: #c4b5fd !important; }
+.tv-setup-cat-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.38);
+  padding: 6px 0 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 4px;
+}
+
+/* Bottom bar – premium */
+.tv-bottom-bar {
+  background: linear-gradient(135deg, rgba(139,92,246,0.07) 0%, rgba(99,102,241,0.05) 100%);
+  border-color: rgba(139,92,246,0.25);
+  box-shadow: 0 0 20px rgba(139,92,246,0.06);
+}
+.tv-bottom-msg {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.4);
+}
+.tv-bottom-msg-ok {
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.25);
+  color: #34d399;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Buttons – polished with glow */
+.tv-btn-save {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 0 0 1px rgba(139,92,246,0.3);
+  font-size: 0.875rem;
+  padding: 11px 24px;
+  border-radius: 10px;
+}
+.tv-btn-save:hover:not(:disabled) {
+  box-shadow: 0 4px 20px rgba(139,92,246,0.45);
+}
+.tv-btn-calc {
+  font-size: 0.875rem;
+  padding: 11px 24px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.9) 0%, rgba(37,99,235,0.9) 100%);
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.3);
+}
+.tv-btn-calc:hover {
+  box-shadow: 0 4px 20px rgba(59,130,246,0.35);
+}
+
+/* Trade form popup – journal card style */
+.tv-trade-form-block {
+  border: 1px solid rgba(139,92,246,0.3);
+  background: rgba(14,12,20,0.98) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,92,246,0.15);
+}
+.tv-trade-form-header h3 {
+  color: #c4b5fd;
+  font-size: 1rem;
+}
+.trade-validator-field label {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  letter-spacing: 0.07em;
+}
+.trade-validator-field input,
+.trade-validator-field select {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+}
+.trade-validator-field input:focus,
+.trade-validator-field select:focus {
+  border-color: rgba(139,92,246,0.6);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+}
+.trade-validator-computed {
+  background: rgba(139,92,246,0.06);
+  border-color: rgba(139,92,246,0.18);
+  border-radius: 10px;
+}
+.trade-validator-computed strong { color: #c4b5fd; }

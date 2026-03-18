@@ -1,9 +1,11 @@
+/* ── NewsFeedView – headline list with pair-impact badges ─────────────────── */
 .nf-page {
   padding: 0;
   color: var(--text, #e2e8f0);
   font-family: 'Space Grotesk', sans-serif;
 }
 
+/* Header */
 .nf-header {
   display: flex;
   align-items: flex-start;
@@ -12,66 +14,69 @@
   margin-bottom: 18px;
   flex-wrap: wrap;
 }
-
 .nf-title {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #fff;
   margin: 0 0 4px;
 }
-
 .nf-sub {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.45);
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.4);
   margin: 0;
 }
+.nf-updated { color: rgba(255,255,255,0.25); }
 
-.nf-updated { color: rgba(255,255,255,0.3); }
-
+/* Search */
 .nf-search {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
-  padding: 7px 12px;
+  padding: 7px 14px;
   color: #e2e8f0;
   font-size: 0.8rem;
   font-family: inherit;
   outline: none;
-  width: 200px;
+  width: 220px;
   transition: border-color 0.15s;
 }
-.nf-search:focus { border-color: rgba(139,92,246,0.5); }
+.nf-search:focus { border-color: rgba(139,92,246,0.55); }
 .nf-search::placeholder { color: rgba(255,255,255,0.2); }
 
+/* Category filters */
 .nf-filters {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
-
 .nf-filter-btn {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.48);
   border-radius: 6px;
   padding: 5px 13px;
-  font-size: 0.73rem;
+  font-size: 0.71rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s;
+  letter-spacing: 0.03em;
 }
 .nf-filter-btn.active,
-.nf-filter-btn:hover { background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.5); color: #c4b5fd; }
-
+.nf-filter-btn:hover {
+  background: rgba(139,92,246,0.18);
+  border-color: rgba(139,92,246,0.5);
+  color: #c4b5fd;
+}
 .nf-count {
   margin-left: auto;
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.3);
+  font-size: 0.66rem;
+  color: rgba(255,255,255,0.28);
 }
 
+/* Loading / error / empty */
 .nf-loading {
   display: flex;
   align-items: center;
@@ -81,7 +86,6 @@
   font-size: 0.85rem;
   justify-content: center;
 }
-
 .nf-loading-spinner {
   width: 18px;
   height: 18px;
@@ -100,121 +104,159 @@
 }
 .nf-error { color: #fca5a5; }
 
-.nf-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
-}
-
-.nf-card {
+/* ── Headline list (replaces card grid) ─────────────────────────────────── */
+.nf-list {
   display: flex;
   flex-direction: column;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px;
-  overflow: hidden;
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
-  cursor: pointer;
-}
-.nf-card:hover {
-  background: rgba(255,255,255,0.056);
-  border-color: rgba(139,92,246,0.3);
-  transform: translateY(-1px);
+  gap: 1px;
 }
 
-.nf-card-img-wrap {
-  height: 120px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.05);
-}
-
-.nf-card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.85;
-}
-
-.nf-card-body {
-  padding: 14px;
+.nf-headline-row {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s;
+  cursor: default;
+  user-select: text;
+}
+.nf-headline-row:hover {
+  background: rgba(255,255,255,0.045);
+  border-color: rgba(139,92,246,0.22);
+}
+
+.nf-headline-left {
   flex: 1;
+  min-width: 0;
 }
 
-.nf-card-meta {
+.nf-headline-meta {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 
-.nf-card-cat {
-  font-size: 0.62rem;
+/* Category badge */
+.nf-cat {
+  font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   padding: 2px 7px;
   border-radius: 4px;
   background: rgba(139,92,246,0.15);
   color: #a78bfa;
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
-.nf-card-cat--forex { background: rgba(14,165,233,0.12); color: #7dd3fc; }
-.nf-card-cat--crypto { background: rgba(234,179,8,0.12); color: #fde047; }
-.nf-card-cat--market { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.nf-cat--forex   { background: rgba(14,165,233,0.12); color: #7dd3fc; }
+.nf-cat--crypto  { background: rgba(234,179,8,0.12);  color: #fde047; }
+.nf-cat--market  { background: rgba(139,92,246,0.15); color: #a78bfa; }
 
-.nf-card-time {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.3);
-  margin-left: auto;
+.nf-headline-time {
+  font-size: 0.67rem;
+  color: rgba(255,255,255,0.28);
 }
-
-.nf-card-headline {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.9);
-  line-height: 1.45;
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.nf-card-summary {
-  font-size: 0.73rem;
-  color: rgba(255,255,255,0.45);
-  line-height: 1.5;
-  margin: 0;
-}
-
-.nf-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.nf-card-source {
+.nf-headline-src {
   font-size: 0.67rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.25);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.nf-card-read {
-  font-size: 0.68rem;
-  color: #a78bfa;
+.nf-headline-text {
+  font-size: 0.875rem;
   font-weight: 600;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.5;
+  margin: 0 0 5px;
+}
+.nf-headline-summary {
+  font-size: 0.74rem;
+  color: rgba(255,255,255,0.42);
+  line-height: 1.55;
+  margin: 0;
 }
 
+/* ── Pair impact badges ─────────────────────────────────────────────────── */
+.nf-impacts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.nf-impact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.nf-impact--up {
+  background: rgba(16,185,129,0.12);
+  border-color: rgba(16,185,129,0.3);
+  color: #34d399;
+}
+.nf-impact--down {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.3);
+  color: #f87171;
+}
+.nf-impact--neutral {
+  background: rgba(148,163,184,0.08);
+  border-color: rgba(148,163,184,0.2);
+  color: rgba(255,255,255,0.45);
+}
+
+/* Animated emoji */
+.nf-impact-emoji {
+  display: inline-block;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.nf-impact--up    .nf-impact-emoji { animation: nf-bounce-up 1.4s ease-in-out infinite; }
+.nf-impact--down  .nf-impact-emoji { animation: nf-bounce-down 1.4s ease-in-out infinite; }
+.nf-impact--neutral .nf-impact-emoji { animation: nf-slide 2s ease-in-out infinite; }
+
+@keyframes nf-bounce-up {
+  0%, 100% { transform: translateY(0); }
+  40%       { transform: translateY(-4px); }
+  70%       { transform: translateY(-2px); }
+}
+@keyframes nf-bounce-down {
+  0%, 100% { transform: translateY(0); }
+  40%       { transform: translateY(4px); }
+  70%       { transform: translateY(2px); }
+}
+@keyframes nf-slide {
+  0%, 100% { transform: translateX(0); }
+  40%       { transform: translateX(4px); }
+}
+
+.nf-impact-pair {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* Responsive */
 @media (max-width: 640px) {
-  .nf-grid { grid-template-columns: 1fr; }
+  .nf-headline-row { flex-direction: column; }
+  .nf-impacts { flex-direction: row; align-items: flex-start; min-width: unset; }
   .nf-search { width: 160px; }
   .nf-header { flex-direction: column; }
 }
