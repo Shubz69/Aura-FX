@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
       const { deletedUsers } = await purgeDemoUsers(executeQuery, { log: console.log });
       if (deletedUsers > 0) {
         results.demoUsersPurged = deletedUsers;
-        invalidatePattern('leaderboard_v10*');
+        invalidatePattern('leaderboard_v*');
         invalidatePattern('community_users*');
       }
     } catch (e) {

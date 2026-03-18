@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
 
   try {
     const result = await purgeDemoUsers(executeQuery, { log: console.log });
-    invalidatePattern('leaderboard_v10*');
+    invalidatePattern('leaderboard_v*');
     invalidatePattern('community_users*');
     return res.status(200).json({
       success: true,

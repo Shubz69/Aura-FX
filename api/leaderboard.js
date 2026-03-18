@@ -142,7 +142,7 @@ async function ensureSchema() {
       const { deletedUsers, steps } = await purgeDemoUsers(executeQuery, { log: console.log });
       if (deletedUsers > 0) {
         console.log('Demo users purged from DB:', steps.join(', '));
-        invalidatePattern('leaderboard_v10*');
+        invalidatePattern('leaderboard_v*');
       }
     } catch (cleanupErr) {
       console.log('Demo purge (non-fatal):', cleanupErr.message);
@@ -290,7 +290,7 @@ module.exports = async (req, res) => {
     
     // Check cache
     const cacheTTL = timeframe === 'all-time' ? DEFAULT_TTLS.LEADERBOARD_ALLTIME : DEFAULT_TTLS.LEADERBOARD;
-    const cacheKey = `leaderboard_v10_${timeframe}_${limit}_${prizeEligibleOnly}`;
+    const cacheKey = `leaderboard_v11_${timeframe}_${limit}_${prizeEligibleOnly}`;
     const coalesceKey = `lb_query_${timeframe}_${limit}`;
     
     const cached = getCached(cacheKey, cacheTTL);
