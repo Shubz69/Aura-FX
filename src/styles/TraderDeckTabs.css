@@ -662,3 +662,230 @@
   border: none;
   display: block;
 }
+
+/* ══════════════════════════════════════════════════════════
+   JOURNAL-STYLE TRADER DECK LAYOUT
+   Uses journal-page / journal-layout / journal-sidebar / journal-main
+   Extra td-deck-* classes for Trader Desk specifics
+   ══════════════════════════════════════════════════════════ */
+
+/* Layout overrides — sidebar wider to fit calendar */
+.td-deck-jlayout {
+  padding-top: calc(70px + env(safe-area-inset-top, 0) + 12px);
+}
+
+.td-deck-jsidebar {
+  width: 310px;
+  flex-shrink: 0;
+}
+
+.td-deck-sidebar-cal .journal-calendar {
+  margin-bottom: 0;
+}
+
+/* Sidebar: VIEW period sub-tabs */
+.td-deck-sidebar-period {
+  margin-top: 18px;
+}
+
+.td-deck-sidebar-period-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin: 0 0 8px 0;
+}
+
+.td-deck-sub-tabs--vert {
+  flex-direction: row;
+  gap: 6px;
+}
+
+/* Sidebar: market sessions */
+.td-deck-sessions {
+  margin-top: 18px;
+}
+
+.td-deck-sessions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.td-deck-session-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.td-deck-session-item--open {
+  background: rgba(16,185,129,0.06);
+  border-color: rgba(16,185,129,0.15);
+}
+
+.td-deck-session-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+
+.td-deck-session-dot--open {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16,185,129,0.6);
+}
+
+.td-deck-session-name {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.td-deck-session-status {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+}
+
+.td-deck-session-status--open {
+  color: #10b981;
+}
+
+/* ── Main area ─────────────────────────────────────────── */
+.td-deck-jmain {
+  padding-top: 0;
+  min-width: 0;
+}
+
+/* Date bar */
+.td-deck-main-datebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.td-deck-nav-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.td-deck-main-dateinfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.td-deck-main-datestr {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 20px rgba(139,92,246,0.2);
+}
+
+.td-deck-open-cal-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  padding: 0;
+}
+
+.td-deck-open-cal-btn:hover { opacity: 0.85; }
+
+/* Tab nav */
+.td-deck-main-tab-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.td-deck-main-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+.td-deck-main-tab-btn:hover {
+  background: rgba(139,92,246,0.1);
+  border-color: rgba(139,92,246,0.3);
+  color: rgba(255,255,255,0.9);
+}
+
+.td-deck-main-tab-btn--active {
+  background: linear-gradient(135deg, rgba(139,92,246,0.28), rgba(99,102,241,0.22));
+  border-color: rgba(139,92,246,0.5);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(139,92,246,0.18);
+}
+
+.td-deck-tab-icon { font-size: 0.9rem; }
+
+/* Tab content */
+.td-deck-tab-content {
+  margin-bottom: 28px;
+}
+
+/* Market Headlines section */
+.td-deck-news-section {
+  margin-top: 8px;
+}
+
+/* Forex Factory panel section */
+.td-outlook-ff-section {
+  margin-top: 24px;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .td-deck-jsidebar { width: 260px; }
+}
+
+@media (max-width: 700px) {
+  .td-deck-jlayout {
+    flex-direction: column;
+    padding-top: calc(64px + env(safe-area-inset-top, 0) + 8px);
+  }
+  .td-deck-jsidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding-bottom: 16px;
+  }
+  .td-deck-jmain { padding-top: 16px; }
+  .td-deck-main-datestr { font-size: 0.88rem; }
+}

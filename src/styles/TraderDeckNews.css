@@ -1,0 +1,370 @@
+/* =============================================================
+   TRADER DECK – Economic Calendar (Forex Factory style)
+   Inherits Space Grotesk + journal-page CSS variables
+   ============================================================= */
+
+@keyframes td-ff-livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
+  50%       { opacity: 0.5; box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+}
+
+@keyframes td-ff-rowIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes td-ff-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Wrapper card ──────────────────────────────────────────── */
+.td-ff-wrap {
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.td-ff-wrap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.7), rgba(99,179,237,0.5), transparent);
+  pointer-events: none;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.td-ff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.td-ff-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.td-ff-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.td-ff-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: 0.2em;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.25);
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+
+.td-ff-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+  animation: td-ff-livePulse 2s ease-in-out infinite;
+}
+
+.td-ff-high-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 99px;
+  padding: 2px 8px;
+  letter-spacing: 0.1em;
+}
+
+.td-ff-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.td-ff-updated {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.04em;
+}
+
+.td-ff-filter-btn {
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all 0.2s;
+}
+
+.td-ff-filter-btn:hover,
+.td-ff-filter-btn--active {
+  background: rgba(139,92,246,0.15);
+  border-color: rgba(139,92,246,0.35);
+  color: #c4b5fd;
+}
+
+/* ── Filter panel ──────────────────────────────────────────── */
+.td-ff-filter-panel {
+  padding: 14px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.015);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.td-ff-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.td-ff-filter-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.td-ff-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.td-ff-chip {
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  font-family: 'Space Grotesk', sans-serif;
+  color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.td-ff-chip:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.75);
+}
+
+.td-ff-chip--on {
+  background: rgba(139,92,246,0.18);
+  border-color: rgba(139,92,246,0.4);
+  color: #c4b5fd;
+}
+
+.td-ff-chip--on:hover {
+  background: rgba(139,92,246,0.25);
+}
+
+.td-ff-chip--impact.td-ff-chip--on {
+  border-color: var(--impact-color, rgba(139,92,246,0.4));
+  color: #fff;
+  background: color-mix(in srgb, var(--impact-color, #8b5cf6) 18%, transparent);
+}
+
+.td-ff-chip-all {
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  color: rgba(139,92,246,0.8);
+  background: transparent;
+  border: 1px dashed rgba(139,92,246,0.3);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.td-ff-chip-all:hover {
+  background: rgba(139,92,246,0.1);
+  border-color: rgba(139,92,246,0.5);
+}
+
+/* ── Loading / Empty ───────────────────────────────────────── */
+.td-ff-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 20px;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.82rem;
+}
+
+.td-ff-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(139,92,246,0.25);
+  border-top-color: rgba(139,92,246,0.8);
+  border-radius: 50%;
+  animation: td-ff-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.td-ff-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 20px;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.82rem;
+}
+
+.td-ff-empty-icon { font-size: 1.2rem; }
+
+/* ── Table ─────────────────────────────────────────────────── */
+.td-ff-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.td-ff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.td-ff-th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.015);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+
+.td-ff-th--num  { text-align: right; }
+.td-ff-th--actual { text-align: right; color: rgba(255,255,255,0.45); }
+
+.td-ff-row {
+  transition: background 0.15s;
+  animation: td-ff-rowIn 0.3s ease both;
+  border-bottom: 1px solid rgba(255,255,255,0.035);
+}
+
+.td-ff-row:last-child { border-bottom: none; }
+
+.td-ff-row:hover { background: rgba(255,255,255,0.025); }
+
+/* Impact left border */
+.td-ff-row--high   { border-left: 2px solid #ef4444; }
+.td-ff-row--medium { border-left: 2px solid #f97316; }
+.td-ff-row--low    { border-left: 2px solid #eab308; }
+
+/* Released row subtle highlight */
+.td-ff-row--released { background: rgba(16,185,129,0.03); }
+
+.td-ff-td {
+  padding: 10px 12px;
+  color: rgba(255,255,255,0.75);
+  vertical-align: middle;
+}
+
+.td-ff-time {
+  white-space: nowrap;
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.45);
+  font-variant-numeric: tabular-nums;
+  min-width: 60px;
+}
+
+.td-ff-ccy-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Impact dots (3 dots = high, 2 = medium, 1 = low) */
+.td-ff-impact-cell {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+}
+
+.td-ff-impact-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.td-ff-event-cell {
+  font-weight: 400;
+  color: rgba(255,255,255,0.9);
+  min-width: 180px;
+}
+
+.td-ff-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.td-ff-prev     { color: rgba(255,255,255,0.4); }
+.td-ff-forecast { color: rgba(99,179,237,0.7);  }
+
+.td-ff-actual {
+  color: rgba(255,255,255,0.3);
+}
+
+.td-ff-actual--live {
+  color: #10b981;
+  font-weight: 600;
+  text-shadow: 0 0 12px rgba(16,185,129,0.4);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .td-ff-filter-panel { flex-direction: column; }
+  .td-ff-th--num      { display: none; }
+  .td-ff-td.td-ff-num { display: none; }
+  .td-ff-td.td-ff-actual { display: table-cell; }
+  .td-ff-th--actual   { display: table-cell; }
+}

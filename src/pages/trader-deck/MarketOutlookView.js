@@ -13,6 +13,7 @@ import SignalList from '../../components/trader-deck/SignalList';
 import ChangeList from '../../components/trader-deck/ChangeList';
 import FocusList from '../../components/trader-deck/FocusList';
 import RiskRadarList from '../../components/trader-deck/RiskRadarList';
+import ForexFactoryNews from '../../components/trader-deck/ForexFactoryNews';
 
 function normalizeForUI(data) {
   if (!data) return null;
@@ -331,10 +332,10 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               <DashboardPanel title="▲ Aurax Market Regime" className="td-outlook-panel td-outlook-panel--regime">{renderRegime()}</DashboardPanel>
               <DashboardPanel title="Aurax Market Pulse" className="td-outlook-panel td-outlook-panel--pulse">{renderPulse()}</DashboardPanel>
               <DashboardPanel title="Key Market Drivers" className="td-outlook-panel td-outlook-panel--drivers">
-                {editMode && editDraft ? renderDriversEdit() : <><p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p><DriverList drivers={keyDrivers} /></>}
+                {editMode && editDraft ? renderDriversEdit() : <DriverList drivers={keyDrivers} />}
               </DashboardPanel>
               <DashboardPanel title="Cross-Asset Signals" className="td-outlook-panel td-outlook-panel--signals">
-                {editMode && editDraft ? renderSignalsEdit() : <><p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p><SignalList signals={crossAssetSignals} /></>}
+                {editMode && editDraft ? renderSignalsEdit() : <SignalList signals={crossAssetSignals} />}
               </DashboardPanel>
               <DashboardPanel title="Market Change Today" className="td-outlook-panel td-outlook-panel--changes">
                 {editMode && editDraft ? renderListEdit(editDraft.marketChangesToday, 'marketChangesToday', 'Theme') : (marketChangesToday && marketChangesToday.length > 0 ? <ChangeList items={marketChangesToday} /> : <p className="td-outlook-empty">No themes recorded. Use Edit to add.</p>)}
@@ -344,14 +345,17 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               </DashboardPanel>
               <DashboardPanel title="Risk Radar" className="td-outlook-panel td-outlook-panel--radar">
                 {editMode && editDraft ? renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event') : (
-                  <>
-                    <p className="td-mi-source td-mi-source--readonly">Upcoming news (FMP). Refreshes at midnight.</p>
-                    {riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>}
-                  </>
+                  riskRadar && riskRadar.length > 0 ? <RiskRadarList items={riskRadar} /> : <p className="td-outlook-empty">No upcoming events. Use Edit to add.</p>
                 )}
               </DashboardPanel>
             </div>
           </div>
+          {/* Forex Factory live economic calendar — daily view only */}
+          {period !== 'weekly' && (
+            <div className="td-outlook-ff-section">
+              <ForexFactoryNews date={selectedDate} onlyToday={true} />
+            </div>
+          )}
         </div>
       </div>
     </>
