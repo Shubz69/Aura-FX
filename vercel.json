@@ -523,6 +523,26 @@
     {
       "source": "/api/trader-deck/brief-delete",
       "destination": "/api/trader-deck/brief-delete.js"
+    },
+    {
+      "source": "/api/ai/chart-check",
+      "destination": "/api/ai/chart-check.js"
+    },
+    {
+      "source": "/api/reports/eligibility",
+      "destination": "/api/reports/eligibility.js"
+    },
+    {
+      "source": "/api/reports/generate",
+      "destination": "/api/reports/generate.js"
+    },
+    {
+      "source": "/api/reports/history",
+      "destination": "/api/reports/history.js"
+    },
+    {
+      "source": "/api/reports/csv-upload",
+      "destination": "/api/reports/csv-upload.js"
     }
   ],
   "crons": [

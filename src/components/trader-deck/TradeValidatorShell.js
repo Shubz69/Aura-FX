@@ -4,13 +4,14 @@ import '../../styles/aura-analysis/AuraAnalysisShell.css';
 
 const BASE = '/trader-deck/trade-validator';
 const TABS = [
-  { path: `${BASE}/overview`, label: 'Overview' },
-  { path: `${BASE}/checklist`, label: 'Checklist' },
-  { path: `${BASE}/calculator`, label: 'Trade Calculator' },
-  { path: `${BASE}/journal`, label: 'Trade Journal' },
-  { path: `${BASE}/analytics`, label: 'Analytics' },
-  { path: `${BASE}/trader-cv`, label: 'Trader CV' },
-  { path: `${BASE}/leaderboard`, label: 'Leaderboard' },
+  { path: `${BASE}/overview`,        label: 'Overview' },
+  { path: `${BASE}/checklist`,       label: 'Checklist' },
+  { path: `${BASE}/ai-chart-check`,  label: 'AI Chart Check' },
+  { path: `${BASE}/calculator`,      label: 'Trade Calculator' },
+  { path: `${BASE}/journal`,         label: 'Trade Journal' },
+  { path: `${BASE}/analytics`,       label: 'Analytics' },
+  { path: `${BASE}/trader-cv`,       label: 'Trader CV' },
+  { path: `${BASE}/leaderboard`,     label: 'Leaderboard' },
 ];
 
 export default function TradeValidatorShell() {

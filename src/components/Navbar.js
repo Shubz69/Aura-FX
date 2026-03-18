@@ -22,6 +22,7 @@ import {
   FaCheckSquare,
   FaChartLine,
   FaLink,
+  FaFileAlt,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -72,6 +73,9 @@ const Navbar = () => {
             <li><Link to="/journal" onClick={closeMobileMenu}><FaBook className="dropdown-icon" /> Journal</Link></li>
             <li><Link to="/trader-deck/trade-validator" onClick={closeMobileMenu}><FaCheckSquare className="dropdown-icon" /> Trade Validator</Link></li>
             <li><Link to="/aura-analysis" onClick={closeMobileMenu}><FaChartLine className="dropdown-icon" /> Aura Analysis</Link></li>
+            {isPremium(user) && (
+              <li><Link to="/reports" onClick={closeMobileMenu}><FaFileAlt className="dropdown-icon" /> Monthly Reports</Link></li>
+            )}
             <li><Link to="/profile" onClick={closeMobileMenu}><FaUserCircle className="dropdown-icon" /> Profile</Link></li>
             <li><Link to="/admin/inbox" onClick={closeMobileMenu}><FaEnvelope className="dropdown-icon" /> Messages</Link></li>
             <li><Link to="/affiliation" onClick={closeMobileMenu}><FaLink className="dropdown-icon" /> Affiliation</Link></li>
@@ -186,6 +190,11 @@ const Navbar = () => {
                       <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaChartLine className="dropdown-icon" /> Aura Analysis
                       </Link>
+                      {isPremium(user) && (
+                        <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaFileAlt className="dropdown-icon" /> Monthly Reports
+                        </Link>
+                      )}
                       <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaUserCircle className="dropdown-icon" /> Profile
                       </Link>

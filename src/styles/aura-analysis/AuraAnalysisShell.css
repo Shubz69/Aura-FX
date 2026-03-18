@@ -184,3 +184,75 @@
     padding: 20px 16px 32px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PREMIUM POLISH — Journal-matching visual upgrades
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Elevated hero with soft border-bottom glow */
+.aura-shell-hero {
+  background: linear-gradient(180deg, rgba(139,92,246,0.04) 0%, transparent 100%);
+  border-bottom-color: rgba(139,92,246,0.22) !important;
+}
+
+/* Gradient shell title (matches Journal h1 style) */
+.aura-shell-title {
+  background: linear-gradient(135deg, #e2d9f3 0%, #c4b5fd 45%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em;
+}
+
+/* Upgraded tab bar — better backdrop + accent bottom line */
+.aura-shell-tabs-wrap {
+  background: rgba(10,10,10,0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom-color: rgba(139,92,246,0.2) !important;
+  box-shadow: 0 1px 0 rgba(139,92,246,0.15), 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* Inactive tab — slightly more visible text */
+.aura-shell-tab {
+  color: rgba(255,255,255,0.55) !important;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+/* Hover tab */
+.aura-shell-tab:hover {
+  color: rgba(255,255,255,0.85) !important;
+  background: rgba(139,92,246,0.07) !important;
+}
+
+/* Active tab — stronger glow + gradient border effect */
+.aura-shell-tab.active {
+  color: #c4b5fd !important;
+  background: rgba(139,92,246,0.14) !important;
+  border: 1px solid rgba(139,92,246,0.45) !important;
+  box-shadow: 0 0 14px rgba(139,92,246,0.18), inset 0 0 6px rgba(139,92,246,0.08);
+  font-weight: 600 !important;
+}
+
+/* Active indicator line */
+.aura-shell-tab.active::after {
+  background: linear-gradient(90deg, #8b5cf6, #c4b5fd) !important;
+  width: 70% !important;
+  height: 2px !important;
+  bottom: -1px !important;
+  border-radius: 2px 2px 0 0 !important;
+}
+
+/* Content area — subtle separator */
+.aura-shell-content {
+  border-top: none;
+}
+
+/* Trade Validator shell – AI Chart Check tab accent colour */
+.trade-validator-shell .aura-shell-tab[href*="ai-chart-check"].active,
+.trade-validator-shell .aura-shell-tab[href*="ai-chart-check"]:focus {
+  border-color: rgba(139,92,246,0.6) !important;
+  color: #c4b5fd !important;
+}
