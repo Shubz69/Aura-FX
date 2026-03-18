@@ -7,7 +7,6 @@ import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarB
 import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
 import NewsHeadlines from '../components/NewsHeadlines';
-import EconomicCalendarView from './trader-deck/EconomicCalendarView';
 import '../styles/Journal.css';
 import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
@@ -211,26 +210,21 @@ export default function TraderDeck() {
                       <MarketIntelligenceBriefsView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
                     )}
                   </div>
+
+                  <div className="td-deck-inbox-footer" aria-label="Sessions and headlines">
+                    <div className="td-deck-inbox-footer-block td-deck-inbox-sessions">
+                      <h2 className="td-deck-inbox-footer-title">Market sessions</h2>
+                      <MarketSessionStatus />
+                    </div>
+                    <div className="td-deck-inbox-footer-block td-deck-inbox-headlines">
+                      <NewsHeadlines />
+                    </div>
+                  </div>
                 </div>
               </main>
             </div>
           </div>
         </div>
-
-        <section className="td-deck-bottom-stack" aria-label="Market sessions, economic calendar, and headlines">
-          <div className="td-deck-bottom-card td-deck-bottom-card--sessions">
-            <h2 className="td-deck-bottom-card-title">Market sessions</h2>
-            <MarketSessionStatus />
-          </div>
-
-          <div className="td-deck-bottom-card td-deck-bottom-card--calendar">
-            <EconomicCalendarView />
-          </div>
-
-          <div className="td-deck-bottom-card td-deck-bottom-card--headlines">
-            <NewsHeadlines />
-          </div>
-        </section>
       </div>
     </div>
   );

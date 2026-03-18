@@ -870,39 +870,21 @@
   margin-top: 24px;
 }
 
-/* Below main box: sessions, economic calendar, headlines (single column) */
-.td-deck-bottom-stack {
+/* Inside main purple box: sessions + headlines (single economic calendar stays in Market Outlook) */
+.td-deck-inbox-footer {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
   width: 100%;
-  margin-top: 28px;
-  padding-bottom: 32px;
+  max-width: 1520px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.td-deck-bottom-card {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 20px 24px 24px;
-  box-sizing: border-box;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 0 0 1px rgba(139, 92, 246, 0.08) inset,
-    0 24px 60px rgba(0, 0, 0, 0.35);
-}
-
-.td-deck-bottom-card:hover {
-  border-color: rgba(139, 92, 246, 0.2);
-}
-
-.td-deck-bottom-card--sessions .td-deck-sessions-list {
-  margin-top: 4px;
-}
-
-.td-deck-bottom-card-title {
+.td-deck-inbox-footer-title {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.72rem;
   font-weight: 600;
@@ -912,16 +894,39 @@
   margin: 0 0 14px;
 }
 
-.td-deck-bottom-card--calendar .ec-page {
+.td-deck-inbox-sessions .td-deck-sessions-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 16px;
+  list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.td-deck-bottom-card--calendar .ec-header {
+@media (min-width: 900px) {
+  .td-deck-inbox-sessions .td-deck-sessions-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.td-deck-inbox-sessions .td-deck-session-item {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.td-deck-inbox-headlines {
+  min-width: 0;
+}
+
+.td-deck-inbox-headlines .news-headlines {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
   margin-top: 0;
-}
-
-.td-deck-bottom-card--headlines {
-  padding-top: 16px;
 }
 
 /* Responsive */
