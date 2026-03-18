@@ -22,9 +22,8 @@
  */
 
 const { executeQuery, executeQueryWithTimeout, addColumnIfNotExists, addIndexIfNotExists } = require('../db');
-const { getCached, setCached, invalidatePattern, DEFAULT_TTLS } = require('../cache');
 const { generateRequestId, createLogger } = require('../utils/logger');
-const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
+const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { safeLimit, safeCursor, isValidUUID } = require('../utils/validators');
 
 // Track schema creation
@@ -52,16 +51,6 @@ function decodeToken(token) {
   } catch (e) {
     return null;
   }
-}
-
-// Get rows helper
-function getRows(result) {
-  if (!result) return [];
-  if (Array.isArray(result)) {
-    if (result.length > 0 && Array.isArray(result[0])) return result[0];
-    return result;
-  }
-  return [];
 }
 
 // Ensure notifications table exists
@@ -184,11 +173,11 @@ async function createNotification(data) {
 // Idempotent daily journal notification: at most one per user per local date
 async function createDailyJournalNotificationIfNotSent(userId, localDate, title, body, meta) {
   await ensureSchema();
-  const rows = getRows(await executeQuery(
+  const [existingRows] = await executeQuery(
     'SELECT id FROM notifications WHERE user_id = ? AND type = ? AND local_date = ? LIMIT 1',
     [userId, 'DAILY_JOURNAL', localDate]
-  ));
-  if (rows.length > 0) return null;
+  );
+  if (Array.isArray(existingRows) && existingRows.length > 0) return null;
   return createNotification({
     userId,
     type: 'DAILY_JOURNAL',
@@ -263,56 +252,28 @@ const handler = async (req, res) => {
     if (req.method === 'GET' && pathParts[pathParts.length - 1] === 'notifications') {
       const cursor = safeCursor(query.cursor);
       const limit = safeLimit(query.limit, 20, 50);
-      
-      let whereClause = 'WHERE user_id = ?';
-      const params = [userId];
-      
-      if (cursor) {
-        // Cursor is the created_at timestamp of the last item
-        whereClause += ' AND created_at < ?';
-        params.push(cursor);
-      }
-      
+
       let rows = [], unreadCount = 0;
       try {
-        const result = await executeQuery(`
-          SELECT 
-            n.*,
-            u.username as from_username
-          FROM notifications n
-          LEFT JOIN users u ON n.from_user_id = u.id
-          ${whereClause.replace('WHERE user_id', 'WHERE n.user_id')}
-          ORDER BY n.created_at DESC
-          LIMIT ?
-        `, [...params, limit + 1]);
-        rows = getRows(result);
+        const queryParams = cursor ? [userId, cursor, limit + 1] : [userId, limit + 1];
+        const cursorClause = cursor ? 'AND created_at < ?' : '';
+        const [fetchedRows] = await executeQuery(
+          `SELECT * FROM notifications WHERE user_id = ? ${cursorClause} ORDER BY created_at DESC LIMIT ?`,
+          queryParams
+        );
+        rows = Array.isArray(fetchedRows) ? fetchedRows : [];
       } catch (qErr) {
-        logger.warn('Notifications JOIN failed, trying without JOIN', { error: qErr.message });
-        try {
-          const fallback = await executeQuery(
-            `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`,
-            [userId, limit + 1]
-          );
-          rows = getRows(fallback).map(n => ({ ...n, from_username: null }));
-        } catch (qErr2) {
-          logger.warn('Notifications fallback also failed', { error: qErr2.message });
-        }
+        logger.warn('Notifications query failed', { error: qErr.message });
       }
 
       try {
-        unreadCount = await coalesceRequest(
-          `notif_unread_${userId}`,
-          async () => {
-            const countResult = await executeQueryWithTimeout(
-              'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
-              [userId, 'UNREAD'],
-              5000,
-              requestId
-            );
-            return getRows(countResult)[0]?.count || 0;
-          },
-          100
+        const [countRows] = await executeQueryWithTimeout(
+          'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
+          [userId, 'UNREAD'],
+          5000,
+          requestId
         );
+        unreadCount = countRows?.[0]?.count || 0;
       } catch (_) { unreadCount = 0; }
 
       const hasMore = rows.length > limit;
@@ -336,7 +297,7 @@ const handler = async (req, res) => {
             channelId: (meta && meta.channelId != null) ? meta.channelId : n.channel_id,
             messageId: n.message_id,
             fromUserId: n.from_user_id,
-            fromUsername: n.from_username,
+            fromUsername: null,
             fromAvatar: null,
             friendRequestId: n.friend_request_id,
             status: n.status,
