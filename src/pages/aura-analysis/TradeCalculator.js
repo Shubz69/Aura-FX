@@ -1,7 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import Api from '../../services/Api';
 import { getAllInstruments, getInstrumentsByCategory, getInstrumentOrFallback, getPriceExamples } from '../../lib/aura-analysis/instruments';
 import { calculateRisk, deriveStopLossFromRiskAndPositionSize } from '../../lib/aura-analysis/calculators/calculateRisk';
+import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
+import { VALIDATOR_CHECKLIST_PENDING_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
 const INSTRUMENTS_LIST = getAllInstruments();
@@ -18,6 +22,10 @@ const SESSIONS = [
 const RISK_WARNING_PCT = 5;
 
 export default function TradeCalculator() {
+  const navigate = useNavigate();
+  const [pendingChecklist, setPendingChecklist] = useState(null);
+  const [saving, setSaving] = useState(false);
+
   const [form, setForm] = useState({
     pair: 'EURUSD',
     pairLabel: 'EUR/USD',
@@ -37,6 +45,15 @@ export default function TradeCalculator() {
   const sessionDropdownRef = useRef(null);
   const userChosenStopLossRef = useRef(null);
   const hadManualPositionSizeRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(VALIDATOR_CHECKLIST_PENDING_KEY);
+      if (raw) setPendingChecklist(JSON.parse(raw));
+    } catch {
+      setPendingChecklist(null);
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -171,17 +188,102 @@ export default function TradeCalculator() {
   const stopAlt = result.stopDistanceAlt ?? result.stopDistancePrice;
   const tpAlt = result.takeProfitDistanceAlt ?? result.takeProfitDistancePrice;
 
+  const handleSaveToJournal = async () => {
+    if (!pendingChecklist) {
+      toast.error('Open the Checklist first, then tap Save trade or Use trade calculator to continue here.');
+      return;
+    }
+    if (!hasEntrySlTp) {
+      toast.error('Enter entry, stop loss, and take profit.');
+      return;
+    }
+    const balance = Number(form.accountBalance) || 0;
+    if (balance <= 0) {
+      toast.error('Enter account balance.');
+      return;
+    }
+    setSaving(true);
+    const checklistScore = Number(pendingChecklist.checklistScore) || 0;
+    const checklistTotal = Number(pendingChecklist.checklistTotal) || 100;
+    const checklistPercent = Number(pendingChecklist.checklistPercent) || 0;
+    const tradeGrade =
+      pendingChecklist.tradeGrade || getScoreLabel(Math.round(checklistPercent * 2));
+    const payload = {
+      pair: form.pair,
+      direction: form.direction,
+      accountBalance: balance,
+      riskPercent: Number(form.riskPercent) || 0,
+      riskAmount: result.riskAmount,
+      entryPrice: Number(form.entryPrice) || 0,
+      stopLoss: Number(form.stopLoss) || 0,
+      takeProfit: Number(form.takeProfit) || 0,
+      stopLossPips: result.stopDistanceAlt ?? result.stopDistancePrice,
+      takeProfitPips: result.takeProfitDistanceAlt ?? result.takeProfitDistancePrice,
+      rr: Number(result.riskReward.toFixed(2)),
+      positionSize: positionSizeUsed,
+      potentialProfit: result.potentialProfit * (positionSizeUsed / Math.max(result.positionSize, 1e-9)),
+      potentialLoss: result.potentialLoss * (positionSizeUsed / Math.max(result.positionSize, 1e-9)),
+      result: 'open',
+      pnl: 0,
+      rMultiple: 0,
+      checklistScore,
+      checklistTotal,
+      checklistPercent,
+      tradeGrade,
+      notes: (form.notes || '').trim() || null,
+      session: form.session || null,
+      assetClass:
+        result.positionUnitLabel === 'lots'
+          ? 'forex'
+          : result.positionUnitLabel === 'contracts'
+            ? 'indices'
+            : 'crypto',
+    };
+    try {
+      await Api.createAuraAnalysisTrade(payload);
+      if (checklistPercent < 70) {
+        toast.warning('Trade saved — checklist was below 70%.');
+      } else {
+        toast.success('Trade saved to journal.');
+      }
+      try {
+        sessionStorage.removeItem(VALIDATOR_CHECKLIST_PENDING_KEY);
+        localStorage.removeItem('aura-trade-validator-checked-by-tab');
+      } catch {}
+      setPendingChecklist(null);
+      navigate('/trader-deck/trade-validator/journal');
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to save trade');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="trade-calc-page">
       <h1 className="trade-calc-title">Trade Calculator</h1>
 
-      <div className="trade-calc-banner">
-        <p className="trade-calc-banner-text">
-          Complete the checklist before using the Trade Validator.
-        </p>
-        <Link to="/trader-deck/trade-validator/checklist" className="trade-calc-banner-btn">
-          Go to Checklist
-        </Link>
+      <div className={`trade-calc-banner${pendingChecklist ? ' trade-calc-banner--linked' : ''}`}>
+        {pendingChecklist ? (
+          <p className="trade-calc-banner-text">
+            <strong>Checklist linked:</strong> {pendingChecklist.checklistPercent}% ·{' '}
+            {pendingChecklist.sessionType === 'scalp'
+              ? 'Scalp'
+              : pendingChecklist.sessionType === 'swing'
+                ? 'Swing'
+                : 'Intra Day'}{' '}
+            · Enter trade details below, then <strong>Save trade to journal</strong>.
+          </p>
+        ) : (
+          <>
+            <p className="trade-calc-banner-text">
+              Complete the checklist, then use <strong>Save trade</strong> or <strong>Use trade calculator</strong> to continue here.
+            </p>
+            <Link to="/trader-deck/trade-validator/checklist" className="trade-calc-banner-btn">
+              Go to Checklist
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="trade-calc-columns">
@@ -444,6 +546,19 @@ export default function TradeCalculator() {
               </div>
             )}
           </div>
+          {pendingChecklist && (
+            <div className="trade-calc-save-wrap">
+              <button
+                type="button"
+                className="trade-calc-save-journal-btn"
+                onClick={handleSaveToJournal}
+                disabled={saving || !hasEntrySlTp}
+              >
+                {saving ? 'Saving…' : 'Save trade to journal'}
+              </button>
+              <p className="trade-calc-save-hint">Requires entry, stop, and take profit.</p>
+            </div>
+          )}
         </section>
       </div>
     </div>

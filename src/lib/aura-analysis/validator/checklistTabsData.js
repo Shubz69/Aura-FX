@@ -1,6 +1,5 @@
 /**
- * Trade Validator – Checklist tabs: Scalp, Intra Day, Swing.
- * 3 cards per tab, 5 rules per card, 15 unique items per tab.
+ * Trade Validator – Scalp / Intra Day / Swing. Each tab sums to exactly 100 points.
  */
 
 export const CHECKLIST_TABS = [
@@ -24,116 +23,93 @@ export const CHECKLIST_TAB_META = {
   },
 };
 
-/** Checklist cards and items per tab. Item id must be unique across the app for scoring. */
+const W33 = [7, 7, 7, 6, 6];
+const W34 = [7, 7, 7, 7, 6];
+
+function makeCard(cardId, title, idPrefix, idOffset, labels, weights) {
+  return {
+    id: cardId,
+    cardTitle: title,
+    items: labels.map((label, i) => ({
+      id: `${idPrefix}${idOffset + i}`,
+      label,
+      points: weights[i],
+    })),
+  };
+}
+
 export const CHECKLIST_BY_TAB = {
   scalp: [
-    {
-      id: 'scalp-card-1',
-      cardTitle: 'Market Context',
-      items: [
-        { id: 'scalp-1', label: 'Session is active', points: 6 },
-        { id: 'scalp-2', label: 'Spread is acceptable', points: 5 },
-        { id: 'scalp-3', label: 'No major news nearby', points: 6 },
-        { id: 'scalp-4', label: 'Market is moving cleanly', points: 5 },
-        { id: 'scalp-5', label: 'HTF bias is clear', points: 5 },
-      ],
-    },
-    {
-      id: 'scalp-card-2',
-      cardTitle: 'Entry Quality',
-      items: [
-        { id: 'scalp-6', label: 'Key level is marked', points: 6 },
-        { id: 'scalp-7', label: 'Liquidity has been taken', points: 6 },
-        { id: 'scalp-8', label: 'Structure shift confirmed', points: 6 },
-        { id: 'scalp-9', label: 'Entry is not mid-range', points: 5 },
-        { id: 'scalp-10', label: 'Momentum confirms entry', points: 5 },
-      ],
-    },
-    {
-      id: 'scalp-card-3',
-      cardTitle: 'Risk & Execution',
-      items: [
-        { id: 'scalp-11', label: 'Stop is logically placed', points: 6 },
-        { id: 'scalp-12', label: 'Target is clearly mapped', points: 5 },
-        { id: 'scalp-13', label: 'RR meets minimum', points: 6 },
-        { id: 'scalp-14', label: 'Size matches risk plan', points: 5 },
-        { id: 'scalp-15', label: 'No emotional entry', points: 5 },
-      ],
-    },
+    makeCard('scalp-card-1', 'Market Context', 'scalp-', 1, [
+      'Session is active',
+      'Spread is acceptable',
+      'No major news nearby',
+      'Market is moving cleanly',
+      'HTF bias is clear',
+    ], W33),
+    makeCard('scalp-card-2', 'Entry Quality', 'scalp-', 6, [
+      'Key level is marked',
+      'Liquidity has been taken',
+      'Structure shift confirmed',
+      'Entry is not mid-range',
+      'Momentum confirms entry',
+    ], W33),
+    makeCard('scalp-card-3', 'Risk & Execution', 'scalp-', 11, [
+      'Stop is logically placed',
+      'Target is clearly mapped',
+      'RR meets minimum',
+      'Size matches risk plan',
+      'No emotional entry',
+    ], W34),
   ],
   intraDay: [
-    {
-      id: 'intra-card-1',
-      cardTitle: 'Bias & Structure',
-      items: [
-        { id: 'intra-1', label: 'Daily bias is clear', points: 6 },
-        { id: 'intra-2', label: 'HTF structure is aligned', points: 6 },
-        { id: 'intra-3', label: 'Price is at key zone', points: 6 },
-        { id: 'intra-4', label: 'Session direction is clear', points: 5 },
-        { id: 'intra-5', label: 'Market is not choppy', points: 5 },
-      ],
-    },
-    {
-      id: 'intra-card-2',
-      cardTitle: 'Confirmation',
-      items: [
-        { id: 'intra-6', label: 'Key level is respected', points: 6 },
-        { id: 'intra-7', label: 'Liquidity has been taken', points: 6 },
-        { id: 'intra-8', label: 'Confirmation pattern formed', points: 6 },
-        { id: 'intra-9', label: 'Momentum supports trade', points: 5 },
-        { id: 'intra-10', label: 'Entry is well timed', points: 5 },
-      ],
-    },
-    {
-      id: 'intra-card-3',
-      cardTitle: 'Risk & Management',
-      items: [
-        { id: 'intra-11', label: 'Stop is beyond invalidation', points: 6 },
-        { id: 'intra-12', label: 'Target is realistic', points: 5 },
-        { id: 'intra-13', label: 'RR meets minimum', points: 6 },
-        { id: 'intra-14', label: 'Correlation does not conflict', points: 5 },
-        { id: 'intra-15', label: 'Trade fits the model', points: 5 },
-      ],
-    },
+    makeCard('intra-card-1', 'Bias & Structure', 'intra-', 1, [
+      'Daily bias is clear',
+      'HTF structure is aligned',
+      'Price is at key zone',
+      'Session direction is clear',
+      'Market is not choppy',
+    ], W33),
+    makeCard('intra-card-2', 'Confirmation', 'intra-', 6, [
+      'Key level is respected',
+      'Liquidity has been taken',
+      'Confirmation pattern formed',
+      'Momentum supports trade',
+      'Entry is well timed',
+    ], W33),
+    makeCard('intra-card-3', 'Risk & Management', 'intra-', 11, [
+      'Stop is beyond invalidation',
+      'Target is realistic',
+      'RR meets minimum',
+      'Correlation does not conflict',
+      'Trade fits the model',
+    ], W34),
   ],
   swing: [
-    {
-      id: 'swing-card-1',
-      cardTitle: 'Higher Timeframe',
-      items: [
-        { id: 'swing-1', label: 'Weekly trend is clear', points: 6 },
-        { id: 'swing-2', label: 'Daily trend is aligned', points: 6 },
-        { id: 'swing-3', label: 'Major zone is marked', points: 6 },
-        { id: 'swing-4', label: 'Structure supports direction', points: 5 },
-        { id: 'swing-5', label: 'Market has room to move', points: 5 },
-      ],
-    },
-    {
-      id: 'swing-card-2',
-      cardTitle: 'Setup Quality',
-      items: [
-        { id: 'swing-6', label: 'Entry is at value area', points: 6 },
-        { id: 'swing-7', label: 'Rejection is confirmed', points: 6 },
-        { id: 'swing-8', label: 'Setup is not late', points: 5 },
-        { id: 'swing-9', label: 'Invalidation is clear', points: 5 },
-        { id: 'swing-10', label: 'Target is HTF based', points: 6 },
-      ],
-    },
-    {
-      id: 'swing-card-3',
-      cardTitle: 'Position Logic',
-      items: [
-        { id: 'swing-11', label: 'Thesis survives noise', points: 6 },
-        { id: 'swing-12', label: 'Risk suits wider stop', points: 5 },
-        { id: 'swing-13', label: 'News does not break thesis', points: 5 },
-        { id: 'swing-14', label: 'Trader can hold patiently', points: 5 },
-        { id: 'swing-15', label: 'Trade is rule based', points: 6 },
-      ],
-    },
+    makeCard('swing-card-1', 'Higher Timeframe', 'swing-', 1, [
+      'Weekly trend is clear',
+      'Daily trend is aligned',
+      'Major zone is marked',
+      'Structure supports direction',
+      'Market has room to move',
+    ], W33),
+    makeCard('swing-card-2', 'Setup Quality', 'swing-', 6, [
+      'Entry is at value area',
+      'Rejection is confirmed',
+      'Setup is not late',
+      'Invalidation is clear',
+      'Target is HTF based',
+    ], W33),
+    makeCard('swing-card-3', 'Position Logic', 'swing-', 11, [
+      'Thesis survives noise',
+      'Risk suits wider stop',
+      'News does not break thesis',
+      'Trader can hold patiently',
+      'Trade is rule based',
+    ], W34),
   ],
 };
 
-/** Max points per tab (sum of all item points). */
 export function getMaxPointsForTab(tabId) {
   const cards = CHECKLIST_BY_TAB[tabId];
   if (!cards) return 0;

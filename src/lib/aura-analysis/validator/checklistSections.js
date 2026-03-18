@@ -99,46 +99,46 @@ export const CHECKLIST_SECTIONS = [
     title: 'Setup Formation',
     timeframeLabel: 'Depends on setup / pattern',
     imagePath: `${BASE_IMAGE}/falling-wedge.png`,
-    maxPoints: 30,
+    maxPoints: 100,
     subPatterns: [
       {
         id: 'pattern-br',
         title: 'Break and Retest',
         items: [
-          { id: 'form-br1', label: 'Price returns to broken structure', points: 4 },
-          { id: 'form-br2', label: 'Level flips support/resistance', points: 4 },
+          { id: 'form-br1', label: 'Price returns to broken structure', points: 10 },
+          { id: 'form-br2', label: 'Level flips support/resistance', points: 10 },
         ],
       },
       {
         id: 'pattern-sd',
         title: 'Supply / Demand Reaction',
         items: [
-          { id: 'form-sd1', label: 'Strong impulsive move from zone', points: 3 },
-          { id: 'form-sd2', label: 'Reaction inside zone', points: 3 },
+          { id: 'form-sd1', label: 'Strong impulsive move from zone', points: 10 },
+          { id: 'form-sd2', label: 'Reaction inside zone', points: 10 },
         ],
       },
       {
         id: 'pattern-trendline',
         title: 'Trendline Break',
         items: [
-          { id: 'form-tl1', label: 'Trendline cleanly broken', points: 2 },
-          { id: 'form-tl2', label: 'Retest of broken trendline', points: 2 },
+          { id: 'form-tl1', label: 'Trendline cleanly broken', points: 10 },
+          { id: 'form-tl2', label: 'Retest of broken trendline', points: 10 },
         ],
       },
       {
         id: 'pattern-wedge',
         title: 'Wedge / Triangle',
         items: [
-          { id: 'form-w1', label: 'Converging trendlines formed', points: 2 },
-          { id: 'form-w2', label: 'Breakout confirmed', points: 2 },
+          { id: 'form-w1', label: 'Converging trendlines formed', points: 10 },
+          { id: 'form-w2', label: 'Breakout confirmed', points: 10 },
         ],
       },
       {
         id: 'pattern-elliott',
         title: 'Elliott Wave',
         items: [
-          { id: 'form-ew1', label: 'Clear wave structure visible', points: 2 },
-          { id: 'form-ew2', label: 'Correct wave count', points: 2 },
+          { id: 'form-ew1', label: 'Clear wave structure visible', points: 10 },
+          { id: 'form-ew2', label: 'Correct wave count', points: 10 },
         ],
       },
     ],

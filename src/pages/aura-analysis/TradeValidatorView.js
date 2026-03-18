@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCheckSquare } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import Api from '../../services/Api';
 import {
   CHECKLIST_TABS,
   CHECKLIST_TAB_META,
@@ -11,14 +10,12 @@ import {
 } from '../../lib/aura-analysis/validator/checklistTabsData';
 import { CHECKLIST_SECTIONS, getSectionScore } from '../../lib/aura-analysis/validator/checklistSections';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
-import { getAllInstruments } from '../../lib/aura-analysis/instruments';
-import { calculateRisk } from '../../lib/aura-analysis/calculators/calculateRisk';
+import { VALIDATOR_CHECKLIST_PENDING_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import '../../styles/TradeValidatorView.css';
 
 const STORAGE_KEY_CHECKED = 'aura-trade-validator-checked-by-tab';
 const STORAGE_KEY_FORMATION = 'aura-trade-validator-formation-checked';
-
-const INSTRUMENTS_LIST = getAllInstruments();
+const MIN_CONFLUENCE_PCT = 70;
 
 function ChecklistItemRow({ item, checked, onToggle }) {
   return (
@@ -49,9 +46,6 @@ function ChecklistCard({ card, checked, onToggle }) {
   );
 }
 
-/** Minimum confluence % required to submit a trade. Trade cannot go through unless checklist is filled in and score meets this. */
-const MIN_CONFLUENCE_PCT = 70;
-
 function parseCheckedByTab(raw) {
   try {
     const data = raw ? JSON.parse(raw) : null;
@@ -78,6 +72,8 @@ export default function TradeValidatorView() {
   const location = useLocation();
   const navigate = useNavigate();
   const isEmbedded = location.pathname.startsWith('/trader-deck/trade-validator');
+  const below70WarnedRef = useRef(false);
+
   const [activeTab, setActiveTab] = useState('scalp');
   const [checkedByTab, setCheckedByTab] = useState(() => {
     try {
@@ -96,20 +92,6 @@ export default function TradeValidatorView() {
       return new Set();
     }
   });
-  const [pnl, setPnl] = useState({ dailyPnl: 0, weeklyPnl: 0, monthlyPnl: 0 });
-  const [saving, setSaving] = useState(false);
-  const [showTradeForm, setShowTradeForm] = useState(false);
-  const [form, setForm] = useState({
-    pair: 'EURUSD',
-    pairLabel: 'EUR/USD',
-    direction: 'buy',
-    accountBalance: 10000,
-    riskPercent: 1,
-    entryPrice: 1.08,
-    stopLoss: 1.075,
-    takeProfit: 1.095,
-    notes: '',
-  });
 
   useEffect(() => {
     try {
@@ -123,20 +105,6 @@ export default function TradeValidatorView() {
     } catch {}
   }, [formationChecked]);
 
-  useEffect(() => {
-    Api.getAuraAnalysisPnl()
-      .then((res) => {
-        if (res?.data?.success) {
-          setPnl({
-            dailyPnl: res.data.dailyPnl ?? 0,
-            weeklyPnl: res.data.weeklyPnl ?? 0,
-            monthlyPnl: res.data.monthlyPnl ?? 0,
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
-
   const activeChecked = checkedByTab[activeTab] ?? new Set();
   const maxPointsActive = useMemo(() => getMaxPointsForTab(activeTab), [activeTab]);
   const checklistScore = useMemo(() => {
@@ -145,37 +113,21 @@ export default function TradeValidatorView() {
     return cards.reduce((sum, card) => sum + card.items.reduce((s, i) => s + (activeChecked.has(i.id) ? i.points : 0), 0), 0);
   }, [activeTab, activeChecked]);
   const scorePercent = maxPointsActive > 0 ? Math.round((checklistScore / maxPointsActive) * 100) : 0;
-  /** Normalize to 0–200 scale for grade labels */
-  const normalizedScore = maxPointsActive > 0 ? (checklistScore / maxPointsActive) * 200 : 0;
-  const scoreGrade = getScoreLabel(Math.round(normalizedScore));
+  const normalizedForLabel = scorePercent * 2;
+  const scoreGrade = getScoreLabel(Math.round(normalizedForLabel));
   const canProceed = scorePercent >= MIN_CONFLUENCE_PCT;
 
+  useEffect(() => {
+    if (scorePercent >= MIN_CONFLUENCE_PCT) below70WarnedRef.current = false;
+  }, [scorePercent]);
+
   const formationSection = useMemo(() => CHECKLIST_SECTIONS.find((s) => s.id === 'setup-formation'), []);
+  const formationMax = 100;
   const setupFormationScore = useMemo(() => {
     if (!formationSection || !formationSection.subPatterns) return 0;
     const score = getSectionScore(formationSection, formationChecked);
-    const max = formationSection.maxPoints;
-    return max > 0 ? Math.round((score / max) * 100) : 0;
+    return formationMax > 0 ? Math.round((score / formationMax) * 100) : 0;
   }, [formationSection, formationChecked]);
-
-  const calcInput = useMemo(
-    () => ({
-      accountBalance: Number(form.accountBalance) || 0,
-      riskPercent: Number(form.riskPercent) || 0,
-      entry: Number(form.entryPrice) || 0,
-      stop: Number(form.stopLoss) || 0,
-      takeProfit: Number(form.takeProfit) || 0,
-      direction: form.direction,
-    }),
-    [form.accountBalance, form.riskPercent, form.entryPrice, form.stopLoss, form.takeProfit, form.direction]
-  );
-
-  const calcResult = useMemo(() => calculateRisk(form.pair, calcInput), [form.pair, calcInput]);
-
-  const riskAmount = calcResult.riskAmount;
-  const positionSize = calcResult.positionSize;
-  const rr = calcResult.riskReward;
-  const positionUnitLabel = calcResult.positionUnitLabel || 'lots';
 
   const handleTabToggle = (tabId, itemId) => {
     setCheckedByTab((prev) => {
@@ -196,69 +148,47 @@ export default function TradeValidatorView() {
     });
   };
 
-  const handleSaveTrade = async () => {
-    if (saving) return;
-    if (scorePercent < MIN_CONFLUENCE_PCT) {
-      toast.error(`A minimum confluence score of ${MIN_CONFLUENCE_PCT}% is required to submit a trade. Complete more checklist items.`);
-      return;
-    }
-    const payload = {
-      pair: form.pair,
-      direction: form.direction,
-      accountBalance: Number(form.accountBalance) || 0,
-      riskPercent: Number(form.riskPercent) || 0,
-      riskAmount,
-      entryPrice: Number(form.entryPrice) || 0,
-      stopLoss: Number(form.stopLoss) || 0,
-      takeProfit: Number(form.takeProfit) || 0,
-      stopLossPips: calcResult.stopDistanceAlt ?? calcResult.stopDistancePrice,
-      takeProfitPips: calcResult.takeProfitDistanceAlt ?? calcResult.takeProfitDistancePrice,
-      rr: Number(rr.toFixed(2)),
-      positionSize,
-      potentialProfit: calcResult.potentialProfit,
-      potentialLoss: calcResult.potentialLoss,
-      result: 'open',
-      pnl: 0,
-      rMultiple: 0,
-      checklistScore,
-      checklistTotal: maxPointsActive,
-      checklistPercent: scorePercent,
-      tradeGrade: scoreGrade,
-      notes: (form.notes || '').trim() || null,
-      assetClass: calcResult.positionUnitLabel === 'lots' ? 'forex' : (calcResult.positionUnitLabel === 'contracts' ? 'indices' : 'crypto'),
-    };
-    if (payload.accountBalance <= 0 || payload.entryPrice <= 0) {
-      toast.error('Enter balance and entry price in Trade details');
-      return;
-    }
-    setSaving(true);
+  const pushPendingAndNavigate = () => {
     try {
-      await Api.createAuraAnalysisTrade(payload);
-      toast.success('Trade saved');
-      try {
-        localStorage.removeItem(STORAGE_KEY_CHECKED);
-      } catch {}
-      setCheckedByTab({ scalp: new Set(), intraDay: new Set(), swing: new Set() });
-      setShowTradeForm(false);
-      Api.getAuraAnalysisPnl().then((res) => {
-        if (res?.data?.success) setPnl({ dailyPnl: res.data.dailyPnl ?? 0, weeklyPnl: res.data.weeklyPnl ?? 0, monthlyPnl: res.data.monthlyPnl ?? 0 });
-      });
-      navigate('/trader-deck/trade-validator/journal');
+      sessionStorage.setItem(
+        VALIDATOR_CHECKLIST_PENDING_KEY,
+        JSON.stringify({
+          checklistScore,
+          checklistTotal: maxPointsActive,
+          checklistPercent: scorePercent,
+          sessionType: activeTab,
+          tradeGrade: scoreGrade,
+        })
+      );
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Failed to save trade');
-    } finally {
-      setSaving(false);
+      console.warn(e);
     }
+    navigate('/trader-deck/trade-validator/calculator');
+  };
+
+  const handleSaveTradeNav = () => {
+    pushPendingAndNavigate();
+    toast.info('Enter your trade details on the Trade Calculator, then save to your journal.');
+  };
+
+  const handleUseTradeCalculator = () => {
+    if (scorePercent >= MIN_CONFLUENCE_PCT) {
+      pushPendingAndNavigate();
+      return;
+    }
+    if (!below70WarnedRef.current) {
+      toast.warning(
+        `Your execution checklist is ${scorePercent}% — below the recommended ${MIN_CONFLUENCE_PCT}%. Click "Use trade calculator" again to continue anyway.`
+      );
+      below70WarnedRef.current = true;
+      return;
+    }
+    below70WarnedRef.current = false;
+    pushPendingAndNavigate();
   };
 
   const meta = CHECKLIST_TAB_META[activeTab] || {};
   const tabCards = CHECKLIST_BY_TAB[activeTab] || [];
-
-  const handlePairChange = (e) => {
-    const v = e.target.value;
-    const inst = INSTRUMENTS_LIST.find((x) => x.symbol === v) || INSTRUMENTS_LIST[0];
-    setForm((f) => ({ ...f, pair: v, pairLabel: inst.displayName }));
-  };
 
   return (
     <div className={`trade-validator-page ${isEmbedded ? 'trade-validator-embedded' : ''}`}>
@@ -271,7 +201,9 @@ export default function TradeValidatorView() {
 
         {!isEmbedded && (
           <header className="tv-header">
-            <h1 className="tv-title"><FaCheckSquare className="tv-title-icon" aria-hidden /> Trade Validator</h1>
+            <h1 className="tv-title">
+              <FaCheckSquare className="tv-title-icon" aria-hidden /> Trade Validator
+            </h1>
             <p className="tv-subtitle">Confluence scoring engine confirms your setup before execution.</p>
           </header>
         )}
@@ -293,8 +225,9 @@ export default function TradeValidatorView() {
 
         <section className="tv-score-card">
           <div className="tv-score-left">
-            <span className="tv-score-label">Trade Score</span>
-            <span className="tv-score-value">{checklistScore} / {maxPointsActive} ({scorePercent}%)</span>
+            <span className="tv-score-label">Trade score</span>
+            <span className="tv-score-value tv-score-pct-main">{scorePercent}%</span>
+            <span className="tv-score-sub">{checklistScore} / {maxPointsActive} points · {CHECKLIST_TABS.find((t) => t.id === activeTab)?.label}</span>
             <span className="tv-score-status">Status</span>
             <span className="tv-score-grade">{scoreGrade}</span>
           </div>
@@ -306,7 +239,7 @@ export default function TradeValidatorView() {
         {formationSection && formationSection.subPatterns && (
           <section className="tv-block tv-setup-block">
             <h2 className="tv-block-title">SETUP FORMATION CHECKLIST</h2>
-            <p className="tv-block-sub">Supporting confirmation, not primary</p>
+            <p className="tv-block-sub">Supporting confirmation, not primary · max 100%</p>
             <div className="tv-setup-chart" aria-hidden />
             <div className="tv-setup-section">
               <h3 className="tv-setup-section-title">{formationSection.title}</h3>
@@ -319,7 +252,9 @@ export default function TradeValidatorView() {
                   ))}
                 </div>
               ))}
-              <p className="tv-setup-section-score">Section score <span className="tv-section-score-value">{setupFormationScore}%</span></p>
+              <p className="tv-setup-section-score">
+                Section score <span className="tv-section-score-value">{setupFormationScore}%</span>
+              </p>
             </div>
           </section>
         )}
@@ -341,75 +276,19 @@ export default function TradeValidatorView() {
 
         <div className="tv-bottom-bar">
           <div className={`tv-bottom-msg ${canProceed ? 'tv-bottom-msg-ok' : ''}`}>
-            {canProceed ? `Score meets minimum requirement (${MIN_CONFLUENCE_PCT}%).` : 'Complete the checklist to save a trade.'}
+            {canProceed
+              ? `Score is at or above ${MIN_CONFLUENCE_PCT}%. You can use the Trade Calculator.`
+              : `Reach ${MIN_CONFLUENCE_PCT}%+ for the recommended threshold — or use the calculator after a second click on the blue button.`}
           </div>
           <div className="tv-bottom-actions">
-            <Link to="/trader-deck/trade-validator/calculator" className="tv-btn-calc">Use in Trade Calculator</Link>
-            <button type="button" className="tv-btn-save" onClick={() => setShowTradeForm(true)} disabled={saving}>
-              {saving ? 'Saving…' : 'Save trade'}
+            <button type="button" className="tv-btn-save" onClick={handleSaveTradeNav}>
+              Save trade
+            </button>
+            <button type="button" className="tv-btn-calc" onClick={handleUseTradeCalculator}>
+              Use trade calculator
             </button>
           </div>
         </div>
-
-        {showTradeForm && (
-          <section className="tv-trade-form-block">
-            <div className="tv-trade-form-header">
-              <h3>Trade details (for Save trade)</h3>
-              <button type="button" className="tv-close-btn" onClick={() => setShowTradeForm(false)} aria-label="Close">×</button>
-            </div>
-            <div className="trade-validator-form-grid">
-              <div className="trade-validator-field full">
-                <label>Pair</label>
-                <select value={form.pair} onChange={handlePairChange}>
-                  {INSTRUMENTS_LIST.map((inst) => (
-                    <option key={inst.symbol} value={inst.symbol}>{inst.symbol} — {inst.displayName}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="trade-validator-field">
-                <label>Direction</label>
-                <select value={form.direction} onChange={(e) => setForm((f) => ({ ...f, direction: e.target.value }))}>
-                  <option value="buy">Buy</option>
-                  <option value="sell">Sell</option>
-                </select>
-              </div>
-              <div className="trade-validator-field">
-                <label>Balance</label>
-                <input type="number" min="1" value={form.accountBalance} onChange={(e) => setForm((f) => ({ ...f, accountBalance: e.target.value }))} />
-              </div>
-              <div className="trade-validator-field">
-                <label>Risk %</label>
-                <input type="number" min="0.1" step="0.1" value={form.riskPercent} onChange={(e) => setForm((f) => ({ ...f, riskPercent: e.target.value }))} />
-              </div>
-              <div className="trade-validator-field">
-                <label>Entry</label>
-                <input type="number" step="0.00001" value={form.entryPrice} onChange={(e) => setForm((f) => ({ ...f, entryPrice: e.target.value }))} />
-              </div>
-              <div className="trade-validator-field">
-                <label>Stop loss</label>
-                <input type="number" step="0.00001" value={form.stopLoss} onChange={(e) => setForm((f) => ({ ...f, stopLoss: e.target.value }))} />
-              </div>
-              <div className="trade-validator-field">
-                <label>Take profit</label>
-                <input type="number" step="0.00001" value={form.takeProfit} onChange={(e) => setForm((f) => ({ ...f, takeProfit: e.target.value }))} />
-              </div>
-            </div>
-            <div className="trade-validator-computed">
-              <p><strong>Risk amount:</strong> ${riskAmount.toFixed(2)}</p>
-              <p><strong>Position size:</strong> {(positionUnitLabel === 'lots' || positionUnitLabel === 'units') ? positionSize.toFixed(2) : Math.round(positionSize)} {positionUnitLabel} — <strong>R:R</strong> 1:{rr.toFixed(2)}</p>
-            </div>
-            <div className="trade-validator-field full">
-              <label>Notes (optional)</label>
-              <input type="text" placeholder="Trade notes" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
-            </div>
-            <div className="tv-trade-form-actions">
-              <button type="button" className="trade-validator-btn trade-validator-btn-primary" onClick={handleSaveTrade} disabled={saving}>
-                {saving ? 'Saving…' : 'Save trade'}
-              </button>
-              <button type="button" className="tv-close-btn" onClick={() => setShowTradeForm(false)}>Cancel</button>
-            </div>
-          </section>
-        )}
       </div>
     </div>
   );

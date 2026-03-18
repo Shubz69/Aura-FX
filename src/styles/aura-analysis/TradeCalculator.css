@@ -59,6 +59,49 @@
   color: #fff;
 }
 
+.trade-calc-banner--linked {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.45);
+}
+
+.trade-calc-save-wrap {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.trade-calc-save-journal-btn {
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.trade-calc-save-journal-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.45);
+}
+
+.trade-calc-save-journal-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.trade-calc-save-hint {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .trade-calc-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
