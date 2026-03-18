@@ -12,8 +12,8 @@
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v2';
-const CACHE_TTL_MS = 2 * 60 * 1000; // 2 min — near-live actuals
+const CACHE_KEY = 'trader-deck:economic-calendar:v3';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min — FF JSON feed updates hourly
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 
@@ -38,76 +38,75 @@ function normCountry(raw) {
   return map[lower] || raw.toUpperCase().slice(0, 3);
 }
 
-// --- Provider 1: Forex Factory scrape ---
+// --- Provider 1: Forex Factory JSON CDN (official FF data feed, no API key needed) ---
 async function fromForexFactory(days = 7) {
   try {
-    const events = [];
     const now = new Date();
-    const dates = [];
-    for (let i = 0; i < days; i++) {
-      const d = new Date(now);
-      d.setDate(d.getDate() + i);
-      dates.push(d);
-    }
+    const cutoff = new Date(now.getTime() + days * 86400 * 1000);
+    const allEvents = [];
 
-    for (const date of dates.slice(0, 3)) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateStr = `${y}${m}${day}`;
-      const url = `https://www.forexfactory.com/calendar?day=${dateStr}`;
+    // FF publishes this-week and next-week JSON feeds via their CDN
+    const feeds = [
+      'https://nfs.faireconomy.media/ff_calendar_thisweek.json',
+      'https://nfs.faireconomy.media/ff_calendar_nextweek.json',
+    ];
 
+    for (const feedUrl of feeds) {
       try {
-        const res = await fetchWithTimeout(url, {
+        const res = await fetchWithTimeout(feedUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Cache-Control': 'no-cache',
+            'User-Agent': 'Mozilla/5.0 (compatible; AuraFX/1.0)',
+            'Accept': 'application/json',
           },
-        }, 12000);
+        }, 10000);
         if (!res.ok) continue;
 
-        const html = await res.text();
-        // Simple regex extraction (no cheerio needed on serverless)
-        const rowRegex = /<tr[^>]*class="[^"]*calendar__row[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
-        let match;
-        while ((match = rowRegex.exec(html)) !== null) {
-          const row = match[1];
-          const text = (s) => s.replace(/<[^>]+>/g, '').trim();
-          const getCell = (cls) => {
-            const m2 = new RegExp(`class="[^"]*${cls}[^"]*"[^>]*>(.*?)<\/td>`, 'is').exec(row);
-            return m2 ? text(m2[1]) : '';
-          };
-          const impactM = /calendar__impact[^>]*title="([^"]+)"/.exec(row);
-          const impact = impactM ? normImpact(impactM[1]) : 'low';
-          const event = getCell('calendar__event');
-          const currency = getCell('calendar__currency');
-          const time = getCell('calendar__time');
-          const actual = getCell('calendar__actual');
-          const forecast = getCell('calendar__forecast');
-          const previous = getCell('calendar__previous');
-          if (event && currency) {
-            events.push({
-              date: `${y}-${m}-${day}`,
-              time: time || 'All Day',
-              currency,
-              impact,
-              event,
-              actual: actual || null,
-              forecast: forecast || null,
-              previous: previous || null,
-              source: 'ForexFactory',
-            });
+        const raw = await res.json();
+        if (!Array.isArray(raw)) continue;
+
+        for (const ev of raw) {
+          // ev.date is ISO with ET offset e.g. "2025-03-18T10:00:00-0400"
+          const evDate = new Date(ev.date);
+          if (evDate < now || evDate > cutoff) continue;
+          if (!ev.title || !ev.country) continue;
+          if ((ev.impact || '').toLowerCase() === 'non-economic') continue;
+
+          // Extract date portion from the ISO string (use ET local date from the raw string)
+          const rawDate = ev.date || '';
+          const dateMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
+          const dateStr = dateMatch ? dateMatch[1] : evDate.toISOString().slice(0, 10);
+
+          // Extract time portion from the raw string (already in ET — what traders expect)
+          const timeMatch = rawDate.match(/T(\d{2}):(\d{2})/);
+          let timeStr = 'All Day';
+          if (timeMatch) {
+            const h24 = parseInt(timeMatch[1], 10);
+            const min = timeMatch[2];
+            const ampm = h24 >= 12 ? 'PM' : 'AM';
+            const h12 = h24 % 12 || 12;
+            timeStr = `${h12}:${min} ${ampm}`;
           }
+
+          allEvents.push({
+            date: dateStr,
+            time: timeStr,
+            currency: ev.country,
+            impact: normImpact(ev.impact),
+            event: ev.title,
+            actual: ev.actual || null,
+            forecast: ev.forecast || null,
+            previous: ev.previous || null,
+            source: 'ForexFactory',
+          });
         }
       } catch (_) {
-        // Continue to next date
+        // Try next feed
       }
     }
-    return events.length > 0 ? events : null;
+
+    return allEvents.length > 0 ? allEvents : null;
   } catch (e) {
-    console.warn('[trader-deck/economic-calendar] FF scrape error:', e.message);
+    console.warn('[trader-deck/economic-calendar] FF JSON error:', e.message);
     return null;
   }
 }
