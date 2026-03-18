@@ -5,11 +5,11 @@
 
 const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
-const { getTier } = require('../utils/entitlements');
+const { getTier, normalizeRole } = require('../utils/entitlements');
 const crypto = require('crypto');
 const { XP, awardOnce } = require('./xp-helper');
 
-/** Mandatory tasks per tier: key, title, description. A7FX treated as ELITE. */
+/** Mandatory tasks per tier: key, title, description. A7FX + ADMIN + SUPER_ADMIN → ELITE set. */
 const MANDATORY_TASKS = {
   FREE: [
     {
@@ -159,6 +159,14 @@ function getMandatoryTemplatesForTier(tier) {
   if (t === 'A7FX' || t === 'ELITE') return MANDATORY_TASKS.ELITE || [];
   if (t === 'PREMIUM') return MANDATORY_TASKS.PREMIUM || [];
   return MANDATORY_TASKS.FREE || [];
+}
+
+/** Tier string used only for which mandatory task templates to seed. Admins always get Elite list. */
+function getMandatoryTaskTier(userRow) {
+  if (!userRow) return 'FREE';
+  const nr = normalizeRole(userRow.role);
+  if (nr === 'ADMIN' || nr === 'SUPER_ADMIN') return 'ELITE';
+  return getTier(userRow);
 }
 
 /** Return tasks with at most one mandatory task per (date, mandatoryKey). Keeps first occurrence. Excludes mandatory tasks on Saturday (rest day). */
@@ -362,7 +370,7 @@ module.exports = async (req, res) => {
           [userId]
         );
         const userRow = userRows && userRows[0] ? userRows[0] : null;
-        const tier = getTier(userRow);
+        const tier = getMandatoryTaskTier(userRow);
         await ensureMandatoryTasksForRange(userId, rangeFrom, rangeTo, tier);
       } catch (err) {
         console.warn('Journal mandatory tasks ensure failed:', err.message);

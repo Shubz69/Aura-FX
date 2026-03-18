@@ -44,13 +44,13 @@ function normalizeRole(dbRole) {
 function getTier(userRow) {
   if (!userRow) return 'FREE';
   if (isSuperAdminEmail(userRow)) return 'ELITE';
+  const adminRole = normalizeRole(userRow.role);
+  if (adminRole === 'ADMIN' || adminRole === 'SUPER_ADMIN') return 'ELITE';
   const role = (userRow.role || '').toLowerCase();
   const plan = (userRow.subscription_plan || '').toLowerCase();
   const status = (userRow.subscription_status || '').toLowerCase();
   const expiry = userRow.subscription_expiry ? new Date(userRow.subscription_expiry) : null;
   const active = status === 'active' && expiry && expiry > new Date() && !userRow.payment_failed;
-
-  if (['admin', 'super_admin'].includes(role)) return 'ELITE';
   if (active && plan === 'a7fx') return 'A7FX';
   if (['elite', 'a7fx'].includes(role) || (active && plan === 'elite')) return 'ELITE';
   if (role === 'premium' || (active && ['aura', 'premium'].includes(plan))) return 'PREMIUM';
