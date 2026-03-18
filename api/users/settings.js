@@ -33,6 +33,7 @@ async function ensureSettingsTable() {
         show_achievements BOOLEAN DEFAULT TRUE,
         ai_personality VARCHAR(50) DEFAULT 'professional',
         ai_chart_preference VARCHAR(50) DEFAULT 'candlestick',
+        profile_visible_stats JSON,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_user (user_id)
@@ -80,7 +81,8 @@ const defaultSettings = {
   show_trading_stats: true,
   show_achievements: true,
   ai_personality: 'professional',
-  ai_chart_preference: 'candlestick'
+  ai_chart_preference: 'candlestick',
+  profile_visible_stats: { discipline_score: false, journal_score: false, consistency_score: false, win_rate: false, total_trades: false, login_streak: false }
 };
 
 // Helper to safely get array from query result
@@ -170,6 +172,35 @@ module.exports = async (req, res) => {
         // Ignore
       }
 
+      // Compute journal-based profile stats
+      let profileStats = { discipline_score: 0, journal_score: 0, consistency_score: 0, win_rate: 0, total_trades: 0, login_streak: user.login_streak || 0 };
+      try {
+        const tradesResult = await executeQuery(
+          `SELECT rResult, followedRules FROM journal_trades WHERE userId = ? AND date >= DATE_SUB(NOW(), INTERVAL 90 DAY)`,
+          [userId]
+        );
+        const trades = getRows(tradesResult);
+        if (trades.length > 0) {
+          profileStats.total_trades = trades.length;
+          const followed = trades.filter(t => t.followedRules == 1).length;
+          profileStats.discipline_score = Math.round((followed / trades.length) * 100);
+          const wins = trades.filter(t => parseFloat(t.rResult) > 0).length;
+          profileStats.win_rate = Math.round((wins / trades.length) * 100);
+          const rVals = trades.map(t => parseFloat(t.rResult) || 0);
+          const mean = rVals.reduce((a, b) => a + b, 0) / rVals.length;
+          const variance = rVals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / rVals.length;
+          profileStats.consistency_score = Math.max(0, Math.min(100, Math.round(100 - (Math.sqrt(variance) / 3) * 100)));
+        }
+      } catch (e) { /* table may not exist yet */ }
+      try {
+        const dailyResult = await executeQuery(
+          `SELECT COUNT(DISTINCT DATE(date)) AS days_logged FROM journal_daily WHERE userId = ? AND date >= DATE_SUB(NOW(), INTERVAL 30 DAY)`,
+          [userId]
+        );
+        const dailyRows = getRows(dailyResult);
+        profileStats.journal_score = Math.round(((dailyRows[0]?.days_logged || 0) / 30) * 100);
+      } catch (e) { /* ignore */ }
+
       // Build stats from user data
       const stats = {
         ai_chats_count: 0,
@@ -184,6 +215,7 @@ module.exports = async (req, res) => {
         success: true,
         settings: settingsData,
         stats: stats,
+        profileStats: profileStats,
         timezone: user.timezone ?? null
       });
     }
@@ -216,7 +248,8 @@ module.exports = async (req, res) => {
           'preferred_markets', 'trading_sessions', 'risk_profile', 'trading_style',
           'experience_level', 'theme', 'notifications_enabled', 'email_notifications',
           'sound_enabled', 'compact_mode', 'show_online_status', 'profile_visibility',
-          'show_trading_stats', 'show_achievements', 'ai_personality', 'ai_chart_preference'
+          'show_trading_stats', 'show_achievements', 'ai_personality', 'ai_chart_preference',
+          'profile_visible_stats'
         ];
 
         const setClauses = [];
@@ -225,7 +258,7 @@ module.exports = async (req, res) => {
         for (const [key, value] of Object.entries(updates)) {
           if (allowedFields.includes(key)) {
             setClauses.push(`${key} = ?`);
-            if (key === 'preferred_markets' || key === 'trading_sessions') {
+            if (key === 'preferred_markets' || key === 'trading_sessions' || key === 'profile_visible_stats') {
               values.push(JSON.stringify(value));
             } else {
               values.push(value);

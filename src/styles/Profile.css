@@ -1099,3 +1099,106 @@
         -webkit-overflow-scrolling: touch !important; touch-action: pan-y;
     }
 }
+
+/* ── Stat Visibility (Community Card) ───────────────────── */
+.pf-stat-vis-section {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+.pf-stat-vis-hint {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.35);
+    margin: 0 0 16px;
+    line-height: 1.55;
+}
+.pf-stat-vis-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.pf-stat-vis-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px;
+    transition: border-color 0.2s;
+}
+.pf-stat-vis-row:hover { border-color: rgba(139,92,246,0.2); }
+.pf-stat-vis-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+.pf-stat-vis-icon { font-size: 1.1rem; flex-shrink: 0; }
+.pf-stat-vis-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 1px;
+}
+.pf-stat-vis-desc {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.3);
+}
+.pf-stat-vis-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.pf-stat-vis-preview {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #a78bfa;
+    font-variant-numeric: tabular-nums;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* Toggle switch */
+.pf-toggle {
+    width: 42px;
+    height: 22px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s;
+    flex-shrink: 0;
+    outline: none;
+}
+.pf-toggle:focus-visible { box-shadow: 0 0 0 3px rgba(139,92,246,0.4); }
+.pf-toggle--on {
+    background: #7c3aed;
+    border-color: #7c3aed;
+}
+.pf-toggle__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.55);
+    transition: left 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.pf-toggle--on .pf-toggle__thumb {
+    left: 22px;
+    background: #fff;
+}
+
+@media (max-width: 480px) {
+    .pf-stat-vis-desc { display: none; }
+    .pf-stat-vis-row { padding: 8px 10px; }
+}

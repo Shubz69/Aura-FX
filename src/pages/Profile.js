@@ -107,6 +107,11 @@ const Profile = () => {
     const [tradingStats, setTradingStats] = useState({ totalTrades: 0, winRate: 0, totalProfit: 0 });
     const [journalTasks, setJournalTasks] = useState([]);
     const [journalStatsLoading, setJournalStatsLoading] = useState(true);
+    const [profileVisibleStats, setProfileVisibleStats] = useState({
+        discipline_score: false, journal_score: false, consistency_score: false,
+        win_rate: false, total_trades: false, login_streak: false
+    });
+    const [profileStatsPreview, setProfileStatsPreview] = useState(null);
 
     const initialLoadDone = useRef(false);
 // Add near your other helper functions
@@ -243,6 +248,17 @@ useEffect(() => {
 
                 if (settingsRes?.data?.timezone != null) {
                     setFormData(prev => ({ ...prev, timezone: settingsRes.data.timezone || "" }));
+                }
+                if (settingsRes?.data?.settings?.profile_visible_stats) {
+                    try {
+                        const prefs = typeof settingsRes.data.settings.profile_visible_stats === 'string'
+                            ? JSON.parse(settingsRes.data.settings.profile_visible_stats)
+                            : settingsRes.data.settings.profile_visible_stats;
+                        setProfileVisibleStats(prev => ({ ...prev, ...prefs }));
+                    } catch (e) {}
+                }
+                if (settingsRes?.data?.profileStats) {
+                    setProfileStatsPreview(settingsRes.data.profileStats);
                 }
 
                if (userRes?.status === 200 && userRes.data) {
@@ -784,6 +800,27 @@ if (!avatarToSave && avatarColor) {
     const monthTotal = monthTasksForMonth.length; const monthDone = monthTasksForMonth.filter(t => t.completed).length;
     const journalMonthPct = monthTotal ? Math.round((monthDone / monthTotal) * 100) : 0;
 
+    const handleStatVisibilityToggle = async (statKey) => {
+        const updated = { ...profileVisibleStats, [statKey]: !profileVisibleStats[statKey] };
+        setProfileVisibleStats(updated);
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                await axios.put(`${resolveApiBaseUrl()}/api/users/settings`,
+                    { profile_visible_stats: updated },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+            }
+        } catch (e) { console.error('Failed to update stat visibility:', e); }
+    };
+
+    const formatStatPreview = (key, val) => {
+        if (val === undefined || val === null) return '—';
+        if (['discipline_score', 'journal_score', 'consistency_score', 'win_rate'].includes(key)) return `${val}%`;
+        if (key === 'login_streak') return `${val}d`;
+        return String(val);
+    };
+
     const hasAvatar = avatarPreview || (formData.avatar && (formData.avatar.startsWith('data:image') || formData.avatar.startsWith('http')));
     const xpPct = Math.max(0, Math.min(100, xpProgress.percentage));
 
@@ -1102,6 +1139,47 @@ if (!avatarToSave && avatarColor) {
                                         <option key={tz} value={tz}>{tz}</option>
                                     ))}
                                 </select>
+                            </div>
+
+                            {/* Community Card — Visible Stats */}
+                            <div className="pf-stat-vis-section">
+                                <p className="pf-section-label" style={{ marginBottom: 4 }}>Community Card — Visible Stats</p>
+                                <p className="pf-stat-vis-hint">Choose which trading stats appear on your public community profile card. PnL and balance are never shown.</p>
+                                <div className="pf-stat-vis-grid">
+                                    {[
+                                        { key: 'discipline_score', label: 'Discipline Score', icon: '🎯', desc: '% of trades following rules (90d)' },
+                                        { key: 'journal_score',    label: 'Journal Score',    icon: '📓', desc: 'Days journaled last 30 days' },
+                                        { key: 'consistency_score',label: 'Consistency',       icon: '📈', desc: 'R:R deviation score (90d)' },
+                                        { key: 'win_rate',         label: 'Win Rate',          icon: '✅', desc: '% winning trades (90d)' },
+                                        { key: 'total_trades',     label: 'Total Trades',      icon: '📊', desc: 'Trades logged last 90 days' },
+                                        { key: 'login_streak',     label: 'Login Streak',      icon: '🔥', desc: 'Current daily login streak' },
+                                    ].map(({ key, label, icon, desc }) => (
+                                        <div key={key} className="pf-stat-vis-row">
+                                            <div className="pf-stat-vis-info">
+                                                <span className="pf-stat-vis-icon">{icon}</span>
+                                                <div>
+                                                    <div className="pf-stat-vis-label">{label}</div>
+                                                    <div className="pf-stat-vis-desc">{desc}</div>
+                                                </div>
+                                            </div>
+                                            <div className="pf-stat-vis-right">
+                                                {profileStatsPreview && (
+                                                    <span className="pf-stat-vis-preview">{formatStatPreview(key, profileStatsPreview[key])}</span>
+                                                )}
+                                                <div
+                                                    className={`pf-toggle${profileVisibleStats[key] ? ' pf-toggle--on' : ''}`}
+                                                    onClick={() => handleStatVisibilityToggle(key)}
+                                                    role="switch"
+                                                    aria-checked={profileVisibleStats[key]}
+                                                    tabIndex={0}
+                                                    onKeyDown={e => e.key === 'Enter' && handleStatVisibilityToggle(key)}
+                                                >
+                                                    <div className="pf-toggle__thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {pushSupported && (

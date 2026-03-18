@@ -555,7 +555,68 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
             console.warn('Public profile journal stats failed:', e.message);
           }
         }
-        
+
+        // Compute visible trading stats for public profile
+        let visibleStats = null;
+        if (isPublicProfile) {
+          try {
+            const [vsSettingsRows] = await db.execute(
+              'SELECT profile_visible_stats FROM user_settings WHERE user_id = ? LIMIT 1',
+              [userId]
+            );
+            if (vsSettingsRows && vsSettingsRows.length > 0 && vsSettingsRows[0].profile_visible_stats) {
+              let prefs;
+              try {
+                prefs = typeof vsSettingsRows[0].profile_visible_stats === 'string'
+                  ? JSON.parse(vsSettingsRows[0].profile_visible_stats)
+                  : vsSettingsRows[0].profile_visible_stats;
+              } catch (e) { prefs = {}; }
+
+              const hasVisible = Object.values(prefs).some(Boolean);
+              if (hasVisible) {
+                const computed = { login_streak: user.login_streak || 0 };
+                try {
+                  const [trades] = await db.execute(
+                    `SELECT rResult, followedRules FROM journal_trades WHERE userId = ? AND date >= DATE_SUB(NOW(), INTERVAL 90 DAY)`,
+                    [userId]
+                  );
+                  if (trades.length > 0) {
+                    computed.total_trades = trades.length;
+                    computed.discipline_score = Math.round((trades.filter(t => t.followedRules == 1).length / trades.length) * 100);
+                    computed.win_rate = Math.round((trades.filter(t => parseFloat(t.rResult) > 0).length / trades.length) * 100);
+                    const rVals = trades.map(t => parseFloat(t.rResult) || 0);
+                    const mean = rVals.reduce((a, b) => a + b, 0) / rVals.length;
+                    const variance = rVals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / rVals.length;
+                    computed.consistency_score = Math.max(0, Math.min(100, Math.round(100 - (Math.sqrt(variance) / 3) * 100)));
+                  } else {
+                    computed.total_trades = 0;
+                    computed.discipline_score = 0;
+                    computed.win_rate = 0;
+                    computed.consistency_score = 0;
+                  }
+                } catch (e) { /* journal_trades may not exist */ }
+                try {
+                  const [dailyRows] = await db.execute(
+                    `SELECT COUNT(DISTINCT DATE(date)) AS days_logged FROM journal_daily WHERE userId = ? AND date >= DATE_SUB(NOW(), INTERVAL 30 DAY)`,
+                    [userId]
+                  );
+                  computed.journal_score = Math.round(((dailyRows[0]?.days_logged || 0) / 30) * 100);
+                } catch (e) { computed.journal_score = 0; }
+
+                visibleStats = {};
+                for (const [key, enabled] of Object.entries(prefs)) {
+                  if (enabled && computed[key] !== undefined) {
+                    visibleStats[key] = computed[key];
+                  }
+                }
+                if (Object.keys(visibleStats).length === 0) visibleStats = null;
+              }
+            }
+          } catch (e) {
+            console.warn('visibleStats computation failed:', e.message);
+          }
+        }
+
         releaseDb(db);
         
         // Return user data with formatted dates
@@ -583,6 +644,9 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
 };
         if (journalStats) {
           responseData.journalStats = journalStats;
+        }
+        if (visibleStats) {
+          responseData.visibleStats = visibleStats;
         }
         
         // Only include personal information if NOT a public profile request

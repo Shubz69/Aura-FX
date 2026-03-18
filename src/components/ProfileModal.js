@@ -809,6 +809,41 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 ))}
                             </div>
 
+                            {/* Visible trading stats chosen by the user */}
+                            {profile.visibleStats && Object.keys(profile.visibleStats).length > 0 && (() => {
+                                const STAT_META = {
+                                    discipline_score: { icon: '🎯', label: 'Discipline', color: '#a78bfa', fmt: v => `${v}%` },
+                                    journal_score:    { icon: '📓', label: 'Journal',    color: '#63b3ed', fmt: v => `${v}%` },
+                                    consistency_score:{ icon: '📈', label: 'Consistency',color: '#10b981', fmt: v => `${v}%` },
+                                    win_rate:         { icon: '✅', label: 'Win Rate',   color: '#f59e0b', fmt: v => `${v}%` },
+                                    total_trades:     { icon: '📊', label: 'Trades',     color: '#8b5cf6', fmt: v => String(v) },
+                                    login_streak:     { icon: '🔥', label: 'Streak',     color: '#f97316', fmt: v => `${v}d` },
+                                };
+                                const entries = Object.entries(profile.visibleStats).filter(([k]) => STAT_META[k]);
+                                if (entries.length === 0) return null;
+                                return (
+                                    <div style={{ padding: '18px 20px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                                            <span style={{ fontSize: '0.85rem', color: tierColor }}>📊</span>
+                                            <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>Trader Stats</span>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '10px' }}>
+                                            {entries.map(([key, value]) => {
+                                                const meta = STAT_META[key];
+                                                return (
+                                                    <div key={key} style={{ padding: '14px 10px', background: `${meta.color}08`, border: `1px solid ${meta.color}22`, borderRadius: '12px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${meta.color}70, transparent)` }} />
+                                                        <div style={{ fontSize: '1.3rem', marginBottom: '6px' }}>{meta.icon}</div>
+                                                        <div style={{ fontSize: '1.2rem', fontWeight: 300, color: meta.color, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif", filter: `drop-shadow(0 0 6px ${meta.color}40)` }}>{meta.fmt(value)}</div>
+                                                        <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: '4px', fontFamily: "'Space Grotesk', sans-serif" }}>{meta.label}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             {/* Next Milestone */}
                             {nextMilestone && (
                                 <div style={{ padding: '18px 22px', background: `${tierColor}08`, border: `1px solid ${tierColor}20`, borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', overflow: 'hidden' }}>
