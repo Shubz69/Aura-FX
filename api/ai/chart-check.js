@@ -170,15 +170,46 @@ Overall score = integer average of all section scores.
 
 You MUST compute scores mathematically from the criterion results. Never pick a score first and work backwards.
 
-═══ VISUAL ANALYSIS INSTRUCTIONS ═══
-1. Identify the asset/symbol, timeframe, and visible date range from the chart itself.
-2. Read price action strictly from what is DRAWN on the chart: candle patterns, trendlines, zones, levels, annotations, boxes, indicators.
-3. Determine the dominant trend direction from visible structure (higher highs/lows or lower highs/lows).
-4. Identify key levels: horizontal support/resistance, supply/demand zones, highlighted areas.
-5. Look for structural events: breaks of structure (BOS), change of character (CHoCH/MSS), liquidity sweeps, rejection wicks.
-6. Assess momentum from candle size and sequence. Assess confluence from the number of confirming factors at the entry.
-7. If information is not visible in the image, mark the criterion UNCLEAR or FAIL — never invent information.
-8. Be consistent: identical visible information must produce identical criterion results every time.
+═══ STEP 1 — READ THE CHART FIRST (do this before scoring anything) ═══
+Before evaluating any criterion, identify the following from the image:
+
+  A. ASSET & TIMEFRAME: Read the symbol and timeframe label from the chart header/title.
+  B. TREND STRUCTURE: Scan the full candle sequence left-to-right.
+     - Lower highs + lower lows = BEARISH trend
+     - Higher highs + higher lows = BULLISH trend
+     - Mixed/equal = RANGING or transitional
+  C. DRAWN ELEMENTS — read every annotation the trader placed on the chart:
+     - Colored RECTANGLES/BOXES = key zones the trader identified
+         • Red / dark-red / maroon box near current price = SUPPLY zone or ENTRY zone (bearish)
+         • Blue / teal / green box near current price = DEMAND zone or ENTRY zone (bullish)
+         • A LARGE box further away in the direction of the trade = TAKE-PROFIT / TARGET zone
+     - DIAGONAL LINES / TRENDLINES = dynamic support or resistance; a break of this line = structural event
+     - HORIZONTAL LINES = static support or resistance levels
+     - ARROWS or LABELS = explicit trade direction markers
+  D. IMPLIED TRADE DIRECTION: 
+     - If the target box is BELOW current price → the trader intends a SHORT
+     - If the target box is ABOVE current price → the trader intends a LONG
+     - Confirm this against the trend structure identified in step B
+  E. ENTRY ZONE: The box overlapping or closest to the most recent candles = entry area
+  F. STRUCTURAL EVENTS: Identify any visible BOS (break of structure), CHoCH/MSS (market structure shift),
+     liquidity sweeps (wick beyond a prior high/low then reversal), or rejection wicks at key levels.
+  G. MOMENTUM: Are the candles in the trade direction large and decisive, or small and hesitant?
+
+Use this pre-analysis as the factual foundation for every criterion score below.
+If the drawn annotations clearly show a well-structured setup aligned with trend, score criteria accordingly — do not undercount what is visibly confirmed.
+
+═══ STEP 2 — SCORE EACH CRITERION (using your Step 1 findings) ═══
+Score each criterion strictly from the visual evidence you identified above:
+  • PASS    = 20 points  (clearly and directly visible/confirmed in the chart)
+  • PARTIAL = 10 points  (partially visible, inferrable from drawn elements, or ambiguous)
+  • FAIL    = 0 points   (not visible, violated, or directly contradicted by chart)
+  • UNCLEAR = 5 points   (genuinely cannot be assessed even with all visible elements)
+
+Rules:
+- If a trendline, box, or level CONFIRMS a criterion → PASS, not PARTIAL
+- If information is not visible, mark UNCLEAR or FAIL — never invent information
+- Identical visible evidence must produce identical scores every time
+- Never pick a score first and work backwards — compute from criterion results
 
 ═══ RETURN FORMAT (strict JSON only — no markdown, no code fences) ═══
 {
@@ -230,7 +261,7 @@ async function callOpenAIVision(base64Image, mimeType, systemPrompt) {
           },
           {
             type: 'text',
-            text: 'Analyze this trading chart image. Follow the scoring formula exactly: evaluate each criterion individually first, then compute section scores by summing criterion scores, then compute the overall score as the average of section scores. Return only the JSON object.',
+            text: 'Analyze this trading chart. Step 1: identify the asset, timeframe, trend direction (HH/HL or LH/LL), all drawn annotations (boxes, trendlines, horizontal levels), the implied trade direction from the annotations, and any structural events visible. Step 2: using those findings, score each criterion individually (PASS=20, PARTIAL=10, FAIL=0, UNCLEAR=5). Step 3: sum criterion scores for each section score, then average section scores for the overall score. Return only the JSON object.',
           },
         ],
       },
