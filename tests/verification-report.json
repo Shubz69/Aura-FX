@@ -1,6 +1,6 @@
 {
-  "passed": 41,
-  "failed": 0,
+  "passed": 37,
+  "failed": 4,
   "warnings": 0,
   "sections": {
     "leaderboard": {
@@ -14,18 +14,6 @@
           "details": ""
         },
         {
-          "item": "Monthly uses calendar month",
-          "details": ""
-        },
-        {
-          "item": "All-time ranks by level DESC",
-          "details": ""
-        },
-        {
-          "item": "Each tab uses different query/dataset",
-          "details": ""
-        },
-        {
           "item": "Tie-breakers are deterministic",
           "details": ""
         },
@@ -34,17 +22,30 @@
           "details": ""
         }
       ],
-      "failed": [],
+      "failed": [
+        {
+          "item": "Monthly uses calendar month",
+          "details": false
+        },
+        {
+          "item": "All-time ranks by level DESC",
+          "details": false
+        },
+        {
+          "item": "Each tab uses different query/dataset",
+          "details": false
+        }
+      ],
       "warnings": []
     },
     "prize_safety": {
       "passed": [
         {
-          "item": "Demo users are flagged (is_demo=true)",
+          "item": "Demo purge utility + seed endpoint purge only",
           "details": ""
         },
         {
-          "item": "Demo users excluded from prize eligibility",
+          "item": "Leaderboard query excludes demo / @aurafx.demo users",
           "details": ""
         },
         {
@@ -90,13 +91,14 @@
         {
           "item": "DB connection pool configured",
           "details": "Check api/db.js"
-        },
-        {
-          "item": "Queries use LIMIT for pagination",
-          "details": ""
         }
       ],
-      "failed": [],
+      "failed": [
+        {
+          "item": "Queries use LIMIT for pagination",
+          "details": false
+        }
+      ],
       "warnings": []
     },
     "profile": {
