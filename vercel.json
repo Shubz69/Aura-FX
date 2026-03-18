@@ -161,6 +161,10 @@
       "destination": "/api/admin/purge-aurafx-com-users.js"
     },
     {
+      "source": "/api/admin/sync-xp",
+      "destination": "/api/admin/sync-xp.js"
+    },
+    {
       "source": "/api/admin",
       "destination": "/api/admin/index.js"
     },

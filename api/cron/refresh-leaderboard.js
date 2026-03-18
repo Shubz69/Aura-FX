@@ -13,6 +13,7 @@
 const { executeQuery } = require('../db');
 const { setCached, clearCache, invalidatePattern } = require('../cache');
 const { purgeDemoUsers } = require('../utils/purge-demo-users');
+const { syncUserXpFromLedger } = require('../utils/sync-user-xp');
 
 // Helper to get array from query result
 function getRows(result) {
@@ -64,6 +65,14 @@ module.exports = async (req, res) => {
       results.errors.push(`Demo purge: ${e.message}`);
     }
 
+    try {
+      const sync = await syncUserXpFromLedger(executeQuery);
+      results.xpSync = sync;
+      invalidatePattern('leaderboard_v*');
+    } catch (e) {
+      results.errors.push(`XP sync: ${e.message}`);
+    }
+
     // 1. Clean up old XP events (keep last 90 days)
     try {
       const cleanResult = await executeQuery(`
@@ -97,19 +106,19 @@ module.exports = async (req, res) => {
       results.errors.push(`Sync check: ${e.message}`);
     }
 
-    // 3. Update user levels if they don't match XP
+    // 3. Levels already updated by syncUserXpFromLedger; optional second pass for users with xp=0 edge cases
     try {
       const levelResult = await executeQuery(`
         UPDATE users u
         SET level = CASE
-          WHEN xp < 500 THEN FLOOR(SQRT(xp / 50)) + 1
-          WHEN xp < 5000 THEN 10 + FLOOR(SQRT((xp - 500) / 100)) + 1
-          WHEN xp < 20000 THEN 50 + FLOOR(SQRT((xp - 5000) / 200)) + 1
-          WHEN xp < 100000 THEN 100 + FLOOR(SQRT((xp - 20000) / 500)) + 1
-          WHEN xp < 500000 THEN 200 + FLOOR(SQRT((xp - 100000) / 1000)) + 1
-          ELSE LEAST(1000, 500 + FLOOR(SQRT((xp - 500000) / 2000)) + 1)
+          WHEN COALESCE(u.xp, 0) <= 0 THEN 1
+          WHEN u.xp < 500 THEN FLOOR(SQRT(u.xp / 50)) + 1
+          WHEN u.xp < 5000 THEN 10 + FLOOR(SQRT((u.xp - 500) / 100)) + 1
+          WHEN u.xp < 20000 THEN 50 + FLOOR(SQRT((u.xp - 5000) / 200)) + 1
+          WHEN u.xp < 100000 THEN 100 + FLOOR(SQRT((u.xp - 20000) / 500)) + 1
+          WHEN u.xp < 500000 THEN 200 + FLOOR(SQRT((u.xp - 100000) / 1000)) + 1
+          ELSE LEAST(1000, 500 + FLOOR(SQRT((u.xp - 500000) / 2000)) + 1)
         END
-        WHERE xp > 0
       `);
       results.updatedLevels = levelResult?.affectedRows || 0;
     } catch (e) {

@@ -618,7 +618,8 @@ const Api = {
     
     getLeaderboard: (timeframe = 'all-time') => {
         return axios.get(`${API_BASE_URL}/api/leaderboard`, {
-            params: { timeframe }
+            params: { timeframe, _cb: Date.now() },
+            headers: { 'Cache-Control': 'no-cache' },
         });
     },
 

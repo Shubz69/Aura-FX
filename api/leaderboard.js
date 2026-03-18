@@ -290,7 +290,7 @@ module.exports = async (req, res) => {
     
     // Check cache
     const cacheTTL = timeframe === 'all-time' ? DEFAULT_TTLS.LEADERBOARD_ALLTIME : DEFAULT_TTLS.LEADERBOARD;
-    const cacheKey = `leaderboard_v11_${timeframe}_${limit}_${prizeEligibleOnly}`;
+    const cacheKey = `leaderboard_v12_${timeframe}_${limit}_${prizeEligibleOnly}`;
     const coalesceKey = `lb_query_${timeframe}_${limit}`;
     
     const cached = getCached(cacheKey, cacheTTL);

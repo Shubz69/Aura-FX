@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
@@ -195,34 +195,51 @@ const Leaderboard = () => {
     const [selectedTimeframe, setSelectedTimeframe] = useState('all-time');
     const [onlineCount, setOnlineCount] = useState(0);
 
-    useEffect(() => {
-        const fetchLeaderboard = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await Api.getLeaderboard(selectedTimeframe);
-                if (response?.data) {
-                    const data = Array.isArray(response.data)
-                        ? response.data
-                        : (response.data.leaderboard || []);
-                    setLeaderboardData(data);
-                    // Count "online" users deterministically
-                    const online = data.filter(u => {
-                        const s = getActivityStatus(u.id, selectedTimeframe);
-                        return s.dot === 'online';
-                    }).length;
-                    setOnlineCount(online);
-                }
-            } catch (err) {
-                console.error('Error fetching leaderboard:', err);
-                setError('Failed to load leaderboard. Please try again.');
-                setLeaderboardData([]);
-            } finally {
-                setLoading(false);
+    const fetchLeaderboard = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await Api.getLeaderboard(selectedTimeframe);
+            if (response?.data) {
+                const data = Array.isArray(response.data)
+                    ? response.data
+                    : (response.data.leaderboard || []);
+                setLeaderboardData(data);
+                const online = data.filter(u => {
+                    const s = getActivityStatus(u.id, selectedTimeframe);
+                    return s.dot === 'online';
+                }).length;
+                setOnlineCount(online);
             }
-        };
-        fetchLeaderboard();
+        } catch (err) {
+            console.error('Error fetching leaderboard:', err);
+            setError('Failed to load leaderboard. Please try again.');
+            setLeaderboardData([]);
+        } finally {
+            setLoading(false);
+        }
     }, [selectedTimeframe]);
+
+    useEffect(() => {
+        fetchLeaderboard();
+    }, [fetchLeaderboard]);
+
+    useEffect(() => {
+        let lastRefetch = 0;
+        const onVis = () => {
+            if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+            const now = Date.now();
+            if (now - lastRefetch < 20000) return;
+            lastRefetch = now;
+            fetchLeaderboard();
+        };
+        document.addEventListener('visibilitychange', onVis);
+        window.addEventListener('focus', onVis);
+        return () => {
+            document.removeEventListener('visibilitychange', onVis);
+            window.removeEventListener('focus', onVis);
+        };
+    }, [fetchLeaderboard]);
 
     // Floating particles
     useEffect(() => {
