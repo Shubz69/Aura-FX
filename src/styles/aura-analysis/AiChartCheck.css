@@ -326,6 +326,80 @@
   padding-bottom: 40px;
 }
 
+/* ══ RECOMMENDATION BANNER ══════════════════════════════════════════ */
+.acc-rec-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: var(--acc-radius);
+  border: 1px solid;
+  flex-wrap: wrap;
+}
+.acc-rec-banner--good {
+  background: rgba(16,185,129,0.08);
+  border-color: rgba(16,185,129,0.35);
+  box-shadow: 0 0 24px rgba(16,185,129,0.07);
+}
+.acc-rec-banner--risk {
+  background: rgba(239,68,68,0.07);
+  border-color: rgba(239,68,68,0.3);
+  box-shadow: 0 0 24px rgba(239,68,68,0.06);
+}
+.acc-rec-banner-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+.acc-rec-banner-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.acc-rec-banner-text { display: flex; flex-direction: column; gap: 4px; }
+.acc-rec-banner-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+.acc-rec-banner--good .acc-rec-banner-title { color: #6ee7b7; }
+.acc-rec-banner--risk .acc-rec-banner-title { color: #fca5a5; }
+.acc-rec-banner-body {
+  font-size: 0.83rem;
+  color: rgba(255,255,255,0.68);
+  line-height: 1.5;
+}
+.acc-rec-banner-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.acc-rec-banner-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.acc-rec-banner-btn--good {
+  background: rgba(16,185,129,0.18);
+  border-color: rgba(16,185,129,0.45);
+  color: #6ee7b7;
+}
+.acc-rec-banner-btn--risk {
+  background: rgba(239,68,68,0.14);
+  border-color: rgba(239,68,68,0.38);
+  color: #fca5a5;
+}
+@media (max-width: 600px) {
+  .acc-rec-banner { flex-direction: column; align-items: stretch; }
+  .acc-rec-banner-btn { justify-content: center; }
+}
+
 /* Hero score row */
 .acc-result-hero {
   display: flex;

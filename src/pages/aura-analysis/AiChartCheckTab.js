@@ -3,6 +3,7 @@
  * Upload a chart → AI scores it against the Trade Validator checklist.
  */
 import React, { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/aura-analysis/AiChartCheck.css';
 
@@ -96,6 +97,38 @@ function SectionCard({ section }) {
   );
 }
 
+function RecommendationBanner({ score }) {
+  const navigate = useNavigate();
+  const isGood = score >= 70;
+
+  return (
+    <div className={`acc-rec-banner ${isGood ? 'acc-rec-banner--good' : 'acc-rec-banner--risk'}`}>
+      <div className="acc-rec-banner-left">
+        <span className="acc-rec-banner-icon">{isGood ? '✅' : '⚠️'}</span>
+        <div className="acc-rec-banner-text">
+          <span className="acc-rec-banner-title">
+            {isGood ? 'Trade Recommendation: Good to Go' : 'Not Recommended — Trade at Your Own Risk'}
+          </span>
+          <span className="acc-rec-banner-body">
+            {isGood
+              ? `Your chart scores ${score}% and meets the 70% threshold. Start your checklist to formally add this trade to the system.`
+              : `Your chart scores ${score}%, which is below the 70% threshold. This setup is not recommended — if you still want to proceed, do so at your own risk.`
+            }
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        className={`acc-rec-banner-btn ${isGood ? 'acc-rec-banner-btn--good' : 'acc-rec-banner-btn--risk'}`}
+        onClick={() => navigate('/trader-deck/trade-validator/checklist')}
+      >
+        <span>📋</span>
+        {isGood ? 'Start Checklist' : 'Go to Checklist'}
+      </button>
+    </div>
+  );
+}
+
 function ResultPanel({ result, onReset }) {
   return (
     <div className="acc-result">
@@ -123,6 +156,9 @@ function ResultPanel({ result, onReset }) {
           <p className="acc-result-summary">{result.summary}</p>
         </div>
       </div>
+
+      {/* Recommendation banner */}
+      <RecommendationBanner score={result.overallScore} />
 
       {/* Section breakdown */}
       {Array.isArray(result.sections) && result.sections.length > 0 && (
