@@ -384,23 +384,59 @@
 .user-dropdown a:nth-child(5), .user-dropdown button:nth-child(5) { animation-delay: 0.24s; }
 .user-dropdown a:nth-child(6), .user-dropdown button:nth-child(6) { animation-delay: 0.29s; }
 
-/* ── Responsive ───────────────────────────────────────────── */
-@media (max-width: 768px) {
+/* ── Tablet & phone: match desktop panel (purple icons, caps) ─────────── */
+@media (max-width: 1150px) {
     .user-dropdown {
-        top: calc(58px + env(safe-area-inset-top, 0) + 10px);
-        right: 12px;
-        width: calc(100vw - 24px);
-        max-width: 280px;
+        top: calc(56px + env(safe-area-inset-top, 0) + 8px);
+        right: max(12px, env(safe-area-inset-right, 0));
+        left: auto;
+        width: min(340px, calc(100vw - 20px));
+        max-width: min(340px, calc(100vw - 20px));
+        border-radius: 16px;
+        box-shadow:
+            0 24px 64px rgba(0, 0, 0, 0.75),
+            0 0 0 1px rgba(139, 92, 246, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .user-dropdown p {
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 14px 16px 12px;
     }
 
     .user-dropdown a,
     .user-dropdown button {
-        padding: 12px 16px;
-        font-size: 0.8rem;
+        padding: 13px 16px;
+        font-size: 0.78rem;
+        letter-spacing: 0.16em;
+        min-height: 48px;
+        -webkit-tap-highlight-color: transparent;
     }
 
-    .user-dropdown a:hover,
-    .user-dropdown button:hover {
-        padding-left: 20px;
+    .user-dropdown .dropdown-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 1.05rem;
+        color: #a78bfa;
+        background: rgba(139, 92, 246, 0.12);
+        border-color: rgba(139, 92, 246, 0.22);
+    }
+}
+
+@media (max-width: 380px) {
+    .user-dropdown {
+        width: calc(100vw - 16px);
+        max-width: none;
+        right: 8px;
+    }
+}
+
+/* iPad landscape / small laptop touch */
+@media (min-width: 769px) and (max-width: 1150px) {
+    .user-dropdown {
+        width: min(300px, calc(100vw - 32px));
+        max-width: 300px;
     }
 }

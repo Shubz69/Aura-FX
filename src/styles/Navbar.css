@@ -788,6 +788,72 @@ body.loading-active .navbar {
   color: var(--text-primary);
 }
 
+.mobile-menu-section-label {
+  margin: 0 0 1rem 0;
+  padding: 0;
+  width: 100%;
+  max-width: 520px;
+  font-family: var(--font-main);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.mobile-nav-links-primary {
+  align-items: stretch;
+}
+
+.mobile-nav-links-primary li a {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.mobile-nav-links-primary li a:hover {
+  color: #fff !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+}
+
+.mobile-nav-links-primary li a.active {
+  color: #c4b5fd !important;
+  background: rgba(139, 92, 246, 0.12) !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
+}
+
+.mobile-menu-account-hint {
+  margin: 1.75rem auto 0;
+  padding: 1rem 1.25rem;
+  max-width: 520px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-main);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.mobile-menu-account-hint strong {
+  color: #a78bfa;
+  font-weight: 600;
+}
+
 .mobile-user-email {
   padding: 22px 18px 16px 18px;
   color: var(--text-secondary);
@@ -852,10 +918,20 @@ body.loading-active .navbar {
     display: none !important; 
   }
   
-  .nav-buttons .user-profile.desktop-only { 
-    display: none !important; 
+  .nav-buttons .user-profile-always {
+    display: flex !important;
+    align-items: center;
   }
-  
+
+  .nav-buttons .user-profile-always .user-icon {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.35rem;
+    border-radius: 50%;
+  }
+
   .nav-buttons .notifications-wrapper {
     display: flex !important;
   }

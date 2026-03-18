@@ -47,7 +47,11 @@ const Navbar = () => {
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
   const toggleDropdown = () => setDropdownOpen((prev) => !prev);
-  const handleUserIconClick = (e) => { e.stopPropagation(); toggleDropdown(); };
+  const handleUserIconClick = (e) => {
+    e.stopPropagation();
+    setMobileMenuOpen(false);
+    toggleDropdown();
+  };
 
   const dropdownPosition = {
     top: "calc(55px + env(safe-area-inset-top, 0) + 8px)",
@@ -67,31 +71,21 @@ const Navbar = () => {
 
       {user ? (
         <>
-          <div className="mobile-user-email">{user.email}</div>
-          <ul className="mobile-nav-links">
-            <li><Link to="/trader-deck" onClick={closeMobileMenu}><FaThLarge className="dropdown-icon" /> Trader Desk</Link></li>
-            <li><Link to="/journal" onClick={closeMobileMenu}><FaBook className="dropdown-icon" /> Journal</Link></li>
-            <li><Link to="/trader-deck/trade-validator" onClick={closeMobileMenu}><FaCheckSquare className="dropdown-icon" /> Trade Validator</Link></li>
-            <li><Link to="/aura-analysis" onClick={closeMobileMenu}><FaChartLine className="dropdown-icon" /> Aura Analysis</Link></li>
-            {isPremium(user) && (
-              <li><Link to="/reports" onClick={closeMobileMenu}><FaFileAlt className="dropdown-icon" /> Monthly Reports</Link></li>
-            )}
-            <li><Link to="/profile" onClick={closeMobileMenu}><FaUserCircle className="dropdown-icon" /> Profile</Link></li>
-            <li><Link to="/admin/inbox" onClick={closeMobileMenu}><FaEnvelope className="dropdown-icon" /> Messages</Link></li>
-            <li><Link to="/affiliation" onClick={closeMobileMenu}><FaLink className="dropdown-icon" /> Affiliation</Link></li>
-            {showSuperAdminLinks && (
-              <>
-                <li><Link to="/admin" onClick={closeMobileMenu}><FaCog className="dropdown-icon" /> Admin Panel</Link></li>
-                <li><Link to="/settings" onClick={closeMobileMenu}><FaSlidersH className="dropdown-icon" /> Settings</Link></li>
-                <li><Link to="/admin/messages" onClick={closeMobileMenu}><FaHeadset className="dropdown-icon" /> Contact Submissions</Link></li>
-              </>
-            )}
+          <p className="mobile-menu-section-label">Menu</p>
+          <ul className="mobile-nav-links mobile-nav-links-primary">
+            <li><Link to="/" onClick={closeMobileMenu} className={location.pathname === '/' ? 'active' : ''}>Home</Link></li>
+            <li><Link to="/community" onClick={closeMobileMenu} className={isActive('/community') ? 'active' : ''}>Community</Link></li>
+            <li>
+              <Link to={auraAiHref} onClick={closeMobileMenu} className={`mobile-aura-ai-link${isActive('/premium-ai') ? ' active' : ''}`}>
+                Aura AI
+              </Link>
+            </li>
+            <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>Leaderboard</Link></li>
+            <li><Link to="/contact" onClick={closeMobileMenu} className={isActive('/contact') ? 'active' : ''}>Contact Us</Link></li>
           </ul>
-          <div className="mobile-buttons">
-            <button className="mobile-sign-in" onClick={() => { logout(); closeMobileMenu(); }}>
-              <FaSignOutAlt style={{ marginRight: 8 }} /> Logout
-            </button>
-          </div>
+          <p className="mobile-menu-account-hint">
+            Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more — same menu as desktop.
+          </p>
         </>
       ) : (
         <>
@@ -163,7 +157,7 @@ const Navbar = () => {
                 <NavbarNotifications />
               </div>
               {/* Desktop user dropdown */}
-              <div className="user-profile desktop-only">
+              <div className="user-profile user-profile-always">
                 <button
                   type="button"
                   className="user-icon"
@@ -228,7 +222,14 @@ const Navbar = () => {
             </>
           )}
           {/* Hamburger — mobile only */}
-          <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen((p) => !p)} aria-label="Toggle menu">
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => {
+              setDropdownOpen(false);
+              setMobileMenuOpen((p) => !p);
+            }}
+            aria-label="Toggle menu"
+          >
             {mobileMenuOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
