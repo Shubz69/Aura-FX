@@ -683,8 +683,10 @@ const Api = {
     getTraderDeckMarketIntelligence: () => {
         return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`);
     },
-    getTraderDeckEconomicCalendar: (days = 7) =>
-        axios.get(`${API_BASE_URL}/api/trader-deck/economic-calendar`, { params: { days } }),
+    getTraderDeckEconomicCalendar: (days = 7, refresh = false) =>
+        axios.get(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
+            params: { days, ...(refresh ? { refresh: '1' } : {}) },
+        }),
     getTraderDeckNews: () =>
         axios.get(`${API_BASE_URL}/api/trader-deck/news`),
 

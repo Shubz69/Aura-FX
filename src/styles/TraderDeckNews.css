@@ -290,7 +290,49 @@
 .td-ff-row--low    { border-left: 2px solid #eab308; }
 
 /* Released row subtle highlight */
-.td-ff-row--released { background: rgba(16,185,129,0.03); }
+.td-ff-row--released { background: rgba(16,185,129,0.04); }
+
+/* Imminent row — event within 2 min */
+.td-ff-row--imminent {
+  background: rgba(245,158,11,0.06);
+  border-left-color: #f59e0b !important;
+  animation: td-ff-imminent-pulse 1.8s ease-in-out infinite;
+}
+@keyframes td-ff-imminent-pulse {
+  0%, 100% { background: rgba(245,158,11,0.06); }
+  50%       { background: rgba(245,158,11,0.12); }
+}
+
+/* Overdue row — past with no actual yet */
+.td-ff-row--overdue { opacity: 0.55; }
+
+/* SOON badge */
+.td-ff-soon-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  border-radius: 4px;
+  background: rgba(245,158,11,0.2);
+  border: 1px solid rgba(245,158,11,0.5);
+  color: #fcd34d;
+  vertical-align: middle;
+  animation: td-ff-soon-blink 1s step-start infinite;
+}
+@keyframes td-ff-soon-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* "releasing…" placeholder in Actual column */
+.td-ff-releasing {
+  font-size: 0.72rem;
+  color: rgba(245,158,11,0.75);
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
 
 .td-ff-td {
   padding: 10px 12px;

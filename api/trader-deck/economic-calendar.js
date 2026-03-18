@@ -12,8 +12,8 @@
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v3';
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min — FF JSON feed updates hourly
+const CACHE_KEY = 'trader-deck:economic-calendar:v4';
+const CACHE_TTL_MS = 60 * 1000; // 60 s — short enough to catch actuals quickly
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 
@@ -64,19 +64,24 @@ async function fromForexFactory(days = 7) {
         const raw = await res.json();
         if (!Array.isArray(raw)) continue;
 
+        // Today's date in ET (FF dates are expressed in ET)
+        const etTodayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+
         for (const ev of raw) {
           // ev.date is ISO with ET offset e.g. "2025-03-18T10:00:00-0400"
           const evDate = new Date(ev.date);
-          if (evDate < now || evDate > cutoff) continue;
           if (!ev.title || !ev.country) continue;
           if ((ev.impact || '').toLowerCase() === 'non-economic') continue;
 
-          // Extract date portion from the ISO string (use ET local date from the raw string)
+          // Extract date/time from the raw string (ET — what traders expect)
           const rawDate = ev.date || '';
           const dateMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
           const dateStr = dateMatch ? dateMatch[1] : evDate.toISOString().slice(0, 10);
 
-          // Extract time portion from the raw string (already in ET — what traders expect)
+          // Include ALL of today's events (even past ones — needed to show actuals)
+          // Skip events from previous days or beyond the cutoff
+          if (dateStr < etTodayStr || evDate > cutoff) continue;
+
           const timeMatch = rawDate.match(/T(\d{2}):(\d{2})/);
           let timeStr = 'All Day';
           if (timeMatch) {
@@ -90,6 +95,7 @@ async function fromForexFactory(days = 7) {
           allEvents.push({
             date: dateStr,
             time: timeStr,
+            timestamp: evDate.getTime(), // UTC ms — used by frontend for precision scheduling
             currency: ev.country,
             impact: normImpact(ev.impact),
             event: ev.title,
@@ -189,7 +195,9 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-  const cached = getCached(CACHE_KEY, CACHE_TTL_MS);
+  // ?refresh=1 bypasses cache — used by frontend for precision fetches at event release time
+  const forceRefresh = req.query.refresh === '1';
+  const cached = forceRefresh ? null : getCached(CACHE_KEY, CACHE_TTL_MS);
   if (cached) return res.status(200).json({ success: true, ...cached, cached: true });
 
   const days = Math.min(14, Math.max(1, parseInt(req.query.days, 10) || 7));
