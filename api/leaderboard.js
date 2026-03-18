@@ -1,66 +1,19 @@
 /**
  * Leaderboard API - Real XP-based leaderboard with proper time boundaries
- * 
+ *
  * Timeframes (all use xp_events ledger):
- * - daily: XP earned since start of today (midnight UTC)
- * - weekly: XP earned since start of ISO week (Monday 00:00 UTC)
- * - monthly: XP earned since start of month (1st 00:00 UTC)
- * - all-time: Total lifetime XP (users.xp – canonical source; xp_events not used for rank)
- * 
- * INVARIANT: For any user in the same month: month_xp >= week_xp >= day_xp
- * This is guaranteed because all tabs query the same xp_events table with
- * different date filters, and the boundaries are nested (day ⊂ week ⊂ month).
- * 
- * Bootstrap Mode:
- * - Seeds demo users with believable xp_events when real traffic is low
- * - Automatically disabled when real_users >= 50 OR real_xp_events_7d >= threshold
- * - Demo users NEVER shown with "Demo" labels in UI
- * - Demo users NEVER eligible for prizes (server-side filter only)
+ * - daily / weekly / monthly: SUM(xp_events) in period
+ * - all-time: users.xp (canonical total)
+ *
+ * Demo/seed accounts are purged on load (see purge-demo-users) and never listed.
  */
 
 const { executeQuery, executeQueryWithTimeout } = require('./db');
-const { getCached, setCached, getOrFetch, DEFAULT_TTLS } = require('./cache');
+const { getCached, setCached, getOrFetch, DEFAULT_TTLS, invalidatePattern } = require('./cache');
 const { generateRequestId, createLogger } = require('./utils/logger');
 const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('./utils/rate-limiter');
 const { safeLimit, safeTimeframe } = require('./utils/validators');
-
-// ============================================================================
-// Configuration
-// ============================================================================
-
-// Bootstrap mode kill-switch thresholds
-const BOOTSTRAP_CONFIG = {
-  MIN_REAL_USERS: parseInt(process.env.LEADERBOARD_MIN_REAL_USERS) || 50,
-  MIN_REAL_EVENTS_7D: parseInt(process.env.LEADERBOARD_MIN_EVENTS_7D) || 500,
-  FORCE_BOOTSTRAP: process.env.LEADERBOARD_FORCE_BOOTSTRAP === 'true',
-  // Bootstrap/demo mode is DISABLED by default — only re-enable via env var explicitly set to 'false'
-  FORCE_DISABLE_BOOTSTRAP: process.env.LEADERBOARD_DISABLE_BOOTSTRAP !== 'false',
-  FAKE_ONLINE_COUNT: 0
-};
-
-// Demo user profiles – realistic online usernames, no underscores, all get avatars via dicebear (seed = id)
-const DEMO_USERS = [
-  { name: 'ZephyrFX', profile: 'grinder' },
-  { name: 'KaiTrader', profile: 'grinder' },
-  { name: 'LunaCharts', profile: 'sprinter' },
-  { name: 'OrionPips', profile: 'sprinter' },
-  { name: 'PhoenixGold', profile: 'weekend' },
-  { name: 'AtlasMarkets', profile: 'weekend' },
-  { name: 'NovaScalper', profile: 'steady' },
-  { name: 'RiverSwing', profile: 'steady' },
-  { name: 'SageTech', profile: 'course' },
-  { name: 'AuroraSignals', profile: 'course' },
-  { name: 'CaspianForex', profile: 'grinder' },
-  { name: 'IndigoTrends', profile: 'sprinter' },
-  { name: 'LyraAnalyst', profile: 'weekend' },
-  { name: 'MaverickRisk', profile: 'steady' },
-  { name: 'SeraphinaAI', profile: 'course' },
-  { name: 'TitanMacro', profile: 'grinder' },
-  { name: 'VesperAlgo', profile: 'sprinter' },
-  { name: 'WillowDay', profile: 'weekend' },
-  { name: 'XanderQuant', profile: 'steady' },
-  { name: 'YukiSMC', profile: 'course' }
-];
+const { purgeDemoUsers } = require('./utils/purge-demo-users');
 
 // ============================================================================
 // Centralized Timeframe Boundary Calculator (Single Source of Truth)
@@ -150,71 +103,8 @@ function getLevelFromXP(xp) {
   return Math.min(1000, 500 + Math.floor(Math.sqrt((xp - 500000) / 2000)) + 1);
 }
 
-function seededRandom(seed) {
-  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
-  return x - Math.floor(x);
-}
-
 // ============================================================================
-// Bootstrap Mode Detection
-// ============================================================================
-
-let bootstrapStatus = null;
-let bootstrapCheckTime = 0;
-const BOOTSTRAP_CHECK_INTERVAL = 60000; // Re-check every minute
-
-/**
- * Check if bootstrap mode should be active.
- * Returns true if we should use demo data, false if we have enough real traffic.
- */
-async function isBootstrapModeActive() {
-  // Force flags take precedence
-  if (BOOTSTRAP_CONFIG.FORCE_DISABLE_BOOTSTRAP) return false;
-  if (BOOTSTRAP_CONFIG.FORCE_BOOTSTRAP) return true;
-  
-  // Use cached result if recent
-  if (bootstrapStatus !== null && Date.now() - bootstrapCheckTime < BOOTSTRAP_CHECK_INTERVAL) {
-    return bootstrapStatus;
-  }
-  
-  try {
-    // Check real user count (non-demo users with activity)
-    const [realUsersResult] = await executeQuery(`
-      SELECT COUNT(DISTINCT u.id) as cnt 
-      FROM users u 
-      WHERE (u.is_demo IS NULL OR u.is_demo = FALSE)
-        AND u.xp > 0
-    `);
-    const realUsers = getRows(realUsersResult)[0]?.cnt || 0;
-    
-    // Check real xp_events in last 7 days (non-demo)
-    const [realEventsResult] = await executeQuery(`
-      SELECT COUNT(*) as cnt 
-      FROM xp_events e
-      JOIN users u ON e.user_id = u.id
-      WHERE e.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        AND (u.is_demo IS NULL OR u.is_demo = FALSE)
-    `);
-    const realEvents7d = getRows(realEventsResult)[0]?.cnt || 0;
-    
-    // Kill-switch: disable bootstrap if thresholds met
-    const shouldDisable = realUsers >= BOOTSTRAP_CONFIG.MIN_REAL_USERS || 
-                          realEvents7d >= BOOTSTRAP_CONFIG.MIN_REAL_EVENTS_7D;
-    
-    bootstrapStatus = !shouldDisable;
-    bootstrapCheckTime = Date.now();
-    
-    console.log(`Bootstrap mode: ${bootstrapStatus ? 'ACTIVE' : 'DISABLED'} (users: ${realUsers}, events7d: ${realEvents7d})`);
-    
-    return bootstrapStatus;
-  } catch (e) {
-    console.error('Bootstrap check error:', e.message);
-    return bootstrapStatus ?? true; // Default to bootstrap on error
-  }
-}
-
-// ============================================================================
-// Database Schema Setup (Idempotent)
+// Database Schema Setup (Idempotent) + demo user purge
 // ============================================================================
 
 let schemaChecked = false;
@@ -248,13 +138,14 @@ async function ensureSchema() {
       await executeQuery(`ALTER TABLE users ADD COLUMN is_demo BOOLEAN DEFAULT FALSE`);
     }
 
-    // Remove all demo/seeded users from leaderboard permanently
     try {
-      await executeQuery(`DELETE FROM xp_events WHERE user_id IN (SELECT id FROM users WHERE is_demo = TRUE OR email LIKE '%@aurafx.demo')`);
-      await executeQuery(`DELETE FROM users WHERE is_demo = TRUE OR email LIKE '%@aurafx.demo'`);
-      console.log('Demo users cleaned up from leaderboard');
+      const { deletedUsers, steps } = await purgeDemoUsers(executeQuery, { log: console.log });
+      if (deletedUsers > 0) {
+        console.log('Demo users purged from DB:', steps.join(', '));
+        invalidatePattern('leaderboard');
+      }
     } catch (cleanupErr) {
-      console.log('Demo cleanup (non-fatal):', cleanupErr.message);
+      console.log('Demo purge (non-fatal):', cleanupErr.message);
     }
 
     schemaChecked = true;
