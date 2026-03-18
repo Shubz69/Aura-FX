@@ -670,7 +670,7 @@ const Api = {
         axios.delete(`${API_BASE_URL}/api/aura-analysis/platform-connect`, { params: { platformId } }),
     getAuraPlatformAccount: (platformId) =>
         axios.get(`${API_BASE_URL}/api/aura-analysis/platform-account`, { params: { platformId } }),
-    getAuraPlatformHistory: (platformId, days = 90) =>
+    getAuraPlatformHistory: (platformId, days = 30) =>
         axios.get(`${API_BASE_URL}/api/aura-analysis/platform-history`, { params: { platformId, days } }),
 
     getAuraAnalysisLeaderboard: (sortBy = 'pnl', order = 'desc') => {
@@ -751,7 +751,11 @@ const Api = {
 
     getReferralStats: () => {
         const token = localStorage.getItem('token');
-        return axios.get(`${API_BASE_URL}/api/referral/stats`, {
+        const base =
+            typeof window !== 'undefined' && window.location?.origin
+                ? window.location.origin
+                : API_BASE_URL;
+        return axios.get(`${base}/api/referral/stats`, {
             headers: { Authorization: `Bearer ${token}` }
         });
     },

@@ -211,7 +211,7 @@ module.exports = async (req, res) => {
 
   const { platformId, days: daysParam } = req.query || {};
   if (!platformId) return res.status(400).json({ success: false, error: 'platformId required' });
-  const days = Math.min(365, Math.max(7, parseInt(daysParam, 10) || 90));
+  const days = Math.min(365, Math.max(1, parseInt(daysParam, 10) || 30));
 
   const [rows] = await executeQuery(
     `SELECT credentials_enc FROM aura_platform_connections

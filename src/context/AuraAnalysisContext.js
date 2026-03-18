@@ -12,11 +12,12 @@ const AuraAnalysisContext = createContext(null);
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 const DATE_RANGE_OPTIONS = [
-  { label: '30d',  days: 30  },
-  { label: '90d',  days: 90  },
-  { label: '180d', days: 180 },
-  { label: '1y',   days: 365 },
-  { label: 'All',  days: 730 },
+  { label: '1D',  days: 1   },
+  { label: '1W',  days: 7   },
+  { label: '1M',  days: 30  },
+  { label: '3M',  days: 90  },
+  { label: '6M',  days: 180 },
+  { label: '1Y',  days: 365 },
 ];
 
 export { DATE_RANGE_OPTIONS };
@@ -42,7 +43,7 @@ export function AuraAnalysisProvider({ children }) {
   }, [connections, activePlatformId]);
 
   // ── Filters ───────────────────────────────────────────────────────────────
-  const [daysFilter,   setDaysFilter]   = useState(90);
+  const [daysFilter,   setDaysFilter]   = useState(30);
   const [symbolFilter, setSymbolFilter] = useState('ALL');
   const [sessionFilter, setSessionFilter] = useState('ALL');
   const [dirFilter,    setDirFilter]    = useState('ALL');
