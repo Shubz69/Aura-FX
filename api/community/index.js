@@ -31,6 +31,7 @@ async function ensureSchema() {
     await addColumnIfNotExists('users', 'subscription_expiry', 'DATETIME DEFAULT NULL');
     await addColumnIfNotExists('users', 'payment_failed', 'TINYINT(1) DEFAULT 0');
     await addColumnIfNotExists('users', 'subscription_plan', 'VARCHAR(50) DEFAULT NULL');
+    await addColumnIfNotExists('users', 'is_demo', 'TINYINT(1) DEFAULT 0');
     schemaMigrated = true;
   } catch (e) {
     // Non-blocking - continue even if migration fails
@@ -169,7 +170,9 @@ async function handleGetUsers(req, res, requestId, logger, startTime) {
       const [result] = await executeQuery(
         `SELECT id, username, email, name, avatar, role, created_at, last_seen 
          FROM users 
-         WHERE username LIKE ? OR name LIKE ? OR email LIKE ?
+         WHERE (is_demo IS NULL OR is_demo = FALSE)
+           AND (email IS NULL OR email NOT LIKE '%@aurafx.demo')
+           AND (username LIKE ? OR name LIKE ? OR email LIKE ?)
          ORDER BY COALESCE(last_seen, created_at, NOW()) DESC
          LIMIT ${limit}`,
         [`%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`]
@@ -180,6 +183,8 @@ async function handleGetUsers(req, res, requestId, logger, startTime) {
       const [result] = await executeQuery(
         `SELECT id, username, email, name, avatar, role, created_at, last_seen 
          FROM users 
+         WHERE (is_demo IS NULL OR is_demo = FALSE)
+           AND (email IS NULL OR email NOT LIKE '%@aurafx.demo')
          ORDER BY COALESCE(last_seen, created_at, NOW()) DESC
          LIMIT ${limit}`
       );

@@ -91,16 +91,14 @@ function testPrizeSafety() {
   
   const leaderboardJs = readFile('api/leaderboard.js');
   const seedJs = readFile('api/seed/demo-leaderboard.js');
-  
-  // Demo users flagged
-  const hasDemoFlag = leaderboardJs?.includes('is_demo') && 
-                      seedJs?.includes('is_demo');
-  check('prize_safety', 'Demo users are flagged (is_demo=true)', hasDemoFlag);
-  
-  // Demo users excluded from prize
-  const excludesDemoFromPrize = leaderboardJs?.includes('isDemo') && 
-                                 seedJs?.includes('is_demo = TRUE');
-  check('prize_safety', 'Demo users excluded from prize eligibility', excludesDemoFromPrize);
+  const purgeJs = readFile('api/utils/purge-demo-users.js');
+
+  const hasPurge = purgeJs?.includes('purgeDemoUsers') && seedJs?.includes('purgeDemoUsers');
+  check('prize_safety', 'Demo purge utility + seed endpoint purge only', hasPurge);
+
+  const excludesDemo =
+    leaderboardJs?.includes('is_demo') && leaderboardJs?.includes('@aurafx.demo');
+  check('prize_safety', 'Leaderboard query excludes demo / @aurafx.demo users', excludesDemo);
   
   // Audit log exists (xp_events)
   const hasAuditLog = leaderboardJs?.includes('xp_events');

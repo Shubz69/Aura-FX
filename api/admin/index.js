@@ -713,7 +713,12 @@ module.exports = async (req, res) => {
         if (hasSubscriptionExpiry) {
           query += ', subscription_expiry';
         }
-        query += ' FROM users';
+        let demoWhere = `COALESCE(email,'') NOT LIKE '%@aurafx.demo'`;
+        try {
+          await db.execute('SELECT is_demo FROM users LIMIT 1');
+          demoWhere = `(is_demo IS NULL OR is_demo = 0 OR is_demo = FALSE) AND ${demoWhere}`;
+        } catch (_) {}
+        query += ` FROM users WHERE ${demoWhere}`;
         if (hasCreatedAt) {
           query += ' ORDER BY created_at DESC';
         } else {

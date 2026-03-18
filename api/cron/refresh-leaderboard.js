@@ -11,7 +11,8 @@
  */
 
 const { executeQuery } = require('../db');
-const { setCached, clearCache } = require('../cache');
+const { setCached, clearCache, invalidatePattern } = require('../cache');
+const { purgeDemoUsers } = require('../utils/purge-demo-users');
 
 // Helper to get array from query result
 function getRows(result) {
@@ -52,6 +53,17 @@ module.exports = async (req, res) => {
   };
 
   try {
+    try {
+      const { deletedUsers } = await purgeDemoUsers(executeQuery, { log: console.log });
+      if (deletedUsers > 0) {
+        results.demoUsersPurged = deletedUsers;
+        invalidatePattern('leaderboard_v10*');
+        invalidatePattern('community_users*');
+      }
+    } catch (e) {
+      results.errors.push(`Demo purge: ${e.message}`);
+    }
+
     // 1. Clean up old XP events (keep last 90 days)
     try {
       const cleanResult = await executeQuery(`
