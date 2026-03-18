@@ -160,13 +160,31 @@ ${contextLines ? `TRADER CONTEXT:\n${contextLines}\n` : ''}
 
 ═══ SCORING FORMULA (follow exactly — do not adjust scores subjectively) ═══
 Each section has exactly 5 criteria. Each criterion scores:
-  • PASS    = 20 points  (clearly and directly visible in the chart)
-  • PARTIAL = 10 points  (partially visible, inferrable from context, or ambiguous)
-  • FAIL    = 0 points   (not visible, violated, or contradicted by chart)
-  • UNCLEAR = 5 points   (genuinely cannot be assessed from the image)
+  • PASS    = 20 points  — evidence clearly and directly confirms the criterion on the chart
+  • PARTIAL = 10 points  — evidence partially supports it; inferrable but not fully confirmed
+  • UNCLEAR = 15 points  — criterion cannot be assessed from a static chart image (benefit of the doubt; absence of evidence ≠ failure)
+  • FAIL    = 0 points   — visible evidence DIRECTLY CONTRADICTS or VIOLATES the criterion
+
+⚠ CRITICAL DISTINCTION — read carefully:
+  • FAIL means you can SEE evidence of a problem (wrong trend, price mid-range, no structure, chasing move, etc.)
+  • UNCLEAR means the information is simply not readable from a chart (session clock, spread, news calendar, position size)
+  • "I cannot see this on the chart" → UNCLEAR (15 pts), NOT FAIL (0 pts)
+  • Never use FAIL unless you can name the specific visual evidence that violates the criterion
+
+CHART-INVISIBLE CRITERIA — these must always be UNCLEAR (never FAIL):
+  - Session timing / whether market session is active
+  - Spread conditions
+  - Position sizing / lot size
+  - Correlated pairs (cannot see other charts)
+  - News calendar items (unless your background intelligence confirms an imminent event)
 
 Section score = sum of its 5 criterion scores (max 100).
 Overall score = integer average of all section scores.
+
+PASS vs PARTIAL guidance:
+  • If a drawn zone, trendline, or visible candle pattern DIRECTLY confirms a criterion → PASS (20)
+  • PARTIAL (10) is only for setups where the evidence exists but is weak, mixed, or only partially visible
+  • Do not downgrade to PARTIAL simply because you want to be conservative — reward clear visual evidence with PASS
 
 You MUST compute scores mathematically from the criterion results. Never pick a score first and work backwards.
 
@@ -199,15 +217,16 @@ Use this pre-analysis as the factual foundation for every criterion score below.
 If the drawn annotations clearly show a well-structured setup aligned with trend, score criteria accordingly — do not undercount what is visibly confirmed.
 
 ═══ STEP 2 — SCORE EACH CRITERION (using your Step 1 findings) ═══
-Score each criterion strictly from the visual evidence you identified above:
-  • PASS    = 20 points  (clearly and directly visible/confirmed in the chart)
-  • PARTIAL = 10 points  (partially visible, inferrable from drawn elements, or ambiguous)
-  • FAIL    = 0 points   (not visible, violated, or directly contradicted by chart)
-  • UNCLEAR = 5 points   (genuinely cannot be assessed even with all visible elements)
+Score each criterion using the values defined in the Scoring Formula above:
+  • PASS    = 20 points  — clearly confirmed by visible chart evidence
+  • PARTIAL = 10 points  — partially supported; evidence exists but is weak or incomplete
+  • UNCLEAR = 15 points  — cannot be read from the chart at all (benefit of the doubt)
+  • FAIL    = 0 points   — chart shows VISIBLE evidence of violation or contradiction
 
 Rules:
-- If a trendline, box, or level CONFIRMS a criterion → PASS, not PARTIAL
-- If information is not visible, mark UNCLEAR or FAIL — never invent information
+- If a trendline, box, or level CONFIRMS a criterion → PASS (20), not PARTIAL (10)
+- If the criterion is about something invisible on a chart (session, spread, sizing) → UNCLEAR (15), never FAIL
+- FAIL requires you to cite the specific visual evidence that shows the criterion is violated
 - Identical visible evidence must produce identical scores every time
 - Never pick a score first and work backwards — compute from criterion results
 
