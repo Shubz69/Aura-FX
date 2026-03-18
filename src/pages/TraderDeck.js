@@ -3,9 +3,11 @@ import CosmicBackground from '../components/CosmicBackground';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
 import TraderDeckCalendar from '../components/trader-deck/TraderDeckCalendar';
+import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarBar';
 import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
 import NewsHeadlines from '../components/NewsHeadlines';
+import EconomicCalendarView from './trader-deck/EconomicCalendarView';
 import '../styles/Journal.css';
 import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
@@ -14,9 +16,9 @@ import '../styles/TraderDeckNews.css';
 const today = () => new Date().toISOString().slice(0, 10);
 
 const SESSIONS = [
-  { name: 'Sydney',   openH: 22, closeH: 7  },
-  { name: 'Tokyo',    openH: 0,  closeH: 9  },
-  { name: 'London',   openH: 8,  closeH: 17 },
+  { name: 'Sydney', openH: 22, closeH: 7 },
+  { name: 'Tokyo', openH: 0, closeH: 9 },
+  { name: 'London', openH: 8, closeH: 17 },
   { name: 'New York', openH: 13, closeH: 22 },
 ];
 
@@ -28,12 +30,12 @@ function isSessionOpen({ openH, closeH }) {
 function MarketSessionStatus() {
   const [tick, setTick] = React.useState(0);
   React.useEffect(() => {
-    const iv = setInterval(() => setTick(t => t + 1), 60000);
+    const iv = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(iv);
   }, []);
   return (
     <ul className="td-deck-sessions-list">
-      {SESSIONS.map(s => {
+      {SESSIONS.map((s) => {
         const open = isSessionOpen(s);
         return (
           <li key={s.name} className={`td-deck-session-item${open ? ' td-deck-session-item--open' : ''}`}>
@@ -116,16 +118,10 @@ export default function TraderDeck() {
 
   const datesWithContent = useMemo(() => ({}), []);
 
-  const displayDate = (() => {
-    const d = new Date(selectedDate + 'T12:00:00');
-    return isNaN(d.getTime()) ? selectedDate : d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  })();
-
   return (
-    <div className="journal-page td-deck-journal-page" id="td-deck-top">
+    <div className="td-layout-page td-deck-with-tabs" id="td-deck-top">
       <CosmicBackground />
 
-      {/* Full-screen calendar overlay */}
       {calendarOverlayOpen && (
         <div className="td-deck-calendar-overlay" role="dialog" aria-modal="true" aria-label="Pick a date">
           <div className="td-deck-calendar-overlay-backdrop" onClick={() => setCalendarOverlayOpen(false)} />
@@ -138,86 +134,103 @@ export default function TraderDeck() {
               onNextMonth={handleNextMonth}
               datesWithContent={datesWithContent}
             />
-            <button type="button" className="td-deck-calendar-overlay-close" onClick={() => setCalendarOverlayOpen(false)}>Close</button>
+            <button type="button" className="td-deck-calendar-overlay-close" onClick={() => setCalendarOverlayOpen(false)} aria-label="Close calendar">
+              Close
+            </button>
           </div>
         </div>
       )}
 
-      <div className="journal-layout td-deck-jlayout">
-
-        {/* ══════════ SIDEBAR ══════════ */}
-        <aside className="journal-sidebar td-deck-jsidebar">
-          <header className="journal-sidebar-header">
-            <h2 className="journal-sidebar-title">Trader Desk</h2>
-            <p className="journal-sidebar-sub">Market Intelligence</p>
-          </header>
-
-          {/* Mini calendar */}
-          <div className="journal-calendar td-deck-sidebar-cal">
-            <TraderDeckCalendar
-              selectedDate={selectedDate}
-              onSelectDate={handleSelectDate}
-              calendarMonth={calendarMonth}
-              onPrevMonth={handlePrevMonth}
-              onNextMonth={handleNextMonth}
-              datesWithContent={datesWithContent}
-            />
-          </div>
-
-          {/* Period sub-tabs */}
-          <div className="td-deck-sidebar-period">
-            <p className="td-deck-sidebar-period-label">VIEW</p>
-            <div className="td-deck-sub-tabs td-deck-sub-tabs--vert">
-              <button type="button" className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`} onClick={() => setSubTab('daily')}>Daily</button>
-              <button type="button" className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`} onClick={() => setSubTab('weekly')}>Weekly</button>
-            </div>
-          </div>
-
-          {/* Market session status */}
-          <div className="td-deck-sessions">
-            <p className="td-deck-sidebar-period-label">MARKET SESSIONS</p>
-            <MarketSessionStatus />
-          </div>
-        </aside>
-
-        {/* ══════════ MAIN ══════════ */}
-        <main className="journal-main td-deck-jmain">
-
-          {/* Date heading + nav */}
-          <div className="td-deck-main-datebar">
-            <button type="button" className="journal-calendar-btn td-deck-nav-btn" onClick={subTab === 'weekly' ? handlePrevWeek : handlePrevDay} aria-label="Previous">‹</button>
-            <div className="td-deck-main-dateinfo">
-              <span className="td-deck-main-datestr">{displayDate}</span>
-              <button type="button" className="td-deck-open-cal-btn" onClick={() => setCalendarOverlayOpen(true)} title="Open calendar">📅</button>
-            </div>
-            <button type="button" className="journal-calendar-btn td-deck-nav-btn" onClick={subTab === 'weekly' ? handleNextWeek : handleNextDay} aria-label="Next">›</button>
-          </div>
-
-          {/* Main tab nav */}
-          <nav className="td-deck-main-tab-nav" aria-label="Trader Desk sections">
-            <button type="button" className={`td-deck-main-tab-btn${mainTab === 'outlook' ? ' td-deck-main-tab-btn--active' : ''}`} onClick={() => setMainTab('outlook')}>
-              <span className="td-deck-tab-icon">📊</span> Market Outlook
-            </button>
-            <button type="button" className={`td-deck-main-tab-btn${mainTab === 'intelligence' ? ' td-deck-main-tab-btn--active' : ''}`} onClick={() => setMainTab('intelligence')}>
-              <span className="td-deck-tab-icon">🗂</span> Market Intelligence
+      <div className="td-deck-layout">
+        <header className="td-deck-header">
+          <nav className="td-deck-header-nav td-deck-header-left" aria-label="Trader Desk sections">
+            <button
+              type="button"
+              className={`td-deck-tab${mainTab === 'outlook' ? ' td-deck-tab--active' : ''}`}
+              onClick={() => setMainTab('outlook')}
+            >
+              MARKET OUTLOOK
             </button>
           </nav>
+          <h1 className="td-deck-page-title">Trader Desk</h1>
+          <nav className="td-deck-header-nav td-deck-header-right" aria-label="Trader Desk sections">
+            <button
+              type="button"
+              className={`td-deck-tab${mainTab === 'intelligence' ? ' td-deck-tab--active' : ''}`}
+              onClick={() => setMainTab('intelligence')}
+            >
+              MARKET INTELLIGENCE
+            </button>
+          </nav>
+        </header>
 
-          {/* Tab content */}
-          <div className="td-deck-tab-content">
-            {mainTab === 'outlook' && (
-              <MarketOutlookView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
-            )}
-            {mainTab === 'intelligence' && (
-              <MarketIntelligenceBriefsView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
-            )}
+        <div className="td-deck-divider-row">
+          <div className="td-deck-header-line-left" aria-hidden="true" />
+          <div className="td-deck-calendar-bar-wrap">
+            <TraderDeckCalendarBar
+              selectedDate={selectedDate}
+              calendarMonth={calendarMonth}
+              period={subTab}
+              onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
+              onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
+              onOpenCalendar={() => setCalendarOverlayOpen(true)}
+            />
+          </div>
+          <div className="td-deck-header-line-right" aria-hidden="true" />
+        </div>
+
+        <div className="td-deck-below-header">
+          <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left" aria-label="Period">
+            <button
+              type="button"
+              className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
+              onClick={() => setSubTab('daily')}
+            >
+              Daily
+            </button>
+            <button
+              type="button"
+              className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
+              onClick={() => setSubTab('weekly')}
+            >
+              Weekly
+            </button>
+          </nav>
+        </div>
+
+        <div className="td-deck-content">
+          <div className="td-deck-content-box">
+            <div className="td-deck-body td-deck-body-single">
+              <main className="td-deck-main">
+                <div className="td-deck-main-inner">
+                  <div className="td-deck-dashboard-wrap">
+                    {mainTab === 'outlook' && (
+                      <MarketOutlookView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
+                    )}
+                    {mainTab === 'intelligence' && (
+                      <MarketIntelligenceBriefsView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
+                    )}
+                  </div>
+                </div>
+              </main>
+            </div>
+          </div>
+        </div>
+
+        <section className="td-deck-bottom-stack" aria-label="Market sessions, economic calendar, and headlines">
+          <div className="td-deck-bottom-card td-deck-bottom-card--sessions">
+            <h2 className="td-deck-bottom-card-title">Market sessions</h2>
+            <MarketSessionStatus />
           </div>
 
-          {/* Market Headlines */}
-          <div className="td-deck-news-section">
+          <div className="td-deck-bottom-card td-deck-bottom-card--calendar">
+            <EconomicCalendarView />
+          </div>
+
+          <div className="td-deck-bottom-card td-deck-bottom-card--headlines">
             <NewsHeadlines />
           </div>
-        </main>
+        </section>
       </div>
     </div>
   );

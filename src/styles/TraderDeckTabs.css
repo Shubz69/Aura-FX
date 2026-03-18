@@ -870,6 +870,60 @@
   margin-top: 24px;
 }
 
+/* Below main box: sessions, economic calendar, headlines (single column) */
+.td-deck-bottom-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  margin-top: 28px;
+  padding-bottom: 32px;
+}
+
+.td-deck-bottom-card {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px 24px 24px;
+  box-sizing: border-box;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.08) inset,
+    0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.td-deck-bottom-card:hover {
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.td-deck-bottom-card--sessions .td-deck-sessions-list {
+  margin-top: 4px;
+}
+
+.td-deck-bottom-card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 14px;
+}
+
+.td-deck-bottom-card--calendar .ec-page {
+  padding: 0;
+}
+
+.td-deck-bottom-card--calendar .ec-header {
+  margin-top: 0;
+}
+
+.td-deck-bottom-card--headlines {
+  padding-top: 16px;
+}
+
 /* Responsive */
 @media (max-width: 860px) {
   .td-deck-jsidebar { width: 260px; }

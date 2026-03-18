@@ -64,7 +64,9 @@ export default function TraderDeckCalendarBar({
       return `${ordinal(startDay)} ${monthName} - ${ordinal(endDay)} ${endMonth} ${endYear}`;
     }
 
-    return `${day || 1} ${monthName} ${year}`;
+    const d = new Date(str + 'T12:00:00');
+    const weekday = d.toLocaleDateString('en-GB', { weekday: 'long' });
+    return `${weekday}, ${day || 1} ${monthName} ${year}`;
   }, [selectedDate, period]);
 
   return (
