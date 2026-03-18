@@ -138,7 +138,7 @@ function buildSystemPrompt(rubric, context) {
   const sectionLines = rubric.sections
     .map((s, i) => {
       const items = s.criteria.map((c, j) => `  ${j + 1}. ${c}`).join('\n');
-      return `Section ${i + 1}: "${s.name}"\nCriteria:\n${items}`;
+      return `Section ${i + 1}: "${s.name}"\nCriteria (5 total — each worth 20 pts):\n${items}`;
     })
     .join('\n\n');
 
@@ -151,42 +151,55 @@ function buildSystemPrompt(rubric, context) {
     .filter(Boolean)
     .join('\n');
 
-  return `You are a professional trading coach and chart analyst. Your role is to assess a trader's chart image against a structured ${rubric.label} trade checklist and return a JSON-formatted analysis.
+  return `You are a strict, objective trading coach and chart analyst. Your sole task is to score a chart image against the ${rubric.label} trade checklist using a FIXED, DETERMINISTIC scoring formula. You must not deviate from this formula.
 
 CHECKLIST RUBRIC (${rubric.label}):
 ${sectionLines}
 
 ${contextLines ? `TRADER CONTEXT:\n${contextLines}\n` : ''}
 
-INSTRUCTIONS:
-1. Analyze the chart image carefully for visible price action, structure, zones, momentum, and context.
-2. Score EACH SECTION from 0–100 based on how well the visible chart satisfies the criteria.
-3. For each criterion, determine: PASS (clearly visible/satisfied), PARTIAL (partially visible or inferrable), FAIL (not visible or violated), or UNCLEAR (not enough visual information).
-4. Calculate an overall score as the simple average of section scores.
-5. Be honest — if the image is unclear or low resolution, say so and reduce confidence.
-6. Avoid making up information not visible in the chart.
-7. DO NOT promise trade success. Use language like "checklist alignment", "setup quality", "visible confluence".
+═══ SCORING FORMULA (follow exactly — do not adjust scores subjectively) ═══
+Each section has exactly 5 criteria. Each criterion scores:
+  • PASS    = 20 points  (clearly and directly visible in the chart)
+  • PARTIAL = 10 points  (partially visible, inferrable from context, or ambiguous)
+  • FAIL    = 0 points   (not visible, violated, or contradicted by chart)
+  • UNCLEAR = 5 points   (genuinely cannot be assessed from the image)
 
-RETURN FORMAT (strict JSON, no markdown, no code blocks):
+Section score = sum of its 5 criterion scores (max 100).
+Overall score = integer average of all section scores.
+
+You MUST compute scores mathematically from the criterion results. Never pick a score first and work backwards.
+
+═══ VISUAL ANALYSIS INSTRUCTIONS ═══
+1. Identify the asset/symbol, timeframe, and visible date range from the chart itself.
+2. Read price action strictly from what is DRAWN on the chart: candle patterns, trendlines, zones, levels, annotations, boxes, indicators.
+3. Determine the dominant trend direction from visible structure (higher highs/lows or lower highs/lows).
+4. Identify key levels: horizontal support/resistance, supply/demand zones, highlighted areas.
+5. Look for structural events: breaks of structure (BOS), change of character (CHoCH/MSS), liquidity sweeps, rejection wicks.
+6. Assess momentum from candle size and sequence. Assess confluence from the number of confirming factors at the entry.
+7. If information is not visible in the image, mark the criterion UNCLEAR or FAIL — never invent information.
+8. Be consistent: identical visible information must produce identical criterion results every time.
+
+═══ RETURN FORMAT (strict JSON only — no markdown, no code fences) ═══
 {
-  "overallScore": <0-100 integer>,
+  "overallScore": <integer 0-100, computed from formula>,
   "confidence": <"high"|"medium"|"low">,
-  "summary": "<2-3 sentence plain-English summary of what the AI sees and how the setup aligns>",
+  "summary": "<2-3 sentence objective summary: what is visible, what the trend is, and how well the setup aligns with the checklist>",
   "sections": [
     {
       "name": "<section name>",
-      "score": <0-100>,
-      "status": <"pass"|"partial"|"fail">,
-      "reasoning": "<1-2 sentence trader-friendly explanation>",
+      "score": <integer 0-100, sum of criterion scores>,
+      "status": <"pass" if score>=70 | "partial" if score>=40 | "fail" if score<40>,
+      "reasoning": "<1-2 sentence explanation grounded in what is visible on the chart>",
       "criteriaResults": [
-        { "criterion": "<text>", "result": <"pass"|"partial"|"fail"|"unclear">, "note": "<short note if needed>" }
+        { "criterion": "<criterion text>", "result": <"pass"|"partial"|"fail"|"unclear">, "note": "<specific observation from the chart>" }
       ]
     }
   ],
-  "positives": ["<what supports the trade idea (max 4 items)>"],
-  "concerns": ["<what weakens the trade idea (max 4 items)>"],
-  "missing": ["<what cannot be confirmed from the image or is absent (max 4 items)>"],
-  "manualConfirmation": ["<what the trader must still confirm manually before entering (max 4 items)>"],
+  "positives": ["<specific visible evidence supporting the setup (max 4)"],
+  "concerns": ["<specific visible evidence weakening the setup (max 4)"],
+  "missing": ["<information not visible or not determinable from the image (max 4)"],
+  "manualConfirmation": ["<what the trader must verify before entry that cannot be seen here (max 4)"],
   "imageQuality": <"good"|"acceptable"|"poor">
 }`;
 }
@@ -196,7 +209,10 @@ async function callOpenAIVision(base64Image, mimeType, systemPrompt) {
 
   const body = {
     model: OPENAI_MODEL,
-    max_tokens: 2000,
+    max_tokens: 2500,
+    temperature: 0.1,       // Near-deterministic — same image → same analysis
+    seed: 7741,             // Fixed seed for reproducibility across identical inputs
+    response_format: { type: 'json_object' }, // Enforce JSON — no markdown wrapping
     messages: [
       {
         role: 'system',
@@ -214,7 +230,7 @@ async function callOpenAIVision(base64Image, mimeType, systemPrompt) {
           },
           {
             type: 'text',
-            text: 'Please analyze this trading chart image and return the structured JSON assessment as described in your instructions.',
+            text: 'Analyze this trading chart image. Follow the scoring formula exactly: evaluate each criterion individually first, then compute section scores by summing criterion scores, then compute the overall score as the average of section scores. Return only the JSON object.',
           },
         ],
       },
