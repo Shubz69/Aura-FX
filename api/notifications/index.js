@@ -253,19 +253,17 @@ const handler = async (req, res) => {
       const cursor = safeCursor(query.cursor);
       const limit = safeLimit(query.limit, 20, 50);
 
-      let rows = [], unreadCount = 0;
-      try {
-        const queryParams = cursor ? [userId, cursor, limit + 1] : [userId, limit + 1];
-        const cursorClause = cursor ? 'AND created_at < ?' : '';
-        const [fetchedRows] = await executeQuery(
-          `SELECT * FROM notifications WHERE user_id = ? ${cursorClause} ORDER BY created_at DESC LIMIT ?`,
-          queryParams
-        );
-        rows = Array.isArray(fetchedRows) ? fetchedRows : [];
-      } catch (qErr) {
-        logger.warn('Notifications query failed', { error: qErr.message });
-      }
+      let rows = [];
+      const listTimeoutMs = 15000;
+      const [fetchedRows] = await executeQueryWithTimeout(
+        `SELECT * FROM notifications WHERE user_id = ? ${cursor ? 'AND created_at < ?' : ''} ORDER BY created_at DESC LIMIT ?`,
+        cursor ? [userId, cursor, limit + 1] : [userId, limit + 1],
+        listTimeoutMs,
+        requestId
+      );
+      rows = Array.isArray(fetchedRows) ? fetchedRows : [];
 
+      let unreadCount = 0;
       try {
         const [countRows] = await executeQueryWithTimeout(
           'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
@@ -273,7 +271,7 @@ const handler = async (req, res) => {
           5000,
           requestId
         );
-        unreadCount = countRows?.[0]?.count || 0;
+        unreadCount = countRows?.[0]?.count ?? 0;
       } catch (_) { unreadCount = 0; }
 
       const hasMore = rows.length > limit;

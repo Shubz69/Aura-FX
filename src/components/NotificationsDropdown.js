@@ -82,7 +82,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
           toast.error(data.message || 'Failed to load notifications');
           return;
         }
-        const items = data.items ?? [];
+        const items = Array.isArray(data.items) ? data.items : (Array.isArray(data.notifications) ? data.notifications : (Array.isArray(data.data) ? data.data : []));
         if (append) {
           setNotifications(prev => [...prev, ...items]);
         } else {
