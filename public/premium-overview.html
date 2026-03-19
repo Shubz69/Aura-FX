@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A7 AURA FX — Overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0B0F17;
+      --bg-secondary: #111827;
+      --card-bg: rgba(255, 255, 255, 0.02);
+
+      --border: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(255, 184, 77, 0.4);
+
+      --text-primary: #E5E7EB;
+      --text-secondary: #9CA3AF;
+
+      --accent-gold: #FFB84D;
+      --accent-gold-soft: rgba(255, 184, 77, 0.15);
+
+      --success: #10B981;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(
+          circle at 20% 10%,
+          rgba(255, 184, 77, 0.05),
+          transparent 40%
+        ),
+        var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.125rem;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+    }
+
+    .nav-links a {
+      margin: 0 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 0.9375rem;
+    }
+
+    .nav-links .active {
+      color: var(--accent-gold);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      backdrop-filter: blur(10px);
+      transition: 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 20px rgba(255, 184, 77, 0.08);
+    }
+
+    .metric {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .metric p {
+      margin: 0 0 8px 0;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .metric h2 {
+      margin: 0;
+      color: var(--accent-gold);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .progress {
+      height: 6px;
+      background: #1f2937;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 40%;
+      background: linear-gradient(90deg, #FFB84D, #FFD580);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .container h1 {
+      margin: 0 0 24px 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+
+    .card h3 {
+      margin: 0 0 12px 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .card > p {
+      margin: 0 0 16px 0;
+      color: var(--accent-gold);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+      }
+      .nav-links a {
+        margin: 4px 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .nav {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="logo">A7 AURA FX</div>
+    <div class="nav-links">
+      <a class="active" href="#">Overview</a>
+      <a href="#">Checklist</a>
+      <a href="#">Trade Journal</a>
+      <a href="#">Analytics</a>
+      <a href="#">Trader CV</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Overview</h1>
+
+    <div class="grid">
+      <div class="metric">
+        <p>Total Trades</p>
+        <h2>3</h2>
+      </div>
+      <div class="metric">
+        <p>Win Rate</p>
+        <h2>100%</h2>
+      </div>
+      <div class="metric">
+        <p>PnL</p>
+        <h2>+$913,300</h2>
+      </div>
+      <div class="metric">
+        <p>Profit Factor</p>
+        <h2>99.00</h2>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Monthly Performance</h3>
+      <p>+$913,300</p>
+      <div class="progress">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
