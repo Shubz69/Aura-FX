@@ -269,9 +269,13 @@ const handler = async (req, res) => {
     if (req.method === 'GET' && pathParts[pathParts.length - 1] === 'notifications') {
       const cursor = safeCursor(query.cursor);
       const limit = safeLimit(query.limit, 20, 50);
+      // MySQL prepared statements reject LIMIT ? (ER_WRONG_ARGUMENTS) — use a validated integer literal
+      const fetchCap = limit + 1; // limit is 1..50 from safeLimit → fetchCap 2..51
 
-      const listSql = `SELECT * FROM notifications WHERE user_id = ? ${cursor ? 'AND created_at < ?' : ''} ORDER BY created_at DESC LIMIT ?`;
-      const listParams = cursor ? [uid, cursor, limit + 1] : [uid, limit + 1];
+      const listSql = cursor
+        ? `SELECT * FROM notifications WHERE user_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT ${fetchCap}`
+        : `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ${fetchCap}`;
+      const listParams = cursor ? [uid, cursor] : [uid];
 
       let rows = [];
       let listFetchFailed = false;
