@@ -1,7 +1,6 @@
 /* =============================================================================
-   AURA JOURNAL — Premium Gold Theme
-   Matches AURA TERMINAL: #03020D bg, #EAA960 gold system, Space Grotesk + DM Mono
-   Full replacement for Journal.css — zero purple, full gold.
+   AURA JOURNAL — Premium Dark Theme
+   Darker background with deep space aesthetic, gold accents removed from bottom
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap');
@@ -138,16 +137,16 @@
 
 /* ══ CSS Variables ═══════════════════════════════════════════════════════════ */
 .journal-page {
-  /* Background */
-  --bg:             #020610;
-  --bg-card:        rgba(8, 9, 22, 0.60);
-  --bg-card-h:      rgba(14, 16, 38, 0.78);
-  --bg-glass:       rgba(7, 8, 20, 0.52);
+  /* Background - Much Darker */
+  --bg:             #010008;
+  --bg-card:        rgba(3, 2, 10, 0.70);
+  --bg-card-h:      rgba(8, 6, 20, 0.85);
+  --bg-glass:       rgba(2, 1, 8, 0.65);
 
   /* Borders */
-  --border:         rgba(255, 255, 255, 0.072);
-  --border-h:       rgba(255, 255, 255, 0.16);
-  --border-gold:    rgba(234, 169, 96, 0.32);
+  --border:         rgba(255, 255, 255, 0.05);
+  --border-h:       rgba(255, 255, 255, 0.12);
+  --border-gold:    rgba(234, 169, 96, 0.28);
 
   /* Gold system */
   --gold:           #EAA960;
@@ -155,20 +154,20 @@
   --gold-warm:      #D48D44;
   --gold-soft:      #EABB80;
   --gold-pale:      #FDE8C4;
-  --gold-dim:       rgba(234, 169, 96, 0.32);
-  --gold-glow:      rgba(234, 169, 96, 0.22);
-  --gold-glass:     rgba(234, 169, 96, 0.08);
-  --gold-ultra:     rgba(234, 169, 96, 0.035);
+  --gold-dim:       rgba(234, 169, 96, 0.28);
+  --gold-glow:      rgba(234, 169, 96, 0.18);
+  --gold-glass:     rgba(234, 169, 96, 0.06);
+  --gold-ultra:     rgba(234, 169, 96, 0.02);
 
   /* Text */
   --text:           #FFFFFF;
-  --text-muted:     rgba(200, 196, 232, 0.72);
-  --text-dim:       rgba(178, 175, 218, 0.45);
+  --text-muted:     rgba(200, 196, 232, 0.65);
+  --text-dim:       rgba(178, 175, 218, 0.38);
 
   /* Status */
   --green:          #0FD98A;
   --green-glass:    rgba(15, 217, 138, 0.08);
-  --green-glow:     rgba(15, 217, 138, 0.22);
+  --green-glow:     rgba(15, 217, 138, 0.18);
   --red:            #F03D5F;
   --red-glass:      rgba(240, 61, 95, 0.08);
 
@@ -179,14 +178,14 @@
 
   /* Glass */
   --glass-shadow:
-    0 4px 24px rgba(0,0,0,0.52),
-    0 1px 0 rgba(255,255,255,0.058) inset,
-    0 0 0 0.5px rgba(255,255,255,0.036) inset;
+    0 8px 32px rgba(0,0,0,0.65),
+    0 1px 0 rgba(255,255,255,0.03) inset,
+    0 0 0 0.5px rgba(255,255,255,0.02) inset;
 
   --transition: 0.26s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-s: 0.16s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Gradients */
+  /* Gradients - No gold at bottom */
   --grad-gold:  linear-gradient(130deg, var(--gold-pale) 0%, var(--gold-bright) 35%, var(--gold) 65%, var(--gold-warm) 100%);
   --grad-green: linear-gradient(130deg, #6FFFC9, var(--green));
   --grad-red:   linear-gradient(130deg, #FF8FA0, var(--red));
@@ -205,7 +204,7 @@
   box-sizing: border-box;
 }
 
-/* ══ Page Container ══════════════════════════════════════════════════════════ */
+/* ══ Page Container - Darker Background ══════════════════════════════════════ */
 .journal-page {
   min-height: 100vh;
   background: var(--bg);
@@ -220,63 +219,46 @@
   max-width: 100%;
 }
 
-/* ══ SPACE BACKGROUND — Galaxy + Twinkling Stars ════════════════════════════ */
+/* ══ SPACE BACKGROUND — Deep Dark Space (No Gold at Bottom) ═══════════════════ */
 
-/* Layer 1: Deep space nebula scene */
+/* Layer 1: Deep space nebula scene - Removed gold horizon glow */
 .journal-page::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
   background:
-    /* Milky Way nebula — top-left, matches home page galaxy position */
+    /* Milky Way nebula — top-left */
     radial-gradient(ellipse 85% 55% at 18% 8%,
-      rgba(28, 38, 85, 0.78) 0%,
-      rgba(18, 25, 60, 0.50) 35%,
+      rgba(20, 28, 55, 0.65) 0%,
+      rgba(12, 18, 40, 0.45) 35%,
       transparent 68%
     ),
     /* Secondary nebula cloud — mid center */
     radial-gradient(ellipse 60% 45% at 55% 20%,
-      rgba(15, 22, 55, 0.45) 0%,
-      rgba(10, 15, 40, 0.25) 50%,
+      rgba(10, 15, 40, 0.38) 0%,
+      rgba(6, 10, 28, 0.22) 50%,
       transparent 75%
     ),
-    /* Right side deep navy — matches dark right panel on home */
+    /* Right side deep navy */
     radial-gradient(ellipse 55% 75% at 92% 28%,
-      rgba(8, 14, 42, 0.88) 0%,
-      rgba(5, 9, 28, 0.55) 55%,
+      rgba(5, 8, 25, 0.75) 0%,
+      rgba(3, 5, 18, 0.48) 55%,
       transparent 78%
-    ),
-    /* Earth horizon glow — warm gold from orbit like home page bottom */
-    radial-gradient(ellipse 110% 38% at 50% 102%,
-      rgba(190, 105, 18, 0.35) 0%,
-      rgba(234, 169, 96, 0.14) 28%,
-      transparent 60%
-    ),
-    /* City lights scatter — bottom left warm cluster */
-    radial-gradient(ellipse 48% 28% at 12% 88%,
-      rgba(210, 128, 25, 0.26) 0%,
-      rgba(234, 169, 96, 0.09) 45%,
-      transparent 72%
-    ),
-    /* City lights scatter — bottom right */
-    radial-gradient(ellipse 38% 22% at 82% 92%,
-      rgba(180, 100, 20, 0.20) 0%,
-      rgba(234, 169, 96, 0.07) 50%,
-      transparent 75%
     ),
     /* Blue star cluster — top right corner */
     radial-gradient(ellipse 42% 32% at 88% 6%,
-      rgba(55, 85, 175, 0.22) 0%,
+      rgba(45, 65, 145, 0.18) 0%,
       transparent 68%
     ),
-    /* Deep space base gradient */
+    /* Deep space base gradient - Pure dark, no gold */
     linear-gradient(168deg,
-      #010510 0%,
-      #020816 18%,
-      #04091c 40%,
-      #030710 65%,
-      #020508 100%
+      #010008 0%,
+      #01010a 15%,
+      #02010c 30%,
+      #01010a 50%,
+      #000006 70%,
+      #010008 100%
     );
   pointer-events: none;
 }
@@ -297,73 +279,60 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  /* Dense star field using repeating background trick */
+  /* Dense star field */
   background-image:
-    /* ── LARGE BRIGHT STARS (biggest glow, slowest twinkle) ── */
-    radial-gradient(2px 2px at 7%   6%,  rgba(255,255,255,0.95), transparent 100%),
-    radial-gradient(2.5px 2.5px at 34%  11%, rgba(255,255,255,0.90), transparent 100%),
-    radial-gradient(2px 2px at 61%   4%,  rgba(255,255,255,0.88), transparent 100%),
-    radial-gradient(2.2px 2.2px at 89%  14%, rgba(255,255,255,0.85), transparent 100%),
-    radial-gradient(2px 2px at 15%  32%, rgba(255,255,255,0.80), transparent 100%),
-    radial-gradient(2.4px 2.4px at 78%  27%, rgba(255,255,255,0.82), transparent 100%),
-    radial-gradient(2px 2px at 50%  18%, rgba(255,255,255,0.78), transparent 100%),
+    /* ── LARGE BRIGHT STARS ── */
+    radial-gradient(2px 2px at 7%   6%,  rgba(255,255,255,0.92), transparent 100%),
+    radial-gradient(2.5px 2.5px at 34%  11%, rgba(255,255,255,0.88), transparent 100%),
+    radial-gradient(2px 2px at 61%   4%,  rgba(255,255,255,0.85), transparent 100%),
+    radial-gradient(2.2px 2.2px at 89%  14%, rgba(255,255,255,0.82), transparent 100%),
+    radial-gradient(2px 2px at 15%  32%, rgba(255,255,255,0.78), transparent 100%),
+    radial-gradient(2.4px 2.4px at 78%  27%, rgba(255,255,255,0.80), transparent 100%),
+    radial-gradient(2px 2px at 50%  18%, rgba(255,255,255,0.75), transparent 100%),
     /* ── MEDIUM STARS ── */
-    radial-gradient(1.5px 1.5px at 4%   22%, rgba(255,255,255,0.72), transparent 100%),
-    radial-gradient(1.4px 1.4px at 19%   8%, rgba(255,255,255,0.68), transparent 100%),
-    radial-gradient(1.6px 1.6px at 44%  26%, rgba(255,255,255,0.65), transparent 100%),
-    radial-gradient(1.5px 1.5px at 67%  19%, rgba(255,255,255,0.70), transparent 100%),
-    radial-gradient(1.4px 1.4px at 83%   8%, rgba(255,255,255,0.66), transparent 100%),
-    radial-gradient(1.5px 1.5px at 93%  33%, rgba(255,255,255,0.62), transparent 100%),
-    radial-gradient(1.6px 1.6px at 28%  42%, rgba(255,255,255,0.60), transparent 100%),
-    radial-gradient(1.4px 1.4px at 56%  38%, rgba(255,255,255,0.64), transparent 100%),
-    radial-gradient(1.5px 1.5px at 72%  45%, rgba(255,255,255,0.58), transparent 100%),
-    radial-gradient(1.4px 1.4px at 10%  55%, rgba(255,255,255,0.55), transparent 100%),
-    radial-gradient(1.6px 1.6px at 38%  60%, rgba(255,255,255,0.52), transparent 100%),
-    radial-gradient(1.5px 1.5px at 64%  58%, rgba(255,255,255,0.56), transparent 100%),
-    radial-gradient(1.4px 1.4px at 85%  52%, rgba(255,255,255,0.50), transparent 100%),
+    radial-gradient(1.5px 1.5px at 4%   22%, rgba(255,255,255,0.68), transparent 100%),
+    radial-gradient(1.4px 1.4px at 19%   8%, rgba(255,255,255,0.64), transparent 100%),
+    radial-gradient(1.6px 1.6px at 44%  26%, rgba(255,255,255,0.62), transparent 100%),
+    radial-gradient(1.5px 1.5px at 67%  19%, rgba(255,255,255,0.66), transparent 100%),
+    radial-gradient(1.4px 1.4px at 83%   8%, rgba(255,255,255,0.62), transparent 100%),
+    radial-gradient(1.5px 1.5px at 93%  33%, rgba(255,255,255,0.58), transparent 100%),
+    radial-gradient(1.6px 1.6px at 28%  42%, rgba(255,255,255,0.56), transparent 100%),
+    radial-gradient(1.4px 1.4px at 56%  38%, rgba(255,255,255,0.60), transparent 100%),
+    radial-gradient(1.5px 1.5px at 72%  45%, rgba(255,255,255,0.54), transparent 100%),
+    radial-gradient(1.4px 1.4px at 10%  55%, rgba(255,255,255,0.52), transparent 100%),
+    radial-gradient(1.6px 1.6px at 38%  60%, rgba(255,255,255,0.48), transparent 100%),
+    radial-gradient(1.5px 1.5px at 64%  58%, rgba(255,255,255,0.52), transparent 100%),
+    radial-gradient(1.4px 1.4px at 85%  52%, rgba(255,255,255,0.46), transparent 100%),
     /* ── SMALL STARS ── */
-    radial-gradient(1px 1px at 2%   45%, rgba(255,255,255,0.48), transparent 100%),
-    radial-gradient(1px 1px at 13%  18%, rgba(255,255,255,0.45), transparent 100%),
-    radial-gradient(1px 1px at 25%  55%, rgba(255,255,255,0.42), transparent 100%),
-    radial-gradient(1px 1px at 48%  48%, rgba(255,255,255,0.44), transparent 100%),
-    radial-gradient(1px 1px at 71%  36%, rgba(255,255,255,0.40), transparent 100%),
-    radial-gradient(1px 1px at 96%  22%, rgba(255,255,255,0.46), transparent 100%),
-    radial-gradient(0.8px 0.8px at 8%  38%, rgba(255,255,255,0.36), transparent 100%),
-    radial-gradient(0.8px 0.8px at 22% 28%, rgba(255,255,255,0.33), transparent 100%),
-    radial-gradient(0.8px 0.8px at 35% 15%, rgba(255,255,255,0.38), transparent 100%),
-    radial-gradient(0.8px 0.8px at 53% 32%, rgba(255,255,255,0.34), transparent 100%),
-    radial-gradient(0.8px 0.8px at 75% 12%, rgba(255,255,255,0.36), transparent 100%),
-    radial-gradient(0.8px 0.8px at 91%  5%, rgba(255,255,255,0.32), transparent 100%),
-    /* ── GOLD TWINKLING STARS (near horizon, matching home warm glow) ── */
-    radial-gradient(2px 2px at 16%  82%, rgba(234,169,96,0.90), transparent 100%),
-    radial-gradient(1.8px 1.8px at 31%  88%, rgba(234,169,96,0.80), transparent 100%),
-    radial-gradient(2.2px 2.2px at 48%  78%, rgba(234,169,96,0.85), transparent 100%),
-    radial-gradient(1.6px 1.6px at 62%  91%, rgba(234,169,96,0.75), transparent 100%),
-    radial-gradient(2px 2px at 77%  84%, rgba(234,169,96,0.82), transparent 100%),
-    radial-gradient(1.5px 1.5px at 92%  79%, rgba(234,169,96,0.70), transparent 100%),
-    radial-gradient(1.8px 1.8px at 6%   75%, rgba(234,169,96,0.72), transparent 100%),
-    radial-gradient(1.4px 1.4px at 42%  95%, rgba(248,195,125,0.65), transparent 100%),
-    radial-gradient(1.6px 1.6px at 58%  72%, rgba(248,195,125,0.60), transparent 100%),
-    radial-gradient(1.5px 1.5px at 85%  94%, rgba(248,195,125,0.55), transparent 100%),
-    /* ── BLUE TWINKLING STARS (nebula zone, top area) ── */
-    radial-gradient(1.8px 1.8px at 9%   12%, rgba(140,175,255,0.80), transparent 100%),
-    radial-gradient(2px 2px at 23%  18%, rgba(140,175,255,0.75), transparent 100%),
-    radial-gradient(1.6px 1.6px at 38%   8%, rgba(140,175,255,0.70), transparent 100%),
-    radial-gradient(2.2px 2.2px at 52%  15%, rgba(120,160,255,0.72), transparent 100%),
-    radial-gradient(1.5px 1.5px at 66%  10%, rgba(120,160,255,0.65), transparent 100%),
-    radial-gradient(1.8px 1.8px at 82%  20%, rgba(140,175,255,0.68), transparent 100%),
-    radial-gradient(1.4px 1.4px at 14%  30%, rgba(120,160,255,0.55), transparent 100%),
-    radial-gradient(1.6px 1.6px at 45%   3%, rgba(150,185,255,0.60), transparent 100%),
-    /* ── VERY DIM DISTANT STARS (depth/milky way density) ── */
-    radial-gradient(0.6px 0.6px at 11%  48%, rgba(255,255,255,0.25), transparent 100%),
-    radial-gradient(0.6px 0.6px at 29%  62%, rgba(255,255,255,0.22), transparent 100%),
-    radial-gradient(0.6px 0.6px at 47%  55%, rgba(255,255,255,0.26), transparent 100%),
-    radial-gradient(0.6px 0.6px at 60%  68%, rgba(255,255,255,0.20), transparent 100%),
-    radial-gradient(0.6px 0.6px at 74%  62%, rgba(255,255,255,0.24), transparent 100%),
-    radial-gradient(0.6px 0.6px at 88%  48%, rgba(255,255,255,0.22), transparent 100%),
-    radial-gradient(0.5px 0.5px at 20%  72%, rgba(255,255,255,0.18), transparent 100%),
-    radial-gradient(0.5px 0.5px at 54%  78%, rgba(255,255,255,0.16), transparent 100%),
-    radial-gradient(0.5px 0.5px at 80%  75%, rgba(255,255,255,0.20), transparent 100%);
+    radial-gradient(1px 1px at 2%   45%, rgba(255,255,255,0.44), transparent 100%),
+    radial-gradient(1px 1px at 13%  18%, rgba(255,255,255,0.42), transparent 100%),
+    radial-gradient(1px 1px at 25%  55%, rgba(255,255,255,0.38), transparent 100%),
+    radial-gradient(1px 1px at 48%  48%, rgba(255,255,255,0.40), transparent 100%),
+    radial-gradient(1px 1px at 71%  36%, rgba(255,255,255,0.36), transparent 100%),
+    radial-gradient(1px 1px at 96%  22%, rgba(255,255,255,0.42), transparent 100%),
+    radial-gradient(0.8px 0.8px at 8%  38%, rgba(255,255,255,0.32), transparent 100%),
+    radial-gradient(0.8px 0.8px at 22% 28%, rgba(255,255,255,0.30), transparent 100%),
+    radial-gradient(0.8px 0.8px at 35% 15%, rgba(255,255,255,0.34), transparent 100%),
+    radial-gradient(0.8px 0.8px at 53% 32%, rgba(255,255,255,0.30), transparent 100%),
+    radial-gradient(0.8px 0.8px at 75% 12%, rgba(255,255,255,0.32), transparent 100%),
+    radial-gradient(0.8px 0.8px at 91%  5%, rgba(255,255,255,0.28), transparent 100%),
+    /* ── GOLD STARS (sparse, subtle) ── */
+    radial-gradient(1.5px 1.5px at 16%  85%, rgba(234,169,96,0.65), transparent 100%),
+    radial-gradient(1.4px 1.4px at 48%  88%, rgba(234,169,96,0.58), transparent 100%),
+    radial-gradient(1.6px 1.6px at 77%  82%, rgba(234,169,96,0.62), transparent 100%),
+    radial-gradient(1.3px 1.3px at 92%  86%, rgba(248,195,125,0.52), transparent 100%),
+    /* ── BLUE STARS ── */
+    radial-gradient(1.8px 1.8px at 9%   12%, rgba(140,175,255,0.70), transparent 100%),
+    radial-gradient(2px 2px at 23%  18%, rgba(140,175,255,0.65), transparent 100%),
+    radial-gradient(1.6px 1.6px at 52%  15%, rgba(120,160,255,0.62), transparent 100%),
+    radial-gradient(1.8px 1.8px at 82%  20%, rgba(140,175,255,0.60), transparent 100%),
+    /* ── VERY DIM DISTANT STARS ── */
+    radial-gradient(0.6px 0.6px at 11%  48%, rgba(255,255,255,0.20), transparent 100%),
+    radial-gradient(0.6px 0.6px at 29%  62%, rgba(255,255,255,0.18), transparent 100%),
+    radial-gradient(0.6px 0.6px at 47%  55%, rgba(255,255,255,0.22), transparent 100%),
+    radial-gradient(0.6px 0.6px at 60%  68%, rgba(255,255,255,0.16), transparent 100%),
+    radial-gradient(0.6px 0.6px at 74%  62%, rgba(255,255,255,0.20), transparent 100%),
+    radial-gradient(0.6px 0.6px at 88%  48%, rgba(255,255,255,0.18), transparent 100%);
   background-size: 100% 100%;
   background-repeat: no-repeat;
 }
@@ -379,24 +348,22 @@
   /* These are the "glowing" stars that pulse with animations */
   background-image:
     /* Large glowing white stars */
-    radial-gradient(3px 3px at 7%   6%,  rgba(255,255,255,1.0), transparent 100%),
-    radial-gradient(4px 4px at 34%  11%, rgba(255,255,255,0.95), transparent 100%),
-    radial-gradient(3px 3px at 61%   4%,  rgba(255,255,255,0.92), transparent 100%),
-    radial-gradient(3.5px 3.5px at 89%  14%, rgba(255,255,255,0.90), transparent 100%),
-    radial-gradient(3px 3px at 15%  32%, rgba(255,255,255,0.88), transparent 100%),
-    radial-gradient(4px 4px at 78%  27%, rgba(255,255,255,0.92), transparent 100%),
-    radial-gradient(3px 3px at 50%  18%, rgba(255,255,255,0.85), transparent 100%),
-    /* Gold glowing stars */
-    radial-gradient(4px 4px at 16%  82%, rgba(234,169,96,1.0),  transparent 100%),
-    radial-gradient(3px 3px at 48%  78%, rgba(234,169,96,0.95), transparent 100%),
-    radial-gradient(4px 4px at 77%  84%, rgba(234,169,96,0.92), transparent 100%),
-    radial-gradient(3.5px 3.5px at 31%  88%, rgba(248,195,125,0.88), transparent 100%),
-    radial-gradient(3px 3px at 62%  91%, rgba(248,195,125,0.82), transparent 100%),
+    radial-gradient(3px 3px at 7%   6%,  rgba(255,255,255,0.95), transparent 100%),
+    radial-gradient(4px 4px at 34%  11%, rgba(255,255,255,0.90), transparent 100%),
+    radial-gradient(3px 3px at 61%   4%,  rgba(255,255,255,0.88), transparent 100%),
+    radial-gradient(3.5px 3.5px at 89%  14%, rgba(255,255,255,0.85), transparent 100%),
+    radial-gradient(3px 3px at 15%  32%, rgba(255,255,255,0.82), transparent 100%),
+    radial-gradient(4px 4px at 78%  27%, rgba(255,255,255,0.86), transparent 100%),
+    radial-gradient(3px 3px at 50%  18%, rgba(255,255,255,0.80), transparent 100%),
+    /* Gold glowing stars (sparse) */
+    radial-gradient(3px 3px at 16%  85%, rgba(234,169,96,0.75),  transparent 100%),
+    radial-gradient(2.5px 2.5px at 48%  88%, rgba(234,169,96,0.68), transparent 100%),
+    radial-gradient(3px 3px at 77%  82%, rgba(234,169,96,0.72), transparent 100%),
     /* Blue glowing stars */
-    radial-gradient(4px 4px at 9%   12%, rgba(140,175,255,0.95), transparent 100%),
-    radial-gradient(3.5px 3.5px at 23%  18%, rgba(140,175,255,0.88), transparent 100%),
-    radial-gradient(4px 4px at 52%  15%, rgba(120,160,255,0.90), transparent 100%),
-    radial-gradient(3px 3px at 82%  20%, rgba(140,175,255,0.85), transparent 100%);
+    radial-gradient(3.5px 3.5px at 9%   12%, rgba(140,175,255,0.80), transparent 100%),
+    radial-gradient(3px 3px at 23%  18%, rgba(140,175,255,0.75), transparent 100%),
+    radial-gradient(3.5px 3.5px at 52%  15%, rgba(120,160,255,0.78), transparent 100%),
+    radial-gradient(3px 3px at 82%  20%, rgba(140,175,255,0.72), transparent 100%);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   animation: starsGlowPulse 4s ease-in-out infinite alternate;
@@ -404,24 +371,24 @@
 
 @keyframes starsGlowPulse {
   0%   {
-    opacity: 0.4;
-    filter: blur(0.5px) brightness(0.8);
+    opacity: 0.35;
+    filter: blur(0.8px) brightness(0.75);
   }
   25%  {
-    opacity: 0.85;
-    filter: blur(0px) brightness(1.4);
+    opacity: 0.75;
+    filter: blur(0px) brightness(1.2);
   }
   50%  {
-    opacity: 0.55;
-    filter: blur(0.8px) brightness(0.9);
+    opacity: 0.48;
+    filter: blur(1px) brightness(0.85);
   }
   75%  {
-    opacity: 1.0;
-    filter: blur(0px) brightness(1.8);
+    opacity: 0.88;
+    filter: blur(0px) brightness(1.5);
   }
   100% {
-    opacity: 0.45;
-    filter: blur(0.6px) brightness(0.85);
+    opacity: 0.40;
+    filter: blur(0.8px) brightness(0.80);
   }
 }
 
@@ -448,7 +415,6 @@
 }
 
 /* ══ Layout ══════════════════════════════════════════════════════════════════ */
-/* ══ Layout ══════════════════════════════════════════════════════════════════ */
 .journal-layout {
   display: flex;
   max-width: 1280px;
@@ -467,7 +433,7 @@
   flex-shrink: 0;
   padding: 28px 22px;
   border-right: 1px solid var(--border);
-  background: rgba(3, 2, 13, 0.72);
+  background: rgba(1, 0, 8, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   animation: journal-fadeInLeft 0.5s ease-out both;
@@ -476,7 +442,7 @@
   overflow-x: hidden;
 }
 
-/* Gold shimmer line across top */
+/* Gold shimmer line across top - subtle */
 .journal-sidebar::before {
   content: '';
   position: absolute;
@@ -484,20 +450,20 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(234,169,96,0.65) 35%,
-    rgba(248,195,125,0.50) 65%,
+    rgba(234,169,96,0.45) 35%,
+    rgba(248,195,125,0.35) 65%,
     transparent
   );
   pointer-events: none;
 }
 
-/* Ambient gold corner glow */
+/* Removed bottom gold glow */
 .journal-sidebar::after {
   content: '';
   position: absolute;
   top: -40px; right: -30px;
   width: 160px; height: 160px;
-  background: radial-gradient(circle, rgba(234,169,96,0.055) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -532,8 +498,8 @@
    CALENDAR
    ════════════════════════════════════════════════════════════════════════════ */
 .journal-calendar {
-  background: rgba(7, 8, 20, 0.60);
-  border: 1px solid rgba(255,255,255,0.072);
+  background: rgba(3, 2, 10, 0.70);
+  border: 1px solid rgba(255,255,255,0.05);
   border-radius: var(--radius-xl);
   padding: 22px clamp(10px, 3.5%, 20px) 18px;
   margin-bottom: 18px;
@@ -544,43 +510,43 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow:
-    0 0 0 0.5px rgba(234,169,96,0.06) inset,
-    0 24px 60px rgba(0,0,0,0.52),
-    0 2px 8px rgba(0,0,0,0.36);
+    0 0 0 0.5px rgba(234,169,96,0.04) inset,
+    0 24px 60px rgba(0,0,0,0.65),
+    0 2px 8px rgba(0,0,0,0.42);
   animation: journal-scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
   transition: box-shadow 0.35s ease, border-color 0.35s ease;
 }
 
 .journal-calendar:hover {
-  border-color: rgba(234,169,96,0.16);
+  border-color: rgba(234,169,96,0.12);
   box-shadow:
-    0 0 0 0.5px rgba(234,169,96,0.10) inset,
-    0 32px 72px rgba(0,0,0,0.58),
-    0 0 40px rgba(234,169,96,0.06);
+    0 0 0 0.5px rgba(234,169,96,0.08) inset,
+    0 32px 72px rgba(0,0,0,0.70),
+    0 0 40px rgba(234,169,96,0.04);
 }
 
-/* Gold shimmer top */
+/* Gold shimmer top - subtle */
 .journal-calendar::before {
   content: '';
   position: absolute;
   top: 0; left: 6%; right: 20%;
   height: 1px;
   background: linear-gradient(90deg,
-    rgba(255,255,255,0.22) 0%,
-    rgba(234,169,96,0.55) 40%,
-    rgba(248,195,125,0.35) 70%,
+    rgba(255,255,255,0.18) 0%,
+    rgba(234,169,96,0.45) 40%,
+    rgba(248,195,125,0.28) 70%,
     transparent 100%
   );
   pointer-events: none;
 }
 
-/* Gold corner glow */
+/* Removed gold corner glow - replaced with subtle purple */
 .journal-calendar::after {
   content: '';
   position: absolute;
   top: -30px; right: -30px;
   width: 110px; height: 110px;
-  background: radial-gradient(circle, rgba(234,169,96,0.07) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -661,19 +627,19 @@
 .journal-calendar-wd {
   font-size: clamp(0.48rem, 1.2vw, 0.56rem);
   font-weight: 700;
-  color: rgba(255,255,255,0.26);
+  color: rgba(255,255,255,0.24);
   text-align: center;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
   overflow: hidden;
   white-space: nowrap;
 }
 
 .journal-calendar-wd:first-child,
 .journal-calendar-wd:last-child {
-  color: rgba(234,169,96,0.40);
+  color: rgba(234,169,96,0.38);
 }
 
 /* ── Grid ────────────────────────────────────────────────────── */
@@ -693,7 +659,7 @@
   border: 1px solid transparent;
   border-radius: clamp(6px, 1.5vw, 10px);
   background: transparent;
-  color: rgba(255,255,255,0.58);
+  color: rgba(255,255,255,0.55);
   font-size: clamp(0.6rem, 1.5vw, 0.74rem);
   font-weight: 300;
   cursor: pointer;
@@ -719,10 +685,10 @@
 
 .journal-calendar-day:hover {
   background: rgba(234,169,96,0.08);
-  border-color: rgba(234,169,96,0.26);
+  border-color: rgba(234,169,96,0.24);
   color: #fff;
   transform: scale(1.12) translateY(-1px);
-  box-shadow: 0 4px 16px rgba(234,169,96,0.14);
+  box-shadow: 0 4px 16px rgba(234,169,96,0.12);
 }
 
 .journal-calendar-day--empty {
@@ -735,7 +701,7 @@
 .journal-calendar-day--today {
   color: var(--gold-bright);
   font-weight: 500;
-  background: rgba(234,169,96,0.055);
+  background: rgba(234,169,96,0.045);
   animation: cal-todayPulse 3s ease-in-out infinite,
              journal-dayAppear 0.28s ease-out both;
 }
@@ -747,13 +713,13 @@
   border-radius: clamp(8px, 2vw, 13px);
   border: 1px solid transparent;
   background:
-    linear-gradient(#03020D, #03020D) padding-box,
+    linear-gradient(#010008, #010008) padding-box,
     conic-gradient(
-      rgba(234,169,96,0.9) 0deg,
-      rgba(248,195,125,0.7) 90deg,
-      rgba(234,169,96,0.12) 180deg,
-      rgba(212,141,68,0.5) 270deg,
-      rgba(234,169,96,0.9) 360deg
+      rgba(234,169,96,0.85) 0deg,
+      rgba(248,195,125,0.65) 90deg,
+      rgba(234,169,96,0.10) 180deg,
+      rgba(212,141,68,0.45) 270deg,
+      rgba(234,169,96,0.85) 360deg
     ) border-box;
   animation: cal-orbitSpin 4s linear infinite;
   pointer-events: none;
@@ -766,16 +732,16 @@
     rgba(248,195,125,0.78) 50%,
     rgba(212,141,68,0.72) 100%
   );
-  border-color: rgba(234,169,96,0.60);
-  color: #03020D;
+  border-color: rgba(234,169,96,0.55);
+  color: #010008;
   font-weight: 700;
   transform: scale(1.08);
   animation: cal-selectedGlow 2.5s ease-in-out infinite,
              journal-dayAppear 0.28s ease-out both;
   box-shadow:
-    0 0 0 1px rgba(234,169,96,0.50),
-    0 6px 24px rgba(234,169,96,0.42),
-    inset 0 1px 0 rgba(255,255,255,0.22);
+    0 0 0 1px rgba(234,169,96,0.45),
+    0 6px 24px rgba(234,169,96,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.20);
 }
 
 .journal-calendar-day--selected::after {
@@ -784,7 +750,7 @@
   top: 0; left: -100%; right: 100%; bottom: 0;
   background: linear-gradient(105deg,
     transparent 40%,
-    rgba(255,255,255,0.22) 50%,
+    rgba(255,255,255,0.20) 50%,
     transparent 60%
   );
   border-radius: inherit;
@@ -796,20 +762,20 @@
 /* Today + Selected */
 .journal-calendar-day--today.journal-calendar-day--selected {
   background: linear-gradient(135deg, rgba(234,169,96,0.95) 0%, rgba(212,141,68,0.88) 100%);
-  color: rgba(255,255,255,0.58);
+  color: rgba(255,255,255,0.55);
   animation: cal-selectedGlow 2.5s ease-in-out infinite;
 }
 .journal-calendar-day--today.journal-calendar-day--selected::before {
   inset: -3px;
   border-radius: clamp(9px, 2vw, 14px);
   background:
-    linear-gradient(#03020D, #03020D) padding-box,
+    linear-gradient(#010008, #010008) padding-box,
     conic-gradient(
-      rgba(255,255,255,0.9) 0deg,
-      rgba(234,169,96,0.7) 90deg,
-      rgba(255,255,255,0.12) 180deg,
-      rgba(248,195,125,0.85) 270deg,
-      rgba(255,255,255,0.9) 360deg
+      rgba(255,255,255,0.85) 0deg,
+      rgba(234,169,96,0.65) 90deg,
+      rgba(255,255,255,0.10) 180deg,
+      rgba(248,195,125,0.80) 270deg,
+      rgba(255,255,255,0.85) 360deg
     ) border-box;
   animation: cal-orbitSpin 3s linear infinite;
 }
@@ -828,7 +794,7 @@
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.5rem;
-  color: rgba(234,169,96,0.65);
+  color: rgba(234,169,96,0.62);
   pointer-events: none;
 }
 
@@ -847,7 +813,7 @@
   width: 4px; height: 4px;
   border-radius: 50%;
   background: var(--green);
-  box-shadow: 0 0 5px rgba(15,217,138,0.65);
+  box-shadow: 0 0 5px rgba(15,217,138,0.55);
   animation: cal-dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
   display: block;
 }
@@ -855,8 +821,8 @@
 .journal-dot-pending {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: rgba(234,169,96,0.50);
-  box-shadow: 0 0 4px rgba(234,169,96,0.35);
+  background: rgba(234,169,96,0.48);
+  box-shadow: 0 0 4px rgba(234,169,96,0.30);
   animation: cal-dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
   display: block;
 }
@@ -864,8 +830,8 @@
 .journal-dot-mood {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: rgba(234,169,96,0.72);
-  box-shadow: 0 0 5px rgba(234,169,96,0.50);
+  background: rgba(234,169,96,0.68);
+  box-shadow: 0 0 5px rgba(234,169,96,0.45);
   animation: cal-dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) 0.06s both;
   display: block;
 }
@@ -874,7 +840,7 @@
 .journal-calendar-footer {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(255,255,255,0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -897,18 +863,18 @@
   width: 5px; height: 5px;
   border-radius: 50%;
   background: var(--green);
-  box-shadow: 0 0 6px rgba(15,217,138,0.60);
+  box-shadow: 0 0 6px rgba(15,217,138,0.55);
   display: inline-block;
 }
 
 .journal-calendar-footer-today-btn {
   font-size: 0.58rem;
   font-weight: 600;
-  color: rgba(234,169,96,0.65);
+  color: rgba(234,169,96,0.62);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   background: none;
-  border: 1px solid rgba(234,169,96,0.22);
+  border: 1px solid rgba(234,169,96,0.20);
   border-radius: 100px;
   padding: 4px 12px;
   cursor: pointer;
@@ -927,7 +893,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 .journal-streak-card {
   background: var(--bg-card);
-  border: 1px solid rgba(234,169,96,0.14);
+  border: 1px solid rgba(234,169,96,0.12);
   border-radius: var(--radius-lg);
   padding: 20px 18px;
   margin-bottom: 16px;
@@ -945,23 +911,23 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.55), rgba(248,195,125,0.40), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.50), rgba(248,195,125,0.35), transparent);
 }
 
-/* Gold bottom-right glow */
+/* Removed bottom gold glow */
 .journal-streak-card::after {
   content: '';
   position: absolute;
   bottom: -30px; right: -30px;
   width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(234,169,96,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
 
 .journal-streak-card:hover {
-  border-color: rgba(234,169,96,0.28);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.36), 0 0 24px rgba(234,169,96,0.08);
+  border-color: rgba(234,169,96,0.24);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 0 24px rgba(234,169,96,0.06);
 }
 
 .journal-streak-flame {
@@ -1027,15 +993,15 @@
   height: 56px;
   border-radius: 50%;
   background: conic-gradient(
-    rgba(234,169,96,0.85) 0deg,
-    rgba(248,195,125,0.90) calc(var(--pct) * 3.6deg),
-    rgba(255,255,255,0.055) calc(var(--pct) * 3.6deg)
+    rgba(234,169,96,0.82) 0deg,
+    rgba(248,195,125,0.88) calc(var(--pct) * 3.6deg),
+    rgba(255,255,255,0.04) calc(var(--pct) * 3.6deg)
   );
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.6s ease;
-  box-shadow: 0 0 14px rgba(234,169,96,0.15);
+  box-shadow: 0 0 12px rgba(234,169,96,0.12);
 }
 
 .journal-stat-circle-ring::before {
@@ -1043,8 +1009,8 @@
   position: absolute;
   inset: 5px;
   border-radius: 50%;
-  background: #03020D;
-  border: 1px solid rgba(255,255,255,0.04);
+  background: #010008;
+  border: 1px solid rgba(255,255,255,0.03);
 }
 
 .journal-stat-circle-value {
@@ -1099,7 +1065,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 28px rgba(234,169,96,0.24));
+  filter: drop-shadow(0 0 24px rgba(234,169,96,0.20));
 }
 
 .journal-main-meta {
@@ -1146,7 +1112,7 @@
   width: 2px;
   background: linear-gradient(180deg, transparent 0%, var(--gold) 50%, var(--gold-warm) 100%);
   border-radius: 2px;
-  opacity: 0.22;
+  opacity: 0.20;
   transition: all var(--transition);
   box-shadow: 0 0 6px var(--gold-glow);
 }
@@ -1157,21 +1123,21 @@
   position: absolute;
   top: 0; left: 6%; right: 28%;
   height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.16), rgba(234,169,96,0.10), transparent);
+  background: linear-gradient(90deg, rgba(255,255,255,0.14), rgba(234,169,96,0.08), transparent);
   pointer-events: none;
 }
 
 .journal-progress-card:hover {
   background: var(--bg-card-h);
-  border-color: rgba(234,169,96,0.22);
+  border-color: rgba(234,169,96,0.20);
   transform: translateY(-5px);
   box-shadow:
-    0 14px 38px rgba(0,0,0,0.46),
-    0 0 0 1px rgba(234,169,96,0.08),
-    0 0 20px rgba(234,169,96,0.05);
+    0 14px 38px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(234,169,96,0.06),
+    0 0 20px rgba(234,169,96,0.04);
 }
 
-.journal-progress-card:hover::before { opacity: 0.85; top: 6%; bottom: 6%; }
+.journal-progress-card:hover::before { opacity: 0.80; top: 6%; bottom: 6%; }
 
 .journal-progress-card-label {
   display: block;
@@ -1202,7 +1168,7 @@
 
 .journal-progress-bar {
   height: 3px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
   border-radius: 99px;
   overflow: hidden;
   position: relative;
@@ -1214,7 +1180,7 @@
   background: linear-gradient(90deg, var(--gold-warm), var(--gold), var(--gold-bright));
   border-radius: 99px;
   transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-  box-shadow: 0 0 10px rgba(234,169,96,0.48);
+  box-shadow: 0 0 10px rgba(234,169,96,0.42);
   position: relative;
   overflow: hidden;
   animation: journal-progressReveal 1.2s cubic-bezier(0.22,1,0.36,1) both;
@@ -1225,7 +1191,7 @@
   position: absolute;
   top: 0; left: -60%;
   width: 50%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.42), transparent);
   animation: journal-trendShimmer 2.8s ease-in-out infinite;
 }
 
@@ -1248,7 +1214,7 @@
   font-weight: 400;
   color: var(--text-muted);
   background: var(--gold-ultra);
-  border: 1px solid rgba(234,169,96,0.12);
+  border: 1px solid rgba(234,169,96,0.10);
   border-radius: var(--radius);
   padding: 12px 16px;
   margin-bottom: 22px;
@@ -1263,7 +1229,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.40), rgba(248,195,125,0.28), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.35), rgba(248,195,125,0.24), transparent);
 }
 
 .journal-xp-info strong {
@@ -1296,7 +1262,7 @@
 .journal-section-title::after {
   content: '';
   flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(234,169,96,0.18), transparent);
+  background: linear-gradient(90deg, rgba(234,169,96,0.15), transparent);
 }
 
 /* ── Completion Banner ───────────────────────────────────────── */
@@ -1306,8 +1272,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 18px;
-  background: rgba(15,217,138,0.07);
-  border: 1px solid rgba(15,217,138,0.28);
+  background: rgba(15,217,138,0.06);
+  border: 1px solid rgba(15,217,138,0.24);
   border-radius: var(--radius);
   margin-bottom: 22px;
   color: #6FFFC9;
@@ -1324,12 +1290,12 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(15,217,138,0.60), transparent);
+  background: linear-gradient(90deg, transparent, rgba(15,217,138,0.55), transparent);
 }
 
 .journal-completion-dismiss {
   background: none; border: none;
-  color: rgba(111,255,201,0.55);
+  color: rgba(111,255,201,0.52);
   cursor: pointer; padding: 4px 8px;
   font-size: 1rem; line-height: 1;
   transition: color var(--transition-s);
@@ -1356,13 +1322,13 @@
   backdrop-filter: blur(8px);
 }
 
-.journal-add-input::placeholder { color: rgba(255,255,255,0.22); }
+.journal-add-input::placeholder { color: rgba(255,255,255,0.20); }
 
 .journal-add-input:focus {
   outline: none;
   border-color: var(--gold-dim);
   background: var(--gold-ultra);
-  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.06);
 }
 
 .journal-add-btn {
@@ -1373,7 +1339,7 @@
   background: linear-gradient(135deg, var(--gold-warm) 0%, var(--gold) 50%, var(--gold-bright) 100%);
   border: none;
   border-radius: var(--radius);
-  color: #03020D;
+  color: #010008;
   font-size: 0.80rem;
   font-weight: 700;
   font-family: 'Space Grotesk', sans-serif;
@@ -1381,7 +1347,7 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 0 22px rgba(234,169,96,0.28), inset 0 1px 0 rgba(255,255,255,0.18);
+  box-shadow: 0 0 20px rgba(234,169,96,0.24), inset 0 1px 0 rgba(255,255,255,0.16);
   position: relative;
   overflow: hidden;
 }
@@ -1389,20 +1355,20 @@
 .journal-add-btn::before {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent);
+  background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent);
   opacity: 0;
   transition: opacity var(--transition-s);
 }
 
 .journal-add-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 0 38px rgba(234,169,96,0.48), 0 8px 24px rgba(0,0,0,0.40);
-  filter: brightness(1.08);
+  box-shadow: 0 0 36px rgba(234,169,96,0.42), 0 8px 24px rgba(0,0,0,0.48);
+  filter: brightness(1.06);
 }
 
 .journal-add-btn:hover::before { opacity: 1; }
 .journal-add-btn:active { transform: translateY(0); }
-.journal-add-btn:disabled { opacity: 0.40; cursor: not-allowed; }
+.journal-add-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 
 /* ════════════════════════════════════════════════════════════════════════════
    TASK CARD GRID
@@ -1435,8 +1401,8 @@
   align-items: stretch;
   gap: 0;
   padding: 0;
-  background: rgba(8, 9, 22, 0.62);
-  border: 1px solid rgba(255,255,255,0.066);
+  background: rgba(3, 2, 10, 0.72);
+  border: 1px solid rgba(255,255,255,0.05);
   border-radius: 16px;
   margin-bottom: 0;
   position: relative;
@@ -1462,8 +1428,8 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(234,169,96,0.48) 40%,
-    rgba(248,195,125,0.30) 70%,
+    rgba(234,169,96,0.42) 40%,
+    rgba(248,195,125,0.26) 70%,
     transparent
   );
   pointer-events: none;
@@ -1473,31 +1439,31 @@
 
 .journal-task-item:hover {
   transform: translateY(-4px);
-  border-color: rgba(234,169,96,0.26);
+  border-color: rgba(234,169,96,0.22);
   box-shadow:
-    0 12px 32px rgba(0,0,0,0.42),
-    0 0 0 1px rgba(234,169,96,0.07),
-    0 0 20px rgba(234,169,96,0.06);
+    0 12px 32px rgba(0,0,0,0.52),
+    0 0 0 1px rgba(234,169,96,0.05),
+    0 0 20px rgba(234,169,96,0.05);
 }
 
 .journal-task-item:hover::before { opacity: 1; }
 
 /* Done card */
 .journal-task-item--done {
-  background: rgba(15,217,138,0.04);
-  border-color: rgba(15,217,138,0.16);
+  background: rgba(15,217,138,0.03);
+  border-color: rgba(15,217,138,0.12);
 }
 
 .journal-task-item--done:hover {
-  border-color: rgba(15,217,138,0.30);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.32), 0 0 16px rgba(15,217,138,0.06);
+  border-color: rgba(15,217,138,0.26);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.42), 0 0 16px rgba(15,217,138,0.05);
 }
 
 /* Mandatory card — gold left stripe */
 .journal-task-item--mandatory {
-  border-left: 2px solid rgba(234,169,96,0.45);
+  border-left: 2px solid rgba(234,169,96,0.42);
 }
-.journal-task-item--mandatory:hover { border-left-color: rgba(234,169,96,0.75); }
+.journal-task-item--mandatory:hover { border-left-color: rgba(234,169,96,0.70); }
 
 /* ── Card Top: checkbox + XP ─────────────────────────────────── */
 .journal-task-card-top {
@@ -1510,7 +1476,7 @@
 .journal-task-check {
   flex-shrink: 0;
   width: 24px; height: 24px;
-  border: 1.5px solid rgba(255,255,255,0.20);
+  border: 1.5px solid rgba(255,255,255,0.18);
   border-radius: 8px;
   background: transparent;
   color: var(--green);
@@ -1525,9 +1491,9 @@
 }
 
 .journal-task-item--done .journal-task-check {
-  background: rgba(15,217,138,0.14);
-  border-color: rgba(15,217,138,0.62);
-  box-shadow: 0 0 10px rgba(15,217,138,0.24);
+  background: rgba(15,217,138,0.12);
+  border-color: rgba(15,217,138,0.58);
+  box-shadow: 0 0 10px rgba(15,217,138,0.20);
 }
 
 .journal-task-item--done .journal-task-check svg {
@@ -1535,8 +1501,8 @@
 }
 
 .journal-task-check:hover {
-  border-color: rgba(234,169,96,0.55);
-  background: rgba(234,169,96,0.07);
+  border-color: rgba(234,169,96,0.52);
+  background: rgba(234,169,96,0.06);
   transform: scale(1.1);
 }
 
@@ -1548,8 +1514,8 @@
   color: var(--green);
   letter-spacing: 0.10em;
   padding: 2px 7px;
-  background: rgba(15,217,138,0.09);
-  border: 1px solid rgba(15,217,138,0.26);
+  background: rgba(15,217,138,0.08);
+  border: 1px solid rgba(15,217,138,0.22);
   border-radius: 99px;
   white-space: nowrap;
 }
@@ -1587,7 +1553,7 @@
   position: absolute;
   left: 0; top: 50%;
   height: 1px;
-  background: rgba(255,255,255,0.32);
+  background: rgba(255,255,255,0.30);
   animation: card-doneStrike 0.4s ease-out both;
   width: 100%;
 }
@@ -1600,7 +1566,7 @@
   line-height: 1.46;
 }
 
-.journal-task-item--done .journal-task-description { opacity: 0.52; }
+.journal-task-item--done .journal-task-description { opacity: 0.48; }
 
 /* ── Card Footer ─────────────────────────────────────────────── */
 .journal-task-card-footer {
@@ -1609,7 +1575,7 @@
   justify-content: flex-end;
   gap: 4px;
   padding: 8px 10px 10px;
-  border-top: 1px solid rgba(255,255,255,0.042);
+  border-top: 1px solid rgba(255,255,255,0.04);
 }
 
 .journal-task-actions {
@@ -1644,15 +1610,15 @@
 .journal-task-delete:hover {
   color: var(--red);
   background: var(--red-glass);
-  border: 1px solid rgba(240,61,95,0.26);
+  border: 1px solid rgba(240,61,95,0.24);
 }
 
 /* Proof button */
 .journal-task-proof-btn {
   padding: 4px 9px; height: 28px;
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 8px;
-  background: rgba(255,255,255,0.028);
+  background: rgba(255,255,255,0.02);
   color: var(--text-dim);
   font-size: 0.66rem;
   font-weight: 500;
@@ -1697,7 +1663,7 @@
 .journal-task-edit-input:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(234,169,96,0.10);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
 }
 
 .journal-task-edit-actions { display: flex; gap: 6px; }
@@ -1708,7 +1674,7 @@
   border: none;
   border-radius: 7px;
   background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
-  color: #03020D;
+  color: #010008;
   cursor: pointer;
   font-size: 0.70rem;
   font-weight: 700;
@@ -1722,19 +1688,19 @@
 }
 
 .journal-task-edit-btn:hover {
-  box-shadow: 0 4px 14px rgba(234,169,96,0.36);
+  box-shadow: 0 4px 14px rgba(234,169,96,0.32);
   transform: translateY(-1px);
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .journal-task-edit-btn--cancel {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
 
 .journal-task-edit-btn--cancel:hover {
-  background: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.08);
   box-shadow: none;
   transform: none;
   filter: none;
@@ -1749,7 +1715,7 @@
   font-weight: 400;
   letter-spacing: 0.10em;
   background: var(--gold-ultra);
-  border: 1px dashed rgba(234,169,96,0.18);
+  border: 1px dashed rgba(234,169,96,0.16);
   border-radius: var(--radius);
 }
 
@@ -1789,7 +1755,7 @@
   flex-wrap: wrap;
   gap: 6px;
   padding: 8px 10px 10px;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.03);
   width: 100%;
   box-sizing: border-box;
 }
@@ -1799,7 +1765,7 @@
   width: 42px; height: 42px;
   border-radius: 9px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.08);
   flex-shrink: 0;
   cursor: pointer;
   transition: all var(--transition-s);
@@ -1808,7 +1774,7 @@
 .journal-proof-thumb:hover {
   border-color: var(--gold-dim);
   transform: scale(1.08);
-  box-shadow: 0 4px 14px rgba(234,169,96,0.25);
+  box-shadow: 0 4px 14px rgba(234,169,96,0.22);
 }
 
 .journal-proof-thumb::after {
@@ -1816,8 +1782,8 @@
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.9rem;
-  background: rgba(0,0,0,0.55);
-  color: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.65);
+  color: rgba(255,255,255,0.85);
   opacity: 0;
   transition: opacity 0.2s ease;
   border-radius: inherit;
@@ -1836,7 +1802,7 @@
   top: 2px; right: 2px;
   width: 14px; height: 14px;
   border-radius: 50%;
-  background: rgba(240,61,95,0.88);
+  background: rgba(240,61,95,0.85);
   border: none; color: #fff;
   font-size: 0.50rem; font-weight: 700;
   cursor: pointer; display: flex;
@@ -1851,9 +1817,9 @@
 .journal-proof-add-more {
   width: 42px; height: 42px;
   border-radius: 9px;
-  border: 1px dashed rgba(234,169,96,0.38);
+  border: 1px dashed rgba(234,169,96,0.35);
   background: var(--gold-ultra);
-  color: rgba(234,169,96,0.65);
+  color: rgba(234,169,96,0.62);
   font-size: 1.2rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -1866,7 +1832,7 @@
   border-color: var(--gold-dim);
   color: var(--gold-bright);
   transform: scale(1.08);
-  box-shadow: 0 0 14px rgba(234,169,96,0.20);
+  box-shadow: 0 0 14px rgba(234,169,96,0.18);
 }
 
 .journal-proof-count-badge {
@@ -1875,11 +1841,11 @@
   min-width: 16px; height: 16px;
   padding: 0 4px; border-radius: 99px;
   background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
-  color: #03020D;
+  color: #010008;
   font-size: 0.56rem; font-weight: 700;
   font-family: 'DM Mono', monospace;
   margin-left: 2px; letter-spacing: 0;
-  box-shadow: 0 0 8px rgba(234,169,96,0.35);
+  box-shadow: 0 0 8px rgba(234,169,96,0.30);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -1888,9 +1854,9 @@
 .journal-lightbox {
   position: fixed; inset: 0;
   z-index: 9999;
-  background: rgba(0,0,0,0.94);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(0,0,0,0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   display: flex; align-items: center; justify-content: center;
   animation: journal-lightboxIn 0.22s ease-out both;
   touch-action: none;
@@ -1906,17 +1872,17 @@
   top: 18px; right: 20px;
   width: 40px; height: 40px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.75);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.72);
   font-size: 1.2rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all var(--transition-s); z-index: 3;
 }
 
 .journal-lightbox-close:hover {
-  background: rgba(240,61,95,0.14);
-  border-color: rgba(240,61,95,0.38);
+  background: rgba(240,61,95,0.12);
+  border-color: rgba(240,61,95,0.35);
   color: #fca5a5;
   transform: scale(1.08);
 }
@@ -1925,9 +1891,9 @@
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 44px; height: 44px;
   border-radius: 12px;
-  border: 1px solid rgba(234,169,96,0.18);
-  background: rgba(234,169,96,0.06);
-  color: rgba(234,169,96,0.65);
+  border: 1px solid rgba(234,169,96,0.16);
+  background: rgba(234,169,96,0.05);
+  color: rgba(234,169,96,0.62);
   font-size: 1.1rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all var(--transition-s); z-index: 3;
@@ -1937,14 +1903,14 @@
   background: var(--gold-glass);
   border-color: var(--gold-dim);
   color: var(--gold-bright);
-  box-shadow: 0 0 18px rgba(234,169,96,0.22);
+  box-shadow: 0 0 18px rgba(234,169,96,0.20);
 }
 
 .journal-lightbox-arrow--prev { left: 16px; }
 .journal-lightbox-arrow--next { right: 16px; }
 
 .journal-lightbox-arrow:disabled {
-  opacity: 0.20; cursor: default; pointer-events: none;
+  opacity: 0.18; cursor: default; pointer-events: none;
 }
 
 .journal-lightbox-img-wrap {
@@ -1959,9 +1925,9 @@
   width: auto; height: auto;
   border-radius: 14px;
   box-shadow:
-    0 0 0 1px rgba(234,169,96,0.18),
-    0 32px 80px rgba(0,0,0,0.75),
-    0 0 60px rgba(234,169,96,0.08);
+    0 0 0 1px rgba(234,169,96,0.16),
+    0 32px 80px rgba(0,0,0,0.82),
+    0 0 60px rgba(234,169,96,0.06);
   object-fit: contain; display: block;
   -webkit-user-drag: none; user-select: none;
 }
@@ -1969,9 +1935,9 @@
 .journal-lightbox-counter {
   position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
   font-size: 0.68rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
-  color: rgba(234,169,96,0.55);
-  background: rgba(234,169,96,0.06);
-  border: 1px solid rgba(234,169,96,0.16);
+  color: rgba(234,169,96,0.52);
+  background: rgba(234,169,96,0.05);
+  border: 1px solid rgba(234,169,96,0.14);
   border-radius: 99px; padding: 4px 16px;
   font-family: 'DM Mono', monospace; white-space: nowrap;
 }
@@ -1980,8 +1946,8 @@
   position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 6px; align-items: center;
   padding: 6px 10px;
-  background: rgba(3,2,13,0.72);
-  border: 1px solid rgba(234,169,96,0.12);
+  background: rgba(1,0,8,0.82);
+  border: 1px solid rgba(234,169,96,0.10);
   border-radius: 12px; backdrop-filter: blur(12px);
   max-width: calc(100vw - 40px);
   overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -1992,16 +1958,16 @@
 .journal-lightbox-thumb {
   width: 36px; height: 36px;
   border-radius: 7px; overflow: hidden; flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.08);
-  cursor: pointer; transition: all var(--transition-s); opacity: 0.52;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer; transition: all var(--transition-s); opacity: 0.48;
 }
 
-.journal-lightbox-thumb:hover { opacity: 0.88; }
+.journal-lightbox-thumb:hover { opacity: 0.85; }
 
 .journal-lightbox-thumb--active {
   opacity: 1;
   border-color: var(--gold-dim);
-  box-shadow: 0 0 10px rgba(234,169,96,0.38);
+  box-shadow: 0 0 10px rgba(234,169,96,0.35);
   transform: scale(1.1);
 }
 
@@ -2047,7 +2013,7 @@
   padding: 12px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-left: 2px solid rgba(234,169,96,0.42);
+  border-left: 2px solid rgba(234,169,96,0.40);
   border-radius: var(--radius);
   margin-bottom: 7px;
   animation: journal-fadeIn 0.3s ease-out both;
@@ -2057,8 +2023,8 @@
 
 .journal-note-item:hover {
   background: var(--bg-card-h);
-  border-color: rgba(234,169,96,0.20);
-  border-left-color: rgba(234,169,96,0.68);
+  border-color: rgba(234,169,96,0.18);
+  border-left-color: rgba(234,169,96,0.65);
   transform: translateX(4px);
 }
 
@@ -2087,7 +2053,7 @@
 .journal-note-edit-input:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(234,169,96,0.10);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
 }
 
 .journal-note-actions {
@@ -2115,29 +2081,29 @@
 .journal-note-delete:hover {
   color: var(--red);
   background: var(--red-glass);
-  border: 1px solid rgba(240,61,95,0.25);
+  border: 1px solid rgba(240,61,95,0.22);
 }
 
 .journal-note-save-btn {
   padding: 0 10px; height: 30px;
   border: none; border-radius: 8px;
   background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
-  color: #03020D;
+  color: #010008;
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.10em;
   text-transform: uppercase; cursor: pointer;
   display: inline-flex; align-items: center; gap: 4px;
   transition: all var(--transition-s);
   font-family: 'Space Grotesk', sans-serif; white-space: nowrap;
-  box-shadow: 0 0 14px rgba(234,169,96,0.28);
+  box-shadow: 0 0 12px rgba(234,169,96,0.24);
 }
 
 .journal-note-save-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 18px rgba(234,169,96,0.44);
+  box-shadow: 0 4px 18px rgba(234,169,96,0.40);
   filter: brightness(1.06);
 }
 
-.journal-note-save-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.journal-note-save-btn:disabled { opacity: 0.40; cursor: not-allowed; }
 
 /* ── Add Note Form ───────────────────────────────────────────── */
 .journal-add-note-form {
@@ -2155,13 +2121,13 @@
   transition: all var(--transition-s);
 }
 
-.journal-add-note-input::placeholder { color: rgba(255,255,255,0.22); }
+.journal-add-note-input::placeholder { color: rgba(255,255,255,0.20); }
 
 .journal-add-note-input:focus {
   outline: none;
   border-color: var(--gold-dim);
   background: var(--gold-ultra);
-  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.06);
 }
 
 .journal-add-note-btn,
@@ -2171,25 +2137,25 @@
   background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright)) !important;
   border: none !important;
   border-radius: var(--radius);
-  color: #03020D !important;
+  color: #010008 !important;
   font-size: 0.76rem; font-weight: 700 !important;
   font-family: 'Space Grotesk', sans-serif;
   letter-spacing: 0.14em; text-transform: uppercase;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 0 22px rgba(234,169,96,0.28);
+  box-shadow: 0 0 20px rgba(234,169,96,0.24);
   white-space: nowrap;
 }
 
 .journal-add-note-btn:hover:not(:disabled),
 .journal-add-note-btn-purple:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 0 36px rgba(234,169,96,0.48), 0 6px 20px rgba(0,0,0,0.36);
+  box-shadow: 0 0 34px rgba(234,169,96,0.42), 0 6px 20px rgba(0,0,0,0.45);
   filter: brightness(1.06);
 }
 
 .journal-add-note-btn:disabled,
-.journal-add-note-btn-purple:disabled { opacity: 0.40; cursor: not-allowed; }
+.journal-add-note-btn-purple:disabled { opacity: 0.38; cursor: not-allowed; }
 
 /* ════════════════════════════════════════════════════════════════════════════
    MOOD / DAILY SECTION
@@ -2210,12 +2176,12 @@
   content: '';
   position: absolute; top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.48), rgba(248,195,125,0.35), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.45), rgba(248,195,125,0.32), transparent);
 }
 
 .journal-daily-section:hover {
   background: var(--bg-card-h);
-  border-color: rgba(234,169,96,0.16);
+  border-color: rgba(234,169,96,0.14);
 }
 
 .journal-mood-row { margin-bottom: 10px; }
@@ -2232,9 +2198,9 @@
 
 .journal-mood-btn {
   width: 44px; height: 44px;
-  border: 1px solid rgba(234,169,96,0.14);
+  border: 1px solid rgba(234,169,96,0.12);
   border-radius: 13px;
-  background: rgba(234,169,96,0.04);
+  background: rgba(234,169,96,0.03);
   font-size: 1.2rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all var(--transition-s);
@@ -2244,13 +2210,13 @@
   background: var(--gold-glass);
   border-color: var(--gold-dim);
   transform: scale(1.12) translateY(-2px);
-  box-shadow: 0 0 16px rgba(234,169,96,0.20);
+  box-shadow: 0 0 16px rgba(234,169,96,0.18);
 }
 
 .journal-mood-btn--active {
   border-color: var(--gold-dim);
   background: var(--gold-glass);
-  box-shadow: 0 0 20px rgba(234,169,96,0.24);
+  box-shadow: 0 0 20px rgba(234,169,96,0.22);
   transform: scale(1.06);
 }
 
@@ -2263,7 +2229,7 @@
 /* ── Notes textarea & save ───────────────────────────────────── */
 .journal-notes-input {
   width: 100%; box-sizing: border-box;
-  background: rgba(255,255,255,0.025);
+  background: rgba(255,255,255,0.02);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px 14px;
@@ -2273,12 +2239,12 @@
   margin-bottom: 12px; transition: all var(--transition-s);
 }
 
-.journal-notes-input::placeholder { color: rgba(255,255,255,0.22); }
+.journal-notes-input::placeholder { color: rgba(255,255,255,0.20); }
 
 .journal-notes-input:focus {
   outline: none;
   border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.06);
 }
 
 .journal-save-notes-btn {
@@ -2297,11 +2263,11 @@
   color: var(--gold-soft);
 }
 
-.journal-save-notes-btn:disabled { opacity: 0.50; cursor: not-allowed; }
+.journal-save-notes-btn:disabled { opacity: 0.48; cursor: not-allowed; }
 
 .journal-save-notes-btn--saved {
-  background: rgba(15,217,138,0.09);
-  border-color: rgba(15,217,138,0.30);
+  background: rgba(15,217,138,0.08);
+  border-color: rgba(15,217,138,0.26);
   color: #6FFFC9;
 }
 
@@ -2309,8 +2275,8 @@
 .journal-note-display {
   margin-bottom: 18px; padding: 16px 18px;
   background: var(--gold-ultra);
-  border: 1px solid rgba(234,169,96,0.14);
-  border-left: 2px solid rgba(234,169,96,0.50);
+  border: 1px solid rgba(234,169,96,0.12);
+  border-left: 2px solid rgba(234,169,96,0.48);
   border-radius: var(--radius);
   animation: journal-fadeIn 0.35s ease-out;
 }
@@ -2337,7 +2303,7 @@
 
 .journal-error {
   background: var(--red-glass);
-  border: 1px solid rgba(240,61,95,0.24);
+  border: 1px solid rgba(240,61,95,0.22);
   color: #fca5a5;
   padding: 12px 16px; border-radius: var(--radius);
   margin-bottom: 20px; font-size: 0.82rem; font-weight: 300;
@@ -2452,16 +2418,12 @@
 /* ── Scrollbar ───────────────────────────────────────────────── */
 .journal-page ::-webkit-scrollbar       { width: 4px; height: 4px; }
 .journal-page ::-webkit-scrollbar-track { background: transparent; }
-.journal-page ::-webkit-scrollbar-thumb { background: rgba(234,169,96,0.20); border-radius: 99px; }
-.journal-page ::-webkit-scrollbar-thumb:hover { background: rgba(234,169,96,0.38); }
+.journal-page ::-webkit-scrollbar-thumb { background: rgba(234,169,96,0.18); border-radius: 99px; }
+.journal-page ::-webkit-scrollbar-thumb:hover { background: rgba(234,169,96,0.35); }
 
 /* ════════════════════════════════════════════════════════════════════════════
    TWINKLING STARS — Individual animated star elements
-   These create the beautiful individually-twinkling star effect
    ════════════════════════════════════════════════════════════════════════════ */
-
-/* We create multiple pseudo-layers with different animation-delay values
-   to simulate individual stars twinkling at different times */
 
 /* Star layer 1 — fast twinklers */
 .journal-page::after {
@@ -2482,34 +2444,34 @@
     radial-gradient(2px 2px at 69%  38%, white, transparent),
     radial-gradient(2px 2px at 92%  48%, white, transparent),
     /* Gold stars */
-    radial-gradient(2.5px 2.5px at 16%  82%, rgba(234,169,96,1),  transparent),
-    radial-gradient(2.5px 2.5px at 48%  78%, rgba(234,169,96,1),  transparent),
-    radial-gradient(2.5px 2.5px at 77%  84%, rgba(234,169,96,1),  transparent),
-    radial-gradient(2.5px 2.5px at 31%  88%, rgba(248,195,125,1), transparent),
-    radial-gradient(2px   2px   at 62%  91%, rgba(248,195,125,1), transparent),
-    radial-gradient(2px   2px   at  6%  75%, rgba(248,195,125,1), transparent),
-    radial-gradient(2.5px 2.5px at 92%  79%, rgba(234,169,96,1),  transparent),
+    radial-gradient(2.5px 2.5px at 16%  85%, rgba(234,169,96,0.85),  transparent),
+    radial-gradient(2.5px 2.5px at 48%  88%, rgba(234,169,96,0.80),  transparent),
+    radial-gradient(2.5px 2.5px at 77%  82%, rgba(234,169,96,0.82),  transparent),
+    radial-gradient(2.5px 2.5px at 31%  86%, rgba(248,195,125,0.75), transparent),
+    radial-gradient(2px   2px   at 62%  90%, rgba(248,195,125,0.72), transparent),
+    radial-gradient(2px   2px   at  6%  88%, rgba(248,195,125,0.70), transparent),
+    radial-gradient(2.5px 2.5px at 92%  84%, rgba(234,169,96,0.78),  transparent),
     /* Blue stars */
-    radial-gradient(2.5px 2.5px at  9%  12%, rgba(140,175,255,1), transparent),
-    radial-gradient(2px   2px   at 23%  18%, rgba(140,175,255,1), transparent),
-    radial-gradient(2.5px 2.5px at 52%  15%, rgba(120,160,255,1), transparent),
-    radial-gradient(2px   2px   at 82%  20%, rgba(140,175,255,1), transparent),
-    radial-gradient(2.5px 2.5px at 38%   8%, rgba(160,190,255,1), transparent),
-    radial-gradient(2px   2px   at 66%  10%, rgba(120,160,255,1), transparent);
+    radial-gradient(2.5px 2.5px at  9%  12%, rgba(140,175,255,0.85), transparent),
+    radial-gradient(2px   2px   at 23%  18%, rgba(140,175,255,0.80), transparent),
+    radial-gradient(2.5px 2.5px at 52%  15%, rgba(120,160,255,0.82), transparent),
+    radial-gradient(2px   2px   at 82%  20%, rgba(140,175,255,0.78), transparent),
+    radial-gradient(2.5px 2.5px at 38%   8%, rgba(160,190,255,0.75), transparent),
+    radial-gradient(2px   2px   at 66%  10%, rgba(120,160,255,0.72), transparent);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   animation: twinkleLayer1 3.2s ease-in-out infinite alternate;
 }
 
 @keyframes twinkleLayer1 {
-  0%   { opacity: 0.12; filter: blur(0.8px); }
-  15%  { opacity: 0.90; filter: blur(0px);   }
-  30%  { opacity: 0.25; filter: blur(1px);   }
-  45%  { opacity: 1.00; filter: blur(0px);   }
-  60%  { opacity: 0.18; filter: blur(0.6px); }
-  75%  { opacity: 0.85; filter: blur(0px);   }
-  90%  { opacity: 0.30; filter: blur(0.9px); }
-  100% { opacity: 0.95; filter: blur(0px);   }
+  0%   { opacity: 0.10; filter: blur(0.8px); }
+  15%  { opacity: 0.85; filter: blur(0px);   }
+  30%  { opacity: 0.22; filter: blur(1px);   }
+  45%  { opacity: 0.95; filter: blur(0px);   }
+  60%  { opacity: 0.15; filter: blur(0.6px); }
+  75%  { opacity: 0.80; filter: blur(0px);   }
+  90%  { opacity: 0.28; filter: blur(0.9px); }
+  100% { opacity: 0.90; filter: blur(0px);   }
 }
 
 /* Star glow halos — larger soft glow behind the sharp stars */
@@ -2521,68 +2483,61 @@
   pointer-events: none;
   background-image:
     /* White star halos */
-    radial-gradient(6px 6px at 7%   6%,  rgba(255,255,255,0.35), transparent),
-    radial-gradient(8px 8px at 34%  11%, rgba(255,255,255,0.30), transparent),
-    radial-gradient(6px 6px at 61%   4%, rgba(255,255,255,0.32), transparent),
-    radial-gradient(7px 7px at 89%  14%, rgba(255,255,255,0.28), transparent),
-    radial-gradient(6px 6px at 15%  32%, rgba(255,255,255,0.25), transparent),
-    radial-gradient(8px 8px at 78%  27%, rgba(255,255,255,0.30), transparent),
-    radial-gradient(6px 6px at 50%  18%, rgba(255,255,255,0.26), transparent),
+    radial-gradient(6px 6px at 7%   6%,  rgba(255,255,255,0.32), transparent),
+    radial-gradient(8px 8px at 34%  11%, rgba(255,255,255,0.28), transparent),
+    radial-gradient(6px 6px at 61%   4%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(7px 7px at 89%  14%, rgba(255,255,255,0.26), transparent),
+    radial-gradient(6px 6px at 15%  32%, rgba(255,255,255,0.24), transparent),
+    radial-gradient(8px 8px at 78%  27%, rgba(255,255,255,0.28), transparent),
+    radial-gradient(6px 6px at 50%  18%, rgba(255,255,255,0.24), transparent),
     /* Medium stars no halo */
-    radial-gradient(1.2px 1.2px at 4%   22%, rgba(255,255,255,0.70), transparent),
-    radial-gradient(1.2px 1.2px at 19%   8%, rgba(255,255,255,0.65), transparent),
-    radial-gradient(1.2px 1.2px at 44%  26%, rgba(255,255,255,0.62), transparent),
-    radial-gradient(1.2px 1.2px at 67%  19%, rgba(255,255,255,0.68), transparent),
-    radial-gradient(1.2px 1.2px at 83%   8%, rgba(255,255,255,0.64), transparent),
-    radial-gradient(1.2px 1.2px at 28%  42%, rgba(255,255,255,0.58), transparent),
-    radial-gradient(1.2px 1.2px at 56%  38%, rgba(255,255,255,0.62), transparent),
-    radial-gradient(1.2px 1.2px at 72%  45%, rgba(255,255,255,0.55), transparent),
-    radial-gradient(1.2px 1.2px at 10%  55%, rgba(255,255,255,0.52), transparent),
-    radial-gradient(1.2px 1.2px at 38%  60%, rgba(255,255,255,0.50), transparent),
-    radial-gradient(1.2px 1.2px at 64%  58%, rgba(255,255,255,0.54), transparent),
-    radial-gradient(1.2px 1.2px at 85%  52%, rgba(255,255,255,0.48), transparent),
-    /* Gold halos */
-    radial-gradient(10px 10px at 16%  82%, rgba(234,169,96,0.40),  transparent),
-    radial-gradient(8px  8px  at 48%  78%, rgba(234,169,96,0.35),  transparent),
-    radial-gradient(10px 10px at 77%  84%, rgba(234,169,96,0.38),  transparent),
-    radial-gradient(8px  8px  at 31%  88%, rgba(248,195,125,0.32), transparent),
-    radial-gradient(7px  7px  at 62%  91%, rgba(248,195,125,0.28), transparent),
+    radial-gradient(1.2px 1.2px at 4%   22%, rgba(255,255,255,0.68), transparent),
+    radial-gradient(1.2px 1.2px at 19%   8%, rgba(255,255,255,0.62), transparent),
+    radial-gradient(1.2px 1.2px at 44%  26%, rgba(255,255,255,0.60), transparent),
+    radial-gradient(1.2px 1.2px at 67%  19%, rgba(255,255,255,0.65), transparent),
+    radial-gradient(1.2px 1.2px at 83%   8%, rgba(255,255,255,0.60), transparent),
+    radial-gradient(1.2px 1.2px at 28%  42%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1.2px 1.2px at 56%  38%, rgba(255,255,255,0.58), transparent),
+    radial-gradient(1.2px 1.2px at 72%  45%, rgba(255,255,255,0.52), transparent),
+    radial-gradient(1.2px 1.2px at 10%  55%, rgba(255,255,255,0.50), transparent),
+    radial-gradient(1.2px 1.2px at 38%  60%, rgba(255,255,255,0.48), transparent),
+    radial-gradient(1.2px 1.2px at 64%  58%, rgba(255,255,255,0.52), transparent),
+    radial-gradient(1.2px 1.2px at 85%  52%, rgba(255,255,255,0.46), transparent),
+    /* Gold halos - subtle */
+    radial-gradient(10px 10px at 16%  85%, rgba(234,169,96,0.28),  transparent),
+    radial-gradient(8px  8px  at 48%  88%, rgba(234,169,96,0.24),  transparent),
+    radial-gradient(10px 10px at 77%  82%, rgba(234,169,96,0.26),  transparent),
+    radial-gradient(8px  8px  at 31%  86%, rgba(248,195,125,0.22), transparent),
+    radial-gradient(7px  7px  at 62%  90%, rgba(248,195,125,0.20), transparent),
     /* Blue halos */
-    radial-gradient(8px  8px  at  9%  12%, rgba(140,175,255,0.35), transparent),
-    radial-gradient(10px 10px at 23%  18%, rgba(140,175,255,0.30), transparent),
-    radial-gradient(8px  8px  at 52%  15%, rgba(120,160,255,0.32), transparent),
-    radial-gradient(9px  9px  at 82%  20%, rgba(140,175,255,0.28), transparent),
+    radial-gradient(8px  8px  at  9%  12%, rgba(140,175,255,0.28), transparent),
+    radial-gradient(10px 10px at 23%  18%, rgba(140,175,255,0.26), transparent),
+    radial-gradient(8px  8px  at 52%  15%, rgba(120,160,255,0.24), transparent),
+    radial-gradient(9px  9px  at 82%  20%, rgba(140,175,255,0.22), transparent),
     /* Dim background field */
-    radial-gradient(0.8px 0.8px at 11%  48%, rgba(255,255,255,0.38), transparent),
-    radial-gradient(0.8px 0.8px at 29%  62%, rgba(255,255,255,0.34), transparent),
-    radial-gradient(0.8px 0.8px at 47%  55%, rgba(255,255,255,0.36), transparent),
-    radial-gradient(0.8px 0.8px at 60%  68%, rgba(255,255,255,0.30), transparent),
-    radial-gradient(0.8px 0.8px at 74%  62%, rgba(255,255,255,0.34), transparent),
-    radial-gradient(0.8px 0.8px at 88%  48%, rgba(255,255,255,0.32), transparent),
-    radial-gradient(0.6px 0.6px at 20%  72%, rgba(255,255,255,0.24), transparent),
-    radial-gradient(0.6px 0.6px at 54%  78%, rgba(255,255,255,0.22), transparent),
-    radial-gradient(0.6px 0.6px at 80%  75%, rgba(255,255,255,0.26), transparent),
-    radial-gradient(0.6px 0.6px at 3%   35%, rgba(255,255,255,0.20), transparent),
-    radial-gradient(0.6px 0.6px at 93%  62%, rgba(255,255,255,0.22), transparent),
-    radial-gradient(0.6px 0.6px at 37%  82%, rgba(255,255,255,0.18), transparent),
-    radial-gradient(0.6px 0.6px at 68%  25%, rgba(255,255,255,0.20), transparent),
-    radial-gradient(0.6px 0.6px at 15%  90%, rgba(255,255,255,0.16), transparent),
-    radial-gradient(0.6px 0.6px at 85%  38%, rgba(255,255,255,0.22), transparent);
+    radial-gradient(0.8px 0.8px at 11%  48%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(0.8px 0.8px at 29%  62%, rgba(255,255,255,0.32), transparent),
+    radial-gradient(0.8px 0.8px at 47%  55%, rgba(255,255,255,0.34), transparent),
+    radial-gradient(0.8px 0.8px at 60%  68%, rgba(255,255,255,0.28), transparent),
+    radial-gradient(0.8px 0.8px at 74%  62%, rgba(255,255,255,0.32), transparent),
+    radial-gradient(0.8px 0.8px at 88%  48%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(0.6px 0.6px at 20%  72%, rgba(255,255,255,0.22), transparent),
+    radial-gradient(0.6px 0.6px at 54%  78%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(0.6px 0.6px at 80%  75%, rgba(255,255,255,0.24), transparent);
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  /* Offset timing from layer1 so they twinkle independently */
   animation: twinkleLayer2 4.7s ease-in-out infinite alternate;
   animation-delay: -1.8s;
 }
 
 @keyframes twinkleLayer2 {
-  0%   { opacity: 0.95; filter: blur(0px);   }
-  20%  { opacity: 0.18; filter: blur(1.2px); }
-  40%  { opacity: 0.88; filter: blur(0px);   }
-  55%  { opacity: 0.22; filter: blur(0.8px); }
-  70%  { opacity: 1.00; filter: blur(0px);   }
-  85%  { opacity: 0.15; filter: blur(1px);   }
-  100% { opacity: 0.80; filter: blur(0px);   }
+  0%   { opacity: 0.90; filter: blur(0px);   }
+  20%  { opacity: 0.16; filter: blur(1.2px); }
+  40%  { opacity: 0.84; filter: blur(0px);   }
+  55%  { opacity: 0.20; filter: blur(0.8px); }
+  70%  { opacity: 0.95; filter: blur(0px);   }
+  85%  { opacity: 0.14; filter: blur(1px);   }
+  100% { opacity: 0.78; filter: blur(0px);   }
 }
 
 /* Third layer — slowest, creates the "background depth" stars */
@@ -2593,25 +2548,25 @@
   z-index: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(1.8px 1.8px at 3%   14%, rgba(255,255,255,0.80), transparent),
-    radial-gradient(1.8px 1.8px at 41%  21%, rgba(255,255,255,0.75), transparent),
-    radial-gradient(1.8px 1.8px at 73%  16%, rgba(255,255,255,0.72), transparent),
-    radial-gradient(1.8px 1.8px at 96%  35%, rgba(255,255,255,0.68), transparent),
-    radial-gradient(1.8px 1.8px at 58%  44%, rgba(255,255,255,0.70), transparent),
-    radial-gradient(1.8px 1.8px at 25%  68%, rgba(255,255,255,0.55), transparent),
-    radial-gradient(1.8px 1.8px at 81%  61%, rgba(255,255,255,0.58), transparent),
-    radial-gradient(1.8px 1.8px at 12%  78%, rgba(255,255,255,0.50), transparent),
+    radial-gradient(1.8px 1.8px at 3%   14%, rgba(255,255,255,0.75), transparent),
+    radial-gradient(1.8px 1.8px at 41%  21%, rgba(255,255,255,0.70), transparent),
+    radial-gradient(1.8px 1.8px at 73%  16%, rgba(255,255,255,0.68), transparent),
+    radial-gradient(1.8px 1.8px at 96%  35%, rgba(255,255,255,0.64), transparent),
+    radial-gradient(1.8px 1.8px at 58%  44%, rgba(255,255,255,0.66), transparent),
+    radial-gradient(1.8px 1.8px at 25%  68%, rgba(255,255,255,0.52), transparent),
+    radial-gradient(1.8px 1.8px at 81%  61%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1.8px 1.8px at 12%  78%, rgba(255,255,255,0.48), transparent),
     /* More gold stars at different positions */
-    radial-gradient(2px 2px at 22%  94%, rgba(234,169,96,0.88),  transparent),
-    radial-gradient(2px 2px at 55%  86%, rgba(234,169,96,0.82),  transparent),
-    radial-gradient(2px 2px at 88%  97%, rgba(248,195,125,0.78), transparent),
-    radial-gradient(2px 2px at 4%   92%, rgba(234,169,96,0.72),  transparent),
-    radial-gradient(2px 2px at 72%  73%, rgba(234,169,96,0.65),  transparent),
+    radial-gradient(2px 2px at 22%  92%, rgba(234,169,96,0.72),  transparent),
+    radial-gradient(2px 2px at 55%  89%, rgba(234,169,96,0.68),  transparent),
+    radial-gradient(2px 2px at 88%  94%, rgba(248,195,125,0.65), transparent),
+    radial-gradient(2px 2px at 4%   94%, rgba(234,169,96,0.62),  transparent),
+    radial-gradient(2px 2px at 72%  78%, rgba(234,169,96,0.58),  transparent),
     /* Blue in different positions */
-    radial-gradient(2px 2px at 30%  25%, rgba(140,175,255,0.78), transparent),
-    radial-gradient(2px 2px at 70%  30%, rgba(120,160,255,0.72), transparent),
-    radial-gradient(2px 2px at 95%   8%, rgba(150,185,255,0.70), transparent),
-    radial-gradient(2px 2px at 5%   42%, rgba(140,175,255,0.65), transparent);
+    radial-gradient(2px 2px at 30%  25%, rgba(140,175,255,0.70), transparent),
+    radial-gradient(2px 2px at 70%  30%, rgba(120,160,255,0.65), transparent),
+    radial-gradient(2px 2px at 95%   8%, rgba(150,185,255,0.62), transparent),
+    radial-gradient(2px 2px at 5%   42%, rgba(140,175,255,0.60), transparent);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   animation: twinkleLayer3 6.1s ease-in-out infinite alternate;
@@ -2619,8 +2574,8 @@
 }
 
 @keyframes twinkleLayer3 {
-  0%   { opacity: 0.30; filter: blur(0.4px); }
-  33%  { opacity: 1.00; filter: blur(0px);   }
-  66%  { opacity: 0.20; filter: blur(0.6px); }
-  100% { opacity: 0.90; filter: blur(0px);   }
+  0%   { opacity: 0.28; filter: blur(0.4px); }
+  33%  { opacity: 0.95; filter: blur(0px);   }
+  66%  { opacity: 0.18; filter: blur(0.6px); }
+  100% { opacity: 0.86; filter: blur(0px);   }
 }
