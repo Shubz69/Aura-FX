@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
 import '../styles/Community.css';
 import { useWebSocket } from '../utils/useWebSocket';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -25,7 +25,47 @@ import {
 import { FaHashtag, FaLock, FaBullhorn, FaPaperPlane, FaSmile, FaTrash, FaPaperclip, FaTimes, FaPlus, FaReply, FaCopy, FaLink, FaBookmark, FaBell, FaFlag, FaImage, FaEdit, FaBars, FaChevronLeft, FaDownload } from 'react-icons/fa';
 import ProfileModal from '../components/ProfileModal';
 import { resolveAvatarUrl, getPlaceholderColor } from '../utils/avatar';
+import {
+    subscribe as subscribeMutedChannels,
+    getSnapshot as getMutedSnapshot,
+    getServerSnapshot as getMutedServerSnapshot,
+    hydrateFromStorage as hydrateMutedChannels,
+    toggleChannel as toggleMutedChannel,
+    has as isChannelMuted
+} from '../utils/mutedChannelsStore';
 // All API calls use real endpoints only - no mock mode
+
+/** Isolated from Community — only this control re-renders when mute toggles (not the whole page). */
+function ChannelMuteButton({ channel, userId }) {
+    const mutedSet = useSyncExternalStore(subscribeMutedChannels, getMutedSnapshot, getMutedServerSnapshot);
+    const isMuted = mutedSet.has(String(channel.id));
+    return (
+        <button
+            type="button"
+            title={isMuted ? 'Unmute channel' : 'Mute channel'}
+            onClick={(e) => {
+                e.stopPropagation();
+                toggleMutedChannel(channel.id, channel.category, userId);
+            }}
+            style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: isMuted ? '#ef4444' : 'transparent',
+                padding: '2px 4px',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                opacity: 0,
+                transition: 'opacity 0.15s, color 0.15s',
+                touchAction: 'manipulation'
+            }}
+            className="channel-mute-btn"
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+        >
+            <FaBell />
+        </button>
+    );
+}
 
 // Emojis array for the emoji picker
 const emojis = [
@@ -727,13 +767,10 @@ const MessageItem = React.memo(({
            JSON.stringify(prevProps.messageReactions[prevProps.message.id]) === 
            JSON.stringify(nextProps.messageReactions[nextProps.message.id]);
 });
-    const userDataFetchInFlightRef = useRef(false);
-    const userDataLastFailureRef = useRef(0);
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
-        if (userDataFetchInFlightRef.current) return null;
-        userDataFetchInFlightRef.current = true;
+        
         try {
             const API_BASE_URL = window.location.origin;
             const token = localStorage.getItem('token');
@@ -791,18 +828,12 @@ const MessageItem = React.memo(({
                     return prevLevel !== newLevel ? newLevel : prevLevel;
                 });
                 
-                userDataLastFailureRef.current = 0;
                 return updatedUser;
             } else {
-                userDataLastFailureRef.current = Date.now();
                 console.warn('Failed to fetch latest user data:', response.status);
             }
         } catch (error) {
-            userDataLastFailureRef.current = Date.now();
-            const isNetwork = (error?.message || '').includes('fetch') || (error?.name === 'TypeError');
-            if (!isNetwork) console.warn('Error fetching latest user data:', error?.message || error);
-        } finally {
-            userDataFetchInFlightRef.current = false;
+            console.error('Error fetching latest user data:', error);
         }
         
         return null;
@@ -827,29 +858,21 @@ const MessageItem = React.memo(({
         
         window.addEventListener('xpUpdated', handleXPUpdate);
         
-        // Fetch latest user data from API periodically (avoid ERR_INSUFFICIENT_RESOURCES: don't poll too fast)
+        // Fetch latest user data from API periodically (every 5 seconds for live updates)
         let xpCheckInterval;
         if (userId) {
-            // Initial fetch after delay so we don't stack with subscription/notifications/channels
-            const initialDelayId = setTimeout(() => fetchLatestUserData(userId), 5000);
-            // Poll every 90s; skip if we had a recent failure (backoff 2 min)
-            const POLL_MS = 90000;
-            const BACKOFF_MS = 120000;
+            // Initial fetch on mount
+            fetchLatestUserData(userId);
+            
+            // Then check periodically
             xpCheckInterval = setInterval(() => {
-                if (userDataLastFailureRef.current && (Date.now() - userDataLastFailureRef.current) < BACKOFF_MS) return;
                 fetchLatestUserData(userId);
-            }, POLL_MS);
-            return () => {
-                window.removeEventListener('xpUpdated', handleXPUpdate);
-                clearTimeout(initialDelayId);
-                if (xpCheckInterval) clearInterval(xpCheckInterval);
-            };
-        }
-        if (!userId) {
+            }, 5000); // Check every 5 seconds for live updates
+        } else {
             // Fallback to localStorage check if userId not available yet
             xpCheckInterval = setInterval(() => {
                 const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
-                if (storedUserData?.xp !== undefined && storedUserData?.level !== undefined) {
+                if (storedUserData.xp !== undefined && storedUserData.level !== undefined) {
                     const currentXP = parseFloat(storedUserData.xp || 0);
                     const currentLevel = parseInt(storedUserData.level || 1);
                     
@@ -874,7 +897,7 @@ const MessageItem = React.memo(({
                         return prevLevel !== currentLevel ? currentLevel : prevLevel;
                     });
                 }
-            }, 5000);
+            }, 2000);
         }
         
         return () => {
@@ -977,32 +1000,9 @@ const [journalLoading, setJournalLoading] = useState(false);
         }
     }, [channelBadges, userId]);
 
-    // Muted channels: Set of channel IDs — announcements channel always notifies regardless
-    const [mutedChannels, setMutedChannels] = useState(() => {
-        try {
-            const saved = localStorage.getItem(`mutedChannels_${userId || 'anon'}`);
-            return new Set(saved ? JSON.parse(saved) : []);
-        } catch { return new Set(); }
-    });
-
     useEffect(() => {
-        if (userId) {
-            localStorage.setItem(`mutedChannels_${userId}`, JSON.stringify([...mutedChannels]));
-        }
-    }, [mutedChannels, userId]);
-
-    const toggleMuteChannel = useCallback((channelId, channelCategory) => {
-        if (channelCategory === 'announcements') return; // announcements always notify
-        setMutedChannels(prev => {
-            const next = new Set(prev);
-            if (next.has(String(channelId))) {
-                next.delete(String(channelId));
-            } else {
-                next.add(String(channelId));
-            }
-            return next;
-        });
-    }, []);
+        hydrateMutedChannels(userId);
+    }, [userId]);
     
     // Helper to update channel badge
     const updateChannelBadge = useCallback((channelId, type, increment = true) => {
@@ -1042,8 +1042,6 @@ const [journalLoading, setJournalLoading] = useState(false);
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
     const isSendingGifRef = useRef(false);
-    const channelsFetchInFlightRef = useRef(false);
-    const channelsLastFailureRef = useRef(0);
     
 
     // Close context menu when clicking outside
@@ -1410,57 +1408,8 @@ useEffect(() => {
         });
     }, [categoryOrder]);
 
-// Get user's role - check subscription status and plan
-const getCurrentUserRole = useCallback(() => {
-    if (isSuperAdminUser) return 'super_admin';
-    if (isAdminUser) return 'admin';
-    
-    // Check subscription status and plan from user object
-    const subStatus = storedUser?.subscription_status;
-    const subPlan = storedUser?.subscription_plan;
-    const userRole = storedUser?.role?.toLowerCase() || 'free';
-    
-    // If user has active subscription, ensure role matches plan
-    if (subStatus === 'active') {
-        if (subPlan === 'a7fx' || subPlan === 'elite' || subPlan === 'A7FX') {
-            return 'a7fx';
-        }
-        if (subPlan === 'aura' || subPlan === 'premium') {
-            return 'premium';
-        }
-        // If no plan specified but has active subscription, check role
-        if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
-            return userRole;
-        }
-        // Default to premium if subscription is active but no plan specified
-        return 'premium';
-    }
-    
-    // If subscription is inactive/expired, downgrade to free
-    if (subStatus === 'inactive' || subStatus === 'cancelled' || subStatus === 'expired') {
-        return 'free';
-    }
-    
-    // Check entitlements context for tier information
-    if (entitlements?.tier) {
-        const tier = entitlements.tier.toLowerCase();
-        if (tier === 'elite' || tier === 'a7fx') return 'a7fx';
-        if (tier === 'premium' || tier === 'aura') return 'premium';
-    }
-    
-    // Return stored role or default to free
-    return userRole || 'free';
-}, [isSuperAdminUser, isAdminUser, storedUser, entitlements]);
-
 const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     if (!isAuthenticated) {
-        return channelListRef.current;
-    }
-    if (channelsFetchInFlightRef.current) {
-        return channelListRef.current;
-    }
-    const CHANNELS_BACKOFF_MS = 45000;
-    if (channelsLastFailureRef.current && (Date.now() - channelsLastFailureRef.current) < CHANNELS_BACKOFF_MS) {
         return channelListRef.current;
     }
 
@@ -1488,47 +1437,49 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
 
     // Get current user's subscription tier
-  // Get current user's subscription tier using the proper function
-const currentUserRole = getCurrentUserRole();
-const isFreeUser = currentUserRole === 'free';
-const isPremiumUser = currentUserRole === 'premium';
-const isEliteUser = currentUserRole === 'a7fx' || currentUserRole === 'elite';
-  
-
-  // Helper to check if user can access a channel based on its access level
-const canAccessChannelByTier = (channel) => {
-    // Admins always have access
-    if (isAdminOrSuperForChannels) return true;
-    
-    const accessLevel = (channel.accessLevel || channel.access_level || 'free').toLowerCase();
-    
-    // CRITICAL: Premium users can see ALL channels EXCEPT a7fx/elite
-    if (isPremiumUser) {
-        // Premium users cannot see a7fx/elite channels
-        if (accessLevel === 'a7fx' || accessLevel === 'elite') {
-            return false;
+    const currentUserRole = (() => {
+        if (isAdminOrSuperForChannels) return 'admin';
+        if (storedUser?.subscription_status === 'active') {
+            if (storedUser?.subscription_plan === 'a7fx' || storedUser?.subscription_plan === 'elite') return 'a7fx';
+            if (storedUser?.subscription_plan === 'aura' || storedUser?.subscription_plan === 'premium') return 'premium';
         }
-        // Premium users can see all other channels (free, open, premium)
-        return true;
-    }
+        return storedUser?.role?.toLowerCase() || 'free';
+    })();
     
-    // Elite users can see everything
-    if (isEliteUser) {
-        return true;
-    }
-    
-    // Free users - only free/open channels
-    if (isFreeUser) {
-        // Free users can see free/open channels AND allowlist channels
-        if (FREE_CHANNEL_ALLOWLIST.has(String(channel.id || channel.name || '').toLowerCase())) {
+    const isFreeUser = currentUserRole === 'free';
+    const isPremiumUser = currentUserRole === 'premium';
+    const isEliteUser = currentUserRole === 'a7fx' || currentUserRole === 'elite';
+
+    // Helper to check if user can access a channel based on its access level
+    const canAccessChannelByTier = (channel) => {
+        // Admins always have access
+        if (isAdminOrSuperForChannels) return true;
+        
+        const accessLevel = (channel.accessLevel || channel.access_level || 'free').toLowerCase();
+        
+        // Free channels - everyone can access
+        if (accessLevel === 'free' || accessLevel === 'open') {
             return true;
         }
-        return accessLevel === 'free' || accessLevel === 'open';
-    }
-    
-    // Default: free access
-    return true;
-};
+        
+        // Premium channels - only premium and elite users
+        if (accessLevel === 'premium') {
+            return isPremiumUser || isEliteUser;
+        }
+        
+        // A7FX/Elite channels - only elite users
+        if (accessLevel === 'a7fx' || accessLevel === 'elite') {
+            return isEliteUser;
+        }
+        
+        // Admin-only channels - only admins (already handled above)
+        if (accessLevel === 'admin-only') {
+            return false;
+        }
+        
+        // Default: free access
+        return true;
+    };
 
     const buildPreparedFromServer = (serverList) => {
         if (!Array.isArray(serverList) || serverList.length === 0) return [];
@@ -1580,10 +1531,8 @@ const canAccessChannelByTier = (channel) => {
         }
     }
 
-    channelsFetchInFlightRef.current = true;
     try {
         const response = await Api.getChannelsBootstrap();
-        channelsLastFailureRef.current = 0;
         const data = response?.data;
         if (data?.success && Array.isArray(data.channels)) {
             channelsFromServer = data.channels;
@@ -1601,20 +1550,15 @@ const canAccessChannelByTier = (channel) => {
     } catch (_) {
         try {
             const response = await Api.getChannels();
-            channelsLastFailureRef.current = 0;
             if (Array.isArray(response?.data)) {
                 channelsFromServer = response.data;
             } else if (Array.isArray(response?.data?.channels)) {
                 channelsFromServer = response.data.channels;
             }
         } catch (error) {
-            channelsLastFailureRef.current = Date.now();
-            const isNetwork = (error?.code === 'ERR_NETWORK') || (error?.message || '').includes('Network');
-            if (!isNetwork) console.warn('Failed to fetch channels from API:', error?.message || error);
+            console.warn('Failed to fetch channels from API:', error?.message || error);
             if (cachedChannels.length > 0) return channelListRef.current;
         }
-    } finally {
-        channelsFetchInFlightRef.current = false;
     }
 
     if (channelsFromServer.length > 0) {
@@ -1658,7 +1602,7 @@ const canAccessChannelByTier = (channel) => {
     }
 
     return sortedChannels;
-}, [isAuthenticated, sortChannels, getCurrentUserRole]);
+}, [isAuthenticated, sortChannels]);
     
     // Initialize WebSocket connection for real-time messaging
     const enableRealtime = useMemo(() => {
@@ -1723,34 +1667,32 @@ const {
     
     // Trigger notifications and update badges
     if (!isCurrentChannel && !isOwnMessage) {
-      const msgChannel = channelList.find(c => String(c.id) === String(messageChannelId));
-      const isAnnouncements = msgChannel?.category === 'announcements';
-      const isMuted = mutedChannels.has(String(messageChannelId));
-
-      // Always update badge (even muted channels show badge count)
       updateChannelBadge(messageChannelId, 'unread');
-      if (isMentioned) updateChannelBadge(messageChannelId, 'mentions');
-
-      // Only send toast notification if not muted, OR always for announcements/mentions
-      if (!isMuted || isAnnouncements || isMentioned) {
-        const channelName = msgChannel?.name || 'a channel';
-        if (isMentioned) {
-          triggerNotification(
-            'mention',
-            `You were mentioned in #${channelName}`,
-            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-            userId
-          );
-        } else if (!isMuted) {
-          triggerNotification(
-            'message',
-            `New message in #${channelName}`,
-            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-            null
-          );
-        }
+      if (isMentioned) {
+        updateChannelBadge(messageChannelId, 'mentions');
+      }
+      
+      const msgChannel = channelList.find(c => String(c.id) === String(messageChannelId));
+      const channelName = msgChannel?.name || 'a channel';
+      const isAnnouncements = msgChannel?.category === 'announcements';
+      const isMuted = isChannelMuted(messageChannelId);
+      
+      if (isMentioned) {
+        triggerNotification(
+          'mention',
+          `You were mentioned in #${channelName}`,
+          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+          userId
+        );
+      } else if (!isMuted || isAnnouncements) {
+        triggerNotification(
+          'message',
+          `New message in #${channelName}`,
+          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+          null
+        );
       }
     } else if (isCurrentChannel && isMentioned && !isOwnMessage) {
       triggerNotification(
@@ -1815,7 +1757,6 @@ return newMessages;
 
     const messagesRef = useRef(messages);
     messagesRef.current = messages;
-    const messagesPollInFlightRef = useRef(false);
 
     useEffect(() => {
         if (!addReconnectListener) return;
@@ -2040,17 +1981,15 @@ const renderMessageContent = (content, messageFile) => {
                 totalMessages: (currentUser.totalMessages || 0) + 1
             };
             
-            // Save to localStorage immediately (guard quota)
-            try {
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-            } catch (e) {
-                if (e.name === 'QuotaExceededError' || e.code === 22) {
-                    const minimal = { id: updatedUser.id, email: updatedUser.email, role: updatedUser.role, xp: updatedUser.xp, level: updatedUser.level, username: updatedUser.username };
-                    try { localStorage.setItem('user', JSON.stringify(minimal)); } catch (_) {}
-                }
-            }
+            // Save to localStorage immediately
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            
+            // Update state and persist so sidebar shows new level immediately
             setStoredUser(updatedUser);
             setUserLevel(newLevel);
+            try {
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+            } catch (e) { /* ignore */ }
             
             // Check if user leveled up
             const leveledUp = newLevel > oldLevel;
@@ -2171,6 +2110,48 @@ const renderMessageContent = (content, messageFile) => {
     };
     
     // XP calculation is now handled by the imported calculateMessageXP function from xpSystem.js
+
+    // Get user's role - check subscription status and plan
+const getCurrentUserRole = () => {
+    if (isSuperAdminUser) return 'super_admin';
+    if (isAdminUser) return 'admin';
+    
+    // Check subscription status and plan from user object
+    const subscriptionStatus = storedUser?.subscription_status;
+    const subscriptionPlan = storedUser?.subscription_plan;
+    const userRole = storedUser?.role?.toLowerCase() || 'free';
+    
+    // If user has active subscription, ensure role matches plan
+    if (subscriptionStatus === 'active') {
+        if (subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'A7FX') {
+            return 'a7fx';
+        }
+        if (subscriptionPlan === 'aura' || subscriptionPlan === 'premium') {
+            return 'premium';
+        }
+        // If no plan specified but has active subscription, check role
+        if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
+            return userRole;
+        }
+        // Default to premium if subscription is active but no plan specified
+        return 'premium';
+    }
+    
+    // If subscription is inactive/expired, downgrade to free
+    if (subscriptionStatus === 'inactive' || subscriptionStatus === 'cancelled' || subscriptionStatus === 'expired') {
+        return 'free';
+    }
+    
+    // Check entitlements context for tier information
+    if (entitlements?.tier) {
+        const tier = entitlements.tier.toLowerCase();
+        if (tier === 'elite' || tier === 'a7fx') return 'a7fx';
+        if (tier === 'premium' || tier === 'aura') return 'premium';
+    }
+    
+    // Return stored role or default to free
+    return userRole || 'free';
+};
 
     // Get user's courses
     const getUserCourses = () => {
@@ -2764,8 +2745,7 @@ if (window.requestAnimationFrame) {
             if (cachedMessages.length > 0) {
                 setMessages(cachedMessages);
             } else {
-                const isNetwork = (apiError?.message || '').includes('fetch') || (apiError?.message || '').includes('Network');
-                if (!isNetwork) console.warn('Backend API unavailable, no cached messages:', apiError.message);
+                console.warn('Backend API unavailable, no cached messages:', apiError.message);
             }
         }
     } finally {
@@ -3118,9 +3098,7 @@ if (window.requestAnimationFrame) {
             }
             return false;
         } catch (error) {
-            const is500 = error?.response?.status === 500;
-            const isNetwork = error?.code === 'ERR_NETWORK' || (error?.message || '').includes('Network');
-            if (!is500 && !isNetwork) console.warn('Error checking subscription from database:', error?.message || error);
+            console.error('Error checking subscription from database:', error);
             // Fallback to localStorage check
             return checkSubscriptionLocal();
         }
@@ -3353,16 +3331,9 @@ if (window.requestAnimationFrame) {
                 totalMessages: storedUserData.totalMessages || 0
             };
             
-            // Save back to localStorage if we added new fields (guard quota)
+            // Save back to localStorage if we added new fields
             if (!storedUserData.xp || !storedUserData.level) {
-                try {
-                    localStorage.setItem('user', JSON.stringify(enhancedUser));
-                } catch (e) {
-                    if (e.name === 'QuotaExceededError' || e.code === 22) {
-                        const minimal = { id: enhancedUser.id, email: enhancedUser.email, role: enhancedUser.role, xp: enhancedUser.xp, level: enhancedUser.level, username: enhancedUser.username };
-                        try { localStorage.setItem('user', JSON.stringify(minimal)); } catch (_) {}
-                    }
-                }
+                localStorage.setItem('user', JSON.stringify(enhancedUser));
             }
             
             setStoredUser(enhancedUser);
@@ -3382,7 +3353,13 @@ if (window.requestAnimationFrame) {
             // Set user level
             setUserLevel(calculatedLevel);
             
-            // (User data is polled by 5s initial + 90s interval in XP effect; no extra fetch here to avoid request storm)
+            // Fetch latest user data from API to ensure XP/level are up-to-date
+            if (storedUserData.id) {
+                // Small delay to ensure component is ready
+                setTimeout(() => {
+                    fetchLatestUserData(storedUserData.id);
+                }, 500);
+            }
             
             // If coming from payment success, immediately check subscription status from DB
             if ((paymentSuccess || sessionId) && storedUserData.id) {
@@ -3392,7 +3369,7 @@ if (window.requestAnimationFrame) {
                 }, 500);
             }
         }
-    }, [navigate, authUser, checkSubscriptionFromDB, refreshEntitlements, refreshChannelList]);
+    }, [navigate, authUser, checkSubscriptionFromDB, fetchLatestUserData, refreshEntitlements, refreshChannelList]);
 
     // Prevent page scrolling on Community only - Discord-like behavior; always restore on unmount/route
     useEffect(() => {
@@ -3468,13 +3445,18 @@ if (window.requestAnimationFrame) {
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Refresh channel list less frequently to avoid ERR_INSUFFICIENT_RESOURCES
-        // Initial load is from mount effect; here we refresh every 90s and only if not in backoff
+        // Refresh channel list less frequently to improve performance
+        // Initial load happens immediately, then refresh every 60 seconds
         const intervalId = setInterval(() => {
+            // Only refresh if API is working to avoid spam
             checkApiConnectivity().then((apiWorking) => {
-                if (apiWorking) refreshChannelList().catch(() => {});
+                if (apiWorking) {
+                    refreshChannelList().catch((err) => {
+                        console.warn('Failed to refresh channel list:', err.message);
+                    });
+                }
             });
-        }, 90000);
+        }, 60000); // Reduced from 30s to 60s
 
         return () => clearInterval(intervalId);
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
@@ -3572,8 +3554,8 @@ if (window.requestAnimationFrame) {
         // Update immediately
         updateConnectionStatus();
         
-        // Update status every 10 seconds (reduces request volume; 2s was contributing to ERR_INSUFFICIENT_RESOURCES)
-        const statusCheckInterval = setInterval(updateConnectionStatus, 10000);
+        // Update status every 2 seconds for real-time updates (optimized for production)
+        const statusCheckInterval = setInterval(updateConnectionStatus, 2000);
         
         return () => clearInterval(statusCheckInterval);
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
@@ -3635,16 +3617,17 @@ if (window.requestAnimationFrame) {
         }
     }, [selectedChannel?.id, clearChannelBadge]);
 
-    // Poll for new messages when WebSocket is unavailable (avoid ERR_INSUFFICIENT_RESOURCES: throttle polling)
+    // Poll for new messages - Fast delivery even under high traffic
+    // When WebSocket is down: poll every 200ms for near-instant fallback
+    // When WebSocket is connected: backup poll every 400ms to catch missed messages (multi-device reliability)
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
         
-        // Slower intervals to prevent ERR_INSUFFICIENT_RESOURCES (15s when WS up, 10s when down)
-        const pollInterval = isConnected ? 15000 : 10000;
+        // Poll interval: 200ms when WS down, 400ms backup when WS connected (faster delivery)
+        const pollInterval = isConnected ? 400 : 200;
         
+        // Start polling immediately
         const pollMessages = async () => {
-            if (messagesPollInFlightRef.current) return;
-            messagesPollInFlightRef.current = true;
             try {
                 const msgs = messagesRef.current || [];
                 const numericIds = msgs
@@ -3736,21 +3719,16 @@ if (window.requestAnimationFrame) {
                 }
             } catch (err) {
                 // Silently handle errors to avoid console spam
-            } finally {
-                messagesPollInFlightRef.current = false;
             }
         };
         
-        // Poll after short delay on mount/channel change (avoid stacking with other requests)
-        const initialDelayId = setTimeout(() => pollMessages(), 2000);
+        // Poll immediately on mount/channel change
+        pollMessages();
         
         // Then poll at regular intervals
         const pollTimer = setInterval(pollMessages, pollInterval);
 
-        return () => {
-            clearTimeout(initialDelayId);
-            clearInterval(pollTimer);
-        };
+        return () => clearInterval(pollTimer);
     }, [selectedChannel?.id, isAuthenticated, isConnected, selectedChannel, storedUser, userId, updateChannelBadge]);
 
     // Pusher realtime subscription (production - when configured)
@@ -3822,7 +3800,7 @@ if (window.requestAnimationFrame) {
         const welcomeMessage = {
             id: 'welcome-message',
             channelId: selectedChannel.id,
-            content: `🎉 WELCOME TO AURA TERMINAL COMMUNITY! 🎉
+            content: `🎉 WELCOME TO AURA FX COMMUNITY! 🎉
 
 Welcome to the most elite trading and wealth-building community on the planet! We're thrilled to have you join us on this incredible journey toward financial freedom and generational wealth.
 
@@ -3894,7 +3872,7 @@ Click the ✅ below to acknowledge you've read and agree to follow these rules, 
 Let's build generational wealth together! 💰🚀`,
                     sender: {
                         id: 'system',
-                        username: 'AURA TERMINAL',
+                        username: 'AURA FX',
                         avatar: null,
                         role: 'admin'
                     },
@@ -3922,14 +3900,14 @@ Let's build generational wealth together! 💰🚀`,
             channelId: selectedChannel.id,
             content: `📢 **ANNOUNCEMENTS**
 
-Important updates and news from AURA TERMINAL will appear here.
+Important updates and news from AURA FX will appear here.
 
 Check back regularly for:
 • New features and platform updates
 • Trading insights and market analysis
 • Community events and challenges
 • Course updates and new content`,
-            sender: { id: 'system', username: 'AURA TERMINAL', avatar: null, role: 'admin' },
+            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -3961,7 +3939,7 @@ Earn XP by:
 • Sharing files and insights
 • Being active in discussions
 • Completing courses`,
-            sender: { id: 'system', username: 'AURA TERMINAL', avatar: null, role: 'admin' },
+            sender: { id: 'system', username: 'AURA FX', avatar: null, role: 'admin' },
             timestamp: new Date().toISOString(),
             file: null,
             isPlaceholder: true
@@ -5741,21 +5719,7 @@ if (!isAuthenticated && !hasToken) {
                                                     </span>
                                                 </span>
                                                 {channel.category !== 'announcements' && isAuthenticated && (
-                                                    <button
-                                                        title={mutedChannels.has(String(channel.id)) ? 'Unmute channel' : 'Mute channel'}
-                                                        onClick={(e) => { e.stopPropagation(); toggleMuteChannel(channel.id, channel.category); }}
-                                                        style={{
-                                                            background: 'none', border: 'none', cursor: 'pointer',
-                                                            color: mutedChannels.has(String(channel.id)) ? '#ef4444' : 'transparent',
-                                                            padding: '2px 4px', borderRadius: '4px', fontSize: '0.7rem',
-                                                            opacity: 0,
-                                                            transition: 'opacity 0.15s, color 0.15s'
-                                                        }}
-                                                        className="channel-mute-btn"
-                                                        aria-label={mutedChannels.has(String(channel.id)) ? 'Unmute' : 'Mute'}
-                                                    >
-                                                        <FaBell />
-                                                    </button>
+                                                    <ChannelMuteButton channel={channel} userId={userId} />
                                                 )}
                                                 {(hasUnread || hasMentions) && (
                                                     <span className="channel-badge" style={{
@@ -6016,7 +5980,7 @@ if (!isAuthenticated && !hasToken) {
                                     let price = '';
                                     
                                     if (accessLevel === 'premium') {
-                                        subscriptionType = 'Aura Terminal Premium';
+                                        subscriptionType = 'Aura FX Premium';
                                         price = '£99/month';
                                     } else if (accessLevel === 'a7fx' || accessLevel === 'elite') {
                                         subscriptionType = 'A7FX Elite';
@@ -6408,7 +6372,7 @@ if (!isAuthenticated && !hasToken) {
                                                         const userId = message.sender?.id || message.userId;
                                                         if (!userId) return;
                                                         if (String(userId).toLowerCase() === 'system') {
-                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA TERMINAL' });
+                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
                                                             setShowProfileModal(true);
                                                             return;
                                                         }
@@ -6475,7 +6439,7 @@ if (!isAuthenticated && !hasToken) {
                                                                     const userId = message.sender?.id || message.userId;
                                                                     if (!userId) return;
                                                                     if (String(userId).toLowerCase() === 'system') {
-                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA TERMINAL' });
+                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
                                                                         setShowProfileModal(true);
                                                                         return;
                                                                     }
@@ -7295,7 +7259,7 @@ if (!isAuthenticated && !hasToken) {
                     </>
                 ) : (
                     <div className="no-channel-selected">
-                        <h2>Welcome to AURA TERMINAL Community</h2>
+                        <h2>Welcome to AURA FX Community</h2>
                         <p>Select a channel to start chatting</p>
                     </div>
                 )}
@@ -7435,7 +7399,7 @@ if (!isAuthenticated && !hasToken) {
                                         <option value="open">Open - Everyone can view and post</option>
                                         <option value="read-only">Read Only - View only</option>
                                         <option value="admin-only">Admin Only</option>
-                                        <option value="premium">Premium - Subscription required (Aura Terminal £99/mo)</option>
+                                        <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
                                         <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
                                     </select>
                                 </div>
@@ -7931,7 +7895,7 @@ if (!isAuthenticated && !hasToken) {
                                 <option value="open">Open - Everyone can view and post</option>
                                 <option value="read-only">Read-Only - Everyone can view, only admins can post</option>
                                 <option value="admin-only">Admin-Only - Only admins can view and post</option>
-                                <option value="premium">Premium - Subscription required (Aura Terminal £99/mo)</option>
+                                <option value="premium">Premium - Subscription required (Aura FX £99/mo)</option>
                                 <option value="a7fx">A7FX Elite - Subscription required (A7FX £250/mo)</option>
                             </select>
                         </div>
@@ -8144,7 +8108,7 @@ if (!isAuthenticated && !hasToken) {
                                 marginBottom: '24px'
                             }}>
                                 <p style={{ color: '#fff', margin: 0, fontSize: '0.9rem' }}>
-                                    <strong>💡 This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura Terminal Premium (£99/month)' : 'A7FX Elite (£250/month)'}
+                                    <strong>💡 This channel requires:</strong> {requiredSubscriptionType === 'premium' ? 'Aura FX Premium (£99/month)' : 'A7FX Elite (£250/month)'}
                                 </p>
                             </div>
                         )}
@@ -8217,7 +8181,7 @@ if (!isAuthenticated && !hasToken) {
                                 </button>
                             </div>
 
-                            {/* Aura Terminal Premium Plan */}
+                            {/* Aura FX Premium Plan */}
                             <div style={{
                                 padding: '24px',
                                 background: requiredSubscriptionType === 'premium' 
@@ -8244,7 +8208,7 @@ if (!isAuthenticated && !hasToken) {
                                         fontWeight: 'bold'
                                     }}>REQUIRED</div>
                                 )}
-                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura Terminal</h3>
+                                <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura FX</h3>
                                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
@@ -8293,7 +8257,7 @@ if (!isAuthenticated && !hasToken) {
                                         e.target.style.transform = 'translateY(0)';
                                     }}
                                 >
-                                    Select Aura Terminal
+                                    Select Aura FX
                                 </button>
                             </div>
 
@@ -8333,7 +8297,7 @@ if (!isAuthenticated && !hasToken) {
                                     paddingLeft: '20px',
                                     listStyle: 'none'
                                 }}>
-                                    <li style={{ marginBottom: '8px' }}>✅ Everything in Aura Terminal</li>
+                                    <li style={{ marginBottom: '8px' }}>✅ Everything in Aura FX</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Elite-only channels</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Direct founder access</li>
                                     <li style={{ marginBottom: '8px' }}>✅ Daily Briefs</li>
@@ -8659,7 +8623,7 @@ if (!isAuthenticated && !hasToken) {
                                         lineHeight: '1.6',
                                         margin: '0 0 16px 0'
                                     }}>
-                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura Terminal Premium</strong> subscription (£99/month) to access.
+                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura FX Premium</strong> subscription (£99/month) to access.
                                     </p>
                                     {lockedChannelInfo.currentRole === 'free' ? (
                                         <div style={{
