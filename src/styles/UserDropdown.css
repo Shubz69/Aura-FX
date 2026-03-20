@@ -1,442 +1,470 @@
 /* ============================================================
-   USER PROFILE DROPDOWN — AURA TERMINAL  |  Matched to Home Theme
+   USER PROFILE DROPDOWN — AURA TERMINAL  |  Gold Theme
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* ── CSS Variables (mirrored from home.css) ───────────────── */
+/* ── CSS Variables ─────────────────────────────────────────── */
 :root {
-    --bg:          #0a0a0a;
-    --bg-card:     rgba(255,255,255,0.03);
-    --bg-card-h:   rgba(255,255,255,0.055);
-    --border:      rgba(255,255,255,0.08);
-    --border-h:    rgba(255,255,255,0.22);
-    --text:        #ffffff;
-    --text-muted:  rgba(255,255,255,0.55);
-    --accent:      rgba(139,92,246,0.55);
-    --accent-solid: #8b5cf6;
-    --accent-blue: rgba(99,179,237,0.45);
-    --accent-blue-solid: #63b3ed;
-    --radius:      10px;
-    --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
+  --bg:           #03020D;
+  --gold:         #EAA960;
+  --gold-bright:  #F8C37D;
+  --gold-warm:    #D48D44;
+  --gold-soft:    #EABB80;
+  --gold-pale:    #FDE8C4;
+  --gold-dim:     rgba(234, 169, 96, 0.32);
+  --gold-glow:    rgba(234, 169, 96, 0.22);
+  --gold-glass:   rgba(234, 169, 96, 0.08);
+  --gold-ultra:   rgba(234, 169, 96, 0.035);
+  --border:       rgba(255, 255, 255, 0.072);
+  --border-h:     rgba(255, 255, 255, 0.16);
+  --text:         #ffffff;
+  --text-muted:   rgba(200, 196, 232, 0.72);
+  --text-dim:     rgba(178, 175, 218, 0.45);
+  --radius:       10px;
+  --transition:   0.26s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Wrapper ──────────────────────────────────────────────── */
+/* ── Wrapper ───────────────────────────────────────────────── */
 .user-profile {
-    position: relative;
-    display: inline-block;
-    font-family: 'Space Grotesk', sans-serif;
+  position: relative;
+  display: inline-block;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
-/* ── Overlay ──────────────────────────────────────────────── */
+/* ── Overlay ───────────────────────────────────────────────── */
 .user-dropdown-overlay {
-    position: fixed;
-    inset: 0;
-    background: transparent;
-    z-index: 10001;
-    cursor: default;
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 10001;
+  cursor: default;
 }
 
-/* ── Trigger Icon ─────────────────────────────────────────── */
+/* ── Trigger Icon ──────────────────────────────────────────── */
 .user-icon {
-    cursor: pointer;
-    font-size: 22px;
-    color: rgba(255,255,255,0.75);
-    transition: all var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    backdrop-filter: blur(8px);
-    position: relative;
-    overflow: hidden;
+  cursor: pointer;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.70);
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Shimmer line on top */
+/* Gold shimmer line on top */
 .user-icon::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(99,179,237,0.4), transparent);
-    opacity: 0;
-    transition: opacity var(--transition);
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234, 169, 96, 0.6),
+    rgba(248, 195, 125, 0.5),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity var(--transition);
 }
 
 .user-icon:hover {
-    color: #ffffff;
-    border-color: rgba(139,92,246,0.45);
-    background: rgba(139,92,246,0.1);
-    box-shadow: 0 0 18px rgba(139,92,246,0.25);
+  color: #ffffff;
+  border-color: var(--gold-dim);
+  background: var(--gold-glass);
+  box-shadow:
+    0 0 18px var(--gold-glow),
+    0 0 0 1px rgba(234, 169, 96, 0.12);
 }
 
 .user-icon:hover::before {
-    opacity: 1;
+  opacity: 1;
 }
 
-/* ── Dropdown Panel ───────────────────────────────────────── */
+/* ── Dropdown Panel ────────────────────────────────────────── */
 .user-dropdown {
-    position: fixed;
-    top: calc(55px + env(safe-area-inset-top, 0) + 10px);
-    right: 16px;
-    width: 260px;
-    font-family: 'Space Grotesk', sans-serif;
+  position: fixed;
+  top: calc(55px + env(safe-area-inset-top, 0) + 10px);
+  right: 16px;
+  width: 268px;
+  font-family: 'Space Grotesk', sans-serif;
 
-    /* Glassmorphism — matches feature cards */
-    background: rgba(14, 14, 14, 0.92);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    box-shadow:
-        0 20px 60px rgba(0,0,0,0.7),
-        0 0 0 1px rgba(139,92,246,0.08),
-        inset 0 1px 0 rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    overflow: hidden;
-    z-index: 10002;
+  /* Deep glass with gold tint */
+  background: rgba(5, 5, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.082);
+  border-radius: 18px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.75),
+    0 0 0 0.5px rgba(234, 169, 96, 0.10),
+    0 0 40px rgba(234, 169, 96, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(22px) saturate(1.1);
+  -webkit-backdrop-filter: blur(22px) saturate(1.1);
+  overflow: hidden;
+  z-index: 10002;
 
-    animation: dropdownAppear 0.32s cubic-bezier(0.4,0,0.2,1) both;
-    transform-origin: top right;
+  animation: dropdownAppear 0.30s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: top right;
 }
 
-/* Top accent shimmer line — matches feature-card::before */
+/* Gold shimmer line on top */
 .user-dropdown::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(139,92,246,0.7) 35%,
-        rgba(99,179,237,0.55) 65%,
-        transparent 100%
-    );
-    z-index: 1;
+  content: '';
+  position: absolute;
+  top: 0; left: 6%; right: 18%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(234, 169, 96, 0.55) 40%,
+    rgba(248, 195, 125, 0.40) 70%,
+    transparent 100%
+  );
+  z-index: 1;
 }
 
-/* Subtle inner purple glow at top — matches feature-card::after */
+/* Ambient gold glow at top */
 .user-dropdown::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 120px;
-    background: radial-gradient(ellipse at top center, rgba(139,92,246,0.07) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 140px;
+  background: radial-gradient(ellipse at top center,
+    rgba(234, 169, 96, 0.065) 0%,
+    transparent 72%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 @keyframes dropdownAppear {
-    from {
-        opacity: 0;
-        transform: translateY(-12px) scale(0.96);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-/* ── User Info Header ─────────────────────────────────────── */
-.user-dropdown-header {
-    position: relative;
-    z-index: 2;
-    padding: 18px 18px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+/* ── Email Header ──────────────────────────────────────────── */
+.user-dropdown > p {
+  margin: 0;
+  padding: 16px 18px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.38);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.058);
+  text-align: center;
+  letter-spacing: 0.10em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  z-index: 2;
 }
 
-.user-dropdown p {
-    margin: 0;
-    padding: 16px 18px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: rgba(255,255,255,0.6);
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    text-align: center;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    position: relative;
-    z-index: 2;
+/* Gold dot indicator before email */
+.user-dropdown > p::before {
+  content: '◈';
+  margin-right: 7px;
+  color: rgba(234, 169, 96, 0.50);
+  font-size: 0.55rem;
+  vertical-align: middle;
 }
 
-/* ── Avatar Image ─────────────────────────────────────────── */
-.avatar-img {
-    display: block;
-    margin: 0 auto;
-    border: 1.5px solid rgba(139,92,246,0.4);
-    box-shadow: 0 0 16px rgba(139,92,246,0.2);
-    transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.avatar-img:hover {
-    border-color: rgba(139,92,246,0.7);
-    box-shadow: 0 0 24px rgba(139,92,246,0.35);
-}
-
-/* ── Avatar Dropdown Select ───────────────────────────────── */
-.avatar-dropdown {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.08);
-    margin-top: 8px;
-    background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.8);
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-    transition: border-color var(--transition), background var(--transition);
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-    position: relative;
-    z-index: 2;
-}
-
-.avatar-dropdown:hover,
-.avatar-dropdown:focus {
-    border-color: rgba(139,92,246,0.4);
-    background: rgba(139,92,246,0.08);
-}
-
-/* ── Menu Items Container ─────────────────────────────────── */
-.user-dropdown-menu {
-    padding: 6px 0;
-    position: relative;
-    z-index: 2;
-}
-
-/* ── Links & Buttons ──────────────────────────────────────── */
+/* ── Menu Items ────────────────────────────────────────────── */
 .user-dropdown a,
 .user-dropdown button {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 11px 18px;
-    color: rgba(255,255,255,0.75);
-    text-decoration: none;
-    transition: all var(--transition);
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    position: relative;
-    overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 11px 18px;
+  color: rgba(255, 255, 255, 0.68);
+  text-decoration: none;
+  transition: all var(--transition);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  z-index: 2;
 }
 
-/* Left accent bar — matches stat-item::before pattern */
+/* Gold left accent bar */
 .user-dropdown a::before,
 .user-dropdown button::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 12%;
-    bottom: 12%;
-    width: 2px;
-    background: linear-gradient(
-        180deg,
-        rgba(139,92,246,0) 0%,
-        rgba(139,92,246,0.9) 50%,
-        rgba(99,179,237,0.6) 100%
-    );
-    border-radius: 2px;
-    opacity: 0;
-    transform: scaleY(0.4);
-    transition: opacity var(--transition), transform var(--transition);
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14%;
+  bottom: 14%;
+  width: 2px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    var(--gold) 50%,
+    var(--gold-warm) 100%
+  );
+  border-radius: 2px;
+  opacity: 0;
+  transform: scaleY(0.3);
+  transition: opacity var(--transition), transform var(--transition);
+  box-shadow: 0 0 6px var(--gold-glow);
 }
 
-/* Hover background glow */
+/* Hover state */
 .user-dropdown a:hover,
 .user-dropdown button:hover {
-    background: rgba(139,92,246,0.07);
-    color: #ffffff;
-    padding-left: 22px;
+  background: var(--gold-ultra);
+  color: #ffffff;
+  padding-left: 22px;
 }
 
 .user-dropdown a:hover::before,
 .user-dropdown button:hover::before {
-    opacity: 1;
-    transform: scaleY(1);
+  opacity: 1;
+  transform: scaleY(1);
 }
 
-/* Danger / logout variant */
-.user-dropdown button.danger,
-.user-dropdown a.danger {
-    color: rgba(239, 68, 68, 0.75);
+/* Logout / danger */
+.user-dropdown button:last-child {
+  color: rgba(240, 61, 95, 0.72);
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+  margin-top: 2px;
 }
 
-.user-dropdown button.danger::before,
-.user-dropdown a.danger::before {
-    background: linear-gradient(180deg, rgba(239,68,68,0) 0%, rgba(239,68,68,0.9) 50%, rgba(239,68,68,0.4) 100%);
+.user-dropdown button:last-child::before {
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(240, 61, 95, 0.9) 50%,
+    rgba(240, 61, 95, 0.5) 100%
+  );
+  box-shadow: 0 0 6px rgba(240, 61, 95, 0.4);
 }
 
-.user-dropdown button.danger:hover,
-.user-dropdown a.danger:hover {
-    background: rgba(239,68,68,0.07);
-    color: #f87171;
+.user-dropdown button:last-child:hover {
+  background: rgba(240, 61, 95, 0.07);
+  color: #f87171;
 }
 
-/* ── Dropdown Icon ────────────────────────────────────────── */
+/* ── Dropdown Icon ─────────────────────────────────────────── */
 .dropdown-icon {
-    margin-right: 12px;
-    font-size: 1rem;
-    color: rgba(139,92,246,0.8);
-    flex-shrink: 0;
-    transition: color var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
-    background: rgba(139,92,246,0.08);
-    border: 1px solid rgba(139,92,246,0.15);
+  margin-right: 12px;
+  font-size: 0.95rem;
+  color: rgba(234, 169, 96, 0.72);
+  flex-shrink: 0;
+  transition: color var(--transition), background var(--transition),
+              border-color var(--transition), box-shadow var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--gold-ultra);
+  border: 1px solid rgba(234, 169, 96, 0.15);
 }
 
 .user-dropdown a:hover .dropdown-icon,
 .user-dropdown button:hover .dropdown-icon {
-    color: #a78bfa;
-    background: rgba(139,92,246,0.15);
-    border-color: rgba(139,92,246,0.35);
+  color: var(--gold-bright);
+  background: var(--gold-glass);
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 10px var(--gold-glow);
 }
 
-.dropdown-icon.danger-icon {
-    color: rgba(239,68,68,0.75);
-    background: rgba(239,68,68,0.07);
-    border-color: rgba(239,68,68,0.15);
+/* Logout icon override */
+.user-dropdown button:last-child .dropdown-icon {
+  color: rgba(240, 61, 95, 0.70);
+  background: rgba(240, 61, 95, 0.06);
+  border-color: rgba(240, 61, 95, 0.14);
 }
 
-/* ── Badge ────────────────────────────────────────────────── */
+.user-dropdown button:last-child:hover .dropdown-icon {
+  color: #f87171;
+  background: rgba(240, 61, 95, 0.10);
+  border-color: rgba(240, 61, 95, 0.28);
+  box-shadow: 0 0 8px rgba(240, 61, 95, 0.30);
+}
+
+/* ── dropdown-item (needed for Link children) ──────────────── */
 .dropdown-item {
-    display: flex;
-    align-items: center;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
+/* ── Badge ─────────────────────────────────────────────────── */
 .dropdown-badge {
-    position: absolute;
-    right: 16px;
-    background: linear-gradient(135deg, rgba(139,92,246,0.9), rgba(99,179,237,0.8));
-    color: white;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.65rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    letter-spacing: 0;
-    box-shadow: 0 0 10px rgba(139,92,246,0.5);
-    animation: badgePulse 2.4s ease-in-out infinite;
+  position: absolute;
+  right: 16px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-warm) 100%);
+  color: #000;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.62rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 0;
+  box-shadow: 0 0 10px var(--gold-glow);
+  animation: badgePulse 2.4s ease-in-out infinite;
 }
 
 @keyframes badgePulse {
-    0%, 100% { box-shadow: 0 0 8px rgba(139,92,246,0.4); transform: scale(1); }
-    50%       { box-shadow: 0 0 16px rgba(139,92,246,0.7); transform: scale(1.1); }
+  0%, 100% { box-shadow: 0 0 8px var(--gold-glow); transform: scale(1); }
+  50%       { box-shadow: 0 0 16px rgba(234, 169, 96, 0.55); transform: scale(1.12); }
 }
 
-/* ── Divider ──────────────────────────────────────────────── */
+/* ── Divider ───────────────────────────────────────────────── */
 .dropdown-divider {
-    height: 1px;
-    margin: 4px 14px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
-    border: none;
-    position: relative;
-    z-index: 2;
+  height: 1px;
+  margin: 4px 14px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234, 169, 96, 0.12),
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  border: none;
+  position: relative;
+  z-index: 2;
 }
 
-/* ── Staggered Fade-In Animations ────────────────────────── */
+/* ── Staggered fade-in ─────────────────────────────────────── */
 .user-dropdown a,
 .user-dropdown button {
-    animation: fadeInItem 0.35s cubic-bezier(0.4,0,0.2,1) both;
+  animation: fadeInItem 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 @keyframes fadeInItem {
-    from { opacity: 0; transform: translateX(-8px); }
-    to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-.user-dropdown a:nth-child(1), .user-dropdown button:nth-child(1) { animation-delay: 0.04s; }
-.user-dropdown a:nth-child(2), .user-dropdown button:nth-child(2) { animation-delay: 0.09s; }
-.user-dropdown a:nth-child(3), .user-dropdown button:nth-child(3) { animation-delay: 0.14s; }
-.user-dropdown a:nth-child(4), .user-dropdown button:nth-child(4) { animation-delay: 0.19s; }
-.user-dropdown a:nth-child(5), .user-dropdown button:nth-child(5) { animation-delay: 0.24s; }
-.user-dropdown a:nth-child(6), .user-dropdown button:nth-child(6) { animation-delay: 0.29s; }
+.user-dropdown a:nth-child(1),  .user-dropdown button:nth-child(1)  { animation-delay: 0.04s; }
+.user-dropdown a:nth-child(2),  .user-dropdown button:nth-child(2)  { animation-delay: 0.08s; }
+.user-dropdown a:nth-child(3),  .user-dropdown button:nth-child(3)  { animation-delay: 0.12s; }
+.user-dropdown a:nth-child(4),  .user-dropdown button:nth-child(4)  { animation-delay: 0.16s; }
+.user-dropdown a:nth-child(5),  .user-dropdown button:nth-child(5)  { animation-delay: 0.20s; }
+.user-dropdown a:nth-child(6),  .user-dropdown button:nth-child(6)  { animation-delay: 0.24s; }
+.user-dropdown a:nth-child(7),  .user-dropdown button:nth-child(7)  { animation-delay: 0.28s; }
+.user-dropdown a:nth-child(8),  .user-dropdown button:nth-child(8)  { animation-delay: 0.32s; }
+.user-dropdown a:nth-child(9),  .user-dropdown button:nth-child(9)  { animation-delay: 0.36s; }
+.user-dropdown a:nth-child(10), .user-dropdown button:nth-child(10) { animation-delay: 0.40s; }
 
-/* ── Tablet & phone: match desktop panel (purple icons, caps) ─────────── */
+/* ── Avatar ────────────────────────────────────────────────── */
+.avatar-img {
+  display: block;
+  margin: 0 auto;
+  border: 1.5px solid var(--gold-dim);
+  box-shadow: 0 0 16px var(--gold-glow);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.avatar-img:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 24px rgba(234, 169, 96, 0.40);
+}
+
+/* ── Avatar Select ─────────────────────────────────────────── */
+.avatar-dropdown {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.80rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  z-index: 2;
+}
+
+.avatar-dropdown:hover,
+.avatar-dropdown:focus {
+  border-color: var(--gold-dim);
+  background: var(--gold-ultra);
+}
+
+/* ── Tablet / Mobile ───────────────────────────────────────── */
 @media (max-width: 1150px) {
-    .user-dropdown {
-        top: calc(56px + env(safe-area-inset-top, 0) + 8px);
-        right: max(12px, env(safe-area-inset-right, 0));
-        left: auto;
-        width: min(340px, calc(100vw - 20px));
-        max-width: min(340px, calc(100vw - 20px));
-        border-radius: 16px;
-        box-shadow:
-            0 24px 64px rgba(0, 0, 0, 0.75),
-            0 0 0 1px rgba(139, 92, 246, 0.12),
-            inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    }
+  .user-dropdown {
+    top: calc(56px + env(safe-area-inset-top, 0) + 8px);
+    right: max(12px, env(safe-area-inset-right, 0));
+    left: auto;
+    width: min(300px, calc(100vw - 20px));
+    max-width: min(300px, calc(100vw - 20px));
+    border-radius: 18px;
+    box-shadow:
+      0 28px 72px rgba(0, 0, 0, 0.80),
+      0 0 0 0.5px rgba(234, 169, 96, 0.12),
+      0 0 40px rgba(234, 169, 96, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  }
 
-    .user-dropdown p {
-        font-size: 0.72rem;
-        letter-spacing: 0.14em;
-        color: rgba(255, 255, 255, 0.5);
-        padding: 14px 16px 12px;
-    }
+  .user-dropdown > p {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    padding: 14px 16px 12px;
+  }
 
-    .user-dropdown a,
-    .user-dropdown button {
-        padding: 13px 16px;
-        font-size: 0.78rem;
-        letter-spacing: 0.16em;
-        min-height: 48px;
-        -webkit-tap-highlight-color: transparent;
-    }
+  .user-dropdown a,
+  .user-dropdown button {
+    padding: 13px 16px;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-    .user-dropdown .dropdown-icon {
-        width: 30px;
-        height: 30px;
-        font-size: 1.05rem;
-        color: #a78bfa;
-        background: rgba(139, 92, 246, 0.12);
-        border-color: rgba(139, 92, 246, 0.22);
-    }
+  .user-dropdown .dropdown-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+    color: var(--gold-soft);
+    background: var(--gold-glass);
+    border-color: rgba(234, 169, 96, 0.20);
+  }
 }
 
 @media (max-width: 380px) {
-    .user-dropdown {
-        width: calc(100vw - 16px);
-        max-width: none;
-        right: 8px;
-    }
+  .user-dropdown {
+    width: calc(100vw - 16px);
+    max-width: none;
+    right: 8px;
+  }
 }
 
-/* iPad landscape / small laptop touch */
 @media (min-width: 769px) and (max-width: 1150px) {
-    .user-dropdown {
-        width: min(300px, calc(100vw - 32px));
-        max-width: 300px;
-    }
+  .user-dropdown {
+    width: min(280px, calc(100vw - 32px));
+    max-width: 280px;
+  }
 }
