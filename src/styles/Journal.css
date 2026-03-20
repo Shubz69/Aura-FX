@@ -1,114 +1,216 @@
 /* =============================================================================
-   AURA JOURNAL – Premium Fintech Redesign
-   Matches AURA TERMINAL home.css: Space Grotesk, deep black, purple/blue accents
-   
-   UPDATES:
-   ✦ Reflection notes: edit + delete buttons
-   ✦ Task proof: multiple photo uploads with tap-to-view lightbox
-   ✦ Calendar: fully responsive (iPad Pro fix)
+   AURA JOURNAL — Premium Gold Theme
+   Matches AURA TERMINAL: #03020D bg, #EAA960 gold system, Space Grotesk + DM Mono
+   Full replacement for Journal.css — zero purple, full gold.
    ============================================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap');
 
-/* ── Motion ─────────────────────────────────────────────────── */
+/* ══ Keyframes ═══════════════════════════════════════════════════════════════ */
 @keyframes journal-fadeIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes journal-fadeInLeft {
-  from { opacity: 0; transform: translateX(-16px); }
+  from { opacity: 0; transform: translateX(-18px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes journal-scaleIn {
   from { opacity: 0; transform: scale(0.96); }
   to   { opacity: 1; transform: scale(1); }
 }
-
 @keyframes journal-dayAppear {
-  from { opacity: 0; transform: scale(0.8) translateY(4px); }
+  from { opacity: 0; transform: scale(0.78) translateY(4px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
-
-@keyframes journal-glowPulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(139,92,246,0.35), 0 0 20px rgba(139,92,246,0.15); }
-  50%       { box-shadow: 0 0 0 2px rgba(139,92,246,0.6),  0 0 32px rgba(139,92,246,0.25); }
-}
-
 @keyframes journal-trendShimmer {
   0%   { left: -60%; opacity: 0; }
   40%  { opacity: 1; }
   100% { left: 120%; opacity: 0; }
 }
-
 @keyframes journal-progressReveal {
   from { width: 0%; }
 }
-
 @keyframes journal-spin {
   to { transform: rotate(360deg); }
 }
-
-@keyframes glowPulse {
-  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-  50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.06); }
-}
-
-/* ── Lightbox animations ─────────────────────────────────────── */
 @keyframes journal-lightboxIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
 @keyframes journal-lightboxImgIn {
   from { opacity: 0; transform: scale(0.88) translateY(16px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
-
 @keyframes journal-lightboxOut {
   from { opacity: 1; }
   to   { opacity: 0; }
 }
-
-/* ── CSS Variables ───────────────────────────────────────────── */
-.journal-page {
-  --bg:            #0a0a0a;
-  --bg-card:       rgba(255,255,255,0.025);
-  --bg-card-h:     rgba(255,255,255,0.048);
-  --border:        rgba(255,255,255,0.07);
-  --border-h:      rgba(255,255,255,0.18);
-  --border-accent: rgba(139,92,246,0.35);
-  --text:          #ffffff;
-  --text-muted:    rgba(255,255,255,0.52);
-  --accent:        rgba(139,92,246,0.85);
-  --accent-soft:   rgba(139,92,246,0.15);
-  --accent-blue:   rgba(99,179,237,0.75);
-  --up:            #10b981;
-  --down:          #ef4444;
-  --radius:        12px;
-  --radius-lg:     18px;
-  --transition:    0.28s cubic-bezier(0.4,0,0.2,1);
+@keyframes cal-orbitSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes cal-todayPulse {
+  0%,100% { box-shadow: 0 0 0 0px rgba(234,169,96,0.45), 0 0 14px rgba(234,169,96,0.18); }
+  50%      { box-shadow: 0 0 0 3px rgba(234,169,96,0.14), 0 0 24px rgba(234,169,96,0.28); }
+}
+@keyframes cal-selectedGlow {
+  0%,100% { box-shadow: 0 4px 22px rgba(234,169,96,0.38), inset 0 1px 0 rgba(255,255,255,0.18); }
+  50%      { box-shadow: 0 6px 34px rgba(234,169,96,0.58), 0 0 0 1px rgba(234,169,96,0.28), inset 0 1px 0 rgba(255,255,255,0.18); }
+}
+@keyframes cal-dotPop {
+  from { transform: scale(0) translateY(2px); opacity: 0; }
+  to   { transform: scale(1) translateY(0);   opacity: 1; }
+}
+@keyframes cal-selectedSheen {
+  0%        { left: -100%; right: 100%; }
+  40%,100%  { left: 100%;  right: -100%; }
+}
+@keyframes cal-slideInRight {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes cal-slideInLeft {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes goldPulse {
+  0%,100% { opacity: 0.6; transform: translate(-50%,-50%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%,-50%) scale(1.06); }
+}
+@keyframes dotPulse {
+  0%,100% { opacity: 0.6; transform: scale(0.85); }
+  50%      { opacity: 1;   transform: scale(1.22); }
+}
+@keyframes card-popIn {
+  from { opacity: 0; transform: scale(0.90) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+@keyframes card-checkBounce {
+  0%   { transform: scale(0.5);  opacity: 0; }
+  60%  { transform: scale(1.28); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes card-doneStrike {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+@keyframes streakFlicker {
+  0%,100% { filter: drop-shadow(0 0 8px rgba(234,169,96,0.55)); }
+  50%      { filter: drop-shadow(0 0 18px rgba(234,169,96,0.90)); }
 }
 
-/* ── Scroll anchor ───────────────────────────────────────────── */
+/* ── Twinkling star animations — different speeds & phases ── */
+@keyframes twinkle-1 {
+  0%,100% { opacity: 0.15; transform: scale(0.8); }
+  50%     { opacity: 1.0;  transform: scale(1.4); }
+}
+@keyframes twinkle-2 {
+  0%,100% { opacity: 0.80; transform: scale(1.1); }
+  50%     { opacity: 0.18; transform: scale(0.7); }
+}
+@keyframes twinkle-3 {
+  0%     { opacity: 0.20; transform: scale(0.9); }
+  33%    { opacity: 1.0;  transform: scale(1.5); }
+  66%    { opacity: 0.45; transform: scale(1.0); }
+  100%   { opacity: 0.20; transform: scale(0.9); }
+}
+@keyframes twinkle-4 {
+  0%,100% { opacity: 0.55; transform: scale(1.0); box-shadow: 0 0 2px rgba(255,255,255,0.4); }
+  50%     { opacity: 1.0;  transform: scale(1.6); box-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.4); }
+}
+@keyframes twinkle-gold {
+  0%,100% { opacity: 0.30; transform: scale(0.85); box-shadow: 0 0 3px rgba(234,169,96,0.4); }
+  50%     { opacity: 1.0;  transform: scale(1.7);  box-shadow: 0 0 10px rgba(234,169,96,1.0), 0 0 20px rgba(234,169,96,0.5); }
+}
+@keyframes twinkle-blue {
+  0%,100% { opacity: 0.25; transform: scale(0.9); box-shadow: 0 0 2px rgba(120,160,255,0.3); }
+  50%     { opacity: 0.95; transform: scale(1.5); box-shadow: 0 0 8px rgba(120,160,255,0.9), 0 0 18px rgba(120,160,255,0.4); }
+}
+@keyframes nebula-drift {
+  0%,100% { opacity: 0.55; transform: scale(1.0) translateY(0); }
+  50%     { opacity: 0.80; transform: scale(1.05) translateY(-8px); }
+}
+@keyframes horizon-pulse {
+  0%,100% { opacity: 0.45; }
+  50%     { opacity: 0.72; }
+}
+
+/* ══ CSS Variables ═══════════════════════════════════════════════════════════ */
+.journal-page {
+  /* Background */
+  --bg:             #020610;
+  --bg-card:        rgba(8, 9, 22, 0.60);
+  --bg-card-h:      rgba(14, 16, 38, 0.78);
+  --bg-glass:       rgba(7, 8, 20, 0.52);
+
+  /* Borders */
+  --border:         rgba(255, 255, 255, 0.072);
+  --border-h:       rgba(255, 255, 255, 0.16);
+  --border-gold:    rgba(234, 169, 96, 0.32);
+
+  /* Gold system */
+  --gold:           #EAA960;
+  --gold-bright:    #F8C37D;
+  --gold-warm:      #D48D44;
+  --gold-soft:      #EABB80;
+  --gold-pale:      #FDE8C4;
+  --gold-dim:       rgba(234, 169, 96, 0.32);
+  --gold-glow:      rgba(234, 169, 96, 0.22);
+  --gold-glass:     rgba(234, 169, 96, 0.08);
+  --gold-ultra:     rgba(234, 169, 96, 0.035);
+
+  /* Text */
+  --text:           #FFFFFF;
+  --text-muted:     rgba(200, 196, 232, 0.72);
+  --text-dim:       rgba(178, 175, 218, 0.45);
+
+  /* Status */
+  --green:          #0FD98A;
+  --green-glass:    rgba(15, 217, 138, 0.08);
+  --green-glow:     rgba(15, 217, 138, 0.22);
+  --red:            #F03D5F;
+  --red-glass:      rgba(240, 61, 95, 0.08);
+
+  /* Shape */
+  --radius:         12px;
+  --radius-lg:      18px;
+  --radius-xl:      22px;
+
+  /* Glass */
+  --glass-shadow:
+    0 4px 24px rgba(0,0,0,0.52),
+    0 1px 0 rgba(255,255,255,0.058) inset,
+    0 0 0 0.5px rgba(255,255,255,0.036) inset;
+
+  --transition: 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-s: 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Gradients */
+  --grad-gold:  linear-gradient(130deg, var(--gold-pale) 0%, var(--gold-bright) 35%, var(--gold) 65%, var(--gold-warm) 100%);
+  --grad-green: linear-gradient(130deg, #6FFFC9, var(--green));
+  --grad-red:   linear-gradient(130deg, #FF8FA0, var(--red));
+  --line-gold:  linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-bright) 70%, transparent);
+}
+
+/* ══ Scroll anchor ═══════════════════════════════════════════════════════════ */
 #journal-top {
   scroll-margin-top: calc(70px + env(safe-area-inset-top, 0));
 }
 
-/* ── Base ────────────────────────────────────────────────────── */
+/* ══ Base ════════════════════════════════════════════════════════════════════ */
 .journal-page,
 .journal-page * {
   font-family: 'Space Grotesk', sans-serif;
   box-sizing: border-box;
 }
 
-/* ── Page Container ──────────────────────────────────────────── */
+/* ══ Page Container ══════════════════════════════════════════════════════════ */
 .journal-page {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  padding-top: 32px;
+  padding-top: 60px;
   padding-bottom: 64px;
   position: relative;
   overflow-x: hidden;
@@ -118,53 +220,235 @@
   max-width: 100%;
 }
 
-/* ── Starfield Background ────────────────────────────────────── */
+/* ══ SPACE BACKGROUND — Galaxy + Twinkling Stars ════════════════════════════ */
+
+/* Layer 1: Deep space nebula scene */
 .journal-page::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-color: #0a0a0a;
-  background-image:
-    radial-gradient(1px 1px at 8%  12%, rgba(255,255,255,0.55), transparent),
-    radial-gradient(1px 1px at 28% 8%,  rgba(255,255,255,0.45), transparent),
-    radial-gradient(0.8px 0.8px at 52% 18%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 74% 5%,  rgba(255,255,255,0.4), transparent),
-    radial-gradient(0.8px 0.8px at 91% 22%, rgba(255,255,255,0.48), transparent),
-    radial-gradient(1px 1px at 14% 45%, rgba(255,255,255,0.42), transparent),
-    radial-gradient(0.8px 0.8px at 38% 55%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 62% 72%, rgba(255,255,255,0.38), transparent),
-    radial-gradient(0.8px 0.8px at 85% 60%, rgba(255,255,255,0.45), transparent),
-    radial-gradient(1px 1px at 5%  80%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(0.8px 0.8px at 47% 90%, rgba(255,255,255,0.42), transparent),
-    radial-gradient(1px 1px at 79% 85%, rgba(255,255,255,0.48), transparent);
-  background-size: 220px 220px;
-  background-repeat: repeat;
+  background:
+    /* Milky Way nebula — top-left, matches home page galaxy position */
+    radial-gradient(ellipse 85% 55% at 18% 8%,
+      rgba(28, 38, 85, 0.78) 0%,
+      rgba(18, 25, 60, 0.50) 35%,
+      transparent 68%
+    ),
+    /* Secondary nebula cloud — mid center */
+    radial-gradient(ellipse 60% 45% at 55% 20%,
+      rgba(15, 22, 55, 0.45) 0%,
+      rgba(10, 15, 40, 0.25) 50%,
+      transparent 75%
+    ),
+    /* Right side deep navy — matches dark right panel on home */
+    radial-gradient(ellipse 55% 75% at 92% 28%,
+      rgba(8, 14, 42, 0.88) 0%,
+      rgba(5, 9, 28, 0.55) 55%,
+      transparent 78%
+    ),
+    /* Earth horizon glow — warm gold from orbit like home page bottom */
+    radial-gradient(ellipse 110% 38% at 50% 102%,
+      rgba(190, 105, 18, 0.35) 0%,
+      rgba(234, 169, 96, 0.14) 28%,
+      transparent 60%
+    ),
+    /* City lights scatter — bottom left warm cluster */
+    radial-gradient(ellipse 48% 28% at 12% 88%,
+      rgba(210, 128, 25, 0.26) 0%,
+      rgba(234, 169, 96, 0.09) 45%,
+      transparent 72%
+    ),
+    /* City lights scatter — bottom right */
+    radial-gradient(ellipse 38% 22% at 82% 92%,
+      rgba(180, 100, 20, 0.20) 0%,
+      rgba(234, 169, 96, 0.07) 50%,
+      transparent 75%
+    ),
+    /* Blue star cluster — top right corner */
+    radial-gradient(ellipse 42% 32% at 88% 6%,
+      rgba(55, 85, 175, 0.22) 0%,
+      transparent 68%
+    ),
+    /* Deep space base gradient */
+    linear-gradient(168deg,
+      #010510 0%,
+      #020816 18%,
+      #04091c 40%,
+      #030710 65%,
+      #020508 100%
+    );
   pointer-events: none;
 }
 
-/* ── Central Ambient Glow ────────────────────────────────────── */
+/* Layer 2: Animated twinkling star field */
 .journal-page::after {
   content: '';
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(139,92,246,0.06) 0%,
-    rgba(99,179,237,0.03) 35%,
-    transparent 70%
-  );
-  border-radius: 50%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
-  animation: glowPulse 6s ease-in-out infinite;
 }
 
-/* ── Layout ──────────────────────────────────────────────────── */
+/* Individual twinkling stars — injected as pseudo-elements on journal-layout */
+.journal-layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Dense star field using repeating background trick */
+  background-image:
+    /* ── LARGE BRIGHT STARS (biggest glow, slowest twinkle) ── */
+    radial-gradient(2px 2px at 7%   6%,  rgba(255,255,255,0.95), transparent 100%),
+    radial-gradient(2.5px 2.5px at 34%  11%, rgba(255,255,255,0.90), transparent 100%),
+    radial-gradient(2px 2px at 61%   4%,  rgba(255,255,255,0.88), transparent 100%),
+    radial-gradient(2.2px 2.2px at 89%  14%, rgba(255,255,255,0.85), transparent 100%),
+    radial-gradient(2px 2px at 15%  32%, rgba(255,255,255,0.80), transparent 100%),
+    radial-gradient(2.4px 2.4px at 78%  27%, rgba(255,255,255,0.82), transparent 100%),
+    radial-gradient(2px 2px at 50%  18%, rgba(255,255,255,0.78), transparent 100%),
+    /* ── MEDIUM STARS ── */
+    radial-gradient(1.5px 1.5px at 4%   22%, rgba(255,255,255,0.72), transparent 100%),
+    radial-gradient(1.4px 1.4px at 19%   8%, rgba(255,255,255,0.68), transparent 100%),
+    radial-gradient(1.6px 1.6px at 44%  26%, rgba(255,255,255,0.65), transparent 100%),
+    radial-gradient(1.5px 1.5px at 67%  19%, rgba(255,255,255,0.70), transparent 100%),
+    radial-gradient(1.4px 1.4px at 83%   8%, rgba(255,255,255,0.66), transparent 100%),
+    radial-gradient(1.5px 1.5px at 93%  33%, rgba(255,255,255,0.62), transparent 100%),
+    radial-gradient(1.6px 1.6px at 28%  42%, rgba(255,255,255,0.60), transparent 100%),
+    radial-gradient(1.4px 1.4px at 56%  38%, rgba(255,255,255,0.64), transparent 100%),
+    radial-gradient(1.5px 1.5px at 72%  45%, rgba(255,255,255,0.58), transparent 100%),
+    radial-gradient(1.4px 1.4px at 10%  55%, rgba(255,255,255,0.55), transparent 100%),
+    radial-gradient(1.6px 1.6px at 38%  60%, rgba(255,255,255,0.52), transparent 100%),
+    radial-gradient(1.5px 1.5px at 64%  58%, rgba(255,255,255,0.56), transparent 100%),
+    radial-gradient(1.4px 1.4px at 85%  52%, rgba(255,255,255,0.50), transparent 100%),
+    /* ── SMALL STARS ── */
+    radial-gradient(1px 1px at 2%   45%, rgba(255,255,255,0.48), transparent 100%),
+    radial-gradient(1px 1px at 13%  18%, rgba(255,255,255,0.45), transparent 100%),
+    radial-gradient(1px 1px at 25%  55%, rgba(255,255,255,0.42), transparent 100%),
+    radial-gradient(1px 1px at 48%  48%, rgba(255,255,255,0.44), transparent 100%),
+    radial-gradient(1px 1px at 71%  36%, rgba(255,255,255,0.40), transparent 100%),
+    radial-gradient(1px 1px at 96%  22%, rgba(255,255,255,0.46), transparent 100%),
+    radial-gradient(0.8px 0.8px at 8%  38%, rgba(255,255,255,0.36), transparent 100%),
+    radial-gradient(0.8px 0.8px at 22% 28%, rgba(255,255,255,0.33), transparent 100%),
+    radial-gradient(0.8px 0.8px at 35% 15%, rgba(255,255,255,0.38), transparent 100%),
+    radial-gradient(0.8px 0.8px at 53% 32%, rgba(255,255,255,0.34), transparent 100%),
+    radial-gradient(0.8px 0.8px at 75% 12%, rgba(255,255,255,0.36), transparent 100%),
+    radial-gradient(0.8px 0.8px at 91%  5%, rgba(255,255,255,0.32), transparent 100%),
+    /* ── GOLD TWINKLING STARS (near horizon, matching home warm glow) ── */
+    radial-gradient(2px 2px at 16%  82%, rgba(234,169,96,0.90), transparent 100%),
+    radial-gradient(1.8px 1.8px at 31%  88%, rgba(234,169,96,0.80), transparent 100%),
+    radial-gradient(2.2px 2.2px at 48%  78%, rgba(234,169,96,0.85), transparent 100%),
+    radial-gradient(1.6px 1.6px at 62%  91%, rgba(234,169,96,0.75), transparent 100%),
+    radial-gradient(2px 2px at 77%  84%, rgba(234,169,96,0.82), transparent 100%),
+    radial-gradient(1.5px 1.5px at 92%  79%, rgba(234,169,96,0.70), transparent 100%),
+    radial-gradient(1.8px 1.8px at 6%   75%, rgba(234,169,96,0.72), transparent 100%),
+    radial-gradient(1.4px 1.4px at 42%  95%, rgba(248,195,125,0.65), transparent 100%),
+    radial-gradient(1.6px 1.6px at 58%  72%, rgba(248,195,125,0.60), transparent 100%),
+    radial-gradient(1.5px 1.5px at 85%  94%, rgba(248,195,125,0.55), transparent 100%),
+    /* ── BLUE TWINKLING STARS (nebula zone, top area) ── */
+    radial-gradient(1.8px 1.8px at 9%   12%, rgba(140,175,255,0.80), transparent 100%),
+    radial-gradient(2px 2px at 23%  18%, rgba(140,175,255,0.75), transparent 100%),
+    radial-gradient(1.6px 1.6px at 38%   8%, rgba(140,175,255,0.70), transparent 100%),
+    radial-gradient(2.2px 2.2px at 52%  15%, rgba(120,160,255,0.72), transparent 100%),
+    radial-gradient(1.5px 1.5px at 66%  10%, rgba(120,160,255,0.65), transparent 100%),
+    radial-gradient(1.8px 1.8px at 82%  20%, rgba(140,175,255,0.68), transparent 100%),
+    radial-gradient(1.4px 1.4px at 14%  30%, rgba(120,160,255,0.55), transparent 100%),
+    radial-gradient(1.6px 1.6px at 45%   3%, rgba(150,185,255,0.60), transparent 100%),
+    /* ── VERY DIM DISTANT STARS (depth/milky way density) ── */
+    radial-gradient(0.6px 0.6px at 11%  48%, rgba(255,255,255,0.25), transparent 100%),
+    radial-gradient(0.6px 0.6px at 29%  62%, rgba(255,255,255,0.22), transparent 100%),
+    radial-gradient(0.6px 0.6px at 47%  55%, rgba(255,255,255,0.26), transparent 100%),
+    radial-gradient(0.6px 0.6px at 60%  68%, rgba(255,255,255,0.20), transparent 100%),
+    radial-gradient(0.6px 0.6px at 74%  62%, rgba(255,255,255,0.24), transparent 100%),
+    radial-gradient(0.6px 0.6px at 88%  48%, rgba(255,255,255,0.22), transparent 100%),
+    radial-gradient(0.5px 0.5px at 20%  72%, rgba(255,255,255,0.18), transparent 100%),
+    radial-gradient(0.5px 0.5px at 54%  78%, rgba(255,255,255,0.16), transparent 100%),
+    radial-gradient(0.5px 0.5px at 80%  75%, rgba(255,255,255,0.20), transparent 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* ── Twinkling star elements — CSS-only animated glowing stars ── */
+/* We use .journal-layout::after for a second layer of animated stars */
+.journal-layout::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* These are the "glowing" stars that pulse with animations */
+  background-image:
+    /* Large glowing white stars */
+    radial-gradient(3px 3px at 7%   6%,  rgba(255,255,255,1.0), transparent 100%),
+    radial-gradient(4px 4px at 34%  11%, rgba(255,255,255,0.95), transparent 100%),
+    radial-gradient(3px 3px at 61%   4%,  rgba(255,255,255,0.92), transparent 100%),
+    radial-gradient(3.5px 3.5px at 89%  14%, rgba(255,255,255,0.90), transparent 100%),
+    radial-gradient(3px 3px at 15%  32%, rgba(255,255,255,0.88), transparent 100%),
+    radial-gradient(4px 4px at 78%  27%, rgba(255,255,255,0.92), transparent 100%),
+    radial-gradient(3px 3px at 50%  18%, rgba(255,255,255,0.85), transparent 100%),
+    /* Gold glowing stars */
+    radial-gradient(4px 4px at 16%  82%, rgba(234,169,96,1.0),  transparent 100%),
+    radial-gradient(3px 3px at 48%  78%, rgba(234,169,96,0.95), transparent 100%),
+    radial-gradient(4px 4px at 77%  84%, rgba(234,169,96,0.92), transparent 100%),
+    radial-gradient(3.5px 3.5px at 31%  88%, rgba(248,195,125,0.88), transparent 100%),
+    radial-gradient(3px 3px at 62%  91%, rgba(248,195,125,0.82), transparent 100%),
+    /* Blue glowing stars */
+    radial-gradient(4px 4px at 9%   12%, rgba(140,175,255,0.95), transparent 100%),
+    radial-gradient(3.5px 3.5px at 23%  18%, rgba(140,175,255,0.88), transparent 100%),
+    radial-gradient(4px 4px at 52%  15%, rgba(120,160,255,0.90), transparent 100%),
+    radial-gradient(3px 3px at 82%  20%, rgba(140,175,255,0.85), transparent 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: starsGlowPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes starsGlowPulse {
+  0%   {
+    opacity: 0.4;
+    filter: blur(0.5px) brightness(0.8);
+  }
+  25%  {
+    opacity: 0.85;
+    filter: blur(0px) brightness(1.4);
+  }
+  50%  {
+    opacity: 0.55;
+    filter: blur(0.8px) brightness(0.9);
+  }
+  75%  {
+    opacity: 1.0;
+    filter: blur(0px) brightness(1.8);
+  }
+  100% {
+    opacity: 0.45;
+    filter: blur(0.6px) brightness(0.85);
+  }
+}
+
+/* Second independent twinkle layer with offset timing */
+.journal-sidebar::before {
+  animation: none !important; /* keep sidebar shimmer, not star-related */
+}
+
+/* Inject extra twinkling layers via journal-page direct children overlay */
+.journal-page > .journal-layout {
+  position: relative;
+}
+
+/* ── Extra twinkling star clusters using box-shadow on tiny elements ── */
+/* This creates the most realistic CSS star twinkling effect */
+.journal-page {
+  isolation: isolate;
+}
+
+/* Star cluster A — upper region, mostly white/blue */
+.journal-page::before,
+.journal-layout::before {
+  z-index: 0;
+}
+
+/* ══ Layout ══════════════════════════════════════════════════════════════════ */
+/* ══ Layout ══════════════════════════════════════════════════════════════════ */
 .journal-layout {
   display: flex;
   max-width: 1280px;
@@ -175,15 +459,15 @@
   overflow-x: hidden;
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════
    SIDEBAR
-   ════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-sidebar {
   width: 300px;
   flex-shrink: 0;
   padding: 28px 22px;
   border-right: 1px solid var(--border);
-  background: rgba(10,10,10,0.7);
+  background: rgba(3, 2, 13, 0.72);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   animation: journal-fadeInLeft 0.5s ease-out both;
@@ -192,14 +476,30 @@
   overflow-x: hidden;
 }
 
-/* Subtle accent line along top of sidebar */
+/* Gold shimmer line across top */
 .journal-sidebar::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), rgba(99,179,237,0.4), transparent);
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234,169,96,0.65) 35%,
+    rgba(248,195,125,0.50) 65%,
+    transparent
+  );
   pointer-events: none;
+}
+
+/* Ambient gold corner glow */
+.journal-sidebar::after {
+  content: '';
+  position: absolute;
+  top: -40px; right: -30px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(234,169,96,0.055) 0%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
 }
 
 .journal-sidebar-header {
@@ -211,64 +511,31 @@
   font-size: 1.35rem;
   font-weight: 200;
   margin: 0 0 5px 0;
-  color: var(--text);
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  background: linear-gradient(125deg, #fff 25%, #c4b5fd 60%, #93c5fd 100%);
+  background: var(--grad-gold);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .journal-sidebar-sub {
-  font-size: 0.72rem;
-  font-weight: 300;
-  color: var(--text-muted);
+  font-size: 0.70rem;
+  font-weight: 400;
+  color: var(--text-dim);
   margin: 0;
   letter-spacing: 0.28em;
   text-transform: uppercase;
 }
 
-/* ════════════════════════════════════════════════════════════
-   CALENDAR – Fully Responsive (iPad Pro Fix)
-   ════════════════════════════════════════════════════════════ */
-
-/* ── Calendar animations ─────────────────────────────────────── */
-@keyframes cal-slideInRight {
-  from { opacity: 0; transform: translateX(18px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes cal-slideInLeft {
-  from { opacity: 0; transform: translateX(-18px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes cal-orbitSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes cal-todayPulse {
-  0%, 100% { box-shadow: 0 0 0 0px rgba(139,92,246,0.5), 0 0 14px rgba(139,92,246,0.2); }
-  50%       { box-shadow: 0 0 0 3px rgba(139,92,246,0.18), 0 0 24px rgba(139,92,246,0.3); }
-}
-@keyframes cal-selectedGlow {
-  0%, 100% { box-shadow: 0 4px 20px rgba(139,92,246,0.4), inset 0 1px 0 rgba(255,255,255,0.18); }
-  50%       { box-shadow: 0 6px 32px rgba(139,92,246,0.6), 0 0 0 1px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.18); }
-}
-@keyframes cal-dotPop {
-  from { transform: scale(0) translateY(2px); opacity: 0; }
-  to   { transform: scale(1) translateY(0);   opacity: 1; }
-}
-@keyframes cal-selectedSheen {
-  0%        { left: -100%; right: 100%; }
-  40%, 100% { left: 100%; right: -100%; }
-}
-
-/* ── Calendar container ──────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   CALENDAR
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-calendar {
-  background: rgba(255,255,255,0.022);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 20px;
-  padding: 24px clamp(10px, 3.5%, 20px) 20px;
+  background: rgba(7, 8, 20, 0.60);
+  border: 1px solid rgba(255,255,255,0.072);
+  border-radius: var(--radius-xl);
+  padding: 22px clamp(10px, 3.5%, 20px) 18px;
   margin-bottom: 18px;
   position: relative;
   overflow: hidden;
@@ -277,55 +544,45 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow:
-    0 0 0 1px rgba(139,92,246,0.06) inset,
-    0 24px 60px rgba(0,0,0,0.45),
-    0 2px 8px rgba(0,0,0,0.3);
+    0 0 0 0.5px rgba(234,169,96,0.06) inset,
+    0 24px 60px rgba(0,0,0,0.52),
+    0 2px 8px rgba(0,0,0,0.36);
   animation: journal-scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
   transition: box-shadow 0.35s ease, border-color 0.35s ease;
 }
 
 .journal-calendar:hover {
-  border-color: rgba(139,92,246,0.18);
+  border-color: rgba(234,169,96,0.16);
   box-shadow:
-    0 0 0 1px rgba(139,92,246,0.12) inset,
-    0 32px 72px rgba(0,0,0,0.55),
-    0 0 40px rgba(139,92,246,0.06);
+    0 0 0 0.5px rgba(234,169,96,0.10) inset,
+    0 32px 72px rgba(0,0,0,0.58),
+    0 0 40px rgba(234,169,96,0.06);
 }
 
+/* Gold shimmer top */
 .journal-calendar::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0; left: 6%; right: 20%;
   height: 1px;
   background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(139,92,246,0.7) 30%,
-    rgba(99,179,237,0.55) 65%,
+    rgba(255,255,255,0.22) 0%,
+    rgba(234,169,96,0.55) 40%,
+    rgba(248,195,125,0.35) 70%,
     transparent 100%
   );
   pointer-events: none;
 }
 
+/* Gold corner glow */
 .journal-calendar::after {
   content: '';
   position: absolute;
-  top: -40px; right: -40px;
-  width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+  top: -30px; right: -30px;
+  width: 110px; height: 110px;
+  background: radial-gradient(circle, rgba(234,169,96,0.07) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
-}
-
-.journal-calendar-texture {
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent, transparent 18px,
-    rgba(255,255,255,0.008) 18px, rgba(255,255,255,0.008) 19px
-  );
-  pointer-events: none;
-  border-radius: inherit;
 }
 
 /* Slide animations */
@@ -338,12 +595,12 @@
   animation: cal-slideInLeft 0.3s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-/* ── Nav header ──────────────────────────────────────────────── */
+/* ── Nav ─────────────────────────────────────────────────────── */
 .journal-calendar-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   position: relative;
   z-index: 1;
 }
@@ -351,47 +608,37 @@
 .journal-calendar-btn {
   width: clamp(28px, 5vw, 34px);
   height: clamp(28px, 5vw, 34px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(234,169,96,0.18);
   border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  color: rgba(255,255,255,0.7);
+  background: rgba(234,169,96,0.05);
+  color: rgba(234,169,96,0.65);
   font-size: 0.95rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  transition: all var(--transition-s);
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
 }
 
-.journal-calendar-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(99,179,237,0.15));
-  opacity: 0;
-  transition: opacity 0.2s;
+.journal-calendar-btn:hover {
+  background: rgba(234,169,96,0.12);
+  border-color: rgba(234,169,96,0.42);
+  color: var(--gold-bright);
+  transform: scale(1.08);
+  box-shadow: 0 0 16px rgba(234,169,96,0.22);
 }
 
-.journal-calendar-btn:hover {
-  background: rgba(139,92,246,0.1);
-  border-color: rgba(139,92,246,0.4);
-  color: #fff;
-  transform: scale(1.08);
-  box-shadow: 0 0 18px rgba(139,92,246,0.25);
-}
-.journal-calendar-btn:hover::after { opacity: 1; }
 .journal-calendar-btn:active { transform: scale(0.93); }
 
-/* Month label */
 .journal-calendar-month {
-  font-size: clamp(0.65rem, 1.8vw, 0.78rem);
-  font-weight: 400;
+  font-size: clamp(0.64rem, 1.8vw, 0.76rem);
+  font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  background: linear-gradient(125deg, #fff 25%, #c4b5fd 60%, #93c5fd 100%);
+  background: var(--grad-gold);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -412,9 +659,9 @@
 }
 
 .journal-calendar-wd {
-  font-size: clamp(0.48rem, 1.2vw, 0.58rem);
-  font-weight: 600;
-  color: rgba(255,255,255,0.28);
+  font-size: clamp(0.48rem, 1.2vw, 0.56rem);
+  font-weight: 700;
+  color: rgba(255,255,255,0.26);
   text-align: center;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -426,7 +673,7 @@
 
 .journal-calendar-wd:first-child,
 .journal-calendar-wd:last-child {
-  color: rgba(139,92,246,0.45);
+  color: rgba(234,169,96,0.40);
 }
 
 /* ── Grid ────────────────────────────────────────────────────── */
@@ -443,14 +690,11 @@
 .journal-calendar-day {
   aspect-ratio: 1 / 1;
   width: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
   border: 1px solid transparent;
   border-radius: clamp(6px, 1.5vw, 10px);
   background: transparent;
-  color: rgba(255,255,255,0.62);
-  font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+  color: rgba(255,255,255,0.58);
+  font-size: clamp(0.6rem, 1.5vw, 0.74rem);
   font-weight: 300;
   cursor: pointer;
   display: flex;
@@ -464,7 +708,7 @@
   box-sizing: border-box;
 }
 
-/* Stagger */
+/* Stagger animation */
 .journal-calendar-grid .journal-calendar-day:nth-child(7n+1) { animation-delay: 0.02s; }
 .journal-calendar-grid .journal-calendar-day:nth-child(7n+2) { animation-delay: 0.04s; }
 .journal-calendar-grid .journal-calendar-day:nth-child(7n+3) { animation-delay: 0.06s; }
@@ -474,11 +718,11 @@
 .journal-calendar-grid .journal-calendar-day:nth-child(7n)   { animation-delay: 0.14s; }
 
 .journal-calendar-day:hover {
-  background: rgba(139,92,246,0.1);
-  border-color: rgba(139,92,246,0.28);
+  background: rgba(234,169,96,0.08);
+  border-color: rgba(234,169,96,0.26);
   color: #fff;
   transform: scale(1.12) translateY(-1px);
-  box-shadow: 0 4px 16px rgba(139,92,246,0.15);
+  box-shadow: 0 4px 16px rgba(234,169,96,0.14);
 }
 
 .journal-calendar-day--empty {
@@ -487,18 +731,11 @@
   animation: none;
 }
 
-.journal-calendar-day--past {
-  color: rgba(255,255,255,0.3);
-}
-.journal-calendar-day--past:hover {
-  color: rgba(255,255,255,0.55);
-}
-
 /* Today */
 .journal-calendar-day--today {
-  color: #c4b5fd;
+  color: var(--gold-bright);
   font-weight: 500;
-  background: rgba(139,92,246,0.06);
+  background: rgba(234,169,96,0.055);
   animation: cal-todayPulse 3s ease-in-out infinite,
              journal-dayAppear 0.28s ease-out both;
 }
@@ -510,13 +747,13 @@
   border-radius: clamp(8px, 2vw, 13px);
   border: 1px solid transparent;
   background:
-    linear-gradient(#0a0a0a, #0a0a0a) padding-box,
+    linear-gradient(#03020D, #03020D) padding-box,
     conic-gradient(
-      rgba(139,92,246,0.9) 0deg,
-      rgba(99,179,237,0.7) 90deg,
-      rgba(139,92,246,0.1) 180deg,
-      rgba(99,179,237,0.4) 270deg,
-      rgba(139,92,246,0.9) 360deg
+      rgba(234,169,96,0.9) 0deg,
+      rgba(248,195,125,0.7) 90deg,
+      rgba(234,169,96,0.12) 180deg,
+      rgba(212,141,68,0.5) 270deg,
+      rgba(234,169,96,0.9) 360deg
     ) border-box;
   animation: cal-orbitSpin 4s linear infinite;
   pointer-events: none;
@@ -525,58 +762,53 @@
 /* Selected */
 .journal-calendar-day--selected {
   background: linear-gradient(135deg,
-    rgba(139,92,246,0.9) 0%,
-    rgba(111,130,246,0.8) 50%,
-    rgba(99,179,237,0.75) 100%
+    rgba(234,169,96,0.88) 0%,
+    rgba(248,195,125,0.78) 50%,
+    rgba(212,141,68,0.72) 100%
   );
-  border-color: rgba(139,92,246,0.6);
-  color: #fff;
-  font-weight: 500;
+  border-color: rgba(234,169,96,0.60);
+  color: #03020D;
+  font-weight: 700;
   transform: scale(1.08);
   animation: cal-selectedGlow 2.5s ease-in-out infinite,
              journal-dayAppear 0.28s ease-out both;
   box-shadow:
-    0 0 0 1px rgba(139,92,246,0.5),
-    0 6px 24px rgba(139,92,246,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.2);
+    0 0 0 1px rgba(234,169,96,0.50),
+    0 6px 24px rgba(234,169,96,0.42),
+    inset 0 1px 0 rgba(255,255,255,0.22);
 }
 
 .journal-calendar-day--selected::after {
   content: '';
   position: absolute;
   top: 0; left: -100%; right: 100%; bottom: 0;
-  background: linear-gradient(
-    105deg,
+  background: linear-gradient(105deg,
     transparent 40%,
-    rgba(255,255,255,0.18) 50%,
+    rgba(255,255,255,0.22) 50%,
     transparent 60%
   );
   border-radius: inherit;
   animation: cal-selectedSheen 3s ease-in-out infinite;
 }
 
-.journal-calendar-day--selected:hover {
-  transform: scale(1.12);
-}
+.journal-calendar-day--selected:hover { transform: scale(1.12); }
 
 /* Today + Selected */
 .journal-calendar-day--today.journal-calendar-day--selected {
-  background: linear-gradient(135deg,
-    rgba(139,92,246,0.95) 0%,
-    rgba(99,179,237,0.85) 100%
-  );
+  background: linear-gradient(135deg, rgba(234,169,96,0.95) 0%, rgba(212,141,68,0.88) 100%);
+  color: rgba(255,255,255,0.58);
   animation: cal-selectedGlow 2.5s ease-in-out infinite;
 }
 .journal-calendar-day--today.journal-calendar-day--selected::before {
   inset: -3px;
   border-radius: clamp(9px, 2vw, 14px);
   background:
-    linear-gradient(#0a0a0a, #0a0a0a) padding-box,
+    linear-gradient(#03020D, #03020D) padding-box,
     conic-gradient(
       rgba(255,255,255,0.9) 0deg,
-      rgba(139,92,246,0.6) 90deg,
-      rgba(255,255,255,0.1) 180deg,
-      rgba(99,179,237,0.8) 270deg,
+      rgba(234,169,96,0.7) 90deg,
+      rgba(255,255,255,0.12) 180deg,
+      rgba(248,195,125,0.85) 270deg,
       rgba(255,255,255,0.9) 360deg
     ) border-box;
   animation: cal-orbitSpin 3s linear infinite;
@@ -586,6 +818,18 @@
   line-height: 1;
   position: relative;
   z-index: 1;
+}
+
+/* Today superscript dot */
+.journal-calendar-day--today .journal-calendar-day-num::before {
+  content: '·';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.5rem;
+  color: rgba(234,169,96,0.65);
+  pointer-events: none;
 }
 
 /* Entry dots */
@@ -602,8 +846,8 @@
 .journal-dot-done {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 5px rgba(16,185,129,0.7);
+  background: var(--green);
+  box-shadow: 0 0 5px rgba(15,217,138,0.65);
   animation: cal-dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
   display: block;
 }
@@ -611,7 +855,8 @@
 .journal-dot-pending {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.25);
+  background: rgba(234,169,96,0.50);
+  box-shadow: 0 0 4px rgba(234,169,96,0.35);
   animation: cal-dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
   display: block;
 }
@@ -619,37 +864,13 @@
 .journal-dot-mood {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: rgba(139,92,246,0.75);
-  box-shadow: 0 0 5px rgba(139,92,246,0.5);
+  background: rgba(234,169,96,0.72);
+  box-shadow: 0 0 5px rgba(234,169,96,0.50);
   animation: cal-dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) 0.06s both;
   display: block;
 }
 
-.journal-calendar-day--today .journal-calendar-day-num::before {
-  content: '·';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.5rem;
-  color: rgba(196,181,253,0.7);
-  letter-spacing: 0;
-  pointer-events: none;
-}
-
-/* Week row hover highlight */
-.journal-calendar-day:not(.journal-calendar-day--empty):hover::before {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0;
-  left: calc(-100% - 4px);
-  right: calc(-100% - 4px);
-  background: rgba(139,92,246,0.02);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── Calendar Footer ─────────────────────────────────────────── */
+/* ── Calendar footer ─────────────────────────────────────────── */
 .journal-calendar-footer {
   margin-top: 14px;
   padding-top: 12px;
@@ -662,10 +883,10 @@
 }
 
 .journal-calendar-footer-done {
-  font-size: 0.6rem;
-  font-weight: 500;
-  color: #10b981;
-  letter-spacing: 0.2em;
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.20em;
   text-transform: uppercase;
   display: flex;
   align-items: center;
@@ -675,36 +896,38 @@
 .journal-calendar-footer-done-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16,185,129,0.6);
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(15,217,138,0.60);
   display: inline-block;
 }
 
 .journal-calendar-footer-today-btn {
   font-size: 0.58rem;
-  font-weight: 500;
-  color: rgba(196,181,253,0.65);
+  font-weight: 600;
+  color: rgba(234,169,96,0.65);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   background: none;
-  border: 1px solid rgba(139,92,246,0.2);
-  border-radius: 6px;
-  padding: 3px 9px;
+  border: 1px solid rgba(234,169,96,0.22);
+  border-radius: 100px;
+  padding: 4px 12px;
   cursor: pointer;
   font-family: 'Space Grotesk', sans-serif;
-  transition: all 0.2s ease;
+  transition: all var(--transition-s);
 }
 
 .journal-calendar-footer-today-btn:hover {
-  background: rgba(139,92,246,0.1);
-  border-color: rgba(139,92,246,0.45);
-  color: #c4b5fd;
+  background: var(--gold-glass);
+  border-color: var(--gold-dim);
+  color: var(--gold-soft);
 }
 
-/* ── Streak Card ─────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   STREAK CARD
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-streak-card {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border: 1px solid rgba(234,169,96,0.14);
   border-radius: var(--radius-lg);
   padding: 20px 18px;
   margin-bottom: 16px;
@@ -713,94 +936,74 @@
   position: relative;
   overflow: hidden;
   transition: all var(--transition);
+  box-shadow: var(--glass-shadow);
 }
 
+/* Gold shimmer top */
 .journal-streak-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(245,158,11,0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.55), rgba(248,195,125,0.40), transparent);
+}
+
+/* Gold bottom-right glow */
+.journal-streak-card::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(234,169,96,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
 }
 
 .journal-streak-card:hover {
-  border-color: rgba(245,158,11,0.3);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 24px rgba(245,158,11,0.08);
+  border-color: rgba(234,169,96,0.28);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.36), 0 0 24px rgba(234,169,96,0.08);
 }
 
 .journal-streak-flame {
   font-size: 2rem;
   margin-bottom: 8px;
-  filter: drop-shadow(0 0 10px rgba(245,158,11,0.6));
   display: block;
+  animation: streakFlicker 2.4s ease-in-out infinite;
 }
 
 .journal-streak-title {
-  font-size: 0.78rem;
-  font-weight: 500;
+  font-size: 0.76rem;
+  font-weight: 600;
   color: var(--text);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   margin-bottom: 8px;
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .journal-streak-longest {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   margin-bottom: 4px;
 }
 
 .journal-streak-longest-value {
-  color: var(--up);
-  font-weight: 400;
+  color: var(--green);
+  font-weight: 500;
 }
 
 .journal-streak-consistency {
-  font-size: 0.8rem;
-  font-weight: 300;
-  color: rgba(255,255,255,0.8);
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--gold-soft);
 }
 
-/* ── Sidebar Stats ────────────────────────────────────────────── */
-.journal-stats-sidebar {
-  display: flex;
-  gap: 10px;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--border);
-}
-
-.journal-stat-mini {
-  flex: 1;
-  text-align: center;
-  padding: 10px 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  transition: all var(--transition);
-}
-
-.journal-stat-mini:hover {
-  background: var(--bg-card-h);
-  border-color: var(--border-accent);
-}
-
-.journal-stat-mini-label {
-  display: block;
-  font-size: 0.6rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  margin-bottom: 3px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.journal-stat-mini-value {
-  font-size: 1rem;
-  font-weight: 300;
-  color: var(--text);
-}
-
-/* ── Circular Progress Rings ─────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   CIRCULAR PROGRESS RINGS
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-stats-circles {
   display: flex;
   gap: 12px;
@@ -820,49 +1023,50 @@
 .journal-stat-circle-ring {
   --pct: 0;
   position: relative;
-  width: 54px;
-  height: 54px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: conic-gradient(
-    rgba(99,179,237,0.8) 0deg,
-    rgba(139,92,246,0.9) calc(var(--pct) * 3.6deg),
-    rgba(255,255,255,0.06) calc(var(--pct) * 3.6deg)
+    rgba(234,169,96,0.85) 0deg,
+    rgba(248,195,125,0.90) calc(var(--pct) * 3.6deg),
+    rgba(255,255,255,0.055) calc(var(--pct) * 3.6deg)
   );
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.5s ease;
+  transition: background 0.6s ease;
+  box-shadow: 0 0 14px rgba(234,169,96,0.15);
 }
 
 .journal-stat-circle-ring::before {
   content: '';
   position: absolute;
-  inset: 4px;
+  inset: 5px;
   border-radius: 50%;
-  background: #0a0a0a;
+  background: #03020D;
   border: 1px solid rgba(255,255,255,0.04);
 }
 
 .journal-stat-circle-value {
   position: relative;
   z-index: 1;
-  font-size: 0.72rem;
-  font-weight: 400;
-  color: var(--text);
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: var(--gold-soft);
 }
 
 .journal-stat-circle-label {
-  font-size: 0.6rem;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-dim);
   text-align: center;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════
    MAIN PANEL
-   ════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-main {
   flex: 1;
   padding: 32px 36px 48px;
@@ -883,33 +1087,31 @@
 }
 
 /* ── Main Header ─────────────────────────────────────────────── */
-.journal-main-header {
-  margin-bottom: 28px;
-}
+.journal-main-header { margin-bottom: 28px; }
 
 .journal-main-title {
   font-size: 2rem;
   font-weight: 200;
-  margin: 0 0 6px 0;
+  margin: 0 0 6px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 65%, #93c5fd 100%);
+  background: var(--grad-gold);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 28px rgba(139,92,246,0.25));
+  filter: drop-shadow(0 0 28px rgba(234,169,96,0.24));
 }
 
 .journal-main-meta {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 400;
   color: var(--text-muted);
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
-.journal-main-percent strong { color: var(--up); }
-.journal-percent-done { color: var(--up) !important; }
+.journal-main-percent strong { color: var(--green); }
+.journal-percent-done { color: var(--green) !important; }
 
 /* ── Progress Cards ──────────────────────────────────────────── */
 .journal-progress-cards {
@@ -922,59 +1124,60 @@
 .journal-progress-card {
   position: relative;
   padding: 20px 20px 18px 22px;
-  background: rgba(255,255,255,0.025);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(12px);
   overflow: hidden;
   transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
-  border-left: 2px solid transparent;
   animation: journal-fadeIn 0.45s ease-out both;
+  box-shadow: var(--glass-shadow);
 }
 
 .journal-progress-card:nth-child(1) { animation-delay: 0.06s; }
 .journal-progress-card:nth-child(2) { animation-delay: 0.12s; }
 .journal-progress-card:nth-child(3) { animation-delay: 0.18s; }
 
+/* Gold left accent bar */
 .journal-progress-card::before {
   content: '';
   position: absolute;
   left: 0; top: 15%; bottom: 15%;
   width: 2px;
-  background: linear-gradient(180deg, rgba(139,92,246,0) 0%, rgba(139,92,246,0.9) 50%, rgba(99,179,237,0.6) 100%);
+  background: linear-gradient(180deg, transparent 0%, var(--gold) 50%, var(--gold-warm) 100%);
   border-radius: 2px;
-  opacity: 0.5;
+  opacity: 0.22;
   transition: all var(--transition);
+  box-shadow: 0 0 6px var(--gold-glow);
 }
 
+/* Gold shimmer top */
 .journal-progress-card::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    -45deg, transparent, transparent 18px,
-    rgba(255,255,255,0.01) 18px, rgba(255,255,255,0.01) 19px
-  );
+  top: 0; left: 6%; right: 28%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.16), rgba(234,169,96,0.10), transparent);
   pointer-events: none;
 }
 
 .journal-progress-card:hover {
   background: var(--bg-card-h);
-  border-color: rgba(139,92,246,0.3);
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,92,246,0.1);
+  border-color: rgba(234,169,96,0.22);
+  transform: translateY(-5px);
+  box-shadow:
+    0 14px 38px rgba(0,0,0,0.46),
+    0 0 0 1px rgba(234,169,96,0.08),
+    0 0 20px rgba(234,169,96,0.05);
 }
 
-.journal-progress-card:hover::before {
-  opacity: 1;
-  top: 5%; bottom: 5%;
-}
+.journal-progress-card:hover::before { opacity: 0.85; top: 6%; bottom: 6%; }
 
 .journal-progress-card-label {
   display: block;
-  font-size: 0.62rem;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-size: 0.60rem;
+  font-weight: 700;
+  color: var(--text-dim);
   margin-bottom: 6px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -986,21 +1189,20 @@
   display: block;
   font-size: 2.4rem;
   font-weight: 300;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   line-height: 1;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   position: relative;
   z-index: 1;
-  background: linear-gradient(125deg, #fff 30%, #c4b5fd 70%, #93c5fd 100%);
+  background: var(--grad-gold);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 16px rgba(139,92,246,0.3));
 }
 
 .journal-progress-bar {
   height: 3px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
   border-radius: 99px;
   overflow: hidden;
   position: relative;
@@ -1009,10 +1211,10 @@
 
 .journal-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(139,92,246,0.9), rgba(99,179,237,0.8));
+  background: linear-gradient(90deg, var(--gold-warm), var(--gold), var(--gold-bright));
   border-radius: 99px;
   transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-  box-shadow: 0 0 10px rgba(139,92,246,0.5);
+  box-shadow: 0 0 10px rgba(234,169,96,0.48);
   position: relative;
   overflow: hidden;
   animation: journal-progressReveal 1.2s cubic-bezier(0.22,1,0.36,1) both;
@@ -1023,20 +1225,18 @@
   position: absolute;
   top: 0; left: -60%;
   width: 50%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
   animation: journal-trendShimmer 2.8s ease-in-out infinite;
 }
 
-/* ── Discipline Score Bar ─────────────────────────────────────── */
-.journal-discipline-score {
-  margin-bottom: 22px;
-}
+/* ── Discipline Score ─────────────────────────────────────────── */
+.journal-discipline-score { margin-bottom: 22px; }
 
 .journal-discipline-label {
   display: block;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-dim);
   margin-bottom: 8px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -1045,14 +1245,14 @@
 /* ── XP Info Banner ──────────────────────────────────────────── */
 .journal-xp-info {
   font-size: 0.78rem;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text-muted);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: var(--gold-ultra);
+  border: 1px solid rgba(234,169,96,0.12);
   border-radius: var(--radius);
   padding: 12px 16px;
   margin-bottom: 22px;
-  line-height: 1.55;
+  line-height: 1.6;
   max-width: 100%;
   overflow-wrap: break-word;
   position: relative;
@@ -1063,34 +1263,40 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.4), rgba(99,179,237,0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.40), rgba(248,195,125,0.28), transparent);
 }
 
 .journal-xp-info strong {
-  color: rgba(255,255,255,0.85);
-  font-weight: 500;
+  color: var(--gold-soft);
+  font-weight: 600;
 }
 
 /* ── Section Title ───────────────────────────────────────────── */
 .journal-section-title {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  margin: 0 0 14px 0;
-  letter-spacing: 0.3em;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin: 0 0 14px;
+  letter-spacing: 0.30em;
   text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   position: relative;
+}
+
+.journal-section-title::before {
+  content: '';
+  width: 24px; height: 1px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+  box-shadow: 0 0 5px var(--gold-glow);
+  flex-shrink: 0;
 }
 
 .journal-section-title::after {
   content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, var(--border), transparent);
-  margin-left: 6px;
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(234,169,96,0.18), transparent);
 }
 
 /* ── Completion Banner ───────────────────────────────────────── */
@@ -1100,13 +1306,13 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 18px;
-  background: rgba(16,185,129,0.08);
-  border: 1px solid rgba(16,185,129,0.3);
+  background: rgba(15,217,138,0.07);
+  border: 1px solid rgba(15,217,138,0.28);
   border-radius: var(--radius);
   margin-bottom: 22px;
-  color: #86efac;
-  font-size: 0.82rem;
-  font-weight: 400;
+  color: #6FFFC9;
+  font-size: 0.80rem;
+  font-weight: 500;
   letter-spacing: 0.08em;
   animation: journal-fadeIn 0.35s ease-out both;
   position: relative;
@@ -1118,21 +1324,17 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(16,185,129,0.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(15,217,138,0.60), transparent);
 }
 
 .journal-completion-dismiss {
-  background: none;
-  border: none;
-  color: rgba(134,239,172,0.6);
-  cursor: pointer;
-  padding: 4px 8px;
-  font-size: 1rem;
-  line-height: 1;
-  transition: color 0.2s;
+  background: none; border: none;
+  color: rgba(111,255,201,0.55);
+  cursor: pointer; padding: 4px 8px;
+  font-size: 1rem; line-height: 1;
+  transition: color var(--transition-s);
 }
-
-.journal-completion-dismiss:hover { color: #86efac; }
+.journal-completion-dismiss:hover { color: #6FFFC9; }
 
 /* ── Add Task Form ────────────────────────────────────────────── */
 .journal-add-form {
@@ -1147,20 +1349,20 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 13px 16px;
-  font-size: 0.9rem;
-  font-weight: 300;
+  font-size: 0.88rem;
+  font-weight: 400;
   color: var(--text);
-  transition: all var(--transition);
+  transition: all var(--transition-s);
   backdrop-filter: blur(8px);
 }
 
-.journal-add-input::placeholder { color: var(--text-muted); }
+.journal-add-input::placeholder { color: rgba(255,255,255,0.22); }
 
 .journal-add-input:focus {
   outline: none;
-  border-color: rgba(139,92,246,0.5);
-  background: rgba(139,92,246,0.04);
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+  border-color: var(--gold-dim);
+  background: var(--gold-ultra);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
 }
 
 .journal-add-btn {
@@ -1168,205 +1370,248 @@
   align-items: center;
   gap: 7px;
   padding: 13px 22px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.85) 0%, rgba(99,179,237,0.75) 100%);
+  background: linear-gradient(135deg, var(--gold-warm) 0%, var(--gold) 50%, var(--gold-bright) 100%);
   border: none;
   border-radius: var(--radius);
-  color: #fff;
-  font-size: 0.82rem;
-  font-weight: 500;
+  color: #03020D;
+  font-size: 0.80rem;
+  font-weight: 700;
   font-family: 'Space Grotesk', sans-serif;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 0 24px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+  box-shadow: 0 0 22px rgba(234,169,96,0.28), inset 0 1px 0 rgba(255,255,255,0.18);
   position: relative;
   overflow: hidden;
 }
 
 .journal-add-btn::before {
   content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent);
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent);
   opacity: 0;
-  transition: opacity var(--transition);
+  transition: opacity var(--transition-s);
 }
 
 .journal-add-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 0 40px rgba(139,92,246,0.5), 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 0 38px rgba(234,169,96,0.48), 0 8px 24px rgba(0,0,0,0.40);
+  filter: brightness(1.08);
 }
 
 .journal-add-btn:hover::before { opacity: 1; }
 .journal-add-btn:active { transform: translateY(0); }
-.journal-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.journal-add-btn:disabled { opacity: 0.40; cursor: not-allowed; }
 
-/* ── Task List ───────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   TASK CARD GRID
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-task-list {
   list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.journal-task-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 13px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 7px;
-  transition: all var(--transition);
-  animation: journal-fadeIn 0.35s ease-out both;
-  position: relative;
-  overflow: hidden;
-}
-
-.journal-task-list .journal-task-item:nth-child(1) { animation-delay: 0.04s; }
-.journal-task-list .journal-task-item:nth-child(2) { animation-delay: 0.08s; }
-.journal-task-list .journal-task-item:nth-child(3) { animation-delay: 0.12s; }
-.journal-task-list .journal-task-item:nth-child(4) { animation-delay: 0.16s; }
-.journal-task-list .journal-task-item:nth-child(5) { animation-delay: 0.20s; }
-.journal-task-list .journal-task-item:nth-child(n+6) { animation-delay: 0.22s; }
-
-.journal-task-item:hover {
-  background: var(--bg-card-h);
-  border-color: rgba(139,92,246,0.25);
-  transform: translateX(4px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-
-.journal-task-item--done {
-  opacity: 0.72;
-}
-
-.journal-task-item--done .journal-task-title {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
-
-/* ── Mandatory tasks ─────────────────────────────────────────── */
-.journal-mandatory-hint {
-  font-size: 0.75rem;
-  font-weight: 300;
-  color: var(--text-muted);
-  margin: -8px 0 14px 0;
-  line-height: 1.55;
-  letter-spacing: 0.02em;
+  margin: 0; padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  align-items: start;
 }
 
 .journal-task-list-mandatory {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
   margin-bottom: 28px;
+  align-items: start;
 }
 
-.journal-task-item--mandatory {
-  align-items: flex-start;
-  border-left: 2px solid rgba(245,158,11,0.4);
+.journal-task-list .journal-task-empty {
+  grid-column: 1 / -1;
 }
 
-.journal-task-item--mandatory:hover {
-  border-left-color: rgba(245,158,11,0.7);
-}
-
-.journal-task-item--mandatory .journal-task-check {
-  margin-top: 2px;
-}
-
-.journal-task-mandatory-content {
-  flex: 1;
-  min-width: 0;
+/* ── Task Card ────────────────────────────────────────────────── */
+.journal-task-item {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: rgba(8, 9, 22, 0.62);
+  border: 1px solid rgba(255,255,255,0.066);
+  border-radius: 16px;
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+  animation: card-popIn 0.32s cubic-bezier(0.34,1.56,0.64,1) both;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+}
+
+/* Stagger */
+.journal-task-list .journal-task-item:nth-child(1) { animation-delay: 0.03s; }
+.journal-task-list .journal-task-item:nth-child(2) { animation-delay: 0.07s; }
+.journal-task-list .journal-task-item:nth-child(3) { animation-delay: 0.11s; }
+.journal-task-list .journal-task-item:nth-child(4) { animation-delay: 0.15s; }
+.journal-task-list .journal-task-item:nth-child(n+5) { animation-delay: 0.18s; }
+
+/* Gold shimmer top line */
+.journal-task-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234,169,96,0.48) 40%,
+    rgba(248,195,125,0.30) 70%,
+    transparent
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-s);
+}
+
+.journal-task-item:hover {
+  transform: translateY(-4px);
+  border-color: rgba(234,169,96,0.26);
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.42),
+    0 0 0 1px rgba(234,169,96,0.07),
+    0 0 20px rgba(234,169,96,0.06);
+}
+
+.journal-task-item:hover::before { opacity: 1; }
+
+/* Done card */
+.journal-task-item--done {
+  background: rgba(15,217,138,0.04);
+  border-color: rgba(15,217,138,0.16);
+}
+
+.journal-task-item--done:hover {
+  border-color: rgba(15,217,138,0.30);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.32), 0 0 16px rgba(15,217,138,0.06);
+}
+
+/* Mandatory card — gold left stripe */
+.journal-task-item--mandatory {
+  border-left: 2px solid rgba(234,169,96,0.45);
+}
+.journal-task-item--mandatory:hover { border-left-color: rgba(234,169,96,0.75); }
+
+/* ── Card Top: checkbox + XP ─────────────────────────────────── */
+.journal-task-card-top {
+  display: flex;
   align-items: center;
-  gap: 6px 12px;
+  justify-content: space-between;
+  padding: 12px 12px 6px;
 }
 
-.journal-task-item--mandatory .journal-task-title {
-  width: 100%;
-  flex: none;
-  cursor: default;
-}
-
-.journal-task-description {
-  width: 100%;
-  margin: 4px 0 0 0;
-  font-size: 0.78rem;
-  font-weight: 300;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.journal-task-item--done .journal-task-description { opacity: 0.6; }
-
-/* ── Checkbox ────────────────────────────────────────────────── */
 .journal-task-check {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 7px;
+  width: 24px; height: 24px;
+  border: 1.5px solid rgba(255,255,255,0.20);
+  border-radius: 8px;
   background: transparent;
-  color: var(--up);
+  color: var(--green);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.65rem;
-  transition: all var(--transition);
+  transition: all var(--transition-s);
+  position: relative;
+  z-index: 1;
 }
 
 .journal-task-item--done .journal-task-check {
-  background: rgba(16,185,129,0.15);
-  border-color: rgba(16,185,129,0.6);
-  box-shadow: 0 0 10px rgba(16,185,129,0.2);
+  background: rgba(15,217,138,0.14);
+  border-color: rgba(15,217,138,0.62);
+  box-shadow: 0 0 10px rgba(15,217,138,0.24);
+}
+
+.journal-task-item--done .journal-task-check svg {
+  animation: card-checkBounce 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
 .journal-task-check:hover {
-  border-color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.04);
+  border-color: rgba(234,169,96,0.55);
+  background: rgba(234,169,96,0.07);
+  transform: scale(1.1);
 }
 
-.journal-task-check-empty {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
+.journal-task-check-empty { display: block; width: 100%; height: 100%; }
 
-/* ── Task Title ──────────────────────────────────────────────── */
-.journal-task-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.9rem;
-  font-weight: 300;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  letter-spacing: 0.02em;
-  transition: color var(--transition);
-}
-
-.journal-task-title:hover { color: #c4b5fd; }
-
-/* ── Task XP Badge ───────────────────────────────────────────── */
 .journal-task-xp {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--up);
-  letter-spacing: 0.12em;
-  padding: 2px 8px;
-  background: rgba(16,185,129,0.1);
-  border: 1px solid rgba(16,185,129,0.25);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.10em;
+  padding: 2px 7px;
+  background: rgba(15,217,138,0.09);
+  border: 1px solid rgba(15,217,138,0.26);
   border-radius: 99px;
   white-space: nowrap;
 }
 
-/* ── Task Actions ────────────────────────────────────────────── */
+/* ── Card Body ───────────────────────────────────────────────── */
+.journal-task-card-body {
+  padding: 2px 12px 10px;
+  flex: 1;
+}
+
+.journal-task-title {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.46;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  cursor: pointer;
+  transition: color var(--transition-s);
+  letter-spacing: 0.01em;
+  position: relative;
+}
+
+.journal-task-title:hover { color: var(--gold-soft); }
+
+.journal-task-item--done .journal-task-title {
+  color: var(--text-muted);
+  text-decoration: none;
+  position: relative;
+}
+
+.journal-task-item--done .journal-task-title::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  height: 1px;
+  background: rgba(255,255,255,0.32);
+  animation: card-doneStrike 0.4s ease-out both;
+  width: 100%;
+}
+
+.journal-task-description {
+  margin: 5px 0 0;
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: var(--text-dim);
+  line-height: 1.46;
+}
+
+.journal-task-item--done .journal-task-description { opacity: 0.52; }
+
+/* ── Card Footer ─────────────────────────────────────────────── */
+.journal-task-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid rgba(255,255,255,0.042);
+}
+
 .journal-task-actions {
   display: flex;
   align-items: center;
@@ -1374,183 +1619,203 @@
   flex-shrink: 0;
 }
 
-.journal-task-edit-wrap {
-  flex: 1;
+.journal-task-edit-icon,
+.journal-task-delete {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  transition: all var(--transition-s);
+}
+
+.journal-task-edit-icon { color: var(--text-dim); }
+.journal-task-edit-icon:hover {
+  color: var(--gold-soft);
+  background: var(--gold-glass);
+  border: 1px solid var(--gold-dim);
+}
+
+.journal-task-delete { color: var(--text-dim); }
+.journal-task-delete:hover {
+  color: var(--red);
+  background: var(--red-glass);
+  border: 1px solid rgba(240,61,95,0.26);
+}
+
+/* Proof button */
+.journal-task-proof-btn {
+  padding: 4px 9px; height: 28px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.028);
+  color: var(--text-dim);
+  font-size: 0.66rem;
+  font-weight: 500;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-s);
+  white-space: nowrap;
+}
+
+.journal-task-proof-btn:hover {
+  background: var(--gold-glass);
+  border-color: var(--gold-dim);
+  color: var(--gold-soft);
+}
+
+/* ── Inline edit mode ────────────────────────────────────────── */
+.journal-task-edit-wrap {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  padding: 10px 12px;
+  flex: 1;
 }
 
 .journal-task-edit-input {
-  flex: 1;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.2);
+  width: 100%;
+  background: var(--gold-ultra);
+  border: 1px solid var(--gold-dim);
   border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.88rem;
+  padding: 8px 10px;
+  font-size: 0.82rem;
   color: var(--text);
   font-family: 'Space Grotesk', sans-serif;
+  box-sizing: border-box;
+  transition: border-color var(--transition-s), box-shadow var(--transition-s);
 }
 
 .journal-task-edit-input:focus {
   outline: none;
-  border-color: rgba(139,92,246,0.5);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.10);
 }
+
+.journal-task-edit-actions { display: flex; gap: 6px; }
 
 .journal-task-edit-btn {
-  padding: 6px 12px;
+  flex: 1;
+  padding: 6px 0;
   border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.8), rgba(99,179,237,0.7));
-  color: #fff;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
+  color: #03020D;
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: 0.70rem;
+  font-weight: 700;
   font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.08em;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  transition: all var(--transition);
+  transition: all var(--transition-s);
 }
 
-.journal-task-edit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,92,246,0.35); }
+.journal-task-edit-btn:hover {
+  box-shadow: 0 4px 14px rgba(234,169,96,0.36);
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
 
 .journal-task-edit-btn--cancel {
-  background: rgba(255,255,255,0.08);
-  color: var(--text);
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
   border: 1px solid var(--border);
 }
 
-.journal-task-edit-btn--cancel:hover { background: rgba(255,255,255,0.13); box-shadow: none; }
-
-.journal-task-edit-icon {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  transition: all var(--transition);
+.journal-task-edit-btn--cancel:hover {
+  background: rgba(255,255,255,0.10);
+  box-shadow: none;
+  transform: none;
+  filter: none;
 }
 
-.journal-task-edit-icon:hover {
-  color: var(--text);
-  background: var(--bg-card-h);
-  border: 1px solid var(--border);
-}
-
-.journal-task-delete {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.78rem;
-  transition: all var(--transition);
-}
-
-.journal-task-delete:hover {
-  color: var(--down);
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.25);
-}
-
-.journal-task-proof-btn {
-  flex-shrink: 0;
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-card);
-  color: var(--text-muted);
-  font-size: 0.72rem;
+/* ── Empty State ─────────────────────────────────────────────── */
+.journal-task-empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.80rem;
   font-weight: 400;
-  font-family: 'Space Grotesk', sans-serif;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all var(--transition);
+  letter-spacing: 0.10em;
+  background: var(--gold-ultra);
+  border: 1px dashed rgba(234,169,96,0.18);
+  border-radius: var(--radius);
 }
 
-.journal-task-proof-btn:hover {
-  background: var(--bg-card-h);
-  border-color: rgba(139,92,246,0.35);
-  color: var(--text);
+/* ── Mandatory hint ──────────────────────────────────────────── */
+.journal-mandatory-hint {
+  font-size: 0.74rem;
+  font-weight: 300;
+  color: var(--text-dim);
+  margin: -8px 0 14px;
+  line-height: 1.58;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   TASK PROOF – MULTI-PHOTO SYSTEM
-   ══════════════════════════════════════════════════════════════ */
+.journal-task-list-mandatory { margin-bottom: 28px; }
 
-/* Hidden file input */
+.journal-task-item--mandatory .journal-task-mandatory-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.journal-task-item--mandatory .journal-task-title { cursor: default; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PROOF PHOTO STRIP
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-proof-input-hidden {
   position: absolute;
   width: 0; height: 0;
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0; pointer-events: none;
 }
 
-/* Photo strip – wraps below the task row */
 .journal-proof-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid rgba(255,255,255,0.04);
   width: 100%;
+  box-sizing: border-box;
 }
 
-/* Individual photo thumbnail */
 .journal-proof-thumb {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: 42px; height: 42px;
   border-radius: 9px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.09);
   flex-shrink: 0;
-  transition: all var(--transition);
-  cursor: pointer;         /* tap to open lightbox */
+  cursor: pointer;
+  transition: all var(--transition-s);
 }
 
 .journal-proof-thumb:hover {
-  border-color: rgba(139,92,246,0.55);
-  transform: scale(1.06);
-  box-shadow: 0 4px 18px rgba(139,92,246,0.3);
+  border-color: var(--gold-dim);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(234,169,96,0.25);
 }
 
-.journal-proof-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;   /* click handled by wrapper */
-  -webkit-user-drag: none;
-  user-select: none;
-}
-
-/* Hover overlay hint */
 .journal-proof-thumb::after {
   content: '⤢';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
   background: rgba(0,0,0,0.55);
   color: rgba(255,255,255,0.9);
   opacity: 0;
@@ -1558,471 +1823,325 @@
   border-radius: inherit;
 }
 
-.journal-proof-thumb:hover::after {
-  opacity: 1;
+.journal-proof-thumb:hover::after { opacity: 1; }
+
+.journal-proof-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  pointer-events: none;
 }
 
-/* Remove single photo button (×) */
 .journal-proof-thumb-remove {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 16px;
-  height: 16px;
+  top: 2px; right: 2px;
+  width: 14px; height: 14px;
   border-radius: 50%;
-  background: rgba(239,68,68,0.85);
-  border: none;
-  color: #fff;
-  font-size: 0.55rem;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  background: rgba(240,61,95,0.88);
+  border: none; color: #fff;
+  font-size: 0.50rem; font-weight: 700;
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  opacity: 0; transform: scale(0.7);
+  transition: opacity 0.15s ease, transform 0.15s ease;
   z-index: 3;
 }
 
-.journal-proof-thumb:hover .journal-proof-thumb-remove {
-  opacity: 1;
-  transform: scale(1);
-}
+.journal-proof-thumb:hover .journal-proof-thumb-remove { opacity: 1; transform: scale(1); }
 
-/* Add more photos button (+ tile in the strip) */
 .journal-proof-add-more {
-  width: 52px;
-  height: 52px;
+  width: 42px; height: 42px;
   border-radius: 9px;
-  border: 1px dashed rgba(139,92,246,0.4);
-  background: rgba(139,92,246,0.05);
-  color: rgba(139,92,246,0.7);
-  font-size: 1.3rem;
+  border: 1px dashed rgba(234,169,96,0.38);
+  background: var(--gold-ultra);
+  color: rgba(234,169,96,0.65);
+  font-size: 1.2rem;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  transition: all var(--transition);
+  transition: all var(--transition-s);
 }
 
 .journal-proof-add-more:hover {
-  background: rgba(139,92,246,0.12);
-  border-color: rgba(139,92,246,0.7);
-  color: #c4b5fd;
-  transform: scale(1.06);
-  box-shadow: 0 0 16px rgba(139,92,246,0.25);
+  background: var(--gold-glass);
+  border-color: var(--gold-dim);
+  color: var(--gold-bright);
+  transform: scale(1.08);
+  box-shadow: 0 0 14px rgba(234,169,96,0.20);
 }
 
-/* Photo count badge shown on the proof button */
 .journal-proof-count-badge {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 99px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.85), rgba(99,179,237,0.75));
-  color: #fff;
-  font-size: 0.6rem;
-  font-weight: 600;
-  font-family: 'Space Grotesk', sans-serif;
-  margin-left: 3px;
-  letter-spacing: 0;
-  box-shadow: 0 0 8px rgba(139,92,246,0.4);
+  align-items: center; justify-content: center;
+  min-width: 16px; height: 16px;
+  padding: 0 4px; border-radius: 99px;
+  background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
+  color: #03020D;
+  font-size: 0.56rem; font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  margin-left: 2px; letter-spacing: 0;
+  box-shadow: 0 0 8px rgba(234,169,96,0.35);
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════
    PHOTO LIGHTBOX
-   ══════════════════════════════════════════════════════════════ */
-
-/* Backdrop */
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-lightbox {
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   z-index: 9999;
-  background: rgba(0,0,0,0.92);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(0,0,0,0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex; align-items: center; justify-content: center;
   animation: journal-lightboxIn 0.22s ease-out both;
   touch-action: none;
-  padding: 16px;
-  box-sizing: border-box;
+  padding: 16px; box-sizing: border-box;
 }
 
 .journal-lightbox.journal-lightbox--closing {
   animation: journal-lightboxOut 0.2s ease-in forwards;
 }
 
-/* Close button */
 .journal-lightbox-close {
   position: absolute;
-  top: 18px;
-  right: 20px;
-  width: 40px;
-  height: 40px;
+  top: 18px; right: 20px;
+  width: 40px; height: 40px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.8);
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  z-index: 3;
-  font-family: 'Space Grotesk', sans-serif;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.75);
+  font-size: 1.2rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-s); z-index: 3;
 }
 
 .journal-lightbox-close:hover {
-  background: rgba(239,68,68,0.15);
-  border-color: rgba(239,68,68,0.4);
+  background: rgba(240,61,95,0.14);
+  border-color: rgba(240,61,95,0.38);
   color: #fca5a5;
   transform: scale(1.08);
 }
 
-/* Prev / Next arrows */
 .journal-lightbox-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.75);
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  z-index: 3;
-  font-family: 'Space Grotesk', sans-serif;
+  border: 1px solid rgba(234,169,96,0.18);
+  background: rgba(234,169,96,0.06);
+  color: rgba(234,169,96,0.65);
+  font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-s); z-index: 3;
 }
 
 .journal-lightbox-arrow:hover {
-  background: rgba(139,92,246,0.15);
-  border-color: rgba(139,92,246,0.45);
-  color: #c4b5fd;
-  box-shadow: 0 0 20px rgba(139,92,246,0.25);
+  background: var(--gold-glass);
+  border-color: var(--gold-dim);
+  color: var(--gold-bright);
+  box-shadow: 0 0 18px rgba(234,169,96,0.22);
 }
 
 .journal-lightbox-arrow--prev { left: 16px; }
 .journal-lightbox-arrow--next { right: 16px; }
 
 .journal-lightbox-arrow:disabled {
-  opacity: 0.2;
-  cursor: default;
-  pointer-events: none;
+  opacity: 0.20; cursor: default; pointer-events: none;
 }
 
-/* Image wrapper */
 .journal-lightbox-img-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   max-width: calc(100vw - 140px);
   max-height: calc(100vh - 100px);
   animation: journal-lightboxImgIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
 .journal-lightbox-img-wrap img {
-  max-width: 100%;
-  max-height: calc(100vh - 100px);
-  width: auto;
-  height: auto;
+  max-width: 100%; max-height: calc(100vh - 100px);
+  width: auto; height: auto;
   border-radius: 14px;
   box-shadow:
-    0 0 0 1px rgba(139,92,246,0.2),
-    0 32px 80px rgba(0,0,0,0.7),
-    0 0 60px rgba(139,92,246,0.1);
-  object-fit: contain;
-  display: block;
-  -webkit-user-drag: none;
-  user-select: none;
+    0 0 0 1px rgba(234,169,96,0.18),
+    0 32px 80px rgba(0,0,0,0.75),
+    0 0 60px rgba(234,169,96,0.08);
+  object-fit: contain; display: block;
+  -webkit-user-drag: none; user-select: none;
 }
 
-/* Counter "2 / 5" */
 .journal-lightbox-counter {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 99px;
-  padding: 4px 14px;
-  font-family: 'Space Grotesk', sans-serif;
-  white-space: nowrap;
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(234,169,96,0.55);
+  background: rgba(234,169,96,0.06);
+  border: 1px solid rgba(234,169,96,0.16);
+  border-radius: 99px; padding: 4px 16px;
+  font-family: 'DM Mono', monospace; white-space: nowrap;
 }
 
-/* Thumbnail strip at bottom of lightbox */
 .journal-lightbox-thumbs {
-  position: absolute;
-  bottom: 52px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 6px;
-  align-items: center;
+  position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px; align-items: center;
   padding: 6px 10px;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
+  background: rgba(3,2,13,0.72);
+  border: 1px solid rgba(234,169,96,0.12);
+  border-radius: 12px; backdrop-filter: blur(12px);
   max-width: calc(100vw - 40px);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
 
 .journal-lightbox-thumbs::-webkit-scrollbar { display: none; }
 
 .journal-lightbox-thumb {
-  width: 36px;
-  height: 36px;
-  border-radius: 7px;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.1);
-  cursor: pointer;
-  transition: all 0.18s ease;
-  opacity: 0.55;
+  width: 36px; height: 36px;
+  border-radius: 7px; overflow: hidden; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer; transition: all var(--transition-s); opacity: 0.52;
 }
 
-.journal-lightbox-thumb:hover { opacity: 0.9; }
+.journal-lightbox-thumb:hover { opacity: 0.88; }
 
 .journal-lightbox-thumb--active {
   opacity: 1;
-  border-color: rgba(139,92,246,0.7);
-  box-shadow: 0 0 10px rgba(139,92,246,0.45);
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 10px rgba(234,169,96,0.38);
   transform: scale(1.1);
 }
 
 .journal-lightbox-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;
+  width: 100%; height: 100%;
+  object-fit: cover; display: block; pointer-events: none;
 }
 
-/* ── Empty State ─────────────────────────────────────────────── */
-.journal-task-empty {
-  padding: 40px 24px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  font-weight: 300;
-  letter-spacing: 0.1em;
-  background: var(--bg-card);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-}
-
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════
    REFLECTION / NOTES SECTION
-   ════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-notes-section {
-  margin-top: 32px;
-  padding-top: 28px;
+  margin-top: 32px; padding-top: 28px;
   border-top: 1px solid var(--border);
   animation: journal-fadeIn 0.45s ease-out 0.12s both;
 }
 
 .journal-notes-hint {
-  font-size: 0.75rem;
-  font-weight: 300;
-  color: var(--text-muted);
-  margin: -8px 0 14px 0;
-  line-height: 1.55;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  font-size: 0.74rem; font-weight: 300; color: var(--text-dim);
+  margin: -8px 0 14px; line-height: 1.58;
+  overflow-wrap: break-word; word-break: break-word;
 }
 
 .journal-reflection-section .journal-section-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: inline-flex; align-items: center; gap: 8px;
 }
 
-.journal-reflection-icon { color: #f59e0b; }
+.journal-reflection-icon { color: var(--gold); }
 
 .journal-reflection-prompt {
-  font-size: 0.78rem;
-  font-weight: 300;
-  color: var(--text-muted);
-  margin: -8px 0 14px 0;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem; font-weight: 300; color: var(--text-muted);
+  margin: -8px 0 14px; letter-spacing: 0.06em;
 }
 
 /* ── Notes List ──────────────────────────────────────────────── */
 .journal-notes-list {
-  list-style: none;
-  margin: 0 0 16px 0;
-  padding: 0;
+  list-style: none; margin: 0 0 16px; padding: 0;
 }
 
-/* Note item – flex row with full controls */
 .journal-note-item {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: flex-start; gap: 10px;
   padding: 12px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-left: 2px solid rgba(139,92,246,0.45);
+  border-left: 2px solid rgba(234,169,96,0.42);
   border-radius: var(--radius);
   margin-bottom: 7px;
   animation: journal-fadeIn 0.3s ease-out both;
-  transition: all var(--transition);
+  transition: all var(--transition-s);
   min-width: 0;
 }
 
 .journal-note-item:hover {
   background: var(--bg-card-h);
-  border-color: rgba(139,92,246,0.3);
-  border-left-color: rgba(139,92,246,0.7);
+  border-color: rgba(234,169,96,0.20);
+  border-left-color: rgba(234,169,96,0.68);
   transform: translateX(4px);
 }
 
 .journal-note-content {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.88rem;
-  font-weight: 300;
+  flex: 1; min-width: 0;
+  font-size: 0.86rem; font-weight: 300;
   color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.55;
-  padding-top: 2px;
+  white-space: pre-wrap; word-break: break-word;
+  line-height: 1.58; padding-top: 2px;
 }
 
-/* Edit inline textarea */
 .journal-note-edit-input {
-  flex: 1;
-  min-width: 0;
-  background: rgba(139,92,246,0.05);
-  border: 1px solid rgba(139,92,246,0.35);
+  flex: 1; min-width: 0;
+  background: var(--gold-ultra);
+  border: 1px solid var(--gold-dim);
   border-radius: 8px;
   padding: 9px 12px;
-  font-size: 0.88rem;
-  font-weight: 300;
+  font-size: 0.86rem; font-weight: 300;
   color: var(--text);
   font-family: 'Space Grotesk', sans-serif;
-  resize: vertical;
-  min-height: 58px;
-  line-height: 1.55;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  resize: vertical; min-height: 58px; line-height: 1.58;
+  transition: border-color var(--transition-s), box-shadow var(--transition-s);
   box-sizing: border-box;
 }
 
 .journal-note-edit-input:focus {
   outline: none;
-  border-color: rgba(139,92,246,0.6);
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
-  background: rgba(139,92,246,0.07);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.10);
 }
 
-/* Note action buttons group */
 .journal-note-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  padding-top: 1px;
+  display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0; padding-top: 1px;
 }
 
-/* Shared icon button base */
 .journal-note-action-btn {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.78rem;
-  transition: all var(--transition);
-  font-family: 'Space Grotesk', sans-serif;
-  line-height: 1;
+  flex-shrink: 0; width: 30px; height: 30px;
+  border: none; border-radius: 8px;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.76rem; transition: all var(--transition-s);
+  font-family: 'Space Grotesk', sans-serif; line-height: 1;
 }
 
-/* Edit button */
-.journal-note-edit-btn {
-  color: var(--text-muted);
-}
-
+.journal-note-edit-btn { color: var(--text-dim); }
 .journal-note-edit-btn:hover {
-  color: #c4b5fd;
-  background: rgba(139,92,246,0.12);
-  border: 1px solid rgba(139,92,246,0.3);
+  color: var(--gold-soft);
+  background: var(--gold-glass);
+  border: 1px solid var(--gold-dim);
 }
 
-/* Delete / cancel button */
-.journal-note-delete {
-  color: var(--text-muted);
-}
-
+.journal-note-delete { color: var(--text-dim); }
 .journal-note-delete:hover {
-  color: var(--down);
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.25);
+  color: var(--red);
+  background: var(--red-glass);
+  border: 1px solid rgba(240,61,95,0.25);
 }
 
-/* Save button (shown in edit mode) */
 .journal-note-save-btn {
-  padding: 0 10px;
-  height: 30px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.8), rgba(99,179,237,0.7));
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all var(--transition);
-  font-family: 'Space Grotesk', sans-serif;
-  white-space: nowrap;
-  box-shadow: 0 0 14px rgba(139,92,246,0.3);
+  padding: 0 10px; height: 30px;
+  border: none; border-radius: 8px;
+  background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
+  color: #03020D;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.10em;
+  text-transform: uppercase; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+  transition: all var(--transition-s);
+  font-family: 'Space Grotesk', sans-serif; white-space: nowrap;
+  box-shadow: 0 0 14px rgba(234,169,96,0.28);
 }
 
 .journal-note-save-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 18px rgba(139,92,246,0.45);
+  box-shadow: 0 4px 18px rgba(234,169,96,0.44);
+  filter: brightness(1.06);
 }
 
-.journal-note-save-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+.journal-note-save-btn:disabled { opacity: 0.42; cursor: not-allowed; }
 
 /* ── Add Note Form ───────────────────────────────────────────── */
 .journal-add-note-form {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
+  display: flex; gap: 12px; margin-bottom: 20px;
 }
 
 .journal-add-note-input {
@@ -2031,55 +2150,50 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px 16px;
-  font-size: 0.88rem;
-  font-weight: 300;
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
-  transition: all var(--transition);
+  font-size: 0.86rem; font-weight: 300;
+  color: var(--text); font-family: 'Space Grotesk', sans-serif;
+  transition: all var(--transition-s);
 }
 
-.journal-add-note-input::placeholder { color: var(--text-muted); }
+.journal-add-note-input::placeholder { color: rgba(255,255,255,0.22); }
 
 .journal-add-note-input:focus {
   outline: none;
-  border-color: rgba(139,92,246,0.45);
-  background: rgba(139,92,246,0.03);
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.08);
+  border-color: var(--gold-dim);
+  background: var(--gold-ultra);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
 }
 
-.journal-add-note-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+.journal-add-note-btn,
+.journal-add-note-btn-purple {
+  display: inline-flex; align-items: center; gap: 7px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.85) 0%, rgba(99,179,237,0.75) 100%);
-  border: none;
+  background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright)) !important;
+  border: none !important;
   border-radius: var(--radius);
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 500;
+  color: #03020D !important;
+  font-size: 0.76rem; font-weight: 700 !important;
   font-family: 'Space Grotesk', sans-serif;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.14em; text-transform: uppercase;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 0 22px rgba(139,92,246,0.25);
+  box-shadow: 0 0 22px rgba(234,169,96,0.28);
+  white-space: nowrap;
 }
 
-.journal-add-note-btn:hover:not(:disabled) {
+.journal-add-note-btn:hover:not(:disabled),
+.journal-add-note-btn-purple:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 0 36px rgba(139,92,246,0.45), 0 6px 20px rgba(0,0,0,0.35);
+  box-shadow: 0 0 36px rgba(234,169,96,0.48), 0 6px 20px rgba(0,0,0,0.36);
+  filter: brightness(1.06);
 }
 
-.journal-add-note-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.journal-add-note-btn:disabled,
+.journal-add-note-btn-purple:disabled { opacity: 0.40; cursor: not-allowed; }
 
-.journal-add-note-btn-purple {
-  background: linear-gradient(135deg, rgba(139,92,246,0.85) 0%, rgba(99,179,237,0.75) 100%) !important;
-  border: none !important;
-  color: #fff !important;
-}
-
-/* ── Mood / Daily Section ────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   MOOD / DAILY SECTION
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-daily-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -2087,204 +2201,170 @@
   padding: 22px 24px;
   margin-bottom: 24px;
   animation: journal-fadeIn 0.45s ease-out both;
-  position: relative;
-  overflow: hidden;
+  position: relative; overflow: hidden;
   transition: all var(--transition);
+  box-shadow: var(--glass-shadow);
 }
 
 .journal-daily-section::before {
   content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
+  position: absolute; top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.45), rgba(99,179,237,0.35), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.48), rgba(248,195,125,0.35), transparent);
 }
 
 .journal-daily-section:hover {
   background: var(--bg-card-h);
-  border-color: rgba(139,92,246,0.2);
+  border-color: rgba(234,169,96,0.16);
 }
 
 .journal-mood-row { margin-bottom: 10px; }
 
 .journal-mood-label {
   display: block;
-  font-size: 0.62rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
+  font-size: 0.60rem; font-weight: 700; color: var(--text-dim);
+  margin-bottom: 10px; letter-spacing: 0.28em; text-transform: uppercase;
 }
 
 .journal-mood-options {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  display: flex; gap: 8px; flex-wrap: wrap;
 }
 
 .journal-mood-btn {
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-card);
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition);
+  width: 44px; height: 44px;
+  border: 1px solid rgba(234,169,96,0.14);
+  border-radius: 13px;
+  background: rgba(234,169,96,0.04);
+  font-size: 1.2rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-s);
 }
 
 .journal-mood-btn:hover {
-  background: var(--bg-card-h);
-  border-color: rgba(255,255,255,0.25);
-  transform: scale(1.1) translateY(-2px);
+  background: var(--gold-glass);
+  border-color: var(--gold-dim);
+  transform: scale(1.12) translateY(-2px);
+  box-shadow: 0 0 16px rgba(234,169,96,0.20);
 }
 
 .journal-mood-btn--active {
-  border-color: rgba(139,92,246,0.6);
-  background: rgba(139,92,246,0.12);
-  box-shadow: 0 0 20px rgba(139,92,246,0.25);
-  transform: scale(1.05);
+  border-color: var(--gold-dim);
+  background: var(--gold-glass);
+  box-shadow: 0 0 20px rgba(234,169,96,0.24);
+  transform: scale(1.06);
 }
 
 .journal-mood-saved {
-  display: inline-block;
-  margin-top: 8px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--up);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  display: inline-block; margin-top: 8px;
+  font-size: 0.68rem; font-weight: 700; color: var(--green);
+  letter-spacing: 0.14em; text-transform: uppercase;
 }
 
+/* ── Notes textarea & save ───────────────────────────────────── */
 .journal-notes-input {
-  width: 100%;
-  box-sizing: border-box;
-  background: rgba(255,255,255,0.03);
+  width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,0.025);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px 14px;
-  font-size: 0.88rem;
-  font-weight: 300;
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
-  resize: vertical;
-  min-height: 80px;
-  margin-bottom: 12px;
-  transition: all var(--transition);
+  font-size: 0.86rem; font-weight: 300;
+  color: var(--text); font-family: 'Space Grotesk', sans-serif;
+  resize: vertical; min-height: 80px;
+  margin-bottom: 12px; transition: all var(--transition-s);
 }
 
-.journal-notes-input::placeholder { color: var(--text-muted); }
+.journal-notes-input::placeholder { color: rgba(255,255,255,0.22); }
 
 .journal-notes-input:focus {
   outline: none;
-  border-color: rgba(255,255,255,0.22);
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 0 3px rgba(234,169,96,0.08);
 }
 
 .journal-save-notes-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+  display: inline-flex; align-items: center; gap: 7px;
   padding: 10px 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 400;
-  font-family: 'Space Grotesk', sans-serif;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: all var(--transition);
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text);
+  font-size: 0.76rem; font-weight: 500;
+  font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.10em;
+  cursor: pointer; transition: all var(--transition-s);
 }
 
 .journal-save-notes-btn:hover:not(:disabled) {
-  background: var(--bg-card-h);
-  border-color: var(--border-h);
+  background: var(--gold-glass);
+  border-color: var(--gold-dim);
+  color: var(--gold-soft);
 }
 
-.journal-save-notes-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.journal-save-notes-btn:disabled { opacity: 0.50; cursor: not-allowed; }
 
 .journal-save-notes-btn--saved {
-  background: rgba(16,185,129,0.1);
-  border-color: rgba(16,185,129,0.35);
-  color: #86efac;
+  background: rgba(15,217,138,0.09);
+  border-color: rgba(15,217,138,0.30);
+  color: #6FFFC9;
 }
 
-/* ── Note Display ────────────────────────────────────────────── */
+/* ── Note display ────────────────────────────────────────────── */
 .journal-note-display {
-  margin-bottom: 18px;
-  padding: 16px 18px;
-  background: rgba(99,179,237,0.05);
-  border: 1px solid rgba(99,179,237,0.15);
-  border-left: 2px solid rgba(99,179,237,0.5);
+  margin-bottom: 18px; padding: 16px 18px;
+  background: var(--gold-ultra);
+  border: 1px solid rgba(234,169,96,0.14);
+  border-left: 2px solid rgba(234,169,96,0.50);
   border-radius: var(--radius);
   animation: journal-fadeIn 0.35s ease-out;
 }
 
 .journal-note-display-label {
-  font-size: 0.6rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  font-size: 0.60rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.22em; color: var(--gold-soft); margin-bottom: 8px;
 }
 
 .journal-note-display-content {
-  font-size: 0.9rem;
-  font-weight: 300;
-  line-height: 1.6;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
+  font-size: 0.88rem; font-weight: 300;
+  line-height: 1.62; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
 }
 
-/* ── Loading / Error ─────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   LOADING / ERROR
+   ════════════════════════════════════════════════════════════════════════════ */
 .journal-loading {
-  padding: 48px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  padding: 52px; text-align: center;
+  color: var(--text-dim); font-size: 0.78rem;
+  letter-spacing: 0.22em; text-transform: uppercase;
 }
 
 .journal-error {
-  background: rgba(239,68,68,0.07);
-  border: 1px solid rgba(239,68,68,0.25);
+  background: var(--red-glass);
+  border: 1px solid rgba(240,61,95,0.24);
   color: #fca5a5;
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  margin-bottom: 20px;
-  font-size: 0.82rem;
-  font-weight: 300;
+  padding: 12px 16px; border-radius: var(--radius);
+  margin-bottom: 20px; font-size: 0.82rem; font-weight: 300;
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════
    RESPONSIVE
-   ════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════ */
 
 /* iPad Pro (769–1366px) */
 @media (min-width: 769px) and (max-width: 1366px) {
-  .journal-sidebar {
-    width: 268px;
-    padding: 22px 16px;
-    overflow-x: hidden;
-  }
-  .journal-calendar {
-    padding: 20px clamp(8px, 2.5%, 16px) 18px;
-  }
+  .journal-sidebar { width: 268px; padding: 22px 16px; overflow-x: hidden; }
+  .journal-calendar { padding: 20px clamp(8px, 2.5%, 16px) 18px; }
   .journal-main { padding: 26px 26px 40px; }
   .journal-progress-cards { grid-template-columns: 1fr 1fr; }
+  .journal-task-list,
+  .journal-task-list-mandatory { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* iPad Pro 12.9″ landscape */
-@media (min-width: 1025px) and (max-width: 1366px) {
-  .journal-sidebar { width: 280px; }
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .journal-task-list,
+  .journal-task-list-mandatory { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .journal-task-list,
+  .journal-task-list-mandatory { grid-template-columns: repeat(3, 1fr); gap: 9px; }
 }
 
 @media (min-width: 768px) and (max-width: 1366px) {
@@ -2303,42 +2383,24 @@
 /* Stacked ≤ 900px */
 @media (max-width: 900px) {
   .journal-layout { flex-direction: column; }
-  .journal-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 22px 18px;
-    overflow-x: hidden;
-  }
-  .journal-calendar {
-    width: 100%;
-    max-width: 360px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 20px clamp(12px, 4%, 20px) 18px;
-  }
+  .journal-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 22px 18px; overflow-x: hidden; }
+  .journal-calendar { width: 100%; max-width: 360px; margin-left: auto; margin-right: auto; padding: 20px clamp(12px, 4%, 20px) 18px; }
   .journal-stats-sidebar,
   .journal-streak-card,
-  .journal-stats-circles {
-    max-width: 340px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+  .journal-stats-circles { max-width: 340px; margin-left: auto; margin-right: auto; }
   .journal-main { padding: 24px 22px 36px; }
   .journal-progress-cards { grid-template-columns: 1fr; }
+  .journal-task-list,
+  .journal-task-list-mandatory { grid-template-columns: repeat(2, 1fr); gap: 9px; }
   .journal-add-note-form { flex-wrap: wrap; }
-
-  /* Lightbox arrows tighter on tablet */
   .journal-lightbox-arrow--prev { left: 8px; }
   .journal-lightbox-arrow--next { right: 8px; }
-  .journal-lightbox-img-wrap {
-    max-width: calc(100vw - 100px);
-  }
+  .journal-lightbox-img-wrap { max-width: calc(100vw - 100px); }
 }
 
 @media (max-width: 600px) {
-  .journal-add-form      { flex-direction: column; }
-  .journal-add-btn       { justify-content: center; }
+  .journal-add-form { flex-direction: column; }
+  .journal-add-btn  { justify-content: center; }
   .journal-add-note-form { flex-direction: column; }
   .journal-add-note-btn  { justify-content: center; }
 }
@@ -2347,10 +2409,9 @@
 @media (max-width: 767px) {
   .journal-page {
     padding: 12px !important;
-    padding-top: 32px !important;
+    padding-top: 56px !important;
     padding-bottom: 56px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow-y: auto !important; overflow-x: hidden !important;
     height: 100vh !important; height: 100dvh !important;
     max-height: 100vh !important; max-height: 100dvh !important;
     -webkit-overflow-scrolling: touch !important;
@@ -2358,635 +2419,208 @@
   }
   .journal-layout,
   .journal-main { overflow-y: visible !important; overflow-x: hidden !important; }
-
-  .journal-sidebar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
-    box-sizing: border-box;
-    overflow-x: hidden;
-  }
-  .journal-sidebar-header {
-    text-align: center;
-    width: 100%;
-    max-width: 340px;
-  }
-  .journal-calendar {
-    max-width: 340px;
-    padding: 18px clamp(10px, 4%, 16px) 16px;
-  }
-  .journal-calendar-day {
-    border-radius: 7px;
-  }
-  .journal-calendar-day--today::before {
-    inset: -2px;
-    border-radius: 9px;
-  }
+  .journal-sidebar { display: flex; flex-direction: column; align-items: center; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); box-sizing: border-box; overflow-x: hidden; }
+  .journal-sidebar-header { text-align: center; width: 100%; max-width: 340px; }
+  .journal-calendar { max-width: 340px; padding: 18px clamp(10px, 4%, 16px) 16px; }
   .journal-stats-sidebar,
   .journal-streak-card,
-  .journal-stats-circles {
-    width: 100%;
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+  .journal-stats-circles { width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; }
   .journal-main-title { font-size: 1.55rem; }
   .journal-progress-card-value { font-size: 1.9rem; }
-
-  /* Lightbox full screen on mobile */
-  .journal-lightbox { padding: 8px; }
-  .journal-lightbox-img-wrap {
-    max-width: 100vw;
-    max-height: calc(100vh - 120px);
-  }
-  .journal-lightbox-img-wrap img {
-    border-radius: 10px;
-    max-height: calc(100vh - 120px);
-  }
-  .journal-lightbox-arrow { width: 36px; height: 36px; font-size: 0.9rem; }
-  .journal-lightbox-arrow--prev { left: 4px; }
-  .journal-lightbox-arrow--next { right: 4px; }
-  .journal-lightbox-close { top: 10px; right: 10px; width: 36px; height: 36px; }
-
-  /* Proof thumbs smaller on mobile */
-  .journal-proof-thumb,
-  .journal-proof-add-more { width: 44px; height: 44px; }
-}
-/* =============================================================================
-   AURA JOURNAL – Task Card Grid System
-   Replace the long horizontal task list with a compact, scannable card grid.
-   Add/replace these rules at the bottom of your Journal.css file.
-   ============================================================================= */
-
-/* ── Animations specific to cards ───────────────────────────── */
-@keyframes card-popIn {
-  from { opacity: 0; transform: scale(0.9) translateY(8px); }
-  to   { opacity: 1; transform: scale(1)   translateY(0); }
-}
-
-@keyframes card-shimmer {
-  0%   { left: -80%; }
-  100% { left: 120%; }
-}
-
-@keyframes card-checkBounce {
-  0%   { transform: scale(0.5);  opacity: 0; }
-  60%  { transform: scale(1.25); opacity: 1; }
-  100% { transform: scale(1);    opacity: 1; }
-}
-
-@keyframes card-doneStrike {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   TASK GRID — replaces .journal-task-list vertical stack
-   ══════════════════════════════════════════════════════════════ */
-.journal-task-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  align-items: start;       /* cards don't stretch to match tallest */
-}
-
-/* Mandatory task list — same grid */
-.journal-task-list-mandatory {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 28px;
-  align-items: start;
-}
-
-/* ── Empty state spans full grid ─────────────────────────────── */
-.journal-task-list .journal-task-empty {
-  grid-column: 1 / -1;
-  padding: 32px 20px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 300;
-  letter-spacing: 0.1em;
-  background: var(--bg-card);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   TASK CARD — the individual card replacing the wide list row
-   ══════════════════════════════════════════════════════════════ */
-.journal-task-item {
-  /* Reset flex layout from old row style */
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  padding: 0;
-  background: rgba(255,255,255,0.028);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 14px;
-  margin-bottom: 0;         /* gap handles spacing now */
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1),
-              border-color 0.25s ease,
-              box-shadow 0.25s ease;
-  animation: card-popIn 0.32s cubic-bezier(0.34,1.56,0.64,1) both;
-  cursor: default;
-}
-
-/* Stagger pop-in */
-.journal-task-list .journal-task-item:nth-child(1)  { animation-delay: 0.03s; }
-.journal-task-list .journal-task-item:nth-child(2)  { animation-delay: 0.07s; }
-.journal-task-list .journal-task-item:nth-child(3)  { animation-delay: 0.11s; }
-.journal-task-list .journal-task-item:nth-child(4)  { animation-delay: 0.15s; }
-.journal-task-list .journal-task-item:nth-child(5)  { animation-delay: 0.18s; }
-.journal-task-list .journal-task-item:nth-child(6)  { animation-delay: 0.21s; }
-.journal-task-list .journal-task-item:nth-child(7)  { animation-delay: 0.24s; }
-.journal-task-list .journal-task-item:nth-child(8)  { animation-delay: 0.27s; }
-.journal-task-list .journal-task-item:nth-child(n+9){ animation-delay: 0.30s; }
-
-/* Top shimmer line on each card */
-.journal-task-item::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(139,92,246,0.5) 40%,
-    rgba(99,179,237,0.35) 70%,
-    transparent
-  );
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.journal-task-item:hover {
-  transform: translateY(-3px);
-  border-color: rgba(139,92,246,0.3);
-  box-shadow:
-    0 8px 28px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(139,92,246,0.08);
-}
-
-.journal-task-item:hover::before { opacity: 1; }
-
-/* Completed card — subtle green tint */
-.journal-task-item--done {
-  opacity: 1;                          /* override old 0.72 */
-  background: rgba(16,185,129,0.04);
-  border-color: rgba(16,185,129,0.18);
-}
-
-.journal-task-item--done:hover {
-  border-color: rgba(16,185,129,0.35);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.3), 0 0 16px rgba(16,185,129,0.08);
-}
-
-/* Mandatory card — amber left stripe */
-.journal-task-item--mandatory {
-  align-items: stretch;
-  border-left: 2px solid rgba(245,158,11,0.45);
-}
-
-.journal-task-item--mandatory:hover {
-  border-left-color: rgba(245,158,11,0.75);
-}
-
-/* ── Card top area: checkbox + XP badge ─────────────────────── */
-.journal-task-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 12px 6px;
-}
-
-/* ── Checkbox — now in card header ──────────────────────────── */
-.journal-task-check {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border: 1.5px solid rgba(255,255,255,0.22);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--up);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
-  position: relative;
-  z-index: 1;
-}
-
-.journal-task-item--done .journal-task-check {
-  background: rgba(16,185,129,0.15);
-  border-color: rgba(16,185,129,0.65);
-  box-shadow: 0 0 10px rgba(16,185,129,0.25);
-}
-
-.journal-task-item--done .journal-task-check svg {
-  animation: card-checkBounce 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
-}
-
-.journal-task-check:hover {
-  border-color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.05);
-  transform: scale(1.1);
-}
-
-/* ── XP badge in top-right ───────────────────────────────────── */
-.journal-task-xp {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: var(--up);
-  letter-spacing: 0.1em;
-  padding: 2px 7px;
-  background: rgba(16,185,129,0.1);
-  border: 1px solid rgba(16,185,129,0.28);
-  border-radius: 99px;
-  white-space: nowrap;
-}
-
-/* ── Card body: task title ───────────────────────────────────── */
-.journal-task-card-body {
-  padding: 2px 12px 10px;
-  flex: 1;
-}
-
-.journal-task-title {
-  display: block;
-  font-size: 0.82rem;
-  font-weight: 400;
-  color: var(--text);
-  line-height: 1.45;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  letter-spacing: 0.01em;
-  position: relative;
-}
-
-.journal-task-title:hover { color: #c4b5fd; }
-
-/* Strike-through animation on done */
-.journal-task-item--done .journal-task-title {
-  color: var(--text-muted);
-  text-decoration: none;             /* remove old text-decoration */
-  position: relative;
-}
-
-.journal-task-item--done .journal-task-title::after {
-  content: '';
-  position: absolute;
-  left: 0; top: 50%;
-  height: 1px;
-  background: rgba(255,255,255,0.35);
-  animation: card-doneStrike 0.4s ease-out both;
-  width: 100%;
-}
-
-/* Task description (mandatory tasks) */
-.journal-task-description {
-  margin: 5px 0 0 0;
-  font-size: 0.72rem;
-  font-weight: 300;
-  color: var(--text-muted);
-  line-height: 1.45;
-}
-
-.journal-task-item--done .journal-task-description { opacity: 0.55; }
-
-/* ── Card footer: actions ────────────────────────────────────── */
-.journal-task-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  padding: 8px 10px 10px;
-  border-top: 1px solid rgba(255,255,255,0.045);
-}
-
-/* Overrides for icon buttons inside cards */
-.journal-task-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.journal-task-edit-icon,
-.journal-task-delete {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  transition: all 0.2s ease;
-}
-
-.journal-task-edit-icon { color: var(--text-muted); }
-.journal-task-edit-icon:hover {
-  color: #c4b5fd;
-  background: rgba(139,92,246,0.12);
-  border: 1px solid rgba(139,92,246,0.3);
-}
-
-.journal-task-delete { color: var(--text-muted); }
-.journal-task-delete:hover {
-  color: var(--down);
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.25);
-}
-
-/* Proof button — compact in card */
-.journal-task-proof-btn {
-  padding: 4px 9px;
-  height: 28px;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-  background: rgba(255,255,255,0.03);
-  color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: 400;
-  font-family: 'Space Grotesk', sans-serif;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.journal-task-proof-btn:hover {
-  background: rgba(139,92,246,0.1);
-  border-color: rgba(139,92,246,0.38);
-  color: #c4b5fd;
-}
-
-/* ── Inline edit mode inside card ────────────────────────────── */
-.journal-task-edit-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  flex: 1;
-}
-
-.journal-task-edit-input {
-  width: 100%;
-  background: rgba(139,92,246,0.06);
-  border: 1px solid rgba(139,92,246,0.35);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 0.82rem;
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
-  box-sizing: border-box;
-}
-
-.journal-task-edit-input:focus {
-  outline: none;
-  border-color: rgba(139,92,246,0.6);
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
-}
-
-.journal-task-edit-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.journal-task-edit-btn {
-  flex: 1;
-  padding: 6px 0;
-  border: none;
-  border-radius: 7px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.8), rgba(99,179,237,0.7));
-  color: #fff;
-  cursor: pointer;
-  font-size: 0.72rem;
-  font-family: 'Space Grotesk', sans-serif;
-  letter-spacing: 0.08em;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-}
-
-.journal-task-edit-btn:hover { box-shadow: 0 4px 14px rgba(139,92,246,0.35); transform: translateY(-1px); }
-
-.journal-task-edit-btn--cancel {
-  background: rgba(255,255,255,0.07);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-.journal-task-edit-btn--cancel:hover { background: rgba(255,255,255,0.12); box-shadow: none; transform: none; }
-
-/* ── Proof photo strip — spans full card width ────────────────── */
-.journal-proof-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px 10px 10px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.journal-proof-thumb {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.1);
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.journal-proof-thumb:hover {
-  border-color: rgba(139,92,246,0.6);
-  transform: scale(1.08);
-  box-shadow: 0 4px 14px rgba(139,92,246,0.3);
-}
-
-.journal-proof-thumb::after {
-  content: '⤢';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  background: rgba(0,0,0,0.55);
-  color: rgba(255,255,255,0.9);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  border-radius: inherit;
-}
-
-.journal-proof-thumb:hover::after { opacity: 1; }
-
-.journal-proof-thumb img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;
-}
-
-.journal-proof-thumb-remove {
-  position: absolute;
-  top: 2px; right: 2px;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: rgba(239,68,68,0.9);
-  border: none;
-  color: #fff;
-  font-size: 0.5rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: scale(0.7);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 3;
-}
-
-.journal-proof-thumb:hover .journal-proof-thumb-remove {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.journal-proof-add-more {
-  width: 40px; height: 40px;
-  border-radius: 8px;
-  border: 1px dashed rgba(139,92,246,0.4);
-  background: rgba(139,92,246,0.05);
-  color: rgba(139,92,246,0.7);
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.journal-proof-add-more:hover {
-  background: rgba(139,92,246,0.12);
-  border-color: rgba(139,92,246,0.7);
-  color: #c4b5fd;
-  transform: scale(1.08);
-}
-
-.journal-proof-count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 99px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.85), rgba(99,179,237,0.75));
-  color: #fff;
-  font-size: 0.56rem;
-  font-weight: 700;
-  font-family: 'Space Grotesk', sans-serif;
-  margin-left: 2px;
-  letter-spacing: 0;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   MANDATORY TASK CARD — adjusted inner layout
-   ══════════════════════════════════════════════════════════════ */
-.journal-task-item--mandatory .journal-task-mandatory-content {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 10px 12px 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.journal-task-item--mandatory .journal-task-title {
-  width: 100%;
-  cursor: default;
-}
-
-.journal-task-item--mandatory .journal-task-actions {
-  margin-top: 4px;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   RESPONSIVE GRID BREAKPOINTS
-   ══════════════════════════════════════════════════════════════ */
-
-/* Wide desktop → 4 columns (default above) */
-
-/* Medium desktop / iPad landscape (1025–1280px) → 3 columns */
-@media (min-width: 1025px) and (max-width: 1280px) {
   .journal-task-list,
-  .journal-task-list-mandatory {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* iPad Pro portrait / small laptop (769–1024px) → 3 columns */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .journal-task-list,
-  .journal-task-list-mandatory {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 9px;
-  }
-}
-
-/* Stacked layout (≤ 900px) → 2 columns */
-@media (max-width: 900px) {
-  .journal-task-list,
-  .journal-task-list-mandatory {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 9px;
-  }
-}
-
-/* Mobile (≤ 520px) → 2 tight columns */
-@media (max-width: 520px) {
-  .journal-task-list,
-  .journal-task-list-mandatory {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 7px;
-  }
+  .journal-task-list-mandatory { grid-template-columns: repeat(2, 1fr); gap: 7px; }
   .journal-task-card-top { padding: 10px 10px 5px; }
   .journal-task-card-body { padding: 2px 10px 8px; }
   .journal-task-card-footer { padding: 7px 8px 8px; }
   .journal-task-title { font-size: 0.78rem; }
+  .journal-lightbox { padding: 8px; }
+  .journal-lightbox-img-wrap { max-width: 100vw; max-height: calc(100vh - 120px); }
+  .journal-lightbox-img-wrap img { border-radius: 10px; max-height: calc(100vh - 120px); }
+  .journal-lightbox-arrow { width: 36px; height: 36px; font-size: 0.9rem; }
+  .journal-lightbox-arrow--prev { left: 4px; }
+  .journal-lightbox-arrow--next { right: 4px; }
+  .journal-lightbox-close { top: 10px; right: 10px; width: 36px; height: 36px; }
+  .journal-proof-thumb,
+  .journal-proof-add-more { width: 38px; height: 38px; }
 }
 
-/* Very small (≤ 360px) → 1 column */
 @media (max-width: 360px) {
   .journal-task-list,
-  .journal-task-list-mandatory {
-    grid-template-columns: 1fr;
-  }
+  .journal-task-list-mandatory { grid-template-columns: 1fr; }
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+.journal-page ::-webkit-scrollbar       { width: 4px; height: 4px; }
+.journal-page ::-webkit-scrollbar-track { background: transparent; }
+.journal-page ::-webkit-scrollbar-thumb { background: rgba(234,169,96,0.20); border-radius: 99px; }
+.journal-page ::-webkit-scrollbar-thumb:hover { background: rgba(234,169,96,0.38); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TWINKLING STARS — Individual animated star elements
+   These create the beautiful individually-twinkling star effect
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* We create multiple pseudo-layers with different animation-delay values
+   to simulate individual stars twinkling at different times */
+
+/* Star layer 1 — fast twinklers */
+.journal-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 7%   6%,  white, transparent),
+    radial-gradient(2px 2px at 34%  11%, white, transparent),
+    radial-gradient(2px 2px at 61%   4%, white, transparent),
+    radial-gradient(2px 2px at 89%  14%, white, transparent),
+    radial-gradient(2px 2px at 15%  32%, white, transparent),
+    radial-gradient(2px 2px at 78%  27%, white, transparent),
+    radial-gradient(2px 2px at 50%  18%, white, transparent),
+    radial-gradient(2px 2px at 23%  44%, white, transparent),
+    radial-gradient(2px 2px at 69%  38%, white, transparent),
+    radial-gradient(2px 2px at 92%  48%, white, transparent),
+    /* Gold stars */
+    radial-gradient(2.5px 2.5px at 16%  82%, rgba(234,169,96,1),  transparent),
+    radial-gradient(2.5px 2.5px at 48%  78%, rgba(234,169,96,1),  transparent),
+    radial-gradient(2.5px 2.5px at 77%  84%, rgba(234,169,96,1),  transparent),
+    radial-gradient(2.5px 2.5px at 31%  88%, rgba(248,195,125,1), transparent),
+    radial-gradient(2px   2px   at 62%  91%, rgba(248,195,125,1), transparent),
+    radial-gradient(2px   2px   at  6%  75%, rgba(248,195,125,1), transparent),
+    radial-gradient(2.5px 2.5px at 92%  79%, rgba(234,169,96,1),  transparent),
+    /* Blue stars */
+    radial-gradient(2.5px 2.5px at  9%  12%, rgba(140,175,255,1), transparent),
+    radial-gradient(2px   2px   at 23%  18%, rgba(140,175,255,1), transparent),
+    radial-gradient(2.5px 2.5px at 52%  15%, rgba(120,160,255,1), transparent),
+    radial-gradient(2px   2px   at 82%  20%, rgba(140,175,255,1), transparent),
+    radial-gradient(2.5px 2.5px at 38%   8%, rgba(160,190,255,1), transparent),
+    radial-gradient(2px   2px   at 66%  10%, rgba(120,160,255,1), transparent);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: twinkleLayer1 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes twinkleLayer1 {
+  0%   { opacity: 0.12; filter: blur(0.8px); }
+  15%  { opacity: 0.90; filter: blur(0px);   }
+  30%  { opacity: 0.25; filter: blur(1px);   }
+  45%  { opacity: 1.00; filter: blur(0px);   }
+  60%  { opacity: 0.18; filter: blur(0.6px); }
+  75%  { opacity: 0.85; filter: blur(0px);   }
+  90%  { opacity: 0.30; filter: blur(0.9px); }
+  100% { opacity: 0.95; filter: blur(0px);   }
+}
+
+/* Star glow halos — larger soft glow behind the sharp stars */
+.journal-layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    /* White star halos */
+    radial-gradient(6px 6px at 7%   6%,  rgba(255,255,255,0.35), transparent),
+    radial-gradient(8px 8px at 34%  11%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(6px 6px at 61%   4%, rgba(255,255,255,0.32), transparent),
+    radial-gradient(7px 7px at 89%  14%, rgba(255,255,255,0.28), transparent),
+    radial-gradient(6px 6px at 15%  32%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(8px 8px at 78%  27%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(6px 6px at 50%  18%, rgba(255,255,255,0.26), transparent),
+    /* Medium stars no halo */
+    radial-gradient(1.2px 1.2px at 4%   22%, rgba(255,255,255,0.70), transparent),
+    radial-gradient(1.2px 1.2px at 19%   8%, rgba(255,255,255,0.65), transparent),
+    radial-gradient(1.2px 1.2px at 44%  26%, rgba(255,255,255,0.62), transparent),
+    radial-gradient(1.2px 1.2px at 67%  19%, rgba(255,255,255,0.68), transparent),
+    radial-gradient(1.2px 1.2px at 83%   8%, rgba(255,255,255,0.64), transparent),
+    radial-gradient(1.2px 1.2px at 28%  42%, rgba(255,255,255,0.58), transparent),
+    radial-gradient(1.2px 1.2px at 56%  38%, rgba(255,255,255,0.62), transparent),
+    radial-gradient(1.2px 1.2px at 72%  45%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1.2px 1.2px at 10%  55%, rgba(255,255,255,0.52), transparent),
+    radial-gradient(1.2px 1.2px at 38%  60%, rgba(255,255,255,0.50), transparent),
+    radial-gradient(1.2px 1.2px at 64%  58%, rgba(255,255,255,0.54), transparent),
+    radial-gradient(1.2px 1.2px at 85%  52%, rgba(255,255,255,0.48), transparent),
+    /* Gold halos */
+    radial-gradient(10px 10px at 16%  82%, rgba(234,169,96,0.40),  transparent),
+    radial-gradient(8px  8px  at 48%  78%, rgba(234,169,96,0.35),  transparent),
+    radial-gradient(10px 10px at 77%  84%, rgba(234,169,96,0.38),  transparent),
+    radial-gradient(8px  8px  at 31%  88%, rgba(248,195,125,0.32), transparent),
+    radial-gradient(7px  7px  at 62%  91%, rgba(248,195,125,0.28), transparent),
+    /* Blue halos */
+    radial-gradient(8px  8px  at  9%  12%, rgba(140,175,255,0.35), transparent),
+    radial-gradient(10px 10px at 23%  18%, rgba(140,175,255,0.30), transparent),
+    radial-gradient(8px  8px  at 52%  15%, rgba(120,160,255,0.32), transparent),
+    radial-gradient(9px  9px  at 82%  20%, rgba(140,175,255,0.28), transparent),
+    /* Dim background field */
+    radial-gradient(0.8px 0.8px at 11%  48%, rgba(255,255,255,0.38), transparent),
+    radial-gradient(0.8px 0.8px at 29%  62%, rgba(255,255,255,0.34), transparent),
+    radial-gradient(0.8px 0.8px at 47%  55%, rgba(255,255,255,0.36), transparent),
+    radial-gradient(0.8px 0.8px at 60%  68%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(0.8px 0.8px at 74%  62%, rgba(255,255,255,0.34), transparent),
+    radial-gradient(0.8px 0.8px at 88%  48%, rgba(255,255,255,0.32), transparent),
+    radial-gradient(0.6px 0.6px at 20%  72%, rgba(255,255,255,0.24), transparent),
+    radial-gradient(0.6px 0.6px at 54%  78%, rgba(255,255,255,0.22), transparent),
+    radial-gradient(0.6px 0.6px at 80%  75%, rgba(255,255,255,0.26), transparent),
+    radial-gradient(0.6px 0.6px at 3%   35%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(0.6px 0.6px at 93%  62%, rgba(255,255,255,0.22), transparent),
+    radial-gradient(0.6px 0.6px at 37%  82%, rgba(255,255,255,0.18), transparent),
+    radial-gradient(0.6px 0.6px at 68%  25%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(0.6px 0.6px at 15%  90%, rgba(255,255,255,0.16), transparent),
+    radial-gradient(0.6px 0.6px at 85%  38%, rgba(255,255,255,0.22), transparent);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  /* Offset timing from layer1 so they twinkle independently */
+  animation: twinkleLayer2 4.7s ease-in-out infinite alternate;
+  animation-delay: -1.8s;
+}
+
+@keyframes twinkleLayer2 {
+  0%   { opacity: 0.95; filter: blur(0px);   }
+  20%  { opacity: 0.18; filter: blur(1.2px); }
+  40%  { opacity: 0.88; filter: blur(0px);   }
+  55%  { opacity: 0.22; filter: blur(0.8px); }
+  70%  { opacity: 1.00; filter: blur(0px);   }
+  85%  { opacity: 0.15; filter: blur(1px);   }
+  100% { opacity: 0.80; filter: blur(0px);   }
+}
+
+/* Third layer — slowest, creates the "background depth" stars */
+.journal-layout::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.8px 1.8px at 3%   14%, rgba(255,255,255,0.80), transparent),
+    radial-gradient(1.8px 1.8px at 41%  21%, rgba(255,255,255,0.75), transparent),
+    radial-gradient(1.8px 1.8px at 73%  16%, rgba(255,255,255,0.72), transparent),
+    radial-gradient(1.8px 1.8px at 96%  35%, rgba(255,255,255,0.68), transparent),
+    radial-gradient(1.8px 1.8px at 58%  44%, rgba(255,255,255,0.70), transparent),
+    radial-gradient(1.8px 1.8px at 25%  68%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1.8px 1.8px at 81%  61%, rgba(255,255,255,0.58), transparent),
+    radial-gradient(1.8px 1.8px at 12%  78%, rgba(255,255,255,0.50), transparent),
+    /* More gold stars at different positions */
+    radial-gradient(2px 2px at 22%  94%, rgba(234,169,96,0.88),  transparent),
+    radial-gradient(2px 2px at 55%  86%, rgba(234,169,96,0.82),  transparent),
+    radial-gradient(2px 2px at 88%  97%, rgba(248,195,125,0.78), transparent),
+    radial-gradient(2px 2px at 4%   92%, rgba(234,169,96,0.72),  transparent),
+    radial-gradient(2px 2px at 72%  73%, rgba(234,169,96,0.65),  transparent),
+    /* Blue in different positions */
+    radial-gradient(2px 2px at 30%  25%, rgba(140,175,255,0.78), transparent),
+    radial-gradient(2px 2px at 70%  30%, rgba(120,160,255,0.72), transparent),
+    radial-gradient(2px 2px at 95%   8%, rgba(150,185,255,0.70), transparent),
+    radial-gradient(2px 2px at 5%   42%, rgba(140,175,255,0.65), transparent);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: twinkleLayer3 6.1s ease-in-out infinite alternate;
+  animation-delay: -3.2s;
+}
+
+@keyframes twinkleLayer3 {
+  0%   { opacity: 0.30; filter: blur(0.4px); }
+  33%  { opacity: 1.00; filter: blur(0px);   }
+  66%  { opacity: 0.20; filter: blur(0.6px); }
+  100% { opacity: 0.90; filter: blur(0px);   }
 }
