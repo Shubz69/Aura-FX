@@ -6,5 +6,54 @@
     height: 100%;
     z-index: 0;
     pointer-events: none;
+    display: block;
+    /* Ensure the canvas maintains aspect ratio and covers the area */
+    object-fit: cover;
+    /* Prevent any unwanted stretching or collapsing */
+    min-width: 100%;
+    min-height: 100%;
+    /* Smooth transitions for responsive changes */
+    transition: opacity 0.3s ease;
+    /* Performance optimization */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
+/* Optional: Add a subtle overlay for better text readability if needed */
+.cosmic-background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.2) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Responsive adjustments for very small devices */
+@media (max-width: 480px) {
+    .cosmic-background-canvas {
+        /* Ensure canvas still covers the area on very small screens */
+        object-fit: cover;
+    }
+}
+
+/* Landscape orientation handling */
+@media (orientation: landscape) and (max-height: 600px) {
+    .cosmic-background-canvas {
+        /* Specific adjustments for landscape mobile */
+        object-fit: cover;
+    }
+}
+
+/* High-resolution displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .cosmic-background-canvas {
+        /* Ensure sharp rendering on retina displays */
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}

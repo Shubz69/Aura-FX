@@ -4,13 +4,13 @@ import { savePostAuthRedirect } from '../utils/postAuthRedirect';
 // Define a fixed API base URL with proper fallback
 // Automatically detect the origin to avoid CORS issues with www redirects
 const getApiBaseUrl = () => {
-    if (process.env.REACT_APP_API_URL) {
-        return process.env.REACT_APP_API_URL;
-    }
-    if (typeof window !== 'undefined' && window.location?.origin) {
-        return window.location.origin;
-    }
-    return '';
+  // If running on localhost → use LIVE backend
+  if (window.location.hostname === "localhost") {
+    return "https://www.auraterminal.ai";
+  }
+
+  // Otherwise (production)
+  return window.location.origin;
 };
 
 const API_BASE_URL = getApiBaseUrl();
