@@ -26,6 +26,14 @@ const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { safeLimit, safeCursor, isValidUUID } = require('../utils/validators');
 
+/** MySQL COUNT(*) may be bigint — normalize for JSON + UI */
+function toCountValue(val) {
+  if (val == null) return 0;
+  if (typeof val === 'bigint') return Number(val);
+  const n = Number(val);
+  return Number.isFinite(n) ? n : 0;
+}
+
 // Track schema creation
 let schemaCreated = false;
 
@@ -217,9 +225,18 @@ const handler = async (req, res) => {
   }
 
   const userId = decoded.id;
+  const uid = Number.parseInt(String(userId), 10);
+  if (!Number.isFinite(uid) || uid <= 0) {
+    return res.status(401).json({
+      success: false,
+      errorCode: 'UNAUTHORIZED',
+      message: 'Invalid user in token',
+      requestId
+    });
+  }
   
   // Rate limiting
-  const rateLimitKey = `notifications_${userId}`;
+  const rateLimitKey = `notifications_${uid}`;
   if (!checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.MEDIUM.requests, RATE_LIMIT_CONFIGS.MEDIUM.windowMs)) {
     logger.warn('Rate limited', { userId });
     return res.status(429).json({
@@ -253,25 +270,40 @@ const handler = async (req, res) => {
       const cursor = safeCursor(query.cursor);
       const limit = safeLimit(query.limit, 20, 50);
 
+      const listSql = `SELECT * FROM notifications WHERE user_id = ? ${cursor ? 'AND created_at < ?' : ''} ORDER BY created_at DESC LIMIT ?`;
+      const listParams = cursor ? [uid, cursor, limit + 1] : [uid, limit + 1];
+
       let rows = [];
-      const listTimeoutMs = 15000;
-      const [fetchedRows] = await executeQueryWithTimeout(
-        `SELECT * FROM notifications WHERE user_id = ? ${cursor ? 'AND created_at < ?' : ''} ORDER BY created_at DESC LIMIT ?`,
-        cursor ? [userId, cursor, limit + 1] : [userId, limit + 1],
-        listTimeoutMs,
-        requestId
-      );
-      rows = Array.isArray(fetchedRows) ? fetchedRows : [];
+      let listFetchFailed = false;
+
+      const loadListRows = async () => {
+        const [fetchedRows] = await executeQuery(listSql, listParams, { timeout: 28000, requestId });
+        if (Array.isArray(fetchedRows)) return fetchedRows;
+        return [];
+      };
+
+      try {
+        rows = await loadListRows();
+      } catch (e1) {
+        logger.warn('Notifications list query failed, retrying once', { error: e1.message, uid, requestId });
+        try {
+          rows = await loadListRows();
+        } catch (e2) {
+          logger.warn('Notifications list query failed after retry', { error: e2.message, uid, requestId });
+          listFetchFailed = true;
+          rows = [];
+        }
+      }
 
       let unreadCount = 0;
       try {
         const [countRows] = await executeQueryWithTimeout(
           'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND status = ?',
-          [userId, 'UNREAD'],
-          5000,
+          [uid, 'UNREAD'],
+          8000,
           requestId
         );
-        unreadCount = countRows?.[0]?.count ?? 0;
+        unreadCount = toCountValue(countRows?.[0]?.count);
       } catch (_) { unreadCount = 0; }
 
       const hasMore = rows.length > limit;
@@ -280,6 +312,7 @@ const handler = async (req, res) => {
 
       return res.status(200).json({
         success: true,
+        listFetchFailed: listFetchFailed || undefined,
         items: items.map(n => {
           let meta = null;
           if (n.meta != null) {
@@ -318,7 +351,7 @@ const handler = async (req, res) => {
     if (req.method === 'POST' && url.includes('/read-all')) {
       await executeQuery(
         'UPDATE notifications SET status = ?, read_at = NOW() WHERE user_id = ? AND status = ?',
-        ['READ', userId, 'UNREAD']
+        ['READ', uid, 'UNREAD']
       );
       
       return res.status(200).json({
@@ -344,7 +377,7 @@ const handler = async (req, res) => {
       
       const result = await executeQuery(
         'UPDATE notifications SET status = ?, read_at = NOW() WHERE id = ? AND user_id = ?',
-        ['READ', notificationId, userId]
+        ['READ', notificationId, uid]
       );
       
       const updateResult = Array.isArray(result) ? result[0] : result;
