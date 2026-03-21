@@ -76,12 +76,13 @@ const getDbPool = () => {
   // Vercel: default 1 connection per instance (8× traffic was exhausting Railway MySQL max_connections).
   // Override with MYSQL_POOL_SIZE (capped on Vercel — avoid >3 unless you use a DB pooler).
   const defaultLimit = process.env.VERCEL ? 1 : 100;
-  const defaultQueue = process.env.VERCEL ? 4 : 500;
+  // Vercel: many concurrent lambdas × multi-query handlers exhausted queueLimit=8 ("Queue limit reached").
+  const defaultQueue = process.env.VERCEL ? 40 : 500;
   let connectionLimit = Math.max(1, parseInt(process.env.MYSQL_POOL_SIZE, 10) || defaultLimit);
   let queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
   if (process.env.VERCEL) {
     connectionLimit = Math.min(connectionLimit, 3);
-    queueLimit = Math.min(Math.max(queueLimit, 2), 8);
+    queueLimit = Math.min(Math.max(queueLimit, 16), 80);
   }
 
   pool = mysql.createPool({
@@ -170,7 +171,8 @@ const getDbConnection = async (_retry = false) => {
 const executeQuery = async (query, params = [], options = {}) => {
   const timeout = options.timeout || 30000;
   const requestId = options.requestId || 'unknown';
-  const isRetry = options._connectionRetry === true;
+  const connectionAttempt = Number(options._connectionAttempt || 0);
+  const maxConnectionAttempts = 4;
 
   const safeParams = params.map(p => p === undefined ? null : p);
 
@@ -208,15 +210,16 @@ const executeQuery = async (query, params = [], options = {}) => {
       console.error('Database query error:', JSON.stringify(errorInfo));
     }
 
-    if (!isRetry && isTooManyConnectionsError(error)) {
-      await sleep(400 + Math.floor(Math.random() * 400));
-      return executeQuery(query, params, { ...options, _connectionRetry: true });
+    if (connectionAttempt < maxConnectionAttempts && isTooManyConnectionsError(error)) {
+      await sleep(400 + connectionAttempt * 250 + Math.floor(Math.random() * 400));
+      return executeQuery(query, params, { ...options, _connectionAttempt: connectionAttempt + 1 });
     }
-    if (!isRetry && isConnectionError(error)) {
+    if (connectionAttempt < maxConnectionAttempts && isConnectionError(error)) {
       if ((error.message || '').includes('Pool is closed')) {
         pool = null;
       }
-      return executeQuery(query, params, { ...options, _connectionRetry: true });
+      await sleep(200 + connectionAttempt * 200 + Math.floor(Math.random() * 300));
+      return executeQuery(query, params, { ...options, _connectionAttempt: connectionAttempt + 1 });
     }
     // Idempotent DDL: duplicate column/index name — treat as success so handlers don't 500
     if (benignDuplicate) {

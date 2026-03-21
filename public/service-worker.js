@@ -64,9 +64,10 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// ── FETCH: network-first with offline fallback for navigation
+// ── FETCH: network-first with offline fallback for navigation (GET only — HEAD prefetch must bypass SW)
 self.addEventListener('fetch', (event) => {
   if (event.request.mode !== 'navigate') return;
+  if (event.request.method !== 'GET') return;
   event.respondWith(
     fetch(event.request).catch(() =>
       caches.match('/').then(r => r || new Response('Offline', { status: 503 }))

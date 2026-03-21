@@ -5,13 +5,7 @@
     {
       "src": "/logos/a7-logo.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any"
-    },
-    {
-      "src": "/logos/a7-logo.png",
-      "type": "image/png",
-      "sizes": "512x512",
+      "sizes": "115x191",
       "purpose": "any"
     }
   ],
