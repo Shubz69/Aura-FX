@@ -3,7 +3,7 @@
  * GET  /api/aura-analysis/validator-accounts — list (creates Primary + backfills trades if needed)
  * POST /api/aura-analysis/validator-accounts — body { name }
  */
-const { executeQuery, columnExists, indexExists } = require('../db');
+const { executeQuery, indexExists, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
 
 function parseBody(req) {
@@ -30,13 +30,15 @@ async function ensureTables() {
   `).catch(() => {});
 
   const tradesTable = 'aura_analysis_trades';
-  if (!(await columnExists(tradesTable, 'validator_account_id'))) {
-    await executeQuery(`ALTER TABLE ${tradesTable} ADD COLUMN validator_account_id INT NULL`).catch(() => {});
-  }
+  await addColumnIfNotExists(tradesTable, 'validator_account_id', 'INT NULL');
   if (!(await indexExists(tradesTable, 'idx_aa_trades_validator_account'))) {
-    await executeQuery(
-      `ALTER TABLE ${tradesTable} ADD INDEX idx_aa_trades_validator_account (user_id, validator_account_id)`
-    ).catch(() => {});
+    try {
+      await executeQuery(
+        `ALTER TABLE ${tradesTable} ADD INDEX idx_aa_trades_validator_account (user_id, validator_account_id)`
+      );
+    } catch (_) {
+      /* duplicate index name — benign */
+    }
   }
 }
 

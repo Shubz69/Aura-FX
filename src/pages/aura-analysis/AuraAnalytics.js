@@ -117,27 +117,38 @@ function buildSessionPerformance(trades) {
 }
 
 export default function AuraAnalytics() {
+  const { selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
-      Api.getAuraAnalysisTrades().then((r) => (r.data?.trades ?? r.data?.data ?? [])),
-      Api.getAuraAnalysisPnl().then((r) => ({
+  const fetchData = useCallback(() => {
+    const params =
+      selectedAccountId != null && Number.isFinite(Number(selectedAccountId))
+        ? { validatorAccountId: selectedAccountId }
+        : {};
+    return Promise.all([
+      Api.getAuraAnalysisTrades(params).then((r) => (r.data?.trades ?? r.data?.data ?? [])),
+      Api.getAuraAnalysisPnl(params).then((r) => ({
         totalPnL: r.data?.totalPnL ?? r.data?.monthlyPnl ?? 0,
         dailyPnl: r.data?.dailyPnl,
         weeklyPnl: r.data?.weeklyPnl,
         monthlyPnl: r.data?.monthlyPnl,
       })),
-    ])
-      .then(([t, p]) => {
-        setTrades(Array.isArray(t) ? t : []);
-        setPnlData(typeof p === 'object' ? p : {});
-      })
+    ]).then(([t, p]) => {
+      setTrades(Array.isArray(t) ? t : []);
+      setPnlData(typeof p === 'object' ? p : {});
+    });
+  }, [selectedAccountId]);
+
+  useEffect(() => {
+    if (accountsLoading) return undefined;
+    setLoading(true);
+    fetchData()
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+    return undefined;
+  }, [accountsLoading, fetchData]);
 
   const kpis = useMemo(() => computeAnalyticsKpis(trades, pnlData), [trades, pnlData]);
   const equityCurve = useMemo(() => buildEquityCurve(trades), [trades]);

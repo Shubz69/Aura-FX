@@ -16,6 +16,18 @@ const MAX_QUERY_TIMES = 100;
 
 /** Idempotent ALTER failures — do not log as errors (expected on warm instances). */
 const BENIGN_DUPLICATE_SCHEMA_CODES = new Set(['ER_DUP_FIELDNAME', 'ER_DUP_KEYNAME']);
+/** MySQL errno for duplicate column / duplicate key name (mysql2 sometimes omits error.code). */
+const BENIGN_DUPLICATE_SCHEMA_ERRNOS = new Set([1060, 1061]);
+
+function isBenignSchemaDuplicate(error) {
+  if (!error) return false;
+  if (BENIGN_DUPLICATE_SCHEMA_CODES.has(error.code)) return true;
+  const errno = Number(error.errno);
+  if (BENIGN_DUPLICATE_SCHEMA_ERRNOS.has(errno)) return true;
+  const msg = (error.message || '').toString();
+  if (/duplicate column name/i.test(msg) || /duplicate key name/i.test(msg)) return true;
+  return false;
+}
 
 // Connection error codes/messages that warrant pool reset (e.g. Vercel serverless + MySQL)
 const CONNECTION_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'PROTOCOL_CONNECTION_LOST', 'ER_CON_COUNT_ERROR']);
@@ -154,7 +166,7 @@ const executeQuery = async (query, params = [], options = {}) => {
   try {
     return await run();
   } catch (error) {
-    const benignDuplicate = error && BENIGN_DUPLICATE_SCHEMA_CODES.has(error.code);
+    const benignDuplicate = isBenignSchemaDuplicate(error);
     if (!benignDuplicate) {
       poolStats.failedQueries++;
       const errorInfo = {
@@ -285,6 +297,9 @@ const addIndexIfNotExists = async (tableName, indexName, columns) => {
     console.log(`Added index ${indexName} on ${tableName}`);
     return true;
   } catch (error) {
+    if (isBenignSchemaDuplicate(error)) return false;
+    const msg = (error.message || '').toString();
+    if (/duplicate key name|already exists/i.test(msg)) return false;
     console.error(`Error adding index ${indexName}:`, error.message);
     return false;
   }

@@ -7,6 +7,43 @@ const { executeQuery } = require('../db');
 
 const MIN_DATA_DAYS = 30;
 
+/** mysql2 may return BIGINT for COUNT/DATEDIFF — JSON.stringify throws on BigInt → 500. */
+function jsonNumber(v, fallback = 0) {
+  if (v == null) return fallback;
+  if (typeof v === 'bigint') return Number(v);
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+async function loadUserRow(userId) {
+  try {
+    const [rows] = await executeQuery(
+      'SELECT id, role, subscription_plan, subscription_status, created_at FROM users WHERE id = ?',
+      [userId]
+    );
+    return rows?.[0] || null;
+  } catch (e) {
+    const badCol = e.code === 'ER_BAD_FIELD_ERROR' || Number(e.errno) === 1054;
+    if (!badCol) throw e;
+    const [rows] = await executeQuery('SELECT id, role, created_at FROM users WHERE id = ?', [userId]);
+    const u = rows?.[0];
+    if (!u) return null;
+    return { ...u, subscription_plan: null, subscription_status: null };
+  }
+}
+
+function serializeReportRow(r) {
+  if (!r) return null;
+  return {
+    id: jsonNumber(r.id),
+    period_year: jsonNumber(r.period_year),
+    period_month: jsonNumber(r.period_month),
+    report_type: r.report_type,
+    status: r.status,
+    generated_at: r.generated_at,
+  };
+}
+
 async function ensureSchema() {
   await executeQuery(`
     CREATE TABLE IF NOT EXISTS monthly_reports (
@@ -59,18 +96,16 @@ module.exports = async (req, res) => {
 
   const decoded = verifyToken(req.headers.authorization);
   if (!decoded?.id) return res.status(401).json({ success: false, message: 'Authentication required' });
-  const userId = decoded.id;
+  const userId = jsonNumber(decoded.id, NaN);
+  if (!Number.isFinite(userId) || userId <= 0) {
+    return res.status(401).json({ success: false, message: 'Authentication required' });
+  }
 
   try {
     await ensureSchema();
 
-    // Load user record
-    const [users] = await executeQuery(
-      'SELECT id, role, subscription_plan, subscription_status, created_at FROM users WHERE id = ?',
-      [userId]
-    );
-    if (!users?.length) return res.status(404).json({ success: false, message: 'User not found' });
-    const user = users[0];
+    const user = await loadUserRow(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     const role = resolveRole(user);
 
     // Count days of journal trade data
@@ -80,8 +115,9 @@ module.exports = async (req, res) => {
       [userId]
     ).catch(() => [[{ data_days: 0, trade_count: 0 }]]);
 
-    const dataDays = Math.max(0, tradeDays?.[0]?.data_days || 0);
-    const tradeCount = tradeDays?.[0]?.trade_count || 0;
+    const row0 = tradeDays?.[0] || {};
+    const dataDays = Math.max(0, jsonNumber(row0.data_days, 0));
+    const tradeCount = jsonNumber(row0.trade_count, 0);
     const isEligible = dataDays >= MIN_DATA_DAYS;
 
     // Also check chart check history
@@ -89,7 +125,7 @@ module.exports = async (req, res) => {
       'SELECT COUNT(*) AS cnt FROM ai_chart_checks WHERE user_id = ? LIMIT 1',
       [userId]
     ).catch(() => [[{ cnt: 0 }]]);
-    const chartCheckCount = chartCheckRows?.[0]?.cnt || 0;
+    const chartCheckCount = jsonNumber(chartCheckRows?.[0]?.cnt, 0);
 
     // Existing reports for this user
     const [reports] = await executeQuery(
@@ -98,14 +134,15 @@ module.exports = async (req, res) => {
       [userId]
     ).catch(() => [[]]);
 
+    const reportsSafe = (reports || []).map(serializeReportRow);
+
     // Current month eligibility
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
 
-    // Check if current month already has a report
-    const currentMonthReport = (reports || []).find(
-      r => r.period_year === currentYear && r.period_month === currentMonth
+    const currentMonthReport = reportsSafe.find(
+      (r) => r.period_year === currentYear && r.period_month === currentMonth
     );
 
     // Check CSV upload for current month (premium)
@@ -115,7 +152,14 @@ module.exports = async (req, res) => {
         'SELECT id, trade_count, uploaded_at FROM report_csv_uploads WHERE user_id = ? AND period_year = ? AND period_month = ?',
         [userId, currentYear, currentMonth]
       ).catch(() => [[]]);
-      csvStatus = csv?.[0] || null;
+      const c = csv?.[0];
+      if (c) {
+        csvStatus = {
+          id: jsonNumber(c.id),
+          trade_count: jsonNumber(c.trade_count, 0),
+          uploaded_at: c.uploaded_at,
+        };
+      }
     }
 
     return res.status(200).json({
@@ -129,7 +173,7 @@ module.exports = async (req, res) => {
       currentPeriod: { year: currentYear, month: currentMonth },
       currentMonthReport: currentMonthReport || null,
       csvStatus,
-      reports: reports || [],
+      reports: reportsSafe,
     });
   } catch (err) {
     console.error('[reports/eligibility]', err.message);

@@ -33,7 +33,16 @@ export function isValidDataUrl(url) {
 /** Returns URL for <img src> when hasRealAvatar(avatar); otherwise null (render placeholder). */
 export function resolveAvatarUrl(avatar, baseUrl = '') {
     if (!hasRealAvatar(avatar)) return null;
-    const v = (avatar || '').trim();
+    return resolveAvatarUrlForUi(avatar, baseUrl);
+}
+
+/**
+ * URL for any stored avatar filename or path (including stock defaults) — use for display contexts like Trader Passport.
+ */
+export function resolveAvatarUrlForUi(avatar, baseUrl = '') {
+    if (!avatar || typeof avatar !== 'string') return null;
+    const v = avatar.trim();
+    if (!v) return null;
     if (v.startsWith('data:image')) {
         if (!isValidDataUrl(v)) return null;
         return v;

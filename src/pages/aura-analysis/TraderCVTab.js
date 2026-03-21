@@ -10,28 +10,15 @@ import { computeBehaviourBreakdown } from '../../lib/aura-analysis/trader-cv/beh
 import { getAverageTradeQuality } from '../../lib/aura-analysis/trader-cv/tradeQualityCalculator';
 import { computeStreaks } from '../../lib/aura-analysis/trader-cv/streakEngine';
 import { getBestConditions, getReviewSummary, getMonthlyReviewStats } from '../../lib/aura-analysis/trader-cv/traderInsightsEngine';
-import { resolveAvatarUrl, getPlaceholderColor } from '../../utils/avatar';
+import { resolveAvatarUrlForUi, getPlaceholderColor } from '../../utils/avatar';
 import { setTraderPassportShare } from '../../utils/traderPassportShare';
 import '../../styles/aura-analysis/TraderCV.css';
 
 function getDisplayInitials(u) {
-  const n = (u?.name || u?.username || 'Trader').trim();
+  const n = (u?.username || u?.name || 'Trader').trim();
   const parts = n.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase() || 'T';
   return (n.slice(0, 2) || 'T').toUpperCase();
-}
-
-function isAvatarSafeForCanvas(avatarUrl) {
-  if (!avatarUrl || typeof avatarUrl !== 'string') return false;
-  if (avatarUrl.startsWith('data:')) return true;
-  if (avatarUrl.startsWith('/')) return true;
-  if (typeof window === 'undefined') return false;
-  try {
-    const u = new URL(avatarUrl, window.location.origin);
-    return u.origin === window.location.origin;
-  } catch {
-    return false;
-  }
 }
 
 const MIN_TRADES_FOR_FULL = 5;
@@ -127,10 +114,14 @@ export default function TraderCVTab() {
     return sorted[0]?.label ?? '—';
   }, [breakdown]);
 
-  const displayName = user?.name || user?.username || 'Trader';
-  const passportAvatarUrl = resolveAvatarUrl(user?.avatar);
-  const showPassportPhoto = passportAvatarUrl && isAvatarSafeForCanvas(passportAvatarUrl);
-  const placeholderColor = getPlaceholderColor(user?.id ?? user?.username ?? displayName);
+  const rawUsername = (user?.username && String(user.username).trim()) || '';
+  const rawName = (user?.name && String(user.name).trim()) || '';
+  const passportHandle = rawUsername ? `@${rawUsername}` : rawName || 'Trader';
+  const passportAltName =
+    rawUsername && rawName && rawName.toLowerCase() !== rawUsername.toLowerCase() ? rawName : null;
+  const passportAvatarUrl = resolveAvatarUrlForUi(user?.avatar);
+  const showPassportPhoto = Boolean(passportAvatarUrl);
+  const placeholderColor = getPlaceholderColor(user?.id ?? user?.username ?? rawName ?? passportHandle);
   const issuedDate = useMemo(() => new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), []);
 
   const capturePassportDataUrl = useCallback(async () => {
@@ -138,7 +129,7 @@ export default function TraderCVTab() {
     if (!el) return null;
     const canvas = await html2canvas(el, {
       scale: 2,
-      backgroundColor: '#07070c',
+      backgroundColor: '#030308',
       useCORS: true,
       allowTaint: false,
       logging: false,
@@ -394,69 +385,97 @@ export default function TraderCVTab() {
         </p>
 
         <div ref={passportRef} className="trader-cv-passport-card" aria-hidden={false}>
+          <div className="trader-cv-passport-cosmos" aria-hidden />
+          <div className="trader-cv-passport-scan" aria-hidden />
           <div className="trader-cv-passport-card-inner">
-            <div className="trader-cv-passport-header">
-              <span className="trader-cv-passport-brand">AURA FX</span>
-              <span className="trader-cv-passport-doc-title">TRADER PASSPORT</span>
-            </div>
-            <div className="trader-cv-passport-body">
-              <div
-                className="trader-cv-passport-photo"
-                style={{ background: showPassportPhoto ? '#111' : placeholderColor }}
-              >
-                {showPassportPhoto ? (
-                  <img
-                    src={passportAvatarUrl}
-                    alt=""
-                    {...(typeof passportAvatarUrl === 'string' && passportAvatarUrl.startsWith('http')
-                      ? { crossOrigin: 'anonymous' }
-                      : {})}
-                  />
-                ) : (
-                  <span className="trader-cv-passport-photo-initials">{getDisplayInitials(user)}</span>
-                )}
+            <header className="trader-cv-passport-top">
+              <div className="trader-cv-passport-brand-block">
+                <span className="trader-cv-passport-brand-mark">AURA</span>
+                <span className="trader-cv-passport-brand-sub">TERMINAL</span>
               </div>
-              <div className="trader-cv-passport-main">
-                <div className="trader-cv-passport-name-row">
-                  <div>
-                    <p className="trader-cv-passport-field-label">Holder</p>
-                    <p className="trader-cv-passport-name">{displayName}</p>
-                    <p className="trader-cv-passport-rank">{rankTitle}</p>
-                  </div>
-                  <div className="trader-cv-passport-score-block">
-                    <p className="trader-cv-passport-field-label">Aurax</p>
-                    <p className="trader-cv-passport-score-num">{Number.isFinite(auraxScore) ? Math.round(auraxScore) : 0}</p>
-                  </div>
-                </div>
-                <div className="trader-cv-passport-metrics">
-                  {[
-                    { key: 'riskDiscipline', short: 'Risk' },
-                    { key: 'ruleAdherence', short: 'Rules' },
-                    { key: 'consistency', short: 'Consist.' },
-                    { key: 'emotionalControl', short: 'Emotion' },
-                  ].map(({ key, short }) => (
-                    <div key={key} className="trader-cv-passport-metric">
-                      <span className="trader-cv-passport-metric-label">{short}</span>
-                      <span className="trader-cv-passport-metric-val">{Math.round(Number(breakdown[key]) || 0)}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="trader-cv-passport-footer-row">
-                  <div>
-                    <p className="trader-cv-passport-field-label">Trade quality (avg)</p>
-                    <p className="trader-cv-passport-quality">
-                      {trades.length ? `${quality.averageQuality}` : '—'}
-                      {trades.length > 0 && <span className="trader-cv-passport-quality-sub"> this period</span>}
-                    </p>
-                  </div>
-                  <div className="trader-cv-passport-meta">
-                    <p><span className="trader-cv-passport-field-label">Issued</span> {issuedDate}</p>
-                    <p className="trader-cv-passport-id">ID · {String(user?.id ?? user?.username ?? '—').slice(0, 12)}</p>
+              <div className="trader-cv-passport-chip">
+                <span className="trader-cv-passport-chip-pulse" aria-hidden />
+                <span className="trader-cv-passport-chip-text">PASSPORT · LIVE</span>
+              </div>
+            </header>
+
+            <div className="trader-cv-passport-hero">
+              <div className="trader-cv-passport-avatar-col">
+                <div className="trader-cv-passport-avatar-shell">
+                  <div className="trader-cv-passport-avatar-ring" aria-hidden />
+                  <div
+                    className="trader-cv-passport-photo"
+                    style={{ background: showPassportPhoto ? '#0a0a12' : placeholderColor }}
+                  >
+                    {showPassportPhoto ? (
+                      <img
+                        src={passportAvatarUrl}
+                        alt=""
+                        {...(typeof passportAvatarUrl === 'string' && /^https?:/i.test(passportAvatarUrl)
+                          ? { crossOrigin: 'anonymous' }
+                          : {})}
+                      />
+                    ) : (
+                      <span className="trader-cv-passport-photo-initials">{getDisplayInitials(user)}</span>
+                    )}
                   </div>
                 </div>
+                <p className="trader-cv-passport-avatar-caption">VISUAL ID</p>
+              </div>
+
+              <div className="trader-cv-passport-identity">
+                <p className="trader-cv-passport-hud">HOLDER // TRADER ID</p>
+                <p className="trader-cv-passport-handle">{passportHandle}</p>
+                {passportAltName ? (
+                  <p className="trader-cv-passport-altname">{passportAltName}</p>
+                ) : null}
+                <p className="trader-cv-passport-rank">{rankTitle}</p>
+              </div>
+
+              <div className="trader-cv-passport-aurax-block">
+                <p className="trader-cv-passport-hud">AURAX</p>
+                <p className="trader-cv-passport-score-num">
+                  {Number.isFinite(auraxScore) ? Math.round(auraxScore) : 0}
+                </p>
+                <p className="trader-cv-passport-score-sub">composite</p>
               </div>
             </div>
-            <p className="trader-cv-passport-watermark">aura-fx · private behavioural summary · not a financial credential</p>
+
+            <div className="trader-cv-passport-metrics">
+              {[
+                { key: 'riskDiscipline', short: 'RISK', code: 'R_DISC' },
+                { key: 'ruleAdherence', short: 'RULES', code: 'RULE_ADH' },
+                { key: 'consistency', short: 'CONSIST', code: 'CONS' },
+                { key: 'emotionalControl', short: 'EMOTION', code: 'EMO_CTL' },
+              ].map(({ key, short, code }) => (
+                <div key={key} className="trader-cv-passport-metric">
+                  <span className="trader-cv-passport-metric-code">{code}</span>
+                  <span className="trader-cv-passport-metric-label">{short}</span>
+                  <span className="trader-cv-passport-metric-val">{Math.round(Number(breakdown[key]) || 0)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="trader-cv-passport-footer-row">
+              <div className="trader-cv-passport-footer-cell">
+                <p className="trader-cv-passport-hud">TRADE QUALITY (AVG)</p>
+                <p className="trader-cv-passport-quality">
+                  {trades.length ? `${quality.averageQuality}` : '—'}
+                  {trades.length > 0 ? <span className="trader-cv-passport-quality-sub"> · window</span> : null}
+                </p>
+              </div>
+              <div className="trader-cv-passport-footer-cell trader-cv-passport-footer-cell--right">
+                <p className="trader-cv-passport-hud">ISSUED</p>
+                <p className="trader-cv-passport-issued">{issuedDate}</p>
+                <p className="trader-cv-passport-id">
+                  REF · {String(user?.id ?? user?.username ?? '—').slice(0, 14)}
+                </p>
+              </div>
+            </div>
+
+            <p className="trader-cv-passport-watermark">
+              // aura-fx · private behavioural summary · not a financial credential
+            </p>
           </div>
         </div>
 

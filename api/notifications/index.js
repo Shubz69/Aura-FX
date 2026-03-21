@@ -132,15 +132,22 @@ async function ensureSchema() {
       `);
       await addIndexIfNotExists('notifications', 'idx_notif_user_type_local', ['user_id', 'type', 'local_date']);
       // Idempotency: at most one DAILY_JOURNAL per user per local date (allows multiple NULL local_date for other types)
-      if (!(await indexExists('notifications', 'unique_user_type_local_date'))) {
+      const hasUnique = await indexExists('notifications', 'unique_user_type_local_date');
+      const hasLegacyUnique = await indexExists('notifications', 'unique_user_type_local_id');
+      if (!hasUnique && !hasLegacyUnique) {
         try {
           await executeQuery(`
             ALTER TABLE notifications ADD UNIQUE KEY unique_user_type_local_date (user_id, type, local_date)
           `);
         } catch (uniqueErr) {
-          if (uniqueErr.code !== 'ER_DUP_KEYNAME' && uniqueErr.code !== 'ER_MULTIPLE_PRI_KEY') {
-            console.warn('Unique key unique_user_type_local_date:', uniqueErr.message);
-          }
+          const code = uniqueErr?.code;
+          const errno = Number(uniqueErr?.errno);
+          const dup =
+            code === 'ER_DUP_KEYNAME' ||
+            code === 'ER_MULTIPLE_PRI_KEY' ||
+            errno === 1061 ||
+            /duplicate key name/i.test(uniqueErr?.message || '');
+          if (!dup) console.warn('Unique key unique_user_type_local_date:', uniqueErr.message);
         }
       }
     } catch (alterErr) {
