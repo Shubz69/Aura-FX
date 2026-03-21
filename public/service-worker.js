@@ -2,7 +2,7 @@
    Handles: push notifications, background sync, offline caching
 */
 
-const CACHE_NAME = 'aura-terminal-v1';
+const CACHE_NAME = 'aura-terminal-v2';
 const OFFLINE_URLS = ['/'];
 
 // ── INSTALL: cache offline shell
@@ -35,8 +35,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'AURA TERMINAL';
   const options = {
     body: data.body || '',
-    icon: '/logos/a7-logo.png',
-    badge: '/logos/a7-logo.png',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     tag: data.tag || 'aura-notification',
     data: { url: data.url || '/', type: data.type || 'general' },
     vibrate: [100, 50, 100],
