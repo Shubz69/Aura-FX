@@ -43,6 +43,22 @@ function isConnectionError(error) {
   return CONNECTION_ERROR_MESSAGES.some(m => msg.includes(m));
 }
 
+function isTooManyConnectionsError(error) {
+  if (!error) return false;
+  if (error.code === 'ER_CON_COUNT_ERROR') return true;
+  const msg = (error.message || '').toString();
+  return /too many connections/i.test(msg);
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function resetPoolAfterConnectionStorm() {
+  try {
+    if (pool) await pool.end();
+  } catch (_) {}
+  pool = null;
+}
+
 /**
  * Get or create database connection pool
  * This should be used by ALL API endpoints instead of creating new connections
@@ -56,12 +72,17 @@ const getDbPool = () => {
     return null;
   }
 
-  // Pool size: per serverless instance. Total DB connections ≈ instances × connectionLimit.
-  // Set MYSQL_POOL_SIZE / MYSQL_QUEUE_LIMIT in Vercel if you need more (Railway max_connections=200 supports this).
-  const defaultLimit = process.env.VERCEL ? 8 : 100;
-  const defaultQueue = process.env.VERCEL ? 16 : 500;
-  const connectionLimit = Math.max(1, parseInt(process.env.MYSQL_POOL_SIZE, 10) || defaultLimit);
-  const queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
+  // Pool size: per serverless instance. Total DB connections ≈ concurrent Lambdas × connectionLimit.
+  // Vercel: default 1 connection per instance (8× traffic was exhausting Railway MySQL max_connections).
+  // Override with MYSQL_POOL_SIZE (capped on Vercel — avoid >3 unless you use a DB pooler).
+  const defaultLimit = process.env.VERCEL ? 1 : 100;
+  const defaultQueue = process.env.VERCEL ? 4 : 500;
+  let connectionLimit = Math.max(1, parseInt(process.env.MYSQL_POOL_SIZE, 10) || defaultLimit);
+  let queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
+  if (process.env.VERCEL) {
+    connectionLimit = Math.min(connectionLimit, 3);
+    queueLimit = Math.min(Math.max(queueLimit, 2), 8);
+  }
 
   pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
@@ -100,7 +121,7 @@ const getDbPool = () => {
  *   connection.release();
  * }
  */
-const getDbConnection = async () => {
+const getDbConnection = async (_retry = false) => {
   try {
     let p = getDbPool();
     if (!p) return null;
@@ -114,7 +135,6 @@ const getDbConnection = async () => {
         console.error('Error getting database connection:', pingErr.message);
         return null;
       }
-      // Retry once with same pool (do NOT close pool - would break other in-flight requests)
       connection = await p.getConnection();
       await connection.ping();
       return connection;
@@ -122,6 +142,11 @@ const getDbConnection = async () => {
   } catch (error) {
     if (error && (error.message || '').includes('Pool is closed')) {
       pool = null;
+    }
+    if (!_retry && isTooManyConnectionsError(error)) {
+      await resetPoolAfterConnectionStorm();
+      await sleep(400);
+      return getDbConnection(true);
     }
     console.error('Error getting database connection:', error.message);
     return null;
@@ -182,6 +207,11 @@ const executeQuery = async (query, params = [], options = {}) => {
       console.error('Database query error:', JSON.stringify(errorInfo));
     }
 
+    if (!isRetry && isTooManyConnectionsError(error)) {
+      await resetPoolAfterConnectionStorm();
+      await sleep(400);
+      return executeQuery(query, params, { ...options, _connectionRetry: true });
+    }
     if (!isRetry && isConnectionError(error)) {
       if ((error.message || '').includes('Pool is closed')) {
         pool = null;
@@ -321,7 +351,8 @@ const closePool = async () => {
 
 module.exports = { 
   getDbPool, 
-  getDbConnection, 
+  getDbConnection,
+  resetPoolAfterConnectionStorm,
   executeQuery,
   executeQueryWithTimeout,
   executeTransaction,

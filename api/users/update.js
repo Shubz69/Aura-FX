@@ -1,6 +1,6 @@
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
-const { getDbConnection } = require('../db');
+const { getDbConnection, executeQuery, getDbPool } = require('../db');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 
 // Use shared pool from api/db.js – do not create new connections (causes "Too many connections")
@@ -415,76 +415,75 @@ const [updatedRows] = await db.execute(
   // Handle GET request for fetching user data (both /api/users/:userId and /api/users/public-profile/:userId)
   if (req.method === 'GET') {
     try {
-      const db = await getDbConnection();
-      if (!db) {
-        return res.status(500).json({ success: false, message: 'Database connection error' });
-      }
-
       try {
+        if (!getDbPool()) {
+          return res.status(500).json({ success: false, message: 'Database connection error' });
+        }
+
+        // Use executeQuery per statement so connections return to the pool between queries (serverless-safe).
         // Ensure last_username_change column exists
         try {
-          await db.execute('SELECT last_username_change FROM users LIMIT 1');
+          await executeQuery('SELECT last_username_change FROM users LIMIT 1');
         } catch (e) {
-          await db.execute('ALTER TABLE users ADD COLUMN last_username_change DATETIME DEFAULT NULL');
+          await executeQuery('ALTER TABLE users ADD COLUMN last_username_change DATETIME DEFAULT NULL');
         }
-        
+
         // Ensure created_at column exists for public profiles
         try {
-          await db.execute('SELECT created_at FROM users LIMIT 1');
+          await executeQuery('SELECT created_at FROM users LIMIT 1');
         } catch (e) {
-          await db.execute('ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP');
+          await executeQuery('ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP');
         }
-        
+
         // Ensure login_streak column exists
         try {
-          await db.execute('SELECT login_streak FROM users LIMIT 1');
+          await executeQuery('SELECT login_streak FROM users LIMIT 1');
         } catch (e) {
-          await db.execute('ALTER TABLE users ADD COLUMN login_streak INT DEFAULT 0');
+          await executeQuery('ALTER TABLE users ADD COLUMN login_streak INT DEFAULT 0');
         }
-        
+
         // Check if banner column exists
         let hasBanner = false;
         try {
-          await db.execute('SELECT banner FROM users LIMIT 1');
+          await executeQuery('SELECT banner FROM users LIMIT 1');
           hasBanner = true;
         } catch (e) {
           // Banner column doesn't exist, will be null
         }
-        
+
         // Check if last_seen column exists
         let hasLastSeen = false;
         try {
-          await db.execute('SELECT last_seen FROM users LIMIT 1');
+          await executeQuery('SELECT last_seen FROM users LIMIT 1');
           hasLastSeen = true;
         } catch (e) {
           // last_seen column doesn't exist
         }
         // Check if avatarColor column exists
-let hasAvatarColor = false;
-try {
-  await db.execute('SELECT avatarColor FROM users LIMIT 1');
-  hasAvatarColor = true;
-} catch (e) {
-  // avatarColor column doesn't exist yet
-}
+        let hasAvatarColor = false;
+        try {
+          await executeQuery('SELECT avatarColor FROM users LIMIT 1');
+          hasAvatarColor = true;
+        } catch (e) {
+          // avatarColor column doesn't exist yet
+        }
 
         // Build select fields dynamically based on what columns exist
-const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
-const fieldsWithBanner = hasBanner ? `${baseFields}, banner` : baseFields;
-const fieldsWithAvatarColor = hasAvatarColor ? `${fieldsWithBanner}, avatarColor` : fieldsWithBanner;
-const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : fieldsWithAvatarColor;
-        
+        const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
+        const fieldsWithBanner = hasBanner ? `${baseFields}, banner` : baseFields;
+        const fieldsWithAvatarColor = hasAvatarColor ? `${fieldsWithBanner}, avatarColor` : fieldsWithBanner;
+        const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : fieldsWithAvatarColor;
+
         let rows;
         try {
-          [rows] = await db.execute(
+          [rows] = await executeQuery(
             `SELECT ${selectFields} FROM users WHERE id = ?`,
             [userId]
           );
         } catch (selectError) {
-          // If SELECT fails (e.g., column doesn't exist), try with minimal fields
           console.warn('Select with all fields failed, trying minimal fields:', selectError.message);
           try {
-            [rows] = await db.execute(
+            [rows] = await executeQuery(
               'SELECT id, username, email, name, phone, address, bio, avatar, role, level, xp, created_at FROM users WHERE id = ?',
               [userId]
             );
@@ -494,21 +493,20 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
           }
         }
 
-        if (rows.length === 0) {
-          releaseDb(db);
+        if (!rows || rows.length === 0) {
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const user = rows[0];
-        
+
         // Check if this is a public profile request (exclude personal information)
         const isPublicProfile = req.url && req.url.includes('/public-profile/');
-        
+
         // Respect "appear offline": if profile owner has show_online_status false, don't expose last_seen
         let lastSeenValue = (hasLastSeen && user.last_seen) ? user.last_seen : null;
         if (isPublicProfile && lastSeenValue) {
           try {
-            const [settingsRows] = await db.execute(
+            const [settingsRows] = await executeQuery(
               'SELECT show_online_status FROM user_settings WHERE user_id = ? LIMIT 1',
               [userId]
             );
@@ -522,9 +520,9 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
 
         // Public profile: fetch journal/task stats (today, this week, this month) for real-time display
         let journalStats = null;
-        if (isPublicProfile && db) {
+        if (isPublicProfile) {
           try {
-            const [todayRows] = await db.execute(
+            const [todayRows] = await executeQuery(
               'SELECT COUNT(*) as total, COALESCE(SUM(completed),0) as done FROM journal_tasks WHERE userId = ? AND date = CURDATE()',
               [userId]
             );
@@ -532,7 +530,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
             const todayDone = Number(todayRows[0]?.done ?? 0);
             const todayPct = todayTotal > 0 ? Math.round((todayDone / todayTotal) * 100) : null;
 
-            const [weekRows] = await db.execute(
+            const [weekRows] = await executeQuery(
               `SELECT COUNT(*) as total, COALESCE(SUM(completed),0) as done FROM journal_tasks 
                WHERE userId = ? AND date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) 
                AND date <= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 6 DAY)`,
@@ -542,7 +540,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
             const weekDone = Number(weekRows[0]?.done ?? 0);
             const weekPct = weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : null;
 
-            const [monthRows] = await db.execute(
+            const [monthRows] = await executeQuery(
               `SELECT COUNT(*) as total, COALESCE(SUM(completed),0) as done FROM journal_tasks 
                WHERE userId = ? AND date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND date <= LAST_DAY(CURDATE())`,
               [userId]
@@ -561,7 +559,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
         let visibleStats = null;
         if (isPublicProfile) {
           try {
-            const [vsSettingsRows] = await db.execute(
+            const [vsSettingsRows] = await executeQuery(
               'SELECT profile_visible_stats FROM user_settings WHERE user_id = ? LIMIT 1',
               [userId]
             );
@@ -577,7 +575,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
               if (hasVisible) {
                 const computed = { login_streak: user.login_streak || 0 };
                 try {
-                  const [trades] = await db.execute(
+                  const [trades] = await executeQuery(
                     `SELECT rResult, followedRules FROM journal_trades WHERE userId = ? AND date >= DATE_SUB(NOW(), INTERVAL 90 DAY)`,
                     [userId]
                   );
@@ -597,7 +595,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
                   }
                 } catch (e) { /* journal_trades may not exist */ }
                 try {
-                  const [dailyRows] = await db.execute(
+                  const [dailyRows] = await executeQuery(
                     `SELECT COUNT(DISTINCT DATE(date)) AS days_logged FROM journal_daily WHERE userId = ? AND date >= DATE_SUB(NOW(), INTERVAL 30 DAY)`,
                     [userId]
                   );
@@ -617,8 +615,6 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
             console.warn('visibleStats computation failed:', e.message);
           }
         }
-
-        releaseDb(db);
         
         // Return user data with formatted dates (mysql2 may return bigint for id/xp/level)
         const xpNum = jsonNumber(user.xp, 0);
@@ -670,9 +666,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
           sqlState: dbError.sqlState,
           sqlMessage: dbError.sqlMessage
         });
-        
-        releaseDb(db);
-        
+
         return res.status(500).json({
           success: false,
           message: 'Failed to fetch user data',
