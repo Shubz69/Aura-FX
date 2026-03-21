@@ -25,7 +25,9 @@ function isBenignSchemaDuplicate(error) {
   const errno = Number(error.errno);
   if (BENIGN_DUPLICATE_SCHEMA_ERRNOS.has(errno)) return true;
   const msg = (error.message || '').toString();
+  const sqlMsg = (error.sqlMessage || '').toString();
   if (/duplicate column name/i.test(msg) || /duplicate key name/i.test(msg)) return true;
+  if (/duplicate column name/i.test(sqlMsg) || /duplicate key name/i.test(sqlMsg)) return true;
   return false;
 }
 
@@ -235,8 +237,8 @@ const columnExists = async (tableName, columnName) => {
   try {
     const [rows] = await executeQuery(
       `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
-      [process.env.MYSQL_DATABASE, tableName, columnName]
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [tableName, columnName]
     );
     return rows.length > 0;
   } catch (error) {
@@ -271,9 +273,9 @@ const addColumnIfNotExists = async (tableName, columnName, columnDef) => {
 
   try {
     await executeQuery(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDef}`);
-    console.log(`Added column ${tableName}.${columnName}`);
     return true;
   } catch (error) {
+    if (isBenignSchemaDuplicate(error)) return false;
     const msg = (error.message || '').toString();
     if (/duplicate column|already exists/i.test(msg)) return false;
     console.error(`Error adding column ${tableName}.${columnName}:`, error.message);
@@ -348,5 +350,6 @@ module.exports = {
   addColumnIfNotExists,
   addIndexIfNotExists,
   getPoolHealth,
-  closePool 
+  closePool,
+  isBenignSchemaDuplicate
 };

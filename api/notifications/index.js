@@ -21,7 +21,14 @@
  * - Structured logging
  */
 
-const { executeQuery, executeQueryWithTimeout, addColumnIfNotExists, addIndexIfNotExists, indexExists } = require('../db');
+const {
+  executeQuery,
+  executeQueryWithTimeout,
+  addColumnIfNotExists,
+  addIndexIfNotExists,
+  indexExists,
+  isBenignSchemaDuplicate
+} = require('../db');
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { safeLimit, safeCursor, isValidUUID } = require('../utils/validators');
@@ -140,21 +147,15 @@ async function ensureSchema() {
             ALTER TABLE notifications ADD UNIQUE KEY unique_user_type_local_date (user_id, type, local_date)
           `);
         } catch (uniqueErr) {
-          const code = uniqueErr?.code;
-          const errno = Number(uniqueErr?.errno);
-          const dup =
-            code === 'ER_DUP_KEYNAME' ||
-            code === 'ER_MULTIPLE_PRI_KEY' ||
-            errno === 1061 ||
-            /duplicate key name/i.test(uniqueErr?.message || '');
-          if (!dup) console.warn('Unique key unique_user_type_local_date:', uniqueErr.message);
+          if (!isBenignSchemaDuplicate(uniqueErr)) {
+            console.warn('Unique key unique_user_type_local_date:', uniqueErr.message);
+          }
         }
       }
     } catch (alterErr) {
       // Ignore if already applied
     }
     schemaCreated = true;
-    console.log('Notifications schema ready');
   } catch (e) {
     console.log('Schema check:', e.code || e.message);
     schemaCreated = true; // Don't retry
