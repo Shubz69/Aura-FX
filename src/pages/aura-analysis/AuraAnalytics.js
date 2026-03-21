@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Api from '../../services/Api';
+import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import '../../styles/aura-analysis/AuraAnalytics.css';
 
@@ -152,7 +153,7 @@ export default function AuraAnalytics() {
     return Math.max(...vals.map(Math.abs), 1);
   }, [sessionPerformance]);
 
-  if (loading) {
+  if (accountsLoading || loading) {
     return (
       <div className="aura-analytics">
         <h1 className="aura-analytics-title">Analytics</h1>

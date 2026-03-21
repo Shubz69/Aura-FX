@@ -1,12 +1,38 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
+import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
 import Api from '../../services/Api';
 import { calculateAuraxScore, getAuraxRankTitle } from '../../lib/aura-analysis/trader-cv/auraxScoreCalculator';
 import { computeBehaviourBreakdown } from '../../lib/aura-analysis/trader-cv/behaviourAnalytics';
 import { getAverageTradeQuality } from '../../lib/aura-analysis/trader-cv/tradeQualityCalculator';
-import { computeStreaks, getRankTitle } from '../../lib/aura-analysis/trader-cv/streakEngine';
+import { computeStreaks } from '../../lib/aura-analysis/trader-cv/streakEngine';
 import { getBestConditions, getReviewSummary, getMonthlyReviewStats } from '../../lib/aura-analysis/trader-cv/traderInsightsEngine';
+import { resolveAvatarUrl, getPlaceholderColor } from '../../utils/avatar';
+import { setTraderPassportShare } from '../../utils/traderPassportShare';
 import '../../styles/aura-analysis/TraderCV.css';
+
+function getDisplayInitials(u) {
+  const n = (u?.name || u?.username || 'Trader').trim();
+  const parts = n.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase() || 'T';
+  return (n.slice(0, 2) || 'T').toUpperCase();
+}
+
+function isAvatarSafeForCanvas(avatarUrl) {
+  if (!avatarUrl || typeof avatarUrl !== 'string') return false;
+  if (avatarUrl.startsWith('data:')) return true;
+  if (avatarUrl.startsWith('/')) return true;
+  if (typeof window === 'undefined') return false;
+  try {
+    const u = new URL(avatarUrl, window.location.origin);
+    return u.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
 
 const MIN_TRADES_FOR_FULL = 5;
 
@@ -17,16 +43,22 @@ function formatStreak(value) {
 
 export default function TraderCVTab() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const passportRef = useRef(null);
+  const [passportBusy, setPassportBusy] = useState(false);
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (accountsLoading) return undefined;
     let cancelled = false;
     setLoading(true);
-    Promise.all([
-      Api.getAuraAnalysisTrades({}).catch(() => ({ data: { trades: [] } })),
-    ])
+    const params =
+      selectedAccountId != null && Number.isFinite(Number(selectedAccountId))
+        ? { validatorAccountId: selectedAccountId }
+        : {};
+    Promise.all([Api.getAuraAnalysisTrades(params).catch(() => ({ data: { trades: [] } }))])
       .then(([tradesRes]) => {
         if (cancelled) return;
         const list = tradesRes.data?.trades ?? [];
@@ -35,9 +67,13 @@ export default function TraderCVTab() {
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load data');
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [accountsLoading, selectedAccountId]);
 
   const behaviour = useMemo(() => computeBehaviourBreakdown(trades, {
     journalStreak: user?.login_streak ?? 0,
@@ -89,6 +125,89 @@ export default function TraderCVTab() {
     const sorted = [...arr].sort((a, b) => (breakdown[a.key] ?? 0) - (breakdown[b.key] ?? 0));
     return sorted[0]?.label ?? '—';
   }, [breakdown]);
+
+  const displayName = user?.name || user?.username || 'Trader';
+  const passportAvatarUrl = resolveAvatarUrl(user?.avatar);
+  const showPassportPhoto = passportAvatarUrl && isAvatarSafeForCanvas(passportAvatarUrl);
+  const placeholderColor = getPlaceholderColor(user?.id ?? user?.username ?? displayName);
+  const issuedDate = useMemo(() => new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), []);
+
+  const capturePassportDataUrl = useCallback(async () => {
+    const el = passportRef.current;
+    if (!el) return null;
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      backgroundColor: '#07070c',
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+    });
+    return new Promise((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(null);
+            return;
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        },
+        'image/png',
+        0.92
+      );
+    });
+  }, []);
+
+  const handleSavePassport = useCallback(async () => {
+    if (passportBusy) return;
+    setPassportBusy(true);
+    try {
+      const dataUrl = await capturePassportDataUrl();
+      if (!dataUrl) {
+        toast.error('Could not create passport image. Try again or disable browser extensions that block canvas export.');
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `aura-trader-passport-${(user?.username || 'trader').replace(/[^\w-]/g, '')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Passport saved — you can share the file anywhere you trust.');
+    } catch (e) {
+      console.warn(e);
+      toast.error('Save failed. Try again in a moment.');
+    } finally {
+      setPassportBusy(false);
+    }
+  }, [passportBusy, capturePassportDataUrl, user?.username]);
+
+  const handleSharePassportToCommunity = useCallback(async () => {
+    if (passportBusy) return;
+    setPassportBusy(true);
+    try {
+      const dataUrl = await capturePassportDataUrl();
+      if (!dataUrl) {
+        toast.error('Could not create passport image for sharing.');
+        return;
+      }
+      try {
+        setTraderPassportShare({ dataUrl, ts: Date.now() });
+      } catch (err) {
+        console.warn(err);
+        toast.error('Image is too large to attach automatically — use Save and upload the file in Community.');
+        return;
+      }
+      navigate('/community');
+    } catch (e) {
+      console.warn(e);
+      toast.error('Could not prepare share. Try Save instead.');
+    } finally {
+      setPassportBusy(false);
+    }
+  }, [passportBusy, capturePassportDataUrl, navigate]);
 
   if (loading) {
     return (
@@ -265,6 +384,100 @@ export default function TraderCVTab() {
           <p>Complete 5+ validated trades to unlock your full Trader CV analytics.</p>
         </div>
       )}
+
+      <section className="trader-cv-section trader-cv-passport-section">
+        <h3 className="trader-cv-section-title">Trader Passport</h3>
+        <p className="trader-cv-passport-intro">
+          A shareable ID-style summary of your Trader CV. Only you see this here. Others only see it if you save the image or send it in{' '}
+          <strong>Community</strong> messages — choose the channel and audience carefully.
+        </p>
+
+        <div ref={passportRef} className="trader-cv-passport-card" aria-hidden={false}>
+          <div className="trader-cv-passport-card-inner">
+            <div className="trader-cv-passport-header">
+              <span className="trader-cv-passport-brand">AURA FX</span>
+              <span className="trader-cv-passport-doc-title">TRADER PASSPORT</span>
+            </div>
+            <div className="trader-cv-passport-body">
+              <div
+                className="trader-cv-passport-photo"
+                style={{ background: showPassportPhoto ? '#111' : placeholderColor }}
+              >
+                {showPassportPhoto ? (
+                  <img
+                    src={passportAvatarUrl}
+                    alt=""
+                    {...(typeof passportAvatarUrl === 'string' && passportAvatarUrl.startsWith('http')
+                      ? { crossOrigin: 'anonymous' }
+                      : {})}
+                  />
+                ) : (
+                  <span className="trader-cv-passport-photo-initials">{getDisplayInitials(user)}</span>
+                )}
+              </div>
+              <div className="trader-cv-passport-main">
+                <div className="trader-cv-passport-name-row">
+                  <div>
+                    <p className="trader-cv-passport-field-label">Holder</p>
+                    <p className="trader-cv-passport-name">{displayName}</p>
+                    <p className="trader-cv-passport-rank">{rankTitle}</p>
+                  </div>
+                  <div className="trader-cv-passport-score-block">
+                    <p className="trader-cv-passport-field-label">Aurax</p>
+                    <p className="trader-cv-passport-score-num">{Number.isFinite(auraxScore) ? Math.round(auraxScore) : 0}</p>
+                  </div>
+                </div>
+                <div className="trader-cv-passport-metrics">
+                  {[
+                    { key: 'riskDiscipline', short: 'Risk' },
+                    { key: 'ruleAdherence', short: 'Rules' },
+                    { key: 'consistency', short: 'Consist.' },
+                    { key: 'emotionalControl', short: 'Emotion' },
+                  ].map(({ key, short }) => (
+                    <div key={key} className="trader-cv-passport-metric">
+                      <span className="trader-cv-passport-metric-label">{short}</span>
+                      <span className="trader-cv-passport-metric-val">{Math.round(Number(breakdown[key]) || 0)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="trader-cv-passport-footer-row">
+                  <div>
+                    <p className="trader-cv-passport-field-label">Trade quality (avg)</p>
+                    <p className="trader-cv-passport-quality">
+                      {trades.length ? `${quality.averageQuality}` : '—'}
+                      {trades.length > 0 && <span className="trader-cv-passport-quality-sub"> this period</span>}
+                    </p>
+                  </div>
+                  <div className="trader-cv-passport-meta">
+                    <p><span className="trader-cv-passport-field-label">Issued</span> {issuedDate}</p>
+                    <p className="trader-cv-passport-id">ID · {String(user?.id ?? user?.username ?? '—').slice(0, 12)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p className="trader-cv-passport-watermark">aura-fx · private behavioural summary · not a financial credential</p>
+          </div>
+        </div>
+
+        <div className="trader-cv-passport-actions">
+          <button
+            type="button"
+            className="trader-cv-passport-btn trader-cv-passport-btn--primary"
+            disabled={passportBusy}
+            onClick={handleSavePassport}
+          >
+            {passportBusy ? 'Working…' : 'Save image'}
+          </button>
+          <button
+            type="button"
+            className="trader-cv-passport-btn trader-cv-passport-btn--secondary"
+            disabled={passportBusy}
+            onClick={handleSharePassportToCommunity}
+          >
+            Share via Community
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

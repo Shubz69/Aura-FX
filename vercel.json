@@ -265,6 +265,10 @@
       "destination": "/api/aura-analysis/trades.js"
     },
     {
+      "source": "/api/aura-analysis/validator-accounts",
+      "destination": "/api/aura-analysis/validator-accounts.js"
+    },
+    {
       "source": "/api/aura-analysis/leaderboard",
       "destination": "/api/aura-analysis/leaderboard.js"
     },
@@ -541,6 +545,10 @@
       "destination": "/api/ai/chart-check.js"
     },
     {
+      "source": "/api/ai/trade-outcome-verify",
+      "destination": "/api/ai/trade-outcome-verify.js"
+    },
+    {
       "source": "/api/reports/eligibility",
       "destination": "/api/reports/eligibility.js"
     },
@@ -555,6 +563,10 @@
     {
       "source": "/api/reports/csv-upload",
       "destination": "/api/reports/csv-upload.js"
+    },
+    {
+      "source": "/api/trader-dna",
+      "destination": "/api/trader-dna.js"
     }
   ],
   "crons": [

@@ -202,6 +202,75 @@ const ensureSettingsTable = async (db) => {
 
 const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'levels', 'admin']);
 
+/** Default category order — `forums` replaces legacy `trading` */
+const DEFAULT_CATEGORY_ORDER = ['announcements', 'staff', 'courses', 'forums', 'general', 'support', 'premium', 'a7fx'];
+
+/**
+ * One-time style migration: trading → forums, channel display names → *-talk slugs.
+ * Idempotent: safe to run on every channels bootstrap.
+ */
+async function migrateTradingCategoryToForums(db) {
+  try {
+    await db.execute(`UPDATE channels SET category = 'forums' WHERE category = 'trading'`);
+    const renames = [
+      ['commodities', 'commodity-talk'],
+      ['crypto', 'crypto-talk'],
+      ['stocks', 'stocks-talk'],
+      ['indices', 'indices-talk'],
+      ['day-trading', 'day-trading-talk'],
+      ['swing-trading', 'swing-trading-talk'],
+      ['futures', 'futures-talk'],
+      ['options', 'options-talk'],
+      ['prop-trading', 'prop-trading-talk'],
+      ['market-analysis', 'market-analysis-talk'],
+      ['forex', 'forex-talk']
+    ];
+    for (const [id, nm] of renames) {
+      try {
+        await db.execute('UPDATE channels SET name = ? WHERE id = ?', [nm, id]);
+      } catch (e) {
+        console.warn(`migrateTradingCategoryToForums rename ${id}:`, e.message);
+      }
+    }
+  } catch (e) {
+    console.warn('migrateTradingCategoryToForums (channels):', e.message);
+  }
+  try {
+    const [rows] = await db.execute(
+      'SELECT id, value FROM community_settings WHERE id IN (?, ?)',
+      ['category_order', 'channelOrder']
+    );
+    for (const row of rows || []) {
+      if (!row.value) continue;
+      let val;
+      try {
+        val = JSON.parse(row.value);
+      } catch {
+        continue;
+      }
+      if (row.id === 'category_order' && Array.isArray(val)) {
+        const next = val.map((c) => (c === 'trading' ? 'forums' : c));
+        if (JSON.stringify(next) !== JSON.stringify(val)) {
+          await db.execute(
+            'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
+            [row.id, JSON.stringify(next), JSON.stringify(next)]
+          );
+        }
+      }
+      if (row.id === 'channelOrder' && val && typeof val === 'object' && !Array.isArray(val) && val.trading && !val.forums) {
+        const next = { ...val, forums: val.trading };
+        delete next.trading;
+        await db.execute(
+          'INSERT INTO community_settings (id, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = CURRENT_TIMESTAMP',
+          ['channelOrder', JSON.stringify(next), JSON.stringify(next)]
+        );
+      }
+    }
+  } catch (e) {
+    console.warn('migrateTradingCategoryToForums (settings):', e.message);
+  }
+}
+
 const { getEntitlements, getChannelPermissions, getAllowedChannelSlugs } = require('../utils/entitlements');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 
@@ -298,8 +367,7 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true, data: order });
           }
           releaseDb(db);
-          const defaultOrder = ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
-          return res.status(200).json({ success: true, data: defaultOrder });
+          return res.status(200).json({ success: true, data: DEFAULT_CATEGORY_ORDER });
         } catch (dbError) {
           console.error('Database error fetching category order:', dbError);
           releaseDb(db);
@@ -461,24 +529,25 @@ module.exports = async (req, res) => {
             await safeInsertChannel('levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open');
             await safeInsertChannel('general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open');
 
-            // TRADING CHANNELS - Open access for all users to see and post
-            const tradingChannels = [
-              { id: 'forex', name: 'forex', category: 'trading', description: 'Forex trading discussions', accessLevel: 'open' },
-              { id: 'crypto', name: 'crypto', category: 'trading', description: 'Cryptocurrency trading discussions', accessLevel: 'open' },
-              { id: 'stocks', name: 'stocks', category: 'trading', description: 'Stock market discussions', accessLevel: 'open' },
-              { id: 'indices', name: 'indices', category: 'trading', description: 'Indices trading discussions', accessLevel: 'open' },
-              { id: 'day-trading', name: 'day-trading', category: 'trading', description: 'Day trading strategies and discussions', accessLevel: 'open' },
-              { id: 'swing-trading', name: 'swing-trading', category: 'trading', description: 'Swing trading discussions', accessLevel: 'open' },
-              { id: 'commodities', name: 'commodities', category: 'trading', description: 'Commodities and metals trading insights', accessLevel: 'open' },
-              { id: 'futures', name: 'futures', category: 'trading', description: 'Futures market strategies and setups', accessLevel: 'open' },
-              { id: 'options', name: 'options', category: 'trading', description: 'Options trading strategies and education', accessLevel: 'open' },
-              { id: 'prop-trading', name: 'prop-trading', category: 'trading', description: 'Prop firm challenges and funded account tips', accessLevel: 'open' },
-              { id: 'market-analysis', name: 'market-analysis', category: 'trading', description: 'Daily market analysis and trade ideas', accessLevel: 'open' }
+            // FORUMS (formerly Trading) — display names use *-talk slugs → "Forex Talk", "Commodity Talk", etc.
+            const forumsChannels = [
+              { id: 'forex', name: 'forex-talk', category: 'forums', description: 'Forex Talk — discussion and ideas', accessLevel: 'open' },
+              { id: 'crypto', name: 'crypto-talk', category: 'forums', description: 'Crypto Talk — discussion and ideas', accessLevel: 'open' },
+              { id: 'stocks', name: 'stocks-talk', category: 'forums', description: 'Stocks Talk — discussion and ideas', accessLevel: 'open' },
+              { id: 'indices', name: 'indices-talk', category: 'forums', description: 'Indices Talk — discussion and ideas', accessLevel: 'open' },
+              { id: 'day-trading', name: 'day-trading-talk', category: 'forums', description: 'Day Trading Talk — strategies and discussion', accessLevel: 'open' },
+              { id: 'swing-trading', name: 'swing-trading-talk', category: 'forums', description: 'Swing Trading Talk — discussion and ideas', accessLevel: 'open' },
+              { id: 'commodities', name: 'commodity-talk', category: 'forums', description: 'Commodity Talk — metals, energy, and more', accessLevel: 'open' },
+              { id: 'futures', name: 'futures-talk', category: 'forums', description: 'Futures Talk — strategies and setups', accessLevel: 'open' },
+              { id: 'options', name: 'options-talk', category: 'forums', description: 'Options Talk — education and discussion', accessLevel: 'open' },
+              { id: 'prop-trading', name: 'prop-trading-talk', category: 'forums', description: 'Prop Trading Talk — funded accounts and firms', accessLevel: 'open' },
+              { id: 'market-analysis', name: 'market-analysis-talk', category: 'forums', description: 'Market Analysis Talk — ideas and commentary', accessLevel: 'open' }
             ];
             
-            for (const channel of tradingChannels) {
+            for (const channel of forumsChannels) {
               await safeInsertChannel(channel.id, channel.name, channel.category, channel.description, channel.accessLevel);
             }
+            await migrateTradingCategoryToForums(db);
             
             // Re-fetch channels after inserting/updating
             [rows] = await db.execute('SELECT * FROM channels ORDER BY COALESCE(category, \'general\'), name');
@@ -498,15 +567,16 @@ module.exports = async (req, res) => {
                 
                 // Determine access level and lock status
                 const isGeneral = row.category === 'general' || row.name === 'general' || row.id === 'general';
-                const isTrading = row.category === 'trading';
                 const accessLevel = row.access_level || (isGeneral ? 'open' : 'admin-only');
                 const locked = accessLevel === 'admin-only' || accessLevel === 'admin';
+                const rawCat = row.category || (isGeneral ? 'general' : 'forums');
+                const categoryNorm = rawCat === 'trading' ? 'forums' : rawCat;
                 
                 return {
                   id: row.id,
                   name: row.name,
                   displayName: displayName,
-                  category: row.category || (isGeneral ? 'general' : 'trading'),
+                  category: categoryNorm,
                   description: row.description,
                   accessLevel: accessLevel,
                   permissionType: row.permission_type || 'read-write',
@@ -564,7 +634,7 @@ module.exports = async (req, res) => {
                   db.execute('SELECT value FROM community_settings WHERE id = ?', ['category_order']),
                   db.execute('SELECT value FROM community_settings WHERE id = ?', ['channelOrder'])
                 ]);
-                const categoryOrder = (catRows && catRows[0] && catRows[0].value) ? JSON.parse(catRows[0].value) : ['announcements', 'staff', 'courses', 'trading', 'general', 'support', 'premium', 'a7fx'];
+                const categoryOrder = (catRows && catRows[0] && catRows[0].value) ? JSON.parse(catRows[0].value) : DEFAULT_CATEGORY_ORDER;
                 const channelOrder = (chanRows && chanRows[0] && chanRows[0].value) ? JSON.parse(chanRows[0].value) : {};
                 return res.status(200).json({ success: true, channels: visibleOnly, categoryOrder, channelOrder });
               } catch (bootstrapErr) {

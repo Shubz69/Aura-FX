@@ -178,7 +178,7 @@ const Navbar = () => {
                       <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaBook className="dropdown-icon" /> Journal
                       </Link>
-                      <Link to="/trader-deck/trade-validator" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                      <Link to="/trader-deck/trade-validator/overview" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaCheckSquare className="dropdown-icon" /> Trade Validator
                       </Link>
                       <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
@@ -186,7 +186,7 @@ const Navbar = () => {
                       </Link>
                       {isPremium(user) && (
                         <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                          <FaFileAlt className="dropdown-icon" /> Monthly Reports
+                          <FaFileAlt className="dropdown-icon" /> Monthly Reports / DNA
                         </Link>
                       )}
                       <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>

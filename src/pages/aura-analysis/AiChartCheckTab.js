@@ -5,7 +5,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { getInstrumentsByCategory } from '../../lib/aura-analysis/instruments';
 import '../../styles/aura-analysis/AiChartCheck.css';
+
+const PAIR_GROUPS = getInstrumentsByCategory();
 
 const BASE_URL = process.env.REACT_APP_API_URL || '';
 
@@ -442,14 +445,27 @@ export default function AiChartCheckTab() {
           {/* Optional context */}
           <div className="acc-context-grid">
             <div className="acc-field">
-              <label className="acc-field-label">Pair / Symbol <span className="acc-optional">optional</span></label>
-              <input
-                className="acc-input"
-                type="text"
-                placeholder="e.g. EURUSD, XAUUSD"
+              <label className="acc-field-label" htmlFor="acc-pair-select">
+                Pair / Symbol <span className="acc-optional">optional</span>
+              </label>
+              <select
+                id="acc-pair-select"
+                className="acc-input acc-select"
                 value={pair}
-                onChange={e => setPair(e.target.value)}
-              />
+                onChange={(e) => setPair(e.target.value)}
+                aria-label="Trading pair or symbol"
+              >
+                <option value="">Select pair…</option>
+                {PAIR_GROUPS.map((g) => (
+                  <optgroup key={g.category} label={g.label}>
+                    {g.instruments.map((inst) => (
+                      <option key={inst.symbol} value={inst.symbol}>
+                        {inst.displayName} ({inst.symbol})
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </div>
             <div className="acc-field">
               <label className="acc-field-label">Direction Idea <span className="acc-optional">optional</span></label>

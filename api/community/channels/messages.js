@@ -522,36 +522,39 @@ module.exports = async (req, res) => {
           }
         }
 
-        // ── MODERATION: block promotional/spam content for non-admins ────────
-        const senderRoleForMod = (userRows[0]?.role || decoded.role || '').toString().toUpperCase();
-        const isAdminSender = senderRoleForMod === 'ADMIN' || senderRoleForMod === 'SUPER_ADMIN';
-        if (!isAdminSender && content) {
-          const PROMO_PATTERNS = [
-            /discord\.gg\//i,
-            /t\.me\//i,
-            /telegram\.me\//i,
-            /whatsapp\.com\/invite/i,
-            /join\s+my\s+(server|group|channel|discord|telegram)/i,
-            /dm\s+me\s+for\s+(signals|calls|access|info)/i,
-            /free\s+signals/i,
-            /100%\s+(win|profit|accurate)/i,
-            /\$\d+\s+(per\s+month|\/mo|monthly)/i,
-            /copy\s+my\s+trades/i,
-            /follow\s+my\s+(insta|instagram|twitter|telegram|discord)/i,
-            /check\s+(my|out\s+my)\s+(channel|page|profile|bio|link)/i,
-          ];
-          const contentText = content.toString();
-          const flagged = PROMO_PATTERNS.some(p => p.test(contentText));
-          if (flagged) {
-            try {
-              if (db && typeof db.release === 'function') db.release();
-              else if (db && typeof db.end === 'function') await db.end();
-            } catch (_) {}
-            return res.status(403).json({
-              success: false,
-              errorCode: 'MODERATION_BLOCKED',
-              message: 'Your message was blocked by the moderation system. Promotional content, external invites, and signal advertising are not permitted on AURA TERMINAL.'
-            });
+        // ── Community moderation bot (rules + strikes + XP) — see api/community/moderation-bot/
+        const moderationEnabled = process.env.COMMUNITY_MODERATION_ENABLED !== 'false';
+        if (moderationEnabled && content) {
+          try {
+            const { moderateMessage, aggregatePenalties } = require('../moderation-bot/engine');
+            const { applyModerationPenalties } = require('../moderation-bot/penalties');
+            const senderRoleForMod = (userRows[0]?.role || decoded.role || 'USER').toString();
+            const modResult = moderateMessage(content.toString(), { role: senderRoleForMod });
+            if (!modResult.allowed && modResult.violations && modResult.violations.length > 0) {
+              const agg = aggregatePenalties(modResult.violations);
+              try {
+                await applyModerationPenalties(db, senderId, channelId, modResult.violations, content.toString());
+              } catch (penErr) {
+                console.warn('Moderation penalty apply failed:', penErr.message);
+              }
+              try {
+                if (db && typeof db.release === 'function') db.release();
+                else if (db && typeof db.end === 'function') await db.end();
+              } catch (_) {}
+              return res.status(403).json({
+                success: false,
+                errorCode: 'MODERATION_BLOCKED',
+                message: agg.publicMessage,
+                moderation: {
+                  strikes: agg.strikes,
+                  xpPenalty: agg.xpPenalty,
+                  ruleIds: agg.ruleIds,
+                },
+              });
+            }
+          } catch (modErr) {
+            console.warn('Community moderation bot error:', modErr.message);
+            // Fail open: allow message if engine crashes (avoid total chat outage)
           }
         }
         // ─────────────────────────────────────────────────────────────────────

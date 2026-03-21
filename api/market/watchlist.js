@@ -96,7 +96,7 @@ module.exports = async (req, res) => {
         order: 5,
         symbols: [
           { symbol: 'SPX', displayName: 'S&P 500', decimals: 2 },
-          { symbol: 'NDX', displayName: 'Nasdaq', decimals: 2 },
+          { symbol: 'NDX', displayName: 'Nasdaq 100', decimals: 2 },
           { symbol: 'DJI', displayName: 'Dow Jones', decimals: 2 },
           { symbol: 'DAX', displayName: 'DAX 40', decimals: 2 },
           { symbol: 'FTSE', displayName: 'FTSE 100', decimals: 2 },
@@ -129,7 +129,7 @@ module.exports = async (req, res) => {
     providerMapping: {
       // Yahoo Finance symbols
       'SPX': '^GSPC',
-      'NDX': '^IXIC',
+      'NDX': '^NDX',
       'DJI': '^DJI',
       'FTSE': '^FTSE',
       'DAX': '^GDAXI',

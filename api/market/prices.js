@@ -34,14 +34,17 @@ const healthStats = {
 
 // Provider mapping for Yahoo Finance
 const YAHOO_SYMBOLS = {
-  'SPX': '^GSPC', 'NDX': '^IXIC', 'DJI': '^DJI', 'FTSE': '^FTSE',
+  // NDX = Nasdaq-100 (^NDX). ^IXIC is the NASDAQ Composite — different index.
+  'SPX': '^GSPC', 'NDX': '^NDX', 'DJI': '^DJI', 'FTSE': '^FTSE',
   'DAX': '^GDAXI', 'NIKKEI': '^N225', 'VIX': '^VIX', 'DXY': 'DX-Y.NYB',
   'US10Y': '^TNX', 'WTI': 'CL=F', 'BRENT': 'BZ=F',
   'BTCUSD': 'BTC-USD', 'ETHUSD': 'ETH-USD', 'SOLUSD': 'SOL-USD',
   'XRPUSD': 'XRP-USD', 'BNBUSD': 'BNB-USD', 'ADAUSD': 'ADA-USD',
-  'DOGEUSD': 'DOGE-USD', 'EURUSD': 'EURUSD=X', 'GBPUSD': 'GBPUSD=X',
+  'DOGEUSD': 'DOGE-USD',   'EURUSD': 'EURUSD=X', 'GBPUSD': 'GBPUSD=X',
   'USDJPY': 'JPY=X', 'USDCHF': 'CHF=X', 'AUDUSD': 'AUDUSD=X',
-  'USDCAD': 'CAD=X', 'NZDUSD': 'NZDUSD=X', 'XAUUSD': 'GC=F', 'XAGUSD': 'SI=F'
+  'USDCAD': 'CAD=X', 'NZDUSD': 'NZDUSD=X',
+  // Last resort for metals: COMEX futures (can diverge from spot). Prefer Stooq/Finnhub/Twelve Data.
+  'XAUUSD': 'GC=F', 'XAGUSD': 'SI=F'
 };
 
 // CoinGecko ID mapping (free, no API key, real-time crypto)
@@ -83,6 +86,79 @@ const SPOT_SYMBOLS = new Set([
   'XAUUSD', 'XAGUSD', 'BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD',
   'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'
 ]);
+
+/** Stooq spot FX + XAU/XAG (daily OHLC CSV; close tracks retail spot better than Yahoo GC=F/SI=F alone). */
+const STOOQ_PARAM_BY_SYMBOL = {
+  EURUSD: 'eurusd',
+  GBPUSD: 'gbpusd',
+  USDJPY: 'usdjpy',
+  USDCHF: 'usdchf',
+  AUDUSD: 'audusd',
+  USDCAD: 'usdcad',
+  NZDUSD: 'nzdusd',
+  XAUUSD: 'xauusd',
+  XAGUSD: 'xagusd',
+};
+const STOOQ_FOREX_METALS = new Set(Object.keys(STOOQ_PARAM_BY_SYMBOL));
+
+function buildStooqPriceRow(symbol, close) {
+  if (!close || !Number.isFinite(close) || close <= 0) return null;
+  return {
+    symbol,
+    price: formatPrice(close, symbol),
+    rawPrice: close,
+    previousClose: formatPrice(close, symbol),
+    change: '0.00',
+    changeSign: '+',
+    changePercent: '0.00',
+    isUp: true,
+    timestamp: Date.now(),
+    source: 'stooq',
+    delayed: true,
+  };
+}
+
+/**
+ * One HTTP request: batch spot FX + gold/silver from Stooq (free, no API key).
+ * @param {string[]} symbols - internal symbols e.g. EURUSD, XAUUSD
+ * @returns {Record<string, ReturnType<buildStooqPriceRow>>}
+ */
+async function fetchStooqBatchMap(symbols) {
+  const params = [...new Set(symbols.map((s) => STOOQ_PARAM_BY_SYMBOL[s]).filter(Boolean))];
+  if (params.length === 0) return {};
+
+  const url = `https://stooq.com/q/l/?s=${params.join('+')}&i=d`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const response = await axios.get(url, {
+      timeout: REQUEST_TIMEOUT,
+      signal: controller.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AuraTerminal/1.0)' },
+      responseType: 'text',
+      transformResponse: [(d) => d],
+    });
+    clearTimeout(timeoutId);
+
+    const text = typeof response.data === 'string' ? response.data : String(response.data || '');
+    const out = {};
+    for (const line of text.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const parts = trimmed.split(',');
+      if (parts.length < 7) continue;
+      if (parts[1] === 'N/D' || String(parts[6]).toUpperCase() === 'N/D') continue;
+      const sym = String(parts[0] || '').toUpperCase();
+      if (!STOOQ_FOREX_METALS.has(sym)) continue;
+      const close = parseFloat(parts[6]);
+      const row = buildStooqPriceRow(sym, close);
+      if (row) out[sym] = row;
+    }
+    return out;
+  } catch (e) {
+    return {};
+  }
+}
 
 // Decimals by symbol
 const DECIMALS = {
@@ -534,7 +610,8 @@ function getFallbackPrice(symbol) {
  * 2. Spot: Finnhub -> Twelve Data -> Yahoo | Non-spot: Yahoo -> Finnhub -> Twelve Data
  * 3. Use stale cache or static fallback (NEVER 0.00)
  */
-async function fetchPrice(symbol) {
+async function fetchPrice(symbol, options = {}) {
+  const { stooqBySymbol = {} } = options;
   // Check fresh cache first
   const cached = priceCache.get(symbol);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -553,9 +630,10 @@ async function fetchPrice(symbol) {
     if (!result) result = await fetchTwelveDataPrice(symbol);
     if (!result) result = await fetchYahooPrice(symbol);
   } else if (isSpot) {
-    // Forex/metals: Finnhub (OANDA) -> Twelve Data -> Yahoo
+    // Forex/metals: Finnhub (OANDA) -> Twelve Data -> Stooq spot (XAU/XAG + FX) -> Yahoo
     result = await fetchFinnhubPrice(symbol);
     if (!result) result = await fetchTwelveDataPrice(symbol);
+    if (!result && stooqBySymbol[symbol]) result = stooqBySymbol[symbol];
     if (!result) result = await fetchYahooPrice(symbol);
   } else {
     // Stocks, indices, DXY, etc: Yahoo -> Polygon.io -> Finnhub -> Twelve Data
@@ -586,6 +664,9 @@ async function fetchPricesForSymbols(symbols) {
   if (!symbols || symbols.length === 0) return { prices: {}, timestamp: Date.now() };
   const REQUEST_TIMEOUT_MS = 5000;
 
+  const stooqSymbols = symbols.filter((s) => STOOQ_FOREX_METALS.has(s));
+  const stooqBySymbol = stooqSymbols.length > 0 ? await fetchStooqBatchMap(stooqSymbols) : {};
+
   // Pre-fetch crypto from CoinGecko (free, no key, real-time)
   const cryptoSymbols = symbols.filter(s => CRYPTO_SYMBOLS.has(s));
   if (cryptoSymbols.length > 0) {
@@ -613,7 +694,7 @@ async function fetchPricesForSymbols(symbols) {
   const results = await Promise.allSettled(
     symbols.map(symbol =>
       Promise.race([
-        fetchPrice(symbol),
+        fetchPrice(symbol, { stooqBySymbol }),
         new Promise(resolve => setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT_MS + 1000))
       ])
     )
@@ -667,12 +748,14 @@ module.exports = async (req, res) => {
   }
 
   const startTime = Date.now();
-  
+
+  const stooqBySymbol = await fetchStooqBatchMap(symbols.filter((s) => STOOQ_FOREX_METALS.has(s)));
+
   // Fetch all prices in parallel with timeout
   const results = await Promise.allSettled(
     symbols.map(symbol => 
       Promise.race([
-        fetchPrice(symbol),
+        fetchPrice(symbol, { stooqBySymbol }),
         new Promise(resolve => setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT + 1000))
       ])
     )

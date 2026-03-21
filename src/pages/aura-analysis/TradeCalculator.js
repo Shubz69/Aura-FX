@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
+import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
 import { getAllInstruments, getInstrumentsByCategory, getInstrumentOrFallback, getPriceExamples } from '../../lib/aura-analysis/instruments';
 import { calculateRisk, deriveStopLossFromRiskAndPositionSize } from '../../lib/aura-analysis/calculators/calculateRisk';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
@@ -23,6 +24,7 @@ const RISK_WARNING_PCT = 5;
 
 export default function TradeCalculator() {
   const navigate = useNavigate();
+  const { selectedAccountId } = useTradeValidatorAccount();
   const [pendingChecklist, setPendingChecklist] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -239,6 +241,9 @@ export default function TradeCalculator() {
             ? 'indices'
             : 'crypto',
     };
+    if (selectedAccountId != null && Number.isFinite(Number(selectedAccountId))) {
+      payload.validatorAccountId = Number(selectedAccountId);
+    }
     try {
       await Api.createAuraAnalysisTrade(payload);
       if (checklistPercent < 70) {

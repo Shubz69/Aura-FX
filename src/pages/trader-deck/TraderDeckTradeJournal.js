@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import Api from '../../services/Api';
+import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import '../../styles/trader-deck/TraderDeckTradeJournal.css';
 
@@ -36,6 +38,23 @@ function getDisplayGrade(t) {
 }
 
 /** PnL string for Edit Outcome when result is win/loss/breakeven/open (from calculator potential profit/loss). */
+function getVerificationMeta(t) {
+  const s = String(t.outcomeVerificationStatus || t.outcome_verification_status || 'none').toLowerCase();
+  if (s === 'verified') return { label: 'Verified', cls: 'td-journal-verify--ok' };
+  if (s === 'self_reported') return { label: 'Self', cls: 'td-journal-verify--self' };
+  if (s === 'failed') return { label: 'Unverified', cls: 'td-journal-verify--fail' };
+  return { label: '—', cls: '' };
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(typeof r.result === 'string' ? r.result : '');
+    r.onerror = () => reject(new Error('Could not read file'));
+    r.readAsDataURL(file);
+  });
+}
+
 function getPnlForResult(trade, result) {
   if (!trade) return '';
   const profit = trade.potentialProfit ?? trade.potential_profit;
@@ -55,6 +74,7 @@ function getPnlForResult(trade, result) {
 }
 
 export default function TraderDeckTradeJournal() {
+  const { accounts, selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -69,16 +89,55 @@ export default function TraderDeckTradeJournal() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [verifyTrade, setVerifyTrade] = useState(null);
+  const [verifyFile, setVerifyFile] = useState(null);
+  const [verifyBusy, setVerifyBusy] = useState(false);
+
+  const loadTrades = useCallback(async () => {
+    const params =
+      selectedAccountId != null && Number.isFinite(Number(selectedAccountId))
+        ? { validatorAccountId: selectedAccountId }
+        : {};
+    const r = await Api.getAuraAnalysisTrades(params);
+    const list = r.data?.trades ?? r.data?.data ?? [];
+    setTrades(Array.isArray(list) ? list : []);
+  }, [selectedAccountId]);
 
   useEffect(() => {
-    Api.getAuraAnalysisTrades()
-      .then((r) => {
-        const list = r.data?.trades ?? r.data?.data ?? [];
-        setTrades(Array.isArray(list) ? list : []);
-      })
+    if (accountsLoading) return;
+    setLoading(true);
+    loadTrades()
       .catch(() => setTrades([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [accountsLoading, loadTrades]);
+
+  const closeVerify = () => {
+    setVerifyTrade(null);
+    setVerifyFile(null);
+    setVerifyBusy(false);
+  };
+
+  const submitVerify = async () => {
+    if (!verifyTrade?.id || !verifyFile) {
+      toast.error('Choose a screenshot first.');
+      return;
+    }
+    setVerifyBusy(true);
+    try {
+      const dataUrl = await readFileAsDataUrl(verifyFile);
+      const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+      const mimeType = verifyFile.type || 'image/png';
+      const res = await Api.verifyTradeOutcome(verifyTrade.id, base64, mimeType);
+      if (res.data?.applied) toast.success(res.data?.message || 'Outcome saved from screenshot.');
+      else toast.warning(res.data?.message || 'Could not confirm from this image — try a clearer screenshot.');
+      await loadTrades();
+      closeVerify();
+    } catch (e) {
+      toast.error(e.response?.data?.message || e.message || 'Verification failed');
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
 
   const pairs = useMemo(() => {
     const set = new Set(trades.map((t) => t.pair || '').filter(Boolean));
@@ -131,16 +190,24 @@ export default function TraderDeckTradeJournal() {
     setSaving(true);
     setSaveError(null);
     try {
-      await Api.updateAuraAnalysisTrade(editTrade.id, {
+      const res = await Api.updateAuraAnalysisTrade(editTrade.id, {
         result: editResult,
         pnl: editPnl === '' ? null : Number(editPnl),
+        outcomeSource: 'manual',
       });
+      const updated = res.data?.trade;
       setTrades((prev) =>
-        prev.map((x) =>
-          x.id === editTrade.id
-            ? { ...x, result: editResult, pnl: editPnl === '' ? null : Number(editPnl) }
-            : x
-        )
+        prev.map((x) => {
+          if (x.id !== editTrade.id) return x;
+          if (updated && typeof updated === 'object') return { ...x, ...updated };
+          return {
+            ...x,
+            result: editResult,
+            pnl: editPnl === '' ? null : Number(editPnl),
+            outcomeVerificationStatus: 'self_reported',
+            outcomeVerification: null,
+          };
+        })
       );
       closeEdit();
     } catch (e) {
@@ -159,7 +226,7 @@ export default function TraderDeckTradeJournal() {
     setDeletingId(t.id);
     try {
       await Api.deleteAuraAnalysisTrade(t.id);
-      setTrades((prev) => prev.filter((x) => x.id !== t.id));
+      await loadTrades();
       if (editTrade?.id === t.id) closeEdit();
     } catch (e) {
       window.alert(e.response?.data?.message || e.message || 'Failed to delete trade');
@@ -173,9 +240,18 @@ export default function TraderDeckTradeJournal() {
     return Array.from(set).sort();
   }, [trades]);
 
+  const selectedAccountName = useMemo(() => {
+    if (selectedAccountId == null) return null;
+    const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
+    return a?.name || `Account ${selectedAccountId}`;
+  }, [accounts, selectedAccountId]);
+
   return (
     <div className="td-journal">
       <h2 className="td-journal-title">Trade Journal</h2>
+      {selectedAccountName && (
+        <p className="td-journal-account-line">Account: {selectedAccountName}</p>
+      )}
 
       <div className="td-journal-toolbar">
         <input
@@ -245,7 +321,7 @@ export default function TraderDeckTradeJournal() {
       </div>
 
       <div className="td-journal-table-wrap">
-        {loading ? (
+        {accountsLoading || loading ? (
           <p className="td-journal-loading">Loading trades…</p>
         ) : (
           <table className="td-journal-table">
@@ -261,6 +337,7 @@ export default function TraderDeckTradeJournal() {
                 <th>Risk %</th>
                 <th>Result</th>
                 <th>PnL</th>
+                <th>Proof</th>
                 <th>R</th>
                 <th>Session</th>
                 <th>Grade</th>
@@ -270,7 +347,7 @@ export default function TraderDeckTradeJournal() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="td-journal-empty">No trades match your filters.</td>
+                  <td colSpan={15} className="td-journal-empty">No trades match your filters.</td>
                 </tr>
               ) : (
                 filtered.map((t) => {
@@ -279,6 +356,7 @@ export default function TraderDeckTradeJournal() {
                   const isLoss = res === 'loss' || (Number(t.pnl) < 0 && res !== 'win');
                   const resultLabel = res === 'breakeven' ? 'BREAKEVEN' : isWin ? 'WIN' : isLoss ? 'LOSS' : '—';
                   const pnlNum = t.pnl != null ? Number(t.pnl) : null;
+                  const ver = getVerificationMeta(t);
                   return (
                     <tr key={t.id}>
                       <td>{formatDate(t.createdAt || t.created_at)}</td>
@@ -297,10 +375,17 @@ export default function TraderDeckTradeJournal() {
                       <td className={pnlNum != null && pnlNum < 0 ? 'td-journal-pnl-neg' : pnlNum != null && pnlNum > 0 ? 'td-journal-pnl-pos' : ''}>
                         {formatPnL(t.pnl)}
                       </td>
+                      <td>
+                        <span className={['td-journal-verify-badge', ver.cls].filter(Boolean).join(' ')}>{ver.label}</span>
+                      </td>
                       <td>{t.rMultiple != null ? formatNum(t.rMultiple, 2) : t.rr != null ? formatNum(t.rr, 2) : '—'}</td>
                       <td>{t.session || '—'}</td>
                       <td>{getDisplayGrade(t)}</td>
                       <td className="td-journal-actions">
+                        <button type="button" className="td-journal-action-link" onClick={() => setVerifyTrade(t)}>
+                          Verify screenshot
+                        </button>
+                        <span className="td-journal-action-sep" aria-hidden>·</span>
                         <button type="button" className="td-journal-action-link" onClick={() => openEdit(t)}>
                           Edit Outcome
                         </button>
@@ -328,6 +413,9 @@ export default function TraderDeckTradeJournal() {
           <div className="td-journal-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="td-journal-modal-title">Edit Outcome</h3>
             <p className="td-journal-modal-pair">{editTrade.pair} · {editTrade.direction}</p>
+            <p className="td-journal-modal-hint">
+              Manual saves are marked as self-reported. Upload a broker screenshot to verify win/loss and PnL.
+            </p>
             <div className="td-journal-modal-form">
               <label>
                 Result
@@ -362,6 +450,34 @@ export default function TraderDeckTradeJournal() {
                 {saving ? 'Saving…' : 'Save'}
               </button>
               <button type="button" className="td-journal-modal-btn" onClick={closeEdit}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {verifyTrade && (
+        <div className="td-journal-modal-overlay" onClick={closeVerify} role="presentation">
+          <div className="td-journal-modal td-journal-modal--verify" onClick={(e) => e.stopPropagation()}>
+            <h3 className="td-journal-modal-title">Verify with screenshot</h3>
+            <p className="td-journal-modal-pair">
+              {verifyTrade.pair} · {verifyTrade.direction} — upload a clear image of closed P/L from your platform.
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              className="td-journal-verify-file"
+              onChange={(e) => setVerifyFile(e.target.files?.[0] || null)}
+            />
+            {verifyFile && (
+              <p className="td-journal-verify-filename">{verifyFile.name}</p>
+            )}
+            <div className="td-journal-modal-actions">
+              <button type="button" className="td-journal-modal-btn primary" onClick={submitVerify} disabled={verifyBusy || !verifyFile}>
+                {verifyBusy ? 'Checking…' : 'Run verification'}
+              </button>
+              <button type="button" className="td-journal-modal-btn" onClick={closeVerify} disabled={verifyBusy}>
+                Cancel
+              </button>
             </div>
           </div>
         </div>

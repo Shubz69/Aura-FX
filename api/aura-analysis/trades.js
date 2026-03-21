@@ -72,10 +72,34 @@ async function ensureTradesTable(db) {
   } catch (_) {
     /* column may already be 80 or table just created */
   }
+  try {
+    await db.execute('ALTER TABLE aura_analysis_trades ADD COLUMN validator_account_id INT NULL');
+  } catch (_) {}
+  try {
+    await db.execute(
+      "ALTER TABLE aura_analysis_trades ADD COLUMN outcome_verification_status VARCHAR(24) DEFAULT 'none'"
+    );
+  } catch (_) {}
+  try {
+    await db.execute('ALTER TABLE aura_analysis_trades ADD COLUMN outcome_verification_json LONGTEXT NULL');
+  } catch (_) {}
+  try {
+    await db.execute(
+      'ALTER TABLE aura_analysis_trades ADD INDEX idx_aa_trades_validator_account (user_id, validator_account_id)'
+    );
+  } catch (_) {}
 }
 
 function mapRow(r) {
   if (!r) return null;
+  let outcomeVerification = null;
+  if (r.outcome_verification_json) {
+    try {
+      outcomeVerification = JSON.parse(r.outcome_verification_json);
+    } catch {
+      outcomeVerification = null;
+    }
+  }
   return {
     id: r.id,
     userId: r.user_id,
@@ -105,6 +129,9 @@ function mapRow(r) {
     notes: r.notes ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    validatorAccountId: r.validator_account_id != null ? Number(r.validator_account_id) : null,
+    outcomeVerificationStatus: r.outcome_verification_status ?? 'none',
+    outcomeVerification,
   };
 }
 
@@ -157,6 +184,15 @@ module.exports = async (req, res) => {
         updates.push('pnl = ?');
         params.push(pnl);
       }
+      const manualOutcome =
+        result !== null &&
+        (body.outcomeSource === 'manual' || body.selfReported === true || body.outcome_source === 'manual');
+      if (manualOutcome) {
+        updates.push('outcome_verification_status = ?');
+        params.push('self_reported');
+        updates.push('outcome_verification_json = NULL');
+      }
+
       if (updates.length === 0) {
         const [rows] = await db.execute('SELECT * FROM aura_analysis_trades WHERE id = ?', [tradeId]);
         db.release && db.release();
@@ -190,15 +226,21 @@ module.exports = async (req, res) => {
       const dateTo = url.searchParams.get('dateTo') || null;
       const pnlSummary = url.searchParams.get('pnl') === '1';
 
+      const validatorAccountIdPnl = url.searchParams.get('validatorAccountId');
+      const vaPnl = validatorAccountIdPnl ? Number(validatorAccountIdPnl) : null;
+
       if (pnlSummary) {
-        const [rows] = await db.execute(
-          `SELECT
+        let pnlSql = `SELECT
             SUM(CASE WHEN DATE(created_at) = CURDATE() THEN pnl ELSE 0 END) as daily_pnl,
             SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE())+1 DAY) AND created_at < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE())+1 DAY), INTERVAL 7 DAY) THEN pnl ELSE 0 END) as weekly_pnl,
             SUM(CASE WHEN YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE()) THEN pnl ELSE 0 END) as monthly_pnl
-           FROM aura_analysis_trades WHERE user_id = ? AND result IN ('win','loss','breakeven')`,
-          [userId]
-        );
+           FROM aura_analysis_trades WHERE user_id = ? AND result IN ('win','loss','breakeven')`;
+        const pnlParams = [userId];
+        if (vaPnl && Number.isFinite(vaPnl)) {
+          pnlSql += ' AND validator_account_id = ?';
+          pnlParams.push(vaPnl);
+        }
+        const [rows] = await db.execute(pnlSql, pnlParams);
         const r = rows[0];
         db.release && db.release();
         return res.status(200).json({
@@ -209,8 +251,15 @@ module.exports = async (req, res) => {
         });
       }
 
+      const validatorAccountIdList = url.searchParams.get('validatorAccountId');
+      const vaList = validatorAccountIdList ? Number(validatorAccountIdList) : null;
+
       let sql = 'SELECT * FROM aura_analysis_trades WHERE user_id = ?';
       const params = [userId];
+      if (vaList && Number.isFinite(vaList)) {
+        sql += ' AND validator_account_id = ?';
+        params.push(vaList);
+      }
       if (dateFrom) {
         sql += ' AND DATE(created_at) >= ?';
         params.push(dateFrom);
@@ -254,6 +303,30 @@ module.exports = async (req, res) => {
       const notes = body.notes != null ? String(body.notes).slice(0, 4096) : null;
       const session = body.session != null ? String(body.session).trim().slice(0, 50) : null;
       const assetClass = (body.assetClass ?? body.asset_class ?? 'forex').toString().slice(0, 50);
+      let validatorAccountId =
+        body.validatorAccountId != null ? Number(body.validatorAccountId) : body.validator_account_id != null
+          ? Number(body.validator_account_id)
+          : null;
+      if (!validatorAccountId || !Number.isFinite(validatorAccountId)) {
+        try {
+          const [fallbackAcc] = await db.execute(
+            'SELECT id FROM trade_validator_accounts WHERE user_id = ? ORDER BY id ASC LIMIT 1',
+            [userId]
+          );
+          validatorAccountId = fallbackAcc?.[0]?.id ? Number(fallbackAcc[0].id) : null;
+        } catch {
+          validatorAccountId = null;
+        }
+      } else {
+        const [own] = await db.execute(
+          'SELECT id FROM trade_validator_accounts WHERE id = ? AND user_id = ?',
+          [validatorAccountId, userId]
+        );
+        if (!own?.length) {
+          if (db.release) db.release();
+          return res.status(400).json({ success: false, message: 'Invalid validator account' });
+        }
+      }
 
       if (!pair || accountBalance <= 0 || entryPrice <= 0) {
         if (db.release) db.release();
@@ -262,16 +335,38 @@ module.exports = async (req, res) => {
 
       const [insertResult] = await db.execute(
         `INSERT INTO aura_analysis_trades (
-          user_id, pair, asset_class, direction, session, account_balance, risk_percent, risk_amount,
+          user_id, validator_account_id, pair, asset_class, direction, session, account_balance, risk_percent, risk_amount,
           entry_price, stop_loss, take_profit, stop_loss_pips, take_profit_pips, rr, position_size,
           potential_profit, potential_loss, result, pnl, r_multiple, checklist_score, checklist_total,
           checklist_percent, trade_grade, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          userId, pair, assetClass, direction, session, accountBalance, riskPercent, riskAmount,
-          entryPrice, stopLoss, takeProfit, stopLossPips, takeProfitPips, rr, positionSize,
-          potentialProfit, potentialLoss, result, pnl, rMultiple, checklistScore, checklistTotal,
-          checklistPercent, tradeGrade, notes,
+          userId,
+          validatorAccountId,
+          pair,
+          assetClass,
+          direction,
+          session,
+          accountBalance,
+          riskPercent,
+          riskAmount,
+          entryPrice,
+          stopLoss,
+          takeProfit,
+          stopLossPips,
+          takeProfitPips,
+          rr,
+          positionSize,
+          potentialProfit,
+          potentialLoss,
+          result,
+          pnl,
+          rMultiple,
+          checklistScore,
+          checklistTotal,
+          checklistPercent,
+          tradeGrade,
+          notes,
         ]
       );
       const insertId = insertResult.insertId;

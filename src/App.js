@@ -80,6 +80,7 @@ const TraderCVTab = lazy(() => import('./pages/aura-analysis/TraderCVTab'));
 const TraderDeckTradeJournal = lazy(() => import('./pages/trader-deck/TraderDeckTradeJournal'));
 const AiChartCheckTab = lazy(() => import('./pages/aura-analysis/AiChartCheckTab'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
+const ReportsDnaPage = lazy(() => import('./pages/reports/ReportsDnaPage'));
 const Affiliation = lazy(() => import('./pages/Affiliation'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
@@ -239,7 +240,7 @@ function AppRoutes() {
                             </Route>
                         </Route>
                         <Route path="/trader-deck/trade-validator" element={<AuthenticatedGuard><TradeValidatorShell /></AuthenticatedGuard>}>
-                            <Route index element={<Navigate to="/trader-deck/trade-validator/checklist" replace />} />
+                            <Route index element={<Navigate to="/trader-deck/trade-validator/overview" replace />} />
                             <Route path="checklist" element={<TradeValidatorEntry />} />
                             <Route path="overview" element={<AuraOverview />} />
                             <Route path="calculator" element={<TradeCalculator />} />
@@ -250,6 +251,7 @@ function AppRoutes() {
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaPage /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />

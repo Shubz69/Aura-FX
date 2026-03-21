@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import { FaPlus } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import Api from '../../../services/Api';
+import { useTradeValidatorAccount } from '../../../context/TradeValidatorAccountContext';
 import '../../../styles/aura-analysis/AuraTabSection.css';
 import '../../../styles/aura-analysis/Overview.css';
 
@@ -52,29 +55,51 @@ function computeKpis(trades = [], pnlData = {}) {
 export default function Overview() {
   const location = useLocation();
   const fromTransition = location.state?.fromTransition === true;
+  const { accounts, selectedAccountId, setSelectedAccountId, loading: accountsLoading, addAccount, error: accountsError } =
+    useTradeValidatorAccount();
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState({});
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
-  useEffect(() => {
-    Promise.all([
-      Api.getAuraAnalysisTrades().then((r) => (r.data?.trades ?? r.data?.data ?? [])),
-      Api.getAuraAnalysisPnl().then((r) => ({
+  const fetchData = useCallback(() => {
+    const params =
+      selectedAccountId != null && Number.isFinite(Number(selectedAccountId))
+        ? { validatorAccountId: selectedAccountId }
+        : {};
+    return Promise.all([
+      Api.getAuraAnalysisTrades(params).then((r) => (r.data?.trades ?? r.data?.data ?? [])),
+      Api.getAuraAnalysisPnl(params).then((r) => ({
         totalPnL: r.data?.totalPnL ?? r.data?.monthlyPnl ?? 0,
         dailyPnl: r.data?.dailyPnl,
         weeklyPnl: r.data?.weeklyPnl,
         monthlyPnl: r.data?.monthlyPnl,
       })),
-    ])
-      .then(([t, p]) => {
-        setTrades(Array.isArray(t) ? t : []);
-        setPnlData(typeof p === 'object' ? p : {});
-      })
+    ]).then(([t, p]) => {
+      setTrades(Array.isArray(t) ? t : []);
+      setPnlData(typeof p === 'object' ? p : {});
+    });
+  }, [selectedAccountId]);
+
+  useEffect(() => {
+    if (accountsLoading) return;
+    setLoading(true);
+    fetchData()
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [accountsLoading, fetchData]);
+
+  const handleAddAccount = async () => {
+    const name = window.prompt('Account name (e.g. FTMO, Personal)');
+    if (!name?.trim()) return;
+    try {
+      await addAccount(name.trim());
+      toast.success('Account added. Select it to use it for new trades.');
+    } catch (e) {
+      toast.error(e?.response?.data?.message || e.message || 'Could not add account');
+    }
+  };
 
   const kpis = useMemo(() => computeKpis(trades, pnlData), [trades, pnlData]);
 
@@ -151,7 +176,7 @@ export default function Overview() {
     });
   }, [trades, selectedDate]);
 
-  if (loading) {
+  if (accountsLoading || loading) {
     return (
       <div className="aura-overview-page">
         <p className="aura-overview-muted">Loading…</p>
@@ -161,6 +186,26 @@ export default function Overview() {
 
   return (
     <div className={`aura-overview-page ${fromTransition ? 'aura-overview-from-transition' : ''}`}>
+      <div className="aura-overview-account-bar" role="toolbar" aria-label="Validator accounts">
+        <span className="aura-overview-account-bar-label">Account</span>
+        <div className="aura-overview-account-pills">
+          {accounts.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              className={`aura-overview-account-pill ${Number(selectedAccountId) === Number(a.id) ? 'active' : ''}`}
+              onClick={() => setSelectedAccountId(a.id)}
+            >
+              {a.name || `Account ${a.id}`}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="aura-overview-account-add" onClick={handleAddAccount} title="Add account">
+          <FaPlus aria-hidden />
+          <span>Add</span>
+        </button>
+      </div>
+      {accountsError && <p className="aura-overview-account-error">{accountsError}</p>}
       <h2 className="aura-overview-glance-title">Your trading performance at a glance</h2>
       <div className="aura-overview-kpi-grid">
         <div className="aura-overview-kpi-card">

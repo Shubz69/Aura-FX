@@ -653,8 +653,8 @@ const Api = {
     getAuraAnalysisTrades: (params = {}) => {
         return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params });
     },
-    getAuraAnalysisPnl: () => {
-        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params: { pnl: 1 } });
+    getAuraAnalysisPnl: (params = {}) => {
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/trades`, { params: { pnl: 1, ...params } });
     },
     createAuraAnalysisTrade: (body) => {
         return axios.post(`${API_BASE_URL}/api/aura-analysis/trades`, body);
@@ -665,6 +665,46 @@ const Api = {
     deleteAuraAnalysisTrade: (id) => {
         return axios.delete(`${API_BASE_URL}/api/aura-analysis/trades/${id}`);
     },
+
+    getValidatorAccounts: () => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/validator-accounts`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    createValidatorAccount: (name) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/aura-analysis/validator-accounts`,
+            { name },
+            { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+        );
+    },
+    verifyTradeOutcome: (tradeId, image, mimeType = 'image/png') => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/ai/trade-outcome-verify`,
+            { tradeId, image, mimeType },
+            { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+        );
+    },
+
+    /** Trader DNA — eligibility, report payload, cycle state (GET); generate snapshot (POST). */
+    getTraderDna: () => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/trader-dna`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    generateTraderDna: () => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/trader-dna`,
+            { confirm: true },
+            { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+        );
+    },
+
     // Platform connections (real MT5/exchange APIs — no relation to Trade Validator)
     getAuraPlatformConnections: () =>
         axios.get(`${API_BASE_URL}/api/aura-analysis/platform-connect`),

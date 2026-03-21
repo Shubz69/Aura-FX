@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { TradeValidatorAccountProvider } from '../../context/TradeValidatorAccountContext';
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
 
 const BASE = '/trader-deck/trade-validator';
@@ -16,6 +17,7 @@ const TABS = [
 
 export default function TradeValidatorShell() {
   return (
+    <TradeValidatorAccountProvider>
     <div className="aura-shell trade-validator-shell">
       <header className="aura-shell-hero">
         <div className="aura-shell-hero-inner">
@@ -45,5 +47,6 @@ export default function TradeValidatorShell() {
         <Outlet />
       </main>
     </div>
+    </TradeValidatorAccountProvider>
   );
 }

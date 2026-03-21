@@ -2240,3 +2240,81 @@
   background: rgba(255,255,255,0.04);
   border-radius: 8px;
 }
+
+/* Trade Validator — account switcher (overview) */
+.aura-overview-account-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: var(--ov-card, rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--ov-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--ov-radius, 12px);
+}
+
+.aura-overview-account-bar-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ov-muted, rgba(255, 255, 255, 0.55));
+}
+
+.aura-overview-account-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.aura-overview-account-pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ov-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ov-text, #fff);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.aura-overview-account-pill:hover {
+  border-color: var(--ov-border-h, rgba(255, 255, 255, 0.2));
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.aura-overview-account-pill.active {
+  border-color: rgba(139, 92, 246, 0.65);
+  background: rgba(139, 92, 246, 0.18);
+  color: #fff;
+}
+
+.aura-overview-account-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px dashed rgba(139, 92, 246, 0.45);
+  background: transparent;
+  color: rgba(196, 181, 253, 0.95);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.aura-overview-account-add:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.7);
+}
+
+.aura-overview-account-error {
+  font-size: 0.85rem;
+  color: #f87171;
+  margin: -8px 0 16px;
+}

@@ -6,6 +6,7 @@
  * Admin  → same as elite
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/reports/ReportsPage.css';
 
@@ -48,7 +49,10 @@ function FreeLockedView() {
   return (
     <div className="rp-locked">
       <div className="rp-locked-icon">📊</div>
-      <h2 className="rp-locked-title">Monthly AI Reports</h2>
+      <h2 className="rp-locked-title">Monthly Reports</h2>
+      <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
+        Enter Your DNA
+      </Link>
       <p className="rp-locked-sub">
         Get a professionally generated monthly performance report — covering your trades,
         discipline, checklist quality, AI chart check history, and a personalised improvement plan.
@@ -547,8 +551,11 @@ export default function ReportsPage() {
   return (
     <div className="rp-page">
       <div className="rp-header">
-        <div>
-          <h2 className="rp-title">Monthly AI Reports</h2>
+        <div className="rp-header-stack">
+          <h2 className="rp-title">Monthly Reports</h2>
+          <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
+            Enter Your DNA
+          </Link>
           <p className="rp-subtitle">
             {role === 'premium'
               ? 'Your monthly performance report — powered by your platform data and optional MT5 CSV.'

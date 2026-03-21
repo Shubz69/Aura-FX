@@ -33,6 +33,7 @@ import {
     toggleChannel as toggleMutedChannel,
     has as isChannelMuted
 } from '../utils/mutedChannelsStore';
+import { popTraderPassportShare, setTraderPassportShare } from '../utils/traderPassportShare';
 // All API calls use real endpoints only - no mock mode
 
 /** Isolated from Community — only this control re-renders when mute toggles (not the whole page). */
@@ -429,11 +430,16 @@ const GifPicker = ({ onGifSelect, onClose }) => {
     );
 };
 
+// Normalize legacy category slug (cached localStorage / old DB)
+const normalizeCategorySlug = (category) => (category === 'trading' ? 'forums' : category);
+
 // Get category icon
 const getCategoryIcon = (category) => {
-    switch(category) {
+    const c = normalizeCategorySlug(category);
+    switch(c) {
         case 'announcements': return '📢';
         case 'staff': return '👨‍💼';
+        case 'forums':
         case 'trading': return '📈';
         case 'general': return '💬';
         case 'support': return '🆘';
@@ -445,15 +451,17 @@ const getCategoryIcon = (category) => {
 
 // Format category name for display
 const formatCategoryName = (category) => {
-    switch(category) {
+    const c = normalizeCategorySlug(category);
+    switch(c) {
         case 'a7fx': return 'A7FX';
         case 'announcements': return 'ANNOUNCEMENTS';
         case 'staff': return 'STAFF';
+        case 'forums': return 'FORUMS';
         case 'trading': return 'TRADING';
         case 'general': return 'GENERAL';
         case 'support': return 'SUPPORT';
         case 'premium': return 'PREMIUM';
-        default: return category.toUpperCase();
+        default: return (category || '').toUpperCase();
     }
 };
 
@@ -1070,6 +1078,39 @@ const [journalLoading, setJournalLoading] = useState(false);
     useEffect(() => {
         selectedChannelRef.current = selectedChannel;
     }, [selectedChannel]);
+
+    // Trader CV passport: attach PNG when user chose "Share via Community" on Trade Validator
+    useEffect(() => {
+        let cancelled = false;
+        const run = async () => {
+            const parsed = popTraderPassportShare();
+            const dataUrl = parsed?.dataUrl;
+            const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
+            if (!dataUrl || typeof dataUrl !== 'string') return;
+            if (Date.now() - ts > 5 * 60 * 1000) {
+                toast.info('Trader Passport attachment expired — generate a new one from Trade Validator → Trader CV.');
+                return;
+            }
+            try {
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+                if (cancelled) {
+                    setTraderPassportShare({ dataUrl, ts });
+                    return;
+                }
+                const file = new File([blob], 'aura-trader-passport.png', { type: 'image/png' });
+                setSelectedFile(file);
+                setNewMessage((prev) => (prev && prev.trim() ? prev : 'My Trader Passport (Aura FX)'));
+                toast.info('Trader Passport attached — pick a channel and send. Only people in that channel will see it.');
+            } catch (e) {
+                console.warn('Trader Passport attach failed', e);
+                setTraderPassportShare({ dataUrl, ts });
+                toast.error('Could not attach Trader Passport. Use Save on Trader CV and upload the image manually.');
+            }
+        };
+        run();
+        return () => { cancelled = true; };
+    }, []);
     
     // Welcome message and channel visibility
     const [hasReadWelcome, setHasReadWelcome] = useState(false);
@@ -1077,7 +1118,7 @@ const [journalLoading, setJournalLoading] = useState(false);
     const [paymentFailed, setPaymentFailed] = useState(false);
     const [showChannelManager, setShowChannelManager] = useState(false);
     const [newChannelName, setNewChannelName] = useState('');
-    const [newChannelCategory, setNewChannelCategory] = useState('trading');
+    const [newChannelCategory, setNewChannelCategory] = useState('forums');
     const [newChannelDescription, setNewChannelDescription] = useState('');
     const [newChannelAccess, setNewChannelAccess] = useState('open');
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
@@ -1101,14 +1142,14 @@ const [journalLoading, setJournalLoading] = useState(false);
             try {
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    return parsed;
+                    return parsed.map((x) => normalizeCategorySlug(x));
                 }
             } catch (e) {
                 // Invalid JSON, use default
             }
         }
         // Default order - will be replaced by backend data (courses removed)
-        return ['announcements', 'staff', 'trading', 'general', 'support', 'premium', 'a7fx'];
+        return ['announcements', 'staff', 'forums', 'general', 'support', 'premium', 'a7fx'];
     });
     
     const categoryOrder = categoryOrderState;
@@ -1129,7 +1170,7 @@ const [journalLoading, setJournalLoading] = useState(false);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && Array.isArray(data.data)) {
-                        setCategoryOrderState(data.data);
+                        setCategoryOrderState(data.data.map((x) => normalizeCategorySlug(x)));
                     }
                 } else if (response.status === 401) {
                     return;
@@ -1139,7 +1180,8 @@ const [journalLoading, setJournalLoading] = useState(false);
                 const saved = localStorage.getItem('channelCategoryOrder');
                 if (saved) {
                     try {
-                        setCategoryOrderState(JSON.parse(saved));
+                        const parsed = JSON.parse(saved);
+                        setCategoryOrderState(Array.isArray(parsed) ? parsed.map((x) => normalizeCategorySlug(x)) : parsed);
                     } catch (e) { /* use default */ }
                 }
             }
@@ -1153,7 +1195,12 @@ const [journalLoading, setJournalLoading] = useState(false);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && data.channelOrder) {
-                        setChannelOrder(data.channelOrder);
+                        let co = data.channelOrder;
+                        if (co && typeof co === 'object' && !Array.isArray(co) && co.trading && !co.forums) {
+                            co = { ...co, forums: co.trading };
+                            delete co.trading;
+                        }
+                        setChannelOrder(co);
                     }
                 } else if (response.status === 401) {
                     return;
@@ -1511,7 +1558,7 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
                 id: idString,
                 name: normalizedName,
                 displayName: displayNameValue,
-                category: channel.category || 'general',
+                category: normalizeCategorySlug(channel.category || 'general'),
                 description: channel.description || '',
                 accessLevel: accessLevelValue,
                 locked,
@@ -1537,10 +1584,15 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
         if (data?.success && Array.isArray(data.channels)) {
             channelsFromServer = data.channels;
             if (Array.isArray(data.categoryOrder) && data.categoryOrder.length > 0) {
-                setCategoryOrderState(data.categoryOrder);
+                setCategoryOrderState(data.categoryOrder.map((x) => normalizeCategorySlug(x)));
             }
             if (data.channelOrder && typeof data.channelOrder === 'object') {
-                setChannelOrder(data.channelOrder);
+                let co = data.channelOrder;
+                if (co.trading && !co.forums) {
+                    co = { ...co, forums: co.trading };
+                    delete co.trading;
+                }
+                setChannelOrder(co);
             }
         } else if (Array.isArray(data)) {
             channelsFromServer = data;
@@ -7372,7 +7424,7 @@ if (!isAuthenticated && !hasToken) {
                                             color: 'white'
                                         }}
                                     >
-                                        <option value="trading">Trading</option>
+                                        <option value="forums">Forums</option>
                                         <option value="general">General</option>
                                         <option value="support">Support</option>
                                         <option value="premium">Premium</option>
@@ -7719,7 +7771,7 @@ if (!isAuthenticated && !hasToken) {
                                 name: channel.name,
                                 displayName: channel.displayName || channel.name,
                                 description: channel.description || '',
-                                category: channel.category || 'general',
+                                category: normalizeCategorySlug(channel.category || 'general'),
                                 accessLevel: channel.accessLevel || 'open',
                                 permissionType: channel.permissionType || 'read-write'
                             });
@@ -7868,7 +7920,7 @@ if (!isAuthenticated && !hasToken) {
                                 }}
                             >
                                 <option value="general">General</option>
-                                <option value="trading">Trading</option>
+                                <option value="forums">Forums</option>
                                 <option value="premium">Premium</option>
                                 <option value="a7fx">A7FX</option>
                                 <option value="announcements">Announcements</option>

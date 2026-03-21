@@ -54,7 +54,7 @@ const DISPLAY_NAMES = {
   'USDJPY': 'USD/JPY', 'USDCHF': 'USD/CHF', 'AUDUSD': 'AUD/USD',
   'USDCAD': 'USD/CAD', 'NZDUSD': 'NZD/USD', 'XAUUSD': 'Gold',
   'XAGUSD': 'Silver', 'WTI': 'WTI Oil', 'BRENT': 'Brent',
-  'SPX': 'S&P 500', 'NDX': 'Nasdaq', 'DJI': 'Dow Jones',
+  'SPX': 'S&P 500', 'NDX': 'Nasdaq 100', 'DJI': 'Dow Jones',
   'DAX': 'DAX 40', 'FTSE': 'FTSE 100', 'NIKKEI': 'Nikkei',
   'DXY': 'DXY', 'US10Y': '10Y Yield', 'VIX': 'VIX'
 };
@@ -203,7 +203,7 @@ async function fetchWatchlist() {
       ]},
       indices: { name: 'Indices', icon: '📊', order: 5, symbols: [
         { symbol: 'SPX', displayName: 'S&P 500' },
-        { symbol: 'NDX', displayName: 'Nasdaq' }
+        { symbol: 'NDX', displayName: 'Nasdaq 100' }
       ]},
       macro: { name: 'Macro', icon: '🌐', order: 6, symbols: [
         { symbol: 'DXY', displayName: 'DXY' },

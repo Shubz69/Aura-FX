@@ -64,6 +64,13 @@
   gap: 16px;
   flex-wrap: wrap;
 }
+.rp-header-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
 .rp-title {
   font-size: 1.45rem;
   font-weight: 800;
@@ -72,13 +79,51 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin: 0 0 6px;
+  margin: 0;
 }
 .rp-subtitle {
   font-size: 0.88rem;
   color: var(--rp-muted);
   margin: 0;
   line-height: 1.5;
+}
+.rp-dna-enter {
+  text-decoration: none;
+  display: inline-flex;
+  align-self: flex-start;
+}
+.rp-locked .rp-dna-enter {
+  align-self: center;
+}
+
+/* DNA sub-page */
+.rp-dna-page {
+  padding: 8px 0 24px;
+}
+.rp-dna-back {
+  display: inline-block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--rp-accent);
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+.rp-dna-back:hover {
+  color: #c4b5fd;
+}
+.rp-dna-page-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+}
+.rp-dna-page-sub {
+  font-size: 0.9rem;
+  color: var(--rp-muted);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 520px;
 }
 
 /* Role badge */

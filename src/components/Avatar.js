@@ -116,6 +116,7 @@ const Avatar = ({ type, selected = false, onClick }) => {
                     </div>
                 );
             
+            case 'forums':
             case 'trading':
                 return (
                     <div className="avatar-container trading-avatar">

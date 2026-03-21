@@ -338,7 +338,8 @@
 .acc-field--full { grid-column: 1 / -1; }
 
 .acc-input,
-.acc-textarea {
+.acc-textarea,
+select.acc-input {
   width: 100%;
   box-sizing: border-box;
   padding: 9px 12px;
@@ -351,8 +352,23 @@
   resize: vertical;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
+select.acc-input.acc-select {
+  cursor: pointer;
+  appearance: none;
+  padding-right: 36px;
+  background-color: rgba(255, 255, 255, 0.04);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.55)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+select.acc-input.acc-select option,
+select.acc-input.acc-select optgroup {
+  background: #1a1a22;
+  color: #e8e8ef;
+}
 .acc-input:focus,
-.acc-textarea:focus {
+.acc-textarea:focus,
+select.acc-input:focus {
   outline: none;
   border-color: rgba(139,92,246,0.6);
   box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
