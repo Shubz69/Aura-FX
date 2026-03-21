@@ -61,9 +61,9 @@ describe('RBAC - Tier Detection', () => {
     expect(tier).toBe('PREMIUM');
   });
 
-  it('ELITE user has tier ELITE', () => {
+  it('A7FX subscription plan maps to tier A7FX', () => {
     const tier = getTier(ELITE_USER);
-    expect(tier).toBe('ELITE');
+    expect(tier).toBe('A7FX');
   });
 });
 

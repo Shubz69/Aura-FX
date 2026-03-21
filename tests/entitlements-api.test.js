@@ -46,7 +46,7 @@ describe('Entitlements Logic', () => {
     expect(ent.canAccessAI).toBe(true);
   });
 
-  it('returns tier ELITE for a7fx subscriber', () => {
+  it('returns tier A7FX for a7fx subscriber', () => {
     const user = {
       id: 3,
       role: 'user',
@@ -56,7 +56,8 @@ describe('Entitlements Logic', () => {
       payment_failed: false
     };
     const ent = getEntitlements(user);
-    expect(ent.tier).toBe('ELITE');
+    expect(ent.tier).toBe('A7FX');
+    expect(ent.canAccessAI).toBe(true);
   });
 });
 
