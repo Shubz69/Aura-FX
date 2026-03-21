@@ -12,6 +12,7 @@ const { verifyToken } = require('./utils/auth');
 const { getOrFetch } = require('./cache');
 const { applyScheduledDowngrade } = require('./utils/apply-scheduled-downgrade');
 const { ensureTimezoneColumn } = require('./utils/ensure-timezone-column');
+const { jsonNumber, jsonSafeDeep } = require('./utils/jsonSafe');
 
 const ENTITLEMENTS_TTL = 60000; // 60s - low latency, fresh enough for tier changes
 
@@ -83,17 +84,17 @@ module.exports = async (req, res) => {
       entitlements.version = String(updatedAt);
 
 const user = {
-    id: userRow.id,
-    email: userRow.email,
-    username: userRow.username || userRow.email?.split('@')[0] || '',
-    name: userRow.name || userRow.username || '',
-    avatar: userRow.avatar ?? null,
-    banner: userRow.banner ?? null,  // <-- ADD THIS LINE
-    role: entitlements.role,
-    level: userRow.level != null ? parseInt(userRow.level, 10) : 1,
-    xp: userRow.xp != null ? parseFloat(userRow.xp) : 0,
-    timezone: userRow.timezone ?? null
-};
+        id: jsonNumber(userRow.id),
+        email: userRow.email,
+        username: userRow.username || userRow.email?.split('@')[0] || '',
+        name: userRow.name || userRow.username || '',
+        avatar: userRow.avatar ?? null,
+        banner: userRow.banner ?? null,
+        role: entitlements.role,
+        level: jsonNumber(userRow.level ?? 1, 1),
+        xp: jsonNumber(userRow.xp, 0),
+        timezone: userRow.timezone ?? null
+      };
 
       return { user, entitlements };
     };
@@ -101,24 +102,26 @@ const user = {
     const cacheKey = `entitlements:${userId}`;
     const { user, entitlements: ent } = await getOrFetch(cacheKey, fetchEntitlements, ENTITLEMENTS_TTL);
 
-    return res.status(200).json({
-      success: true,
-      user,
-      entitlements: {
-        tier: ent.tier,
-        status: ent.status,
-        periodEnd: ent.periodEnd ?? null,
-        pendingTier: ent.pendingTier ?? null,
-        effectiveTier: ent.effectiveTier ?? ent.tier,
-        canAccessCommunity: ent.canAccessCommunity,
-        canAccessAI: ent.canAccessAI,
-        allowedChannelSlugs: ent.allowedChannelSlugs,
-        onboardingAccepted: ent.onboardingAccepted,
-        needsOnboardingReaccept: ent.needsOnboardingReaccept,
-        updatedAt: ent.updatedAt,
-        version: ent.version
-      }
-    });
+    return res.status(200).json(
+      jsonSafeDeep({
+        success: true,
+        user,
+        entitlements: {
+          tier: ent.tier,
+          status: ent.status,
+          periodEnd: ent.periodEnd ?? null,
+          pendingTier: ent.pendingTier ?? null,
+          effectiveTier: ent.effectiveTier ?? ent.tier,
+          canAccessCommunity: ent.canAccessCommunity,
+          canAccessAI: ent.canAccessAI,
+          allowedChannelSlugs: ent.allowedChannelSlugs,
+          onboardingAccepted: ent.onboardingAccepted,
+          needsOnboardingReaccept: ent.needsOnboardingReaccept,
+          updatedAt: ent.updatedAt,
+          version: ent.version
+        }
+      })
+    );
   } catch (error) {
     if (error.code === 'USER_NOT_FOUND') {
       return res.status(404).json({

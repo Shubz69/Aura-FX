@@ -1,4 +1,5 @@
 const { getDbConnection } = require('../../db');
+const { jsonSafeDeep } = require('../../utils/jsonSafe');
 const { getEntitlements, getChannelPermissions, canAccessChannel, isSuperAdminEmail } = require('../../utils/entitlements');
 const { triggerNewMessage } = require('../../utils/pusher');
 
@@ -428,7 +429,7 @@ module.exports = async (req, res) => {
           };
         });
 
-        return res.status(200).json(messages);
+        return res.status(200).json(jsonSafeDeep(messages));
       } catch (error) {
         // Catch all errors (database errors, unexpected errors, etc.)
         console.error('Error fetching messages:', error);

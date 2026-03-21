@@ -141,7 +141,8 @@ async function ensureSchema() {
       // Idempotency: at most one DAILY_JOURNAL per user per local date (allows multiple NULL local_date for other types)
       const hasUnique = await indexExists('notifications', 'unique_user_type_local_date');
       const hasLegacyUnique = await indexExists('notifications', 'unique_user_type_local_id');
-      if (!hasUnique && !hasLegacyUnique) {
+      const hasTypoUnique = await indexExists('notifications', 'unique_user_type_local_data');
+      if (!hasUnique && !hasLegacyUnique && !hasTypoUnique) {
         try {
           await executeQuery(`
             ALTER TABLE notifications ADD UNIQUE KEY unique_user_type_local_date (user_id, type, local_date)
@@ -259,7 +260,11 @@ const handler = async (req, res) => {
 
   logger.info('Request started', { method: req.method, url: req.url });
 
-  await ensureSchema();
+  try {
+    await ensureSchema();
+  } catch (schemaErr) {
+    logger.warn('ensureSchema failed (continuing)', { message: schemaErr?.message, requestId });
+  }
 
   // Parse URL
   const url = req.url || '';

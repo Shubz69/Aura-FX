@@ -20,12 +20,14 @@ async function ensureDowngradeColumns() {
 }
 
 async function applyScheduledDowngrade(userId) {
-  if (!userId) return null;
+  if (userId == null || userId === '') return null;
+  const id = Number(userId);
+  if (!Number.isFinite(id) || id <= 0) return null;
   await ensureDowngradeColumns();
 
   const [rows] = await executeQuery(
     'SELECT * FROM users WHERE id = ?',
-    [userId]
+    [id]
   );
   const user = rows && rows[0];
   if (!user) return null;
@@ -49,10 +51,10 @@ async function applyScheduledDowngrade(userId) {
        downgrade_to_plan = NULL,
        onboarding_accepted = FALSE
      WHERE id = ?`,
-    [downgradeTo, newRole, userId]
+    [downgradeTo, newRole, id]
   );
 
-  const [updated] = await executeQuery('SELECT * FROM users WHERE id = ?', [userId]);
+  const [updated] = await executeQuery('SELECT * FROM users WHERE id = ?', [id]);
   return updated && updated[0] ? updated[0] : user;
 }
 

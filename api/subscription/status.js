@@ -28,6 +28,7 @@ const { executeQuery } = require('../db');
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
+const { jsonSafeDeep } = require('../utils/jsonSafe');
 
 // Decode JWT token
 function decodeToken(authHeader) {
@@ -101,8 +102,16 @@ module.exports = async (req, res) => {
     });
   }
 
-  const userId = decoded.id;
-  
+  const userId = Number(decoded.id);
+  if (!Number.isFinite(userId) || userId <= 0) {
+    return res.status(401).json({
+      success: false,
+      errorCode: 'UNAUTHORIZED',
+      message: 'Invalid user in token',
+      requestId
+    });
+  }
+
   // Rate limiting
   const rateLimitKey = `subscription_status_${userId}`;
   if (!checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.MEDIUM.requests, RATE_LIMIT_CONFIGS.MEDIUM.windowMs)) {
@@ -290,11 +299,13 @@ module.exports = async (req, res) => {
       isActive: subscription.isActive 
     });
 
-    return res.status(200).json({
-      success: true,
-      subscription,
-      requestId
-    });
+    return res.status(200).json(
+      jsonSafeDeep({
+        success: true,
+        subscription,
+        requestId
+      })
+    );
 
   } catch (error) {
     logger.error('Error fetching subscription status', { error, userId });

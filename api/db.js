@@ -188,6 +188,10 @@ const executeQuery = async (query, params = [], options = {}) => {
       }
       return executeQuery(query, params, { ...options, _connectionRetry: true });
     }
+    // Idempotent DDL: duplicate column/index name — treat as success so handlers don't 500
+    if (benignDuplicate) {
+      return [[], []];
+    }
     throw error;
   }
 };
@@ -254,8 +258,8 @@ const indexExists = async (tableName, indexName) => {
   try {
     const [rows] = await executeQuery(
       `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS 
-       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ?`,
-      [process.env.MYSQL_DATABASE, tableName, indexName]
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?`,
+      [tableName, indexName]
     );
     return rows.length > 0;
   } catch (error) {
@@ -268,43 +272,19 @@ const indexExists = async (tableName, indexName) => {
  * Add column if it doesn't exist (idempotent)
  */
 const addColumnIfNotExists = async (tableName, columnName, columnDef) => {
-  const exists = await columnExists(tableName, columnName);
-  if (exists) return false;
-
-  try {
-    await executeQuery(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDef}`);
-    return true;
-  } catch (error) {
-    if (isBenignSchemaDuplicate(error)) return false;
-    const msg = (error.message || '').toString();
-    if (/duplicate column|already exists/i.test(msg)) return false;
-    console.error(`Error adding column ${tableName}.${columnName}:`, error.message);
-    return false;
-  }
+  if (await columnExists(tableName, columnName)) return false;
+  await executeQuery(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDef}`);
+  return await columnExists(tableName, columnName);
 };
 
 /**
  * Add index if it doesn't exist (idempotent)
  */
 const addIndexIfNotExists = async (tableName, indexName, columns) => {
-  const exists = await indexExists(tableName, indexName);
-  if (exists) {
-    console.log(`Index ${indexName} already exists on ${tableName}`);
-    return false;
-  }
-  
-  try {
-    const columnList = Array.isArray(columns) ? columns.join(', ') : columns;
-    await executeQuery(`CREATE INDEX ${indexName} ON ${tableName} (${columnList})`);
-    console.log(`Added index ${indexName} on ${tableName}`);
-    return true;
-  } catch (error) {
-    if (isBenignSchemaDuplicate(error)) return false;
-    const msg = (error.message || '').toString();
-    if (/duplicate key name|already exists/i.test(msg)) return false;
-    console.error(`Error adding index ${indexName}:`, error.message);
-    return false;
-  }
+  if (await indexExists(tableName, indexName)) return false;
+  const columnList = Array.isArray(columns) ? columns.join(', ') : columns;
+  await executeQuery(`CREATE INDEX ${indexName} ON ${tableName} (${columnList})`);
+  return await indexExists(tableName, indexName);
 };
 
 /**
