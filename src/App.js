@@ -11,6 +11,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import AuraDashboardGuard from './pages/aura-analysis/AuraDashboardGuard';
 import GDPRModal from './components/GDPRModal';
 import Footer from './components/Footer';
+import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
@@ -207,12 +208,16 @@ function AppRoutes() {
                         <Route path="/privacy" element={<Privacy />} />
                         <Route path="/community" element={
                             <CommunityGuard>
-                                <Community />
+                                <CommunityRouteBoundary>
+                                    <Community />
+                                </CommunityRouteBoundary>
                             </CommunityGuard>
                         } />
                         <Route path="/community/:channelId" element={
                             <CommunityGuard>
-                                <Community />
+                                <CommunityRouteBoundary>
+                                    <Community />
+                                </CommunityRouteBoundary>
                             </CommunityGuard>
                         } />
                         <Route path="/premium-ai" element={

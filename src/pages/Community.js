@@ -4638,13 +4638,18 @@ useEffect(() => {
         window.location.href = paymentLink;
     };
 
-    const renderedDateGroupedMessages = useMemo(() => messagesWithDateGroups.map((item, index) => {
+    const renderedDateGroupedMessages = useMemo(() => (
+        <>
+            {messagesWithDateGroups.map((item, index) => {
                                     if (item.type === 'date') {
                                         return (
                                             <div key={`date-${item.dateKey}`} className="community-date-separator">
                                                 <span className="community-date-separator-label">{item.label}</span>
                                             </div>
                                         );
+                                    }
+                                    if (item.type !== 'message' || item.message == null) {
+                                        return null;
                                     }
                                     const message = item.message;
                                     const prevMessage = (() => {
@@ -5102,7 +5107,9 @@ useEffect(() => {
                                         </div>
                                     </div>
                                     );
-    }), [messagesWithDateGroups, messageReactions, hasReadWelcome, entitlements, userId, isAdminUser, isSuperAdminUser, storedUser?.role, editingMessageId, selectedChannel?.id]);
+            })}
+        </>
+    ), [messagesWithDateGroups, messageReactions, hasReadWelcome, entitlements, userId, isAdminUser, isSuperAdminUser, storedUser?.role, editingMessageId, selectedChannel?.id]);
 
     // Render
 // Always render something to prevent white screen, even during initialization
