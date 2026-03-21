@@ -21,7 +21,7 @@
  * - Structured logging
  */
 
-const { executeQuery, executeQueryWithTimeout, addColumnIfNotExists, addIndexIfNotExists } = require('../db');
+const { executeQuery, executeQueryWithTimeout, addColumnIfNotExists, addIndexIfNotExists, indexExists } = require('../db');
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
 const { safeLimit, safeCursor, isValidUUID } = require('../utils/validators');
@@ -132,13 +132,15 @@ async function ensureSchema() {
       `);
       await addIndexIfNotExists('notifications', 'idx_notif_user_type_local', ['user_id', 'type', 'local_date']);
       // Idempotency: at most one DAILY_JOURNAL per user per local date (allows multiple NULL local_date for other types)
-      try {
-        await executeQuery(`
-          ALTER TABLE notifications ADD UNIQUE KEY unique_user_type_local_date (user_id, type, local_date)
-        `);
-      } catch (uniqueErr) {
-        if (uniqueErr.code !== 'ER_DUP_KEYNAME' && uniqueErr.code !== 'ER_MULTIPLE_PRI_KEY') {
-          console.warn('Unique key unique_user_type_local_date:', uniqueErr.message);
+      if (!(await indexExists('notifications', 'unique_user_type_local_date'))) {
+        try {
+          await executeQuery(`
+            ALTER TABLE notifications ADD UNIQUE KEY unique_user_type_local_date (user_id, type, local_date)
+          `);
+        } catch (uniqueErr) {
+          if (uniqueErr.code !== 'ER_DUP_KEYNAME' && uniqueErr.code !== 'ER_MULTIPLE_PRI_KEY') {
+            console.warn('Unique key unique_user_type_local_date:', uniqueErr.message);
+          }
         }
       }
     } catch (alterErr) {

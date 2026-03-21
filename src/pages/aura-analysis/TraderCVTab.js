@@ -43,6 +43,7 @@ function formatStreak(value) {
 
 export default function TraderCVTab() {
   const { user } = useAuth();
+  const { selectedAccountId, loading: accountsLoading } = useTradeValidatorAccount();
   const navigate = useNavigate();
   const passportRef = useRef(null);
   const [passportBusy, setPassportBusy] = useState(false);
@@ -209,7 +210,7 @@ export default function TraderCVTab() {
     }
   }, [passportBusy, capturePassportDataUrl, navigate]);
 
-  if (loading) {
+  if (accountsLoading || loading) {
     return (
       <div className="trader-cv">
         <div className="trader-cv-loading">

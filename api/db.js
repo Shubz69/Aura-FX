@@ -14,6 +14,9 @@ let poolStats = {
 // Query time tracking (keep last 100)
 const MAX_QUERY_TIMES = 100;
 
+/** Idempotent ALTER failures — do not log as errors (expected on warm instances). */
+const BENIGN_DUPLICATE_SCHEMA_CODES = new Set(['ER_DUP_FIELDNAME', 'ER_DUP_KEYNAME']);
+
 // Connection error codes/messages that warrant pool reset (e.g. Vercel serverless + MySQL)
 const CONNECTION_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'PROTOCOL_CONNECTION_LOST', 'ER_CON_COUNT_ERROR']);
 const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT', 'Pool is closed', 'Too many connections', 'Queue limit reached'];
@@ -151,16 +154,19 @@ const executeQuery = async (query, params = [], options = {}) => {
   try {
     return await run();
   } catch (error) {
-    poolStats.failedQueries++;
-    const errorInfo = {
-      requestId,
-      query: query.substring(0, 100),
-      paramCount: safeParams.length,
-      error: error.message,
-      code: error.code,
-      errno: error.errno
-    };
-    console.error('Database query error:', JSON.stringify(errorInfo));
+    const benignDuplicate = error && BENIGN_DUPLICATE_SCHEMA_CODES.has(error.code);
+    if (!benignDuplicate) {
+      poolStats.failedQueries++;
+      const errorInfo = {
+        requestId,
+        query: query.substring(0, 100),
+        paramCount: safeParams.length,
+        error: error.message,
+        code: error.code,
+        errno: error.errno
+      };
+      console.error('Database query error:', JSON.stringify(errorInfo));
+    }
 
     if (!isRetry && isConnectionError(error)) {
       if ((error.message || '').includes('Pool is closed')) {
