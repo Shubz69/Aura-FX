@@ -61,7 +61,7 @@ export const triggerNotification = (type, title, message, link = null, userId = 
                 new Notification(title, {
                     body: message || '',
                     icon: '/aura_logo.png',
-                    badge: '/infinity-6.png',
+                    badge: '/logos/a7-logo.png',
                     tag: isMessageLike ? `aura-community-${type}` : `aura-${type}-${Date.now()}`,
                     renotify: type === 'mention',
                 });

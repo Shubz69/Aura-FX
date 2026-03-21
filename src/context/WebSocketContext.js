@@ -15,7 +15,8 @@ import { useAuth } from './AuthContext';
 
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 16000];
 const isProduction = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
-const MAX_ATTEMPTS = isProduction ? 2 : BACKOFF_MS.length;
+/** Production used to stop after 2 attempts, which surfaces console errors and the banner too aggressively when the WS host blips. */
+const MAX_ATTEMPTS = isProduction ? 5 : BACKOFF_MS.length;
 
 function backoffWithJitter(baseMs) {
   const jitter = Math.random() * Math.min(500, baseMs * 0.25);

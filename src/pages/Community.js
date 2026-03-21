@@ -6579,9 +6579,7 @@ if (!isAuthenticated && !hasToken) {
                 </div>
             ))}
         </div>
-                            ) : (
-                                {renderedDateGroupedMessages}
-                            )}
+                            ) : renderedDateGroupedMessages}
                             <div ref={messagesEndRef} />
                         </div>
                        
