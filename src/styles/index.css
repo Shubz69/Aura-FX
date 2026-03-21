@@ -1,4 +1,9 @@
 /* ========== VARIABLES (From Landing Page) ========== */
+html {
+    background: url('/assets/my-bg.jpg') no-repeat center center fixed !important;
+    background-size: cover !important;
+    min-height: 100%;
+}
 
 :root {
     /* White/Cosmic Colors */
@@ -198,11 +203,11 @@ h1, h2, h3, h4, h5, h6,
     font-weight: 200 !important;
 }
 
+/* ========== MAIN BACKGROUND IMAGE - FIXED ========== */
 html, body, #root {
     margin: 0;
     padding: 0;
     min-height: 100%;
-    background: #0a0a0a !important;
     color: var(--primary);
     font-family: 'Space Grotesk', sans-serif;
     overflow-x: hidden;
@@ -215,11 +220,11 @@ html, body, #root {
     position: relative;
 }
 
+/* Body with transparent background */
 body {
   font-family: 'Space Grotesk', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0a0a0a !important;
   color: var(--primary);
   min-height: 100vh;
   height: auto;
@@ -235,8 +240,10 @@ body {
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: transparent;
 }
 
+/* Root with transparent background */
 #root {
   display: flex;
   flex-direction: column;
@@ -248,9 +255,10 @@ body {
   overflow-x: hidden;
   overflow: visible;
   position: relative;
-  background: #0a0a0a !important;
+  background: transparent;
 }
 
+/* App container with transparent background */
 .app-container {
   display: flex;
   flex-direction: column;
@@ -262,7 +270,7 @@ body {
   overflow-x: hidden;
   overflow: visible;
   position: relative;
-  background: #0a0a0a;
+  background: transparent;
 }
 
 .container {
@@ -312,7 +320,7 @@ button {
 
 /* Footer styling */
 footer {
-  background-color: #0a0a0a;
+  background-color: rgba(10, 10, 10, 0.9);
   color: #ffffff;
   padding: 20px 0;
   text-align: center;
@@ -331,28 +339,24 @@ footer {
   position: relative;
 }
 
-/* Scroll Fix for All Pages - .page-wrapper is the scroll container (touch-friendly on iPhone/iPad/Android) */
+/* Scroll Fix for All Pages - .page-wrapper is the scroll container */
 .page-wrapper {
   flex: 1;
   min-height: 100vh;
   padding-top: 60px;
-  padding-bottom: 0; /* No bottom padding needed since footer is relative */
+  padding-bottom: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Enable smooth touch scrolling on mobile */
   -webkit-overflow-scrolling: touch;
-  /* Allow vertical swipes to scroll */
   touch-action: pan-y;
+  background: transparent;
 }
 
 /* Community page layout - Discord-like with internal scroll */
-/* IMPORTANT: Do NOT use position: fixed on body/html - it breaks mobile touch scrolling */
 body.community-page-active,
 html.community-page-active {
-  /* Use overflow hidden but NOT position: fixed - this allows flexbox to handle layout */
   overflow: hidden;
   height: 100vh;
-  /* NO position: fixed here - it breaks mobile scroll */
 }
 
 body.community-page-active .page-wrapper,
@@ -363,12 +367,11 @@ html.community-page-active .page-wrapper {
   padding-top: 0 !important;
   display: flex;
   flex-direction: column;
-  background: var(--bg-dark);
+  background: rgba(10, 10, 10, 0.95);
   position: relative;
   width: 100%;
   max-width: 100vw;
   box-sizing: border-box;
-  /* Internal containers will handle their own scrolling */
 }
 
 /* Ensure all pages have proper footer spacing */
@@ -390,7 +393,7 @@ html.community-page-active .page-wrapper {
   contain-intrinsic-size: auto 800px;
 }
 
-/* Specific page adjustments */
+/* Specific page adjustments with semi-transparent backgrounds */
 .community-container,
 .home-container,
 .courses-container,
@@ -399,8 +402,11 @@ html.community-page-active .page-wrapper {
 .contact-container,
 .profile-container,
 .leaderboard-container {
-  padding-bottom: 0; /* Footer is now relative, no need for extra padding */
-  min-height: calc(100vh - 160px); /* Account for navbar */
+  padding-bottom: 0;
+  min-height: calc(100vh - 160px);
+  background: rgba(10, 10, 10, 0.85) !important;
+  border-radius: 0;
+  backdrop-filter: blur(2px);
 }
 
 * {
@@ -491,7 +497,7 @@ input:focus, textarea:focus, select:focus {
 /* Footer */
 footer {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(to bottom, var(--bg-dark), var(--bg-medium));
+    background: linear-gradient(to bottom, rgba(10, 10, 10, 0.9), rgba(26, 26, 26, 0.9));
     color: var(--accent);
     text-align: center;
     padding: 20px;
@@ -577,7 +583,7 @@ img, video, canvas {
 /* Touch Target Sizes for Mobile */
 @media (max-width: 768px) {
     button, a, input, select, textarea {
-        min-height: 44px; /* iOS recommended touch target */
+        min-height: 44px;
     }
     
     .btn {
@@ -597,13 +603,12 @@ img, video, canvas {
     }
 }
 
-/* Prevent horizontal scroll on all devices */
+/* Prevent horizontal scroll on all devices - removed background overrides */
 @media (max-width: 1024px) {
     body, html, #root, .app-container {
         overflow-x: hidden !important;
         width: 100% !important;
         max-width: 100vw !important;
-        background: #0a0a0a !important;
     }
     
     * {
@@ -611,10 +616,9 @@ img, video, canvas {
     }
 }
 
-/* iPhone and iPad: allow document scroll; avoid height lock on #root – .page-wrapper stays scroll container (from 8717b88) */
+/* iPhone and iPad: allow document scroll - removed background overrides */
 @media (max-width: 1024px) {
     html {
-        background: #0a0a0a !important;
         -webkit-text-size-adjust: 100% !important;
         -ms-text-size-adjust: 100% !important;
         text-size-adjust: 100% !important;
@@ -627,7 +631,6 @@ img, video, canvas {
     }
     
     body {
-        background: #0a0a0a !important;
         -webkit-font-smoothing: antialiased !important;
         -moz-osx-font-smoothing: grayscale !important;
         height: auto !important;
@@ -641,7 +644,6 @@ img, video, canvas {
     }
     
     #root {
-        background: #0a0a0a !important;
         min-height: 100vh !important;
         height: auto !important;
         display: flex !important;
@@ -654,7 +656,6 @@ img, video, canvas {
     }
     
     .app-container {
-        background: #0a0a0a !important;
         min-height: 100vh !important;
         height: auto !important;
         width: 100% !important;
@@ -666,16 +667,10 @@ img, video, canvas {
     * {
         box-sizing: border-box;
     }
-    
-    /* Force dark background on all page containers */
-    [class*="container"], [class*="page"], [class*="main"] {
-        background: #0a0a0a !important;
-    }
 }
 
-/* iPhone & Android: single scroll container – lock viewport, only .page-wrapper scrolls (whole page) */
+/* iPhone & Android: single scroll container */
 @media (max-width: 767px) {
-    /* Lock viewport so body does NOT scroll; only .page-wrapper scrolls */
     html {
         height: 100vh !important;
         height: 100dvh !important;
@@ -713,7 +708,6 @@ img, video, canvas {
         flex-direction: column !important;
         flex: 1 1 auto !important;
     }
-    /* .page-wrapper = only scroll container; takes space below navbar, scrolls whole page */
     .page-wrapper {
         flex: 1 1 auto !important;
         min-height: 0 !important;
@@ -722,8 +716,6 @@ img, video, canvas {
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
     }
-    /* Home on iPhone: full-page scroll via .page-wrapper (set in mobile-scroll-override) – no inner scroll here */
-    /* Journal, Leaderboard, C&S: inner container scrolls (same as Explore) */
     .page-wrapper:has(.journal-page),
     .page-wrapper:has(.leaderboard-container),
     .page-wrapper:has(.courses-container) {
@@ -743,7 +735,7 @@ img, video, canvas {
     }
 }
 
-/* All devices: Contact, Why Aura, Explore, Profile, Home, C&S, Login, Register – same structure as Explore, inner container scrolls */
+/* All devices: containers with semi-transparent background */
 .page-wrapper:has(.contact-container),
 .page-wrapper:has(.why-container),
 .page-wrapper:has(.explore-container),
@@ -761,7 +753,7 @@ img, video, canvas {
     min-height: 0 !important;
 }
 
-/* Home: inner container is the scroll area (same as Explore) */
+/* Home: inner container is the scroll area */
 .page-wrapper:has(.home-container) .home-container {
     height: 100% !important;
     min-height: 0 !important;
@@ -769,9 +761,10 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    background: rgba(10, 10, 10, 0.85) !important;
 }
 
-/* iPhone: Home – same as Explore. Wrapper fixed; .home-container is full-size scroll container (scroll on right) */
+/* iPhone: Home */
 @media (max-width: 767px) {
     .page-wrapper:has(.home-container) {
         overflow: hidden !important;
@@ -800,8 +793,8 @@ img, video, canvas {
         left: 0 !important;
         right: 0 !important;
         box-sizing: border-box !important;
+        background: rgba(10, 10, 10, 0.85) !important;
     }
-    /* iPhone: Login & Register – same as Home. Wrapper fixed; container is full-size scroll */
     .page-wrapper:has(.login-container),
     .page-wrapper:has(.register-container) {
         overflow: hidden !important;
@@ -831,10 +824,11 @@ img, video, canvas {
         left: 0 !important;
         right: 0 !important;
         box-sizing: border-box !important;
+        background: rgba(10, 10, 10, 0.85) !important;
     }
 }
 
-/* C&S: inner container is the scroll area (same as Explore) */
+/* C&S: inner container is the scroll area */
 .page-wrapper:has(.courses-container) .courses-container {
     height: 100% !important;
     min-height: 0 !important;
@@ -842,9 +836,10 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    background: rgba(10, 10, 10, 0.85) !important;
 }
 
-/* Login & Register: inner container is the scroll area (same as Explore) */
+/* Login & Register: inner container is the scroll area */
 .page-wrapper:has(.login-container) .login-container,
 .page-wrapper:has(.register-container) .register-container {
     height: 100% !important;
@@ -853,9 +848,10 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    background: rgba(10, 10, 10, 0.85) !important;
 }
 
-/* iPad/tablet: Journal, Leaderboard, Home, C&S, Login, Register – inner container scrolls (same as Explore) */
+/* iPad/tablet */
 @media (min-width: 768px) and (max-width: 1366px) {
     .page-wrapper:has(.journal-page),
     .page-wrapper:has(.leaderboard-container),
@@ -871,7 +867,6 @@ img, video, canvas {
         max-height: 100dvh !important;
         min-height: 0 !important;
     }
-    /* C&S on iPad: same as .explore-container – explicit 100vh so scroll works like Explore */
     .page-wrapper .courses-container {
         height: 100vh !important;
         height: 100dvh !important;
@@ -882,8 +877,8 @@ img, video, canvas {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+        background: rgba(10, 10, 10, 0.85) !important;
     }
-    /* Login & Register on iPad: same as Explore – explicit 100vh so scroll works */
     .page-wrapper .login-container,
     .page-wrapper .register-container {
         height: 100vh !important;
@@ -895,10 +890,11 @@ img, video, canvas {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+        background: rgba(10, 10, 10, 0.85) !important;
     }
 }
 
-/* iPad only: hide scrollbar so nothing shows – scroll still works */
+/* iPad only: hide scrollbar */
 @media (min-width: 768px) and (max-width: 1024px) {
     .page-wrapper {
         scrollbar-width: none;
@@ -934,7 +930,6 @@ html, body {
   margin: 0 !important;
   padding: 0 !important;
   overflow-x: hidden !important;
-  background: #0a0a0a !important;
 }
 
 #root {
@@ -943,7 +938,6 @@ html, body {
   width: 100% !important;
   max-width: 100vw !important;
   overflow-x: hidden !important;
-  background: #0a0a0a !important;
 }
 
 .app-container {
@@ -952,7 +946,6 @@ html, body {
   width: 100% !important;
   max-width: 100vw !important;
   overflow-x: hidden !important;
-  background: #0a0a0a !important;
 }
 
 /* ── DESKTOP > 1366px: body scrolls naturally ── */
@@ -989,6 +982,7 @@ html, body {
     max-height: none !important;
     overflow-y: visible !important;
     padding-top: 0 !important;
+    background: rgba(10, 10, 10, 0.85) !important;
   }
 }
 
@@ -1016,7 +1010,6 @@ html, body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    /* page-wrapper fills remaining space below fixed navbar */
     height: calc(100dvh - 62px) !important;
     margin-top: 62px !important;
     overflow-y: auto !important;
@@ -1044,8 +1037,8 @@ html, body {
     overflow-y: visible !important;
     overflow-x: hidden !important;
     padding-top: 0 !important;
+    background: rgba(10, 10, 10, 0.85) !important;
   }
-  /* Contact: override its own min-height:100vh */
   .contact-container {
     min-height: 0 !important;
   }
@@ -1102,11 +1095,11 @@ html, body {
     overflow-y: visible !important;
     overflow-x: hidden !important;
     padding-top: 0 !important;
+    background: rgba(10, 10, 10, 0.85) !important;
   }
   .contact-container {
     min-height: 0 !important;
   }
-  /* Community: unchanged */
   body.community-page-active {
     overflow: hidden !important;
   }
