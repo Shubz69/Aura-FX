@@ -1574,6 +1574,8 @@ return newMessages;
 
     const messagesRef = useRef(messages);
     messagesRef.current = messages;
+    /** Prevents stacked message polls (was hammering API + main thread → "Page Unresponsive"). */
+    const messagesPollInFlightRef = useRef(false);
 
     useEffect(() => {
         if (!addReconnectListener) return;
@@ -3371,8 +3373,8 @@ if (window.requestAnimationFrame) {
         // Update immediately
         updateConnectionStatus();
         
-        // Update status every 2 seconds for real-time updates (optimized for production)
-        const statusCheckInterval = setInterval(updateConnectionStatus, 2000);
+        // Light status checks — 2s was competing with message polling and heavy renders
+        const statusCheckInterval = setInterval(updateConnectionStatus, 5000);
         
         return () => clearInterval(statusCheckInterval);
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
@@ -3434,61 +3436,73 @@ if (window.requestAnimationFrame) {
         }
     }, [selectedChannel?.id, clearChannelBadge]);
 
-    // Poll for new messages - Fast delivery even under high traffic
-    // When WebSocket is down: poll every 200ms for near-instant fallback
-    // When WebSocket is connected: backup poll every 400ms to catch missed messages (multi-device reliability)
+    // Backup poll for new messages only. Real-time path is WebSocket — aggressive 200–400ms polling
+    // caused constant network + setState work and froze the tab ("Page Unresponsive") on busy channels.
     useEffect(() => {
         if (!selectedChannel || !isAuthenticated || !selectedChannel?.id) return;
-        
-        // Poll interval: 200ms when WS down, 400ms backup when WS connected (faster delivery)
-        const pollInterval = isConnected ? 400 : 200;
-        
-        // Start polling immediately
+
+        const POLL_MS_WS_UP = 12000;
+        const POLL_MS_WS_DOWN = 3000;
+        const pollInterval = isConnected ? POLL_MS_WS_UP : POLL_MS_WS_DOWN;
+
         const pollMessages = async () => {
+            if (messagesPollInFlightRef.current) return;
+            const ch = selectedChannelRef.current;
+            const channelId = ch?.id;
+            if (!channelId) return;
+
+            messagesPollInFlightRef.current = true;
             try {
                 const msgs = messagesRef.current || [];
-                const numericIds = msgs
-                    .filter(m => m.id != null && (typeof m.id === 'number' || /^\d+$/.test(String(m.id))))
-                    .map(m => Number(m.id));
-                const afterId = numericIds.length > 0 ? Math.max(...numericIds) : null;
-                const response = await Api.getChannelMessages(selectedChannel.id, afterId ? { afterId } : {});
+                let afterId = null;
+                if (msgs.length > 0) {
+                    for (let i = msgs.length - 1; i >= 0; i--) {
+                        const mid = msgs[i]?.id;
+                        if (mid != null && (typeof mid === 'number' || /^\d+$/.test(String(mid)))) {
+                            afterId = Number(mid);
+                            break;
+                        }
+                    }
+                }
+                const response = await Api.getChannelMessages(channelId, afterId ? { afterId } : {});
+                if (selectedChannelRef.current?.id !== channelId) return;
+
                 if (response && response.data && Array.isArray(response.data)) {
                     const apiMessages = response.data;
-                    
-                    // Check for new messages
-                    setMessages(prev => {
-                        const existingIds = new Set(prev.map(m => m.id));
-                        const newMessages = apiMessages.filter(m => !existingIds.has(m.id));
-                        
-                        // Trigger notifications for new messages (only if not from current user)
+
+                    setMessages((prev) => {
+                        const sel = selectedChannelRef.current;
+                        if (!sel || String(sel.id) !== String(channelId)) return prev;
+
+                        const existingIds = new Set(prev.map((m) => m.id));
+                        const newMessages = apiMessages.filter((m) => !existingIds.has(m.id));
+
                         if (newMessages.length > 0) {
                             const currentUsername = storedUser?.username || storedUser?.name || '';
-                            newMessages.forEach(newMsg => {
-                                // Don't notify for own messages
-                                if (String(newMsg.sender?.id) === String(userId) || 
-                                    newMsg.sender?.username === currentUsername) {
+                            newMessages.forEach((newMsg) => {
+                                if (
+                                    String(newMsg.sender?.id) === String(userId) ||
+                                    newMsg.sender?.username === currentUsername
+                                ) {
                                     return;
                                 }
-                                
                                 const messageContent = newMsg.content || '';
                                 const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
-                                
-                                // Update badges for mentions in current channel
-                                const curAnn = selectedChannel?.category === 'announcements';
-                                const curMuted = isChannelMuted(selectedChannel.id) && !curAnn;
+                                const curAnn = sel?.category === 'announcements';
+                                const curMuted = isChannelMuted(sel.id) && !curAnn;
                                 if (isMentioned && !curMuted) {
-                                    updateChannelBadge(selectedChannel.id, 'mentions');
+                                    updateChannelBadge(sel.id, 'mentions');
                                     triggerNotification(
                                         'mention',
-                                        `You were mentioned in #${selectedChannel.name}`,
+                                        `You were mentioned in #${sel.name}`,
                                         `${newMsg.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-                                        `/community/${selectedChannel.id}?message=${newMsg.id || newMsg.messageId || ''}`,
+                                        `/community/${sel.id}?message=${newMsg.id || newMsg.messageId || ''}`,
                                         userId
                                     );
                                 }
                             });
                         }
-                        
+
                         if (newMessages.length > 0) {
                             const currentUserId = String(userId || '');
                             let result = prev;
@@ -3502,9 +3516,11 @@ if (window.requestAnimationFrame) {
                                 const apiContent = apiMsg.content || '';
 
                                 if (isFromCurrentUser) {
-                                    const optimisticMatch = result.find(m => {
+                                    const optimisticMatch = result.find((m) => {
                                         const mid = m.id;
-                                        const isOptimistic = typeof mid === 'string' && (mid.startsWith('temp_') || mid.length === 36);
+                                        const isOptimistic =
+                                            typeof mid === 'string' &&
+                                            (mid.startsWith('temp_') || mid.length === 36);
                                         if (!isOptimistic) return false;
                                         const mSenderId = String(m.userId || m.sender?.id || '');
                                         if (mSenderId !== currentUserId) return false;
@@ -3513,14 +3529,18 @@ if (window.requestAnimationFrame) {
                                         const mFile = m.file;
                                         const mFileName = mFile?.name || '';
                                         const mContent = m.content || '';
-                                        return (apiFileName && mFileName === apiFileName) || (apiContent && mContent === apiContent) || (mContent === apiContent && mFileName === apiFileName);
+                                        return (
+                                            (apiFileName && mFileName === apiFileName) ||
+                                            (apiContent && mContent === apiContent) ||
+                                            (mContent === apiContent && mFileName === apiFileName)
+                                        );
                                     });
                                     if (optimisticMatch) {
-                                        result = result.map(m => m.id === optimisticMatch.id ? apiMsg : m);
+                                        result = result.map((m) => (m.id === optimisticMatch.id ? apiMsg : m));
                                         continue;
                                     }
                                 }
-                                if (!result.some(m => String(m.id) === String(apiId))) {
+                                if (!result.some((m) => String(m.id) === String(apiId))) {
                                     result = [...result, apiMsg];
                                 }
                             }
@@ -3529,26 +3549,25 @@ if (window.requestAnimationFrame) {
                                 const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
                                 return timeA - timeB;
                             });
-                            saveMessagesToStorage(selectedChannel.id, result);
+                            saveMessagesToStorage(channelId, result);
                             return result;
                         }
-                        
-                        return prev; // No new messages
+
+                        return prev;
                     });
                 }
             } catch (err) {
-                // Silently handle errors to avoid console spam
+                // ignore
+            } finally {
+                messagesPollInFlightRef.current = false;
             }
         };
-        
-        // Poll immediately on mount/channel change
+
         pollMessages();
-        
-        // Then poll at regular intervals
         const pollTimer = setInterval(pollMessages, pollInterval);
 
         return () => clearInterval(pollTimer);
-    }, [selectedChannel?.id, isAuthenticated, isConnected, selectedChannel, storedUser, userId, updateChannelBadge]);
+    }, [selectedChannel?.id, isAuthenticated, isConnected, storedUser, userId, updateChannelBadge]);
 
     // Pusher realtime subscription (production - when configured)
     useEffect(() => {
@@ -4458,49 +4477,48 @@ setMessages(prev => {
         
         return grouped;
     }, [channelList, channelOrder]);
-   // Detect when user is manually scrolling
+   // Detect when user is manually scrolling (rAF-throttle setState — raw scroll events can fire >100/s)
 useEffect(() => {
     const messagesContainer = messagesContainerRef.current;
     if (!messagesContainer) return;
-    
+
     let scrollTimeout;
     let isManuallyScrolling = false;
-    
+    let scrollRaf = null;
+
     const handleScroll = () => {
-        // User is scrolling manually
-        if (!isManuallyScrolling) {
-            isManuallyScrolling = true;
-            setIsUserScrolling(true);
+        if (scrollRaf == null) {
+            scrollRaf = requestAnimationFrame(() => {
+                scrollRaf = null;
+                if (!isManuallyScrolling) {
+                    isManuallyScrolling = true;
+                    setIsUserScrolling(true);
+                }
+            });
         }
-        
-        // Clear existing timeout
+
         if (scrollTimeout) {
             clearTimeout(scrollTimeout);
         }
-        
-        // Set new timeout to detect when scrolling stops
+
         scrollTimeout = setTimeout(() => {
             isManuallyScrolling = false;
             setIsUserScrolling(false);
-            
-            // Check if user is near bottom when they stop scrolling
+
             const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
             const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-            
-            // If they're near bottom, allow auto-scroll again
             if (isNearBottom) {
                 setIsUserScrolling(false);
             }
-        }, 200); // Slightly longer timeout for better detection
+        }, 200);
     };
-    
+
     messagesContainer.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     return () => {
         messagesContainer.removeEventListener('scroll', handleScroll);
-        if (scrollTimeout) {
-            clearTimeout(scrollTimeout);
-        }
+        if (scrollRaf != null) cancelAnimationFrame(scrollRaf);
+        if (scrollTimeout) clearTimeout(scrollTimeout);
     };
 }, []);
 // Add this effect after your other useEffects (around line 1300 in your component)
