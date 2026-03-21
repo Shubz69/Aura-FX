@@ -26,6 +26,6 @@
   "display": "standalone",
   "display_override": ["standalone", "browser"],
   "orientation": "any",
-  "theme_color": "#0d1b2a",
-  "background_color": "#0d1b2a"
+  "theme_color": "#28282c",
+  "background_color": "#28282c"
 }
