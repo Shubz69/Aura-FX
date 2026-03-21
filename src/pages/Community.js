@@ -6,7 +6,11 @@ import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
 import { SUPER_ADMIN_EMAIL } from '../utils/roles';
 import axios from 'axios';
-import { triggerNotification } from '../components/NotificationSystem';
+import {
+    triggerNotification,
+    requestCommunityMessageAlerts,
+    getNotificationPermission
+} from '../components/NotificationSystem';
 import { useAuth } from '../context/AuthContext';
 import { FaBook, FaCheck, FaCalendarAlt } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -52,15 +56,12 @@ function ChannelMuteButton({ channel, userId }) {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: isMuted ? '#ef4444' : 'transparent',
                 padding: '2px 4px',
                 borderRadius: '4px',
                 fontSize: '0.7rem',
-                opacity: 0,
-                transition: 'opacity 0.15s, color 0.15s',
                 touchAction: 'manipulation'
             }}
-            className="channel-mute-btn"
+            className={`channel-mute-btn${isMuted ? ' channel-mute-btn--muted' : ''}`}
             aria-label={isMuted ? 'Unmute' : 'Mute'}
         >
             <FaBell />
@@ -1042,6 +1043,23 @@ const [journalLoading, setJournalLoading] = useState(false);
     
     // Discord-like features
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [communityNotifPerm, setCommunityNotifPerm] = useState(() =>
+        typeof window !== 'undefined' ? getNotificationPermission() : 'denied'
+    );
+    const [dismissCommunityAlertBanner, setDismissCommunityAlertBanner] = useState(
+        () => localStorage.getItem('community_message_alerts_banner_dismissed') === '1'
+    );
+
+    useEffect(() => {
+        const sync = () => setCommunityNotifPerm(getNotificationPermission());
+        sync();
+        document.addEventListener('visibilitychange', sync);
+        window.addEventListener('aura-notification-permission-change', sync);
+        return () => {
+            document.removeEventListener('visibilitychange', sync);
+            window.removeEventListener('aura-notification-permission-change', sync);
+        };
+    }, []);
     const [showGifPicker, setShowGifPicker] = useState(false);
     const [selectedMessageForReaction, setSelectedMessageForReaction] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -1717,43 +1735,52 @@ const {
     const messageSenderId = message.sender?.id || message.userId;
     const isOwnMessage = String(messageSenderId) === String(userId);
     
-    // Trigger notifications and update badges
+    // Badges + notifications (muted non-announcement channels: fully silent — no unread/mention counts, no toasts/OS alerts)
+    const msgChannel = channelList.find(c => String(c.id) === String(messageChannelId));
+    const isAnnouncements = msgChannel?.category === 'announcements';
+    const isMuted = isChannelMuted(messageChannelId);
+    const fullyMuted = isMuted && !isAnnouncements;
+
     if (!isCurrentChannel && !isOwnMessage) {
-      updateChannelBadge(messageChannelId, 'unread');
-      if (isMentioned) {
-        updateChannelBadge(messageChannelId, 'mentions');
+      if (!fullyMuted) {
+        updateChannelBadge(messageChannelId, 'unread');
+        if (isMentioned) {
+          updateChannelBadge(messageChannelId, 'mentions');
+        }
       }
-      
-      const msgChannel = channelList.find(c => String(c.id) === String(messageChannelId));
+
       const channelName = msgChannel?.name || 'a channel';
-      const isAnnouncements = msgChannel?.category === 'announcements';
-      const isMuted = isChannelMuted(messageChannelId);
-      
-      if (isMentioned) {
-        triggerNotification(
-          'mention',
-          `You were mentioned in #${channelName}`,
-          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-          userId
-        );
-      } else if (!isMuted || isAnnouncements) {
-        triggerNotification(
-          'message',
-          `New message in #${channelName}`,
-          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-          `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
-          null
-        );
+      if (!fullyMuted) {
+        if (isMentioned) {
+          triggerNotification(
+            'mention',
+            `You were mentioned in #${channelName}`,
+            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+            userId
+          );
+        } else if (!isMuted || isAnnouncements) {
+          triggerNotification(
+            'message',
+            `New message in #${channelName}`,
+            `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+            `/community/${messageChannelId}?message=${message.id || message.messageId || ''}`,
+            null
+          );
+        }
       }
     } else if (isCurrentChannel && isMentioned && !isOwnMessage) {
-      triggerNotification(
-        'mention',
-        `You were mentioned in #${selectedChannel.name}`,
-        `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
-        `/community/${selectedChannel.id}?message=${message.id}`,
-        userId
-      );
+      const curAnn = selectedChannel?.category === 'announcements';
+      const curMuted = isChannelMuted(selectedChannel.id) && !curAnn;
+      if (!curMuted) {
+        triggerNotification(
+          'mention',
+          `You were mentioned in #${selectedChannel.name}`,
+          `${message.sender?.username || 'Someone'}: ${messageContent.substring(0, 100)}`,
+          `/community/${selectedChannel.id}?message=${message.id}`,
+          userId
+        );
+      }
     }
     
     // INSTANT UI update - only add message if it's for the current channel
@@ -2992,7 +3019,7 @@ if (window.requestAnimationFrame) {
                 setCategoryOrderState(updatedOrder);
                 localStorage.setItem('channelCategoryOrder', JSON.stringify(updatedOrder));
                 setCategoryContextMenu(null);
-                triggerNotification('Category deleted successfully', 'success');
+                toast.success('Category deleted successfully');
             } else {
                 throw new Error('Failed to delete category');
             }
@@ -3049,7 +3076,7 @@ if (window.requestAnimationFrame) {
                 localStorage.setItem('channelCategoryOrder', JSON.stringify(currentOrder));
                 setCategoryContextMenu(null);
                 setEditingCategory(null);
-                triggerNotification('Category renamed successfully', 'success');
+                toast.success('Category renamed successfully');
             } else {
                 throw new Error('Failed to rename category');
             }
@@ -3709,7 +3736,9 @@ if (window.requestAnimationFrame) {
                                 const isMentioned = currentUsername && messageContent.includes(`@${currentUsername}`);
                                 
                                 // Update badges for mentions in current channel
-                                if (isMentioned) {
+                                const curAnn = selectedChannel?.category === 'announcements';
+                                const curMuted = isChannelMuted(selectedChannel.id) && !curAnn;
+                                if (isMentioned && !curMuted) {
                                     updateChannelBadge(selectedChannel.id, 'mentions');
                                     triggerNotification(
                                         'mention',
@@ -5364,6 +5393,37 @@ if (!isAuthenticated && !hasToken) {
                         </span>
                     </div>
                 </div>
+
+                {!dismissCommunityAlertBanner && communityNotifPerm !== 'granted' && (
+                    <div className="community-message-alerts-banner">
+                        <div className="community-message-alerts-banner-text">
+                            {communityNotifPerm === 'denied'
+                                ? 'System alerts are off or blocked. Unmute AURA TERMINAL in your device settings to get message-style notifications when the app is in the background.'
+                                : 'Enable alerts to get notified of new messages and mentions (muted channels stay silent).'}
+                        </div>
+                        <div className="community-message-alerts-banner-actions">
+                            {communityNotifPerm === 'default' && (
+                                <button
+                                    type="button"
+                                    className="community-message-alerts-enable"
+                                    onClick={() => requestCommunityMessageAlerts().then(setCommunityNotifPerm)}
+                                >
+                                    Enable alerts
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                className="community-message-alerts-dismiss"
+                                onClick={() => {
+                                    localStorage.setItem('community_message_alerts_banner_dismissed', '1');
+                                    setDismissCommunityAlertBanner(true);
+                                }}
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                )}
                 
                 <div className="channels-section" style={{
                     flex: 1,

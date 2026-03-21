@@ -53,15 +53,6 @@ function persist(userId) {
   }
 }
 
-let persistTimer = null;
-function schedulePersist(userId) {
-  if (persistTimer) clearTimeout(persistTimer);
-  persistTimer = setTimeout(() => {
-    persistTimer = null;
-    persist(userId);
-  }, 0);
-}
-
 export function toggleChannel(channelId, category, userId) {
   if (category === 'announcements') return;
   const id = String(channelId);
@@ -70,7 +61,7 @@ export function toggleChannel(channelId, category, userId) {
   else next.add(id);
   muted = next;
   emit();
-  schedulePersist(userId);
+  persist(userId);
 }
 
 /** Synchronous read (e.g. WebSocket toast logic) — no re-render */

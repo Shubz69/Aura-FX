@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function ProgressRing({ pct }) {
   const p = Math.max(0, Math.min(100, pct));
@@ -11,31 +12,69 @@ function ProgressRing({ pct }) {
 }
 
 export default function TraderDnaNotReady({ dna, afterIntro = false }) {
-  const { status, statusMessage, progress, cooldown } = dna || {};
+  const { status, statusMessage, progress, cooldown, qualificationGaps, analysisWindowDays, dataLookbackDays } =
+    dna || {};
   const rem = cooldown?.remaining;
   const eligible = status === 'READY_FIRST_GENERATION' || status === 'READY_TO_GENERATE';
+  const gaps = Array.isArray(qualificationGaps) ? qualificationGaps : [];
+
+  const titleForStatus = () => {
+    if (status === 'DATA_LOAD_FAILED') return 'We could not reach your data';
+    if (status === 'COOLDOWN') return 'Your Trader DNA is sealed for this cycle';
+    if (eligible) return 'You are cleared for synthesis';
+    if (status === 'INSUFFICIENT_FOR_NEXT_CYCLE') return 'Your DNA is still forming';
+    return 'Trader DNA requires more signal';
+  };
+
+  const kickerForStatus = () => {
+    if (status === 'DATA_LOAD_FAILED') return 'Connection / database';
+    if (status === 'COOLDOWN') return 'DNA cycle active';
+    if (eligible) return 'Eligibility confirmed';
+    if (status === 'INSUFFICIENT_FOR_NEXT_CYCLE') return 'Next cycle open';
+    return 'DNA formation';
+  };
+
+  const winDays = analysisWindowDays || progress?.analysisWindowDays || 90;
+  const lookback = dataLookbackDays || 120;
 
   return (
     <div className={`tdna-nr ${afterIntro ? 'tdna-nr--reveal' : ''}`}>
       <div className="tdna-nr-aurora" aria-hidden />
       <div className="tdna-nr-inner">
-        <p className="tdna-nr-kicker">
-          {status === 'COOLDOWN' ? 'DNA cycle active' : eligible ? 'Eligibility confirmed' : 'DNA formation'}
-        </p>
-        <h2 className="tdna-nr-title">
-          {status === 'COOLDOWN'
-            ? 'Your Trader DNA is sealed for this cycle'
-            : eligible
-              ? 'You are cleared for synthesis'
-              : status === 'INSUFFICIENT_FOR_NEXT_CYCLE'
-                ? 'Your DNA is still forming'
-                : 'Trader DNA requires more signal'}
-        </h2>
+        <p className="tdna-nr-kicker">{kickerForStatus()}</p>
+        <h2 className="tdna-nr-title">{titleForStatus()}</h2>
         <p className="tdna-nr-msg">
           {statusMessage?.trim()
             ? statusMessage
             : 'Trader DNA is not available yet. Keep validating trades and journaling until the minimum data window is met, then return here.'}
         </p>
+
+        {progress && status !== 'DATA_LOAD_FAILED' && dna?.dataHealth?.tradesOk !== false && (
+          <div className="tdna-found-strip" role="status">
+            <strong>What we found in your account</strong> (last ~{winDays} days for eligibility, up to {lookback} days
+            loaded):{' '}
+            {progress.totalTradesInWindow != null && (
+              <>
+                {progress.totalTradesInWindow} trade{progress.totalTradesInWindow !== 1 ? 's' : ''} in the DNA window
+                {progress.pendingOutcomeTradesInWindow > 0
+                  ? ` (${progress.pendingOutcomeTradesInWindow} still need a win/loss/breakeven outcome)`
+                  : ''}
+                .{' '}
+              </>
+            )}
+            {progress.closedTradeCount != null && (
+              <>
+                {progress.closedTradeCount} closed (counted toward DNA).{' '}
+              </>
+            )}
+            {progress.journalEntriesCounted != null && (
+              <>
+                {progress.journalEntriesCounted} journal entr{progress.journalEntriesCounted !== 1 ? 'ies' : 'y'} in the
+                lookback.
+              </>
+            )}
+          </div>
+        )}
 
         {rem?.label && (
           <div className="tdna-nr-countdown">
@@ -52,7 +91,36 @@ export default function TraderDnaNotReady({ dna, afterIntro = false }) {
           </div>
         )}
 
-        {progress && (
+        {gaps.length > 0 && (
+          <>
+            <h3 className="tdna-nr-kicker" style={{ marginTop: 24, letterSpacing: '0.12em' }}>
+              What is still needed
+            </h3>
+            <ul className="tdna-gap-list">
+              {gaps.map((g) => (
+                <li key={g.key} className="tdna-gap-item">
+                  <p className="tdna-gap-title">{g.title}</p>
+                  <p className="tdna-gap-meta">
+                    {g.met} / {g.need} required
+                  </p>
+                  <p className="tdna-gap-detail">{g.detail}</p>
+                  {g.hint && <p className="tdna-gap-hint">{g.hint}</p>}
+                  {g.links?.length > 0 && (
+                    <div className="tdna-gap-links">
+                      {g.links.map((l) => (
+                        <Link key={l.href} to={l.href} className="tdna-gap-link">
+                          {l.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {progress && status !== 'DATA_LOAD_FAILED' && dna?.dataHealth?.tradesOk !== false && (
           <div className="tdna-nr-metrics">
             <ProgressRing pct={progress.dataProgressPercent} />
             <div className="tdna-nr-stat-grid">
@@ -76,9 +144,18 @@ export default function TraderDnaNotReady({ dna, afterIntro = false }) {
           </div>
         )}
 
+        {status === 'DATA_LOAD_FAILED' && (
+          <div className="tdna-gap-links" style={{ marginTop: 16 }}>
+            <Link to="/reports" className="tdna-gap-link">
+              Back to Monthly Reports
+            </Link>
+          </div>
+        )}
+
         <p className="tdna-nr-hint">
           Continue journaling, validating trades in Trade Validator, and logging outcomes. Trader DNA refreshes on a strict{' '}
-          {dna?.cycleDays || 90}-day cadence once eligibility is met.
+          {dna?.cycleDays || 90}-day cadence once eligibility is met. Each successful run is saved to your profile in the
+          database for that cycle.
         </p>
       </div>
     </div>

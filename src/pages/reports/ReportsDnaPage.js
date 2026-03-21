@@ -22,9 +22,35 @@ export default function ReportsDnaPage() {
     setError('');
     try {
       const res = await Api.getTraderDna();
-      setDna(res.data);
+      const body = res?.data;
+      if (!body || typeof body !== 'object') {
+        setError('Unexpected response from the server. Please refresh the page.');
+        setDna(null);
+        return;
+      }
+      if (body.success === false) {
+        setError(body.message || 'Trader DNA could not be loaded.');
+        setDna(null);
+        return;
+      }
+      setDna(body);
     } catch (e) {
-      const msg = e?.response?.data?.message || e.message || 'Failed to load Trader DNA';
+      const status = e?.response?.status;
+      const code = e?.response?.data?.code;
+      const serverMsg = e?.response?.data?.message;
+      let msg =
+        serverMsg ||
+        (status === 401
+          ? 'Session expired — sign in again to load Trader DNA.'
+          : status === 503
+            ? 'Service temporarily unavailable. Try again in a moment.'
+            : e.message || 'Failed to load Trader DNA');
+      if (!serverMsg && status === 500) {
+        msg = 'Server error while loading Trader DNA. If this keeps happening, contact support.';
+      }
+      if (e.code === 'ECONNABORTED' || /timeout/i.test(e.message || '')) {
+        msg = 'Request timed out. Check your connection and tap Refresh status.';
+      }
       setError(msg);
       setDna(null);
     } finally {
@@ -105,7 +131,8 @@ export default function ReportsDnaPage() {
         <h1 className="tdna-landing-title">Trader DNA</h1>
         <p className="tdna-landing-sub">
           A behavioural, execution, and psychological identity synthesis built from your validated trades and journal
-          signal. Refreshes on a strict {dna?.cycleDays || 90}-day cadence once minimum data quality is met.
+          signal. Eligibility uses roughly your last {dna?.analysisWindowDays || 90} days (~3 months) of data; each sealed
+          report is stored for your account until the next cycle.
         </p>
 
         <div className="tdna-cta-row">
@@ -120,9 +147,40 @@ export default function ReportsDnaPage() {
         </div>
       </header>
 
-      {loading && !dna && <p className="tdna-landing-sub">Loading DNA engine…</p>}
+      {loading && !dna && (
+        <div className="tdna-load-panel" aria-live="polite">
+          <div className="tdna-resolving-spinner tdna-load-panel-spinner" />
+          <p className="tdna-landing-sub tdna-load-panel-text">
+            Loading your DNA status, trade window, and any saved snapshot from the database…
+          </p>
+        </div>
+      )}
 
-      {error && <div className="tdna-err">{error}</div>}
+      {error && (
+        <div className="tdna-err" role="alert">
+          <p>{error}</p>
+          <button type="button" className="tdna-btn tdna-btn--ghost tdna-err-retry" onClick={() => load()}>
+            Try again
+          </button>
+        </div>
+      )}
+
+      {!loading && dna?.loadWarning && <div className="tdna-warn-banner">{dna.loadWarning}</div>}
+
+      {!loading &&
+        dna?.dataHealth?.errors?.length > 0 &&
+        dna.dataHealth.errors.map((err) => (
+          <div key={err.source} className="tdna-warn-banner tdna-warn-banner--strong" role="status">
+            {err.message}
+          </div>
+        ))}
+
+      {!loading && dna?.snapshotCorrupt && !hasReport && (
+        <div className="tdna-warn-banner tdna-warn-banner--strong" role="status">
+          A DNA snapshot exists on your account but could not be read. When your cycle allows, run synthesis again to
+          rebuild it, or contact support if this repeats.
+        </div>
+      )}
 
       {!loading && dna && cooldown && hasReport && (
         <div className="tdna-cooldown-strip">

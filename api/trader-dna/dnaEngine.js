@@ -65,6 +65,9 @@ function computeDataProgress(trades, journalRows) {
     span = Math.abs(daysBetween(w[0].createdAt, w[w.length - 1].createdAt));
   }
   const journalDays = new Set((journalRows || []).map((j) => String(j.date).slice(0, 10))).size;
+  const pendingOutcome = w.filter(
+    (t) => t.result !== 'win' && t.result !== 'loss' && t.result !== 'breakeven'
+  ).length;
 
   const tradeRatio = Math.min(1, closed.length / MIN_CLOSED_TRADES);
   const distinctRatio = Math.min(1, dayKeys.size / MIN_DISTINCT_TRADE_DAYS);
@@ -73,10 +76,14 @@ function computeDataProgress(trades, journalRows) {
   const pct = Math.round(100 * (0.45 * tradeRatio + 0.3 * distinctRatio + 0.15 * spanRatio + 0.1 * journalRatio));
 
   return {
+    analysisWindowDays: ANALYSIS_DAYS,
+    totalTradesInWindow: w.length,
+    pendingOutcomeTradesInWindow: pendingOutcome,
     closedTradeCount: closed.length,
     distinctTradeDays: dayKeys.size,
     calendarSpanDays: span,
     journalDaysLogged: journalDays,
+    journalEntriesCounted: (journalRows || []).length,
     minClosedTrades: MIN_CLOSED_TRADES,
     minDistinctTradeDays: MIN_DISTINCT_TRADE_DAYS,
     minCalendarSpanDays: MIN_CALENDAR_SPAN_DAYS,
@@ -88,6 +95,65 @@ function computeDataProgress(trades, journalRows) {
       span >= MIN_CALENDAR_SPAN_DAYS &&
       journalDays >= MIN_JOURNAL_DAYS,
   };
+}
+
+/**
+ * Human-readable gaps vs minimum data rules (for UI when DNA cannot be generated yet).
+ */
+function buildQualificationGaps(progress) {
+  if (!progress || progress.meetsMinimumData) return [];
+  const gaps = [];
+  if (progress.closedTradeCount < progress.minClosedTrades) {
+    gaps.push({
+      key: 'closed_trades',
+      title: 'Closed trades with outcomes',
+      detail: `DNA uses ~${progress.analysisWindowDays || ANALYSIS_DAYS} days of Trade Validator / validated activity. You have ${progress.closedTradeCount} closed trades (win, loss, or breakeven); at least ${progress.minClosedTrades} are required.`,
+      met: progress.closedTradeCount,
+      need: progress.minClosedTrades,
+      hint: 'Log trades in Trade Validator, complete checklists, and set outcomes so closes are counted.',
+      links: [
+        { label: 'Trade Validator', href: '/trader-deck/trade-validator' },
+        { label: 'Trader Deck', href: '/trader-deck' },
+      ],
+    });
+    if (progress.pendingOutcomeTradesInWindow > 0) {
+      gaps[gaps.length - 1].detail += ` ${progress.pendingOutcomeTradesInWindow} trade(s) in this window still need an outcome (not counted as closed).`;
+    }
+  }
+  if (progress.distinctTradeDays < progress.minDistinctTradeDays) {
+    gaps.push({
+      key: 'distinct_days',
+      title: 'Distinct trading days',
+      detail: `Trades must span at least ${progress.minDistinctTradeDays} different days in the window. You are on ${progress.distinctTradeDays}.`,
+      met: progress.distinctTradeDays,
+      need: progress.minDistinctTradeDays,
+      hint: 'Spread quality setups across more sessions instead of clustering everything on a few days.',
+      links: [{ label: 'Trade Validator', href: '/trader-deck/trade-validator' }],
+    });
+  }
+  if (progress.calendarSpanDays < progress.minCalendarSpanDays) {
+    gaps.push({
+      key: 'calendar_span',
+      title: 'Calendar span',
+      detail: `First-to-last trade in the window should span at least ${progress.minCalendarSpanDays} days. Current span: ${progress.calendarSpanDays} days.`,
+      met: progress.calendarSpanDays,
+      need: progress.minCalendarSpanDays,
+      hint: 'Keep logging over a longer period so the profile is not built from a single week cluster.',
+      links: [{ label: 'Journal', href: '/journal' }],
+    });
+  }
+  if (progress.journalDaysLogged < progress.minJournalDays) {
+    gaps.push({
+      key: 'journal',
+      title: 'Journal days',
+      detail: `At least ${progress.minJournalDays} different days with a journal entry in the window. You have ${progress.journalDaysLogged} (${progress.journalEntriesCounted || 0} entries loaded).`,
+      met: progress.journalDaysLogged,
+      need: progress.minJournalDays,
+      hint: 'Add daily journal notes — mood and context feed the psychology dimension of DNA.',
+      links: [{ label: 'Journal', href: '/journal' }],
+    });
+  }
+  return gaps;
 }
 
 function avg(arr) {
@@ -807,6 +873,7 @@ module.exports = {
   CYCLE_DAYS,
   ANALYSIS_DAYS,
   computeDataProgress,
+  buildQualificationGaps,
   buildDnaPayload,
   addDaysIso,
   filterWindowTrades,

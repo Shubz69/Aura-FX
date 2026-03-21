@@ -9,9 +9,9 @@ const {
   CYCLE_DAYS,
   ANALYSIS_DAYS,
   computeDataProgress,
+  buildQualificationGaps,
   buildDnaPayload,
   addDaysIso,
-  filterWindowTrades,
 } = require('./trader-dna/dnaEngine');
 
 function parseBody(req) {
@@ -71,7 +71,7 @@ async function loadTrades(userId) {
      WHERE user_id = ? AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 120 DAY)
      ORDER BY created_at ASC`,
     [userId]
-  ).catch(() => [[]]);
+  );
   return (rows || []).map(mapTradeRow);
 }
 
@@ -80,7 +80,7 @@ async function loadJournal(userId) {
     `SELECT date, mood, notes FROM journal_daily
      WHERE userId = ? AND date >= DATE_SUB(CURDATE(), INTERVAL 120 DAY)`,
     [userId]
-  ).catch(() => [[]]);
+  );
   return rows || [];
 }
 
@@ -124,9 +124,37 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     try {
-      const trades = await loadTrades(userId);
-      const journal = await loadJournal(userId);
+      const dataHealth = { tradesOk: true, journalOk: true, errors: [] };
+
+      let trades = [];
+      try {
+        trades = await loadTrades(userId);
+      } catch (e) {
+        console.error('[trader-dna] loadTrades', e);
+        dataHealth.tradesOk = false;
+        dataHealth.errors.push({
+          source: 'trades',
+          message: 'We could not load your trade history from the database. DNA counts may be incomplete.',
+        });
+      }
+
+      let journal = [];
+      try {
+        journal = await loadJournal(userId);
+      } catch (e) {
+        console.error('[trader-dna] loadJournal', e);
+        dataHealth.journalOk = false;
+        dataHealth.errors.push({
+          source: 'journal',
+          message: 'We could not load your journal entries. Psychology metrics may be incomplete.',
+        });
+      }
+
       const progress = computeDataProgress(trades, journal);
+      const dataBlocked = !dataHealth.tradesOk && !dataHealth.journalOk;
+      const qualificationGaps =
+        dataBlocked || !dataHealth.tradesOk ? [] : buildQualificationGaps(progress);
+      const dataLookbackDays = 120;
 
       const [snapRows] = await executeQuery(
         `SELECT id, payload_json, overall_score, archetype, analysis_window_start, analysis_window_end,
@@ -141,39 +169,15 @@ module.exports = async (req, res) => {
       let nextEligible = latest?.next_eligible_at ? new Date(latest.next_eligible_at).getTime() : null;
       const inCooldown = latest && nextEligible && now < nextEligible;
 
-      let status = 'INSUFFICIENT_DATA';
-      let statusMessage =
-        'More validated trading activity and journal coverage is required before Trader DNA can be formed.';
-
-      if (inCooldown) {
-        status = 'COOLDOWN';
-        statusMessage = 'Your current DNA reading is active. The next full refresh unlocks after the cycle completes.';
-        if (progress.meetsMinimumData) {
-          statusMessage +=
-            ' You already have enough fresh data for the next cycle — it will become available when the countdown ends.';
-        }
-      } else if (latest && !progress.meetsMinimumData) {
-        status = 'INSUFFICIENT_FOR_NEXT_CYCLE';
-        statusMessage =
-          'The next DNA cycle is open, but your recent window does not yet contain enough quality data. Keep journaling and logging trades.';
-      } else if (progress.meetsMinimumData) {
-        status = latest ? 'READY_TO_GENERATE' : 'READY_FIRST_GENERATION';
-        statusMessage = latest
-          ? 'You are eligible to generate a new Trader DNA reading for this cycle.'
-          : 'You have enough data for your first Trader DNA reading.';
-      }
-
-      let remaining = null;
-      if (inCooldown && latest?.next_eligible_at) {
-        remaining = formatRemaining(latest.next_eligible_at);
-      }
-
       let latestPayload = null;
+      let snapshotCorrupt = false;
       if (latest?.payload_json) {
         try {
           latestPayload = JSON.parse(latest.payload_json);
-        } catch {
+        } catch (e) {
+          console.error('[trader-dna] parse latest payload', e);
           latestPayload = null;
+          snapshotCorrupt = String(latest.payload_json || '').trim().length > 0;
         }
       }
 
@@ -186,20 +190,76 @@ module.exports = async (req, res) => {
         }
       }
 
+      let status = 'INSUFFICIENT_DATA';
+      let statusMessage =
+        'More validated trading activity and journal coverage is required before Trader DNA can be formed.';
+
+      if (dataBlocked) {
+        status = 'DATA_LOAD_FAILED';
+        statusMessage =
+          'Trader DNA could not read your platform data. Check your connection and try again. If this persists, contact support.';
+      } else if (inCooldown) {
+        status = 'COOLDOWN';
+        statusMessage = 'Your current DNA reading is active. The next full refresh unlocks after the cycle completes.';
+        if (snapshotCorrupt) {
+          statusMessage =
+            'A DNA snapshot is on file but could not be read. After this cycle ends, run synthesis again to rebuild it.';
+        } else if (progress.meetsMinimumData) {
+          statusMessage +=
+            ' You already have enough fresh data for the next cycle — it will become available when the countdown ends.';
+        }
+      } else if (latest && !progress.meetsMinimumData) {
+        status = 'INSUFFICIENT_FOR_NEXT_CYCLE';
+        statusMessage =
+          'The next DNA cycle is open, but your last ~3 months of data do not yet meet minimum quality. Use the checklist below — Trade Validator + journal are the main levers.';
+      } else if (progress.meetsMinimumData) {
+        status = latest ? 'READY_TO_GENERATE' : 'READY_FIRST_GENERATION';
+        statusMessage = latest
+          ? 'You are eligible to generate a new Trader DNA reading for this cycle.'
+          : 'You have enough data for your first Trader DNA reading.';
+        if (snapshotCorrupt && !latestPayload) {
+          status = 'READY_TO_GENERATE';
+          statusMessage =
+            'Your last snapshot could not be displayed, but you can run a new synthesis now to rebuild your DNA.';
+        }
+      }
+
+      const loadWarning =
+        !dataBlocked && !dataHealth.tradesOk
+          ? 'Trade history failed to load; counts below may be wrong until the database responds.'
+          : !dataBlocked && !dataHealth.journalOk
+            ? 'Journal failed to load; add journal days in /journal — psychology metrics may be understated until it loads.'
+            : null;
+
+      let remaining = null;
+      if (inCooldown && latest?.next_eligible_at) {
+        remaining = formatRemaining(latest.next_eligible_at);
+      }
+
+      const meetsMinimum = dataHealth.tradesOk && progress.meetsMinimumData;
+
       return res.status(200).json({
         success: true,
         status,
         statusMessage,
+        loadWarning,
         cycleDays: CYCLE_DAYS,
         analysisWindowDays: ANALYSIS_DAYS,
+        analysisWindowNote:
+          'DNA eligibility uses your last ~90 days (~3 months) of validated trades plus journal coverage; we load up to 120 days from the database.',
         progress,
+        qualificationGaps,
+        dataHealth,
+        dataLookbackDays,
+        snapshotCorrupt,
+        persistenceNote: 'Each successful synthesis is saved to your account for the active cycle.',
         cooldown: inCooldown
           ? {
               active: true,
               remaining,
             }
           : { active: false, remaining: null },
-        canGenerateNow: !inCooldown && progress.meetsMinimumData,
+        canGenerateNow: Boolean(!inCooldown && meetsMinimum),
         latestSnapshot: latest
           ? {
               id: latest.id,
@@ -233,8 +293,28 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Set confirm: true to generate DNA' });
     }
     try {
-      const trades = await loadTrades(userId);
-      const journal = await loadJournal(userId);
+      let trades = [];
+      let journal = [];
+      try {
+        trades = await loadTrades(userId);
+      } catch (e) {
+        console.error('[trader-dna] POST trades', e);
+        return res.status(503).json({
+          success: false,
+          code: 'TRADES_LOAD_FAILED',
+          message: 'Could not load trades to generate DNA. Try again in a moment.',
+        });
+      }
+      try {
+        journal = await loadJournal(userId);
+      } catch (e) {
+        console.error('[trader-dna] POST journal', e);
+        return res.status(503).json({
+          success: false,
+          code: 'JOURNAL_LOAD_FAILED',
+          message: 'Could not load journal data to generate DNA. Try again in a moment.',
+        });
+      }
       const progress = computeDataProgress(trades, journal);
 
       const [snapRows] = await executeQuery(
@@ -259,8 +339,9 @@ module.exports = async (req, res) => {
         return res.status(403).json({
           success: false,
           code: 'INSUFFICIENT_DATA',
-          message: 'Not enough validated data in the analysis window to generate Trader DNA.',
+          message: 'Not enough validated data in the last ~90 days to generate Trader DNA. Close more trades in Trade Validator and add journal days.',
           progress,
+          qualificationGaps: buildQualificationGaps(progress),
         });
       }
 
@@ -273,14 +354,13 @@ module.exports = async (req, res) => {
         }
       }
 
-      const windowTrades = filterWindowTrades(trades, ANALYSIS_DAYS);
       const payload = buildDnaPayload(trades, journal, previousPayload, new Date().toISOString());
 
       const nextEligibleAt = addDaysIso(new Date(), CYCLE_DAYS);
       const wStart = payload.analysisWindow?.start || null;
       const wEnd = payload.analysisWindow?.end || null;
 
-      await executeQuery(
+      const [insertPacket] = await executeQuery(
         `INSERT INTO trader_dna_snapshots
          (user_id, payload_json, overall_score, archetype, analysis_window_start, analysis_window_end, next_eligible_at, previous_snapshot_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -296,11 +376,24 @@ module.exports = async (req, res) => {
         ]
       );
 
+      const insertMeta = insertPacket && typeof insertPacket === 'object' ? insertPacket : {};
+      const savedOk =
+        insertMeta.affectedRows === 1 || (Number(insertMeta.insertId) > 0 && insertMeta.affectedRows !== 0);
+      if (!savedOk) {
+        console.error('[trader-dna] INSERT did not confirm row', insertMeta);
+        return res.status(500).json({
+          success: false,
+          code: 'PERSIST_FAILED',
+          message: 'DNA was computed but not saved to the database. Please try again.',
+        });
+      }
+
       return res.status(200).json({
         success: true,
         report: payload,
         nextEligibleAt,
         progress,
+        savedSnapshotId: insertMeta.insertId ?? null,
       });
     } catch (err) {
       console.error('[trader-dna] POST', err);
