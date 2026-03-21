@@ -46,6 +46,35 @@ function formatRelativeTime(date) {
   return then.toLocaleDateString();
 }
 
+/** Coerce API / MySQL-style fields into the shape the UI expects */
+function normalizeNotification(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = raw.id != null ? String(raw.id) : null;
+  if (!id) return null;
+  return {
+    ...raw,
+    id,
+    type: raw.type || 'SYSTEM',
+    title: raw.title != null ? String(raw.title) : 'Notification',
+    body: raw.body != null ? raw.body : null,
+    status: raw.status || 'READ',
+    actionStatus: raw.actionStatus ?? raw.action_status ?? null,
+    channelId: raw.channelId ?? raw.channel_id,
+    messageId: raw.messageId ?? raw.message_id,
+    friendRequestId: raw.friendRequestId ?? raw.friend_request_id,
+    createdAt: raw.createdAt ?? raw.created_at,
+    readAt: raw.readAt ?? raw.read_at,
+  };
+}
+
+function parseUnreadCount(data) {
+  const c = data?.unreadCount;
+  if (c == null) return 0;
+  if (typeof c === 'bigint') return Number(c);
+  const n = Number(c);
+  return Number.isFinite(n) ? n : 0;
+}
+
 const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCountChange }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,9 +82,11 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
   const [nextCursor, setNextCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [listFetchFailed, setListFetchFailed] = useState(false);
   const [processingIds, setProcessingIds] = useState(new Set());
   
   const listRef = useRef(null);
+  const listRetryRef = useRef(0);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const baseUrl = process.env.REACT_APP_API_URL || window.location.origin;
@@ -76,26 +107,48 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success === false) {
-          toast.error(data.message || 'Failed to load notifications');
-          return;
-        }
-        const items = data.items ?? [];
-        if (append) {
-          setNotifications(prev => [...prev, ...items]);
-        } else {
-          setNotifications(items);
-        }
-        setNextCursor(data.nextCursor ?? null);
-        setHasMore(data.hasMore ?? false);
-        const count = data.unreadCount ?? 0;
-        setUnreadCount(count);
-        onUnreadCountChange?.(count);
+      const data = response.ok ? await response.json().catch(() => ({})) : null;
+
+      if (!response.ok) {
+        setListFetchFailed(true);
+        const msg = data?.message || `Could not load notifications (${response.status})`;
+        toast.error(msg);
+        if (!append) setNotifications([]);
+        return;
       }
+
+      if (data.success === false) {
+        setListFetchFailed(true);
+        toast.error(data.message || 'Failed to load notifications');
+        return;
+      }
+
+      const rawItems = Array.isArray(data.items)
+        ? data.items
+        : (Array.isArray(data.notifications) ? data.notifications : (Array.isArray(data.data) ? data.data : []));
+      const items = rawItems.map(normalizeNotification).filter(Boolean);
+
+      setListFetchFailed(!!data.listFetchFailed);
+      if (append) {
+        setNotifications(prev => [...prev, ...items]);
+      } else {
+        setNotifications(items);
+      }
+      setNextCursor(data.nextCursor ?? null);
+      setHasMore(data.hasMore ?? false);
+      const count = parseUnreadCount(data);
+      setUnreadCount(count);
+      onUnreadCountChange?.(count);
+
+      // One silent retry if server reported unread but returned no rows (matches fc33ee2-style list/ count drift)
+      if (!append && items.length === 0 && count > 0 && !data.listFetchFailed && listRetryRef.current < 1) {
+        listRetryRef.current += 1;
+        setTimeout(() => fetchNotifications(null, false), 500);
+      }
+      if (items.length > 0) listRetryRef.current = 0;
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
+      setListFetchFailed(true);
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
@@ -106,6 +159,8 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
   // Load on open
   useEffect(() => {
     if (isOpen) {
+      listRetryRef.current = 0;
+      setListFetchFailed(false);
       fetchNotifications();
     }
   }, [isOpen, fetchNotifications]);
@@ -342,7 +397,23 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
           ) : notifications.length === 0 ? (
             <div className="notifications-empty">
               <FaBell className="empty-icon" />
-              <span>No notifications yet</span>
+              {(listFetchFailed || (unreadCount > 0)) ? (
+                <>
+                  <span>Couldn&apos;t load notifications</span>
+                  <button
+                    type="button"
+                    className="notifications-retry-btn"
+                    onClick={() => {
+                      listRetryRef.current = 0;
+                      fetchNotifications();
+                    }}
+                  >
+                    Tap to retry
+                  </button>
+                </>
+              ) : (
+                <span>No notifications yet</span>
+              )}
             </div>
           ) : (
             <>
