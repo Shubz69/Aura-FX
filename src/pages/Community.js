@@ -510,6 +510,10 @@ const [showImageModal, setShowImageModal] = useState(false);
 const [selectedImage, setSelectedImage] = useState(null);
 const scrollTimeoutRef = useRef(null);
 const messagesContainerRef = useRef(null);
+/** Prevents overlapping /api/users/:id polls (storm → net::ERR_INSUFFICIENT_RESOURCES when DB is slow). */
+const latestUserFetchInFlightRef = useRef(false);
+const latestUserBackoffUntilRef = useRef(0);
+const latestUserFailCountRef = useRef(0);
 
   const [showPptxModal, setShowPptxModal] = useState(false);
     const [selectedPptx, setSelectedPptx] = useState(null);
@@ -517,22 +521,40 @@ const messagesContainerRef = useRef(null);
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
-        
+        if (Date.now() < latestUserBackoffUntilRef.current) return null;
+        if (latestUserFetchInFlightRef.current) return null;
+
+        const bumpBackoff = () => {
+            latestUserFailCountRef.current += 1;
+            const n = latestUserFailCountRef.current;
+            const delaySec = Math.min(120, 5 * 2 ** Math.min(n - 1, 5));
+            latestUserBackoffUntilRef.current = Date.now() + delaySec * 1000;
+        };
+
+        latestUserFetchInFlightRef.current = true;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
         try {
             const API_BASE_URL = window.location.origin;
             const token = localStorage.getItem('token');
-            
+
             const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`
+                },
+                signal: controller.signal
             });
-            
+            clearTimeout(timeoutId);
+
             if (response.ok) {
+                latestUserFailCountRef.current = 0;
+                latestUserBackoffUntilRef.current = 0;
+
                 const userData = await response.json();
-                
+
                 // Update localStorage with latest data (keep payload small to avoid quota)
                 const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
                 const updatedUser = {
@@ -556,33 +578,36 @@ const messagesContainerRef = useRef(null);
                         try { localStorage.setItem('user', JSON.stringify(minimal)); } catch (_) {}
                     }
                 }
-                
-                // Update state only if values actually changed
+
                 setStoredUser(prev => {
                     if (!prev) return updatedUser;
-                    
+
                     const xpChanged = Math.abs(parseFloat(prev.xp || 0) - parseFloat(userData.xp || 0)) > 0.01;
                     const levelChanged = parseInt(prev.level || 1) !== parseInt(userData.level || 1);
-                    
+
                     if (xpChanged || levelChanged) {
                         return updatedUser;
                     }
-                    return prev; // Return same reference if no change
+                    return prev;
                 });
-                
+
                 const newLevel = parseInt(userData.level || 1);
-                setUserLevel(prevLevel => {
-                    return prevLevel !== newLevel ? newLevel : prevLevel;
-                });
-                
+                setUserLevel(prevLevel => (prevLevel !== newLevel ? newLevel : prevLevel));
+
                 return updatedUser;
-            } else {
-                console.warn('Failed to fetch latest user data:', response.status);
             }
+            console.warn('Failed to fetch latest user data:', response.status);
+            bumpBackoff();
         } catch (error) {
-            console.error('Error fetching latest user data:', error);
+            clearTimeout(timeoutId);
+            if (error.name !== 'AbortError') {
+                console.error('Error fetching latest user data:', error);
+            }
+            bumpBackoff();
+        } finally {
+            latestUserFetchInFlightRef.current = false;
         }
-        
+
         return null;
     }, []);
 
@@ -605,16 +630,15 @@ const messagesContainerRef = useRef(null);
         
         window.addEventListener('xpUpdated', handleXPUpdate);
         
-        // Fetch latest user data from API periodically (every 5 seconds for live updates)
+        // Poll user profile lightly: XP/level also update via window "xpUpdated" above.
+        // 5s polling stacked requests when the API was slow → hundreds of concurrent fetches → ERR_INSUFFICIENT_RESOURCES.
         let xpCheckInterval;
         if (userId) {
-            // Initial fetch on mount
             fetchLatestUserData(userId);
-            
-            // Then check periodically
+
             xpCheckInterval = setInterval(() => {
                 fetchLatestUserData(userId);
-            }, 5000); // Check every 5 seconds for live updates
+            }, 60000);
         } else {
             // Fallback to localStorage check if userId not available yet
             xpCheckInterval = setInterval(() => {
@@ -3175,15 +3199,7 @@ if (window.requestAnimationFrame) {
             
             // Set user level
             setUserLevel(calculatedLevel);
-            
-            // Fetch latest user data from API to ensure XP/level are up-to-date
-            if (storedUserData.id) {
-                // Small delay to ensure component is ready
-                setTimeout(() => {
-                    fetchLatestUserData(storedUserData.id);
-                }, 500);
-            }
-            
+
             // If coming from payment success, immediately check subscription status from DB
             if ((paymentSuccess || sessionId) && storedUserData.id) {
                 // Small delay to ensure backend has processed the payment
@@ -3192,7 +3208,7 @@ if (window.requestAnimationFrame) {
                 }, 500);
             }
         }
-    }, [navigate, authUser, checkSubscriptionFromDB, fetchLatestUserData, refreshEntitlements, refreshChannelList]);
+    }, [navigate, authUser, checkSubscriptionFromDB, refreshEntitlements, refreshChannelList]);
 
     // Prevent page scrolling on Community only - Discord-like behavior; always restore on unmount/route
     useEffect(() => {
