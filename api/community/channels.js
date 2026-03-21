@@ -1,6 +1,16 @@
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
+const { jsonSafeDeep } = require('../utils/jsonSafe');
+
+function safeJsonParse(raw, fallback) {
+  if (raw == null || raw === '') return fallback;
+  try {
+    return JSON.parse(typeof raw === 'string' ? raw : String(raw));
+  } catch {
+    return fallback;
+  }
+}
 
 const slugify = (value) => {
   if (!value) return '';
@@ -330,11 +340,9 @@ module.exports = async (req, res) => {
           );
           releaseDb(db);
           if (rows && rows.length > 0) {
-            try {
-              const channelOrder = JSON.parse(rows[0].value);
-              return res.status(200).json({ success: true, channelOrder });
-            } catch (parseError) {
-              console.error('Error parsing channel order:', parseError);
+            const channelOrder = safeJsonParse(rows[0].value, {});
+            if (channelOrder && typeof channelOrder === 'object') {
+              return res.status(200).json({ success: true, channelOrder: jsonSafeDeep(channelOrder) });
             }
           }
           return res.status(200).json({ success: true, channelOrder: {} });
@@ -362,9 +370,10 @@ module.exports = async (req, res) => {
             ['category_order']
           );
           if (rows && rows.length > 0) {
-            const order = JSON.parse(rows[0].value);
+            const order = safeJsonParse(rows[0].value, DEFAULT_CATEGORY_ORDER);
             releaseDb(db);
-            return res.status(200).json({ success: true, data: order });
+            const payload = Array.isArray(order) ? order : DEFAULT_CATEGORY_ORDER;
+            return res.status(200).json({ success: true, data: jsonSafeDeep(payload) });
           }
           releaseDb(db);
           return res.status(200).json({ success: true, data: DEFAULT_CATEGORY_ORDER });
@@ -634,14 +643,24 @@ module.exports = async (req, res) => {
                   db.execute('SELECT value FROM community_settings WHERE id = ?', ['category_order']),
                   db.execute('SELECT value FROM community_settings WHERE id = ?', ['channelOrder'])
                 ]);
-                const categoryOrder = (catRows && catRows[0] && catRows[0].value) ? JSON.parse(catRows[0].value) : DEFAULT_CATEGORY_ORDER;
-                const channelOrder = (chanRows && chanRows[0] && chanRows[0].value) ? JSON.parse(chanRows[0].value) : {};
-                return res.status(200).json({ success: true, channels: visibleOnly, categoryOrder, channelOrder });
+                const categoryOrder = (catRows && catRows[0] && catRows[0].value)
+                  ? safeJsonParse(catRows[0].value, DEFAULT_CATEGORY_ORDER)
+                  : DEFAULT_CATEGORY_ORDER;
+                const channelOrder = (chanRows && chanRows[0] && chanRows[0].value)
+                  ? safeJsonParse(chanRows[0].value, {})
+                  : {};
+                const catPayload = Array.isArray(categoryOrder) ? categoryOrder : DEFAULT_CATEGORY_ORDER;
+                return res.status(200).json({
+                  success: true,
+                  channels: jsonSafeDeep(visibleOnly),
+                  categoryOrder: jsonSafeDeep(catPayload),
+                  channelOrder: jsonSafeDeep(channelOrder),
+                });
               } catch (bootstrapErr) {
                 console.warn('Bootstrap order fetch failed, returning channels only:', bootstrapErr.message);
               }
             }
-            return res.status(200).json(visibleOnly);
+            return res.status(200).json(jsonSafeDeep(visibleOnly));
           }
         } catch (dbError) {
           console.error('Database error fetching channels:', dbError);

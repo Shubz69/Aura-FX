@@ -1,6 +1,7 @@
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { getDbConnection } = require('../db');
+const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 
 // Use shared pool from api/db.js – do not create new connections (causes "Too many connections")
 // Always release with connection.release() when done (never .end())
@@ -619,29 +620,30 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
 
         releaseDb(db);
         
-        // Return user data with formatted dates
-       const responseData = {
-  id: user.id,
-  username: user.username || user.name || 'User',
-  name: user.name,
-  bio: user.bio || '',
-  avatar: user.avatar ?? null,
-  banner: (hasBanner && user.banner) ? user.banner : '', // THIS IS IMPORTANT
-  avatarColor: user.avatarColor || null,
-  role: user.role || 'free',
-  level: parseInt(user.level || 1),
-  xp: parseFloat(user.xp || 0),
-  joinDate: user.created_at,
-  createdAt: user.created_at,
-  login_streak: (user.login_streak !== undefined && user.login_streak !== null) ? user.login_streak : 0,
-  last_seen: lastSeenValue,
-  stats: {
-    reputation: Math.floor((user.xp || 0) / 100),
-    totalTrades: 0,
-    winRate: 0,
-    totalProfit: 0
-  }
-};
+        // Return user data with formatted dates (mysql2 may return bigint for id/xp/level)
+        const xpNum = jsonNumber(user.xp, 0);
+        const responseData = {
+          id: jsonNumber(user.id),
+          username: user.username || user.name || 'User',
+          name: user.name,
+          bio: user.bio || '',
+          avatar: user.avatar ?? null,
+          banner: (hasBanner && user.banner) ? user.banner : '',
+          avatarColor: user.avatarColor || null,
+          role: user.role || 'free',
+          level: jsonNumber(user.level ?? 1, 1),
+          xp: xpNum,
+          joinDate: user.created_at,
+          createdAt: user.created_at,
+          login_streak: jsonNumber(user.login_streak, 0),
+          last_seen: lastSeenValue,
+          stats: {
+            reputation: Math.floor(xpNum / 100),
+            totalTrades: 0,
+            winRate: 0,
+            totalProfit: 0
+          }
+        };
         if (journalStats) {
           responseData.journalStats = journalStats;
         }
@@ -659,7 +661,7 @@ const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : field
           responseData.createdAt = user.created_at;
         }
         
-        return res.status(200).json(responseData);
+        return res.status(200).json(jsonSafeDeep(responseData));
       } catch (dbError) {
         console.error('Database error fetching user:', dbError);
         console.error('Error details:', {

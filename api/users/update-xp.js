@@ -1,4 +1,13 @@
 const { getDbConnection } = require('../db');
+const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
+
+/** mysql2 may return DECIMAL/BIGINT; parseFloat(BigInt) throws in JS. */
+function num(v, fallback = 0) {
+  if (v == null || v === '') return fallback;
+  if (typeof v === 'bigint') return Number(v);
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
 
 module.exports = async (req, res) => {
     if (req.method !== 'POST') {
@@ -69,11 +78,11 @@ module.exports = async (req, res) => {
 
             // Get previous XP to calculate gain
             const [userRows] = await db.execute('SELECT xp FROM users WHERE id = ?', [userId]);
-            const previousXP = userRows.length > 0 ? parseFloat(userRows[0].xp || 0) : 0;
-            let rawGain = parseFloat(xp) - previousXP;
+            const previousXP = userRows.length > 0 ? num(userRows[0].xp, 0) : 0;
+            let rawGain = num(xp, 0) - previousXP;
             const PLAYER_XP_MULT = Number(process.env.XP_PLAYER_GAIN_MULT || 0.55);
-            let adjustedXP = parseFloat(xp);
-            let adjustedLevel = parseInt(level, 10);
+            let adjustedXP = num(xp, 0);
+            let adjustedLevel = jsonNumber(level, 1);
             if (rawGain > 0 && PLAYER_XP_MULT > 0 && PLAYER_XP_MULT < 1) {
                 const scaledGain = Math.round(rawGain * PLAYER_XP_MULT * 100) / 100;
                 adjustedXP = Math.max(0, previousXP + scaledGain);
@@ -144,12 +153,12 @@ module.exports = async (req, res) => {
                 await db.end();
             }
 
-            return res.status(200).json({
+            return res.status(200).json(jsonSafeDeep({
                 success: true,
                 message: 'XP and level updated successfully',
                 xp: adjustedXP,
                 level: adjustedLevel
-            });
+            }));
         } catch (dbError) {
             console.error('❌ Database error updating XP:', dbError);
             console.error('Error details:', {
