@@ -1819,35 +1819,48 @@ const renderMessageContent = (content, messageFile) => {
     // Award XP and update user data - Save to both localStorage and database
     const awardXP = async (earnedXP) => {
         try {
-            // Get current user data
             const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
             const currentXP = parseFloat(currentUser.xp || 0);
             const newXP = currentXP + earnedXP;
             const newLevel = getLevelFromXP(newXP);
             const oldLevel = getLevelFromXP(currentXP);
-            
-            // Update user data
+            const levelBeforeSync = parseInt(currentUser.level, 10) || oldLevel;
+
             const updatedUser = {
                 ...currentUser,
                 xp: newXP,
                 level: newLevel,
                 totalMessages: (currentUser.totalMessages || 0) + 1
             };
-            
-            // Save to localStorage immediately
+
             localStorage.setItem('user', JSON.stringify(updatedUser));
-            
-            // Update state and persist so sidebar shows new level immediately
             setStoredUser(updatedUser);
             setUserLevel(newLevel);
             try {
                 localStorage.setItem('user', JSON.stringify(updatedUser));
             } catch (e) { /* ignore */ }
-            
-            // Check if user leveled up
-            const leveledUp = newLevel > oldLevel;
-            
-            // Save to database in background (don't block UI)
+
+            const clientLeveledUp = newLevel > oldLevel;
+
+            const applyServerProfile = (result) => {
+                const srvXp = parseFloat(result.xp);
+                const srvLevel = parseInt(result.level, 10);
+                const merged = {
+                    ...updatedUser,
+                    xp: Number.isFinite(srvXp) ? srvXp : newXP,
+                    level: Number.isFinite(srvLevel) ? srvLevel : newLevel
+                };
+                try {
+                    localStorage.setItem('user', JSON.stringify(merged));
+                } catch (e) { /* ignore */ }
+                setStoredUser(merged);
+                setUserLevel(merged.level);
+                const leveledUp =
+                    result.leveledUp === true ||
+                    (Number.isFinite(srvLevel) && srvLevel > levelBeforeSync);
+                return { merged, leveledUp };
+            };
+
             if (currentUser.id) {
                 try {
                     const API_BASE_URL = window.location.origin;
@@ -1855,7 +1868,7 @@ const renderMessageContent = (content, messageFile) => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
                         },
                         body: JSON.stringify({
                             userId: currentUser.id,
@@ -1865,94 +1878,58 @@ const renderMessageContent = (content, messageFile) => {
                             description: `Earned ${earnedXP} XP from sending a message`
                         })
                     });
-                    
+
                     if (response.ok) {
                         const result = await response.json();
-                        console.log(`✅ XP updated: +${earnedXP} XP (Total: ${newXP} XP, Level: ${newLevel})`, result);
-                        
-                        // If user leveled up, send notification to Levels channel
-                        if (leveledUp) {
-                            try {
-                                const notificationResponse = await fetch(`${API_BASE_URL}/api/users/level-up-notification`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                    },
-                                    body: JSON.stringify({
-                                        userId: currentUser.id,
-                                        oldLevel: oldLevel,
-                                        newLevel: newLevel,
-                                        username: currentUser.username || currentUser.name || 'User'
-                                    })
-                                });
-                                
-                                if (notificationResponse.ok) {
-                                    console.log(`🎉 Level-up notification sent for Level ${newLevel}!`);
-                                } else {
-                                    console.warn('⚠️ Failed to send level-up notification');
-                                }
-                            } catch (notifError) {
-                                console.error('❌ Error sending level-up notification:', notifError);
-                            }
-                        }
-                    } else {
-                        const errorData = await response.json().catch(() => ({}));
-                        console.error('❌ Failed to sync XP to database:', response.status, errorData);
-                        // Retry once after 1 second
-                        setTimeout(async () => {
-                            try {
-                                const retryResponse = await fetch(`${API_BASE_URL}/api/users/update-xp`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                    },
-                                    body: JSON.stringify({
-                                        userId: currentUser.id,
-                                        xp: newXP,
-                                        level: newLevel
-                                    })
-                                });
-                                if (retryResponse.ok) {
-                                    console.log('✅ XP synced to database on retry');
-                                    // Send level-up notification on retry if leveled up
-                                    if (leveledUp) {
-                                        try {
-                                            await fetch(`${API_BASE_URL}/api/users/level-up-notification`, {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                                },
-                                                body: JSON.stringify({
-                                                    userId: currentUser.id,
-                                                    oldLevel: oldLevel,
-                                                    newLevel: newLevel,
-                                                    username: currentUser.username || currentUser.name || 'User'
-                                                })
-                                            });
-                                        } catch (e) {}
-                                    }
-                                }
-                            } catch (retryError) {
-                                console.error('❌ XP retry failed:', retryError);
-                            }
-                        }, 1000);
+                        console.log(`✅ XP updated: +${earnedXP} XP`, result);
+                        const { merged, leveledUp } = applyServerProfile(result);
+                        return {
+                            earnedXP,
+                            newXP: merged.xp,
+                            newLevel: merged.level,
+                            leveledUp,
+                            xpForNextLevel: getXPForNextLevel(merged.level),
+                            xpProgress: merged.xp - getXPForNextLevel(oldLevel)
+                        };
                     }
+
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Failed to sync XP to database:', response.status, errorData);
+                    setTimeout(async () => {
+                        try {
+                            const retryResponse = await fetch(`${API_BASE_URL}/api/users/update-xp`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                                },
+                                body: JSON.stringify({
+                                    userId: currentUser.id,
+                                    xp: newXP,
+                                    level: newLevel
+                                })
+                            });
+                            if (retryResponse.ok) {
+                                const result = await retryResponse.json();
+                                console.log('✅ XP synced to database on retry');
+                                applyServerProfile(result);
+                            }
+                        } catch (retryError) {
+                            console.error('❌ XP retry failed:', retryError);
+                        }
+                    }, 1000);
                 } catch (dbError) {
                     console.error('❌ Error syncing XP to database:', dbError);
-                    // Continue anyway - XP is saved locally
                 }
             } else {
                 console.warn('⚠️ Cannot sync XP: User ID not found');
             }
-            
+
             return {
                 earnedXP,
                 newXP,
                 newLevel,
-                leveledUp: leveledUp,
+                leveledUp: clientLeveledUp,
                 xpForNextLevel: getXPForNextLevel(newLevel),
                 xpProgress: newXP - getXPForNextLevel(oldLevel)
             };

@@ -5,6 +5,7 @@ require('../utils/suppress-warnings');
 const nodemailer = require('nodemailer');
 const { verifyToken } = require('../utils/auth');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
+const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
 
 // Configure email transporter (optional – logs warning if credentials missing)
 const createTransporter = () => {
@@ -1530,14 +1531,14 @@ module.exports = async (req, res) => {
 
         if (leveledUp) {
           try {
-            const [userInfo] = await db.execute('SELECT username, name FROM users WHERE id = ?', [userId]);
-            const username = userInfo[0]?.username || userInfo[0]?.name || 'User';
-            const base = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : (process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:3000');
-            fetch(`${base}/api/users/level-up-notification`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId, oldLevel: currentLevel, newLevel, username })
-            }).catch(() => {});
+            const [userInfo] = await db.execute('SELECT username, name, email FROM users WHERE id = ?', [userId]);
+            const u = userInfo[0];
+            const un = (u?.username || u?.name || (u?.email && String(u.email).split('@')[0]) || 'User').toString();
+            await postLevelUpToLevelsChannel({
+              username: un,
+              newLevel,
+              senderIdFallback: userId
+            });
           } catch (_) {}
         }
 

@@ -1,5 +1,6 @@
 const { getDbConnection } = require('../db');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
+const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
 
 /** mysql2 may return DECIMAL/BIGINT; parseFloat(BigInt) throws in JS. */
 function num(v, fallback = 0) {
@@ -76,9 +77,16 @@ module.exports = async (req, res) => {
                 console.warn('xp_logs table already exists or error creating:', tableError.message);
             }
 
-            // Get previous XP to calculate gain
-            const [userRows] = await db.execute('SELECT xp FROM users WHERE id = ?', [userId]);
-            const previousXP = userRows.length > 0 ? num(userRows[0].xp, 0) : 0;
+            const [userRows] = await db.execute(
+              'SELECT xp, level, username, name, email FROM users WHERE id = ?',
+              [userId]
+            );
+            if (!userRows || userRows.length === 0) {
+              if (db && typeof db.release === 'function') db.release();
+              return res.status(404).json({ success: false, message: 'User not found' });
+            }
+            const previousXP = num(userRows[0].xp, 0);
+            const previousLevel = parseInt(userRows[0].level, 10) || 1;
             let rawGain = num(xp, 0) - previousXP;
             const PLAYER_XP_MULT = Number(process.env.XP_PLAYER_GAIN_MULT || 0.55);
             let adjustedXP = num(xp, 0);
@@ -146,18 +154,39 @@ module.exports = async (req, res) => {
             
             console.log(`✅ XP updated for user ${userId}: ${adjustedXP} XP, Level ${adjustedLevel}`, updateResult);
 
-            // Release connection (don't use db.end() if using pool)
+            const leveledUp = adjustedLevel > previousLevel;
+
             if (db && typeof db.release === 'function') {
                 db.release();
             } else if (db && typeof db.end === 'function') {
                 await db.end();
             }
 
+            if (leveledUp) {
+                const row = userRows[0];
+                const displayName = (
+                    row.username ||
+                    row.name ||
+                    (row.email && String(row.email).split('@')[0]) ||
+                    'User'
+                ).toString();
+                try {
+                    await postLevelUpToLevelsChannel({
+                        username: displayName,
+                        newLevel: adjustedLevel,
+                        senderIdFallback: userId
+                    });
+                } catch (e) {
+                    console.warn('Level-up #levels post failed:', e.message);
+                }
+            }
+
             return res.status(200).json(jsonSafeDeep({
                 success: true,
                 message: 'XP and level updated successfully',
                 xp: adjustedXP,
-                level: adjustedLevel
+                level: adjustedLevel,
+                leveledUp
             }));
         } catch (dbError) {
             console.error('❌ Database error updating XP:', dbError);

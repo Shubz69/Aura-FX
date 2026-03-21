@@ -1,6 +1,12 @@
 const { executeQuery } = require('../db');
+const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+
+function displayNameFromUser(u) {
+  if (!u) return 'User';
+  return (u.username || u.name || (u.email && String(u.email).split('@')[0]) || 'User').toString();
+}
 
 // Add timeout wrapper for database operations (reduced for speed)
 const withTimeout = (promise, timeoutMs = 2000) => {
@@ -108,7 +114,7 @@ module.exports = async (req, res) => {
     try {
       const [users] = await withTimeout(
         executeQuery(
-          `SELECT id, login_streak, last_login_date, xp, level,
+          `SELECT id, login_streak, last_login_date, xp, level, username, name, email,
             CASE WHEN last_login_date IS NULL THEN NULL
                  ELSE DATEDIFF(CURDATE(), DATE(last_login_date)) END AS days_since_last,
             CASE WHEN last_login_date IS NULL THEN 0
@@ -193,6 +199,15 @@ module.exports = async (req, res) => {
         ).catch(err => console.warn('XP log failed (non-blocking):', err.message));
         logDailyLoginXpEvent(executeQuery, userId, xpReward, 'streak_reset_day');
 
+        const prevLvReset = parseInt(user.level, 10) || 1;
+        if (newLevel > prevLvReset) {
+          postLevelUpToLevelsChannel({
+            username: displayNameFromUser(user),
+            newLevel,
+            senderIdFallback: userId
+          }).catch(() => {});
+        }
+
         return res.status(200).json({
           success: true,
           streak: newStreak,
@@ -200,6 +215,7 @@ module.exports = async (req, res) => {
           newXP,
           newLevel,
           streakReset: true,
+          leveledUp: newLevel > prevLvReset,
           message: 'Login streak restarted after a missed day.'
         });
       }
@@ -253,6 +269,11 @@ module.exports = async (req, res) => {
 
       if (leveledUp) {
         console.log(`User ${userId} leveled up to ${newLevel} from daily login`);
+        postLevelUpToLevelsChannel({
+          username: displayNameFromUser(user),
+          newLevel,
+          senderIdFallback: userId
+        }).catch(() => {});
       }
 
       return res.status(200).json({
