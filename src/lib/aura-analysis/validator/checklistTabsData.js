@@ -1,5 +1,10 @@
 /**
  * Trade Validator – Scalp / Intra Day / Swing. Each tab sums to exactly 100 points.
+ *
+ * Optional on any item: exampleImageSrc — public URL, e.g.
+ *   '/assets/trade-validator/checklist-examples/scalp-1.png'
+ * (Put files in public/assets/trade-validator/checklist-examples/)
+ * When set, a small thumbnail appears left of the points; click opens a larger preview.
  */
 
 export const CHECKLIST_TABS = [
@@ -26,15 +31,19 @@ export const CHECKLIST_TAB_META = {
 const W33 = [7, 7, 7, 6, 6];
 const W34 = [7, 7, 7, 7, 6];
 
-function makeCard(cardId, title, idPrefix, idOffset, labels, weights) {
+function makeCard(cardId, title, idPrefix, idOffset, labels, weights, exampleSrcByIndex) {
   return {
     id: cardId,
     cardTitle: title,
-    items: labels.map((label, i) => ({
-      id: `${idPrefix}${idOffset + i}`,
-      label,
-      points: weights[i],
-    })),
+    items: labels.map((label, i) => {
+      const src = exampleSrcByIndex && exampleSrcByIndex[i];
+      return {
+        id: `${idPrefix}${idOffset + i}`,
+        label,
+        points: weights[i],
+        ...(src ? { exampleImageSrc: src } : {}),
+      };
+    }),
   };
 }
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaCheckSquare } from 'react-icons/fa';
+import { FaArrowLeft, FaCheckSquare, FaImage } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import {
   CHECKLIST_TABS,
@@ -17,18 +17,39 @@ const STORAGE_KEY_CHECKED = 'aura-trade-validator-checked-by-tab';
 const STORAGE_KEY_FORMATION = 'aura-trade-validator-formation-checked';
 const MIN_CONFLUENCE_PCT = 70;
 
-function ChecklistItemRow({ item, checked, onToggle }) {
+function ChecklistItemRow({ item, checked, onToggle, onExampleOpen }) {
+  const hasImg = Boolean(item.exampleImageSrc);
   return (
-    <label className="tv-checklist-item">
-      <input type="checkbox" checked={checked.has(item.id)} onChange={() => onToggle(item.id)} />
-      <span className="tv-checkmark" aria-hidden />
-      <span className="tv-item-label">{item.label}</span>
+    <div className="tv-checklist-item">
+      <label className="tv-checklist-item-main">
+        <input type="checkbox" checked={checked.has(item.id)} onChange={() => onToggle(item.id)} />
+        <span className="tv-checkmark" aria-hidden />
+        <span className="tv-item-label">{item.label}</span>
+      </label>
+      <button
+        type="button"
+        className={`tv-example-thumb ${hasImg ? 'tv-example-thumb--has-img' : 'tv-example-thumb--empty'}`}
+        onClick={() =>
+          onExampleOpen({
+            src: item.exampleImageSrc || null,
+            label: item.label,
+          })
+        }
+        aria-label={hasImg ? `Enlarge example image for: ${item.label}` : `Example image placeholder for: ${item.label}`}
+        title={hasImg ? 'View example' : 'Example image (add file later)'}
+      >
+        {hasImg ? (
+          <img src={item.exampleImageSrc} alt="" className="tv-example-thumb-img" loading="lazy" />
+        ) : (
+          <FaImage className="tv-example-thumb-icon" aria-hidden />
+        )}
+      </button>
       <span className="tv-item-pct">+{item.points}</span>
-    </label>
+    </div>
   );
 }
 
-function ChecklistCard({ card, checked, onToggle }) {
+function ChecklistCard({ card, checked, onToggle, onExampleOpen }) {
   const score = card.items.reduce((s, i) => s + (checked.has(i.id) ? i.points : 0), 0);
   const max = card.items.reduce((s, i) => s + i.points, 0);
   const pct = max > 0 ? Math.round((score / max) * 100) : 0;
@@ -38,7 +59,13 @@ function ChecklistCard({ card, checked, onToggle }) {
       <h3 className="tv-section-card-title">{card.cardTitle}</h3>
       <div className="tv-section-list">
         {card.items.map((item) => (
-          <ChecklistItemRow key={item.id} item={item} checked={checked} onToggle={onToggle} />
+          <ChecklistItemRow
+            key={item.id}
+            item={item}
+            checked={checked}
+            onToggle={onToggle}
+            onExampleOpen={onExampleOpen}
+          />
         ))}
       </div>
       <p className="tv-section-score">Section score <span className="tv-section-score-value">{pct}%</span></p>
@@ -82,6 +109,28 @@ export default function TradeValidatorView() {
       return { scalp: new Set(), intraDay: new Set(), swing: new Set() };
     }
   });
+  const [exampleOverlay, setExampleOverlay] = useState(null);
+
+  const openExample = useCallback((payload) => {
+    setExampleOverlay(payload);
+  }, []);
+
+  const closeExample = useCallback(() => setExampleOverlay(null), []);
+
+  useEffect(() => {
+    if (!exampleOverlay) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeExample();
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [exampleOverlay, closeExample]);
+
   const [formationChecked, setFormationChecked] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_FORMATION);
@@ -255,6 +304,7 @@ export default function TradeValidatorView() {
                 card={card}
                 checked={activeChecked}
                 onToggle={(itemId) => handleTabToggle(activeTab, itemId)}
+                onExampleOpen={openExample}
               />
             ))}
           </div>
@@ -272,7 +322,13 @@ export default function TradeValidatorView() {
                 <div key={sub.id} className="tv-setup-cat">
                   <h4 className="tv-setup-cat-name">{sub.title}</h4>
                   {sub.items.map((item) => (
-                    <ChecklistItemRow key={item.id} item={item} checked={formationChecked} onToggle={handleFormationToggle} />
+                    <ChecklistItemRow
+                      key={item.id}
+                      item={item}
+                      checked={formationChecked}
+                      onToggle={handleFormationToggle}
+                      onExampleOpen={openExample}
+                    />
                   ))}
                 </div>
               ))}
@@ -281,6 +337,34 @@ export default function TradeValidatorView() {
               </p>
             </div>
           </section>
+        )}
+
+        {exampleOverlay && (
+          <div
+            className="tv-example-lightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Example image"
+            onClick={closeExample}
+          >
+            <button type="button" className="tv-example-lightbox-close" onClick={closeExample} aria-label="Close">
+              ×
+            </button>
+            <div className="tv-example-lightbox-inner" onClick={(e) => e.stopPropagation()}>
+              {exampleOverlay.src ? (
+                <img src={exampleOverlay.src} alt={exampleOverlay.label} className="tv-example-lightbox-img" />
+              ) : (
+                <div className="tv-example-lightbox-placeholder">
+                  <FaImage className="tv-example-lightbox-placeholder-icon" aria-hidden />
+                  <p>No example image for this line yet.</p>
+                  <p className="tv-example-lightbox-hint">
+                    When an image is added, it will show here full size so traders can see what this checklist item refers to.
+                  </p>
+                </div>
+              )}
+              <p className="tv-example-lightbox-caption">{exampleOverlay.label}</p>
+            </div>
+          </div>
         )}
 
         <div className="tv-bottom-bar">

@@ -302,12 +302,150 @@
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
+.tv-checklist-item-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  cursor: pointer;
+  margin: 0;
+}
 .tv-item-label {
   flex: 1;
+  min-width: 0;
+}
+.tv-example-thumb {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--tv-border-accent);
+  background: rgba(139, 92, 246, 0.12);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.tv-example-thumb:hover {
+  border-color: rgba(139, 92, 246, 0.65);
+  box-shadow: 0 0 0 2px var(--tv-accent-soft);
+  transform: scale(1.04);
+}
+.tv-example-thumb:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--tv-accent);
+}
+.tv-example-thumb--empty {
+  color: rgba(139, 92, 246, 0.55);
+}
+.tv-example-thumb--empty .tv-example-thumb-icon {
+  width: 16px;
+  height: 16px;
+}
+.tv-example-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .tv-item-pct {
   font-size: 0.85rem;
   color: var(--tv-muted);
+  flex-shrink: 0;
+}
+
+/* Example image lightbox */
+.tv-example-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px 32px;
+  animation: tv-fade-in 0.2s ease;
+}
+@keyframes tv-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.tv-example-lightbox-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10051;
+  transition: background 0.15s;
+}
+.tv-example-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.tv-example-lightbox-inner {
+  max-width: min(920px, 100%);
+  max-height: min(85vh, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.tv-example-lightbox-img {
+  max-width: 100%;
+  max-height: min(72vh, 800px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+.tv-example-lightbox-placeholder {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 32px 24px;
+  max-width: 420px;
+}
+.tv-example-lightbox-placeholder-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+  color: rgba(139, 92, 246, 0.9);
+}
+.tv-example-lightbox-placeholder p {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+}
+.tv-example-lightbox-hint {
+  font-size: 0.8rem !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  line-height: 1.45;
+}
+.tv-example-lightbox-hint code {
+  font-size: 0.72rem;
+  background: rgba(139, 92, 246, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.tv-example-lightbox-caption {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  max-width: 560px;
+  line-height: 1.4;
 }
 
 /* Main cards – Market Structure, Entry Confirmation, Risk Management */
@@ -1046,15 +1184,23 @@
 
 /* Checklist items – polished rows */
 .tv-checklist-item {
+  display: flex;
+  align-items: center;
   padding: 11px 14px;
   margin: 0 -14px;
   border-radius: 8px;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   font-size: 0.86rem;
-  gap: 12px;
+  gap: 10px;
   transition: background 0.15s, border-color 0.15s;
 }
 .tv-checklist-item:hover { background: rgba(139,92,246,0.07); }
+.tv-checklist-tab-cards .tv-example-thumb,
+.tv-setup-block .tv-example-thumb {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+}
 .tv-checkmark {
   width: 18px;
   height: 18px;
@@ -1074,6 +1220,7 @@
   padding: 2px 7px;
   border-radius: 4px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Setup formation – remove plain placeholder chart box */

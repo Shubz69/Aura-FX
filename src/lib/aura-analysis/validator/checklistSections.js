@@ -2,6 +2,9 @@
  * Trade Validator – Two-layer checklist sections.
  * Layer 1: Core Confluence Checklist
  * Layer 2: Setup Formation Checklist
+ *
+ * Optional on any item: exampleImageSrc (public URL) for setup-formation rows —
+ * same thumbnail + lightbox behaviour as execution checklist (TradeValidatorView).
  */
 
 const BASE_IMAGE = '/assets/trading-checklist';
