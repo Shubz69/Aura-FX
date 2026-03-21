@@ -144,8 +144,9 @@ const getDbConnection = async (_retry = false) => {
       pool = null;
     }
     if (!_retry && isTooManyConnectionsError(error)) {
-      await resetPoolAfterConnectionStorm();
-      await sleep(400);
+      // Do not end the pool here: it causes cascading "Pool is closed" across concurrent
+      // serverless invocations on the same instance while the DB is already at max_connections.
+      await sleep(400 + Math.floor(Math.random() * 400));
       return getDbConnection(true);
     }
     console.error('Error getting database connection:', error.message);
@@ -208,8 +209,7 @@ const executeQuery = async (query, params = [], options = {}) => {
     }
 
     if (!isRetry && isTooManyConnectionsError(error)) {
-      await resetPoolAfterConnectionStorm();
-      await sleep(400);
+      await sleep(400 + Math.floor(Math.random() * 400));
       return executeQuery(query, params, { ...options, _connectionRetry: true });
     }
     if (!isRetry && isConnectionError(error)) {

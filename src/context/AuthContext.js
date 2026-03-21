@@ -315,9 +315,11 @@ export const AuthProvider = ({ children }) => {
   // Login function - supports both email/password login and token-based login from MFA
   const login = async (emailOrToken, passwordOrRole, userData = null) => {
     try {
-      setLoading(true);
+      // Do not toggle global `loading` here: AppRoutes replaces the entire tree with
+      // a spinner while loading is true, which unmounts Login/Register and drops their
+      // local error state when login fails. Bootstrap-only loading stays in checkAuth.
       setError(null);
-      
+
       // Check which login method is being used
       if (userData) {
         const token = emailOrToken;
@@ -555,15 +557,13 @@ export const AuthProvider = ({ children }) => {
         }
       }
       throw wrappedError;
-    } finally {
-      setLoading(false);
     }
   };
 
   // Register function
   const register = async (userData) => {
     try {
-      setLoading(true);
+      // Same as login: avoid unmounting Register while the request is in flight.
       setError(null);
       
       const response = await Api.register(userData);
@@ -606,8 +606,6 @@ export const AuthProvider = ({ children }) => {
       console.error('Registration error:', error);
       setError(Api.handleApiError(error));
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 

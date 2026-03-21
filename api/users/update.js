@@ -2,6 +2,7 @@
 require('../utils/suppress-warnings');
 const { getDbConnection, executeQuery, getDbPool } = require('../db');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
+const { ensureUsersSchema, buildUserSelectFields } = require('../utils/ensure-users-schema');
 
 // Use shared pool from api/db.js – do not create new connections (causes "Too many connections")
 // Always release with connection.release() when done (never .end())
@@ -104,71 +105,13 @@ module.exports = async (req, res) => {
   // Handle PUT request for updating user profile
   if (req.method === 'PUT') {
     try {
+      await ensureUsersSchema();
       const db = await getDbConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
       }
 
       try {
-        // Ensure all necessary columns exist
-        const ensureColumn = async (columnDefinition, testQuery) => {
-          try {
-            await db.execute(testQuery);
-          } catch (err) {
-            await db.execute(`ALTER TABLE users ADD COLUMN ${columnDefinition}`);
-          }
-        };
-
-        await ensureColumn('name VARCHAR(255)', 'SELECT name FROM users LIMIT 1');
-        await ensureColumn('username VARCHAR(255)', 'SELECT username FROM users LIMIT 1');
-        await ensureColumn('email VARCHAR(255)', 'SELECT email FROM users LIMIT 1');
-        await ensureColumn('phone VARCHAR(50)', 'SELECT phone FROM users LIMIT 1');
-        await ensureColumn('address TEXT', 'SELECT address FROM users LIMIT 1');
-        await ensureColumn('bio TEXT', 'SELECT bio FROM users LIMIT 1');
-        await ensureColumn('avatarColor VARCHAR(50)', 'SELECT avatarColor FROM users LIMIT 1');
-        
-        // Avatar column - ensure it's TEXT (for base64 images which can be very long)
-        try {
-          const [columns] = await db.execute(`
-            SELECT COLUMN_TYPE 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = ? 
-            AND TABLE_NAME = 'users' 
-            AND COLUMN_NAME = 'avatar'
-          `, [process.env.MYSQL_DATABASE]);
-          
-          if (columns.length > 0) {
-            const columnType = columns[0].COLUMN_TYPE.toLowerCase();
-            // If it's VARCHAR (not TEXT), convert it to TEXT to handle long base64 strings
-            if (columnType.includes('varchar') && !columnType.includes('text')) {
-              try {
-                await db.execute('ALTER TABLE users MODIFY COLUMN avatar TEXT');
-                console.log('Avatar column converted to TEXT');
-              } catch (alterError) {
-                console.warn('Could not convert avatar column to TEXT:', alterError.message);
-              }
-            }
-          } else {
-            // Column doesn't exist, create it as TEXT
-            await db.execute('ALTER TABLE users ADD COLUMN avatar TEXT');
-            console.log('Avatar column created as TEXT');
-          }
-        } catch (e) {
-          // If we can't check, try to alter to TEXT to be safe for base64
-          try {
-            await db.execute('ALTER TABLE users MODIFY COLUMN avatar TEXT');
-            console.log('Avatar column modified to TEXT');
-          } catch (alterError) {
-            // If modification fails, try to add it
-            try {
-              await db.execute('ALTER TABLE users ADD COLUMN avatar TEXT');
-              console.log('Avatar column added as TEXT');
-            } catch (addError) {
-              console.warn('Could not modify avatar column:', addError.message);
-            }
-          }
-        }
-
        // Get update data from request body
 const { name, username, email, phone, address, bio, avatar, updateUsername, avatarColor } = req.body || {};
 
@@ -237,13 +180,6 @@ const { name, username, email, phone, address, bio, avatar, updateUsername, avat
           
           // Check 30-day cooldown
           try {
-            // Ensure last_username_change column exists
-            try {
-              await db.execute('SELECT last_username_change FROM users LIMIT 1');
-            } catch (e) {
-              await db.execute('ALTER TABLE users ADD COLUMN last_username_change DATETIME DEFAULT NULL');
-            }
-            
             // Get current user data
             const [currentUser] = await db.execute(
               'SELECT username, last_username_change FROM users WHERE id = ?',
@@ -366,10 +302,6 @@ if (req.body.banner !== undefined) {
           releaseDb(db);
           return res.status(400).json({ success: false, message: 'No fields to update' });
         }
-if (avatarColor !== undefined) {
-  updates.push('avatarColor = ?');
-  values.push(cleanValue(avatarColor));
-}
         // Add userId to values
         values.push(userId);
 
@@ -420,59 +352,8 @@ const [updatedRows] = await db.execute(
           return res.status(500).json({ success: false, message: 'Database connection error' });
         }
 
-        // Use executeQuery per statement so connections return to the pool between queries (serverless-safe).
-        // Ensure last_username_change column exists
-        try {
-          await executeQuery('SELECT last_username_change FROM users LIMIT 1');
-        } catch (e) {
-          await executeQuery('ALTER TABLE users ADD COLUMN last_username_change DATETIME DEFAULT NULL');
-        }
-
-        // Ensure created_at column exists for public profiles
-        try {
-          await executeQuery('SELECT created_at FROM users LIMIT 1');
-        } catch (e) {
-          await executeQuery('ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP');
-        }
-
-        // Ensure login_streak column exists
-        try {
-          await executeQuery('SELECT login_streak FROM users LIMIT 1');
-        } catch (e) {
-          await executeQuery('ALTER TABLE users ADD COLUMN login_streak INT DEFAULT 0');
-        }
-
-        // Check if banner column exists
-        let hasBanner = false;
-        try {
-          await executeQuery('SELECT banner FROM users LIMIT 1');
-          hasBanner = true;
-        } catch (e) {
-          // Banner column doesn't exist, will be null
-        }
-
-        // Check if last_seen column exists
-        let hasLastSeen = false;
-        try {
-          await executeQuery('SELECT last_seen FROM users LIMIT 1');
-          hasLastSeen = true;
-        } catch (e) {
-          // last_seen column doesn't exist
-        }
-        // Check if avatarColor column exists
-        let hasAvatarColor = false;
-        try {
-          await executeQuery('SELECT avatarColor FROM users LIMIT 1');
-          hasAvatarColor = true;
-        } catch (e) {
-          // avatarColor column doesn't exist yet
-        }
-
-        // Build select fields dynamically based on what columns exist
-        const baseFields = 'id, username, email, name, phone, address, bio, avatar, role, level, xp, login_streak, last_username_change, created_at';
-        const fieldsWithBanner = hasBanner ? `${baseFields}, banner` : baseFields;
-        const fieldsWithAvatarColor = hasAvatarColor ? `${fieldsWithBanner}, avatarColor` : fieldsWithBanner;
-        const selectFields = hasLastSeen ? `${fieldsWithAvatarColor}, last_seen` : fieldsWithAvatarColor;
+        const columnSet = await ensureUsersSchema();
+        const { selectFields, hasBanner, hasLastSeen, hasAvatarColor } = buildUserSelectFields(columnSet);
 
         let rows;
         try {

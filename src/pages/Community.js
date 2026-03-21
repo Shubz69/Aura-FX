@@ -514,268 +514,6 @@ const messagesContainerRef = useRef(null);
   const [showPptxModal, setShowPptxModal] = useState(false);
     const [selectedPptx, setSelectedPptx] = useState(null);
 
-// Memoized message component to prevent re-renders
-const MessageItem = React.memo(({ 
-    message, 
-    isGrouped, 
-    onContextMenu, 
-    onAvatarClick, 
-    onDelete, 
-    canDelete,
-    entitlements,
-    hasReadWelcome,
-    onWelcomeAcknowledgment,
-    messageReactions,
-    onReactionClick,
-    formatTimeOnly,
-    formatTimestamp,
-    renderMessageContent,
-    PptxPreview,
-    handleFileClick,
-    getDisplayFileName
-}) => {
-    return (
-        <div 
-            id={`message-${message.id}`}
-            className={`message-item ${isGrouped ? 'grouped' : ''}`}
-            onContextMenu={onContextMenu}
-        >
-            {!isGrouped && (
-                <div 
-                    className="message-avatar" 
-                    onClick={onAvatarClick}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.1)';
-                        e.currentTarget.style.opacity = '0.9';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.opacity = '1';
-                    }}
-                >
-                    {resolveAvatarUrl(message.sender?.avatar, window.location?.origin) ? (
-                        <img 
-                            src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} 
-                            alt="" 
-                            loading="lazy" 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                    ) : (
-                        <div style={{ 
-                            width: '100%', 
-                            height: '100%', 
-                            borderRadius: '50%', 
-                            background: getPlaceholderColor(message.sender?.id ?? message.sender?.username ?? message.userId) 
-                        }} />
-                    )}
-                </div>
-            )}
-            
-            <div className="message-content">
-                {!isGrouped && (
-                    <div className="message-header-info community-message-header-with-time">
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
-                            <span 
-                                className="message-author"
-                                onClick={onAvatarClick}
-                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                            >
-                                {message.sender?.username || 'Unknown'}
-                            </span>
-                            {message.edited && (
-                                <span style={{ 
-                                    fontSize: '0.6875rem', 
-                                    color: '#72767D',
-                                    fontStyle: 'italic'
-                                }}>
-                                    (edited)
-                                </span>
-                            )}
-                        </div>
-                        <span className="message-timestamp message-time-right" title={formatTimestamp(message.timestamp)}>
-                            {formatTimeOnly(message.timestamp || message.createdAt || message.created_at)}
-                        </span>
-                        
-                        {!message.isDeleted && message.content !== '[deleted]' && canDelete && (
-                            <button
-                                onClick={() => onDelete(message.id)}
-                                className="message-delete-btn"
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: '#f87171',
-                                    cursor: 'pointer',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    opacity: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    fontSize: '0.85rem',
-                                    transition: 'all 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.opacity = 1;
-                                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.opacity = 0;
-                                    e.currentTarget.style.background = 'transparent';
-                                }}
-                                title="Delete message"
-                            >
-                                <FaTrash size={12} />
-                            </button>
-                        )}
-                    </div>
-                )}
-                
-                {/* Delete button for grouped messages */}
-                {isGrouped && !message.isDeleted && message.content !== '[deleted]' && canDelete && (
-                    <div className="message-delete-grouped" style={{ 
-                        position: 'absolute', 
-                        right: '16px', 
-                        top: '2px',
-                        opacity: 0,
-                        transition: 'opacity 0.2s ease'
-                    }}>
-                        <button
-                            onClick={() => onDelete(message.id)}
-                            className="message-delete-btn"
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#f87171',
-                                cursor: 'pointer',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '0.85rem',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'transparent';
-                            }}
-                            title="Delete message"
-                        >
-                            <FaTrash size={12} />
-                        </button>
-                    </div>
-                )}
-                
-                <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
-                    {message.isDeleted || message.content === '[deleted]' ? (
-                        <span style={{ color: '#72767D', fontStyle: 'italic', opacity: 0.7 }}>
-                            [message deleted]
-                        </span>
-                    ) : message.isWelcomeMessage ? (
-                        message.content.split('\n').map((line, idx) => {
-                            const trimmedLine = line.trim();
-                            if (trimmedLine.startsWith('## ')) {
-                                return <h3 key={idx} style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '16px', marginBottom: '10px', color: 'var(--primary)' }}>{trimmedLine.substring(3)}</h3>;
-                            }
-                            if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && trimmedLine.length > 4) {
-                                return <div key={idx} style={{ fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>{trimmedLine.replace(/\*\*/g, '')}</div>;
-                            }
-                            if (trimmedLine === '') {
-                                return <br key={idx} />;
-                            }
-                            return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
-                        })
-                    ) : (
-                        renderMessageContent(message.content, message.file)
-                    )}
-                </div>
-                
-                {message.isWelcomeMessage && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
-                    <div style={{
-                        marginTop: '20px',
-                        padding: '16px',
-                        background: 'rgba(99, 102, 241, 0.1)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease'
-                    }}
-                    onClick={onWelcomeAcknowledgment}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
-                    >
-                        <span style={{ fontSize: '1.5rem' }}>✅</span>
-                        <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
-                    </div>
-                )}
-                
-                {message.file && message.file.preview && (
-                    (() => {
-                        const isPptx = message.file.type?.includes('presentation') || 
-                                       message.file.type?.includes('powerpoint') || 
-                                       message.file.name?.toLowerCase().endsWith('.pptx') ||
-                                       message.file.name?.toLowerCase().endsWith('.ppt') ||
-                                       message.file.name?.toLowerCase().endsWith('.odp');
-                        
-                        if (isPptx) {
-                            return (
-                                <PptxPreview 
-                                    file={message.file}
-                                    onClick={() => handleFileClick(message.file)}
-                                />
-                            );
-                        }
-                        
-                        if (message.file.type?.startsWith('image/')) {
-                            return (
-                                <div 
-                                    className="message-attachment clickable-file"
-                                    onClick={() => handleFileClick(message.file)}
-                                >
-                                    <img 
-                                        src={message.file.preview} 
-                                        alt={getDisplayFileName(message.file.name, message.file.type)}
-                                        loading="lazy"
-                                    />
-                                </div>
-                            );
-                        }
-                        
-                        return null;
-                    })()
-                )}
-                
-                {messageReactions[message.id] && Object.keys(messageReactions[message.id]).length > 0 && (
-                    <div className="message-reactions">
-                        {Object.entries(messageReactions[message.id]).map(([emoji, count]) => (
-                            <button
-                                key={emoji}
-                                className="reaction-button"
-                                onClick={() => onReactionClick(message.id, emoji)}
-                            >
-                                <span>{emoji}</span>
-                                <span>{count}</span>
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}, (prevProps, nextProps) => {
-    // Custom comparison to prevent re-renders
-    return prevProps.message.id === nextProps.message.id &&
-           prevProps.message.content === nextProps.message.content &&
-           prevProps.message.edited === nextProps.message.edited &&
-           prevProps.message.isDeleted === nextProps.message.isDeleted &&
-           prevProps.isGrouped === nextProps.isGrouped &&
-           prevProps.hasReadWelcome === nextProps.hasReadWelcome &&
-           JSON.stringify(prevProps.messageReactions[prevProps.message.id]) === 
-           JSON.stringify(nextProps.messageReactions[nextProps.message.id]);
-});
     // Function to fetch latest user data from API (including XP and level)
     const fetchLatestUserData = useCallback(async (userId) => {
         if (!userId) return null;
@@ -4555,12 +4293,13 @@ setMessages(prev => {
     }, [userId, isAdminUser, isSuperAdminUser, storedUser]);
 
     const handleDeleteMessage = (messageId) => {
-        if (!selectedChannel) {
+        const channel = selectedChannelRef.current;
+        if (!channel) {
             return;
         }
 
-        // Find the message to show in confirmation
-        const messageToDelete = messages.find(msg => msg.id === messageId);
+        // Find the message to show in confirmation (ref = latest list when handler is stale inside memoized JSX)
+        const messageToDelete = messagesRef.current.find(msg => msg.id === messageId);
         if (!messageToDelete) {
             return;
         }
@@ -4576,7 +4315,7 @@ setMessages(prev => {
             messageId,
             messageContent: messageToDelete.content,
             author: messageToDelete.sender?.username || 'Unknown',
-            isOwnMessage: String(messageToDelete.userId || messageToDelete.sender?.id) === String(userId)
+            isOwnMessage: String(messageToDelete.userId || messageToDelete.sender?.id) === String(userId),
         });
     };
 
@@ -4898,6 +4637,472 @@ useEffect(() => {
         setShowSubscriptionModal(false);
         window.location.href = paymentLink;
     };
+
+    const renderedDateGroupedMessages = useMemo(() => messagesWithDateGroups.map((item, index) => {
+                                    if (item.type === 'date') {
+                                        return (
+                                            <div key={`date-${item.dateKey}`} className="community-date-separator">
+                                                <span className="community-date-separator-label">{item.label}</span>
+                                            </div>
+                                        );
+                                    }
+                                    const message = item.message;
+                                    const prevMessage = (() => {
+                                        for (let i = index - 1; i >= 0; i--) {
+                                            const prev = messagesWithDateGroups[i];
+                                            if (prev && prev.type === 'message') return prev.message;
+                                        }
+                                        return null;
+                                    })();
+                                    const isGrouped = prevMessage &&
+                                        prevMessage.sender?.username === message.sender?.username &&
+                                        !message.isWelcomeMessage &&
+                                        !prevMessage.isWelcomeMessage &&
+                                        (new Date(message.timestamp || message.created_at) - new Date(prevMessage.timestamp || prevMessage.created_at)) < 300000;
+
+                                    return (
+                                        <div 
+                                            key={message.id || index}
+                                            id={`message-${message.id}`}
+                                            className={`message-item ${isGrouped ? 'grouped' : ''}`}
+                                            onContextMenu={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setContextMenu({
+                                                    x: e.clientX,
+                                                    y: e.clientY,
+                                                    messageId: message.id
+                                                });
+                                            }}
+                                            onTouchStart={(e) => {
+                                                // Long press for touch devices
+                                                if (!e.currentTarget) return;
+                                                
+                                                const touch = e.touches[0];
+                                                if (!touch) return;
+                                                
+                                                const startX = touch.clientX;
+                                                const startY = touch.clientY;
+                                                const messageId = message.id;
+                                                const targetElement = e.currentTarget;
+                                                
+                                                const longPressTimer = setTimeout(() => {
+                                                    // Show context menu on long press
+                                                    setContextMenu({
+                                                        x: startX,
+                                                        y: startY,
+                                                        messageId: messageId
+                                                    });
+                                                    // Prevent default touch behavior only if cancelable
+                                                    if (e.cancelable) {
+                                                        e.preventDefault();
+                                                    }
+                                                }, 500); // 500ms long press
+                                                
+                                                // Store timer on element for cleanup
+                                                targetElement._longPressTimer = longPressTimer;
+                                                
+                                                // Clean up on touch end/move
+                                                const handleTouchEnd = () => {
+                                                    if (targetElement && targetElement._longPressTimer) {
+                                                        clearTimeout(targetElement._longPressTimer);
+                                                        targetElement._longPressTimer = null;
+                                                    }
+                                                    document.removeEventListener('touchend', handleTouchEnd);
+                                                    document.removeEventListener('touchmove', handleTouchMove);
+                                                };
+                                                
+                                                const handleTouchMove = (moveEvent) => {
+                                                    const moveTouch = moveEvent.touches[0] || moveEvent.changedTouches[0];
+                                                    if (!moveTouch) return;
+                                                    
+                                                    const moveX = moveTouch.clientX;
+                                                    const moveY = moveTouch.clientY;
+                                                    
+                                                    // Cancel long press if user moved too much
+                                                    if (Math.abs(moveX - startX) > 10 || Math.abs(moveY - startY) > 10) {
+                                                        if (targetElement && targetElement._longPressTimer) {
+                                                            clearTimeout(targetElement._longPressTimer);
+                                                            targetElement._longPressTimer = null;
+                                                        }
+                                                    }
+                                                };
+                                                
+                                                document.addEventListener('touchend', handleTouchEnd, { once: true, passive: true });
+                                                document.addEventListener('touchmove', handleTouchMove, { once: true, passive: true });
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                // Clean up any pending long press timer
+                                                if (e.currentTarget && e.currentTarget._longPressTimer) {
+                                                    clearTimeout(e.currentTarget._longPressTimer);
+                                                    e.currentTarget._longPressTimer = null;
+                                                }
+                                            }}
+                                            style={{ cursor: 'context-menu' }}
+                                        >
+                                            {!isGrouped && (
+                                                <div 
+                                                    className="message-avatar" 
+                                                    onClick={async () => {
+                                                        const userId = message.sender?.id || message.userId;
+                                                        if (!userId) return;
+                                                        if (String(userId).toLowerCase() === 'system') {
+                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                            setShowProfileModal(true);
+                                                            return;
+                                                        }
+                                                        try {
+                                                            const baseUrl = window.location.origin;
+                                                            const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
+                                                            if (response.ok) {
+                                                                const data = await response.json();
+                                                                setProfileModalData(data);
+                                                                setShowProfileModal(true);
+                                                            } else {
+                                                                setProfileModalData(message.sender || { id: userId });
+                                                                setShowProfileModal(true);
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('Error fetching profile:', error);
+                                                            setProfileModalData(message.sender || { id: userId });
+                                                            setShowProfileModal(true);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        borderRadius: '50%',
+                                                        overflow: 'hidden',
+                                                        flexShrink: 0,
+                                                        background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: 'white',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.875rem',
+                                                        cursor: 'pointer',
+                                                        transition: 'transform 0.2s ease, opacity 0.2s ease',
+                                                        position: 'absolute',
+                                                        left: '16px',
+                                                        top: '0.125rem',
+                                                        zIndex: 1
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                                        e.currentTarget.style.opacity = '0.9';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                        e.currentTarget.style.opacity = '1';
+                                                    }}
+                                                >
+                                                    {resolveAvatarUrl(message.sender?.avatar, window.location?.origin) ? (
+                                                        <img src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
+                                                    ) : (
+                                                        <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(message.sender?.id ?? message.sender?.username ?? message.userId), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
+                                                    )}
+                                                </div>
+                                            )}
+                                            <div className="message-content">
+                                                {!isGrouped && (
+                                                    <div className="message-header-info community-message-header-with-time">
+                                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
+                                                            <span 
+                                                                className="message-author"
+                                                                onClick={async () => {
+                                                                    const userId = message.sender?.id || message.userId;
+                                                                    if (!userId) return;
+                                                                    if (String(userId).toLowerCase() === 'system') {
+                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
+                                                                        setShowProfileModal(true);
+                                                                        return;
+                                                                    }
+                                                                    try {
+                                                                        const baseUrl = window.location.origin;
+                                                                        const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
+                                                                        if (response.ok) {
+                                                                            const data = await response.json();
+                                                                            setProfileModalData(data);
+                                                                            setShowProfileModal(true);
+                                                                        } else {
+                                                                            setProfileModalData(message.sender || { id: userId });
+                                                                            setShowProfileModal(true);
+                                                                        }
+                                                                    } catch (error) {
+                                                                        console.error('Error fetching profile:', error);
+                                                                        setProfileModalData(message.sender || { id: userId });
+                                                                        setShowProfileModal(true);
+                                                                    }
+                                                                }}
+                                                                style={{
+                                                                    cursor: 'pointer',
+                                                                    transition: 'color 0.2s ease',
+                                                                    fontWeight: 500
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.textDecoration = 'underline';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.textDecoration = 'none';
+                                                                }}
+                                                            >
+                                                                {message.sender?.username || 'Unknown'}
+                                                            </span>
+                                                            {message.edited && (
+                                                                <span style={{ 
+                                                                    fontSize: '0.6875rem', 
+                                                                    color: '#72767D',
+                                                                    fontStyle: 'italic',
+                                                                    lineHeight: '1.375'
+                                                                }}>
+                                                                    (edited)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="message-timestamp message-time-right" title={formatTimestamp(message.timestamp)}>
+                                                            {formatTimeOnly(message.timestamp || message.createdAt || message.created_at)}
+                                                        </span>
+                                                        {/* Delete button - shown for message owner, admin, or moderator (not for deleted messages) */}
+                                                        {!message.isDeleted && message.content !== '[deleted]' && canDeleteMessage(message) && (
+                                                            <button
+                                                                onClick={() => handleDeleteMessage(message.id)}
+                                                                className="message-delete-btn"
+                                                                style={{
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    color: '#f87171',
+                                                                    cursor: 'pointer',
+                                                                    padding: '4px 8px',
+                                                                    borderRadius: '4px',
+                                                                    opacity: 0,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px',
+                                                                    fontSize: '0.85rem',
+                                                                    transition: 'all 0.2s ease'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.opacity = 1;
+                                                                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.opacity = 0;
+                                                                    e.currentTarget.style.background = 'transparent';
+                                                                }}
+                                                                title="Delete message"
+                                                            >
+                                                                <FaTrash size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {/* Delete button for grouped messages */}
+                                                {isGrouped && !message.isDeleted && message.content !== '[deleted]' && canDeleteMessage(message) && (
+                                                    <div className="message-delete-grouped" style={{ 
+                                                        position: 'absolute', 
+                                                        right: '16px', 
+                                                        top: '2px',
+                                                        opacity: 0,
+                                                        transition: 'opacity 0.2s ease'
+                                                    }}>
+                                                        <button
+                                                            onClick={() => handleDeleteMessage(message.id)}
+                                                            className="message-delete-btn"
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: '#f87171',
+                                                                cursor: 'pointer',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.85rem',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'transparent';
+                                                            }}
+                                                            title="Delete message"
+                                                        >
+                                                            <FaTrash size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                        <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
+    {/* Deleted message */}
+    {message.isDeleted || message.content === '[deleted]' ? (
+        <span style={{ 
+            color: '#72767D', 
+            fontStyle: 'italic',
+            opacity: 0.7
+        }}>
+            [message deleted]
+        </span>
+    ) : message.isWelcomeMessage ? (
+        message.content.split('\n').map((line, idx) => {
+            const trimmedLine = line.trim();
+            // Format markdown-style headers
+            if (trimmedLine.startsWith('## ')) {
+                return <h3 key={idx} style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '16px', marginBottom: '10px', color: 'var(--primary)' }}>{trimmedLine.substring(3)}</h3>;
+            }
+            // Format bold text (lines that start and end with **)
+            if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && trimmedLine.length > 4) {
+                return <div key={idx} style={{ fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>{trimmedLine.replace(/\*\*/g, '')}</div>;
+            }
+            // Empty lines
+            if (trimmedLine === '') {
+                return <br key={idx} />;
+            }
+            // Regular text lines
+            return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
+        })
+    ) : (
+        renderMessageContent(message.content, message.file)
+    )}
+</div>
+                                            
+                                            {message.isWelcomeMessage && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
+                                                <div style={{
+                                                    marginTop: '20px',
+                                                    padding: '16px',
+                                                    background: 'rgba(99, 102, 241, 0.1)',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease'
+                                                }}
+                                                onClick={handleWelcomeAcknowledgment}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
+                                                >
+                                                    <span style={{ fontSize: '1.5rem' }}>✅</span>
+                                                    <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
+                                                </div>
+                                            )}
+                                                                                    {message.file && message.file.preview && (
+    // Check for PPTX files first
+    (() => {
+        const isPptx = message.file.type?.includes('presentation') || 
+                       message.file.type?.includes('powerpoint') || 
+                       message.file.name?.toLowerCase().endsWith('.pptx') ||
+                       message.file.name?.toLowerCase().endsWith('.ppt') ||
+                       message.file.name?.toLowerCase().endsWith('.odp');
+        
+        if (isPptx) {
+            return (
+                <PptxPreview 
+                    key={`pptx-${message.id}-${message.file.name}`} // Stable key
+                    file={message.file}
+                    onClick={() => handleFileClick(message.file)}
+                />
+            );
+        }
+        
+        if (message.file.type?.startsWith('image/')) {
+            return (
+                <div 
+                    key={`img-${message.id}`}
+                    className="message-attachment clickable-file"
+                    onClick={() => handleFileClick(message.file)}
+                    style={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        marginTop: '8px',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: 'var(--bg-elevated)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    }}
+                >
+                    <img 
+                        src={message.file.preview} 
+                        alt={getDisplayFileName(message.file.name, message.file.type)}
+                        loading="lazy"
+                        style={{
+                            width: 'auto',
+                            maxWidth: '180px',
+                            maxHeight: '180px',
+                            objectFit: 'contain',
+                            display: 'block',
+                            background: 'var(--bg-tertiary)'
+                        }}
+                    />
+                </div>
+            );
+        }
+        
+        return null;
+    })()
+)}
+                                            
+                                            {/* Emoji Reactions - At the bottom of message */}
+                                            {messageReactions[message.id] && Object.keys(messageReactions[message.id]).length > 0 && (
+                                                <div className="message-reactions" style={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: '6px',
+                                                    marginTop: '8px',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    {Object.entries(messageReactions[message.id]).map(([emoji, count]) => (
+                                                        <button
+                                                            key={emoji}
+                                                            className="reaction-button"
+                                                            onClick={() => {
+                                                                // Toggle reaction
+                                                                setMessageReactions(prev => {
+                                                                    const current = prev[message.id] || {};
+                                                                    const newCount = (current[emoji] || 0) - 1;
+                                                                    if (newCount <= 0) {
+                                                                        const { [emoji]: removed, ...rest } = current;
+                                                                        if (Object.keys(rest).length === 0) {
+                                                                            const { [message.id]: removedMsg, ...restMsgs } = prev;
+                                                                            return restMsgs;
+                                                                        }
+                                                                        return { ...prev, [message.id]: rest };
+                                                                    }
+                                                                    return { ...prev, [message.id]: { ...current, [emoji]: newCount } };
+                                                                });
+                                                            }}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                padding: '4px 8px',
+                                                                background: 'rgba(255, 255, 255, 0.1)',
+                                                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                                borderRadius: '12px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '0.85rem',
+                                                                color: '#ffffff',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                                            }}
+                                                        >
+                                                            <span>{emoji}</span>
+                                                            <span>{count}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    );
+    }), [messagesWithDateGroups, messageReactions, hasReadWelcome, entitlements, userId, isAdminUser, isSuperAdminUser, storedUser?.role, editingMessageId, selectedChannel?.id]);
 
     // Render
 // Always render something to prevent white screen, even during initialization
@@ -6375,471 +6580,7 @@ if (!isAuthenticated && !hasToken) {
             ))}
         </div>
                             ) : (
-                                messagesWithDateGroups.map((item, index) => {
-                                    if (item.type === 'date') {
-                                        return (
-                                            <div key={`date-${item.dateKey}`} className="community-date-separator">
-                                                <span className="community-date-separator-label">{item.label}</span>
-                                            </div>
-                                        );
-                                    }
-                                    const message = item.message;
-                                    const prevMessage = (() => {
-                                        for (let i = index - 1; i >= 0; i--) {
-                                            const prev = messagesWithDateGroups[i];
-                                            if (prev && prev.type === 'message') return prev.message;
-                                        }
-                                        return null;
-                                    })();
-                                    const isGrouped = prevMessage &&
-                                        prevMessage.sender?.username === message.sender?.username &&
-                                        !message.isWelcomeMessage &&
-                                        !prevMessage.isWelcomeMessage &&
-                                        (new Date(message.timestamp || message.created_at) - new Date(prevMessage.timestamp || prevMessage.created_at)) < 300000;
-
-                                    return (
-                                        <div 
-                                            key={message.id || index}
-                                            id={`message-${message.id}`}
-                                            className={`message-item ${isGrouped ? 'grouped' : ''}`}
-                                            onContextMenu={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                setContextMenu({
-                                                    x: e.clientX,
-                                                    y: e.clientY,
-                                                    messageId: message.id
-                                                });
-                                            }}
-                                            onTouchStart={(e) => {
-                                                // Long press for touch devices
-                                                if (!e.currentTarget) return;
-                                                
-                                                const touch = e.touches[0];
-                                                if (!touch) return;
-                                                
-                                                const startX = touch.clientX;
-                                                const startY = touch.clientY;
-                                                const messageId = message.id;
-                                                const targetElement = e.currentTarget;
-                                                
-                                                const longPressTimer = setTimeout(() => {
-                                                    // Show context menu on long press
-                                                    setContextMenu({
-                                                        x: startX,
-                                                        y: startY,
-                                                        messageId: messageId
-                                                    });
-                                                    // Prevent default touch behavior only if cancelable
-                                                    if (e.cancelable) {
-                                                        e.preventDefault();
-                                                    }
-                                                }, 500); // 500ms long press
-                                                
-                                                // Store timer on element for cleanup
-                                                targetElement._longPressTimer = longPressTimer;
-                                                
-                                                // Clean up on touch end/move
-                                                const handleTouchEnd = () => {
-                                                    if (targetElement && targetElement._longPressTimer) {
-                                                        clearTimeout(targetElement._longPressTimer);
-                                                        targetElement._longPressTimer = null;
-                                                    }
-                                                    document.removeEventListener('touchend', handleTouchEnd);
-                                                    document.removeEventListener('touchmove', handleTouchMove);
-                                                };
-                                                
-                                                const handleTouchMove = (moveEvent) => {
-                                                    const moveTouch = moveEvent.touches[0] || moveEvent.changedTouches[0];
-                                                    if (!moveTouch) return;
-                                                    
-                                                    const moveX = moveTouch.clientX;
-                                                    const moveY = moveTouch.clientY;
-                                                    
-                                                    // Cancel long press if user moved too much
-                                                    if (Math.abs(moveX - startX) > 10 || Math.abs(moveY - startY) > 10) {
-                                                        if (targetElement && targetElement._longPressTimer) {
-                                                            clearTimeout(targetElement._longPressTimer);
-                                                            targetElement._longPressTimer = null;
-                                                        }
-                                                    }
-                                                };
-                                                
-                                                document.addEventListener('touchend', handleTouchEnd, { once: true, passive: true });
-                                                document.addEventListener('touchmove', handleTouchMove, { once: true, passive: true });
-                                            }}
-                                            onTouchEnd={(e) => {
-                                                // Clean up any pending long press timer
-                                                if (e.currentTarget && e.currentTarget._longPressTimer) {
-                                                    clearTimeout(e.currentTarget._longPressTimer);
-                                                    e.currentTarget._longPressTimer = null;
-                                                }
-                                            }}
-                                            style={{ cursor: 'context-menu' }}
-                                        >
-                                            {!isGrouped && (
-                                                <div 
-                                                    className="message-avatar" 
-                                                    onClick={async () => {
-                                                        const userId = message.sender?.id || message.userId;
-                                                        if (!userId) return;
-                                                        if (String(userId).toLowerCase() === 'system') {
-                                                            setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
-                                                            setShowProfileModal(true);
-                                                            return;
-                                                        }
-                                                        try {
-                                                            const baseUrl = window.location.origin;
-                                                            const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
-                                                            if (response.ok) {
-                                                                const data = await response.json();
-                                                                setProfileModalData(data);
-                                                                setShowProfileModal(true);
-                                                            } else {
-                                                                setProfileModalData(message.sender || { id: userId });
-                                                                setShowProfileModal(true);
-                                                            }
-                                                        } catch (error) {
-                                                            console.error('Error fetching profile:', error);
-                                                            setProfileModalData(message.sender || { id: userId });
-                                                            setShowProfileModal(true);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        width: '40px',
-                                                        height: '40px',
-                                                        borderRadius: '50%',
-                                                        overflow: 'hidden',
-                                                        flexShrink: 0,
-                                                        background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        color: 'white',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '0.875rem',
-                                                        cursor: 'pointer',
-                                                        transition: 'transform 0.2s ease, opacity 0.2s ease',
-                                                        position: 'absolute',
-                                                        left: '16px',
-                                                        top: '0.125rem',
-                                                        zIndex: 1
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1.1)';
-                                                        e.currentTarget.style.opacity = '0.9';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1)';
-                                                        e.currentTarget.style.opacity = '1';
-                                                    }}
-                                                >
-                                                    {resolveAvatarUrl(message.sender?.avatar, window.location?.origin) ? (
-                                                        <img src={resolveAvatarUrl(message.sender?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
-                                                    ) : (
-                                                        <div aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(message.sender?.id ?? message.sender?.username ?? message.userId), border: '2px solid rgba(255,255,255,0.2)', boxSizing: 'border-box' }} />
-                                                    )}
-                                                </div>
-                                            )}
-                                            <div className="message-content">
-                                                {!isGrouped && (
-                                                    <div className="message-header-info community-message-header-with-time">
-                                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', flexWrap: 'wrap' }}>
-                                                            <span 
-                                                                className="message-author"
-                                                                onClick={async () => {
-                                                                    const userId = message.sender?.id || message.userId;
-                                                                    if (!userId) return;
-                                                                    if (String(userId).toLowerCase() === 'system') {
-                                                                        setProfileModalData(message.sender || { id: 'system', username: 'AURA FX' });
-                                                                        setShowProfileModal(true);
-                                                                        return;
-                                                                    }
-                                                                    try {
-                                                                        const baseUrl = window.location.origin;
-                                                                        const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
-                                                                        if (response.ok) {
-                                                                            const data = await response.json();
-                                                                            setProfileModalData(data);
-                                                                            setShowProfileModal(true);
-                                                                        } else {
-                                                                            setProfileModalData(message.sender || { id: userId });
-                                                                            setShowProfileModal(true);
-                                                                        }
-                                                                    } catch (error) {
-                                                                        console.error('Error fetching profile:', error);
-                                                                        setProfileModalData(message.sender || { id: userId });
-                                                                        setShowProfileModal(true);
-                                                                    }
-                                                                }}
-                                                                style={{
-                                                                    cursor: 'pointer',
-                                                                    transition: 'color 0.2s ease',
-                                                                    fontWeight: 500
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    e.currentTarget.style.textDecoration = 'underline';
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.textDecoration = 'none';
-                                                                }}
-                                                            >
-                                                                {message.sender?.username || 'Unknown'}
-                                                            </span>
-                                                            {message.edited && (
-                                                                <span style={{ 
-                                                                    fontSize: '0.6875rem', 
-                                                                    color: '#72767D',
-                                                                    fontStyle: 'italic',
-                                                                    lineHeight: '1.375'
-                                                                }}>
-                                                                    (edited)
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <span className="message-timestamp message-time-right" title={formatTimestamp(message.timestamp)}>
-                                                            {formatTimeOnly(message.timestamp || message.createdAt || message.created_at)}
-                                                        </span>
-                                                        {/* Delete button - shown for message owner, admin, or moderator (not for deleted messages) */}
-                                                        {!message.isDeleted && message.content !== '[deleted]' && canDeleteMessage(message) && (
-                                                            <button
-                                                                onClick={() => handleDeleteMessage(message.id)}
-                                                                className="message-delete-btn"
-                                                                style={{
-                                                                    background: 'transparent',
-                                                                    border: 'none',
-                                                                    color: '#f87171',
-                                                                    cursor: 'pointer',
-                                                                    padding: '4px 8px',
-                                                                    borderRadius: '4px',
-                                                                    opacity: 0,
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '4px',
-                                                                    fontSize: '0.85rem',
-                                                                    transition: 'all 0.2s ease'
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    e.currentTarget.style.opacity = 1;
-                                                                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.opacity = 0;
-                                                                    e.currentTarget.style.background = 'transparent';
-                                                                }}
-                                                                title="Delete message"
-                                                            >
-                                                                <FaTrash size={12} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {/* Delete button for grouped messages */}
-                                                {isGrouped && !message.isDeleted && message.content !== '[deleted]' && canDeleteMessage(message) && (
-                                                    <div className="message-delete-grouped" style={{ 
-                                                        position: 'absolute', 
-                                                        right: '16px', 
-                                                        top: '2px',
-                                                        opacity: 0,
-                                                        transition: 'opacity 0.2s ease'
-                                                    }}>
-                                                        <button
-                                                            onClick={() => handleDeleteMessage(message.id)}
-                                                            className="message-delete-btn"
-                                                            style={{
-                                                                background: 'transparent',
-                                                                border: 'none',
-                                                                color: '#f87171',
-                                                                cursor: 'pointer',
-                                                                padding: '4px 8px',
-                                                                borderRadius: '4px',
-                                                                fontSize: '0.85rem',
-                                                                transition: 'all 0.2s ease'
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.background = 'transparent';
-                                                            }}
-                                                            title="Delete message"
-                                                        >
-                                                            <FaTrash size={12} />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                        <div className={`message-text ${message.isDeleted ? 'message-deleted' : ''}`}>
-    {/* Deleted message */}
-    {message.isDeleted || message.content === '[deleted]' ? (
-        <span style={{ 
-            color: '#72767D', 
-            fontStyle: 'italic',
-            opacity: 0.7
-        }}>
-            [message deleted]
-        </span>
-    ) : message.isWelcomeMessage ? (
-        message.content.split('\n').map((line, idx) => {
-            const trimmedLine = line.trim();
-            // Format markdown-style headers
-            if (trimmedLine.startsWith('## ')) {
-                return <h3 key={idx} style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '16px', marginBottom: '10px', color: 'var(--primary)' }}>{trimmedLine.substring(3)}</h3>;
-            }
-            // Format bold text (lines that start and end with **)
-            if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**') && trimmedLine.length > 4) {
-                return <div key={idx} style={{ fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>{trimmedLine.replace(/\*\*/g, '')}</div>;
-            }
-            // Empty lines
-            if (trimmedLine === '') {
-                return <br key={idx} />;
-            }
-            // Regular text lines
-            return <div key={idx} style={{ marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>;
-        })
-    ) : (
-        renderMessageContent(message.content, message.file)
-    )}
-</div>
-                                            
-                                            {message.isWelcomeMessage && (entitlements?.needsOnboardingReaccept || !hasReadWelcome) && (
-                                                <div style={{
-                                                    marginTop: '20px',
-                                                    padding: '16px',
-                                                    background: 'rgba(99, 102, 241, 0.1)',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '12px',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.3s ease'
-                                                }}
-                                                onClick={handleWelcomeAcknowledgment}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
-                                                >
-                                                    <span style={{ fontSize: '1.5rem' }}>✅</span>
-                                                    <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
-                                                </div>
-                                            )}
-                                                                                    {message.file && message.file.preview && (
-    // Check for PPTX files first
-    (() => {
-        const isPptx = message.file.type?.includes('presentation') || 
-                       message.file.type?.includes('powerpoint') || 
-                       message.file.name?.toLowerCase().endsWith('.pptx') ||
-                       message.file.name?.toLowerCase().endsWith('.ppt') ||
-                       message.file.name?.toLowerCase().endsWith('.odp');
-        
-        if (isPptx) {
-            return (
-                <PptxPreview 
-                    key={`pptx-${message.id}-${message.file.name}`} // Stable key
-                    file={message.file}
-                    onClick={() => handleFileClick(message.file)}
-                />
-            );
-        }
-        
-        if (message.file.type?.startsWith('image/')) {
-            return (
-                <div 
-                    key={`img-${message.id}`}
-                    className="message-attachment clickable-file"
-                    onClick={() => handleFileClick(message.file)}
-                    style={{
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        marginTop: '8px',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        background: 'var(--bg-elevated)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                    }}
-                >
-                    <img 
-                        src={message.file.preview} 
-                        alt={getDisplayFileName(message.file.name, message.file.type)}
-                        loading="lazy"
-                        style={{
-                            width: 'auto',
-                            maxWidth: '180px',
-                            maxHeight: '180px',
-                            objectFit: 'contain',
-                            display: 'block',
-                            background: 'var(--bg-tertiary)'
-                        }}
-                    />
-                </div>
-            );
-        }
-        
-        return null;
-    })()
-)}
-                                            
-                                            {/* Emoji Reactions - At the bottom of message */}
-                                            {messageReactions[message.id] && Object.keys(messageReactions[message.id]).length > 0 && (
-                                                <div className="message-reactions" style={{
-                                                    display: 'flex',
-                                                    flexWrap: 'wrap',
-                                                    gap: '6px',
-                                                    marginTop: '8px',
-                                                    alignItems: 'center'
-                                                }}>
-                                                    {Object.entries(messageReactions[message.id]).map(([emoji, count]) => (
-                                                        <button
-                                                            key={emoji}
-                                                            className="reaction-button"
-                                                            onClick={() => {
-                                                                // Toggle reaction
-                                                                setMessageReactions(prev => {
-                                                                    const current = prev[message.id] || {};
-                                                                    const newCount = (current[emoji] || 0) - 1;
-                                                                    if (newCount <= 0) {
-                                                                        const { [emoji]: removed, ...rest } = current;
-                                                                        if (Object.keys(rest).length === 0) {
-                                                                            const { [message.id]: removedMsg, ...restMsgs } = prev;
-                                                                            return restMsgs;
-                                                                        }
-                                                                        return { ...prev, [message.id]: rest };
-                                                                    }
-                                                                    return { ...prev, [message.id]: { ...current, [emoji]: newCount } };
-                                                                });
-                                                            }}
-                                                            style={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px',
-                                                                padding: '4px 8px',
-                                                                background: 'rgba(255, 255, 255, 0.1)',
-                                                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                                                borderRadius: '12px',
-                                                                cursor: 'pointer',
-                                                                fontSize: '0.85rem',
-                                                                color: '#ffffff',
-                                                                transition: 'all 0.2s ease'
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                                                            }}
-                                                        >
-                                                            <span>{emoji}</span>
-                                                            <span>{count}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    );
-                                })
+                                {renderedDateGroupedMessages}
                             )}
                             <div ref={messagesEndRef} />
                         </div>
