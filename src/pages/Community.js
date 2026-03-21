@@ -2262,10 +2262,14 @@ if (window.requestAnimationFrame) {
             // Save to backend API for permanent persistence
             try {
                 const response = await Api.sendMessage(selectedChannel.id, messageToSend);
-                
-                    if (response && response.data) {
-                    // Replace optimistic message with server response (has real ID)
-                    const serverMessage = response.data;
+                const payload = response?.data;
+                const isSavedMessage =
+                  payload &&
+                  payload.success !== false &&
+                  (payload.id != null || payload.sequence != null);
+
+                if (isSavedMessage) {
+                    const serverMessage = payload;
                     setMessages(prev => {
                         const final = replaceMessageById(prev, optimisticMessage.id, serverMessage);
                         saveMessagesToStorage(selectedChannel.id, final);
@@ -4014,9 +4018,14 @@ setMessages(prev => {
     // Send via API
     console.log('📡 Sending to API...');
     const response = await Api.sendMessage(selectedChannel.id, messageToSend);
-    
-    if (response && response.data) {
-      const serverMessage = response.data;
+    const payload = response?.data;
+    const isSavedMessage =
+      payload &&
+      payload.success !== false &&
+      (payload.id != null || payload.sequence != null);
+
+    if (isSavedMessage) {
+      const serverMessage = payload;
       console.log('✅ Server responded with message:', serverMessage.id);
       
       // Update state by replacing optimistic message with server message and maintain order
@@ -4037,8 +4046,7 @@ setMessages(prev => {
         saveMessagesToStorage(selectedChannel.id, final);
         return final;
       });
-    }
-        
+
         // Handle mentions (keep your existing mention code)
         const mentionRegex = /@(\w+)/g;
         const mentions = messageContent.match(mentionRegex);
@@ -4125,6 +4133,19 @@ setMessages(prev => {
         } else {
             console.error('❌ Failed to award XP');
         }
+    } else {
+      const errText =
+        typeof payload?.message === 'string' ? payload.message : 'Message could not be saved. Try again in a moment.';
+      console.warn('Message send returned error payload:', payload);
+      setMessages(prev => {
+        const filtered = prev.filter(
+          m => m.id !== clientMessageId && m.clientMessageId !== clientMessageId
+        );
+        saveMessagesToStorage(selectedChannel.id, filtered);
+        return filtered;
+      });
+      toast.error(errText);
+    }
     } catch (error) {
         console.error('Error sending message:', error);
         

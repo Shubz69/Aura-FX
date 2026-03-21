@@ -72,16 +72,16 @@ const getDbPool = () => {
     return null;
   }
 
-  // Pool size: per serverless instance. Total DB connections ≈ concurrent Lambdas × connectionLimit.
-  // Vercel: default 1 connection per instance (8× traffic was exhausting Railway MySQL max_connections).
-  // Override with MYSQL_POOL_SIZE (capped on Vercel — avoid >3 unless you use a DB pooler).
+  // Pool size: per serverless instance. Total DB connections ≈ concurrent warm Lambdas × connectionLimit.
+  // ER_CON_COUNT_ERROR (1040) = MySQL max_connections exhausted — raising per-instance limit makes it worse.
+  // On Vercel: always 1 physical connection per pool (ignore MYSQL_POOL_SIZE). Use a DB pooler if you need more throughput per lambda.
   const defaultLimit = process.env.VERCEL ? 1 : 100;
-  // Vercel: many concurrent lambdas × multi-query handlers exhausted queueLimit=8 ("Queue limit reached").
+  // Queue: absorb bursts on a single instance without opening extra server connections.
   const defaultQueue = process.env.VERCEL ? 40 : 500;
   let connectionLimit = Math.max(1, parseInt(process.env.MYSQL_POOL_SIZE, 10) || defaultLimit);
   let queueLimit = Math.max(1, parseInt(process.env.MYSQL_QUEUE_LIMIT, 10) || defaultQueue);
   if (process.env.VERCEL) {
-    connectionLimit = Math.min(connectionLimit, 3);
+    connectionLimit = 1;
     queueLimit = Math.min(Math.max(queueLimit, 16), 80);
   }
 
@@ -144,11 +144,10 @@ const getDbConnection = async (_retry = false) => {
     if (error && (error.message || '').includes('Pool is closed')) {
       pool = null;
     }
-    if (!_retry && isTooManyConnectionsError(error)) {
-      // Do not end the pool here: it causes cascading "Pool is closed" across concurrent
-      // serverless invocations on the same instance while the DB is already at max_connections.
-      await sleep(400 + Math.floor(Math.random() * 400));
-      return getDbConnection(true);
+    if (isTooManyConnectionsError(error)) {
+      // Retrying 1040 worsens storms (more lambdas pile up waiting). Fail fast; scale DB or add a pooler.
+      console.warn('Database connection limit reached (ER_CON_COUNT_ERROR); skipping retry');
+      return null;
     }
     console.error('Error getting database connection:', error.message);
     return null;
@@ -210,9 +209,8 @@ const executeQuery = async (query, params = [], options = {}) => {
       console.error('Database query error:', JSON.stringify(errorInfo));
     }
 
-    if (connectionAttempt < maxConnectionAttempts && isTooManyConnectionsError(error)) {
-      await sleep(400 + connectionAttempt * 250 + Math.floor(Math.random() * 400));
-      return executeQuery(query, params, { ...options, _connectionAttempt: connectionAttempt + 1 });
+    if (isTooManyConnectionsError(error)) {
+      throw error;
     }
     if (connectionAttempt < maxConnectionAttempts && isConnectionError(error)) {
       if ((error.message || '').includes('Pool is closed')) {

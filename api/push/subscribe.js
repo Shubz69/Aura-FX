@@ -4,7 +4,7 @@
  * DELETE { endpoint, userId }     → remove subscription
  */
 
-const { createPool } = require('../db');
+const { getDbConnection } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const webpush = require('web-push');
 
@@ -83,6 +83,8 @@ module.exports = async (req, res) => {
     console.error('Push subscribe error:', e.message);
     return res.status(500).json({ success: false, message: 'Server error' });
   } finally {
-    if (db && db.end) await db.end().catch(() => {});
+    try {
+      if (db && typeof db.release === 'function') db.release();
+    } catch (_) {}
   }
 };
