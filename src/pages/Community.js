@@ -497,6 +497,16 @@ const generateWeightedOnlineCount = () => {
     }
 };
 
+/** Community uses UUID client ids until the server returns a numeric DB id — only the latter exists in MySQL. */
+function isPersistedCommunityMessageId(messageId) {
+    if (messageId == null || messageId === '') return false;
+    if (typeof messageId === 'string' && messageId.startsWith('temp_')) return false;
+    const s = String(messageId).trim();
+    if (!/^\d+$/.test(s)) return false;
+    const n = parseInt(s, 10);
+    return Number.isFinite(n) && n > 0;
+}
+
 // Main Community Component
 const Community = () => {
     const [userLevel, setUserLevel] = useState(1);
@@ -4384,63 +4394,66 @@ setMessages(prev => {
         const { messageId } = deleteMessageModal;
 
         try {
-            // Check if this is a temporary message (optimistic update that hasn't been saved to DB yet)
-            const isTemporaryMessage = typeof messageId === 'string' && messageId.startsWith('temp_');
-            
-            // Optimistically update UI first
-            setMessages(prevMessages => 
-                prevMessages.map(msg => 
-                    msg.id === messageId 
-                        ? { ...msg, content: '[deleted]', isDeleted: true } 
+            // Optimistic / UUID client ids are not in MySQL; only numeric DB ids can hit the API.
+            const hasPersistedId = isPersistedCommunityMessageId(messageId);
+
+            setMessages(prevMessages =>
+                prevMessages.map(msg =>
+                    msg.id === messageId
+                        ? { ...msg, content: '[deleted]', isDeleted: true }
                         : msg
                 )
             );
-            
-            if (!isTemporaryMessage) {
-                // Real message - delete from database via new API endpoint
-                const token = localStorage.getItem('token');
-                const API_BASE_URL = window.location.origin;
-                
-                const response = await fetch(`${API_BASE_URL}/api/messages/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        messageId,
-                        channelId: selectedChannel.id
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok || !data.success) {
-                    // Revert optimistic update on failure
-                    const originalMessage = messages.find(msg => msg.id === messageId);
+
+            if (hasPersistedId) {
+                let data;
+                try {
+                    const response = await Api.deleteMessage(selectedChannel.id, messageId);
+                    data = response.data;
+                } catch (err) {
+                    const msg =
+                        err?.response?.data?.message ||
+                        err?.message ||
+                        'Failed to delete message';
+                    const originalMessage = messages.find(m => m.id === messageId);
                     if (originalMessage) {
-                        setMessages(prevMessages => 
-                            prevMessages.map(msg => 
-                                msg.id === messageId ? originalMessage : msg
+                        setMessages(prevMessages =>
+                            prevMessages.map(m =>
+                                m.id === messageId ? originalMessage : m
                             )
                         );
                     }
-                    throw new Error(data.message || 'Failed to delete message');
+                    throw new Error(msg);
                 }
-                
-                // Broadcast deletion via WebSocket if available (only when OPEN; avoid send on CLOSING/CLOSED)
+
+                if (!data?.success) {
+                    const originalMessage = messages.find(m => m.id === messageId);
+                    if (originalMessage) {
+                        setMessages(prevMessages =>
+                            prevMessages.map(m =>
+                                m.id === messageId ? originalMessage : m
+                            )
+                        );
+                    }
+                    throw new Error(data?.message || 'Failed to delete message');
+                }
+
                 const ws = typeof window !== 'undefined' ? window.wsConnection : null;
                 if (ws && ws.readyState === 1) {
                     try {
-                        ws.send(JSON.stringify({
-                            type: 'MESSAGE_DELETED',
-                            channelId: selectedChannel.id,
-                            messageId: messageId,
-                            deletedAt: data.deletedAt
-                        }));
+                        ws.send(
+                            JSON.stringify({
+                                type: 'MESSAGE_DELETED',
+                                channelId: selectedChannel.id,
+                                messageId,
+                                deletedAt: data.deletedAt || new Date().toISOString()
+                            })
+                        );
                     } catch (wsError) {
-                        const msg = wsError?.message || String(wsError);
-                        if (!msg.includes('CLOSING') && !msg.includes('CLOSED')) console.warn('WebSocket broadcast failed:', wsError);
+                        const m = wsError?.message || String(wsError);
+                        if (!m.includes('CLOSING') && !m.includes('CLOSED')) {
+                            console.warn('WebSocket broadcast failed:', wsError);
+                        }
                     }
                 }
             }
