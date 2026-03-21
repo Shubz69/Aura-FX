@@ -1,5 +1,6 @@
 const { getDbConnection } = require('../db');
 const { verifyToken } = require('../utils/auth');
+const { jsonSafeDeep } = require('../utils/jsonSafe');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
@@ -70,13 +71,25 @@ module.exports = async (req, res) => {
   }
 
   const authRole = (decoded.role || '').toString().toUpperCase();
-  const isAdmin = authRole === 'ADMIN' || authRole === 'SUPER_ADMIN';
+  let isAdmin = authRole === 'ADMIN' || authRole === 'SUPER_ADMIN';
 
   let db = null;
   try {
     db = await getDbConnection();
     if (!db) {
       return res.status(500).json({ success: false, message: 'Database connection error' });
+    }
+
+    if (!isAdmin) {
+      try {
+        const [ar] = await db.execute(
+          `SELECT 1 AS ok FROM users WHERE id = ? AND LOWER(COALESCE(role, '')) IN ('admin', 'super_admin') LIMIT 1`,
+          [decoded.id]
+        );
+        if (ar && ar.length) isAdmin = true;
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     // Ensure threads table exists
@@ -210,8 +223,7 @@ module.exports = async (req, res) => {
         const [threads] = await db.execute(
           `SELECT t.*, 
             CASE WHEN t.userId = ? THEN u2.id ELSE u1.id END as otherUserId,
-            CASE WHEN t.userId = ? THEN u2.username ELSE u1.username END as username,
-            CASE WHEN t.userId = ? THEN u2.name ELSE u1.name END as name,
+            CASE WHEN t.userId = ? THEN COALESCE(u2.username, u2.email) ELSE COALESCE(u1.username, u1.email) END as username,
             CASE WHEN t.userId = ? THEN u2.email ELSE u1.email END as email
            FROM threads t
            LEFT JOIN users u1 ON u1.id = t.userId
@@ -219,7 +231,7 @@ module.exports = async (req, res) => {
            WHERE t.adminId IS NOT NULL AND (t.userId = ? OR t.adminId = ?)
            ORDER BY COALESCE(t.lastMessageAt, t.createdAt) DESC
            LIMIT 200`,
-          [myId, myId, myId, myId, myId, myId]
+          [myId, myId, myId, myId, myId]
         );
         let result = threads || [];
         if (friendsOnly && result.length > 0) {
@@ -241,7 +253,10 @@ module.exports = async (req, res) => {
             `SELECT threadId, COUNT(*) as c FROM thread_messages WHERE threadId IN (${placeholders}) AND recipientId = ? AND readAt IS NULL GROUP BY threadId`,
             [...threadIds, String(myId)]
           );
-          (unreadRows || []).forEach((r) => { unreadMap[r.threadId] = r.c; });
+          (unreadRows || []).forEach((r) => {
+            const c = typeof r.c === 'bigint' ? Number(r.c) : r.c;
+            unreadMap[r.threadId] = c;
+          });
         }
         const threadsWithUnread = result.map((t) => ({
           ...t,
@@ -249,7 +264,7 @@ module.exports = async (req, res) => {
           adminUnreadCount: unreadMap[t.id] || 0
         }));
         db.release && db.release();
-        return res.status(200).json({ success: true, threads: threadsWithUnread });
+        return res.status(200).json({ success: true, threads: jsonSafeDeep(threadsWithUnread) });
       }
 
       if (!isAdmin) {
@@ -272,11 +287,14 @@ module.exports = async (req, res) => {
           `SELECT threadId, COUNT(*) as c FROM thread_messages WHERE threadId IN (${placeholders}) AND recipientId = 'ADMIN' AND readAt IS NULL GROUP BY threadId`,
           threadIds
         );
-        (unreadRows || []).forEach((r) => { unreadMap[r.threadId] = r.c; });
+        (unreadRows || []).forEach((r) => {
+          const c = typeof r.c === 'bigint' ? Number(r.c) : r.c;
+          unreadMap[r.threadId] = c;
+        });
       }
       const threadsWithUnread = (threads || []).map((t) => ({ ...t, adminUnreadCount: unreadMap[t.id] || 0 }));
       db.release && db.release();
-      return res.status(200).json({ success: true, threads: threadsWithUnread });
+      return res.status(200).json({ success: true, threads: jsonSafeDeep(threadsWithUnread) });
     }
 
     // Handle /api/messages/threads/:threadId/messages - Get messages for a thread
@@ -308,7 +326,7 @@ module.exports = async (req, res) => {
       await db.execute('UPDATE threads SET lastMessageAt = NOW() WHERE id = ?', [threadId]);
 
       db.release && db.release();
-      return res.status(200).json({ success: true, messages: (messages || []).reverse() });
+      return res.status(200).json({ success: true, messages: jsonSafeDeep((messages || []).reverse()) });
     }
 
     // Handle /api/messages/threads/:threadId/messages - Send message to thread

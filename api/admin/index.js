@@ -4,6 +4,7 @@ const mysql = require('mysql2/promise');
 require('../utils/suppress-warnings');
 const nodemailer = require('nodemailer');
 const { verifyToken } = require('../utils/auth');
+const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 
 // Configure email transporter (optional – logs warning if credentials missing)
 const createTransporter = () => {
@@ -342,7 +343,7 @@ module.exports = async (req, res) => {
 
         return res.status(200).json({
           onlineUsers: onlineUsers,
-          totalUsers: allUsers[0]?.total || 0
+          totalUsers: jsonNumber(allUsers[0]?.total, 0)
         });
       } catch (dbError) {
         console.error('Database error fetching user status:', dbError.message);
@@ -597,14 +598,24 @@ module.exports = async (req, res) => {
       if (!decoded || !decoded.id) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
       }
-      const role = (decoded.role || '').toString().toUpperCase();
-      if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
-        return res.status(403).json({ success: false, message: 'Admin access required' });
-      }
 
       const db = await getDbConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
+      }
+
+      let authRole = (decoded.role || '').toString().toUpperCase();
+      if (authRole !== 'ADMIN' && authRole !== 'SUPER_ADMIN') {
+        try {
+          const [me] = await db.execute('SELECT role FROM users WHERE id = ?', [decoded.id]);
+          authRole = ((me && me[0] && me[0].role) || '').toString().toUpperCase();
+        } catch (_) {
+          authRole = '';
+        }
+      }
+      if (authRole !== 'ADMIN' && authRole !== 'SUPER_ADMIN') {
+        if (db && typeof db.end === 'function') await db.end();
+        return res.status(403).json({ success: false, message: 'Admin access required' });
       }
 
       try {
@@ -729,13 +740,13 @@ module.exports = async (req, res) => {
 
         const formattedUsers = users.map(user => {
           const formatted = {
-            id: user.id,
+            id: jsonNumber(user.id),
             email: user.email || '',
             username: user.username || user.name || '',
             role: user.role || 'free',
             capabilities: [],
-            xp: hasXP ? (user.xp || 0) : 0,
-            level: hasLevel ? (user.level || 1) : 1,
+            xp: hasXP ? jsonNumber(user.xp, 0) : 0,
+            level: hasLevel ? jsonNumber(user.level ?? 1, 1) : 1,
             subscription_status: hasSubscriptionStatus ? (user.subscription_status || 'inactive') : 'inactive',
             subscription_plan: hasSubscriptionPlan ? (user.subscription_plan || null) : null,
             subscription_expiry: hasSubscriptionExpiry ? (user.subscription_expiry || null) : null
@@ -765,7 +776,7 @@ module.exports = async (req, res) => {
         });
 
         await db.end();
-        return res.status(200).json(formattedUsers);
+        return res.status(200).json(jsonSafeDeep(formattedUsers));
       } catch (dbError) {
         console.error('Database error fetching users:', dbError);
         if (db && !db.ended) await db.end();

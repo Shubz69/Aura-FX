@@ -25,6 +25,7 @@
  */
 
 const { executeQuery, executeQueryWithTimeout } = require('../db');
+const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 const { getCached, setCached, deleteCached, invalidatePattern, DEFAULT_TTLS } = require('../cache');
 const { generateRequestId, createLogger } = require('../utils/logger');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
@@ -214,7 +215,7 @@ module.exports = async (req, res) => {
         logger.info('Cache HIT', { ms: Date.now() - startTime });
         return res.status(200).json({
           success: true,
-          friends: cached,
+          friends: jsonSafeDeep(cached),
           count: cached.length,
           cached: true,
           requestId
@@ -241,11 +242,11 @@ module.exports = async (req, res) => {
           const showOnline = f.show_online_status !== 0 && f.show_online_status !== false;
           const actuallyOnline = f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000);
           return {
-            id: f.id,
+            id: jsonNumber(f.id),
             username: f.username,
             avatar: f.avatar,
-            level: f.level,
-            xp: f.xp,
+            level: jsonNumber(f.level, 1),
+            xp: jsonNumber(f.xp, 0),
             role: f.role,
             isOnline: showOnline && actuallyOnline,
             lastSeen: showOnline ? f.last_seen : null,
@@ -254,8 +255,7 @@ module.exports = async (req, res) => {
         });
       } catch (joinErr) {
         logger.endTimer('db_query');
-        // Fallback if user_settings join fails (e.g. table missing)
-        {
+        try {
           const result = await executeQueryWithTimeout(`
             SELECT 
               u.id, u.username, u.avatar, u.level, u.xp, u.role,
@@ -267,14 +267,37 @@ module.exports = async (req, res) => {
           `, [userId], 10000, requestId);
           const rows = getRows(result);
           friends = rows.map(f => ({
-            id: f.id,
+            id: jsonNumber(f.id),
             username: f.username,
             avatar: f.avatar,
-            level: f.level,
-            xp: f.xp,
+            level: jsonNumber(f.level, 1),
+            xp: jsonNumber(f.xp, 0),
             role: f.role,
             isOnline: f.last_seen && new Date(f.last_seen) >= new Date(Date.now() - 5 * 60 * 1000),
             lastSeen: f.last_seen,
+            friendsSince: f.friends_since
+          }));
+        } catch (e2) {
+          const result = await executeQueryWithTimeout(
+            `SELECT u.id, u.username, f.created_at as friends_since
+             FROM friendships f
+             JOIN users u ON f.friend_id = u.id
+             WHERE f.user_id = ?
+             ORDER BY u.id DESC`,
+            [userId],
+            10000,
+            requestId
+          );
+          const rows = getRows(result);
+          friends = rows.map(f => ({
+            id: jsonNumber(f.id),
+            username: f.username || '',
+            avatar: null,
+            level: 1,
+            xp: 0,
+            role: 'free',
+            isOnline: false,
+            lastSeen: null,
             friendsSince: f.friends_since
           }));
         }
@@ -287,7 +310,7 @@ module.exports = async (req, res) => {
       
       return res.status(200).json({
         success: true,
-        friends,
+        friends: jsonSafeDeep(friends),
         count: friends.length,
         requestId
       });
