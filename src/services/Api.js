@@ -694,6 +694,7 @@ const Api = {
         const token = localStorage.getItem('token');
         return axios.get(`${API_BASE_URL}/api/trader-dna`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
+            skipCache: true,
         });
     },
     generateTraderDna: () => {

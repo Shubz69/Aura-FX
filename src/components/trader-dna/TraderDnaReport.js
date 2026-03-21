@@ -1,5 +1,14 @@
 import React from 'react';
 
+/** True when GET/POST payload is a real DNA snapshot (not null, empty object, or corrupt row). */
+export function hasRenderableDnaReport(report) {
+  if (report == null || typeof report !== 'object' || Array.isArray(report)) return false;
+  const archetype = report.archetype;
+  if (typeof archetype === 'string' && archetype.trim().length > 0) return true;
+  const overall = report.scores?.overallDNA;
+  return overall != null && Number.isFinite(Number(overall));
+}
+
 function ScoreOrb({ label, value, max = 100 }) {
   const v = Math.round(Number(value) || 0);
   return (
@@ -22,7 +31,7 @@ function Section({ title, children, className = '' }) {
 }
 
 export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90 }) {
-  if (!report) return null;
+  if (!hasRenderableDnaReport(report)) return null;
   const { scores, ratings, archetype, archetypeTagline, identityStatement, headlineSummary, generatedAt } = report;
   const nextDate = nextEligibleAt
     ? new Date(nextEligibleAt).toLocaleDateString(undefined, { dateStyle: 'long' })

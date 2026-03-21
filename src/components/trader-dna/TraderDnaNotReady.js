@@ -31,7 +31,11 @@ export default function TraderDnaNotReady({ dna, afterIntro = false }) {
                 ? 'Your DNA is still forming'
                 : 'Trader DNA requires more signal'}
         </h2>
-        <p className="tdna-nr-msg">{statusMessage}</p>
+        <p className="tdna-nr-msg">
+          {statusMessage?.trim()
+            ? statusMessage
+            : 'Trader DNA is not available yet. Keep validating trades and journaling until the minimum data window is met, then return here.'}
+        </p>
 
         {rem?.label && (
           <div className="tdna-nr-countdown">

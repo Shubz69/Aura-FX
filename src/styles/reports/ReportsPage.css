@@ -19,7 +19,8 @@
 .rp-page {
   max-width: 860px;
   margin: 0 auto;
-  padding: 0 4px 48px;
+  /* Extra top breathing room below global nav offset (Monthly Reports + DNA CTA) */
+  padding: 12px 16px 48px;
   display: flex;
   flex-direction: column;
   gap: 22px;

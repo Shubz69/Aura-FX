@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import TraderDnaIntroSequence from '../../components/trader-dna/TraderDnaIntroSequence';
-import TraderDnaReport from '../../components/trader-dna/TraderDnaReport';
+import TraderDnaReport, { hasRenderableDnaReport } from '../../components/trader-dna/TraderDnaReport';
 import TraderDnaNotReady from '../../components/trader-dna/TraderDnaNotReady';
 import '../../styles/trader-dna/TraderDna.css';
 
@@ -80,7 +80,7 @@ export default function ReportsDnaPage() {
   };
 
   const report = dna?.report;
-  const hasReport = Boolean(report);
+  const hasReport = hasRenderableDnaReport(report);
   const canGen = Boolean(dna?.canGenerateNow);
   const cooldown = dna?.cooldown?.active;
   const remLabel = dna?.cooldown?.remaining?.label;
