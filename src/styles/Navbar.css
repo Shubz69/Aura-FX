@@ -209,7 +209,7 @@ body.loading-active .navbar {
 }
 
 .navbar-logo-wrapper .aura-logo-symbol {
-  width: 34px; height: 34px;
+  width: 40px; height: 40px;
   filter:
     drop-shadow(0 0 6px  rgba(234, 169, 96, 0.55))
     drop-shadow(0 0 18px rgba(234, 169, 96, 0.25));
