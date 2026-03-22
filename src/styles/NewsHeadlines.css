@@ -168,14 +168,14 @@
   align-items: center;
   gap: 10px;
   font-size: 0.82rem;
-  color: #ef4444;
+  color: #9a8f84;
   padding: 8px 0;
 }
 
 .news-headlines__retry {
   background: none;
-  border: 1px solid #ef444444;
-  color: #ef4444;
+  border: 1px solid rgba(154,143,132,0.35);
+  color: #9a8f84;
   border-radius: 5px;
   padding: 3px 10px;
   font-size: 0.78rem;

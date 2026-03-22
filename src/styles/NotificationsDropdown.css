@@ -151,7 +151,7 @@
   padding: 0.42rem 1rem;
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.28);
-  color: #34d399;
+  color: #f8c37d;
   border-radius: 999px;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.68rem;
@@ -434,7 +434,7 @@
 
 .action-btn.accept {
   background: rgba(16, 185, 129, 0.1);
-  color: #34d399;
+  color: #f8c37d;
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
@@ -447,7 +447,7 @@
 
 .action-btn.decline {
   background: rgba(239, 68, 68, 0.08);
-  color: #f87171;
+  color: #9a8f84;
   border: 1px solid rgba(239, 68, 68, 0.28);
 }
 
@@ -472,13 +472,13 @@
 }
 
 .action-status.accepted {
-  color: #34d399;
+  color: #f8c37d;
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.22);
 }
 
 .action-status.declined {
-  color: #f87171;
+  color: #9a8f84;
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }

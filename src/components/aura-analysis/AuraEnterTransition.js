@@ -240,7 +240,7 @@ class Galaxy {
 
   _buildParticles() {
     const N = window.innerWidth < 480 ? 300 : 500;
-    const COLS = ['rgba(234,169,96,', 'rgba(248,195,125,', 'rgba(253,224,200,', 'rgba(180,120,40,', 'rgba(255,255,255,', 'rgba(52,211,153,'];
+    const COLS = ['rgba(234,169,96,', 'rgba(248,195,125,', 'rgba(253,224,200,', 'rgba(180,120,40,', 'rgba(255,255,255,', 'rgba(201,160,92,'];
     this.pts = Array.from({ length: N }, (_, i) => {
       const arm = i % 3;
       const t = Math.random();

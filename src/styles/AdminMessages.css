@@ -69,11 +69,11 @@
   --accent-gold-light: rgba(234, 169, 96, 0.18);
   --accent-gold-glow: rgba(234, 169, 96, 0.28);
   --accent-blue: #f8c37d;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
-  --accent-orange: #f59e0b;
-  --up: #10b981;
-  --down: #ef4444;
+  --accent-green: #f8c37d;
+  --accent-red: #9a8f84;
+  --accent-orange: #c9a05c;
+  --up: #f8c37d;
+  --down: #9a8f84;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
@@ -344,13 +344,13 @@
 
 .submission-role-badge[data-role='admin'] {
   background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+  color: #f8c37d;
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .submission-role-badge[data-role='super_admin'] {
   background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  color: #9a8f84;
   border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
@@ -360,7 +360,7 @@
   border-radius: 9px;
   font-weight: 600;
   background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+  color: #f8c37d;
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 

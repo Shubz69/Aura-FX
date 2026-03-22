@@ -13,11 +13,11 @@
     --border-h:     rgba(255,255,255,0.22);
     --text:         #ffffff;
     --text-muted:   rgba(255,255,255,0.55);
-    --accent:       rgba(139,92,246,0.55);
-    --accent-solid: #8b5cf6;
-    --accent-light: #a78bfa;
-    --accent-blue:  rgba(99,179,237,0.45);
-    --up:           #10b981;
+    --accent:       rgba(234,169,96,0.55);
+    --accent-solid: #eaa960;
+    --accent-light: #f8c37d;
+    --accent-blue:  rgba(248,195,125,0.45);
+    --up:           #f8c37d;
     --radius:       12px;
     --transition:   0.28s cubic-bezier(0.4,0,0.2,1);
 }
@@ -52,7 +52,7 @@
     display: flex;
     flex-direction: column;
     background: rgba(10, 10, 18, 0.92);
-    border: 1px solid rgba(139,92,246,0.22);
+    border: 1px solid rgba(234,169,96,0.22);
     border-radius: 18px;
     overflow: hidden;
     box-shadow:
@@ -68,7 +68,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.8), rgba(99,179,237,0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(234,169,96,0.8), rgba(248,195,125,0.5), transparent);
     z-index: 2;
 }
 
@@ -132,7 +132,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: drop-shadow(0 0 16px rgba(139,92,246,0.4));
+    filter: drop-shadow(0 0 16px rgba(234,169,96,0.4));
     margin-bottom: 16px;
     display: block;
 }
@@ -170,9 +170,9 @@
 }
 
 .admin-inbox-sidebar-search input:focus {
-    border-color: rgba(139,92,246,0.5);
-    background: rgba(139,92,246,0.06);
-    box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+    border-color: rgba(234,169,96,0.5);
+    background: rgba(234,169,96,0.06);
+    box-shadow: 0 0 0 3px rgba(234,169,96,0.1);
 }
 
 .admin-inbox-sidebar-search input::placeholder {
@@ -201,11 +201,11 @@
 .admin-inbox-user-list::-webkit-scrollbar { width: 4px; }
 .admin-inbox-user-list::-webkit-scrollbar-track { background: transparent; }
 .admin-inbox-user-list::-webkit-scrollbar-thumb {
-    background: rgba(139,92,246,0.35);
+    background: rgba(234,169,96,0.35);
     border-radius: 4px;
 }
 .admin-inbox-user-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(139,92,246,0.6);
+    background: rgba(234,169,96,0.6);
 }
 
 /* ── User List Item ───────────────────────────────────────── */
@@ -230,18 +230,18 @@
     position: absolute;
     left: 0; top: 15%; bottom: 15%;
     width: 2px;
-    background: linear-gradient(180deg, rgba(139,92,246,0), rgba(139,92,246,0.9) 50%, rgba(99,179,237,0.6));
+    background: linear-gradient(180deg, rgba(234,169,96,0), rgba(234,169,96,0.9) 50%, rgba(248,195,125,0.6));
     border-radius: 2px;
     opacity: 0;
     transition: opacity var(--transition);
 }
 
 .admin-inbox-user-item:hover {
-    background: rgba(139,92,246,0.08);
+    background: rgba(234,169,96,0.08);
 }
 
 .admin-inbox-user-item.selected {
-    background: rgba(139,92,246,0.14);
+    background: rgba(234,169,96,0.14);
 }
 
 .admin-inbox-user-item.selected::after {
@@ -264,8 +264,8 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: linear-gradient(135deg, rgba(139,92,246,0.4), rgba(99,179,237,0.3));
-    border: 1px solid rgba(139,92,246,0.3);
+    background: linear-gradient(135deg, rgba(234,169,96,0.4), rgba(248,195,125,0.3));
+    border: 1px solid rgba(234,169,96,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -293,7 +293,7 @@
 }
 
 .unread-badge {
-    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    background: linear-gradient(135deg, #b47830, #f8c37d);
     color: #fff;
     font-size: 0.65rem;
     padding: 2px 7px;
@@ -301,7 +301,7 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     flex-shrink: 0;
-    box-shadow: 0 0 10px rgba(139,92,246,0.5);
+    box-shadow: 0 0 10px rgba(234,169,96,0.35);
 }
 
 .admin-inbox-user-meta {
@@ -333,7 +333,7 @@
     display: flex;
     flex-direction: column;
     background: rgba(10, 10, 18, 0.92);
-    border: 1px solid rgba(139,92,246,0.22);
+    border: 1px solid rgba(234,169,96,0.22);
     border-radius: 18px;
     overflow: hidden;
     box-shadow:
@@ -348,7 +348,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99,179,237,0.5), rgba(139,92,246,0.8), transparent);
+    background: linear-gradient(90deg, transparent, rgba(248,195,125,0.5), rgba(234,169,96,0.8), transparent);
     z-index: 2;
 }
 
@@ -369,8 +369,8 @@
     width: 40px;
     height: 40px;
     border-radius: 11px;
-    background: linear-gradient(135deg, rgba(139,92,246,0.45), rgba(99,179,237,0.35));
-    border: 1px solid rgba(139,92,246,0.35);
+    background: linear-gradient(135deg, rgba(234,169,96,0.45), rgba(248,195,125,0.35));
+    border: 1px solid rgba(234,169,96,0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -429,14 +429,14 @@
     padding: 24px 24px 16px;
     -webkit-overflow-scrolling: touch;
     background:
-        radial-gradient(ellipse at 20% 80%, rgba(139,92,246,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(99,179,237,0.03) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 80%, rgba(234,169,96,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(248,195,125,0.03) 0%, transparent 50%);
 }
 
 .admin-inbox-messages-wrap::-webkit-scrollbar { width: 4px; }
 .admin-inbox-messages-wrap::-webkit-scrollbar-track { background: transparent; }
 .admin-inbox-messages-wrap::-webkit-scrollbar-thumb {
-    background: rgba(139,92,246,0.3);
+    background: rgba(234,169,96,0.3);
     border-radius: 4px;
 }
 
@@ -500,8 +500,8 @@
 
 /* Own (admin) bubble — purple tinted */
 .admin-inbox-message-row.own .admin-inbox-message-bubble {
-    background: linear-gradient(135deg, rgba(139,92,246,0.3) 0%, rgba(99,179,237,0.18) 100%);
-    border: 1px solid rgba(139,92,246,0.35);
+    background: linear-gradient(135deg, rgba(234,169,96,0.3) 0%, rgba(248,195,125,0.18) 100%);
+    border: 1px solid rgba(234,169,96,0.35);
     border-bottom-right-radius: 4px;
     color: #fff;
     box-shadow:
@@ -550,13 +550,13 @@
     width: 64px;
     height: 64px;
     border-radius: 18px;
-    background: rgba(139,92,246,0.08);
-    border: 1px solid rgba(139,92,246,0.2);
+    background: rgba(234,169,96,0.08);
+    border: 1px solid rgba(234,169,96,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.6rem;
-    color: rgba(139,92,246,0.5);
+    color: rgba(234,169,96,0.5);
 }
 
 .admin-inbox-conversation-empty p {
@@ -589,9 +589,9 @@
 }
 
 .admin-inbox-form-row:focus-within {
-    border-color: rgba(139,92,246,0.45);
-    box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
-    background: rgba(139,92,246,0.04);
+    border-color: rgba(234,169,96,0.45);
+    box-shadow: 0 0 0 3px rgba(234,169,96,0.1);
+    background: rgba(234,169,96,0.04);
 }
 
 .admin-inbox-form-row input[type="text"] {
@@ -640,7 +640,7 @@
     padding: 10px 18px !important;
     border-radius: 10px !important;
     border: none !important;
-    background: linear-gradient(135deg, rgba(139,92,246,0.85), rgba(99,179,237,0.7)) !important;
+    background: linear-gradient(135deg, rgba(234,169,96,0.85), rgba(248,195,125,0.7)) !important;
     color: #fff !important;
     font-weight: 500 !important;
     font-family: 'Space Grotesk', sans-serif !important;
@@ -653,7 +653,7 @@
     font-size: 0.8rem !important;
     letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
-    box-shadow: 0 0 20px rgba(139,92,246,0.3) !important;
+    box-shadow: 0 0 20px rgba(234,169,96,0.3) !important;
     transition: all var(--transition) !important;
     position: relative;
     overflow: hidden;
@@ -670,7 +670,7 @@
 
 .admin-inbox-send-btn:hover:not(:disabled) {
     transform: translateY(-1px) !important;
-    box-shadow: 0 0 32px rgba(139,92,246,0.55), 0 6px 18px rgba(0,0,0,0.4) !important;
+    box-shadow: 0 0 32px rgba(234,169,96,0.55), 0 6px 18px rgba(0,0,0,0.4) !important;
 }
 
 .admin-inbox-send-btn:hover:not(:disabled)::before { opacity: 1; }
@@ -687,8 +687,8 @@
     align-items: center;
     gap: 6px;
     padding: 4px 10px 4px 8px;
-    background: rgba(139,92,246,0.15);
-    border: 1px solid rgba(139,92,246,0.3);
+    background: rgba(234,169,96,0.15);
+    border: 1px solid rgba(234,169,96,0.3);
     border-radius: 8px;
     font-size: 0.75rem;
     color: var(--accent-light);

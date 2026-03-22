@@ -5,11 +5,11 @@
 .tdna-page {
   --tdna-bg0: #030308;
   --tdna-bg1: #0a0a12;
-  --tdna-line: rgba(139, 92, 246, 0.22);
-  --tdna-glow: rgba(139, 92, 246, 0.35);
+  --tdna-line: rgba(234, 169, 96, 0.22);
+  --tdna-glow: rgba(234, 169, 96, 0.35);
   --tdna-text: rgba(255, 255, 255, 0.92);
   --tdna-muted: rgba(255, 255, 255, 0.48);
-  --tdna-accent: #a78bfa;
+  --tdna-accent: #f8c37d;
   --tdna-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --tdna-sans: 'IBM Plex Sans', system-ui, sans-serif;
   font-family: var(--tdna-sans);
@@ -50,7 +50,7 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0 0 10px;
-  background: linear-gradient(120deg, #fff 0%, #c4b5fd 55%, #8b5cf6 100%);
+  background: linear-gradient(120deg, #fff 0%, #f8c37d 55%, #eaa960 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -88,13 +88,13 @@
   cursor: not-allowed;
 }
 .tdna-btn--primary {
-  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  background: linear-gradient(135deg, #b47830 0%, #f8c37d 100%);
   color: #fff;
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.5), 0 12px 40px rgba(91, 33, 182, 0.35);
+  box-shadow: 0 0 0 1px rgba(234, 169, 96, 0.5), 0 12px 40px rgba(20, 16, 10, 0.45);
 }
 .tdna-btn--primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 0 0 1px rgba(196, 181, 253, 0.6), 0 16px 48px rgba(91, 33, 182, 0.45);
+  box-shadow: 0 0 0 1px rgba(248, 195, 125, 0.35), 0 16px 48px rgba(20, 16, 10, 0.5);
 }
 .tdna-btn--ghost {
   background: rgba(255, 255, 255, 0.04);
@@ -102,14 +102,14 @@
   color: var(--tdna-text);
 }
 .tdna-btn--ghost:hover:not(:disabled) {
-  border-color: rgba(139, 92, 246, 0.4);
+  border-color: rgba(234, 169, 96, 0.4);
 }
 
 .tdna-cooldown-strip {
   margin: 20px 0;
   padding: 16px 20px;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(15, 15, 25, 0.9));
+  background: linear-gradient(135deg, rgba(234, 169, 96, 0.12), rgba(15, 15, 25, 0.9));
   border: 1px solid var(--tdna-line);
   display: flex;
   flex-wrap: wrap;
@@ -118,7 +118,7 @@
   font-size: 0.88rem;
 }
 .tdna-cooldown-strip strong {
-  color: #e9d5ff;
+  color: #f5ead8;
 }
 
 .tdna-resolving {
@@ -137,8 +137,8 @@
 .tdna-resolving-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(139, 92, 246, 0.2);
-  border-top-color: #a78bfa;
+  border: 3px solid rgba(234, 169, 96, 0.2);
+  border-top-color: #f8c37d;
   border-radius: 50%;
   animation: tdna-spin 0.75s linear infinite;
 }
@@ -174,7 +174,7 @@
   height: min(90vw, 720px);
   top: -20%;
   right: -15%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(59, 7, 100, 0.2) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.5) 0%, rgba(59, 7, 100, 0.2) 45%, transparent 70%);
   animation: tdna-nebula-drift 22s ease-in-out infinite alternate;
 }
 .tdna-intro-nebula--b {
@@ -182,7 +182,7 @@
   height: min(70vw, 520px);
   bottom: -25%;
   left: -20%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.35) 0%, rgba(15, 23, 42, 0.3) 50%, transparent 68%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.22) 0%, rgba(15, 23, 42, 0.3) 50%, transparent 68%);
   animation: tdna-nebula-drift 28s ease-in-out infinite alternate;
   animation-delay: -7s;
 }
@@ -244,8 +244,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(139, 92, 246, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 92, 246, 0.055) 1px, transparent 1px);
+    linear-gradient(rgba(234, 169, 96, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(234, 169, 96, 0.055) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 85% 70% at 50% 45%, black 20%, transparent 75%);
   opacity: 0.85;
@@ -258,7 +258,7 @@
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(34, 211, 238, 0.04) 50%,
+    rgba(248, 195, 125, 0.04) 50%,
     transparent 100%
   );
   background-size: 100% 140px;
@@ -284,7 +284,7 @@
   transform: translate(-50%, -50%);
   background:
     radial-gradient(circle, rgba(124, 58, 237, 0.22) 0%, transparent 42%),
-    radial-gradient(circle at 30% 40%, rgba(34, 211, 238, 0.08) 0%, transparent 35%);
+    radial-gradient(circle at 30% 40%, rgba(248, 195, 125, 0.08) 0%, transparent 35%);
   pointer-events: none;
 }
 
@@ -320,16 +320,16 @@
   white-space: pre;
 }
 .tdna-matrix-col--emerald {
-  color: #5eead4;
-  text-shadow: 0 0 10px rgba(94, 234, 212, 0.45);
+  color: #f8c37d;
+  text-shadow: 0 0 10px rgba(234, 169, 96, 0.4);
 }
 .tdna-matrix-col--cyan {
-  color: #22d3ee;
-  text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+  color: #eaa960;
+  text-shadow: 0 0 10px rgba(248, 195, 125, 0.4);
 }
 .tdna-matrix-col--violet {
-  color: #c4b5fd;
-  text-shadow: 0 0 10px rgba(196, 181, 253, 0.5);
+  color: #fcd9a8;
+  text-shadow: 0 0 10px rgba(234, 169, 96, 0.35);
 }
 @keyframes tdna-matrix-fall {
   0% {
@@ -363,17 +363,17 @@
   position: absolute;
   width: min(78vmin, 560px);
   height: min(78vmin, 560px);
-  border: 1px solid rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(234, 169, 96, 0.12);
   border-radius: 50%;
   animation: tdna-orbit-spin 48s linear infinite;
   box-shadow:
-    0 0 60px rgba(139, 92, 246, 0.08),
-    inset 0 0 40px rgba(34, 211, 238, 0.04);
+    0 0 60px rgba(234, 169, 96, 0.08),
+    inset 0 0 40px rgba(248, 195, 125, 0.04);
 }
 .tdna-intro-orbit-ring--slow {
   width: min(92vmin, 680px);
   height: min(92vmin, 680px);
-  border-color: rgba(34, 211, 238, 0.1);
+  border-color: rgba(248, 195, 125, 0.1);
   animation-duration: 72s;
   animation-direction: reverse;
 }
@@ -393,7 +393,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   background: rgba(4, 6, 14, 0.72);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(234, 169, 96, 0.2);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.5),
     0 20px 50px rgba(0, 0, 0, 0.45),
@@ -409,7 +409,7 @@
 .tdna-intro-stream-head {
   font-size: 0.58rem;
   letter-spacing: 0.06em;
-  color: rgba(167, 139, 250, 0.85);
+  color: rgba(234, 169, 96, 0.85);
   margin-bottom: 10px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -453,11 +453,11 @@
 .tdna-intro-frame {
   border-radius: 14px;
   background: linear-gradient(165deg, rgba(10, 10, 20, 0.92) 0%, rgba(4, 4, 12, 0.96) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.28);
+  border: 1px solid rgba(234, 169, 96, 0.28);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.6),
     0 24px 80px rgba(0, 0, 0, 0.55),
-    0 0 120px rgba(91, 33, 182, 0.12),
+    0 0 120px rgba(234, 169, 96, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   overflow: hidden;
   backdrop-filter: blur(20px);
@@ -506,7 +506,7 @@
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #34d399;
+  color: #f8c37d;
   text-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
 }
 
@@ -523,7 +523,7 @@
   font-family: var(--tdna-mono);
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(167, 139, 250, 0.9);
+  color: rgba(248, 195, 125, 0.9);
   vertical-align: middle;
 }
 .tdna-intro-brand-mark {
@@ -534,7 +534,7 @@
   color: rgba(255, 255, 255, 0.88);
   vertical-align: middle;
   margin: 0 4px;
-  text-shadow: 0 0 24px rgba(167, 139, 250, 0.35);
+  text-shadow: 0 0 24px rgba(234, 169, 96, 0.35);
 }
 .tdna-intro-brand-sub {
   display: block;
@@ -543,7 +543,7 @@
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.14em;
-  color: rgba(167, 139, 250, 0.95);
+  color: rgba(248, 195, 125, 0.95);
 }
 .tdna-intro-brand-session {
   display: block;
@@ -565,8 +565,8 @@
 .tdna-intro-prompt {
   font-family: var(--tdna-mono);
   font-size: 1rem;
-  color: #22d3ee;
-  text-shadow: 0 0 14px rgba(34, 211, 238, 0.5);
+  color: #f8c37d;
+  text-shadow: 0 0 14px rgba(248, 195, 125, 0.5);
 }
 .tdna-intro-phase-index {
   font-family: var(--tdna-mono);
@@ -577,11 +577,11 @@
 .tdna-intro-cmd {
   font-family: var(--tdna-mono);
   font-size: 0.58rem;
-  color: rgba(52, 211, 153, 0.85);
+  color: rgba(248, 195, 125, 0.88);
   padding: 4px 10px;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(52, 211, 153, 0.2);
+  border: 1px solid rgba(234, 169, 96, 0.22);
   max-width: 100%;
   word-break: break-all;
 }
@@ -590,7 +590,7 @@
   font-weight: 700;
   margin: 14px 0 10px;
   letter-spacing: -0.02em;
-  background: linear-gradient(120deg, #fff 0%, #e9d5ff 40%, #67e8f9 100%);
+  background: linear-gradient(120deg, #fff 0%, #f8c37d 45%, #eaa960 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -603,7 +603,7 @@
   font-family: var(--tdna-mono);
 }
 .tdna-intro-phase-sub-prefix {
-  color: rgba(167, 139, 250, 0.55);
+  color: rgba(248, 195, 125, 0.55);
 }
 
 .tdna-intro-bars {
@@ -638,15 +638,15 @@
 .tdna-intro-bar-fill {
   height: 100%;
   border-radius: 6px;
-  background: linear-gradient(90deg, #4c1d95, #7c3aed, #a78bfa, #22d3ee);
+  background: linear-gradient(90deg, #3d3020, #b47830, #eaa960, #f8c37d);
   transition: width 0.05s linear;
   box-shadow:
-    0 0 16px rgba(167, 139, 250, 0.55),
-    0 0 28px rgba(34, 211, 238, 0.2);
+    0 0 16px rgba(234, 169, 96, 0.4),
+    0 0 28px rgba(248, 195, 125, 0.2);
 }
 .tdna-intro-bar-fill--phase {
-  background: linear-gradient(90deg, rgba(52, 211, 153, 0.25), #34d399, #5eead4);
-  box-shadow: 0 0 14px rgba(52, 211, 153, 0.45);
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.25), #eaa960, #f8c37d);
+  box-shadow: 0 0 14px rgba(234, 169, 96, 0.35);
 }
 
 .tdna-intro-foot {
@@ -658,7 +658,7 @@
   line-height: 1.55;
 }
 .tdna-intro-foot-glyph {
-  color: rgba(167, 139, 250, 0.5);
+  color: rgba(234, 169, 96, 0.5);
   margin: 0 6px;
 }
 
@@ -721,7 +721,7 @@
   right: -20%;
   width: 60%;
   height: 120%;
-  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.15), transparent 70%);
+  background: radial-gradient(ellipse, rgba(234, 169, 96, 0.15), transparent 70%);
   pointer-events: none;
 }
 .tdna-nr-inner {
@@ -768,7 +768,7 @@
 .tdna-nr-countdown-value {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #e9d5ff;
+  color: #f5ead8;
 }
 .tdna-nr-countdown-date {
   font-size: 0.8rem;
@@ -786,7 +786,7 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: conic-gradient(#8b5cf6 calc(var(--p) * 1%), rgba(255, 255, 255, 0.06) 0);
+  background: conic-gradient(#eaa960 calc(var(--p) * 1%), rgba(255, 255, 255, 0.06) 0);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -865,7 +865,7 @@
   right: -15%;
   width: 55%;
   height: 150%;
-  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.2), transparent 65%);
+  background: radial-gradient(ellipse, rgba(234, 169, 96, 0.2), transparent 65%);
   pointer-events: none;
 }
 .tdna-hero-top {
@@ -934,11 +934,11 @@
   height: 88px;
   border-radius: 50%;
   margin: 0 auto 8px;
-  background: conic-gradient(#a78bfa calc(var(--v) * 1%), rgba(255, 255, 255, 0.06) 0);
+  background: conic-gradient(#f8c37d calc(var(--v) * 1%), rgba(255, 255, 255, 0.06) 0);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 0 6px #0e0e16, 0 0 28px rgba(139, 92, 246, 0.2);
+  box-shadow: inset 0 0 0 6px #0e0e16, 0 0 28px rgba(234, 169, 96, 0.2);
 }
 .tdna-score-orb-num {
   font-size: 1.35rem;
@@ -1003,7 +1003,7 @@
   color: rgba(255, 255, 255, 0.78);
 }
 .tdna-list--pos li::marker {
-  color: #34d399;
+  color: #f8c37d;
 }
 .tdna-list--warn li::marker {
   color: #fbbf24;
@@ -1037,7 +1037,7 @@
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 10px;
-  color: #e9d5ff;
+  color: #f5ead8;
 }
 .tdna-exec-style {
   margin: 0 0 8px;
@@ -1180,8 +1180,8 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .tdna-alert--high {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(130, 118, 108, 0.12);
+  border-color: rgba(130, 118, 108, 0.35);
   color: #fecaca;
 }
 .tdna-alert--medium {
@@ -1190,8 +1190,8 @@
   color: #fde68a;
 }
 .tdna-alert--low {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(234, 169, 96, 0.08);
+  border-color: rgba(234, 169, 96, 0.25);
   color: #a7f3d0;
 }
 
@@ -1219,8 +1219,8 @@
 .tdna-err {
   padding: 20px;
   border-radius: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(130, 118, 108, 0.1);
+  border: 1px solid rgba(130, 118, 108, 0.25);
   color: #fecaca;
   font-size: 0.88rem;
   display: flex;
@@ -1262,8 +1262,8 @@
   margin-bottom: 4px;
 }
 .tdna-warn-banner--strong {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(130, 118, 108, 0.08);
+  border-color: rgba(130, 118, 108, 0.3);
   color: #fecaca;
 }
 
@@ -1297,7 +1297,7 @@
 .tdna-gap-meta {
   font-size: 0.75rem;
   font-family: var(--tdna-mono);
-  color: rgba(167, 139, 250, 0.85);
+  color: rgba(234, 169, 96, 0.85);
   margin-bottom: 8px;
 }
 .tdna-gap-hint {
@@ -1319,21 +1319,21 @@
   font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
-  background: rgba(139, 92, 246, 0.15);
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  background: rgba(234, 169, 96, 0.15);
+  border: 1px solid rgba(234, 169, 96, 0.35);
   color: var(--tdna-accent);
 }
 .tdna-gap-link:hover {
-  background: rgba(139, 92, 246, 0.28);
-  color: #e9d5ff;
+  background: rgba(234, 169, 96, 0.28);
+  color: #f5ead8;
 }
 
 .tdna-found-strip {
   margin-top: 18px;
   padding: 12px 16px;
   border-radius: 10px;
-  background: rgba(139, 92, 246, 0.06);
-  border: 1px dashed rgba(139, 92, 246, 0.25);
+  background: rgba(234, 169, 96, 0.06);
+  border: 1px dashed rgba(234, 169, 96, 0.25);
   font-size: 0.8rem;
   color: var(--tdna-muted);
   line-height: 1.5;
@@ -1343,3 +1343,4 @@
   color: rgba(255, 255, 255, 0.75);
   font-weight: 600;
 }
+

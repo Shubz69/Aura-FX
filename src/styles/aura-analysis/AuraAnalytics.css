@@ -52,11 +52,11 @@
 }
 
 .aura-analytics-kpi-value.positive {
-  color: #10b981;
+  color: #f8c37d;
 }
 
 .aura-analytics-kpi-value.negative {
-  color: #ef4444;
+  color: #9a8f84;
 }
 
 /* Section titles */
@@ -174,11 +174,11 @@
 }
 
 .aura-analytics-pair-value.positive {
-  color: #10b981;
+  color: #f8c37d;
 }
 
 .aura-analytics-pair-value.negative {
-  color: #ef4444;
+  color: #9a8f84;
 }
 
 /* PnL by session – vertical bars with zero baseline */

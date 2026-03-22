@@ -10,10 +10,10 @@
   --border:   rgba(255,255,255,0.07);
   --text:     #ffffff;
   --muted:    rgba(255,255,255,0.45);
-  --accent:   #8b5cf6;
-  --accent2:  #63b3ed;
-  --up:       #10b981;
-  --down:     #ef4444;
+  --accent:   #eaa960;
+  --accent2:  #f8c37d;
+  --up:       #f8c37d;
+  --down:     #9a8f84;
   --radius:   12px;
   --ease:     0.25s cubic-bezier(0.4,0,0.2,1);
   --nav:      55px;
@@ -165,9 +165,9 @@ body.pai-active [class*="Footer"] {
   transition: all var(--ease);
 }
 .pai-clear:hover {
-  border-color: rgba(239,68,68,0.4);
+  border-color: rgba(130,118,108,0.4);
   color: var(--down);
-  background: rgba(239,68,68,0.07);
+  background: rgba(130,118,108,0.07);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -381,13 +381,13 @@ body.pai-active [class*="Footer"] {
   flex-shrink: 0;
 }
 .pai-avatar.user {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: 1px solid rgba(139,92,246,0.3);
+  background: linear-gradient(135deg, #5c4a32, #eaa960);
+  border: 1px solid rgba(234,169,96,0.3);
 }
 .pai-avatar.ai {
-  background: linear-gradient(135deg, #8b5cf6, #63b3ed);
-  border: 1px solid rgba(139,92,246,0.3);
-  box-shadow: 0 0 10px rgba(139,92,246,0.2);
+  background: linear-gradient(135deg, #eaa960, #fcd9a8);
+  border: 1px solid rgba(234,169,96,0.3);
+  box-shadow: 0 0 10px rgba(234,169,96,0.2);
 }
 
 /* Bubble wrapper */
@@ -416,8 +416,8 @@ body.pai-active [class*="Footer"] {
 }
 
 .pai-msg.user .pai-bubble {
-  background: linear-gradient(135deg, rgba(139,92,246,0.7), rgba(99,102,241,0.6));
-  border: 1px solid rgba(139,92,246,0.3);
+  background: linear-gradient(135deg, rgba(234,169,96,0.55), rgba(248,195,125,0.35));
+  border: 1px solid rgba(234,169,96,0.35);
   border-bottom-right-radius: 4px;
   color: #fff;
   font-weight: 400;
@@ -439,8 +439,8 @@ body.pai-active [class*="Footer"] {
 }
 
 .pai-msg.error .pai-bubble {
-  background: rgba(239,68,68,0.07);
-  border-color: rgba(239,68,68,0.2);
+  background: rgba(130,118,108,0.07);
+  border-color: rgba(130,118,108,0.2);
   color: #fca5a5;
 }
 
@@ -763,19 +763,19 @@ footer.pai-composer,
 .pai-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .pai-icon-btn.recording {
-  background: rgba(239,68,68,0.15) !important;
-  border-color: rgba(239,68,68,0.4) !important;
+  background: rgba(130,118,108,0.15) !important;
+  border-color: rgba(130,118,108,0.4) !important;
   color: var(--down) !important;
   animation: recPulse 1.2s ease-in-out infinite;
 }
 @keyframes recPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
-  50%       { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(130,118,108,0.3); }
+  50%       { box-shadow: 0 0 0 5px rgba(130,118,108,0); }
 }
 
 .pai-icon-btn.stop {
-  background: rgba(239,68,68,0.15) !important;
-  border-color: rgba(239,68,68,0.4) !important;
+  background: rgba(130,118,108,0.15) !important;
+  border-color: rgba(130,118,108,0.4) !important;
   color: var(--down) !important;
 }
 
@@ -822,7 +822,7 @@ footer.pai-composer,
   height: 48px !important;
   min-width: 48px !important;
   flex-shrink: 0 !important;
-  background: linear-gradient(135deg, var(--accent), #6366f1) !important;
+  background: linear-gradient(135deg, var(--accent), #f8c37d) !important;
   border: none !important;
   border-radius: 12px !important;
   color: #fff !important;

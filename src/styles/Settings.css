@@ -26,8 +26,8 @@
   --accent-rgb:      234, 169, 96;
   --accent-blue:     #f8c37d;
   --accent-blue-rgb: 248, 195, 125;
-  --up:              #10b981;
-  --down:            #ef4444;
+  --up:              #f8c37d;
+  --down:            #9a8f84;
   --orange:          #f59e0b;
   --radius:          14px;
   --radius-sm:       8px;
@@ -709,9 +709,9 @@
 }
 
 .role-badge.role-a7fx {
-  background: linear-gradient(135deg, rgba(239,68,68,0.8), rgba(220,38,38,0.7));
+  background: linear-gradient(135deg, rgba(60,52,46,0.95), rgba(90,78,68,0.88));
   color: #fff;
-  box-shadow: 0 0 16px rgba(239,68,68,0.25);
+  box-shadow: 0 0 16px rgba(234,169,96,0.12);
   border-color: rgba(255,255,255,0.18);
 }
 
@@ -964,18 +964,18 @@
   letter-spacing: 0.15em;
   text-transform: uppercase;
   cursor: pointer;
-  border: 1px solid rgba(239,68,68,0.35);
+  border: 1px solid rgba(130,118,108,0.4);
   border-radius: var(--radius-pill);
   background: rgba(239,68,68,0.08);
-  color: #f87171;
+  color: #c9a05c;
   transition: all var(--transition);
 }
 
 .btn-danger:hover {
-  background: rgba(239,68,68,0.16);
-  border-color: rgba(239,68,68,0.6);
+  background: rgba(90,78,68,0.2);
+  border-color: rgba(234,169,96,0.35);
   transform: translateY(-2px);
-  box-shadow: 0 0 24px rgba(239,68,68,0.2);
+  box-shadow: 0 0 24px rgba(234,169,96,0.1);
 }
 
 /* ── Toggle / Switch ──────────────────────────────────────────────── */
@@ -1350,7 +1350,7 @@
 
 .subscription-badge.active {
   background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.15));
-  color: #34d399;
+  color: #f8c37d;
   border-color: rgba(16, 185, 129, 0.3);
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.18);
 }
@@ -1401,7 +1401,7 @@
 .panel-header .close-btn:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.35);
-  color: #f87171;
+  color: #c9a05c;
   transform: rotate(90deg);
 }
 

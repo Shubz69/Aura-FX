@@ -77,7 +77,7 @@
 }
 
 .aura-leaderboard-error {
-  color: #ef4444;
+  color: #9a8f84;
   margin: 0 0 16px 0;
   font-size: 0.9rem;
 }
@@ -136,12 +136,12 @@
 }
 
 .aura-leaderboard-pnl-pos {
-  color: #10b981;
+  color: #f8c37d;
   font-weight: 500;
 }
 
 .aura-leaderboard-pnl-neg {
-  color: #ef4444;
+  color: #9a8f84;
   font-weight: 500;
 }
 

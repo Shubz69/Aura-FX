@@ -5,7 +5,7 @@ const ALL_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 
 const ALL_IMPACTS    = ['high', 'medium', 'low'];
 
 const IMPACT_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
-const IMPACT_COLOR = { high: '#ef4444', medium: '#f97316', low: '#eab308' };
+const IMPACT_COLOR = { high: '#7a6e62', medium: '#c9a05c', low: '#f8c37d' };
 
 const POLL_NORMAL_MS = 2 * 60 * 1000;   // 2 min baseline
 const POLL_FAST_MS   = 20 * 1000;        // 20 s when an event is within ±5 min

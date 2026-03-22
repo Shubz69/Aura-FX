@@ -159,7 +159,7 @@
 .admin-journal-error {
   text-align: center;
   padding: 20px 24px;
-  color: #ef4444;
+  color: #9a8f84;
   background: rgba(239,68,68,0.07);
   border: 1px solid rgba(239,68,68,0.18);
   border-radius: var(--aj-radius);
@@ -177,7 +177,7 @@
 }
 
 .admin-journal-denied {
-  color: #ef4444;
+  color: #9a8f84;
   text-align: center;
   padding: 80px 24px;
   text-transform: uppercase;
@@ -571,7 +571,7 @@
 .admin-journal-modal-close:hover {
   background: rgba(239,68,68,0.14);
   border-color: rgba(239,68,68,0.3);
-  color: #ef4444;
+  color: #9a8f84;
 }
 
 /* ── Modal Body ───────────────────────────────────────────── */

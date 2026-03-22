@@ -355,7 +355,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             return { 
                 icon: <FaUserPlus />, 
                 text: 'Accept', 
-                color: '#8b5cf6', 
+                color: '#eaa960', 
                 action: 'accept', 
                 subtext: 'Accept request' 
             };
@@ -364,7 +364,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             return { 
                 icon: <FaUserPlus />, 
                 text: 'Add Friend', 
-                color: '#8b5cf6', 
+                color: '#eaa960', 
                 action: 'add', 
                 subtext: 'Send request' 
             };
@@ -395,10 +395,10 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const getBannerAccent = (level) => {
         if (level >= 100) return '#FFD700';
         if (level >= 75) return '#63b3ed';
-        if (level >= 50) return '#8b5cf6';
-        if (level >= 25) return '#10b981';
-        if (level >= 10) return '#8b5cf6';
-        return '#8b5cf6';
+        if (level >= 50) return '#eaa960';
+        if (level >= 25) return '#f8c37d';
+        if (level >= 10) return '#eaa960';
+        return '#eaa960';
     };
 
     const getAchievements = (level, streak = 0, aiChats = 0, messages = 0) => {
@@ -647,7 +647,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 {profile.username || profile.name || 'User'}
                             </h1>
                             {(profile.role === 'admin' || profile.role === 'super_admin') && <FaCrown style={{ color: '#FFD700', fontSize: '1.1rem', filter: 'drop-shadow(0 0 8px #FFD70060)' }} />}
-                            {profile.subscription_status === 'active' && <FaCheckCircle style={{ color: '#8b5cf6', fontSize: '1rem' }} />}
+                            {profile.subscription_status === 'active' && <FaCheckCircle style={{ color: '#eaa960', fontSize: '1rem' }} />}
                         </div>
                         {/* Rank pill */}
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', background: `${tierColor}12`, border: `1px solid ${tierColor}30`, borderRadius: '99px' }}>
@@ -780,7 +780,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 <div style={{ display: 'flex', justifyContent: 'center', gap: '28px', flexWrap: 'wrap', padding: '20px', background: 'rgba(255,255,255,0.015)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     {[{ pct: profile.journalStats.todayPct, label: 'Today' }, { pct: profile.journalStats.weekPct, label: 'This Week' }, { pct: profile.journalStats.monthPct, label: 'This Month' }].map((item, i) => (
                                         <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: 54, height: 54, borderRadius: '50%', background: `conic-gradient(${tierColor} 0deg, #10b981 ${(item.pct ?? 0) * 3.6}deg, rgba(255,255,255,0.05) ${(item.pct ?? 0) * 3.6}deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                                            <div style={{ width: 54, height: 54, borderRadius: '50%', background: `conic-gradient(${tierColor} 0deg, #f8c37d ${(item.pct ?? 0) * 3.6}deg, rgba(255,255,255,0.05) ${(item.pct ?? 0) * 3.6}deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                                                 <div style={{ position: 'absolute', inset: 4, borderRadius: '50%', background: '#0a0a12' }} />
                                                 <span style={{ position: 'relative', zIndex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}>{item.pct != null ? `${item.pct}%` : '—'}</span>
                                             </div>
@@ -796,7 +796,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                     { icon: '⚡', label: 'Power Level', value: level, color: tierColor },
                                     { icon: '✨', label: 'Total XP', value: xp.toLocaleString(), color: '#FFD700' },
                                     { icon: '🔥', label: 'Streak', value: `${loginStreak}d`, color: '#f59e0b' },
-                                    { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#8b5cf6' }
+                                    { icon: '🎖️', label: 'Achievements', value: `${unlockedCount}/${ALL_ACHIEVEMENTS.length}`, color: '#eaa960' }
                                 ].map((stat, i) => (
                                     <div key={i} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', overflow: 'hidden', transition: 'border-color 0.22s' }}>
                                         <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: '2px', background: `linear-gradient(180deg, transparent, ${stat.color}80, transparent)`, borderRadius: '2px' }} />
@@ -814,9 +814,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                 const STAT_META = {
                                     discipline_score: { icon: '🎯', label: 'Discipline', color: '#a78bfa', fmt: v => `${v}%` },
                                     journal_score:    { icon: '📓', label: 'Journal',    color: '#63b3ed', fmt: v => `${v}%` },
-                                    consistency_score:{ icon: '📈', label: 'Consistency',color: '#10b981', fmt: v => `${v}%` },
+                                    consistency_score:{ icon: '📈', label: 'Consistency',color: '#f8c37d', fmt: v => `${v}%` },
                                     win_rate:         { icon: '✅', label: 'Win Rate',   color: '#f59e0b', fmt: v => `${v}%` },
-                                    total_trades:     { icon: '📊', label: 'Trades',     color: '#8b5cf6', fmt: v => String(v) },
+                                    total_trades:     { icon: '📊', label: 'Trades',     color: '#eaa960', fmt: v => String(v) },
                                     login_streak:     { icon: '🔥', label: 'Streak',     color: '#f97316', fmt: v => `${v}d` },
                                 };
                                 const entries = Object.entries(profile.visibleStats).filter(([k]) => STAT_META[k]);
@@ -868,7 +868,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {[
                                 { icon: <FaChartLine />, color: tierColor, label: 'Preferred Markets', content: (settings?.preferred_markets || ['forex', 'gold']).map((m, i) => <span key={i} style={{ padding: '5px 12px', background: `${tierColor}18`, border: `1px solid ${tierColor}40`, borderRadius: '99px', color: tierColor, fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{m}</span>) },
                                 { icon: <FaClock />, color: '#63b3ed', label: 'Trading Sessions', content: (settings?.trading_sessions || ['london', 'newyork']).map((s, i) => <span key={i} style={{ padding: '5px 12px', background: 'rgba(99,179,237,0.1)', border: '1px solid rgba(99,179,237,0.3)', borderRadius: '99px', color: '#63b3ed', fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{s}</span>) },
-                                { icon: <FaShieldAlt />, color: '#10b981', label: 'Risk Profile', content: [<span key="r" style={{ fontSize: '1.1rem', color: '#10b981', fontWeight: 300, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{settings?.risk_profile === 'conservative' ? '🛡️ ' : settings?.risk_profile === 'aggressive' ? '🔥 ' : '⚖️ '}{settings?.risk_profile || 'Moderate'}</span>] },
+                                { icon: <FaShieldAlt />, color: '#f8c37d', label: 'Risk Profile', content: [<span key="r" style={{ fontSize: '1.1rem', color: '#f8c37d', fontWeight: 300, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{settings?.risk_profile === 'conservative' ? '🛡️ ' : settings?.risk_profile === 'aggressive' ? '🔥 ' : '⚖️ '}{settings?.risk_profile || 'Moderate'}</span>] },
                                 { icon: <FaRobot />, color: '#a78bfa', label: 'AI Usage', content: [<span key="ai" style={{ fontSize: '1.1rem', color: '#a78bfa', fontWeight: 300, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif" }}>{stats?.ai_chats_count || 0} conversations</span>] }
                             ].map((card, i) => (
                                 <div key={i} style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
@@ -889,9 +889,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {[
                                 { icon: <FaRobot />, label: 'AI Chats', value: stats?.ai_chats_count || 0, color: '#a78bfa' },
                                 { icon: <FaComments />, label: 'Messages', value: stats?.community_messages || 0, color: '#63b3ed' },
-                                { icon: <FaGraduationCap />, label: 'Courses', value: stats?.courses_completed || 0, color: '#10b981' },
+                                { icon: <FaGraduationCap />, label: 'Courses', value: stats?.courses_completed || 0, color: '#f8c37d' },
                                 { icon: <FaFire />, label: 'Best Streak', value: `${stats?.longest_streak || loginStreak}d`, color: '#f59e0b' },
-                                { icon: <FaCalendarCheck />, label: 'Login Days', value: stats?.total_login_days || 0, color: '#8b5cf6' },
+                                { icon: <FaCalendarCheck />, label: 'Login Days', value: stats?.total_login_days || 0, color: '#eaa960' },
                                 { icon: <FaBolt />, label: 'Monthly XP', value: (stats?.current_month_xp || xp).toLocaleString(), color: '#FFD700' }
                             ].map((stat, i) => (
                                 <div key={i} style={{ padding: '20px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', textAlign: 'center', position: 'relative', overflow: 'hidden', transition: 'all 0.22s' }}>

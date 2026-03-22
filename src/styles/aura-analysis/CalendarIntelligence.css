@@ -89,7 +89,7 @@
   color: #fff;
 }
 .ci-stat-value--green { color: #4ade80; }
-.ci-stat-value--red { color: #f87171; }
+.ci-stat-value--red { color: #9a8f84; }
 
 /* Calendar grid */
 .ci-calendar-wrap {
@@ -169,7 +169,7 @@
   line-height: 1.2;
 }
 .ci-cal-pnl.positive { color: #4ade80; }
-.ci-cal-pnl.negative { color: #f87171; }
+.ci-cal-pnl.negative { color: #9a8f84; }
 
 .ci-cal-trades {
   font-size: 0.6rem;
@@ -203,7 +203,7 @@
   font-weight: 700;
 }
 .ci-detail-pnl.positive { color: #4ade80; }
-.ci-detail-pnl.negative { color: #f87171; }
+.ci-detail-pnl.negative { color: #9a8f84; }
 
 .ci-detail-trades {
   display: flex;
@@ -225,7 +225,7 @@
 .ci-detail-pair { font-weight: 700; color: rgba(255,255,255,0.85); }
 .ci-detail-dir { color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.65rem; }
 .ci-detail-result.win { color: #4ade80; font-weight: 700; }
-.ci-detail-result.loss { color: #f87171; font-weight: 700; }
+.ci-detail-result.loss { color: #9a8f84; font-weight: 700; }
 .ci-detail-note { color: rgba(255,255,255,0.35); font-size: 0.68rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ci-detail-pnl-cell { font-weight: 700; text-align: right; }
 

@@ -203,7 +203,7 @@ export const FriendsUpgradeRequired = () => (
         style={{
           display: 'inline-block',
           padding: '12px 24px',
-          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+          background: 'linear-gradient(135deg, #b47830 0%, #f8c37d 100%)',
           color: '#fff',
           borderRadius: 10,
           fontWeight: 600,

@@ -200,9 +200,9 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.ec-event-impact--high .ec-impact-dot { background: #ef4444; }
-.ec-event-impact--medium .ec-impact-dot { background: #eab308; }
-.ec-event-impact--low .ec-impact-dot { background: #22c55e; }
+.ec-event-impact--high .ec-impact-dot { background: #7a6e62; }
+.ec-event-impact--medium .ec-impact-dot { background: #c9a05c; }
+.ec-event-impact--low .ec-impact-dot { background: #f8c37d; }
 
 .ec-impact-label {
   font-size: 0.65rem;

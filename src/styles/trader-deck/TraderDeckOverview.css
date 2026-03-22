@@ -62,11 +62,11 @@
 }
 
 .td-overview-kpi-value--green {
-  color: #22c55e;
+  color: #f8c37d;
 }
 
 .td-overview-kpi-value--red {
-  color: #f87171;
+  color: #9a8f84;
 }
 
 /* Monthly + calendar */
@@ -221,8 +221,8 @@
   font-weight: 500;
 }
 
-.td-overview-cal-pnl.positive { color: #22c55e; }
-.td-overview-cal-pnl.negative { color: #f87171; }
+.td-overview-cal-pnl.positive { color: #f8c37d; }
+.td-overview-cal-pnl.negative { color: #9a8f84; }
 
 .td-overview-calendar-hint {
   margin: 16px 0 0 0;
@@ -314,9 +314,9 @@
 }
 
 .td-overview-pair-value.positive,
-.td-overview-session-value.positive { color: #22c55e; }
+.td-overview-session-value.positive { color: #f8c37d; }
 .td-overview-pair-value.negative,
-.td-overview-session-value.negative { color: #f87171; }
+.td-overview-session-value.negative { color: #9a8f84; }
 
 .td-overview-session-row {
   display: grid;
@@ -391,11 +391,11 @@
   color: #fff;
 }
 
-.td-overview-result.win { color: #22c55e; }
-.td-overview-result.loss { color: #f87171; }
+.td-overview-result.win { color: #f8c37d; }
+.td-overview-result.loss { color: #9a8f84; }
 
-.td-overview-pnl-positive { color: #22c55e; }
-.td-overview-pnl-negative { color: #f87171; }
+.td-overview-pnl-positive { color: #f8c37d; }
+.td-overview-pnl-negative { color: #9a8f84; }
 
 @media (max-width: 900px) {
   .td-overview-kpi-grid {

@@ -79,12 +79,12 @@
 }
 
 .confirmation-modal-icon.danger {
-  color: #ef4444;
+  color: #9a8f84;
   animation: pulse 2s infinite;
 }
 
 .confirmation-modal-icon.warning {
-  color: #f59e0b;
+  color: #c9a05c;
 }
 
 .confirmation-modal-icon.info {

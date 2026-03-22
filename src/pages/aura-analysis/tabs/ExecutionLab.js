@@ -84,7 +84,7 @@ export default function ExecutionLab() {
   execScore = Math.max(0, Math.min(100, Math.round(execScore)));
 
   const execLabel = execScore >= 75 ? 'Elite' : execScore >= 55 ? 'Disciplined' : execScore >= 35 ? 'Developing' : 'Needs Work';
-  const execColor = execScore >= 75 ? '#10b981' : execScore >= 55 ? '#eaa960' : execScore >= 35 ? '#f59e0b' : '#ef4444';
+  const execColor = execScore >= 75 ? '#f8c37d' : execScore >= 55 ? '#eaa960' : execScore >= 35 ? '#c9a05c' : '#7a6e62';
 
   /* ── Duration buckets ── */
   const withDuration = trades.filter(t => t.openTime && t.closeTime);
@@ -144,9 +144,9 @@ export default function ExecutionLab() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
           {[
             { l: 'Avg Duration',  v: fmtDuration(a.avgDurationMs),       c: 'rgba(255,255,255,0.75)' },
-            { l: 'Avg Win Dur',   v: fmtDuration(avgWinDur),              c: '#10b981' },
-            { l: 'Avg Loss Dur',  v: fmtDuration(avgLossDur),             c: avgLossDur > avgWinDur ? '#ef4444' : 'rgba(255,255,255,0.75)' },
-            { l: 'Avg Per Week',  v: fmtNum(a.avgTradesPerWeek, 1) + 'T', c: overtradingFlag ? '#ef4444' : 'rgba(255,255,255,0.75)' },
+            { l: 'Avg Win Dur',   v: fmtDuration(avgWinDur),              c: '#f8c37d' },
+            { l: 'Avg Loss Dur',  v: fmtDuration(avgLossDur),             c: avgLossDur > avgWinDur ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
+            { l: 'Avg Per Week',  v: fmtNum(a.avgTradesPerWeek, 1) + 'T', c: overtradingFlag ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
           ].map(({ l, v, c }) => (
             <div key={l}>
               <div style={{ fontSize: '0.58rem', fontWeight: 600, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</div>
@@ -162,12 +162,12 @@ export default function ExecutionLab() {
         {/* SL/TP usage */}
         <div className="aa-card">
           <div className="aa-section-title">Risk Management</div>
-          <MetricRow label="Stop Loss Usage"  value={fmtPct(a.pctWithSL) + '%'} color={a.pctWithSL >= 80 ? '#10b981' : '#f59e0b'} sub={`${Math.round(a.totalTrades * a.pctWithSL / 100)} of ${a.totalTrades} trades`} />
+          <MetricRow label="Stop Loss Usage"  value={fmtPct(a.pctWithSL) + '%'} color={a.pctWithSL >= 80 ? '#f8c37d' : '#c9a05c'} sub={`${Math.round(a.totalTrades * a.pctWithSL / 100)} of ${a.totalTrades} trades`} />
           <MetricRow label="Take Profit Usage" value={fmtPct(a.pctWithTP) + '%'} color="#eaa960" sub={`${Math.round(a.totalTrades * a.pctWithTP / 100)} of ${a.totalTrades} trades`} />
-          <MetricRow label="Profit Factor" value={a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—'} color={a.profitFactor >= 1.5 ? '#10b981' : a.profitFactor >= 1 ? '#f59e0b' : '#ef4444'} />
-          <MetricRow label="Expectancy / Trade" value={a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—'} color={a.expectancy >= 0 ? '#10b981' : '#ef4444'} />
+          <MetricRow label="Profit Factor" value={a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—'} color={a.profitFactor >= 1.5 ? '#f8c37d' : a.profitFactor >= 1 ? '#c9a05c' : '#9a8f84'} />
+          <MetricRow label="Expectancy / Trade" value={a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—'} color={a.expectancy >= 0 ? '#f8c37d' : '#9a8f84'} />
           <MetricRow label="Avg Win / Avg Loss" value={a.avgWin > 0 && a.avgLoss > 0 ? fmtNum(a.avgWin / a.avgLoss) + 'x' : '—'}
-            color={a.avgWin > a.avgLoss ? '#10b981' : '#ef4444'} sub={`${fmtPnl(a.avgWin)} avg win`} />
+            color={a.avgWin > a.avgLoss ? '#f8c37d' : '#9a8f84'} sub={`${fmtPnl(a.avgWin)} avg win`} />
         </div>
 
         {/* Holding time breakdown */}
@@ -186,20 +186,20 @@ export default function ExecutionLab() {
             );
           })}
           <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '12px 0' }} />
-          <MetricRow label="Win trades avg hold"  value={fmtDuration(avgWinDur)}  color="#10b981" />
-          <MetricRow label="Loss trades avg hold" value={fmtDuration(avgLossDur)} color={avgLossDur > avgWinDur ? '#ef4444' : 'rgba(255,255,255,0.75)'}
+          <MetricRow label="Win trades avg hold"  value={fmtDuration(avgWinDur)}  color="#f8c37d" />
+          <MetricRow label="Loss trades avg hold" value={fmtDuration(avgLossDur)} color={avgLossDur > avgWinDur ? '#9a8f84' : 'rgba(255,255,255,0.75)'}
             sub={avgLossDur > avgWinDur ? 'Holding losers too long' : 'Duration balanced'} />
         </div>
 
         {/* Frequency & discipline */}
         <div className="aa-card">
           <div className="aa-section-title">Discipline Signals</div>
-          <MetricRow label="Trades / Week" value={fmtNum(a.avgTradesPerWeek, 1)} color={overtradingFlag ? '#ef4444' : highActivityFlag ? '#f59e0b' : '#10b981'}
+          <MetricRow label="Trades / Week" value={fmtNum(a.avgTradesPerWeek, 1)} color={overtradingFlag ? '#9a8f84' : highActivityFlag ? '#c9a05c' : '#f8c37d'}
             sub={overtradingFlag ? 'High frequency — review selectivity' : highActivityFlag ? 'Active — monitor quality' : 'Good selectivity'} />
-          <MetricRow label="Max Win Streak"  value={String(a.maxWinStreak)}  color="#10b981" />
-          <MetricRow label="Max Loss Streak" value={String(a.maxLossStreak)} color={a.maxLossStreak >= 5 ? '#ef4444' : 'rgba(255,255,255,0.75)'}
+          <MetricRow label="Max Win Streak"  value={String(a.maxWinStreak)}  color="#f8c37d" />
+          <MetricRow label="Max Loss Streak" value={String(a.maxLossStreak)} color={a.maxLossStreak >= 5 ? '#9a8f84' : 'rgba(255,255,255,0.75)'}
             sub={a.maxLossStreak >= 5 ? 'High — add daily loss limit' : 'Acceptable'} />
-          <MetricRow label="Win Rate"  value={fmtPct(a.winRate) + '%'}  color={a.winRate >= 50 ? '#10b981' : '#ef4444'} />
+          <MetricRow label="Win Rate"  value={fmtPct(a.winRate) + '%'}  color={a.winRate >= 50 ? '#f8c37d' : '#9a8f84'} />
           <MetricRow label="Breakeven" value={String(a.breakeven)} color="rgba(255,255,255,0.5)" />
         </div>
       </div>
@@ -213,25 +213,25 @@ export default function ExecutionLab() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {a.pctWithSL < 80 && (
             <div className="aa-warning">
-              <i className="fas fa-shield-alt aa-warning-icon" style={{ color: '#f59e0b' }} />
+              <i className="fas fa-shield-alt aa-warning-icon" style={{ color: '#c9a05c' }} />
               {fmtPct(100 - a.pctWithSL)}% of trades missing a stop loss. Every trade should have a defined exit before entry.
             </div>
           )}
           {avgLossDur > avgWinDur * 1.5 && avgWinDur > 0 && (
             <div className="aa-warning aa-warning--red">
-              <i className="fas fa-clock aa-warning-icon" style={{ color: '#ef4444' }} />
+              <i className="fas fa-clock aa-warning-icon" style={{ color: '#9a8f84' }} />
               Losing trades are held {fmtDuration(avgLossDur - avgWinDur)} longer than winners — classic sign of letting losses run.
             </div>
           )}
           {overtradingFlag && (
             <div className="aa-warning aa-warning--red">
-              <i className="fas fa-exclamation-circle aa-warning-icon" style={{ color: '#ef4444' }} />
+              <i className="fas fa-exclamation-circle aa-warning-icon" style={{ color: '#9a8f84' }} />
               Averaging {fmtNum(a.avgTradesPerWeek, 1)} trades per week. High frequency correlates with lower quality setups — be more selective.
             </div>
           )}
           {a.maxLossStreak >= 5 && (
             <div className="aa-warning aa-warning--red">
-              <i className="fas fa-times aa-warning-icon" style={{ color: '#ef4444' }} />
+              <i className="fas fa-times aa-warning-icon" style={{ color: '#9a8f84' }} />
               Max loss streak of {a.maxLossStreak} trades. Implement a 3-trade daily loss limit to prevent emotional spirals.
             </div>
           )}
@@ -249,7 +249,7 @@ export default function ExecutionLab() {
           )}
           {a.profitFactor > 0 && a.profitFactor < 1 && (
             <div className="aa-warning aa-warning--red">
-              <i className="fas fa-chart-line aa-warning-icon" style={{ color: '#ef4444' }} />
+              <i className="fas fa-chart-line aa-warning-icon" style={{ color: '#9a8f84' }} />
               Profit factor below 1.0 — review your setup criteria and ensure you're only taking A+ setups.
             </div>
           )}

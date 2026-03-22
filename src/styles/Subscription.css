@@ -19,7 +19,7 @@
   --accent-purple: #8B5CF6;
   --accent-purple-light: rgba(139, 92, 246, 0.15);
   --accent-blue: #3B82F6;
-  --accent-green: #10B981;
+  --accent-green: #eaa960;
   --accent-orange: #F59E0B;
   --accent-red: #EF4444;
   --radius-sm: 6px;
@@ -588,7 +588,7 @@
 }
 
 .manual-redirect-button {
-  background: linear-gradient(135deg, var(--accent-green), #059669);
+  background: linear-gradient(135deg, var(--accent-green), #f8c37d);
   color: white;
   border: none;
   padding: 16px 32px;

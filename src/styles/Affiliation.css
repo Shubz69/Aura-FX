@@ -365,7 +365,7 @@
 }
 
 .aff-share-btn--tw {
-  color: #38bdf8;
+  color: #f8c37d;
 }
 .aff-share-btn--wa {
   color: #4ade80;
@@ -402,7 +402,7 @@
 }
 
 .aff-copy-btn.copied {
-  background: linear-gradient(135deg, #34d399, #059669);
+  background: linear-gradient(135deg, #f8c37d, #b47830);
   border-color: rgba(16, 185, 129, 0.45);
   color: #fff;
   box-shadow: 0 6px 22px rgba(16, 185, 129, 0.3);
@@ -847,7 +847,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #34d399;
+  color: #f8c37d;
   background: rgba(16, 185, 129, 0.12);
   padding: 6px 12px;
   border-radius: 100px;

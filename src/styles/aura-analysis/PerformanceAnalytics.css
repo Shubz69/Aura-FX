@@ -106,7 +106,7 @@
   color: #fff;
 }
 .pa-kpi-value--green { color: #4ade80; }
-.pa-kpi-value--red { color: #f87171; }
+.pa-kpi-value--red { color: #9a8f84; }
 
 /* Section */
 .pa-section {
@@ -202,7 +202,7 @@
   transition: width 0.3s;
 }
 .pa-bar-fill--pos { background: #4ade80; }
-.pa-bar-fill--neg { background: #f87171; }
+.pa-bar-fill--neg { background: #7a6e62; }
 
 .pa-bar-val {
   font-size: 0.68rem;
@@ -306,7 +306,7 @@
 
 /* Color helpers */
 .pa--green { color: #4ade80; }
-.pa--red { color: #f87171; }
+.pa--red { color: #9a8f84; }
 
 @media (max-width: 768px) {
   .pa-kpi-row { grid-template-columns: repeat(3, 1fr); }

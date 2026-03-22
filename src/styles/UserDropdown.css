@@ -259,7 +259,7 @@
 
 .user-dropdown button:last-child:hover {
   background: rgba(240, 61, 95, 0.07);
-  color: #f87171;
+  color: #9a8f84;
 }
 
 /* ── Dropdown Icon ─────────────────────────────────────────── */
@@ -296,7 +296,7 @@
 }
 
 .user-dropdown button:last-child:hover .dropdown-icon {
-  color: #f87171;
+  color: #9a8f84;
   background: rgba(240, 61, 95, 0.10);
   border-color: rgba(240, 61, 95, 0.28);
   box-shadow: 0 0 8px rgba(240, 61, 95, 0.30);

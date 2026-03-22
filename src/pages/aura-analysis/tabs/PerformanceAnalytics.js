@@ -18,7 +18,7 @@ function MiniEquity({ curve, height = 100 }) {
   const line = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
   const area = `${line} L${xs[xs.length-1].toFixed(1)},${H-pad.b} L${xs[0].toFixed(1)},${H-pad.b} Z`;
   const isUp = vals[vals.length - 1] >= vals[0];
-  const col = isUp ? '#10b981' : '#ef4444';
+  const col = isUp ? '#f8c37d' : '#9a8f84';
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, display: 'block' }}>
       <defs>
@@ -164,15 +164,15 @@ export default function PerformanceAnalytics() {
               <div className="aa-section-title" style={{ marginTop: 4 }}>Direction Breakdown</div>
               <div style={{ display: 'flex', gap: 10 }}>
                 {[
-                  { key: 'buy',  label: 'Long',  col: '#10b981', data: a.byDirection.buy  },
-                  { key: 'sell', label: 'Short', col: '#ef4444', data: a.byDirection.sell },
+                  { key: 'buy',  label: 'Long',  col: '#f8c37d', data: a.byDirection.buy  },
+                  { key: 'sell', label: 'Short', col: '#9a8f84', data: a.byDirection.sell },
                 ].map(({ key, label, col, data }) => (
                   <div key={key} style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ fontSize: '0.7rem', fontWeight: 700, color: col, marginBottom: 8 }}>{label} ({data.trades})</div>
                     {[
-                      { l: 'Win Rate', v: fmtPct(data.winRate), c: data.winRate >= 50 ? '#10b981' : '#ef4444' },
-                      { l: 'Net P/L',  v: fmtPnl(data.pnl),          c: data.pnl >= 0 ? '#10b981' : '#ef4444' },
-                      { l: 'P-Factor', v: data.pf > 0 ? fmtNum(data.pf) : '—', c: data.pf >= 1 ? '#10b981' : '#ef4444' },
+                      { l: 'Win Rate', v: fmtPct(data.winRate), c: data.winRate >= 50 ? '#f8c37d' : '#9a8f84' },
+                      { l: 'Net P/L',  v: fmtPnl(data.pnl),          c: data.pnl >= 0 ? '#f8c37d' : '#9a8f84' },
+                      { l: 'P-Factor', v: data.pf > 0 ? fmtNum(data.pf) : '—', c: data.pf >= 1 ? '#f8c37d' : '#9a8f84' },
                     ].map(({ l, v, c }) => (
                       <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                         <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>{l}</span>

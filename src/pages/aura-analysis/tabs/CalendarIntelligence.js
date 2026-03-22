@@ -118,8 +118,8 @@ export default function CalendarIntelligence() {
               let bg, bdr;
               if (isSel) { bg = 'rgba(234,169,96,0.28)'; bdr = 'rgba(234,169,96,0.65)'; }
               else if (cell.pnl == null) { bg = 'rgba(255,255,255,0.02)'; bdr = 'rgba(255,255,255,0.06)'; }
-              else if (isPos) { bg = `rgba(16,185,129,${0.04 + intensity * 0.2})`; bdr = `rgba(16,185,129,${0.12 + intensity * 0.28})`; }
-              else            { bg = `rgba(239,68,68,${0.04 + intensity * 0.2})`;  bdr = `rgba(239,68,68,${0.12 + intensity * 0.28})`; }
+              else if (isPos) { bg = `rgba(234,169,96,${0.05 + intensity * 0.22})`; bdr = `rgba(234,169,96,${0.14 + intensity * 0.3})`; }
+              else            { bg = `rgba(140,125,115,${0.06 + intensity * 0.18})`;  bdr = `rgba(140,125,115,${0.16 + intensity * 0.26})`; }
 
               return (
                 <button key={cell.key} type="button"
@@ -128,7 +128,7 @@ export default function CalendarIntelligence() {
                   <div style={{ fontSize: '0.65rem', fontWeight: isToday ? 700 : 400, color: isToday ? '#c4b5fd' : 'rgba(255,255,255,0.65)', marginBottom: 2 }}>{cell.d}</div>
                   {cell.pnl != null && (
                     <>
-                      <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isPos ? '#10b981' : '#ef4444', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+                      <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isPos ? '#f8c37d' : '#9a8f84', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                         {isPos ? '+' : ''}{Math.abs(cell.pnl) >= 1000 ? fmtNum(cell.pnl / 1000, 1) + 'k' : fmtNum(cell.pnl, 0)}
                       </div>
                       <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>{cell.tradeCount}T</div>
@@ -141,7 +141,7 @@ export default function CalendarIntelligence() {
 
           {/* Legend */}
           <div style={{ display: 'flex', gap: 14, marginTop: 12, justifyContent: 'flex-end' }}>
-            {[['#10b981', 'Profit day'], ['#ef4444', 'Loss day'], ['rgba(255,255,255,0.15)', 'No trades']].map(([c, l]) => (
+            {[['#f8c37d', 'Profit day'], ['#9a8f84', 'Loss day'], ['rgba(255,255,255,0.15)', 'No trades']].map(([c, l]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />
                 <span style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.3)' }}>{l}</span>
@@ -165,9 +165,9 @@ export default function CalendarIntelligence() {
                 </div>
                 <div style={{ display: 'flex', gap: 14, marginBottom: 12, flexWrap: 'wrap' }}>
                   {[
-                    { l: 'Day P/L',  v: fmtPnl(selDayData.pnl),  c: selDayData.pnl >= 0 ? '#10b981' : '#ef4444' },
+                    { l: 'Day P/L',  v: fmtPnl(selDayData.pnl),  c: selDayData.pnl >= 0 ? '#f8c37d' : '#9a8f84' },
                     { l: 'Trades',   v: String(selDayData.trades.length), c: 'rgba(255,255,255,0.75)' },
-                    { l: 'Wins',     v: String(selDayData.wins),          c: '#10b981' },
+                    { l: 'Wins',     v: String(selDayData.wins),          c: '#f8c37d' },
                     { l: 'Win Rate', v: selDayData.trades.length > 0 ? fmtPct(selDayData.wins / selDayData.trades.length * 100) + '%' : '—', c: 'rgba(255,255,255,0.75)' },
                   ].map(({ l, v, c }) => (
                     <div key={l} style={{ flex: '1 1 60px' }}>

@@ -18,7 +18,7 @@ function HeatCell({ value, maxAbs, label, sub, size = 'md' }) {
   return (
     <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 8, padding: size === 'sm' ? '8px 6px' : '10px 8px', textAlign: 'center' }}>
       <div style={{ fontSize: size === 'sm' ? '0.6rem' : '0.63rem', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: size === 'sm' ? '0.68rem' : '0.75rem', fontWeight: 700, color: value === 0 ? 'rgba(255,255,255,0.3)' : isPos ? '#10b981' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>
+      <div style={{ fontSize: size === 'sm' ? '0.68rem' : '0.75rem', fontWeight: 700, color: value === 0 ? 'rgba(255,255,255,0.3)' : isPos ? '#f8c37d' : '#9a8f84', fontVariantNumeric: 'tabular-nums' }}>
         {value === 0 ? '—' : (isPos ? '+' : '') + fmtNum(value, 0)}
       </div>
       {sub && <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>{sub}</div>}
@@ -122,15 +122,15 @@ export default function EdgeAnalyzer() {
           <div className="aa-section-title">Long vs Short Edge</div>
           <div style={{ display: 'flex', gap: 10 }}>
             {[
-              { key: 'buy',  label: 'Long',  col: '#10b981', data: a.byDirection.buy },
-              { key: 'sell', label: 'Short', col: '#ef4444', data: a.byDirection.sell },
+              { key: 'buy',  label: 'Long',  col: '#f8c37d', data: a.byDirection.buy },
+              { key: 'sell', label: 'Short', col: '#9a8f84', data: a.byDirection.sell },
             ].map(({ key, label, col, data }) => (
               <div key={key} style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '10px 12px' }}>
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: col, marginBottom: 8 }}>{label} ({data.trades})</div>
                 {[
-                  { l: 'Win Rate', v: fmtPct(data.winRate) + '%', c: data.winRate >= 50 ? '#10b981' : '#ef4444' },
-                  { l: 'Net P/L',  v: fmtPnl(data.pnl),          c: data.pnl >= 0 ? '#10b981' : '#ef4444' },
-                  { l: 'P-Factor', v: data.pf > 0 ? fmtNum(data.pf) : '—', c: data.pf >= 1 ? '#10b981' : '#ef4444' },
+                  { l: 'Win Rate', v: fmtPct(data.winRate) + '%', c: data.winRate >= 50 ? '#f8c37d' : '#9a8f84' },
+                  { l: 'Net P/L',  v: fmtPnl(data.pnl),          c: data.pnl >= 0 ? '#f8c37d' : '#9a8f84' },
+                  { l: 'P-Factor', v: data.pf > 0 ? fmtNum(data.pf) : '—', c: data.pf >= 1 ? '#f8c37d' : '#9a8f84' },
                 ].map(({ l, v, c }) => (
                   <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                     <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>{l}</span>

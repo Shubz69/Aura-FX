@@ -14,13 +14,13 @@
   --border: rgba(255, 255, 255, 0.06);
   --border-h: rgba(234, 169, 96, 0.22);
   --text: #ffffff;
-  --text-muted: rgba(200, 196, 232, 0.65);
+  --text-muted: rgba(200, 198, 190, 0.68);
   --text-subtle: rgba(255, 255, 255, 0.35);
   --accent: rgba(234, 169, 96, 0.55);
   --accent-blue: rgba(248, 195, 125, 0.45);
-  --up: #10b981;
-  --down: #ef4444;
-  --warning: #f59e0b;
+  --up: #f8c37d;
+  --down: #9a8f84;
+  --warning: #c9a05c;
   --radius: 10px;
   --radius-lg: 16px;
   --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1284,7 +1284,7 @@
 }
 .chub-modal-close:hover {
   background: rgba(248, 113, 113, 0.15);
-  color: #f87171;
+  color: #9a8f84;
   border-color: rgba(248, 113, 113, 0.3);
 }
 

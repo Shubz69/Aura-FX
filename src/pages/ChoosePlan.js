@@ -184,7 +184,7 @@ const ChoosePlan = () => {
         </p>
 
         {error && (
-          <div style={{ margin: '0 auto 24px', maxWidth: '600px', padding: '16px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#f87171', textAlign: 'center' }}>
+          <div style={{ margin: '0 auto 24px', maxWidth: '600px', padding: '16px', background: 'rgba(130, 118, 108, 0.12)', border: '1px solid rgba(234, 169, 96, 0.35)', borderRadius: '8px', color: '#c4bbb2', textAlign: 'center' }}>
             {error}
           </div>
         )}

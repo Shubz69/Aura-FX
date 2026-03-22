@@ -199,7 +199,7 @@
 
 /* MONEY AVATAR */
 .money-avatar .avatar-head {
-    background: linear-gradient(135deg, #059669, #10B981);
+    background: linear-gradient(135deg, #7a5c30, #f8c37d);
     border-color: rgba(16, 185, 129, 0.4);
 }
 
@@ -347,7 +347,7 @@
 .chart-line {
     width: 20px;
     height: 2px;
-    background: linear-gradient(90deg, #10B981, #059669);
+    background: linear-gradient(90deg, #f8c37d, #b47830);
     border-radius: 1px;
     position: absolute;
     top: 20px;

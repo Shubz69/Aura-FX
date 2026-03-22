@@ -14,8 +14,8 @@
   --tv-accent-soft:   var(--aa-accent-soft, rgba(234, 169, 96, 0.14));
   --tv-radius:        var(--aa-radius, 12px);
   --tv-radius-lg:     var(--aa-radius-lg, 18px);
-  --tv-up:            var(--aa-success, #10b981);
-  --tv-down:          var(--aa-loss, #ef4444);
+  --tv-up:            var(--aa-success, #f8c37d);
+  --tv-down:          var(--aa-loss, #9a8f84);
   font-family: 'Space Grotesk', sans-serif;
   min-height: 100vh;
   background: var(--tv-bg);
@@ -181,7 +181,7 @@
 }
 .tv-score-bar {
   height: 100%;
-  background: linear-gradient(90deg, #059669 0%, var(--tv-up) 100%);
+  background: linear-gradient(90deg, #5c4a32 0%, var(--tv-up) 100%);
   border-radius: 6px;
   transition: width 0.3s ease;
 }
@@ -633,7 +633,7 @@
   margin-top: 4px;
 }
 .tv-score-bonus {
-  color: #10b981;
+  color: #f8c37d;
   font-weight: 700;
 }
 .tv-btn-calc:hover {
@@ -844,7 +844,7 @@
   font-weight: 700;
 }
 .trade-validator-score-value.good { color: var(--tv-up); }
-.trade-validator-score-value.warn { color: #f59e0b; }
+.trade-validator-score-value.warn { color: #c9a05c; }
 .trade-validator-score-value.low { color: var(--tv-down); }
 .trade-validator-score-label {
   font-size: 0.9rem;
@@ -1089,7 +1089,7 @@
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #6ee7b7, #10b981);
+  background: linear-gradient(135deg, #c9a05c, #f8c37d);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1114,7 +1114,7 @@
 .tv-score-bar {
   height: 100%;
   border-radius: 8px;
-  background: linear-gradient(90deg, #059669, #10b981, #34d399);
+  background: linear-gradient(90deg, #7a5c30, #eaa960, #f8c37d);
   background-size: 200% 100%;
   animation: tv-bar-shimmer 2.4s linear infinite;
   box-shadow: 0 0 10px rgba(16,185,129,0.4);
@@ -1208,8 +1208,8 @@
   border: 1.5px solid rgba(255,255,255,0.2);
 }
 .tv-checklist-item input:checked + .tv-checkmark {
-  background: linear-gradient(135deg, #059669, #10b981);
-  border-color: #10b981;
+  background: linear-gradient(135deg, #5c4a32, #eaa960);
+  border-color: #eaa960;
   box-shadow: 0 0 8px rgba(16,185,129,0.3);
 }
 .tv-item-pct {
@@ -1254,7 +1254,7 @@
 .tv-bottom-msg-ok {
   background: rgba(16,185,129,0.12);
   border: 1px solid rgba(16,185,129,0.25);
-  color: #34d399;
+  color: #f8c37d;
   border-radius: 8px;
   padding: 9px 16px;
   font-weight: 600;

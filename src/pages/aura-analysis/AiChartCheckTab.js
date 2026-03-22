@@ -28,7 +28,7 @@ const makeSlot = (tf = '1H') => ({ id: `${Date.now()}-${Math.random()}`, timefra
 
 function ScoreDial({ score }) {
   const clamp = Math.max(0, Math.min(100, score));
-  const color = clamp >= 80 ? '#10b981' : clamp >= 60 ? '#f59e0b' : clamp >= 40 ? '#f97316' : '#ef4444';
+  const color = clamp >= 80 ? '#f8c37d' : clamp >= 60 ? '#eaa960' : clamp >= 40 ? '#c9a05c' : '#7a6e62';
   const radius = 44;
   const circ = 2 * Math.PI * radius;
   const offset = circ - (clamp / 100) * circ;

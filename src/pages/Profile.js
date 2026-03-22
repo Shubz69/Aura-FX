@@ -1193,7 +1193,7 @@ if (!avatarToSave && avatarColor) {
                                         style={{
                                             background: pushSubscribed ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)',
                                             border: pushSubscribed ? '1px solid rgba(239,68,68,0.3)' : 'none',
-                                            color: pushSubscribed ? '#ef4444' : '#fff',
+                                            color: pushSubscribed ? '#c9a05c' : '#fff',
                                             borderRadius: 8, padding: '7px 14px', fontSize: '0.78rem',
                                             fontWeight: 600, cursor: pushLoading ? 'wait' : 'pointer',
                                             opacity: pushLoading ? 0.7 : 1, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 12

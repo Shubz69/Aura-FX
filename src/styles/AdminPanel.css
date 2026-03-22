@@ -14,9 +14,9 @@
   --ap-text: #ffffff;
   --ap-muted: rgba(200, 196, 232, 0.65);
   --ap-dim: rgba(178, 175, 218, 0.38);
-  --ap-green: #10b981;
-  --ap-red: #ef4444;
-  --ap-amber: #f59e0b;
+  --ap-green: #f8c37d;
+  --ap-red: #9a8f84;
+  --ap-amber: #c9a05c;
   --ap-shadow:
     0 8px 32px rgba(0, 0, 0, 0.65),
     0 1px 0 rgba(255, 255, 255, 0.03) inset,

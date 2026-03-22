@@ -209,12 +209,12 @@
 .nf-impact--up {
   background: rgba(16,185,129,0.12);
   border-color: rgba(16,185,129,0.3);
-  color: #34d399;
+  color: #f8c37d;
 }
 .nf-impact--down {
-  background: rgba(239,68,68,0.12);
-  border-color: rgba(239,68,68,0.3);
-  color: #f87171;
+  background: rgba(130,118,108,0.12);
+  border-color: rgba(130,118,108,0.3);
+  color: #9a8f84;
 }
 .nf-impact--neutral {
   background: rgba(148,163,184,0.08);

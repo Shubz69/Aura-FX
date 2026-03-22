@@ -17,20 +17,20 @@ function hashCode(str) {
     return Math.abs(hash);
 }
 
-// Vibrant palette — each user gets a unique gradient (journal: gold-forward, no violet)
+// Navy / charcoal + gold only — deterministic variety without hue noise
 const AVATAR_PALETTES = [
-    ['#92400e', '#fbbf24'],   // bronze → gold
-    ['#0ea5e9', '#38bdf8'],   // sky
-    ['#059669', '#34d399'],   // emerald
-    ['#b45309', '#fcd34d'],   // deep gold
-    ['#dc2626', '#f87171'],   // red
-    ['#0284c7', '#7dd3fc'],   // blue
-    ['#c2410c', '#fb923c'],   // copper
-    ['#065f46', '#6ee7b7'],   // dark green
-    ['#a16207', '#fde68a'],   // antique gold
-    ['#78350f', '#f59e0b'],   // brown gold
-    ['#0f766e', '#5eead4'],   // teal
-    ['#be123c', '#fb7185'],   // rose
+    ['#0c0a08', '#eaa960'],
+    ['#141018', '#f8c37d'],
+    ['#1a1510', '#c9a05c'],
+    ['#0a0908', '#d4a574'],
+    ['#181620', '#fcd9a8'],
+    ['#12100c', '#b47830'],
+    ['#1f1a14', '#e8c992'],
+    ['#0f0e12', '#a67c3d'],
+    ['#161410', '#f6d4a8'],
+    ['#221c14', '#eaa960'],
+    ['#101018', '#c9a05c'],
+    ['#1c1812', '#f8c37d'],
 ];
 
 // Unique geometric avatar shapes per user (SVG paths)
@@ -150,7 +150,7 @@ function MiniSparkline({ userId, xp }) {
         return `${x},${y}`;
     }).join(' ');
 
-    const trend = points[6] > points[0] ? '#10b981' : '#ef4444';
+    const trend = points[6] > points[0] ? '#f8c37d' : '#7a6e62';
 
     return (
         <svg width={w} height={h2} viewBox={`0 0 ${w} ${h2}`} style={{ display: 'block' }}>

@@ -14,9 +14,9 @@
     --text:         #ffffff;
     --text-muted:   rgba(255,255,255,0.55);
     --accent:       rgba(139,92,246,0.55);
-    --accent-solid: #8b5cf6;
+    --accent-solid: #eaa960;
     --accent-blue:  rgba(99,179,237,0.45);
-    --down:         #ef4444;
+    --down:         #9a8f84;
     --radius:       10px;
     --transition:   0.28s cubic-bezier(0.4,0,0.2,1);
 }
@@ -325,7 +325,7 @@
 .error-message {
     background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.12) 100%) !important;
     border: 1px solid rgba(239,68,68,0.5) !important;
-    border-left: 3px solid #ef4444 !important;
+    border-left: 3px solid #9a8f84 !important;
     color: rgba(255,255,255,0.95) !important;
     padding: 16px 20px !important;
     border-radius: 10px !important;
@@ -349,7 +349,7 @@
 .error-message-under-button {
     background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.12) 100%) !important;
     border: 1px solid rgba(239,68,68,0.5) !important;
-    border-left: 3px solid #ef4444 !important;
+    border-left: 3px solid #9a8f84 !important;
     color: rgba(255,255,255,0.95) !important;
     padding: 16px 20px !important;
     border-radius: 10px !important;

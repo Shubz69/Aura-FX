@@ -4921,7 +4921,7 @@ useEffect(() => {
                                                                 style={{
                                                                     background: 'transparent',
                                                                     border: 'none',
-                                                                    color: '#f87171',
+                                                                    color: '#9a8f84',
                                                                     cursor: 'pointer',
                                                                     padding: '4px 8px',
                                                                     borderRadius: '4px',
@@ -4962,7 +4962,7 @@ useEffect(() => {
                                                             style={{
                                                                 background: 'transparent',
                                                                 border: 'none',
-                                                                color: '#f87171',
+                                                                color: '#9a8f84',
                                                                 cursor: 'pointer',
                                                                 padding: '4px 8px',
                                                                 borderRadius: '4px',
@@ -6079,7 +6079,7 @@ if (!isAuthenticated && !hasToken) {
                                                         height: '20px',
                                                         borderRadius: '10px',
                                                         background: hasMentions 
-                                                            ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
+                                                            ? 'linear-gradient(135deg, #5c534a, #9a8f84)' 
                                                             : 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
                                                         color: 'white',
                                                         fontSize: '0.75rem',
@@ -7255,7 +7255,7 @@ if (!isAuthenticated && !hasToken) {
                                         ? 'rgba(34,197,94,0.1)'
                                         : 'rgba(248,113,113,0.1)',
                                     border: `1px solid ${channelActionStatus.type === 'success' ? 'rgba(34,197,94,0.4)' : 'rgba(248,113,113,0.4)'}`,
-                                    color: channelActionStatus.type === 'success' ? '#34d399' : '#f87171'
+                                    color: channelActionStatus.type === 'success' ? '#f8c37d' : '#9a8f84'
                                 }}
                             >
                                 {channelActionStatus.message}
@@ -7663,7 +7663,7 @@ if (!isAuthenticated && !hasToken) {
                                 onClick={() => {
                                     handleDeleteChannel(channelContextMenu.channel);
                                 }}
-                                style={{ color: '#f87171' }}
+                                style={{ color: '#9a8f84' }}
                             >
                                 <FaTrash size={14} /> Delete Channel
                             </button>
@@ -7712,7 +7712,7 @@ if (!isAuthenticated && !hasToken) {
                         onClick={() => {
                             handleDeleteCategory(categoryContextMenu.categoryName);
                         }}
-                        style={{ color: '#f87171' }}
+                        style={{ color: '#9a8f84' }}
                     >
                         <FaTrash size={14} /> Delete Category
                     </button>
@@ -8415,7 +8415,7 @@ if (!isAuthenticated && !hasToken) {
                             // Report message functionality
                             setContextMenu(null);
                         }}
-                        style={{ color: '#f87171' }}
+                        style={{ color: '#9a8f84' }}
                     >
                         <FaFlag size={14} /> Report message
                     </button>
@@ -8430,7 +8430,7 @@ if (!isAuthenticated && !hasToken) {
                                         handleDeleteMessage(contextMenu.messageId);
                                         setContextMenu(null);
                                     }}
-                                    style={{ color: '#ef4444' }}
+                                    style={{ color: '#9a8f84' }}
                                 >
                                     <FaTrash size={14} /> Delete message
                                 </button>

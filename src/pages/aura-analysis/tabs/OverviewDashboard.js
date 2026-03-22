@@ -27,7 +27,7 @@ function EquityCurve({ curve, height = 140 }) {
   const linePath = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
   const areaPath = `${linePath} L${xs[xs.length - 1].toFixed(1)},${H - pad.b} L${xs[0].toFixed(1)},${H - pad.b} Z`;
   const isUp = vals[vals.length - 1] >= vals[0];
-  const col = isUp ? '#10b981' : '#ef4444';
+  const col = isUp ? '#f8c37d' : '#9a8f84';
   const gradId = `ec-${isUp ? 'g' : 'r'}`;
 
   return (
@@ -65,12 +65,12 @@ function DrawdownChart({ curve, height = 90 }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="aa-svg-chart" style={{ height }}>
         <defs>
           <linearGradient id="dd-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+            <stop offset="0%" stopColor="#9a8f84" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#9a8f84" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={areaPath} fill="url(#dd-grad)" />
-        <path d={linePath} fill="none" stroke="#ef4444" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={linePath} fill="none" stroke="#9a8f84" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
   );
@@ -238,15 +238,15 @@ export default function OverviewDashboard() {
             <ScoreRing
               score={a.riskScore}
               label={a.riskLabel}
-              color={a.riskScore < 25 ? '#10b981' : a.riskScore < 50 ? '#f59e0b' : '#ef4444'}
+              color={a.riskScore < 25 ? '#f8c37d' : a.riskScore < 50 ? '#c9a05c' : '#9a8f84'}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
               {[
                 { label: 'Current DD',  value: fmtPct(a.currentDrawdownPct), col: a.currentDrawdownPct > 10 ? 'var(--red)' : 'rgba(255,255,255,0.75)' },
                 { label: 'Max DD',      value: fmtPct(a.maxDrawdownPct),     col: a.maxDrawdownPct > 20 ? 'var(--red)' : 'rgba(255,255,255,0.75)' },
-                { label: 'Win Streak',  value: `${a.maxWinStreak}`,          col: '#10b981' },
+                { label: 'Win Streak',  value: `${a.maxWinStreak}`,          col: '#f8c37d' },
                 { label: 'Loss Streak', value: `${a.maxLossStreak}`,          col: a.maxLossStreak >= 5 ? 'var(--red)' : 'rgba(255,255,255,0.75)' },
-                { label: 'SL Usage',    value: fmtPct(a.pctWithSL),          col: a.pctWithSL < 70 ? 'var(--amber)' : '#10b981' },
+                { label: 'SL Usage',    value: fmtPct(a.pctWithSL),          col: a.pctWithSL < 70 ? 'var(--amber)' : '#f8c37d' },
                 { label: 'TP Usage',    value: fmtPct(a.pctWithTP),          col: 'rgba(255,255,255,0.75)' },
               ].map(({ label, value, col }) => (
                 <div key={label}>
@@ -269,13 +269,13 @@ export default function OverviewDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {a.maxDrawdownPct > 20 && (
               <div className="aa-warning aa-warning--red">
-                <i className="fas fa-exclamation-triangle aa-warning-icon" style={{ color: '#ef4444' }} />
+                <i className="fas fa-exclamation-triangle aa-warning-icon" style={{ color: '#9a8f84' }} />
                 Max drawdown {fmtPct(a.maxDrawdownPct)} — review risk management
               </div>
             )}
             {a.pctWithSL < 70 && a.totalTrades > 0 && (
               <div className="aa-warning">
-                <i className="fas fa-shield-alt aa-warning-icon" style={{ color: '#f59e0b' }} />
+                <i className="fas fa-shield-alt aa-warning-icon" style={{ color: '#c9a05c' }} />
                 Only {fmtPct(a.pctWithSL)} of trades have a stop loss
               </div>
             )}
@@ -315,8 +315,8 @@ export default function OverviewDashboard() {
         <div className="aa-card">
           <div className="aa-section-title">Direction Breakdown</div>
           {[
-            { key: 'buy',  icon: 'fa-arrow-up',   label: 'Long',  col: '#10b981', data: a.byDirection.buy  },
-            { key: 'sell', icon: 'fa-arrow-down',  label: 'Short', col: '#ef4444', data: a.byDirection.sell },
+            { key: 'buy',  icon: 'fa-arrow-up',   label: 'Long',  col: '#f8c37d', data: a.byDirection.buy  },
+            { key: 'sell', icon: 'fa-arrow-down',  label: 'Short', col: '#9a8f84', data: a.byDirection.sell },
           ].map(({ key, icon, label, col, data }) => (
             <div key={key} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -328,9 +328,9 @@ export default function OverviewDashboard() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
                 {[
-                  { l: 'Win Rate', v: fmtPct(data.winRate), c: data.winRate >= 50 ? '#10b981' : '#ef4444' },
-                  { l: 'Net P/L',  v: fmtPnl(data.pnl),    c: data.pnl >= 0 ? '#10b981' : '#ef4444' },
-                  { l: 'P-Factor', v: data.pf > 0 ? fmtNum(data.pf) : '—', c: data.pf >= 1 ? '#10b981' : '#ef4444' },
+                  { l: 'Win Rate', v: fmtPct(data.winRate), c: data.winRate >= 50 ? '#f8c37d' : '#9a8f84' },
+                  { l: 'Net P/L',  v: fmtPnl(data.pnl),    c: data.pnl >= 0 ? '#f8c37d' : '#9a8f84' },
+                  { l: 'P-Factor', v: data.pf > 0 ? fmtNum(data.pf) : '—', c: data.pf >= 1 ? '#f8c37d' : '#9a8f84' },
                 ].map(({ l, v, c }) => (
                   <div key={l}>
                     <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</div>
@@ -354,7 +354,7 @@ export default function OverviewDashboard() {
                   <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'rgba(255,255,255,0.2)', width: 14, textAlign: 'right' }}>{idx + 1}</span>
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255,255,255,0.85)', flex: 1 }}>{s.pair}</span>
                   <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>{s.trades}T</span>
-                  <span style={{ fontSize: '0.65rem', color: s.winRate >= 50 ? '#10b981' : '#ef4444' }}>{fmtPct(s.winRate)}</span>
+                  <span style={{ fontSize: '0.65rem', color: s.winRate >= 50 ? '#f8c37d' : '#9a8f84' }}>{fmtPct(s.winRate)}</span>
                   <span className={`${pnlCls(s.pnl)}`} style={{ fontSize: '0.72rem', fontWeight: 700, width: 76, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtPnl(s.pnl)}</span>
                 </div>
               ))}
@@ -394,7 +394,7 @@ export default function OverviewDashboard() {
                   }}>
                   <div style={{ fontSize: '0.62rem', fontWeight: isToday ? 700 : 400, color: isToday ? '#c4b5fd' : 'rgba(255,255,255,0.65)' }}>{cell.d}</div>
                   {cell.pnl != null && (
-                    <div style={{ fontSize: '0.52rem', fontWeight: 700, color: cell.pnl >= 0 ? '#10b981' : '#ef4444', marginTop: 1, fontVariantNumeric: 'tabular-nums' }}>
+                    <div style={{ fontSize: '0.52rem', fontWeight: 700, color: cell.pnl >= 0 ? '#f8c37d' : '#9a8f84', marginTop: 1, fontVariantNumeric: 'tabular-nums' }}>
                       {cell.pnl >= 0 ? '+' : ''}{cell.pnl >= 1000 || cell.pnl <= -1000 ? fmtNum(cell.pnl / 1000, 1) + 'k' : fmtNum(cell.pnl, 0)}
                     </div>
                   )}
@@ -415,7 +415,7 @@ export default function OverviewDashboard() {
               ) : selDayTrades.map((t, idx) => (
                 <div key={t.id || idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                   <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>{t.pair || '—'}</span>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: (Number(t.pnl) || 0) >= 0 ? '#10b981' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>{fmtPnl(t.pnl)}</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: (Number(t.pnl) || 0) >= 0 ? '#f8c37d' : '#9a8f84', fontVariantNumeric: 'tabular-nums' }}>{fmtPnl(t.pnl)}</span>
                 </div>
               ))}
             </div>

@@ -14,10 +14,10 @@
   --ov-purple:       var(--aa-accent, rgba(234, 169, 96, 0.85));
   --ov-purple-dim:   var(--aa-accent-soft, rgba(234, 169, 96, 0.15));
   --ov-blue:         var(--aa-accent-blue, rgba(248, 195, 125, 0.75));
-  --ov-green:        var(--aa-success, #10b981);
-  --ov-green-dim:    rgba(16, 185, 129, 0.18);
-  --ov-red:          var(--aa-loss, #ef4444);
-  --ov-red-dim:      rgba(239, 68, 68, 0.18);
+  --ov-green:        var(--aa-success, #f8c37d);
+  --ov-green-dim:    rgba(234, 169, 96, 0.18);
+  --ov-red:          var(--aa-loss, #9a8f84);
+  --ov-red-dim:      rgba(130, 118, 108, 0.22);
   --ov-text:         var(--aa-text, #ffffff);
   --ov-muted:        var(--aa-text-muted, rgba(255, 255, 255, 0.6));
   --ov-radius:       var(--aa-radius, 12px);
@@ -334,20 +334,20 @@
 
 .aura-overview-cal-day--win {
   background: var(--ov-green-dim);
-  border-color: rgba(16, 185, 129, 0.25);
+  border-color: rgba(234, 169, 96, 0.25);
 }
 
 .aura-overview-cal-day--win:hover {
-  background: rgba(16, 185, 129, 0.22);
+  background: rgba(234, 169, 96, 0.22);
 }
 
 .aura-overview-cal-day--loss {
   background: var(--ov-red-dim);
-  border-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(130, 118, 108, 0.2);
 }
 
 .aura-overview-cal-day--loss:hover {
-  background: rgba(239, 68, 68, 0.22);
+  background: rgba(130, 118, 108, 0.22);
 }
 
 .aura-overview-cal-day--today {
@@ -684,7 +684,7 @@
 
 .aura-summary-badge.positive {
   background: var(--ov-green-dim);
-  color: #4ade80;
+  color: #f8c37d;
   border: 1px solid rgba(34,197,94,0.2);
 }
 
@@ -728,7 +728,7 @@
 
 .aura-calendar-day.green {
   background: var(--ov-green-dim);
-  color: #4ade80;
+  color: #f8c37d;
   border: 1px solid rgba(34,197,94,0.2);
   font-weight: 600;
   box-shadow: 0 0 8px rgba(34,197,94,0.12);
@@ -851,7 +851,7 @@
   right: 0;
   bottom: 22%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(234, 169, 96,0.9) 20%, #22c55e 80%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96,0.9) 20%, #f8c37d 80%, transparent);
   border-radius: 2px;
   box-shadow: 0 0 18px rgba(234, 169, 96,0.5), 0 0 40px rgba(34,197,94,0.2);
 }
@@ -949,7 +949,7 @@
   border-radius: 50%;
   background: conic-gradient(
     rgba(234, 169, 96,0.9) 0deg 245deg,
-    rgba(248,113,113,0.85) 245deg 360deg
+    rgba(154,143,132,0.85) 245deg 360deg
   );
   mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #fff calc(100% - 13px));
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #fff calc(100% - 13px));
@@ -1344,9 +1344,9 @@
 }
 
 .ov2-badge-up {
-  background: rgba(16,185,129,0.15);
-  color: #4ade80;
-  border: 1px solid rgba(16,185,129,0.3);
+  background: rgba(234,169,96,0.15);
+  color: #f8c37d;
+  border: 1px solid rgba(234,169,96,0.3);
 }
 
 .ov2-equity-amount {
@@ -1367,8 +1367,8 @@
 .ov2-pct-green {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #4ade80;
-  background: rgba(16,185,129,0.12);
+  color: #f8c37d;
+  background: rgba(234,169,96,0.12);
   padding: 2px 8px;
   border-radius: 20px;
 }
@@ -1377,7 +1377,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: #86efac;
-  background: rgba(16,185,129,0.08);
+  background: rgba(234,169,96,0.08);
   padding: 2px 8px;
   border-radius: 20px;
 }
@@ -1408,8 +1408,8 @@
   color: #fff;
 }
 
-.ov2-stat-val.green { color: #4ade80; }
-.ov2-stat-val.red   { color: #f87171; }
+.ov2-stat-val.green { color: #f8c37d; }
+.ov2-stat-val.red   { color: #9a8f84; }
 
 .ov2-risk-row {
   display: flex;
@@ -1503,8 +1503,8 @@
 .ov2-cal-empty { background: transparent; cursor: default; pointer-events: none; }
 
 .ov2-cal-win {
-  background: rgba(16,185,129,0.15);
-  border: 1px solid rgba(16,185,129,0.25);
+  background: rgba(234,169,96,0.15);
+  border: 1px solid rgba(234,169,96,0.25);
 }
 
 .ov2-cal-loss {
@@ -1524,7 +1524,7 @@
   line-height: 1;
 }
 
-.ov2-cal-pnl.green { color: #4ade80; }
+.ov2-cal-pnl.green { color: #f8c37d; }
 .ov2-cal-pnl.red   { color: #f8c37d; }
 
 .ov2-cal-footer {
@@ -1566,9 +1566,9 @@
 
 .ov2-badge-tag {
   font-size: 0.58rem;
-  color: #4ade80;
-  background: rgba(16,185,129,0.1);
-  border: 1px solid rgba(16,185,129,0.2);
+  color: #f8c37d;
+  background: rgba(234,169,96,0.1);
+  border: 1px solid rgba(234,169,96,0.2);
   padding: 1px 6px;
   border-radius: 20px;
 }
@@ -1611,7 +1611,7 @@
 .ov2-ks-label { color: rgba(255,255,255,0.45); }
 .ov2-ks-mid   { color: rgba(255,255,255,0.35); font-size: 0.65rem; }
 .ov2-ks-val   { font-weight: 600; color: #fff; text-align: right; }
-.ov2-ks-val.green { color: #4ade80; }
+.ov2-ks-val.green { color: #f8c37d; }
 
 .ov2-ks-mini-bars {
   display: flex;
@@ -1629,7 +1629,7 @@
 }
 
 .ov2-ks-bar.win  { background: linear-gradient(180deg, #f8c37d, rgba(234, 169, 96,0.3)); }
-.ov2-ks-bar.loss { background: linear-gradient(180deg, #f87171, rgba(239,68,68,0.2)); }
+.ov2-ks-bar.loss { background: linear-gradient(180deg, #9a8f84, rgba(239,68,68,0.2)); }
 
 .ov2-ks-tags {
   display: flex;
@@ -1646,7 +1646,7 @@
 }
 
 .ov2-ks-tag.purple { background: rgba(234, 169, 96,0.15); color: #f8c37d; border: 1px solid rgba(234, 169, 96,0.3); }
-.ov2-ks-tag.teal   { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+.ov2-ks-tag.teal   { background: rgba(234,169,96,0.12); color: #e8c992; border: 1px solid rgba(234,169,96,0.25); }
 .ov2-ks-tag.blue   { background: rgba(59,130,246,0.12); color: #fcd9a8; border: 1px solid rgba(59,130,246,0.25); }
 .ov2-ks-tag.dim    { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
 
@@ -1680,8 +1680,8 @@
   border-radius: 20px;
 }
 
-.ov2-daily-pct.green { background: rgba(16,185,129,0.12); color: #4ade80; }
-.ov2-daily-pct.red   { background: rgba(239,68,68,0.12);  color: #f87171; }
+.ov2-daily-pct.green { background: rgba(234,169,96,0.12); color: #f8c37d; }
+.ov2-daily-pct.red   { background: rgba(239,68,68,0.12);  color: #9a8f84; }
 
 .ov2-daily-filters { display: flex; gap: 4px; flex-wrap: wrap; }
 
@@ -1718,8 +1718,8 @@
 }
 
 .ov2-sess-pnl { font-weight: 700; font-size: 0.88rem; }
-.ov2-sess-pnl.green { color: #4ade80; }
-.ov2-sess-pnl.red   { color: #f87171; }
+.ov2-sess-pnl.green { color: #f8c37d; }
+.ov2-sess-pnl.red   { color: #9a8f84; }
 
 .ov2-sess-maxr, .ov2-sess-risk {
   display: flex;
@@ -1735,9 +1735,9 @@
   flex-shrink: 0;
 }
 
-.ov2-rr-dot.green { background: #4ade80; box-shadow: 0 0 4px #4ade80; }
+.ov2-rr-dot.green { background: #f8c37d; box-shadow: 0 0 4px #f8c37d; }
 
-.ov2-risk-arrow { color: #4ade80; font-size: 0.7rem; }
+.ov2-risk-arrow { color: #f8c37d; font-size: 0.7rem; }
 
 .ov2-sess-pair {
   display: flex;
@@ -1814,8 +1814,8 @@
 .ov2-tl tbody tr:hover td { background: rgba(234, 169, 96,0.05); }
 .ov2-tl tbody tr:last-child td { border-bottom: none; }
 
-.ov2-tl .green { color: #4ade80; font-weight: 600; }
-.ov2-tl .red   { color: #f87171; font-weight: 600; }
+.ov2-tl .green { color: #f8c37d; font-weight: 600; }
+.ov2-tl .red   { color: #9a8f84; font-weight: 600; }
 
 .ov2-tl-date { color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; }
 
@@ -1832,8 +1832,8 @@
   flex-shrink: 0;
 }
 
-.ov2-pair-flag.green { background: #4ade80; box-shadow: 0 0 5px rgba(74,222,128,0.6); }
-.ov2-pair-flag.red   { background: #f87171; box-shadow: 0 0 5px rgba(248,113,113,0.6); }
+.ov2-pair-flag.green { background: #f8c37d; box-shadow: 0 0 5px rgba(74,222,128,0.6); }
+.ov2-pair-flag.red   { background: #9a8f84; box-shadow: 0 0 5px rgba(154,143,132,0.6); }
 
 .ov2-result-badge {
   font-size: 0.6rem;
@@ -1844,8 +1844,8 @@
   letter-spacing: 0.06em;
 }
 
-.ov2-result-badge.win  { background: rgba(16,185,129,0.15);  color: #4ade80; border: 1px solid rgba(16,185,129,0.3); }
-.ov2-result-badge.loss { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+.ov2-result-badge.win  { background: rgba(234,169,96,0.15);  color: #f8c37d; border: 1px solid rgba(234,169,96,0.3); }
+.ov2-result-badge.loss { background: rgba(239,68,68,0.12); color: #9a8f84; border: 1px solid rgba(239,68,68,0.25); }
 
 .ov2-tl-notes { color: rgba(255,255,255,0.4); max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
 .ov2-tl-dim   { color: rgba(255,255,255,0.2); }
@@ -1915,7 +1915,7 @@
 }
 
 .ov2-wl-dot.purple { background: #f8c37d; box-shadow: 0 0 6px rgba(248, 195, 125,0.6); }
-.ov2-wl-dot.red    { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.6); }
+.ov2-wl-dot.red    { background: #9a8f84; box-shadow: 0 0 6px rgba(154,143,132,0.6); }
 
 .ov2-wl-delta {
   font-size: 0.68rem;
@@ -1925,9 +1925,9 @@
 }
 
 .ov2-wl-delta.green {
-  background: rgba(16,185,129,0.12);
-  color: #4ade80;
-  border: 1px solid rgba(16,185,129,0.25);
+  background: rgba(234,169,96,0.12);
+  color: #f8c37d;
+  border: 1px solid rgba(234,169,96,0.25);
 }
 
 .ov2-wl-pcts {
@@ -1943,8 +1943,8 @@
   letter-spacing: -0.03em;
 }
 
-.ov2-wl-big.green { color: #4ade80; }
-.ov2-wl-big.red   { color: #f87171; }
+.ov2-wl-big.green { color: #f8c37d; }
+.ov2-wl-big.red   { color: #9a8f84; }
 
 .ov2-wl-days { margin-bottom: 14px; }
 
@@ -1963,8 +1963,8 @@
 .ov2-wl-day-label { color: rgba(255,255,255,0.4); }
 
 .ov2-wl-day-val { font-weight: 600; font-size: 0.82rem; }
-.ov2-wl-day-val.green { color: #4ade80; }
-.ov2-wl-day-val.red   { color: #f87171; }
+.ov2-wl-day-val.green { color: #f8c37d; }
+.ov2-wl-day-val.red   { color: #9a8f84; }
 
 .ov2-compliance-row {
   display: flex;
@@ -2014,7 +2014,7 @@
 }
 
 .ov2-dist-bar.win  { background: linear-gradient(180deg, #f8c37d 0%, rgba(234, 169, 96,0.25) 100%); }
-.ov2-dist-bar.loss { background: linear-gradient(180deg, #f87171 0%, rgba(239,68,68,0.2) 100%); }
+.ov2-dist-bar.loss { background: linear-gradient(180deg, #9a8f84 0%, rgba(239,68,68,0.2) 100%); }
 
 .ov2-dist-bar:hover { opacity: 0.8; }
 
@@ -2068,9 +2068,9 @@
   font-weight: 700;
 }
 
-.ov2-streak-num.green  { color: #4ade80; }
+.ov2-streak-num.green  { color: #f8c37d; }
 .ov2-streak-num.muted  { color: rgba(255,255,255,0.3); }
-.ov2-streak-arrow.green { color: #4ade80; font-size: 0.65rem; }
+.ov2-streak-arrow.green { color: #f8c37d; font-size: 0.65rem; }
 .ov2-streak-arrow.muted { color: rgba(255,255,255,0.2); font-size: 0.65rem; }
 
 /* ══════════════════════════════════════════════════════════
@@ -2177,8 +2177,8 @@
   color: rgba(255,255,255,0.85);
 }
 
-.ov2-tl-expand-item strong.green { color: #4ade80; }
-.ov2-tl-expand-item strong.red   { color: #f87171; }
+.ov2-tl-expand-item strong.green { color: #f8c37d; }
+.ov2-tl-expand-item strong.red   { color: #9a8f84; }
 
 .ov2-tl-expand-notes {
   width: 100%;
@@ -2315,6 +2315,6 @@
 
 .aura-overview-account-error {
   font-size: 0.85rem;
-  color: #f87171;
+  color: #9a8f84;
   margin: -8px 0 16px;
 }

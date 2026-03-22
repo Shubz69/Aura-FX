@@ -33,12 +33,12 @@ function DrawdownChart({ curve, height = 120 }) {
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height, display: 'block' }}>
       <defs>
         <linearGradient id="rl-dd" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+          <stop offset="0%" stopColor="#9a8f84" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#9a8f84" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#rl-dd)" />
-      <path d={line} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={line} fill="none" stroke="#9a8f84" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -78,7 +78,7 @@ export default function RiskLab() {
     </div>
   );
 
-  const riskColor = a.riskScore < 25 ? '#10b981' : a.riskScore < 50 ? '#f59e0b' : '#ef4444';
+  const riskColor = a.riskScore < 25 ? '#f8c37d' : a.riskScore < 50 ? '#c9a05c' : '#9a8f84';
   const maxDD = Math.max(a.maxDrawdownPct, a.currentDrawdownPct, 1);
 
   /* Risk-of-ruin estimate: simplified Kelly formula */
@@ -111,10 +111,10 @@ export default function RiskLab() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
           {[
-            { l: 'Max Drawdown',     v: fmtPct(a.maxDrawdownPct),     c: a.maxDrawdownPct > 20 ? '#ef4444' : '#10b981' },
-            { l: 'Current DD',       v: fmtPct(a.currentDrawdownPct), c: a.currentDrawdownPct > 10 ? '#ef4444' : '#10b981' },
-            { l: 'Max Loss Streak',  v: String(a.maxLossStreak),      c: a.maxLossStreak >= 5 ? '#ef4444' : 'rgba(255,255,255,0.75)' },
-            { l: 'SL Coverage',      v: fmtPct(a.pctWithSL),         c: a.pctWithSL < 70 ? '#f59e0b' : '#10b981' },
+            { l: 'Max Drawdown',     v: fmtPct(a.maxDrawdownPct),     c: a.maxDrawdownPct > 20 ? '#9a8f84' : '#f8c37d' },
+            { l: 'Current DD',       v: fmtPct(a.currentDrawdownPct), c: a.currentDrawdownPct > 10 ? '#9a8f84' : '#f8c37d' },
+            { l: 'Max Loss Streak',  v: String(a.maxLossStreak),      c: a.maxLossStreak >= 5 ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
+            { l: 'SL Coverage',      v: fmtPct(a.pctWithSL),         c: a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d' },
           ].map(({ l, v, c }) => (
             <div key={l}>
               <div style={{ fontSize: '0.58rem', fontWeight: 600, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</div>
@@ -135,10 +135,10 @@ export default function RiskLab() {
         <div className="aa-card">
           <div className="aa-section-title">Drawdown Metrics</div>
           {[
-            { label: 'Max Drawdown $',    value: '-$' + fmtNum(a.maxDrawdown),         color: '#ef4444' },
-            { label: 'Max Drawdown %',    value: fmtPct(a.maxDrawdownPct),             color: a.maxDrawdownPct > 20 ? '#ef4444' : '#f59e0b' },
-            { label: 'Current DD $',      value: '-$' + fmtNum(a.currentDrawdown),     color: '#ef4444' },
-            { label: 'Current DD %',      value: fmtPct(a.currentDrawdownPct),         color: a.currentDrawdownPct > 10 ? '#ef4444' : '#10b981' },
+            { label: 'Max Drawdown $',    value: '-$' + fmtNum(a.maxDrawdown),         color: '#9a8f84' },
+            { label: 'Max Drawdown %',    value: fmtPct(a.maxDrawdownPct),             color: a.maxDrawdownPct > 20 ? '#9a8f84' : '#c9a05c' },
+            { label: 'Current DD $',      value: '-$' + fmtNum(a.currentDrawdown),     color: '#9a8f84' },
+            { label: 'Current DD %',      value: fmtPct(a.currentDrawdownPct),         color: a.currentDrawdownPct > 10 ? '#9a8f84' : '#f8c37d' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
@@ -150,11 +150,11 @@ export default function RiskLab() {
         <div className="aa-card">
           <div className="aa-section-title">Streak & Consistency</div>
           {[
-            { label: 'Max Win Streak',  value: String(a.maxWinStreak),  color: '#10b981' },
-            { label: 'Max Loss Streak', value: String(a.maxLossStreak), color: a.maxLossStreak >= 5 ? '#ef4444' : 'rgba(255,255,255,0.75)' },
-            { label: 'Current Streak',  value: `${a.currentStreak} ${a.streakType}`, color: a.streakType === 'win' ? '#10b981' : a.streakType === 'loss' ? '#ef4444' : 'rgba(255,255,255,0.4)' },
-            { label: 'Gross Profit',    value: '+$' + fmtNum(a.grossProfit), color: '#10b981' },
-            { label: 'Gross Loss',      value: '-$' + fmtNum(a.grossLoss),   color: '#ef4444' },
+            { label: 'Max Win Streak',  value: String(a.maxWinStreak),  color: '#f8c37d' },
+            { label: 'Max Loss Streak', value: String(a.maxLossStreak), color: a.maxLossStreak >= 5 ? '#9a8f84' : 'rgba(255,255,255,0.75)' },
+            { label: 'Current Streak',  value: `${a.currentStreak} ${a.streakType}`, color: a.streakType === 'win' ? '#f8c37d' : a.streakType === 'loss' ? '#9a8f84' : 'rgba(255,255,255,0.4)' },
+            { label: 'Gross Profit',    value: '+$' + fmtNum(a.grossProfit), color: '#f8c37d' },
+            { label: 'Gross Loss',      value: '-$' + fmtNum(a.grossLoss),   color: '#9a8f84' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
@@ -165,12 +165,12 @@ export default function RiskLab() {
 
         <div className="aa-card">
           <div className="aa-section-title">Execution Risk</div>
-          <RiskBar label="SL Coverage"  value={a.pctWithSL} max={100} color={a.pctWithSL < 70 ? '#f59e0b' : '#10b981'} fmt={v => fmtPct(v) + '%'} />
+          <RiskBar label="SL Coverage"  value={a.pctWithSL} max={100} color={a.pctWithSL < 70 ? '#c9a05c' : '#f8c37d'} fmt={v => fmtPct(v) + '%'} />
           <RiskBar label="TP Coverage"  value={a.pctWithTP} max={100} color="#eaa960" fmt={v => fmtPct(v) + '%'} />
           {rorPct != null && (
             <div style={{ marginTop: 12, padding: '10px 12px', background: rorPct > 30 ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)', border: `1px solid ${rorPct > 30 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`, borderRadius: 8 }}>
               <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Risk-of-Ruin Est.</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: rorPct > 30 ? '#ef4444' : '#10b981' }}>{fmtPct(rorPct, 1)}</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: rorPct > 30 ? '#9a8f84' : '#f8c37d' }}>{fmtPct(rorPct, 1)}</div>
               <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Probability of substantial account damage</div>
             </div>
           )}
@@ -178,7 +178,7 @@ export default function RiskLab() {
             <div style={{ marginTop: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>Margin Level</span>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: account.marginLevel < 150 ? '#ef4444' : account.marginLevel < 300 ? '#f59e0b' : '#10b981', fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: account.marginLevel < 150 ? '#9a8f84' : account.marginLevel < 300 ? '#c9a05c' : '#f8c37d', fontVariantNumeric: 'tabular-nums' }}>
                   {fmtNum(account.marginLevel, 1)}%
                 </span>
               </div>
@@ -190,48 +190,48 @@ export default function RiskLab() {
       {/* ── Compliance warnings ── */}
       <div className="aa-card">
         <div className="aa-section-title-lg" style={{ marginBottom: 12 }}>
-          <span className="aa-title-dot" style={{ background: a.riskScore > 50 ? '#ef4444' : '#10b981' }} />
+          <span className="aa-title-dot" style={{ background: a.riskScore > 50 ? '#9a8f84' : '#f8c37d' }} />
           Compliance & Warnings
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {a.maxDrawdownPct > 10 ? (
             <div className={`aa-warning ${a.maxDrawdownPct > 20 ? 'aa-warning--red' : ''}`}>
-              <i className={`fas fa-exclamation-triangle aa-warning-icon`} style={{ color: a.maxDrawdownPct > 20 ? '#ef4444' : '#f59e0b' }} />
+              <i className={`fas fa-exclamation-triangle aa-warning-icon`} style={{ color: a.maxDrawdownPct > 20 ? '#9a8f84' : '#c9a05c' }} />
               Max drawdown of {fmtPct(a.maxDrawdownPct)} is {a.maxDrawdownPct > 20 ? 'dangerously high' : 'elevated'}. Most prop firms allow 5-10% max.
             </div>
           ) : (
             <div className="aa-insight">
-              <div className="aa-insight-dot" style={{ background: '#10b981' }} />
+              <div className="aa-insight-dot" style={{ background: '#f8c37d' }} />
               Max drawdown of {fmtPct(a.maxDrawdownPct)} is within safe limits.
             </div>
           )}
           {a.pctWithSL < 80 && a.totalTrades > 5 && (
             <div className="aa-warning">
-              <i className="fas fa-shield-alt aa-warning-icon" style={{ color: '#f59e0b' }} />
+              <i className="fas fa-shield-alt aa-warning-icon" style={{ color: '#c9a05c' }} />
               {fmtPct(100 - a.pctWithSL)} of trades entered without a defined stop loss — this increases risk-of-ruin significantly.
             </div>
           )}
           {a.maxLossStreak >= 5 && (
             <div className="aa-warning aa-warning--red">
-              <i className="fas fa-times-circle aa-warning-icon" style={{ color: '#ef4444' }} />
+              <i className="fas fa-times-circle aa-warning-icon" style={{ color: '#9a8f84' }} />
               Maximum loss streak of {a.maxLossStreak} trades detected. Consider implementing a daily loss limit rule.
             </div>
           )}
           {a.currentDrawdownPct > 8 && (
             <div className="aa-warning aa-warning--red">
-              <i className="fas fa-arrow-down aa-warning-icon" style={{ color: '#ef4444' }} />
+              <i className="fas fa-arrow-down aa-warning-icon" style={{ color: '#9a8f84' }} />
               Currently in a {fmtPct(a.currentDrawdownPct)} drawdown from peak equity. Reduce position sizes until recovered.
             </div>
           )}
           {a.riskScore < 25 && a.totalTrades > 5 && (
             <div className="aa-insight">
-              <div className="aa-insight-dot" style={{ background: '#10b981' }} />
+              <div className="aa-insight-dot" style={{ background: '#f8c37d' }} />
               Risk profile is within controlled parameters. Maintain current discipline standards.
             </div>
           )}
           {a.profitFactor > 0 && a.profitFactor < 1 && (
             <div className="aa-warning aa-warning--red">
-              <i className="fas fa-chart-line aa-warning-icon" style={{ color: '#ef4444' }} />
+              <i className="fas fa-chart-line aa-warning-icon" style={{ color: '#9a8f84' }} />
               Profit factor of {fmtNum(a.profitFactor)} means losses are exceeding profits. Review your strategy edge.
             </div>
           )}

@@ -106,14 +106,14 @@ const PLATFORM_ICONS = {
 
 const PLATFORM_COLORS = {
   mt5: '#eaa960',
-  mt4: '#6366f1',
-  ctrader: '#3b82f6',
-  dxtrade: '#10b981',
-  tradovate: '#f59e0b',
-  binance: '#fbbf24',
-  bybit: '#6b7280',
-  kraken: '#4f46e5',
-  coinbase: '#2563eb',
+  mt4: '#f8c37d',
+  ctrader: '#d4a574',
+  dxtrade: '#c9a05c',
+  tradovate: '#b47830',
+  binance: '#fcd9a8',
+  bybit: '#6b6560',
+  kraken: '#5c534a',
+  coinbase: '#8a7d72',
 };
 
 // Particles component for background effect
@@ -392,7 +392,7 @@ export default function ConnectionHub() {
           
           {canEnter && (
             <p className="connection-hub-enter-hint">
-              <i className="fas fa-check-circle" style={{ color: '#10b981' }} />
+              <i className="fas fa-check-circle" style={{ color: '#f8c37d' }} />
               Ready to analyze — {connectedCount} platform{connectedCount !== 1 ? 's' : ''} connected
             </p>
           )}

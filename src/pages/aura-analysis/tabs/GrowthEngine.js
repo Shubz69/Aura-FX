@@ -24,7 +24,7 @@ function GrowthCurve({ curve, height = 160 }) {
   const line = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
   const area = `${line} L${xs[xs.length-1].toFixed(1)},${H-pad.b} L${xs[0].toFixed(1)},${H-pad.b} Z`;
   const isUp = vals[vals.length - 1] >= vals[0];
-  const col  = isUp ? '#10b981' : '#ef4444';
+  const col  = isUp ? '#f8c37d' : '#9a8f84';
 
   /* Milestone ticks (every 10% return) */
   const startBal = vals[0];
@@ -190,7 +190,7 @@ export default function GrowthEngine() {
             <div className="aa-section-title">Compound Projection</div>
             <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: 14, lineHeight: 1.5 }}>
               Based on avg monthly return of{' '}
-              <span style={{ color: projection.avgMonthlyPct >= 0 ? '#10b981' : '#ef4444', fontWeight: 700 }}>
+              <span style={{ color: projection.avgMonthlyPct >= 0 ? '#f8c37d' : '#9a8f84', fontWeight: 700 }}>
                 {fmtPct(projection.avgMonthlyPct)}%
               </span>
               {' '}applied to current balance.
@@ -204,7 +204,7 @@ export default function GrowthEngine() {
                 <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{label}</span>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
-                  <div style={{ fontSize: '0.65rem', color: chg >= 0 ? '#10b981' : '#ef4444', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ fontSize: '0.65rem', color: chg >= 0 ? '#f8c37d' : '#9a8f84', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                     {fmtPnl(chg)}
                   </div>
                 </div>
@@ -227,19 +227,19 @@ export default function GrowthEngine() {
       {/* ── Milestones ── */}
       <div className="aa-card">
         <div className="aa-section-title-lg" style={{ marginBottom: 14 }}>
-          <span className="aa-title-dot" style={{ background: '#f59e0b' }} />
+          <span className="aa-title-dot" style={{ background: '#c9a05c' }} />
           Growth Milestones
         </div>
         <div className="aa-grid-3" style={{ gap: 8 }}>
-          <Milestone icon="fa-chart-line"    label="First Profitable Month"     value="Complete at least 1 profitable month"          achieved={a.byMonth.some(m => m.pnl > 0)}                color="#10b981" />
+          <Milestone icon="fa-chart-line"    label="First Profitable Month"     value="Complete at least 1 profitable month"          achieved={a.byMonth.some(m => m.pnl > 0)}                color="#f8c37d" />
           <Milestone icon="fa-fire"          label="Win Streak ≥ 3"             value={`Best: ${a.maxWinStreak} consecutive wins`}     achieved={a.maxWinStreak >= 3}                             color="#f59e0b" />
           <Milestone icon="fa-trophy"        label="+10% Total Return"          value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 10}                                 color="#eaa960" />
-          <Milestone icon="fa-shield-alt"    label="90% SL Coverage"            value={`Current: ${fmtPct(a.pctWithSL)}%`}            achieved={a.pctWithSL >= 90}                               color="#10b981" />
-          <Milestone icon="fa-bullseye"      label="Profit Factor ≥ 2.0"        value={`Current: ${a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—'}`} achieved={a.profitFactor >= 2}   color="#10b981" />
+          <Milestone icon="fa-shield-alt"    label="90% SL Coverage"            value={`Current: ${fmtPct(a.pctWithSL)}%`}            achieved={a.pctWithSL >= 90}                               color="#f8c37d" />
+          <Milestone icon="fa-bullseye"      label="Profit Factor ≥ 2.0"        value={`Current: ${a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—'}`} achieved={a.profitFactor >= 2}   color="#f8c37d" />
           <Milestone icon="fa-calendar-check" label="3 Consecutive Profit Months" value={`Current: ${a.profitableMonths} months`}    achieved={a.profitableMonths >= 3}                         color="#eaa960" />
           <Milestone icon="fa-percent"        label="+25% Total Return"         value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 25}                                 color="#f59e0b" />
           <Milestone icon="fa-star"           label="Win Rate ≥ 60%"            value={`Current: ${fmtPct(a.winRate)}%`}               achieved={a.winRate >= 60}                                 color="#f59e0b" />
-          <Milestone icon="fa-gem"            label="+50% Total Return"         value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 50}                                 color="#ef4444" />
+          <Milestone icon="fa-gem"            label="+50% Total Return"         value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 50}                                 color="#9a8f84" />
         </div>
       </div>
 

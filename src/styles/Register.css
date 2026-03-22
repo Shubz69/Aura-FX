@@ -14,10 +14,10 @@
     --text:         #ffffff;
     --text-muted:   rgba(255,255,255,0.55);
     --accent:       rgba(139,92,246,0.55);
-    --accent-solid: #8b5cf6;
+    --accent-solid: #eaa960;
     --accent-blue:  rgba(99,179,237,0.45);
-    --up:           #10b981;
-    --down:         #ef4444;
+    --up:           #f8c37d;
+    --down:         #9a8f84;
     --radius:       10px;
     --transition:   0.28s cubic-bezier(0.4,0,0.2,1);
 }
@@ -499,7 +499,7 @@ html, body {
     cursor: pointer;
     font-size: clamp(10px, 2vw, 11px);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(239,68,68,0.35);
+    box-shadow: 0 2px 8px rgba(130,118,108,0.35);
     transition: all var(--transition);
 }
 
@@ -763,7 +763,7 @@ html, body {
 .error-message {
     background: linear-gradient(135deg, rgba(239,68,68,0.13) 0%, rgba(220,38,38,0.1) 100%) !important;
     border: 1px solid rgba(239,68,68,0.45) !important;
-    border-left: 3px solid #ef4444 !important;
+    border-left: 3px solid #9a8f84 !important;
     color: rgba(255,255,255,0.95) !important;
     padding: clamp(12px, 3vh, 15px) clamp(15px, 4vw, 18px) !important;
     border-radius: 10px !important;
@@ -774,7 +774,7 @@ html, body {
     line-height: 1.65 !important;
     text-align: left !important;
     backdrop-filter: blur(8px) !important;
-    box-shadow: 0 4px 18px rgba(239,68,68,0.12), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+    box-shadow: 0 4px 18px rgba(130,118,108,0.14), inset 0 1px 0 rgba(255,255,255,0.05) !important;
     animation: msgReveal 0.4s cubic-bezier(0.22,1,0.36,1) both !important;
     position: relative !important;
     z-index: 100 !important;

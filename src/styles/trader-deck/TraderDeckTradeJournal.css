@@ -281,7 +281,7 @@
 }
 
 .td-journal-modal-btn.primary {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #b47830 0%, #f8c37d 100%);
   border: none;
 }
 
@@ -298,7 +298,7 @@
   margin: 0 0 12px;
   padding: 8px 12px;
   font-size: 0.9rem;
-  color: #f87171;
+  color: #9a8f84;
   background: rgba(248, 113, 113, 0.1);
   border-radius: 8px;
 }

@@ -295,7 +295,7 @@ const PublicProfile = () => {
                                 ))}
                                 {profile.role && profile.role !== 'free' && (
                                     <div className="tag-badge">
-                                        <span className="tag-dot" style={{ backgroundColor: '#10b981' }}></span>
+                                        <span className="tag-dot" style={{ backgroundColor: '#eaa960' }}></span>
                                         {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)} Member
                                     </div>
                                 )}
