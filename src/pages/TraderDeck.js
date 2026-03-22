@@ -11,6 +11,7 @@ import '../styles/Journal.css';
 import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
 import '../styles/TraderDeckNews.css';
+import '../styles/trader-deck/TraderDeckJournalGlass.css';
 
 const today = () => new Date().toISOString().slice(0, 10);
 

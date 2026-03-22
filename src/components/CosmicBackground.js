@@ -1,9 +1,13 @@
 import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { shouldUseAppCosmicBackground } from '../utils/appCosmicBackground';
 
 const CosmicBackground = () => {
+  const location = useLocation();
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    if (shouldUseAppCosmicBackground(location.pathname)) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -109,7 +113,11 @@ const CosmicBackground = () => {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [location.pathname]);
+
+  if (shouldUseAppCosmicBackground(location.pathname)) {
+    return null;
+  }
 
   return (
     <canvas

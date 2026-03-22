@@ -1,0 +1,319 @@
+/* =============================================================================
+   TRADE VALIDATOR SHELL — Journal glass / gold / navy (Trade Validator routes only)
+   Tokens mirror src/styles/Journal.css (.journal-page). Loaded after AuraAnalysisShell.css.
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+@keyframes tvj-fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.trade-validator-shell {
+  /* Journal core tokens (inherit to all tab content) */
+  --bg:             #010008;
+  --bg-card:        rgba(3, 2, 10, 0.70);
+  --bg-card-h:      rgba(8, 6, 20, 0.85);
+  --bg-glass:       rgba(2, 1, 8, 0.65);
+  --border:         rgba(255, 255, 255, 0.05);
+  --border-h:       rgba(255, 255, 255, 0.12);
+  --border-gold:    rgba(234, 169, 96, 0.28);
+  --gold:           #EAA960;
+  --gold-bright:    #F8C37D;
+  --gold-warm:      #D48D44;
+  --gold-soft:      #EABB80;
+  --gold-pale:      #FDE8C4;
+  --gold-glow:      rgba(234, 169, 96, 0.18);
+  --gold-glass:     rgba(234, 169, 96, 0.06);
+  --text:           #FFFFFF;
+  --text-muted:     rgba(200, 196, 232, 0.65);
+  --text-dim:       rgba(178, 175, 218, 0.38);
+  --green:          #0FD98A;
+  --glass-shadow:
+    0 8px 32px rgba(0,0,0,0.65),
+    0 1px 0 rgba(255,255,255,0.03) inset,
+    0 0 0 0.5px rgba(255,255,255,0.02) inset;
+  --grad-gold: linear-gradient(130deg, var(--gold-pale) 0%, var(--gold-bright) 35%, var(--gold) 65%, var(--gold-warm) 100%);
+  --line-gold: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-bright) 70%, transparent);
+
+  /* Overview / shared --aa-* chain (Overview.css) */
+  --aa-bg: transparent;
+  --aa-bg-card: rgba(3, 2, 10, 0.72);
+  --aa-bg-card-h: rgba(8, 6, 20, 0.88);
+  --aa-border: rgba(255, 255, 255, 0.06);
+  --aa-border-h: rgba(255, 255, 255, 0.12);
+  --aa-accent: rgba(234, 169, 96, 0.92);
+  --aa-accent-soft: rgba(234, 169, 96, 0.14);
+  --aa-accent-blue: rgba(140, 175, 255, 0.78);
+  --aa-text: #ffffff;
+  --aa-text-muted: rgba(200, 196, 232, 0.65);
+  --aa-border-accent: rgba(234, 169, 96, 0.42);
+  --aa-radius: 12px;
+  --aa-radius-lg: 18px;
+
+  /* AiChartCheck :root vars — inherit */
+  --acc-bg: rgba(3, 2, 10, 0.55);
+  --acc-border: rgba(255, 255, 255, 0.06);
+  --acc-border-h: rgba(234, 169, 96, 0.35);
+  --acc-accent: #EAA960;
+  --acc-accent-soft: rgba(234, 169, 96, 0.14);
+  --acc-text: rgba(255, 255, 255, 0.92);
+  --acc-muted: rgba(200, 196, 232, 0.55);
+
+  background: transparent !important;
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  animation: tvj-fadeIn 0.4s ease both;
+}
+
+/* ── Hero — glass + navy wash (journal sidebar energy) ───────────────────── */
+.trade-validator-shell .aura-shell-hero {
+  background: linear-gradient(180deg, rgba(20, 28, 55, 0.35) 0%, rgba(3, 2, 10, 0.4) 55%, transparent 100%) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding-top: 28px !important;
+  padding-bottom: 22px !important;
+  position: relative;
+}
+
+.trade-validator-shell .aura-shell-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: min(280px, 45%);
+  height: 1px;
+  background: var(--line-gold);
+  pointer-events: none;
+}
+
+.trade-validator-shell .aura-shell-title {
+  background: var(--grad-gold) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  font-weight: 200 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  filter: drop-shadow(0 0 20px rgba(234, 169, 96, 0.2));
+}
+
+.trade-validator-shell .aura-shell-sub {
+  color: var(--text-muted) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  margin-top: 8px !important;
+}
+
+/* ── Sticky tab bar — frosted glass + gold active (journal pills) ─────────── */
+.trade-validator-shell .aura-shell-tabs-wrap {
+  background: rgba(3, 2, 10, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.08) !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(234, 169, 96, 0.06) inset !important;
+}
+
+.trade-validator-shell .aura-shell-tab {
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+  border-radius: 100px !important;
+  border: 1px solid transparent !important;
+  margin: 6px 2px !important;
+  padding: 10px 16px !important;
+}
+
+.trade-validator-shell .aura-shell-tab:hover {
+  color: var(--text) !important;
+  background: var(--gold-glass) !important;
+  border-color: var(--border-gold) !important;
+}
+
+.trade-validator-shell .aura-shell-tab.active {
+  color: #0a0704 !important;
+  background: linear-gradient(135deg, rgba(248,195,125,0.95) 0%, rgba(234,169,96,0.92) 50%, rgba(212,141,68,0.88) 100%) !important;
+  border: 1px solid rgba(234, 169, 96, 0.5) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 18px rgba(234, 169, 96, 0.22), inset 0 1px 0 rgba(255,255,255,0.35) !important;
+}
+
+.trade-validator-shell .aura-shell-tab.active::after {
+  display: none !important;
+}
+
+/* ── Main content — transparent; cards supply glass ────────────────────────── */
+.trade-validator-shell .aura-shell-content {
+  background: transparent !important;
+  padding-top: 32px !important;
+  padding-bottom: 56px !important;
+}
+
+/* ── AuraShared .aa-page — gold accent system ─────────────────────────────── */
+.trade-validator-shell .aa-page {
+  --bg: transparent;
+  --bg-card: rgba(3, 2, 10, 0.72);
+  --bg-card-h: rgba(8, 6, 20, 0.88);
+  --bg-card-2: rgba(3, 2, 10, 0.55);
+  --border: rgba(255, 255, 255, 0.06);
+  --border-h: rgba(255, 255, 255, 0.12);
+  --border-acc: rgba(234, 169, 96, 0.35);
+  --accent: #EAA960;
+  --accent-glow: rgba(234, 169, 96, 0.22);
+  --accent-soft: rgba(234, 169, 96, 0.10);
+}
+
+/* ── Overview tab ─────────────────────────────────────────────────────────── */
+.trade-validator-shell .aura-overview-page {
+  --ov-bg: transparent;
+}
+
+.trade-validator-shell .aura-overview-glance-title {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 14px rgba(234, 169, 96, 0.15));
+}
+
+/* ── AI Chart Check title gradient → gold ────────────────────────────────── */
+.trade-validator-shell .acc-title {
+  background: var(--grad-gold) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── Trade Calculator — glass panels + gold CTAs ─────────────────────────── */
+.trade-validator-shell .trade-calc-panel {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--glass-shadow) !important;
+}
+
+.trade-validator-shell .trade-calc-banner--linked {
+  background: var(--gold-glass) !important;
+  border-color: var(--border-gold) !important;
+}
+
+.trade-validator-shell .trade-calc-save-journal-btn {
+  background: linear-gradient(135deg, rgba(248,195,125,0.95) 0%, rgba(234,169,96,0.9) 45%, rgba(212,141,68,0.85) 100%) !important;
+  box-shadow: 0 6px 24px rgba(234, 169, 96, 0.28) !important;
+  color: #0a0704 !important;
+}
+
+/* ── Analytics tab ─────────────────────────────────────────────────────────── */
+.trade-validator-shell .aura-analytics {
+  background: transparent !important;
+}
+
+.trade-validator-shell .aura-analytics-kpi-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--glass-shadow);
+}
+
+.trade-validator-shell .aura-analytics-title {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Leaderboard tab ─────────────────────────────────────────────────────── */
+.trade-validator-shell .aura-leaderboard {
+  background: transparent !important;
+}
+
+.trade-validator-shell .aura-leaderboard-title {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Trader CV tab ───────────────────────────────────────────────────────── */
+.trade-validator-shell .trader-cv-hero {
+  background: linear-gradient(145deg, rgba(3, 2, 10, 0.88), rgba(8, 6, 20, 0.82)) !important;
+  border: 1px solid var(--border-gold) !important;
+  box-shadow: var(--glass-shadow), 0 0 40px rgba(45, 65, 145, 0.08) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.trade-validator-shell .trader-cv-loading-ring {
+  border-color: rgba(234, 169, 96, 0.25) !important;
+  border-top-color: var(--gold) !important;
+}
+
+/* ── Trade Journal tab (td-journal) — glass table shell ───────────────────── */
+.trade-validator-shell .td-journal-title {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 200 !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trade-validator-shell .td-journal-search,
+.trade-validator-shell .td-journal-select {
+  background: var(--bg-glass) !important;
+  border: 1px solid var(--border) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.trade-validator-shell .td-journal-search:focus,
+.trade-validator-shell .td-journal-select:focus {
+  border-color: var(--border-gold) !important;
+}
+
+.trade-validator-shell .td-journal-table-wrap {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--glass-shadow);
+}
+
+/* ── Checklist tab (TradeValidatorView) — glass inner + gold timeframe tabs ─ */
+.trade-validator-shell .trade-validator-page {
+  background: transparent !important;
+}
+
+.trade-validator-shell .trade-validator-inner {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  backdrop-filter: blur(22px) saturate(1.06);
+  -webkit-backdrop-filter: blur(22px) saturate(1.06);
+  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(234, 169, 96, 0.06) !important;
+}
+
+.trade-validator-shell .tv-title-icon {
+  color: var(--gold) !important;
+}
+
+.trade-validator-shell .tv-tab-btn-active {
+  color: #0a0704 !important;
+  background: linear-gradient(135deg, rgba(248,195,125,0.95) 0%, rgba(234,169,96,0.92) 50%, rgba(212,141,68,0.88) 100%) !important;
+  border-color: rgba(234, 169, 96, 0.5) !important;
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.2) !important;
+}
+
+.trade-validator-shell .tv-tab-btn-active:hover {
+  background: linear-gradient(135deg, rgba(248,195,125,1) 0%, rgba(234,169,96,0.96) 50%, rgba(212,141,68,0.92) 100%) !important;
+}
+
+.trade-validator-shell .tv-score-card {
+  background: var(--bg-glass) !important;
+  border-color: var(--border) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--glass-shadow);
+}

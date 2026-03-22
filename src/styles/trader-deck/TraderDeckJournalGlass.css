@@ -1,0 +1,312 @@
+/* =============================================================================
+   TRADER DESK — Journal-matching glass / gold / navy (scoped to tabbed deck only)
+   Design tokens and glass patterns aligned with src/styles/Journal.css (.journal-page)
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
+
+@keyframes tdj-fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Journal.css variable block (same as .journal-page) ───────────────────── */
+.td-deck-with-tabs.td-layout-page {
+  --bg:             #010008;
+  --bg-card:        rgba(3, 2, 10, 0.70);
+  --bg-card-h:      rgba(8, 6, 20, 0.85);
+  --bg-glass:       rgba(2, 1, 8, 0.65);
+  --border:         rgba(255, 255, 255, 0.05);
+  --border-h:       rgba(255, 255, 255, 0.12);
+  --border-gold:    rgba(234, 169, 96, 0.28);
+  --gold:           #EAA960;
+  --gold-bright:    #F8C37D;
+  --gold-warm:      #D48D44;
+  --gold-soft:      #EABB80;
+  --gold-pale:      #FDE8C4;
+  --gold-dim:       rgba(234, 169, 96, 0.28);
+  --gold-glow:      rgba(234, 169, 96, 0.18);
+  --gold-glass:     rgba(234, 169, 96, 0.06);
+  --gold-ultra:     rgba(234, 169, 96, 0.02);
+  --text:           #FFFFFF;
+  --text-muted:     rgba(200, 196, 232, 0.65);
+  --text-dim:       rgba(178, 175, 218, 0.38);
+  --green:          #0FD98A;
+  --green-glass:    rgba(15, 217, 138, 0.08);
+  --radius:         12px;
+  --radius-lg:      18px;
+  --radius-xl:      22px;
+  --glass-shadow:
+    0 8px 32px rgba(0,0,0,0.65),
+    0 1px 0 rgba(255,255,255,0.03) inset,
+    0 0 0 0.5px rgba(255,255,255,0.02) inset;
+  --grad-gold:  linear-gradient(130deg, var(--gold-pale) 0%, var(--gold-bright) 35%, var(--gold) 65%, var(--gold-warm) 100%);
+  --line-gold:  linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-bright) 70%, transparent);
+  --transition: 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--text);
+}
+
+.td-deck-with-tabs.td-layout-page,
+.td-deck-with-tabs.td-layout-page * {
+  box-sizing: border-box;
+}
+
+/* ── Center title — journal main-title treatment ─────────────────────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-page-title {
+  font-size: clamp(1.05rem, 2.8vw, 1.45rem);
+  font-weight: 200;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 22px rgba(234, 169, 96, 0.22));
+  margin: 0;
+}
+
+/* ── Primary tabs (MARKET OUTLOOK / INTELLIGENCE) — glass pills + gold active ─ */
+.td-deck-with-tabs.td-layout-page .td-deck-tab {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 12px 18px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--bg-glass);
+  color: var(--text-muted);
+  backdrop-filter: blur(16px) saturate(1.08);
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
+  box-shadow: var(--glass-shadow);
+  transition: color var(--transition), border-color var(--transition), background var(--transition), transform 0.18s ease;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-tab:hover {
+  color: var(--text);
+  border-color: var(--border-gold);
+  background: var(--bg-card);
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-tab--active {
+  color: #0a0704 !important;
+  border-color: rgba(234, 169, 96, 0.55) !important;
+  background: linear-gradient(135deg, rgba(248,195,125,0.95) 0%, rgba(234,169,96,0.92) 45%, rgba(212,141,68,0.88) 100%) !important;
+  box-shadow:
+    0 0 0 1px rgba(234,169,96,0.35),
+    0 8px 28px rgba(234, 169, 96, 0.25),
+    inset 0 1px 0 rgba(255,255,255,0.35) !important;
+}
+
+/* ── Daily / Weekly — journal secondary chips ─────────────────────────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tab {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: rgba(3, 2, 10, 0.5);
+  color: var(--text-muted);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: var(--transition);
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tab:hover {
+  border-color: var(--border-gold);
+  color: var(--text);
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tab--active {
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: var(--border-gold) !important;
+  color: var(--gold-bright) !important;
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.12);
+}
+
+/* ── Divider lines — gold fade like journal section titles ───────────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-header-line-left,
+.td-deck-with-tabs.td-layout-page .td-deck-header-line-right {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.35), rgba(255,255,255,0.06)) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-header-line-right {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(234,169,96,0.35), transparent) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-calendar-bar-label {
+  color: var(--text-muted);
+  letter-spacing: 0.2em;
+  font-weight: 500;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-calendar-bar-btn {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-glass) !important;
+  color: var(--gold-soft) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-calendar-bar-btn:hover {
+  border-color: var(--border-gold);
+  background: var(--gold-glass) !important;
+  color: var(--gold-bright) !important;
+}
+
+/* ── Main glass canvas — journal card stack ──────────────────────────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-content-box {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-xl) !important;
+  padding: 22px 26px 28px !important;
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 0.5px rgba(234, 169, 96, 0.08),
+    0 24px 64px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(22px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
+  position: relative;
+  overflow: hidden;
+  animation: tdj-fadeIn 0.45s ease both;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 22%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(234,169,96,0.25) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content-box::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(ellipse at top right, rgba(45, 65, 145, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content-box:hover {
+  border-color: rgba(234, 169, 96, 0.22) !important;
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 0.5px rgba(234, 169, 96, 0.14),
+    0 28px 72px rgba(0, 0, 0, 0.55) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content-box .td-deck-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Footer strip: sessions + headlines — journal note cards ─────────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer {
+  border-top: 1px solid var(--border) !important;
+  padding-top: 28px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer-title {
+  color: var(--text-dim) !important;
+  letter-spacing: 0.28em !important;
+  font-size: 0.65rem !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer-title::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+  margin-right: 10px;
+  vertical-align: middle;
+  background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+  box-shadow: 0 0 6px var(--gold-glow);
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-inbox-sessions .td-deck-session-item {
+  background: var(--bg-glass) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--glass-shadow);
+  transition: border-color var(--transition), transform 0.2s ease;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-inbox-sessions .td-deck-session-item:hover {
+  border-color: var(--border-gold) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-session-dot--open {
+  background: var(--green) !important;
+  box-shadow: 0 0 8px rgba(15, 217, 138, 0.45);
+}
+
+/* ── Market Intelligence panels inside deck ─────────────────────────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  backdrop-filter: blur(18px) saturate(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.05);
+  box-shadow: var(--glass-shadow) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel:hover {
+  border-color: rgba(234, 169, 96, 0.2) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel-title {
+  color: var(--text) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-header {
+  border-bottom-color: var(--border) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-header::after {
+  background: linear-gradient(90deg, var(--gold), rgba(234,169,96,0.12), transparent) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-eyebrow {
+  background: var(--gold-glass) !important;
+  border-color: var(--border-gold) !important;
+}
+
+/* ── Economic calendar strip — gold top accent (was purple) ───────────────── */
+.td-deck-with-tabs.td-layout-page .td-ff-wrap::before {
+  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.55), rgba(140,175,255,0.35), transparent) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-ff-wrap {
+  background: var(--bg-glass) !important;
+  border-color: var(--border) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--glass-shadow);
+}
+
+/* ── Calendar overlay ───────────────────────────────────────────────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-calendar-overlay-content {
+  background: var(--bg-card-h) !important;
+  border: 1px solid var(--border-gold) !important;
+  border-radius: var(--radius-xl) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: var(--glass-shadow), 0 0 60px rgba(0,0,0,0.6);
+}

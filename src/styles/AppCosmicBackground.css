@@ -1,0 +1,171 @@
+/* Journal-matching deep space layers for main.page-wrapper (see Journal.css .journal-page) */
+
+@keyframes app-cosmic-stars-pulse {
+  0% {
+    opacity: 0.35;
+    filter: blur(0.8px) brightness(0.75);
+  }
+  25% {
+    opacity: 0.75;
+    filter: blur(0) brightness(1.2);
+  }
+  50% {
+    opacity: 0.48;
+    filter: blur(1px) brightness(0.85);
+  }
+  75% {
+    opacity: 0.88;
+    filter: blur(0) brightness(1.5);
+  }
+  100% {
+    opacity: 0.4;
+    filter: blur(0.8px) brightness(0.8);
+  }
+}
+
+.page-wrapper.app-cosmic-bg {
+  position: relative;
+  isolation: isolate;
+  background-color: #010008;
+}
+
+.page-wrapper.app-cosmic-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 55% at 18% 8%, rgba(20, 28, 55, 0.65) 0%, rgba(12, 18, 40, 0.45) 35%, transparent 68%),
+    radial-gradient(ellipse 60% 45% at 55% 20%, rgba(10, 15, 40, 0.38) 0%, rgba(6, 10, 28, 0.22) 50%, transparent 75%),
+    radial-gradient(ellipse 55% 75% at 92% 28%, rgba(5, 8, 25, 0.75) 0%, rgba(3, 5, 18, 0.48) 55%, transparent 78%),
+    radial-gradient(ellipse 42% 32% at 88% 6%, rgba(45, 65, 145, 0.18) 0%, transparent 68%),
+    linear-gradient(168deg, #010008 0%, #01010a 15%, #02010c 30%, #01010a 50%, #000006 70%, #010008 100%);
+}
+
+.page-wrapper.app-cosmic-bg::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 7% 6%, rgba(255, 255, 255, 0.92), transparent 100%),
+    radial-gradient(2.5px 2.5px at 34% 11%, rgba(255, 255, 255, 0.88), transparent 100%),
+    radial-gradient(2px 2px at 61% 4%, rgba(255, 255, 255, 0.85), transparent 100%),
+    radial-gradient(2.2px 2.2px at 89% 14%, rgba(255, 255, 255, 0.82), transparent 100%),
+    radial-gradient(2px 2px at 15% 32%, rgba(255, 255, 255, 0.78), transparent 100%),
+    radial-gradient(2.4px 2.4px at 78% 27%, rgba(255, 255, 255, 0.8), transparent 100%),
+    radial-gradient(2px 2px at 50% 18%, rgba(255, 255, 255, 0.75), transparent 100%),
+    radial-gradient(1.5px 1.5px at 4% 22%, rgba(255, 255, 255, 0.68), transparent 100%),
+    radial-gradient(1.5px 1.5px at 67% 19%, rgba(255, 255, 255, 0.66), transparent 100%),
+    radial-gradient(1.4px 1.4px at 93% 33%, rgba(255, 255, 255, 0.58), transparent 100%),
+    radial-gradient(1px 1px at 48% 48%, rgba(255, 255, 255, 0.4), transparent 100%),
+    radial-gradient(1px 1px at 71% 36%, rgba(255, 255, 255, 0.36), transparent 100%),
+    radial-gradient(0.8px 0.8px at 11% 48%, rgba(255, 255, 255, 0.22), transparent 100%),
+    radial-gradient(0.8px 0.8px at 88% 48%, rgba(255, 255, 255, 0.18), transparent 100%),
+    radial-gradient(1.5px 1.5px at 16% 85%, rgba(234, 169, 96, 0.65), transparent 100%),
+    radial-gradient(1.4px 1.4px at 48% 88%, rgba(234, 169, 96, 0.58), transparent 100%),
+    radial-gradient(1.6px 1.6px at 77% 82%, rgba(234, 169, 96, 0.62), transparent 100%),
+    radial-gradient(1.8px 1.8px at 9% 12%, rgba(140, 175, 255, 0.7), transparent 100%),
+    radial-gradient(2px 2px at 23% 18%, rgba(140, 175, 255, 0.65), transparent 100%),
+    radial-gradient(1.6px 1.6px at 52% 15%, rgba(120, 160, 255, 0.62), transparent 100%),
+    radial-gradient(1.8px 1.8px at 82% 20%, rgba(140, 175, 255, 0.6), transparent 100%),
+    radial-gradient(3px 3px at 7% 6%, rgba(255, 255, 255, 0.95), transparent 100%),
+    radial-gradient(4px 4px at 34% 11%, rgba(255, 255, 255, 0.9), transparent 100%),
+    radial-gradient(3px 3px at 61% 4%, rgba(255, 255, 255, 0.88), transparent 100%),
+    radial-gradient(3.5px 3.5px at 89% 14%, rgba(255, 255, 255, 0.85), transparent 100%),
+    radial-gradient(3px 3px at 50% 18%, rgba(255, 255, 255, 0.8), transparent 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: app-cosmic-stars-pulse 4s ease-in-out infinite alternate;
+}
+
+.page-wrapper.app-cosmic-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Community: page-wrapper may get a solid fill from global rules — keep cosmic visible */
+html.community-page-active .page-wrapper.app-cosmic-bg,
+body.community-page-active .page-wrapper.app-cosmic-bg {
+  background-color: transparent !important;
+}
+
+.page-wrapper.app-cosmic-bg .community-container {
+  background: rgba(1, 0, 8, 0.88) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Trader Desk layout: drop duplicate shell gradients; show shared cosmic */
+.page-wrapper.app-cosmic-bg .td-layout-page {
+  background: transparent !important;
+}
+
+.page-wrapper.app-cosmic-bg .td-layout-page::before,
+.page-wrapper.app-cosmic-bg .td-layout-page::after {
+  display: none !important;
+}
+
+/* Trade Validator / similar shells */
+.page-wrapper.app-cosmic-bg .aura-shell {
+  background: transparent !important;
+}
+
+.page-wrapper.app-cosmic-bg .aff-page {
+  background: transparent !important;
+}
+
+/* Aura AI full-screen */
+.page-wrapper.app-cosmic-bg .pai {
+  background: rgba(1, 0, 8, 0.85) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.page-wrapper.app-cosmic-bg .pai::before {
+  opacity: 0.35;
+}
+
+/* Typical full-page tints from global styles — glass over cosmic */
+.page-wrapper.app-cosmic-bg .profile-container,
+.page-wrapper.app-cosmic-bg .public-profile-container,
+.page-wrapper.app-cosmic-bg .login-container,
+.page-wrapper.app-cosmic-bg .register-container,
+.page-wrapper.app-cosmic-bg .terms-container,
+.page-wrapper.app-cosmic-bg .privacy-container,
+.page-wrapper.app-cosmic-bg .not-found-container,
+.page-wrapper.app-cosmic-bg .edit-container,
+.page-wrapper.app-cosmic-bg .my-courses-container,
+.page-wrapper.app-cosmic-bg .admin-inbox-page,
+.page-wrapper.app-cosmic-bg .admin-journal-page,
+.page-wrapper.app-cosmic-bg .admin-messages-container,
+.page-wrapper.app-cosmic-bg .admin-panel-container {
+  background: rgba(1, 0, 8, 0.42) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.page-wrapper.app-cosmic-bg .subscription-container {
+  background: transparent !important;
+}
+
+.page-wrapper.app-cosmic-bg .subscription-container::before {
+  display: none !important;
+}
+
+.page-wrapper.app-cosmic-bg .connection-hub-page {
+  background: transparent !important;
+}
+
+.page-wrapper.app-cosmic-bg .connection-hub-page::before,
+.page-wrapper.app-cosmic-bg .connection-hub-page::after {
+  display: none !important;
+}
+
+.page-wrapper.app-cosmic-bg .settings-page {
+  background: rgba(1, 0, 8, 0.35) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}

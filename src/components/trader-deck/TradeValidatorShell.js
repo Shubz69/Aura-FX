@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { TradeValidatorAccountProvider } from '../../context/TradeValidatorAccountContext';
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
+import '../../styles/trader-deck/TradeValidatorJournalGlass.css';
 
 const BASE = '/trader-deck/trade-validator';
 const TABS = [
