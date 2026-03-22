@@ -1,0 +1,454 @@
+/* =============================================================================
+   TRADE VALIDATOR ROUTE ONLY — import after TradeValidatorTabModern.css in
+   TradeValidatorShell.js. High specificity (.trade-validator-shell …) so lazy
+   tab styles (Overview, AiChartCheck, TraderCV, etc.) cannot reintroduce purple.
+   ============================================================================= */
+
+/* ── Overview: tokens + hardcoded purple/violet replacements ──────────────── */
+.trade-validator-shell .aura-overview-page {
+  --ov-purple: rgba(234, 169, 96, 0.92);
+  --ov-purple-dim: rgba(234, 169, 96, 0.12);
+  --ov-blue: rgba(248, 195, 125, 0.75);
+}
+
+.trade-validator-shell .aura-overview-header::after {
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.85), transparent) !important;
+}
+
+.trade-validator-shell .aura-overview-title {
+  background: linear-gradient(125deg, #ffffff 35%, #f8c37d 72%, #eaa960 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.trade-validator-shell .aura-overview-kpi-card:hover {
+  box-shadow: 0 0 22px rgba(234, 169, 96, 0.1) !important;
+}
+
+.trade-validator-shell .aura-overview-cal-day--today {
+  border-color: rgba(248, 195, 125, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .aura-overview-cal-day--selected {
+  background: linear-gradient(135deg, rgba(234, 169, 96, 0.32) 0%, rgba(212, 141, 68, 0.18) 100%) !important;
+  border-color: rgba(234, 169, 96, 0.55) !important;
+  box-shadow: 0 0 0 2px rgba(234, 169, 96, 0.12), 0 4px 18px rgba(234, 169, 96, 0.15) !important;
+}
+
+.trade-validator-shell .aura-overview-cal-day--selected:hover {
+  background: linear-gradient(135deg, rgba(234, 169, 96, 0.42) 0%, rgba(212, 141, 68, 0.26) 100%) !important;
+  box-shadow: 0 0 0 2px rgba(234, 169, 96, 0.16), 0 6px 22px rgba(234, 169, 96, 0.2) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-card::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(234, 169, 96, 0.45) 42%,
+    rgba(248, 195, 125, 0.35) 72%,
+    transparent 100%
+  ) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-card::after {
+  background: radial-gradient(ellipse at top left, rgba(234, 169, 96, 0.06) 0%, transparent 62%) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-card:hover {
+  border-color: rgba(234, 169, 96, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(234, 169, 96, 0.1) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-select:hover {
+  border-color: rgba(234, 169, 96, 0.42) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-calendar-day.purple {
+  background: rgba(234, 169, 96, 0.14) !important;
+  color: #f8c37d !important;
+  border: 1px solid rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-key-stats-bar {
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.75), rgba(248, 195, 125, 0.45)) !important;
+  box-shadow: 0 0 10px rgba(234, 169, 96, 0.22) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-btn-ghost:hover {
+  background: rgba(234, 169, 96, 0.1) !important;
+  border-color: rgba(234, 169, 96, 0.38) !important;
+  color: #f8c37d !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-chart-line {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.9) 22%, #22c55e 78%, transparent) !important;
+  box-shadow: 0 0 16px rgba(234, 169, 96, 0.35), 0 0 36px rgba(34, 197, 94, 0.18) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-donut {
+  background: conic-gradient(
+    rgba(234, 169, 96, 0.92) 0deg 245deg,
+    rgba(248, 113, 113, 0.85) 245deg 360deg
+  ) !important;
+  box-shadow: 0 0 22px rgba(234, 169, 96, 0.2) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-bar {
+  background: linear-gradient(180deg, rgba(234, 169, 96, 0.82) 0%, rgba(212, 141, 68, 0.28) 100%) !important;
+  border: 1px solid rgba(234, 169, 96, 0.28) !important;
+  border-bottom: none !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-bar:hover {
+  background: linear-gradient(180deg, rgba(248, 195, 125, 0.95) 0%, rgba(234, 169, 96, 0.42) 100%) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-trade-log-wrap {
+  scrollbar-color: rgba(234, 169, 96, 0.35) transparent !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-trade-log-wrap::-webkit-scrollbar-thumb {
+  background: rgba(234, 169, 96, 0.35) !important;
+}
+
+.trade-validator-shell .aura-overview-page .aura-trade-log tbody tr:hover td {
+  background: rgba(234, 169, 96, 0.06) !important;
+}
+
+.trade-validator-shell .aura-overview-account-pill.active {
+  border-color: rgba(234, 169, 96, 0.65) !important;
+  background: rgba(234, 169, 96, 0.16) !important;
+}
+
+.trade-validator-shell .aura-overview-account-add {
+  border-color: rgba(234, 169, 96, 0.45) !important;
+  color: rgba(253, 232, 196, 0.95) !important;
+}
+
+.trade-validator-shell .aura-overview-account-add:hover {
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: rgba(248, 195, 125, 0.65) !important;
+}
+
+/* OV2 block (if used): gold chrome */
+.trade-validator-shell .ov2-spinner {
+  border: 3px solid rgba(234, 169, 96, 0.22) !important;
+  border-top-color: #f8c37d !important;
+}
+
+.trade-validator-shell .ov2-card::before {
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.5) 50%, transparent) !important;
+}
+
+.trade-validator-shell .ov2-card:hover {
+  border-color: rgba(234, 169, 96, 0.28) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(234, 169, 96, 0.14) !important;
+}
+
+.trade-validator-shell .ov2-view-btn:hover,
+.trade-validator-shell .ov2-filter-btn:hover {
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: rgba(234, 169, 96, 0.32) !important;
+}
+
+.trade-validator-shell .ov2-view-btn.active,
+.trade-validator-shell .ov2-filter-btn.active {
+  background: rgba(234, 169, 96, 0.22) !important;
+  border-color: rgba(234, 169, 96, 0.5) !important;
+  box-shadow: 0 0 12px rgba(234, 169, 96, 0.15) !important;
+}
+
+.trade-validator-shell .ov2-tl tbody tr:hover {
+  background: rgba(234, 169, 96, 0.07) !important;
+}
+
+.trade-validator-shell .ov2-tl-row-active {
+  background: rgba(234, 169, 96, 0.1) !important;
+}
+
+.trade-validator-shell .ov2-tl-expand-body {
+  border-top-color: rgba(234, 169, 96, 0.2) !important;
+}
+
+.trade-validator-shell .ov2-ks-bar.win {
+  background: linear-gradient(180deg, #f8c37d, rgba(234, 169, 96, 0.32)) !important;
+}
+
+.trade-validator-shell .ov2-ks-tag.purple {
+  background: rgba(234, 169, 96, 0.14) !important;
+  color: #f8c37d !important;
+  border: 1px solid rgba(234, 169, 96, 0.3) !important;
+}
+
+.trade-validator-shell .ov2-wl-dot.purple {
+  background: #eaa960 !important;
+  box-shadow: 0 0 8px rgba(234, 169, 96, 0.45) !important;
+}
+
+.trade-validator-shell .ov2-dist-bar.win {
+  background: linear-gradient(180deg, #f8c37d 0%, rgba(234, 169, 96, 0.28) 100%) !important;
+}
+
+/* ── AI Chart Check — re-token + purple literals ─────────────────────────── */
+.trade-validator-shell .acc-page {
+  --acc-border-h: rgba(234, 169, 96, 0.42);
+  --acc-accent: #eaa960;
+  --acc-accent-soft: rgba(234, 169, 96, 0.14);
+}
+
+.trade-validator-shell .acc-page .acc-card:hover {
+  border-color: rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .acc-page .acc-slot-empty:hover {
+  background: rgba(234, 169, 96, 0.06) !important;
+}
+
+.trade-validator-shell .acc-page .acc-slot-plus {
+  color: rgba(234, 169, 96, 0.65) !important;
+}
+
+.trade-validator-shell .acc-page .acc-slot--filled {
+  border-color: rgba(234, 169, 96, 0.32) !important;
+}
+
+.trade-validator-shell .acc-page .acc-slot-overlay-btn {
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.95), rgba(234, 169, 96, 0.9)) !important;
+  color: #0a0704 !important;
+}
+
+.trade-validator-shell .acc-page .acc-slot--add-new {
+  border-color: rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .acc-page .acc-slot--add-new:hover {
+  color: #f8c37d !important;
+}
+
+.trade-validator-shell .acc-page .acc-dropzone {
+  border-color: rgba(234, 169, 96, 0.32) !important;
+  background: rgba(234, 169, 96, 0.04) !important;
+}
+
+.trade-validator-shell .acc-page .acc-dropzone-link {
+  color: #f8c37d !important;
+}
+
+.trade-validator-shell .acc-page .acc-type-pill:hover {
+  background: rgba(234, 169, 96, 0.08) !important;
+  border-color: rgba(234, 169, 96, 0.32) !important;
+}
+
+.trade-validator-shell .acc-page .acc-type-pill.active {
+  background: rgba(234, 169, 96, 0.16) !important;
+  border-color: rgba(234, 169, 96, 0.55) !important;
+  box-shadow: 0 0 12px rgba(234, 169, 96, 0.12) !important;
+}
+
+.trade-validator-shell .acc-page .acc-input:focus,
+.trade-validator-shell .acc-page .acc-textarea:focus,
+.trade-validator-shell .acc-page select.acc-input:focus {
+  border-color: rgba(234, 169, 96, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.12) !important;
+}
+
+.trade-validator-shell .acc-page .acc-dir-pill:hover {
+  background: rgba(234, 169, 96, 0.1) !important;
+  border-color: rgba(234, 169, 96, 0.35) !important;
+}
+
+.trade-validator-shell .acc-page .acc-dir-pill.active {
+  background: rgba(234, 169, 96, 0.2) !important;
+  border-color: rgba(248, 195, 125, 0.55) !important;
+  color: #f8c37d !important;
+}
+
+.trade-validator-shell .acc-page .acc-btn--primary {
+  background: linear-gradient(135deg, #f8c37d 0%, #eaa960 45%, #d48d44 100%) !important;
+  color: #0a0704 !important;
+  box-shadow: 0 0 0 1px rgba(234, 169, 96, 0.35) !important;
+}
+
+.trade-validator-shell .acc-page .acc-btn--primary:hover:not(:disabled) {
+  box-shadow: 0 4px 22px rgba(234, 169, 96, 0.35) !important;
+}
+
+.trade-validator-shell .acc-page .acc-btn--secondary {
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: rgba(234, 169, 96, 0.38) !important;
+  color: #f8c37d !important;
+}
+
+.trade-validator-shell .acc-page .acc-btn--secondary:hover {
+  background: rgba(234, 169, 96, 0.2) !important;
+}
+
+.trade-validator-shell .acc-page .acc-result-hero {
+  background: rgba(234, 169, 96, 0.07) !important;
+  border: 1px solid rgba(234, 169, 96, 0.28) !important;
+  box-shadow: 0 0 28px rgba(234, 169, 96, 0.08) !important;
+}
+
+.trade-validator-shell .acc-page .acc-result-badge {
+  background: rgba(234, 169, 96, 0.12) !important;
+  color: #f8c37d !important;
+}
+
+.trade-validator-shell .acc-page .acc-insight--missing {
+  border-color: rgba(234, 169, 96, 0.28) !important;
+  background: rgba(234, 169, 96, 0.04) !important;
+}
+
+.trade-validator-shell .acc-page .acc-insight--missing .acc-insight-title {
+  color: #f8c37d !important;
+}
+
+.trade-validator-shell .acc-page .acc-disclaimer {
+  background: rgba(234, 169, 96, 0.06) !important;
+  border: 1px solid rgba(234, 169, 96, 0.26) !important;
+}
+
+.trade-validator-shell .acc-page .acc-disclaimer-icon,
+.trade-validator-shell .acc-page .acc-disclaimer strong {
+  color: #f8c37d !important;
+  -webkit-text-fill-color: #f8c37d !important;
+}
+
+/* ── Trade Calculator — linked banner + save CTA ───────────────────────── */
+.trade-validator-shell .trade-calc-banner--linked {
+  background: rgba(234, 169, 96, 0.12) !important;
+  border-color: rgba(234, 169, 96, 0.42) !important;
+}
+
+.trade-validator-shell .trade-calc-save-journal-btn {
+  background: linear-gradient(135deg, #f8c37d 0%, #eaa960 45%, #d48d44 100%) !important;
+  color: #0a0704 !important;
+  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.32) !important;
+}
+
+.trade-validator-shell .trade-calc-save-journal-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 26px rgba(234, 169, 96, 0.42) !important;
+}
+
+/* ── Trader CV — breakdown, quality, passport, CTAs ────────────────────── */
+.trade-validator-shell .trader-cv-loading-ring {
+  border: 3px solid rgba(234, 169, 96, 0.28) !important;
+  border-top-color: rgba(234, 169, 96, 0.95) !important;
+}
+
+.trade-validator-shell .trader-cv-hero {
+  border-color: rgba(234, 169, 96, 0.3) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    0 0 72px rgba(234, 169, 96, 0.1) !important;
+}
+
+.trade-validator-shell .trader-cv-hero-glow {
+  background: radial-gradient(ellipse, rgba(234, 169, 96, 0.14) 0%, transparent 70%) !important;
+}
+
+.trade-validator-shell .trader-cv-hero-rank {
+  color: rgba(248, 195, 125, 0.95) !important;
+}
+
+.trade-validator-shell .trader-cv-hero-ring {
+  background: conic-gradient(rgba(234, 169, 96, 0.92) calc(var(--score, 0) * 1%), rgba(255, 255, 255, 0.08) 0) !important;
+  box-shadow: inset 0 0 0 4px rgba(10, 10, 18, 0.9), 0 0 24px rgba(234, 169, 96, 0.22) !important;
+}
+
+.trade-validator-shell .trader-cv-breakdown-weight {
+  color: rgba(248, 195, 125, 0.85) !important;
+}
+
+.trade-validator-shell .trader-cv-breakdown-bar {
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.75), rgba(248, 195, 125, 0.5)) !important;
+}
+
+.trade-validator-shell .trader-cv-quality-card {
+  background: rgba(234, 169, 96, 0.1) !important;
+  border: 1px solid rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .trader-cv-streak-value {
+  color: rgba(248, 195, 125, 0.95) !important;
+}
+
+.trade-validator-shell .trader-cv-rank-fill {
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.85), rgba(248, 195, 125, 0.55)) !important;
+}
+
+.trade-validator-shell .trader-cv-review-list--action {
+  color: rgba(248, 195, 125, 0.92) !important;
+}
+
+.trade-validator-shell .trader-cv-cta {
+  background: rgba(234, 169, 96, 0.08) !important;
+  border: 1px solid rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-intro strong {
+  color: rgba(253, 232, 196, 0.95) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-card {
+  border-color: rgba(234, 169, 96, 0.42) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 28px 80px rgba(0, 0, 0, 0.55),
+    0 0 100px rgba(234, 169, 96, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-cosmos {
+  background:
+    radial-gradient(ellipse 90% 70% at 10% 20%, rgba(234, 169, 96, 0.16) 0%, transparent 45%),
+    radial-gradient(ellipse 80% 60% at 95% 80%, rgba(248, 195, 125, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(20, 28, 55, 0.45) 0%, transparent 55%),
+    linear-gradient(165deg, #08081a 0%, #030308 40%, #050510 100%) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-card-inner::before,
+.trade-validator-shell .trader-cv-passport-card-inner::after {
+  border-color: rgba(234, 169, 96, 0.45) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-top {
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.1), transparent 55%) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-chip {
+  border-color: rgba(234, 169, 96, 0.38) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-avatar-ring {
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.9), rgba(234, 169, 96, 0.55), rgba(212, 141, 68, 0.45)) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-handle {
+  text-shadow: 0 0 40px rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-rank {
+  color: rgba(253, 232, 196, 0.95) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-aurax-block {
+  background: linear-gradient(145deg, rgba(234, 169, 96, 0.14), rgba(15, 23, 42, 0.5)) !important;
+  border-color: rgba(234, 169, 96, 0.3) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-aurax-block .trader-cv-passport-hud {
+  color: rgba(248, 195, 125, 0.88) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-metric-code {
+  color: rgba(248, 195, 125, 0.72) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-btn--primary {
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.95), rgba(234, 169, 96, 0.88)) !important;
+  color: #0a0704 !important;
+}

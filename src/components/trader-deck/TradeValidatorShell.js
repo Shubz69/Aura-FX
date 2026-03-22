@@ -8,6 +8,7 @@ import { TradeValidatorAccountProvider } from '../../context/TradeValidatorAccou
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
 import '../../styles/trader-deck/TradeValidatorJournalGlass.css';
 import '../../styles/trader-deck/TradeValidatorTabModern.css';
+import '../../styles/trader-deck/TradeValidatorRouteThemeGold.css';
 
 const BASE = '/trader-deck/trade-validator';
 const TABS = [

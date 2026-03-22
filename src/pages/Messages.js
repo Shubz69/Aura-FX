@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Messages.css';
@@ -188,7 +188,7 @@ const Messages = () => {
                         <div className="admin-details">
                             <h2>
                                 <span className="admin-badge">Admin</span>
-                                Support Team
+                                <span className="admin-title-text">Support Team</span>
                             </h2>
                             <p className="admin-status">
                                 <span className="status-dot online"></span>

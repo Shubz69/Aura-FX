@@ -17,18 +17,18 @@ function hashCode(str) {
     return Math.abs(hash);
 }
 
-// Vibrant palette — each user gets a unique gradient based on username
+// Vibrant palette — each user gets a unique gradient (journal: gold-forward, no violet)
 const AVATAR_PALETTES = [
-    ['#7c3aed', '#a855f7'],   // purple
-    ['#0ea5e9', '#38bdf8'],   // sky blue
+    ['#92400e', '#fbbf24'],   // bronze → gold
+    ['#0ea5e9', '#38bdf8'],   // sky
     ['#059669', '#34d399'],   // emerald
-    ['#d97706', '#fbbf24'],   // amber
+    ['#b45309', '#fcd34d'],   // deep gold
     ['#dc2626', '#f87171'],   // red
     ['#0284c7', '#7dd3fc'],   // blue
-    ['#7c3aed', '#ec4899'],   // purple-pink
+    ['#c2410c', '#fb923c'],   // copper
     ['#065f46', '#6ee7b7'],   // dark green
-    ['#9333ea', '#c084fc'],   // violet
-    ['#b45309', '#fcd34d'],   // gold
+    ['#a16207', '#fde68a'],   // antique gold
+    ['#78350f', '#f59e0b'],   // brown gold
     ['#0f766e', '#5eead4'],   // teal
     ['#be123c', '#fb7185'],   // rose
 ];

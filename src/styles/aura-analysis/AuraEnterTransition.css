@@ -6,10 +6,10 @@
 
 /* ── Variables (mirror home.css) ─────────────────────────── */
 :root {
-  --aura-bg:          #0a0a0a;
+  --aura-bg:          #010008;
   --aura-border:      rgba(255, 255, 255, 0.08);
-  --aura-accent:      rgba(139, 92, 246, 0.55);
-  --aura-accent-blue: rgba(99, 179, 237, 0.45);
+  --aura-accent:      rgba(234, 169, 96, 0.55);
+  --aura-accent-blue: rgba(248, 195, 125, 0.45);
   --aura-text:        #ffffff;
   --aura-text-muted:  rgba(255, 255, 255, 0.55);
   --aura-up:          #10b981;
@@ -46,8 +46,8 @@
   height: 900px;
   background: radial-gradient(
     ellipse at center,
-    rgba(139, 92, 246, 0.09) 0%,
-    rgba(99, 179, 237, 0.05) 35%,
+    rgba(234, 169, 96, 0.09) 0%,
+    rgba(248, 195, 125, 0.05) 35%,
     rgba(255, 255, 255, 0.018) 60%,
     transparent 100%
   );
@@ -68,15 +68,15 @@
   pointer-events: none;
   background-image:
     radial-gradient(1px 1px at 12%  18%, rgba(255,255,255,0.18) 0%, transparent 100%),
-    radial-gradient(1px 1px at 28%  72%, rgba(139,92,246,0.25)  0%, transparent 100%),
+    radial-gradient(1px 1px at 28%  72%, rgba(234, 169, 96,0.25)  0%, transparent 100%),
     radial-gradient(1px 1px at 45%  35%, rgba(255,255,255,0.12) 0%, transparent 100%),
-    radial-gradient(1px 1px at 62%  88%, rgba(99,179,237,0.2)   0%, transparent 100%),
+    radial-gradient(1px 1px at 62%  88%, rgba(248, 195, 125,0.2)   0%, transparent 100%),
     radial-gradient(1px 1px at 75%  22%, rgba(255,255,255,0.15) 0%, transparent 100%),
-    radial-gradient(1px 1px at 88%  55%, rgba(139,92,246,0.18)  0%, transparent 100%),
+    radial-gradient(1px 1px at 88%  55%, rgba(234, 169, 96,0.18)  0%, transparent 100%),
     radial-gradient(1px 1px at 5%   60%, rgba(255,255,255,0.1)  0%, transparent 100%),
-    radial-gradient(1px 1px at 92%  10%, rgba(99,179,237,0.15)  0%, transparent 100%),
+    radial-gradient(1px 1px at 92%  10%, rgba(248, 195, 125,0.15)  0%, transparent 100%),
     radial-gradient(1.5px 1.5px at 35% 50%, rgba(255,255,255,0.08) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 55% 15%, rgba(139,92,246,0.14) 0%, transparent 100%);
+    radial-gradient(1.5px 1.5px at 55% 15%, rgba(234, 169, 96,0.14) 0%, transparent 100%);
   animation: auraStarDrift 18s ease-in-out infinite alternate;
 }
 
@@ -111,7 +111,7 @@
 .aura-enter-galaxy-item {
   position: absolute;
   transform: translate(-50%, -50%);
-  color: var(--galaxy-color, rgba(167, 139, 250, 0.75));
+  color: var(--galaxy-color, rgba(248, 195, 125, 0.75));
   font-size: calc(var(--galaxy-size, 1) * 0.72rem);
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 300;
@@ -121,8 +121,8 @@
   user-select: none;
   /* Soft glow matching site accent */
   text-shadow:
-    0 0 8px  rgba(139, 92, 246, 0.4),
-    0 0 20px rgba(99, 179, 237, 0.15);
+    0 0 8px  rgba(234, 169, 96, 0.4),
+    0 0 20px rgba(248, 195, 125, 0.15);
   will-change: opacity, transform;
 }
 
@@ -153,8 +153,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(139, 92, 246, 0.55),
-    rgba(99, 179, 237, 0.4),
+    rgba(234, 169, 96, 0.55),
+    rgba(248, 195, 125, 0.4),
     transparent
   );
 }
@@ -164,7 +164,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.06) 0%, transparent 65%);
+  background: radial-gradient(ellipse at top, rgba(234, 169, 96, 0.06) 0%, transparent 65%);
   pointer-events: none;
 }
 
@@ -218,10 +218,10 @@
   border-radius: 99px;
   background: linear-gradient(
     90deg,
-    rgba(139, 92, 246, 0.85),
-    rgba(99, 179, 237, 0.75)
+    rgba(234, 169, 96, 0.85),
+    rgba(248, 195, 125, 0.75)
   );
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.55);
+  box-shadow: 0 0 10px rgba(234, 169, 96, 0.55);
   position: relative;
   transition: width 0.12s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -258,11 +258,11 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
   /* Gradient text — mirrors .stat-number */
-  background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
+  background: linear-gradient(125deg, #ffffff 30%, #f8c37d 70%, #fcd9a8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+  filter: drop-shadow(0 0 10px rgba(234, 169, 96, 0.3));
 }
 
 /* ── Responsive tweaks ────────────────────────────────────── */

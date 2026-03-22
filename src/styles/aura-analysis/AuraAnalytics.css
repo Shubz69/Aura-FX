@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 .aura-analytics {
-  background: #0a0a0a;
+  background: #010008;
   color: #ffffff;
   font-family: 'Space Grotesk', sans-serif;
   padding: 0 0 40px;
@@ -162,7 +162,7 @@
 .aura-analytics-pair-bar {
   height: 100%;
   min-width: 4px;
-  background: linear-gradient(90deg, rgba(99, 179, 237, 0.9), rgba(59, 130, 246, 0.9));
+  background: linear-gradient(90deg, rgba(248, 195, 125, 0.9), rgba(59, 130, 246, 0.9));
   border-radius: 6px;
   transition: width 0.3s ease;
 }
@@ -245,7 +245,7 @@
 
 .aura-analytics-session-bar.positive {
   bottom: 50%;
-  background: linear-gradient(180deg, rgba(99, 179, 237, 0.95), rgba(59, 130, 246, 0.9));
+  background: linear-gradient(180deg, rgba(248, 195, 125, 0.95), rgba(59, 130, 246, 0.9));
   border-radius: 6px 6px 0 0;
 }
 

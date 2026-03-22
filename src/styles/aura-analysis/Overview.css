@@ -6,14 +6,14 @@
 
 /* ── Variables: journal UI/UX (match Journal / --aa-*) ──────── */
 .aura-overview-page {
-  --ov-bg:           var(--aa-bg, #0a0a0a);
+  --ov-bg:           var(--aa-bg, #010008);
   --ov-card:         var(--aa-bg-card, rgba(255, 255, 255, 0.025));
   --ov-card-h:       var(--aa-bg-card-h, rgba(255, 255, 255, 0.048));
   --ov-border:       var(--aa-border, rgba(255, 255, 255, 0.08));
   --ov-border-h:     var(--aa-border-h, rgba(255, 255, 255, 0.18));
-  --ov-purple:       var(--aa-accent, rgba(139, 92, 246, 0.85));
-  --ov-purple-dim:   var(--aa-accent-soft, rgba(139, 92, 246, 0.15));
-  --ov-blue:         var(--aa-accent-blue, rgba(99, 179, 237, 0.75));
+  --ov-purple:       var(--aa-accent, rgba(234, 169, 96, 0.85));
+  --ov-purple-dim:   var(--aa-accent-soft, rgba(234, 169, 96, 0.15));
+  --ov-blue:         var(--aa-accent-blue, rgba(248, 195, 125, 0.75));
   --ov-green:        var(--aa-success, #10b981);
   --ov-green-dim:    rgba(16, 185, 129, 0.18);
   --ov-red:          var(--aa-loss, #ef4444);
@@ -84,7 +84,7 @@
   position: absolute;
   bottom: -1px; left: 0;
   width: 80px; height: 1px;
-  background: linear-gradient(90deg, rgba(139,92,246,0.8), transparent);
+  background: linear-gradient(90deg, rgba(234, 169, 96,0.8), transparent);
 }
 
 .aura-overview-title {
@@ -95,7 +95,7 @@
   color: var(--ov-text);
   margin: 0 0 4px;
   /* Gradient text shimmer */
-  background: linear-gradient(125deg, #ffffff 40%, #c4b5fd 80%, #93c5fd 100%);
+  background: linear-gradient(125deg, #ffffff 40%, #f8c37d 80%, #fcd9a8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -145,8 +145,8 @@
 
 .aura-overview-kpi-card:hover {
   background: var(--ov-card-h);
-  border-color: var(--aa-border-accent, rgba(139, 92, 246, 0.35));
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.08);
+  border-color: var(--aa-border-accent, rgba(234, 169, 96, 0.35));
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.08);
 }
 
 .aura-overview-kpi-card:focus-within {
@@ -254,7 +254,7 @@
 
 .aura-overview-month-nav-btn:hover {
   background: var(--ov-card-h);
-  border-color: var(--aa-border-accent, rgba(139, 92, 246, 0.4));
+  border-color: var(--aa-border-accent, rgba(234, 169, 96, 0.4));
   transform: scale(1.06);
 }
 
@@ -352,19 +352,19 @@
 
 .aura-overview-cal-day--today {
   border-color: var(--ov-blue);
-  box-shadow: 0 0 0 1px rgba(99, 179, 237, 0.35);
+  box-shadow: 0 0 0 1px rgba(248, 195, 125, 0.35);
 }
 
 .aura-overview-cal-day--selected {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(139, 92, 246, 0.2) 100%);
+  background: linear-gradient(135deg, rgba(234, 169, 96, 0.35) 0%, rgba(234, 169, 96, 0.2) 100%);
   border-color: var(--ov-purple);
-  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 4px 16px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 4px 16px rgba(234, 169, 96, 0.2);
   transform: scale(1.02);
 }
 
 .aura-overview-cal-day--selected:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.45) 0%, rgba(139, 92, 246, 0.28) 100%);
-  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 6px 20px rgba(139, 92, 246, 0.25);
+  background: linear-gradient(135deg, rgba(234, 169, 96, 0.45) 0%, rgba(234, 169, 96, 0.28) 100%);
+  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 6px 20px rgba(234, 169, 96, 0.25);
 }
 
 .aura-overview-cal-num {
@@ -544,8 +544,8 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(139,92,246,0.5) 40%,
-    rgba(99,179,237,0.4) 70%,
+    rgba(234, 169, 96,0.5) 40%,
+    rgba(248, 195, 125,0.4) 70%,
     transparent 100%
   );
   opacity: 0;
@@ -557,7 +557,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at top left, rgba(139,92,246,0.05) 0%, transparent 60%);
+  background: radial-gradient(ellipse at top left, rgba(234, 169, 96,0.05) 0%, transparent 60%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.28s var(--ov-ease);
@@ -565,8 +565,8 @@
 
 .aura-card:hover {
   background: var(--ov-card-h);
-  border-color: rgba(139,92,246,0.28);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(139,92,246,0.08);
+  border-color: rgba(234, 169, 96,0.28);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(234, 169, 96,0.08);
   transform: translateY(-2px);
 }
 
@@ -623,7 +623,7 @@
 
 .aura-select:hover {
   background: rgba(255,255,255,0.1);
-  border-color: rgba(139,92,246,0.4);
+  border-color: rgba(234, 169, 96,0.4);
 }
 
 /* ── Summary card ─────────────────────────────────────────── */
@@ -735,9 +735,9 @@
 }
 
 .aura-calendar-day.purple {
-  background: rgba(139,92,246,0.15);
-  color: #c4b5fd;
-  border: 1px solid rgba(139,92,246,0.22);
+  background: rgba(234, 169, 96,0.15);
+  color: #f8c37d;
+  border: 1px solid rgba(234, 169, 96,0.22);
   font-weight: 600;
 }
 
@@ -783,10 +783,10 @@
 
 .aura-key-stats-bar {
   height: 2px;
-  background: linear-gradient(90deg, rgba(139,92,246,0.7), rgba(99,179,237,0.5));
+  background: linear-gradient(90deg, rgba(234, 169, 96,0.7), rgba(248, 195, 125,0.5));
   border-radius: 2px;
   margin-bottom: 12px;
-  box-shadow: 0 0 8px rgba(139,92,246,0.3);
+  box-shadow: 0 0 8px rgba(234, 169, 96,0.3);
   position: relative;
   z-index: 1;
 }
@@ -814,9 +814,9 @@
 }
 
 .aura-btn-ghost:hover {
-  background: rgba(139,92,246,0.1);
-  border-color: rgba(139,92,246,0.4);
-  color: #c4b5fd;
+  background: rgba(234, 169, 96,0.1);
+  border-color: rgba(234, 169, 96,0.4);
+  color: #f8c37d;
 }
 
 /* ── Chart placeholders ───────────────────────────────────── */
@@ -851,9 +851,9 @@
   right: 0;
   bottom: 22%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.9) 20%, #22c55e 80%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96,0.9) 20%, #22c55e 80%, transparent);
   border-radius: 2px;
-  box-shadow: 0 0 18px rgba(139,92,246,0.5), 0 0 40px rgba(34,197,94,0.2);
+  box-shadow: 0 0 18px rgba(234, 169, 96,0.5), 0 0 40px rgba(34,197,94,0.2);
 }
 
 .aura-chart-y, .aura-chart-x {
@@ -948,12 +948,12 @@
   inset: 0;
   border-radius: 50%;
   background: conic-gradient(
-    rgba(139,92,246,0.9) 0deg 245deg,
+    rgba(234, 169, 96,0.9) 0deg 245deg,
     rgba(248,113,113,0.85) 245deg 360deg
   );
   mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #fff calc(100% - 13px));
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #fff calc(100% - 13px));
-  box-shadow: 0 0 24px rgba(139,92,246,0.25);
+  box-shadow: 0 0 24px rgba(234, 169, 96,0.25);
 }
 
 .aura-donut-label {
@@ -1037,16 +1037,16 @@
 
 .aura-bar {
   flex: 1;
-  background: linear-gradient(180deg, rgba(139,92,246,0.85) 0%, rgba(139,92,246,0.25) 100%);
+  background: linear-gradient(180deg, rgba(234, 169, 96,0.85) 0%, rgba(234, 169, 96,0.25) 100%);
   border-radius: 4px 4px 0 0;
   min-height: 4px;
-  border: 1px solid rgba(139,92,246,0.25);
+  border: 1px solid rgba(234, 169, 96,0.25);
   border-bottom: none;
   transition: background 0.2s;
 }
 
 .aura-bar:hover {
-  background: linear-gradient(180deg, rgba(139,92,246,1) 0%, rgba(139,92,246,0.4) 100%);
+  background: linear-gradient(180deg, rgba(234, 169, 96,1) 0%, rgba(234, 169, 96,0.4) 100%);
 }
 
 .aura-bar-labels {
@@ -1095,13 +1095,13 @@
   position: relative;
   z-index: 1;
   scrollbar-width: thin;
-  scrollbar-color: rgba(139,92,246,0.3) transparent;
+  scrollbar-color: rgba(234, 169, 96,0.3) transparent;
 }
 
 .aura-trade-log-wrap::-webkit-scrollbar { height: 4px; }
 .aura-trade-log-wrap::-webkit-scrollbar-track { background: transparent; }
 .aura-trade-log-wrap::-webkit-scrollbar-thumb {
-  background: rgba(139,92,246,0.3);
+  background: rgba(234, 169, 96,0.3);
   border-radius: 4px;
 }
 
@@ -1133,7 +1133,7 @@
 }
 
 .aura-trade-log tbody tr:hover td {
-  background: rgba(139,92,246,0.04);
+  background: rgba(234, 169, 96,0.04);
 }
 
 .aura-trade-log tbody tr:last-child td { border-bottom: none; }
@@ -1185,8 +1185,8 @@
 .ov2-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid rgba(139,92,246,0.2);
-  border-top-color: #a78bfa;
+  border: 3px solid rgba(234, 169, 96,0.2);
+  border-top-color: #f8c37d;
   border-radius: 50%;
   animation: ov2-spin 0.8s linear infinite;
 }
@@ -1240,14 +1240,14 @@
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.55) 50%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96,0.55) 50%, transparent);
   opacity: 0;
   transition: opacity 0.25s;
 }
 
 .ov2-card:hover {
-  border-color: rgba(139,92,246,0.25);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(139,92,246,0.06);
+  border-color: rgba(234, 169, 96,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(234, 169, 96,0.06);
 }
 
 .ov2-card:hover::before { opacity: 1; }
@@ -1306,16 +1306,16 @@
 }
 
 .ov2-view-btn:hover, .ov2-filter-btn:hover {
-  background: rgba(139,92,246,0.12);
-  border-color: rgba(139,92,246,0.3);
+  background: rgba(234, 169, 96,0.12);
+  border-color: rgba(234, 169, 96,0.3);
   color: rgba(255,255,255,0.85);
 }
 
 .ov2-view-btn.active, .ov2-filter-btn.active {
-  background: rgba(139,92,246,0.2);
-  border-color: rgba(139,92,246,0.5);
+  background: rgba(234, 169, 96,0.2);
+  border-color: rgba(234, 169, 96,0.5);
   color: #fff;
-  box-shadow: 0 0 10px rgba(139,92,246,0.2);
+  box-shadow: 0 0 10px rgba(234, 169, 96,0.2);
 }
 
 /* ── Overview / equity stats ─────────────────────────────── */
@@ -1427,7 +1427,7 @@
 }
 
 .ov2-risk-pct {
-  color: #a78bfa;
+  color: #f8c37d;
   margin-left: 4px;
 }
 
@@ -1465,8 +1465,8 @@
 }
 
 .ov2-nav-btn:hover, .ov2-cal-refresh:hover {
-  background: rgba(139,92,246,0.12);
-  border-color: rgba(139,92,246,0.35);
+  background: rgba(234, 169, 96,0.12);
+  border-color: rgba(234, 169, 96,0.35);
   color: #fff;
 }
 
@@ -1508,8 +1508,8 @@
 }
 
 .ov2-cal-loss {
-  background: rgba(139,92,246,0.15);
-  border: 1px solid rgba(139,92,246,0.22);
+  background: rgba(234, 169, 96,0.15);
+  border: 1px solid rgba(234, 169, 96,0.22);
 }
 
 .ov2-cal-num {
@@ -1525,7 +1525,7 @@
 }
 
 .ov2-cal-pnl.green { color: #4ade80; }
-.ov2-cal-pnl.red   { color: #c4b5fd; }
+.ov2-cal-pnl.red   { color: #f8c37d; }
 
 .ov2-cal-footer {
   display: flex;
@@ -1543,9 +1543,9 @@
 .ov2-cal-enter {
   font-size: 0.65rem;
   padding: 3px 10px;
-  background: rgba(139,92,246,0.15);
-  border: 1px solid rgba(139,92,246,0.35);
-  color: #c4b5fd;
+  background: rgba(234, 169, 96,0.15);
+  border: 1px solid rgba(234, 169, 96,0.35);
+  color: #f8c37d;
   border-radius: 20px;
   cursor: pointer;
   font-family: 'Space Grotesk', sans-serif;
@@ -1553,7 +1553,7 @@
 }
 
 .ov2-cal-enter:hover {
-  background: rgba(139,92,246,0.3);
+  background: rgba(234, 169, 96,0.3);
   color: #fff;
 }
 
@@ -1583,8 +1583,8 @@
 
 .ov2-badge-num2 {
   font-size: 0.6rem;
-  color: #a78bfa;
-  background: rgba(139,92,246,0.1);
+  color: #f8c37d;
+  background: rgba(234, 169, 96,0.1);
   padding: 1px 6px;
   border-radius: 20px;
 }
@@ -1628,7 +1628,7 @@
   transition: opacity 0.2s;
 }
 
-.ov2-ks-bar.win  { background: linear-gradient(180deg, #a78bfa, rgba(139,92,246,0.3)); }
+.ov2-ks-bar.win  { background: linear-gradient(180deg, #f8c37d, rgba(234, 169, 96,0.3)); }
 .ov2-ks-bar.loss { background: linear-gradient(180deg, #f87171, rgba(239,68,68,0.2)); }
 
 .ov2-ks-tags {
@@ -1645,9 +1645,9 @@
   letter-spacing: 0.05em;
 }
 
-.ov2-ks-tag.purple { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
+.ov2-ks-tag.purple { background: rgba(234, 169, 96,0.15); color: #f8c37d; border: 1px solid rgba(234, 169, 96,0.3); }
 .ov2-ks-tag.teal   { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
-.ov2-ks-tag.blue   { background: rgba(59,130,246,0.12); color: #93c5fd; border: 1px solid rgba(59,130,246,0.25); }
+.ov2-ks-tag.blue   { background: rgba(59,130,246,0.12); color: #fcd9a8; border: 1px solid rgba(59,130,246,0.25); }
 .ov2-ks-tag.dim    { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
 
 /* ── Charts ───────────────────────────────────────────────── */
@@ -1751,7 +1751,7 @@
 .ov2-pair-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #a78bfa, #6366f1);
+  background: linear-gradient(135deg, #f8c37d, #d97706);
   flex-shrink: 0;
 }
 
@@ -1775,12 +1775,12 @@
 .ov2-tl-wrap {
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(139,92,246,0.3) transparent;
+  scrollbar-color: rgba(234, 169, 96,0.3) transparent;
 }
 
 .ov2-tl-wrap::-webkit-scrollbar { height: 4px; }
 .ov2-tl-wrap::-webkit-scrollbar-thumb {
-  background: rgba(139,92,246,0.3);
+  background: rgba(234, 169, 96,0.3);
   border-radius: 4px;
 }
 
@@ -1811,7 +1811,7 @@
   vertical-align: middle;
 }
 
-.ov2-tl tbody tr:hover td { background: rgba(139,92,246,0.05); }
+.ov2-tl tbody tr:hover td { background: rgba(234, 169, 96,0.05); }
 .ov2-tl tbody tr:last-child td { border-bottom: none; }
 
 .ov2-tl .green { color: #4ade80; font-weight: 600; }
@@ -1914,7 +1914,7 @@
   vertical-align: middle;
 }
 
-.ov2-wl-dot.purple { background: #a78bfa; box-shadow: 0 0 6px rgba(167,139,250,0.6); }
+.ov2-wl-dot.purple { background: #f8c37d; box-shadow: 0 0 6px rgba(248, 195, 125,0.6); }
 .ov2-wl-dot.red    { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.6); }
 
 .ov2-wl-delta {
@@ -2013,7 +2013,7 @@
   transition: opacity 0.2s;
 }
 
-.ov2-dist-bar.win  { background: linear-gradient(180deg, #a78bfa 0%, rgba(139,92,246,0.25) 100%); }
+.ov2-dist-bar.win  { background: linear-gradient(180deg, #f8c37d 0%, rgba(234, 169, 96,0.25) 100%); }
 .ov2-dist-bar.loss { background: linear-gradient(180deg, #f87171 0%, rgba(239,68,68,0.2) 100%); }
 
 .ov2-dist-bar:hover { opacity: 0.8; }
@@ -2105,7 +2105,7 @@
   transition: box-shadow 0.22s, transform 0.22s;
 }
 .ov2-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(139,92,246,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(234, 169, 96,0.15);
   transform: translateY(-1px);
 }
 .ov2-card.ov2-card-in:hover {
@@ -2130,11 +2130,11 @@
 }
 
 .ov2-tl tbody tr:hover {
-  background: rgba(139,92,246,0.08) !important;
+  background: rgba(234, 169, 96,0.08) !important;
 }
 
 .ov2-tl-row-active {
-  background: rgba(139,92,246,0.12) !important;
+  background: rgba(234, 169, 96,0.12) !important;
   border-bottom: none !important;
 }
 
@@ -2153,7 +2153,7 @@
   gap: 8px 20px;
   padding: 10px 14px 12px;
   background: rgba(10,8,22,0.6);
-  border-top: 1px solid rgba(139,92,246,0.15);
+  border-top: 1px solid rgba(234, 169, 96,0.15);
   animation: ov2-card-enter 0.22s ease forwards;
 }
 
@@ -2288,8 +2288,8 @@
 }
 
 .aura-overview-account-pill.active {
-  border-color: rgba(139, 92, 246, 0.65);
-  background: rgba(139, 92, 246, 0.18);
+  border-color: rgba(234, 169, 96, 0.65);
+  background: rgba(234, 169, 96, 0.18);
   color: #fff;
 }
 
@@ -2299,7 +2299,7 @@
   gap: 8px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px dashed rgba(139, 92, 246, 0.45);
+  border: 1px dashed rgba(234, 169, 96, 0.45);
   background: transparent;
   color: rgba(196, 181, 253, 0.95);
   font-size: 0.85rem;
@@ -2309,8 +2309,8 @@
 }
 
 .aura-overview-account-add:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.7);
+  background: rgba(234, 169, 96, 0.12);
+  border-color: rgba(234, 169, 96, 0.7);
 }
 
 .aura-overview-account-error {

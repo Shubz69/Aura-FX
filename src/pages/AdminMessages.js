@@ -4,14 +4,12 @@ import '../styles/AdminMessages.css';
 import AdminApi from '../services/AdminApi';
 import Api from '../services/Api';
 
-const ROLE_COLOURS = {
-    free: '#6b7280',
-    premium: '#8b5cf6',
-    elite: '#f59e0b',
-    a7fx: '#ec4899',
-    admin: '#10b981',
-    super_admin: '#ef4444',
-};
+const KNOWN_ROLES = ['free', 'premium', 'elite', 'a7fx', 'admin', 'super_admin'];
+
+function normalizeSubmissionRole(role) {
+    const k = (role || 'free').toLowerCase();
+    return KNOWN_ROLES.includes(k) ? k : 'free';
+}
 
 const AdminMessages = () => {
     const { user } = useAuth();
@@ -83,20 +81,22 @@ const AdminMessages = () => {
                     <p className="admin-subtitle">Review and manage user contact messages</p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-                    {['all', 'open', 'dealt'].map(f => (
+                <div className="submission-filter-bar" role="tablist" aria-label="Filter submissions">
+                    {['all', 'open', 'dealt'].map((f) => (
                         <button
                             key={f}
+                            type="button"
+                            role="tab"
+                            aria-selected={filter === f}
+                            className={`submission-filter-btn${filter === f ? ' is-active' : ''}`}
                             onClick={() => setFilter(f)}
-                            style={{
-                                padding: '6px 16px', borderRadius: '6px', cursor: 'pointer',
-                                background: filter === f ? '#7c3aed' : 'rgba(255,255,255,0.05)',
-                                color: '#fff', border: '1px solid rgba(255,255,255,0.1)',
-                                fontWeight: filter === f ? '600' : '400', fontSize: '0.85rem'
-                            }}
                         >
                             {f.charAt(0).toUpperCase() + f.slice(1)}
-                            {f === 'open' && <span style={{ marginLeft: 6, background: '#ef4444', borderRadius: 9, padding: '1px 6px', fontSize: '0.75rem' }}>{messages.filter(m => !m.dealtWith).length}</span>}
+                            {f === 'open' && (
+                                <span className="submission-filter-count" aria-hidden>
+                                    {messages.filter((m) => !m.dealtWith).length}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -130,8 +130,7 @@ const AdminMessages = () => {
                             {filtered.map((msg, index) => (
                                 <div
                                     key={msg.id || index}
-                                    className="message-card"
-                                    style={{ opacity: msg.dealtWith ? 0.65 : 1, border: msg.dealtWith ? '1px solid rgba(16,185,129,0.25)' : undefined }}
+                                    className={`message-card${msg.dealtWith ? ' message-card--dealt' : ''}`}
                                 >
                                     <div className="message-header">
                                         <div className="user-info">
@@ -139,19 +138,18 @@ const AdminMessages = () => {
                                                 <span className="avatar-letter">{msg.name?.charAt(0)?.toUpperCase() || 'U'}</span>
                                             </div>
                                             <div className="user-details">
-                                                <div className="user-name" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <div className="user-name submission-user-line">
                                                     {msg.name || 'Anonymous'}
                                                     {msg.userRole && (
-                                                        <span style={{
-                                                            fontSize: '0.7rem', padding: '1px 7px', borderRadius: 9,
-                                                            background: `${ROLE_COLOURS[msg.userRole.toLowerCase()] || '#6b7280'}22`,
-                                                            color: ROLE_COLOURS[msg.userRole.toLowerCase()] || '#6b7280',
-                                                            border: `1px solid ${ROLE_COLOURS[msg.userRole.toLowerCase()] || '#6b7280'}44`,
-                                                            fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em'
-                                                        }}>{msg.userRole}</span>
+                                                        <span
+                                                            className="submission-role-badge"
+                                                            data-role={normalizeSubmissionRole(msg.userRole)}
+                                                        >
+                                                            {msg.userRole}
+                                                        </span>
                                                     )}
                                                     {msg.dealtWith && (
-                                                        <span style={{ fontSize: '0.7rem', padding: '1px 7px', borderRadius: 9, background: '#10b98122', color: '#10b981', border: '1px solid #10b98144', fontWeight: 600 }}>✓ Dealt</span>
+                                                        <span className="submission-dealt-badge">✓ Dealt</span>
                                                     )}
                                                 </div>
                                                 <div className="user-email">{msg.email || 'No email'}</div>
@@ -162,15 +160,17 @@ const AdminMessages = () => {
                                             {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 'N/A'}
                                         </div>
                                     </div>
-                                    {msg.subject && <div style={{ fontSize: '0.8rem', color: '#a78bfa', marginBottom: 6, fontWeight: 500 }}>Re: {msg.subject}</div>}
+                                    {msg.subject && (
+                                        <div className="message-subject">Re: {msg.subject}</div>
+                                    )}
                                     <div className="message-content">{msg.message || 'No message content'}</div>
                                     <div className="message-actions">
                                         <a href={`mailto:${msg.email}`} className="action-btn reply-btn">Reply</a>
                                         <button
-                                            className={`action-btn ${msg.dealtWith ? 'mark-read-btn' : 'delete-btn'}`}
+                                            type="button"
+                                            className={`action-btn action-btn--toggle ${msg.dealtWith ? 'mark-read-btn' : 'delete-btn'}`}
                                             disabled={actionLoading[msg.id]}
                                             onClick={() => markDealt(msg.id, !msg.dealtWith)}
-                                            style={{ minWidth: 110 }}
                                         >
                                             {actionLoading[msg.id] ? '...' : msg.dealtWith ? 'Mark Open' : 'Mark Dealt ✓'}
                                         </button>

@@ -5,7 +5,7 @@ import { useWebSocket } from '../utils/useWebSocket';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
-import { FaSearch, FaUserShield, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaUserShield } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
 
 const AdminPanel = () => {
@@ -501,7 +501,7 @@ const AdminPanel = () => {
       {activeTab === 'users' && (
         <>
           <div className="search-container">
-            <span className="search-icon">🔍</span>
+            <FaSearch className="search-icon" aria-hidden />
             <input
               type="text"
               placeholder="Search by email, username, name, or ID..."
@@ -558,23 +558,19 @@ const AdminPanel = () => {
                       <span>•</span>
                       <span>{Math.floor(userItem.xp || 0).toLocaleString()} XP</span>
                     </div>
-                    {/* Add this line in the user-info div */}
-<div className="user-plan">
-  📋 Plan: <span style={{ 
-    color: userItem.subscription_plan === 'premium' ? '#ffd700' : 
-           userItem.subscription_plan === 'a7fx' ? '#00ffff' :
-           userItem.subscription_plan === 'elite' ? '#ff6b6b' : '#aaa',
-    fontWeight: 'bold',
-    textTransform: 'uppercase'
-  }}>
-    {userItem.subscription_plan || 'free'}
-  </span>
-  {userItem.subscription_expiry && userItem.subscription_plan !== 'free' && (
-    <span style={{ fontSize: '0.8rem', color: '#888', marginLeft: '8px' }}>
-      (expires: {new Date(userItem.subscription_expiry).toLocaleDateString()})
-    </span>
-  )}
-</div>
+                    <div className="user-plan">
+                      <span className="user-plan__label">Plan</span>
+                      <span
+                        className={`user-plan__value user-plan__value--${(userItem.subscription_plan || 'free').toLowerCase()}`}
+                      >
+                        {userItem.subscription_plan || 'free'}
+                      </span>
+                      {userItem.subscription_expiry && userItem.subscription_plan !== 'free' && (
+                        <span className="user-plan__expiry">
+                          Expires {new Date(userItem.subscription_expiry).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
                     <div className="user-joined">
                       Joined: {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
@@ -622,10 +618,10 @@ const AdminPanel = () => {
                     >
                       Delete
                     </button>
-                    {/* Add this button near the other action buttons */}
-<button 
-  className="action-btn plan-btn"
-  onClick={() => {
+                    <button
+                      className="action-btn plan-btn"
+                      type="button"
+                      onClick={() => {
     const newPlan = window.prompt(
       `Change subscription for ${userItem.email}\n\nCurrent: ${userItem.subscription_plan || 'free'}\n\nEnter new plan (free/premium/a7fx/elite):`,
       userItem.subscription_plan || 'free'
@@ -658,10 +654,10 @@ const AdminPanel = () => {
     } else {
       alert('Invalid plan. Use: free, premium, a7fx, elite');
     }
-  }}
->
-  🔄 Change Plan
-</button>
+                      }}
+                    >
+                      Change plan
+                    </button>
                   </div>
                 </div>
               ))}
@@ -701,6 +697,7 @@ const AdminPanel = () => {
                         Access Level:
                       </label>
                       <select
+                        id={`access-${channel.id}`}
                         value={channel.accessLevel || 'open'}
                         onChange={(e) => handleUpdateChannelAccess(channel.id, e.target.value)}
                         className="access-level-select"

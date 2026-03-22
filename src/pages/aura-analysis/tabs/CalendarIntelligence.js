@@ -116,7 +116,7 @@ export default function CalendarIntelligence() {
               const isPos = cell.pnl != null && cell.pnl >= 0;
 
               let bg, bdr;
-              if (isSel) { bg = 'rgba(139,92,246,0.3)'; bdr = 'rgba(139,92,246,0.7)'; }
+              if (isSel) { bg = 'rgba(234,169,96,0.28)'; bdr = 'rgba(234,169,96,0.65)'; }
               else if (cell.pnl == null) { bg = 'rgba(255,255,255,0.02)'; bdr = 'rgba(255,255,255,0.06)'; }
               else if (isPos) { bg = `rgba(16,185,129,${0.04 + intensity * 0.2})`; bdr = `rgba(16,185,129,${0.12 + intensity * 0.28})`; }
               else            { bg = `rgba(239,68,68,${0.04 + intensity * 0.2})`;  bdr = `rgba(239,68,68,${0.12 + intensity * 0.28})`; }

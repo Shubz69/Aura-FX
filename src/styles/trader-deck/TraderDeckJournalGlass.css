@@ -57,12 +57,13 @@
 /* ── Main glass canvas — journal card stack ──────────────────────────────── */
 .td-deck-with-tabs.td-layout-page .td-deck-content-box {
   background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(234, 169, 96, 0.22) !important;
   border-radius: var(--radius-xl) !important;
   padding: 22px 26px 28px !important;
   box-shadow:
     var(--glass-shadow),
-    0 0 0 0.5px rgba(234, 169, 96, 0.08),
+    0 0 0 1px rgba(234, 169, 96, 0.12) inset,
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
     0 24px 64px rgba(0, 0, 0, 0.5) !important;
   backdrop-filter: blur(22px) saturate(1.06) !important;
   -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
@@ -90,16 +91,17 @@
   right: 0;
   width: 200px;
   height: 200px;
-  background: radial-gradient(ellipse at top right, rgba(45, 65, 145, 0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse at top right, rgba(234, 169, 96, 0.08) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-content-box:hover {
-  border-color: rgba(234, 169, 96, 0.22) !important;
+  border-color: rgba(248, 195, 125, 0.38) !important;
   box-shadow:
     var(--glass-shadow),
-    0 0 0 0.5px rgba(234, 169, 96, 0.14),
+    0 0 0 1px rgba(234, 169, 96, 0.2) inset,
+    0 0 24px rgba(234, 169, 96, 0.12),
     0 28px 72px rgba(0, 0, 0, 0.55) !important;
 }
 
@@ -202,4 +204,58 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   box-shadow: var(--glass-shadow), 0 0 60px rgba(0,0,0,0.6);
+}
+
+/* ── Override TraderDeckTabs.css purple chrome (this route only) ─────────── */
+.td-deck-with-tabs.td-layout-page .td-deck-calendar-bar-label {
+  text-shadow: 0 0 20px rgba(234, 169, 96, 0.18) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-calendar-overlay-close:hover {
+  background: rgba(234, 169, 96, 0.22) !important;
+  border-color: rgba(234, 169, 96, 0.45) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-tab:hover {
+  background: rgba(234, 169, 96, 0.1) !important;
+  border-color: rgba(234, 169, 96, 0.32) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-tab--active {
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.32), rgba(234, 169, 96, 0.26)) !important;
+  border-color: rgba(234, 169, 96, 0.48) !important;
+  box-shadow: 0 0 22px rgba(234, 169, 96, 0.18) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tab:hover {
+  background: rgba(234, 169, 96, 0.08) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-sub-tab--active {
+  background: rgba(234, 169, 96, 0.18) !important;
+  border-color: rgba(234, 169, 96, 0.42) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-main-datestr {
+  text-shadow: 0 0 20px rgba(234, 169, 96, 0.15) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-main-tab-btn:hover {
+  background: rgba(234, 169, 96, 0.1) !important;
+  border-color: rgba(234, 169, 96, 0.3) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-main-tab-btn--active {
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.3), rgba(234, 169, 96, 0.24)) !important;
+  border-color: rgba(234, 169, 96, 0.48) !important;
+  box-shadow: 0 0 18px rgba(234, 169, 96, 0.16) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer {
+  border-top-color: rgba(234, 169, 96, 0.18) !important;
+}
+
+.td-deck-with-tabs.td-layout-page .td-intel-preview-box {
+  border-color: rgba(234, 169, 96, 0.35) !important;
+  box-shadow: 0 0 60px rgba(234, 169, 96, 0.12), 0 24px 48px rgba(0, 0, 0, 0.5) !important;
 }

@@ -1,20 +1,20 @@
 /* ============================================================
-   AuraShared.css — Shared design tokens for all Aura Analysis tabs
-   Matches Journal.css palette: Space Grotesk, deep black, purple accents
+   AuraShared.css — Shared tokens for Aura Analysis dashboard tabs
+   Journal navy / gold glass (scoped to .aa-page)
    ============================================================ */
 
 /* ── CSS Variables ───────────────────────────────────────────── */
 .aa-page {
-  --bg:           #08080f;
-  --bg-card:      rgba(255,255,255,0.025);
-  --bg-card-h:    rgba(255,255,255,0.045);
-  --bg-card-2:    rgba(255,255,255,0.04);
-  --border:       rgba(255,255,255,0.07);
-  --border-h:     rgba(255,255,255,0.15);
-  --border-acc:   rgba(139,92,246,0.35);
-  --accent:       #8b5cf6;
-  --accent-glow:  rgba(139,92,246,0.2);
-  --accent-soft:  rgba(139,92,246,0.12);
+  --bg:           #010008;
+  --bg-card:      rgba(3, 2, 10, 0.72);
+  --bg-card-h:    rgba(8, 6, 20, 0.88);
+  --bg-card-2:    rgba(255, 255, 255, 0.04);
+  --border:       rgba(255, 255, 255, 0.06);
+  --border-h:     rgba(234, 169, 96, 0.22);
+  --border-acc:   rgba(234, 169, 96, 0.35);
+  --accent:       #eaa960;
+  --accent-glow:  rgba(234, 169, 96, 0.22);
+  --accent-soft:  rgba(234, 169, 96, 0.12);
   --green:        #10b981;
   --green-soft:   rgba(16,185,129,0.12);
   --green-glow:   rgba(16,185,129,0.25);
@@ -24,8 +24,8 @@
   --amber:        #f59e0b;
   --amber-soft:   rgba(245,158,11,0.12);
   --text:         #ffffff;
-  --text-muted:   rgba(255,255,255,0.5);
-  --text-dim:     rgba(255,255,255,0.28);
+  --text-muted:   rgba(200, 196, 232, 0.65);
+  --text-dim:     rgba(255, 255, 255, 0.32);
   --radius:       12px;
   --radius-lg:    18px;
   --radius-sm:    8px;
@@ -82,12 +82,15 @@
 /* ── Card / Panel ────────────────────────────────────────────── */
 .aa-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(234, 169, 96, 0.12);
   border-radius: var(--radius);
   padding: 18px 20px;
   position: relative;
   overflow: hidden;
   transition: border-color var(--transition), box-shadow var(--transition);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
 }
 
 .aa-card::before {
@@ -95,18 +98,18 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(99,179,237,0.35), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96,0.5), rgba(248, 195, 125,0.35), transparent);
   pointer-events: none;
 }
 
 .aa-card:hover {
-  border-color: rgba(139,92,246,0.18);
-  box-shadow: 0 0 30px rgba(139,92,246,0.06);
+  border-color: rgba(234, 169, 96,0.18);
+  box-shadow: 0 0 30px rgba(234, 169, 96,0.06);
 }
 
 .aa-card--accent {
   border-color: var(--border-acc);
-  box-shadow: 0 0 24px rgba(139,92,246,0.08);
+  box-shadow: 0 0 24px rgba(234, 169, 96,0.08);
 }
 
 .aa-card--green {
@@ -149,7 +152,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(234, 169, 96,0.4), transparent);
   pointer-events: none;
 }
 
@@ -207,7 +210,7 @@
 .aa-pill--green  { background: var(--green-soft);  color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
 .aa-pill--red    { background: var(--red-soft);    color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
 .aa-pill--amber  { background: var(--amber-soft);  color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
-.aa-pill--accent { background: var(--accent-soft); color: #c4b5fd;      border: 1px solid var(--border-acc); }
+.aa-pill--accent { background: var(--accent-soft); color: #f8c37d;      border: 1px solid var(--border-acc); }
 .aa-pill--dim    { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
 
 /* ── Horizontal bar ──────────────────────────────────────────── */
@@ -247,7 +250,7 @@
 
 .aa-bar-fill--green  { background: linear-gradient(90deg, #10b981, #34d399); }
 .aa-bar-fill--red    { background: linear-gradient(90deg, #ef4444, #f87171); }
-.aa-bar-fill--accent { background: linear-gradient(90deg, #7c3aed, #8b5cf6); }
+.aa-bar-fill--accent { background: linear-gradient(90deg, #b45309, #eaa960); }
 
 .aa-bar-val {
   font-size: 0.7rem;
@@ -362,7 +365,7 @@
 
 .aa-spinner {
   width: 20px; height: 20px;
-  border: 2px solid rgba(139,92,246,0.25);
+  border: 2px solid rgba(234, 169, 96,0.25);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: aa-spin 0.75s linear infinite;
@@ -441,8 +444,8 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  background: rgba(139,92,246,0.06);
-  border: 1px solid rgba(139,92,246,0.15);
+  background: rgba(234, 169, 96,0.06);
+  border: 1px solid rgba(234, 169, 96,0.15);
   border-radius: var(--radius-sm);
   font-size: 0.78rem;
   color: rgba(255,255,255,0.8);

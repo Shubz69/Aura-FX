@@ -9,13 +9,14 @@
   margin-bottom: 18px;
   padding: 18px 18px 16px;
   border-radius: 20px;
-  background: rgba(3, 2, 10, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(20px) saturate(1.08);
-  -webkit-backdrop-filter: blur(20px) saturate(1.08);
+  background: rgba(3, 2, 10, 0.48);
+  border: 1px solid rgba(234, 169, 96, 0.16);
+  backdrop-filter: blur(22px) saturate(1.08);
+  -webkit-backdrop-filter: blur(22px) saturate(1.08);
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.38),
-    0 0 0 0.5px rgba(234, 169, 96, 0.05) inset;
+    0 0 0 1px rgba(234, 169, 96, 0.08) inset,
+    0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-header--tab-zone {
@@ -75,13 +76,13 @@
 
 .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab:hover {
   color: rgba(255, 255, 255, 0.92);
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(234, 169, 96, 0.12);
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab--active {
-  color: #fff !important;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.45), rgba(99, 102, 241, 0.38)) !important;
-  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.22) !important;
+  color: #0a0704 !important;
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.92), rgba(234, 169, 96, 0.88) 50%, rgba(212, 141, 68, 0.82)) !important;
+  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.28) !important;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-main-tab-rail .td-deck-tab {

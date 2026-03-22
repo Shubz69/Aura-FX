@@ -420,7 +420,7 @@ const Settings = () => {
           <div className="settings-section">
             <div className="search-and-filters">
               <div className="search-box">
-                <FaSearch style={{ marginRight: '10px', color: '#8B5CF6' }} />
+                <FaSearch className="settings-search-icon" aria-hidden />
                 <input
                   type="text"
                   placeholder="Search by email, username, name, or ID..."
@@ -708,7 +708,7 @@ const Settings = () => {
             </p>
             
             <div className="search-box">
-              <FaSearch style={{ marginRight: '10px', color: '#8B5CF6' }} />
+              <FaSearch className="settings-search-icon" aria-hidden />
               <input
                 type="text"
                 placeholder="Search users by email or username..."

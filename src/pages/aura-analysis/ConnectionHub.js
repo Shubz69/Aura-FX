@@ -105,7 +105,7 @@ const PLATFORM_ICONS = {
 };
 
 const PLATFORM_COLORS = {
-  mt5: '#8b5cf6',
+  mt5: '#eaa960',
   mt4: '#6366f1',
   ctrader: '#3b82f6',
   dxtrade: '#10b981',
@@ -270,7 +270,7 @@ export default function ConnectionHub() {
                 className={`connection-card ${isConn ? 'connected' : ''}`}
                 onMouseEnter={() => setHoveredCard(p.id)}
                 onMouseLeave={() => setHoveredCard(null)}
-                style={{ '--platform-color': PLATFORM_COLORS[p.id] || '#8b5cf6' }}
+                style={{ '--platform-color': PLATFORM_COLORS[p.id] || '#eaa960' }}
               >
                 <div className="connection-card-header">
                   <span className="connection-card-icon">{PLATFORM_ICONS[p.id] || '📊'}</span>

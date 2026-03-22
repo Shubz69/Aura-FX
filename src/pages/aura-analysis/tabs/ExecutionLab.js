@@ -84,7 +84,7 @@ export default function ExecutionLab() {
   execScore = Math.max(0, Math.min(100, Math.round(execScore)));
 
   const execLabel = execScore >= 75 ? 'Elite' : execScore >= 55 ? 'Disciplined' : execScore >= 35 ? 'Developing' : 'Needs Work';
-  const execColor = execScore >= 75 ? '#10b981' : execScore >= 55 ? '#8b5cf6' : execScore >= 35 ? '#f59e0b' : '#ef4444';
+  const execColor = execScore >= 75 ? '#10b981' : execScore >= 55 ? '#eaa960' : execScore >= 35 ? '#f59e0b' : '#ef4444';
 
   /* ── Duration buckets ── */
   const withDuration = trades.filter(t => t.openTime && t.closeTime);
@@ -163,7 +163,7 @@ export default function ExecutionLab() {
         <div className="aa-card">
           <div className="aa-section-title">Risk Management</div>
           <MetricRow label="Stop Loss Usage"  value={fmtPct(a.pctWithSL) + '%'} color={a.pctWithSL >= 80 ? '#10b981' : '#f59e0b'} sub={`${Math.round(a.totalTrades * a.pctWithSL / 100)} of ${a.totalTrades} trades`} />
-          <MetricRow label="Take Profit Usage" value={fmtPct(a.pctWithTP) + '%'} color="#8b5cf6" sub={`${Math.round(a.totalTrades * a.pctWithTP / 100)} of ${a.totalTrades} trades`} />
+          <MetricRow label="Take Profit Usage" value={fmtPct(a.pctWithTP) + '%'} color="#eaa960" sub={`${Math.round(a.totalTrades * a.pctWithTP / 100)} of ${a.totalTrades} trades`} />
           <MetricRow label="Profit Factor" value={a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—'} color={a.profitFactor >= 1.5 ? '#10b981' : a.profitFactor >= 1 ? '#f59e0b' : '#ef4444'} />
           <MetricRow label="Expectancy / Trade" value={a.expectancy !== 0 ? fmtPnl(a.expectancy) : '—'} color={a.expectancy >= 0 ? '#10b981' : '#ef4444'} />
           <MetricRow label="Avg Win / Avg Loss" value={a.avgWin > 0 && a.avgLoss > 0 ? fmtNum(a.avgWin / a.avgLoss) + 'x' : '—'}

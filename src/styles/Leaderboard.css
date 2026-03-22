@@ -1,35 +1,8 @@
 /* ============================================================
-   LEADERBOARD.CSS — AURA TERMINAL  |  Real-User Redesign
+   LEADERBOARD — journal navy / gold (scoped to .leaderboard-container)
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
-
-/* ── CSS Variables ──────────────────────────────────────────── */
-:root {
-    --bg:          #0a0a0a;
-    --bg-card:     rgba(255,255,255,0.03);
-    --bg-card-h:   rgba(255,255,255,0.055);
-    --border:      rgba(255,255,255,0.08);
-    --border-h:    rgba(255,255,255,0.22);
-    --text:        #ffffff;
-    --text-muted:  rgba(255,255,255,0.55);
-    --accent:      rgba(139,92,246,0.55);
-    --accent-solid: #8b5cf6;
-    --accent-blue: rgba(99,179,237,0.45);
-    --accent-blue-solid: #63b3ed;
-    --up:          #10b981;
-    --down:        #ef4444;
-    --gold:        #f59e0b;
-    --silver:      #94a3b8;
-    --bronze:      #cd7f32;
-    --radius:      10px;
-    --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
-
-    /* Status dot colors */
-    --online:  #22c55e;
-    --away:    #f59e0b;
-    --offline: #6b7280;
-}
 
 /* ── Reset / Base ───────────────────────────────────────────── */
 .leaderboard-container,
@@ -48,8 +21,29 @@
     pointer-events: none;
 }
 
-/* ── Container ──────────────────────────────────────────────── */
+/* ── Container + tokens (scoped — no :root leakage) ─────────── */
 .leaderboard-container {
+    --bg: #010008;
+    --bg-card: rgba(3, 2, 10, 0.72);
+    --bg-card-h: rgba(8, 6, 20, 0.88);
+    --border: rgba(255, 255, 255, 0.06);
+    --border-h: rgba(234, 169, 96, 0.28);
+    --text: #ffffff;
+    --text-muted: rgba(200, 196, 232, 0.65);
+    --accent: rgba(234, 169, 96, 0.55);
+    --accent-solid: #eaa960;
+    --accent-warm: rgba(248, 195, 125, 0.45);
+    --accent-warm-solid: #f8c37d;
+    --up: #10b981;
+    --down: #ef4444;
+    --gold: #eaa960;
+    --silver: #94a3b8;
+    --bronze: #cd7f32;
+    --radius: 10px;
+    --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    --online: #22c55e;
+    --away: #f59e0b;
+    --offline: #6b7280;
     min-height: 100vh;
     background: var(--bg);
     color: var(--text);
@@ -78,8 +72,8 @@
     margin: 0 0 1rem;
     text-transform: uppercase;
     text-shadow:
-        0 0 60px rgba(139,92,246,0.25),
-        0 0 120px rgba(99,179,237,0.1);
+        0 0 60px rgba(234,169,96,0.25),
+        0 0 120px rgba(248,195,125,0.1);
     animation: fadeInUp 0.9s ease-out both;
 }
 
@@ -118,21 +112,22 @@
     text-transform: uppercase;
     font-family: 'Space Grotesk', sans-serif;
     letter-spacing: 0.2em;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(16px) saturate(1.08);
+    -webkit-backdrop-filter: blur(16px) saturate(1.08);
 }
 
 .timeframe-btn:hover {
     background: var(--bg-card-h);
-    border-color: rgba(139,92,246,0.35);
+    border-color: rgba(234,169,96,0.35);
     color: var(--text);
     transform: translateY(-2px);
 }
 
 .timeframe-btn.active {
-    background: rgba(139,92,246,0.15);
-    border-color: rgba(139,92,246,0.5);
-    color: #c4b5fd;
-    box-shadow: 0 0 20px rgba(139,92,246,0.2);
+    background: rgba(234,169,96,0.15);
+    border-color: rgba(234,169,96,0.5);
+    color: #f8c37d;
+    box-shadow: 0 0 20px rgba(234,169,96,0.2);
 }
 
 /* ── Status Dots ────────────────────────────────────────────── */
@@ -228,7 +223,7 @@
     bottom: -10px;
     width: 48px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.7), transparent);
+    background: linear-gradient(90deg, transparent, rgba(234,169,96,0.7), transparent);
 }
 
 /* ── Podium ─────────────────────────────────────────────────── */
@@ -296,11 +291,12 @@
 /* Podium card */
 .podium-info {
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(234, 169, 96, 0.12);
     border-radius: 14px;
     padding: 20px 16px;
     width: 100%;
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px) saturate(1.1);
+    -webkit-backdrop-filter: blur(20px) saturate(1.1);
     position: relative;
     overflow: hidden;
 }
@@ -351,11 +347,11 @@
     font-size: 1.1rem;
     font-weight: 300;
     margin-bottom: 2px;
-    background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
+    background: linear-gradient(125deg, #ffffff 30%, #f8c37d 65%, #eaa960 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: drop-shadow(0 0 10px rgba(139,92,246,0.3));
+    filter: drop-shadow(0 0 10px rgba(234,169,96,0.3));
 }
 
 .podium-xp-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 6px; }
@@ -414,7 +410,7 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 0;
-    background: rgba(139,92,246,0.05);
+    background: rgba(234,169,96,0.05);
     transition: width 0.35s ease;
 }
 
@@ -545,8 +541,8 @@
 }
 
 .badge-legend { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.25); }
-.badge-elite  { background: rgba(99,179,237,0.12); color: #93c5fd; border-color: rgba(99,179,237,0.25); }
-.badge-pro    { background: rgba(139,92,246,0.12); color: #c4b5fd; border-color: rgba(139,92,246,0.25); }
+.badge-elite  { background: rgba(248,195,125,0.14); color: #fff8ed; border-color: rgba(248,195,125,0.35); }
+.badge-pro    { background: rgba(234,169,96,0.14); color: #f8c37d; border-color: rgba(234,169,96,0.32); }
 .badge-member { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.25); }
 .badge-rookie { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.25); }
 
@@ -570,7 +566,7 @@
 .xp-value {
     font-size: 0.9rem;
     font-weight: 300;
-    background: linear-gradient(125deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
+    background: linear-gradient(125deg, #ffffff 30%, #f8c37d 65%, #eaa960 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -586,9 +582,9 @@
 
 .xp-fill {
     height: 100%;
-    background: linear-gradient(90deg, rgba(139,92,246,0.8), rgba(99,179,237,0.7));
+    background: linear-gradient(90deg, rgba(234,169,96,0.8), rgba(248,195,125,0.7));
     border-radius: 99px;
-    box-shadow: 0 0 8px rgba(139,92,246,0.4);
+    box-shadow: 0 0 8px rgba(234,169,96,0.4);
     transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
 }
 
@@ -649,11 +645,13 @@
     background: var(--bg-card);
     border-radius: 14px;
     padding: 40px 36px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(234, 169, 96, 0.14);
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(22px) saturate(1.12);
+    -webkit-backdrop-filter: blur(22px) saturate(1.12);
     margin-bottom: 40px;
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
 }
 
 .xp-info-section::before {
@@ -661,14 +659,14 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(99,179,237,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(234,169,96,0.5), rgba(248,195,125,0.4), transparent);
 }
 
 .xp-info-section::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top, rgba(139,92,246,0.04) 0%, transparent 65%);
+    background: radial-gradient(ellipse at top, rgba(234,169,96,0.04) 0%, transparent 65%);
     pointer-events: none;
 }
 
@@ -705,7 +703,7 @@
     transition: all var(--transition);
 }
 
-.xp-rule:hover { background: rgba(139,92,246,0.07); border-color: rgba(139,92,246,0.2); transform: translateX(4px); }
+.xp-rule:hover { background: rgba(234,169,96,0.07); border-color: rgba(234,169,96,0.2); transform: translateX(4px); }
 .xp-rule.negative { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.12); }
 .xp-rule.negative:hover { background: rgba(239,68,68,0.08); }
 
@@ -715,15 +713,15 @@
 .xp-system-info {
     margin-top: 28px;
     padding: 24px;
-    background: rgba(139,92,246,0.06);
-    border: 1px solid rgba(139,92,246,0.15);
+    background: rgba(234,169,96,0.06);
+    border: 1px solid rgba(234,169,96,0.15);
     border-radius: var(--radius);
     position: relative;
     z-index: 1;
 }
 
 .xp-system-info h4 {
-    color: #c4b5fd;
+    color: #f8c37d;
     font-size: 0.78rem;
     font-weight: 500;
     margin-bottom: 16px;
@@ -735,7 +733,7 @@
 .xp-system-info ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .xp-system-info li { padding: 10px 0; color: rgba(255,255,255,0.7); font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06); letter-spacing: 0.03em; }
 .xp-system-info li:last-child { border-bottom: none; }
-.xp-system-info li strong { color: #a78bfa; margin-right: 8px; font-weight: 600; }
+.xp-system-info li strong { color: #eaa960; margin-right: 8px; font-weight: 600; }
 
 /* ── Loading ─────────────────────────────────────────────────── */
 .loading-screen {
@@ -753,7 +751,7 @@
 .loading-spinner {
     width: 40px; height: 40px;
     border: 1px solid rgba(255,255,255,0.1);
-    border-top-color: rgba(139,92,246,0.8);
+    border-top-color: rgba(234,169,96,0.8);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
 }
@@ -770,7 +768,7 @@
 .error-message button:hover { background: rgba(239,68,68,0.22); transform: translateY(-2px); }
 
 /* ── Empty States ───────────────────────────────────────────── */
-.podium-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; text-align: center; background: rgba(139,92,246,0.04); border-radius: 14px; border: 1px dashed rgba(139,92,246,0.2); margin: 20px auto; max-width: 460px; position: relative; z-index: 1; }
+.podium-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; text-align: center; background: rgba(234,169,96,0.04); border-radius: 14px; border: 1px dashed rgba(234,169,96,0.2); margin: 20px auto; max-width: 460px; position: relative; z-index: 1; }
 .podium-empty .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
 .podium-empty .empty-text { font-size: 1.1rem; font-weight: 300; color: var(--text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2em; }
 .podium-empty .empty-subtext { font-size: 0.85rem; color: var(--text-muted); }
@@ -784,7 +782,7 @@
 .data-point {
     position: absolute;
     width: 2px; height: 2px;
-    background: rgba(139,92,246,0.7);
+    background: rgba(234,169,96,0.7);
     border-radius: 50%;
     animation: dataFloat 9s linear infinite;
     opacity: 0;

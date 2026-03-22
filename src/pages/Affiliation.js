@@ -1,50 +1,85 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useId } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaUsers, FaCopy, FaCheck, FaTrophy, FaTwitter, FaWhatsapp } from 'react-icons/fa';
+import {
+  FaCopy,
+  FaCheck,
+  FaTrophy,
+  FaTwitter,
+  FaWhatsapp,
+  FaEnvelope,
+  FaLinkedin,
+  FaRocket,
+  FaUserPlus,
+  FaGift,
+  FaSyncAlt,
+  FaLightbulb,
+  FaChevronDown,
+} from 'react-icons/fa';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import '../styles/Affiliation.css';
 
+/** Milestones — consistent labels & rewards (display only; backend may differ) */
 const TIERS = [
-  { referrals: 5,    reward: '1 Week Free Premium',   icon: '🥉', color: '#cd7f32', label: '5 Premium' },
-  { referrals: 10,   reward: '1 Month Free Premium',  icon: '�', color: '#f59e0b', label: '20 Referrals' },
-  { referrals: 25,   reward: '3 Months Free Elite',   icon: '⭐', color: '#f59e0b', label: '35 Wars Referrals' },
-  { referrals: 1000, reward: 'Lifetime Elite Access', icon: '💎', color: '#8b5cf6', label: '6,000 Elite Referrals' },
+  { referrals: 5, reward: '1 week free Premium', icon: '🥉', color: '#cd7f32', label: 'Bronze' },
+  { referrals: 10, reward: '1 month free Premium', icon: '🥈', color: '#94a3b8', label: 'Silver' },
+  { referrals: 25, reward: '3 months Elite access', icon: '🥇', color: '#eaa960', label: 'Gold' },
+  { referrals: 100, reward: 'Lifetime Elite access', icon: '💎', color: '#f8c37d', label: 'Elite' },
 ];
 
-/* ── SVG circular progress dial ── */
-function ProgressDial({ pct }) {
+const FAQ_ITEMS = [
+  {
+    q: 'When does a referral count?',
+    a: 'Someone must register using your full referral link (or code at signup, if supported). Self-referrals and duplicate accounts do not count.',
+  },
+  {
+    q: 'How long until rewards apply?',
+    a: 'Eligible rewards are typically applied within 48 hours after a milestone is verified. If something looks wrong, contact support with your referral code.',
+  },
+  {
+    q: 'Can I share anywhere?',
+    a: 'Yes — social, forums, or direct messages. Just keep it honest: no spam, no misleading claims, and follow each platform’s rules.',
+  },
+  {
+    q: 'What if tiers change?',
+    a: 'We may adjust milestones or benefits over time. Existing verified progress is honoured according to the terms in place when you earned it, unless we notify you otherwise.',
+  },
+];
+
+function ProgressDial({ pct, gradId }) {
   const r = 52;
   const circ = 2 * Math.PI * r;
-  const offset = circ - (Math.min(100, pct) / 100) * circ;
+  const clamped = Math.min(100, Math.max(0, pct));
+  const offset = circ - (clamped / 100) * circ;
   return (
-    <svg viewBox="0 0 120 120" className="aff-dial-svg" aria-label={`${Math.round(pct)}% progress`}>
-      {/* track */}
-      <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="9" />
-      {/* fill — gradient via linearGradient */}
+    <svg viewBox="0 0 120 120" className="aff-dial-svg" aria-label={`${Math.round(clamped)} percent to next reward`}>
+      <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
       <defs>
-        <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#a78bfa" />
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f8c37d" />
+          <stop offset="55%" stopColor="#eaa960" />
+          <stop offset="100%" stopColor="#d48d44" />
         </linearGradient>
       </defs>
       <circle
-        cx="60" cy="60" r={r}
+        cx="60"
+        cy="60"
+        r={r}
         fill="none"
-        stroke="url(#dialGrad)"
+        stroke={`url(#${gradId})`}
         strokeWidth="9"
         strokeDasharray={circ}
         strokeDashoffset={offset}
         strokeLinecap="round"
         transform="rotate(-90 60 60)"
-        style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+        style={{ transition: 'stroke-dashoffset 0.85s cubic-bezier(0.22, 1, 0.36, 1)' }}
       />
       <text x="60" y="55" textAnchor="middle" fill="#fff" fontSize="20" fontWeight="800" fontFamily="inherit">
-        {Math.round(pct)}%
+        {Math.round(clamped)}%
       </text>
-      <text x="60" y="71" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="inherit">
-        Progress
+      <text x="60" y="71" textAnchor="middle" fill="rgba(200,196,232,0.45)" fontSize="9" fontFamily="inherit">
+        Next tier
       </text>
     </svg>
   );
@@ -53,20 +88,20 @@ function ProgressDial({ pct }) {
 export default function Affiliation() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const dialGradId = `aff-dial-grad-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const [stats, setStats] = useState({ referrals: 0, active: 0, earned: 0 });
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const referralCode = user?.id ? `AT-${String(user.id).padStart(6, '0')}` : null;
-  const referralLink = referralCode
-    ? `${window.location.origin}/register?ref=${referralCode}`
-    : null;
+  const referralLink = referralCode ? `${window.location.origin}/register?ref=${referralCode}` : null;
 
   const fetchStats = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await Api.getReferralStats?.();
+      const res = await Api.getReferralStats();
       const d = res?.data;
       if (d && typeof d === 'object') {
         setStats({
@@ -75,49 +110,84 @@ export default function Affiliation() {
           earned: Number(d.earned) || 0,
         });
       }
-    } catch (_) {}
-    finally { setLoading(false); }
+    } catch (_) {
+      /* keep defaults */
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
-    if (!user) { navigate('/login'); return; }
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     fetchStats();
   }, [user, navigate, fetchStats]);
 
-  const copyLink = async () => {
-    if (!referralLink) return;
+  const copyText = async (text, which) => {
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(referralLink);
+      await navigator.clipboard.writeText(text);
     } catch {
       const el = document.createElement('textarea');
-      el.value = referralLink;
+      el.value = text;
       document.body.appendChild(el);
       el.select();
       document.execCommand('copy');
       document.body.removeChild(el);
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    if (which === 'link') {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } else {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2500);
+    }
   };
 
   const shareTwitter = () => {
     if (!referralLink) return;
-    window.open(`https://twitter.com/intent/tweet?text=Join%20me%20on%20AURA%20TERMINAL%20%E2%80%94%20the%20ultimate%20trading%20platform.%20Use%20my%20link%3A%20${encodeURIComponent(referralLink)}`, '_blank');
-  };
-  const shareWhatsApp = () => {
-    if (!referralLink) return;
-    window.open(`https://wa.me/?text=Join%20me%20on%20AURA%20TERMINAL%3A%20${encodeURIComponent(referralLink)}`, '_blank');
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent('Join me on AURA TERMINAL — serious tools for traders. My link:')} ${encodeURIComponent(referralLink)}`,
+      '_blank',
+    );
   };
 
-  const nextTier = TIERS.find(t => t.referrals > stats.referrals);
+  const shareWhatsApp = () => {
+    if (!referralLink) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Join me on AURA TERMINAL: ${referralLink}`)}`, '_blank');
+  };
+
+  const shareEmail = () => {
+    if (!referralLink) return;
+    const subject = encodeURIComponent('Join me on AURA TERMINAL');
+    const body = encodeURIComponent(
+      `Hey,\n\nI've been using AURA TERMINAL for trading — thought you might want to check it out.\n\n${referralLink}\n\nSee you there.`,
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const shareLinkedIn = () => {
+    if (!referralLink) return;
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(referralLink)}`,
+      '_blank',
+    );
+  };
+
+  const nextTier = TIERS.find((t) => t.referrals > stats.referrals);
+  const prevTier = [...TIERS].filter((t) => t.referrals <= stats.referrals).pop();
   const progressPct = nextTier
     ? Math.min(100, (stats.referrals / nextTier.referrals) * 100)
     : 100;
 
+  const referralsToNext = nextTier ? Math.max(0, nextTier.referrals - stats.referrals) : 0;
+
   const statCards = [
-    { label: 'TOTAL REFERRALS',  value: loading ? '—' : stats.referrals, icon: '👥' },
-    { label: 'ACTIVE REFERRALS', value: loading ? '—' : (stats.active ?? 0), icon: '📈' },
-    { label: 'REWARDS EARNED',   value: loading ? '—' : (stats.earned ?? 0),  icon: '🏆' },
+    { label: 'Total referrals', value: loading ? '—' : stats.referrals, hint: 'All-time signups' },
+    { label: 'Active', value: loading ? '—' : stats.active ?? 0, hint: 'Engaged accounts' },
+    { label: 'Rewards earned', value: loading ? '—' : stats.earned ?? 0, hint: 'Milestones credited' },
   ];
 
   return (
@@ -125,101 +195,197 @@ export default function Affiliation() {
       <CosmicBackground />
 
       <div className="aff-content">
-
-        {/* ── HERO ── */}
-        <div className="aff-hero">
-          <div className="aff-hero__eyebrow">✦ REFERRAL PROGRAMME</div>
-          <h1 className="aff-hero__title">Refer &amp; Earn</h1>
+        <header className="aff-hero">
+          <div className="aff-hero__eyebrow">Referral programme</div>
+          <h1 className="aff-hero__title">Refer &amp; earn</h1>
           <p className="aff-hero__sub">
-            Share AURA FX with fellow traders. Every referral gets you closer to<br />
-            free premium access.
+            One link. Real rewards. Share AURA TERMINAL with traders you trust — unlock Premium and Elite perks as your
+            community grows.
           </p>
-        </div>
+          <div className="aff-hero__chips">
+            <span className="aff-chip">No fees to join</span>
+            <span className="aff-chip">Tracked automatically</span>
+            <span className="aff-chip">Milestone rewards</span>
+          </div>
+        </header>
 
-        {/* ── MAIN DASHBOARD (2-col) ── */}
+        <section className="aff-steps" aria-label="How referrals work in three steps">
+          <div className="aff-steps__item">
+            <div className="aff-steps__icon" aria-hidden>
+              <FaRocket />
+            </div>
+            <h3 className="aff-steps__title">Share your link</h3>
+            <p className="aff-steps__text">Copy once — use it in bios, DMs, or emails. Your code is baked into the URL.</p>
+          </div>
+          <div className="aff-steps__connector" aria-hidden />
+          <div className="aff-steps__item">
+            <div className="aff-steps__icon" aria-hidden>
+              <FaUserPlus />
+            </div>
+            <h3 className="aff-steps__title">They sign up</h3>
+            <p className="aff-steps__text">Friends register through your link. We attribute the referral when the account is valid.</p>
+          </div>
+          <div className="aff-steps__connector" aria-hidden />
+          <div className="aff-steps__item">
+            <div className="aff-steps__icon" aria-hidden>
+              <FaGift />
+            </div>
+            <h3 className="aff-steps__title">You unlock tiers</h3>
+            <p className="aff-steps__text">Hit referral counts to earn extended Premium and Elite access — see milestones below.</p>
+          </div>
+        </section>
+
         <div className="aff-dashboard">
-
-          {/* LEFT — stats + link */}
-          <div className="aff-dashboard__left">
-
-            {/* Stat cards */}
+          <div className="aff-dashboard__main">
             <div className="aff-stats">
-              {statCards.map((s, i) => (
-                <div key={i} className="aff-stat">
-                  <span className="aff-stat__icon">{s.icon}</span>
+              {statCards.map((s) => (
+                <div key={s.label} className="aff-stat">
                   <div className="aff-stat__value">{s.value}</div>
                   <div className="aff-stat__label">{s.label}</div>
+                  <div className="aff-stat__hint">{s.hint}</div>
                 </div>
               ))}
             </div>
 
-            {/* Referral link box */}
             <div className="aff-link-box">
-              <div className="aff-link-box__label">REFERRAL LINK</div>
+              <div className="aff-link-box__head">
+                <span className="aff-link-box__label">Your referral link</span>
+                <button type="button" className="aff-refresh" onClick={fetchStats} disabled={loading} title="Refresh stats">
+                  <FaSyncAlt className={loading ? 'aff-refresh--spin' : ''} />
+                  Refresh
+                </button>
+              </div>
               <div className="aff-link-box__row">
-                <span className="aff-link-box__url">{referralLink || 'Log in to view your link'}</span>
-                <div className="aff-link-box__actions">
-                  <button className="aff-share-btn aff-share-btn--tw" onClick={shareTwitter} title="Share on X / Twitter" type="button">
+                <span className="aff-link-box__url" title={referralLink || ''}>
+                  {referralLink || 'Log in to generate your link'}
+                </span>
+              </div>
+              <div className="aff-link-box__actions-bar">
+                <button
+                  type="button"
+                  className={`aff-copy-btn ${copied ? 'copied' : ''}`}
+                  onClick={() => copyText(referralLink, 'link')}
+                  disabled={!referralLink}
+                >
+                  {copied ? (
+                    <>
+                      <FaCheck /> Copied link
+                    </>
+                  ) : (
+                    <>
+                      <FaCopy /> Copy link
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className={`aff-btn-secondary ${codeCopied ? 'copied' : ''}`}
+                  onClick={() => copyText(referralCode, 'code')}
+                  disabled={!referralCode}
+                >
+                  {codeCopied ? (
+                    <>
+                      <FaCheck /> Code copied
+                    </>
+                  ) : (
+                    <>
+                      <FaCopy /> Copy code
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="aff-share-row">
+                <span className="aff-share-row__label">Share</span>
+                <div className="aff-share-row__btns">
+                  <button type="button" className="aff-share-btn aff-share-btn--tw" onClick={shareTwitter} title="Share on X">
                     <FaTwitter />
                   </button>
-                  <button className="aff-share-btn aff-share-btn--wa" onClick={shareWhatsApp} title="Share on WhatsApp" type="button">
+                  <button type="button" className="aff-share-btn aff-share-btn--wa" onClick={shareWhatsApp} title="WhatsApp">
                     <FaWhatsapp />
                   </button>
-                  <button
-                    className={`aff-copy-btn ${copied ? 'copied' : ''}`}
-                    onClick={copyLink}
-                    disabled={!referralLink}
-                    type="button"
-                  >
-                    {copied ? <><FaCheck /> Copied!</> : <><FaCopy /> Copy</>}
+                  <button type="button" className="aff-share-btn aff-share-btn--mail" onClick={shareEmail} title="Email">
+                    <FaEnvelope />
+                  </button>
+                  <button type="button" className="aff-share-btn aff-share-btn--in" onClick={shareLinkedIn} title="LinkedIn">
+                    <FaLinkedin />
                   </button>
                 </div>
               </div>
-              <div className="aff-link-box__code">Your code: <strong>{referralCode || '—'}</strong></div>
-              {nextTier && (
-                <div className="aff-link-progress">
-                  <div className="aff-link-progress__bar" style={{ width: `${progressPct}%` }} />
-                  <span className="aff-link-progress__label">
-                    {Math.round(progressPct)}% of signups become referrals
-                  </span>
-                </div>
-              )}
-            </div>
-
-          </div>
-
-          {/* RIGHT — progress dial */}
-          <div className="aff-dashboard__right">
-            <div className="aff-progress-panel">
-              <ProgressDial pct={progressPct} />
-              <div className="aff-progress-panel__bar-wrap">
-                <div className="aff-progress-panel__bar">
-                  <div className="aff-progress-panel__fill" style={{ width: `${progressPct}%` }} />
-                </div>
+              <div className="aff-link-box__code">
+                Code: <strong>{referralCode || '—'}</strong>
               </div>
               {nextTier && (
-                <p className="aff-progress-panel__label">
-                  {stats.referrals} / {nextTier.referrals} — {nextTier.reward}
+                <div className="aff-milestone-progress">
+                  <div className="aff-milestone-progress__top">
+                    <span>
+                      <strong>{stats.referrals}</strong> / {nextTier.referrals} referrals → <em>{nextTier.reward}</em>
+                    </span>
+                    <span className="aff-milestone-progress__pct">{Math.round(progressPct)}%</span>
+                  </div>
+                  <div className="aff-milestone-progress__track">
+                    <div className="aff-milestone-progress__fill" style={{ width: `${progressPct}%` }} />
+                  </div>
+                  <p className="aff-milestone-progress__hint">
+                    {referralsToNext === 0
+                      ? 'You reached this tier — next milestone unlocking soon.'
+                      : `${referralsToNext} more referral${referralsToNext === 1 ? '' : 's'} until the next reward.`}
+                  </p>
+                </div>
+              )}
+              {!nextTier && (
+                <p className="aff-milestone-progress__hint aff-milestone-progress__hint--done">
+                  You have reached the highest displayed tier. Thank you for growing the community.
                 </p>
               )}
-              <button
-                className={`aff-copy-btn aff-copy-btn--sm ${copied ? 'copied' : ''}`}
-                onClick={copyLink}
-                disabled={!referralLink}
-                type="button"
-              >
-                {copied ? <FaCheck /> : <FaCopy />} Copy
-              </button>
             </div>
+
+            <aside className="aff-tips">
+              <div className="aff-tips__head">
+                <FaLightbulb aria-hidden />
+                <span>Tips that convert</span>
+              </div>
+              <ul className="aff-tips__list">
+                <li>Lead with what you actually use — journal, validator, or desk — not generic hype.</li>
+                <li>Drop your link under a short personal note; cold spam hurts trust and compliance.</li>
+                <li>Pin the link in your profile during high-engagement weeks to compound clicks.</li>
+              </ul>
+            </aside>
           </div>
 
+          <aside className="aff-dashboard__aside">
+            <div className="aff-progress-panel">
+              <ProgressDial pct={progressPct} gradId={dialGradId} />
+              {nextTier ? (
+                <>
+                  <p className="aff-progress-panel__next">
+                    Next: <strong>{nextTier.label}</strong>
+                  </p>
+                  <p className="aff-progress-panel__reward">{nextTier.reward}</p>
+                  {prevTier && (
+                    <p className="aff-progress-panel__prev">
+                      Last unlocked: <span>{prevTier.label}</span>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="aff-progress-panel__reward">All milestone tiers cleared on this ladder.</p>
+              )}
+              <button
+                type="button"
+                className={`aff-copy-btn aff-copy-btn--sm ${copied ? 'copied' : ''}`}
+                onClick={() => copyText(referralLink, 'link')}
+                disabled={!referralLink}
+              >
+                {copied ? <FaCheck /> : <FaCopy />} Copy link
+              </button>
+            </div>
+          </aside>
         </div>
 
-        {/* ── TIER PROGRESSION BAR ── */}
-        <div className="aff-tier-bar-section">
+        <section className="aff-tier-bar-section" aria-label="Referral milestones">
           <div className="aff-tier-bar-header">
-            <span className="aff-tier-bar-name">Aura Core</span>
-            <span className="aff-tier-bar-cta">Earn more tiers →</span>
+            <span className="aff-tier-bar-name">Milestone path</span>
+            <span className="aff-tier-bar-sub">Four tiers · cumulative referrals</span>
           </div>
           <div className="aff-tier-track">
             <div className="aff-tier-track__line" />
@@ -227,53 +393,78 @@ export default function Affiliation() {
               const achieved = stats.referrals >= tier.referrals;
               const isNext = nextTier?.referrals === tier.referrals;
               return (
-                <div key={i} className={`aff-tier-node ${achieved ? 'achieved' : ''} ${isNext ? 'next' : ''}`}>
+                <div key={tier.referrals} className={`aff-tier-node ${achieved ? 'achieved' : ''} ${isNext ? 'next' : ''}`}>
                   <div className="aff-tier-node__dot">
                     <span className="aff-tier-node__icon">{tier.icon}</span>
                   </div>
                   <div className="aff-tier-node__label">
-                    <span className="aff-tier-node__count">{tier.referrals.toLocaleString()} Referrals</span>
+                    <span className="aff-tier-node__count">{tier.referrals} referrals</span>
                     <span className="aff-tier-node__reward">{tier.label}</span>
+                    <span className="aff-tier-node__detail">{tier.reward}</span>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* ── HOW IT WORKS ── */}
-        <div className="aff-how">
-          <h2 className="aff-section-title"><FaTrophy /> How It Works</h2>
+        <section className="aff-how">
+          <h2 className="aff-section-title">
+            <FaTrophy aria-hidden />
+            Rewards at a glance
+          </h2>
+          <p className="aff-section-lead">Each tier stacks on your progress — check what you have unlocked and what is next.</p>
           <div className="aff-how__grid">
-            {TIERS.map((tier, i) => {
+            {TIERS.map((tier) => {
               const achieved = stats.referrals >= tier.referrals;
               return (
-                <div key={i} className={`aff-how__card ${achieved ? 'aff-how__card--achieved' : ''}`} style={{ '--tc': tier.color }}>
+                <div
+                  key={tier.referrals}
+                  className={`aff-how__card ${achieved ? 'aff-how__card--achieved' : ''}`}
+                  style={{ '--tier-accent': tier.color }}
+                >
                   <div className="aff-how__icon">{tier.icon}</div>
-                  <div className="aff-how__ref-count">
-                    {tier.referrals.toLocaleString()} {tier.referrals === 1 ? 'REFERRAL' : 'REFERRALS'}
-                    {tier.referrals === 1000 && ' ELITE'}
-                  </div>
+                  <div className="aff-how__tier-name">{tier.label}</div>
+                  <div className="aff-how__ref-count">{tier.referrals} referrals</div>
                   <div className="aff-how__reward">{tier.reward}</div>
-                  {achieved && <div className="aff-how__achieved">✓ Achieved</div>}
+                  {achieved ? (
+                    <div className="aff-how__achieved">
+                      <FaCheck /> Unlocked
+                    </div>
+                  ) : (
+                    <div className="aff-how__pending">In progress</div>
+                  )}
                 </div>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* ── TERMS ── */}
-        <div className="aff-terms">
-          <h3 className="aff-terms__title">TERMS &amp; CONDITIONS</h3>
+        <section className="aff-faq" aria-label="Frequently asked questions">
+          <h2 className="aff-section-title">Questions</h2>
+          <div className="aff-faq__list">
+            {FAQ_ITEMS.map((item) => (
+              <details key={item.q} className="aff-faq__item">
+                <summary className="aff-faq__summary">
+                  {item.q}
+                  <FaChevronDown className="aff-faq__chev" aria-hidden />
+                </summary>
+                <p className="aff-faq__answer">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <footer className="aff-terms">
+          <h3 className="aff-terms__title">Terms &amp; conditions</h3>
           <ul className="aff-terms__list">
-            <li>Referrals must use your unique link to be tracked.</li>
-            <li>Self-referrals or duplicate accounts are not permitted.</li>
-            <li>Rewards are applied within 48 hours of milestone verification.</li>
-            <li>AURA TERMINAL reserves the right to modify reward tiers at any time.</li>
-            <li>Abuse of the referral system may result in account suspension.</li>
+            <li>Referrals must use your unique link (or approved code flow) to be tracked.</li>
+            <li>Self-referrals, duplicate accounts, and fraudulent signups are not permitted.</li>
+            <li>Rewards are applied within 48 hours of milestone verification where possible.</li>
+            <li>AURA TERMINAL may update tiers or benefits; we will communicate material changes where required.</li>
+            <li>Abuse of the programme may result in forfeiture of rewards and account action.</li>
           </ul>
-        </div>
-
+        </footer>
       </div>
     </div>
   );

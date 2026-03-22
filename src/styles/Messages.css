@@ -1,8 +1,27 @@
+/* Messages page — journal navy / gold glass (matches Trader Desk / Trade Validator) */
+
 .messages-page-container {
+    --msg-bg: #010008;
+    --msg-card: rgba(3, 2, 10, 0.72);
+    --msg-card-h: rgba(8, 6, 20, 0.88);
+    --msg-glass: rgba(2, 1, 8, 0.55);
+    --msg-border: rgba(255, 255, 255, 0.06);
+    --msg-border-h: rgba(255, 255, 255, 0.1);
+    --msg-gold: #eaa960;
+    --msg-gold-bright: #f8c37d;
+    --msg-gold-dim: rgba(234, 169, 96, 0.22);
+    --msg-gold-glow: rgba(234, 169, 96, 0.18);
+    --msg-text: #ffffff;
+    --msg-muted: rgba(200, 196, 232, 0.7);
+    --msg-glass-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.65),
+        0 1px 0 rgba(255, 255, 255, 0.03) inset,
+        0 0 0 0.5px rgba(255, 255, 255, 0.02) inset;
+
     min-height: 100vh;
     padding-top: 80px;
     padding-bottom: 100px;
-    background: #0a0a0a;
+    background: var(--msg-bg);
     position: relative;
     z-index: 1;
     overflow-x: hidden;
@@ -11,21 +30,24 @@
     font-family: 'Space Grotesk', sans-serif;
 }
 
-/* All text and titles in Space Grotesk (match navbar AURA TERMINAL); titles in all caps */
 .messages-page-container,
 .messages-page-container * {
     font-family: 'Space Grotesk', sans-serif;
 }
 
 .messages-page-header {
-    background: linear-gradient(135deg, rgba(17, 17, 27, 0.98), rgba(25, 25, 40, 0.95));
-    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+    background: linear-gradient(180deg, rgba(20, 28, 55, 0.45) 0%, rgba(3, 2, 10, 0.82) 100%);
+    border-bottom: 1px solid var(--msg-border);
     padding: 25px 35px;
     display: flex;
     align-items: center;
     gap: 20px;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.15), 0 0 40px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(22px) saturate(1.06);
+    -webkit-backdrop-filter: blur(22px) saturate(1.06);
+    box-shadow:
+        var(--msg-glass-shadow),
+        0 0 0 1px rgba(234, 169, 96, 0.08) inset,
+        0 12px 40px rgba(0, 0, 0, 0.45);
     position: relative;
     overflow: hidden;
 }
@@ -36,20 +58,20 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-    animation: shimmer 3s infinite;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.55), rgba(248, 195, 125, 0.35), transparent);
+    animation: msg-shimmer 3.5s ease-in-out infinite;
 }
 
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+@keyframes msg-shimmer {
+    0%, 100% { opacity: 0.65; }
+    50% { opacity: 1; }
 }
 
 .back-button {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.25));
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    color: rgba(255, 255, 255, 0.9);
+    background: rgba(234, 169, 96, 0.08);
+    border: 1px solid var(--msg-gold-dim);
+    color: rgba(255, 255, 255, 0.88);
     padding: 12px 24px;
     border-radius: 12px;
     cursor: pointer;
@@ -58,13 +80,15 @@
     gap: 10px;
     font-size: 0.95rem;
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     position: relative;
     overflow: hidden;
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.15em;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .back-button::before {
@@ -74,16 +98,16 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(248, 195, 125, 0.15), transparent);
     transition: left 0.5s;
 }
 
 .back-button:hover {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.35));
-    border-color: rgba(255, 255, 255, 0.6);
-    color: white;
-    transform: translateX(-5px);
-    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.2);
+    background: rgba(234, 169, 96, 0.14);
+    border-color: rgba(248, 195, 125, 0.42);
+    color: #fff;
+    transform: translateX(-4px);
+    box-shadow: 0 6px 24px rgba(234, 169, 96, 0.15);
 }
 
 .back-button:hover::before {
@@ -101,64 +125,79 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5));
+    background: linear-gradient(145deg, rgba(248, 195, 125, 0.2), rgba(234, 169, 96, 0.12));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.8rem;
     font-weight: 700;
-    color: white;
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.3);
+    color: var(--msg-gold-bright);
+    box-shadow:
+        0 0 24px rgba(234, 169, 96, 0.25),
+        0 0 0 1px rgba(234, 169, 96, 0.35) inset;
     position: relative;
-    animation: avatarGlow 3s ease-in-out infinite;
-    border: 2px solid rgba(255, 255, 255, 0.4);
+    animation: msg-avatar-glow 3.5s ease-in-out infinite;
+    border: 2px solid rgba(234, 169, 96, 0.35);
     font-family: 'Space Grotesk', sans-serif;
 }
 
 .admin-avatar .admin-icon {
     font-size: 1.5rem;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 2px 6px rgba(234, 169, 96, 0.35));
 }
 
-@keyframes avatarGlow {
+@keyframes msg-avatar-glow {
     0%, 100% {
-        box-shadow: 0 0 30px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.3);
+        box-shadow:
+            0 0 24px rgba(234, 169, 96, 0.22),
+            0 0 0 1px rgba(234, 169, 96, 0.3) inset;
     }
     50% {
-        box-shadow: 0 0 40px rgba(255, 255, 255, 0.8), 0 0 80px rgba(255, 255, 255, 0.5);
+        box-shadow:
+            0 0 36px rgba(248, 195, 125, 0.28),
+            0 0 0 1px rgba(248, 195, 125, 0.4) inset;
     }
 }
 
 .admin-details h2 {
     margin: 0;
     font-size: 1.6rem;
-    color: rgba(255, 255, 255, 0.95);
     font-weight: 200;
     display: flex;
     align-items: center;
     gap: 12px;
-    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+    flex-wrap: wrap;
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.2em;
 }
 
+.admin-title-text {
+    background: linear-gradient(125deg, #fff 30%, var(--msg-gold-bright) 70%, var(--msg-gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 18px rgba(234, 169, 96, 0.12));
+}
+
 .admin-badge {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5));
+    background: linear-gradient(135deg, rgba(248, 195, 125, 0.2), rgba(234, 169, 96, 0.12));
     padding: 4px 12px;
     border-radius: 8px;
     font-size: 0.85rem;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--msg-gold-dim);
+    box-shadow: 0 2px 12px rgba(234, 169, 96, 0.1);
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.15em;
+    -webkit-text-fill-color: var(--msg-gold-bright);
+    color: var(--msg-gold-bright);
 }
 
 .admin-status {
     margin: 8px 0 0 0;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--msg-muted);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -175,9 +214,9 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #10B981;
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.8), 0 0 30px rgba(16, 185, 129, 0.4);
-    animation: pulse 2s infinite;
+    background: #10b981;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.65);
+    animation: msg-pulse 2s infinite;
     position: relative;
 }
 
@@ -190,25 +229,25 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: #10B981;
-    animation: ripple 2s infinite;
+    background: #10b981;
+    animation: msg-ripple 2s infinite;
 }
 
-@keyframes pulse {
+@keyframes msg-pulse {
     0%, 100% {
         opacity: 1;
         transform: scale(1);
     }
     50% {
-        opacity: 0.8;
-        transform: scale(1.1);
+        opacity: 0.85;
+        transform: scale(1.08);
     }
 }
 
-@keyframes ripple {
+@keyframes msg-ripple {
     0% {
         transform: translate(-50%, -50%) scale(1);
-        opacity: 0.8;
+        opacity: 0.7;
     }
     100% {
         transform: translate(-50%, -50%) scale(2);
@@ -232,15 +271,18 @@
     gap: 20px;
     padding: 30px;
     overflow-y: auto;
-    background: linear-gradient(135deg, rgba(17, 17, 27, 0.7), rgba(25, 25, 40, 0.6));
+    background: var(--msg-card);
     border-radius: 20px;
     margin-bottom: 25px;
-    backdrop-filter: blur(15px);
-    box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px) saturate(1.05);
+    -webkit-backdrop-filter: blur(20px) saturate(1.05);
+    box-shadow:
+        var(--msg-glass-shadow),
+        0 0 0 1px rgba(234, 169, 96, 0.1) inset,
+        0 20px 56px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(234, 169, 96, 0.18);
 }
 
-/* WhatsApp-style date separator: Today / Yesterday / exact date */
 .messages-date-separator {
     display: flex;
     justify-content: center;
@@ -252,15 +294,17 @@
 .messages-date-separator-label {
     padding: 8px 16px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.9);
+    background: rgba(234, 169, 96, 0.08);
+    color: var(--msg-muted);
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-family: 'Space Grotesk', sans-serif;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(234, 169, 96, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .empty-messages-state {
@@ -270,7 +314,7 @@
     justify-content: center;
     padding: 60px 20px;
     text-align: center;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--msg-muted);
     font-family: 'Space Grotesk', sans-serif;
 }
 
@@ -278,45 +322,50 @@
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.25));
+    background: linear-gradient(145deg, rgba(248, 195, 125, 0.12), rgba(234, 169, 96, 0.06));
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 25px;
-    box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    animation: float 3s ease-in-out infinite;
+    box-shadow:
+        0 0 32px rgba(234, 169, 96, 0.12),
+        0 0 0 1px rgba(234, 169, 96, 0.22) inset;
+    border: 1px solid rgba(234, 169, 96, 0.28);
+    animation: msg-float 3s ease-in-out infinite;
 }
 
-@keyframes float {
+@keyframes msg-float {
     0%, 100% {
         transform: translateY(0);
     }
     50% {
-        transform: translateY(-10px);
+        transform: translateY(-8px);
     }
 }
 
 .empty-icon {
     font-size: 3rem;
-    color: rgba(255, 255, 255, 0.8);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    color: var(--msg-gold-bright);
+    filter: drop-shadow(0 4px 12px rgba(234, 169, 96, 0.35));
 }
 
 .empty-messages-state h3 {
     font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--msg-text);
     margin: 0 0 10px 0;
     font-weight: 200;
-    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.2em;
+    background: linear-gradient(125deg, #fff 40%, var(--msg-gold-bright) 85%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .empty-messages-state p {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--msg-muted);
     margin: 0;
     max-width: 400px;
     line-height: 1.6;
@@ -327,7 +376,7 @@
     max-width: 70%;
     padding: 18px 24px;
     border-radius: 18px;
-    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: msg-slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     transition: transform 0.2s ease;
 }
@@ -336,10 +385,10 @@
     transform: translateY(-2px);
 }
 
-@keyframes slideIn {
+@keyframes msg-slide-in {
     from {
         opacity: 0;
-        transform: translateY(15px) scale(0.95);
+        transform: translateY(15px) scale(0.96);
     }
     to {
         opacity: 1;
@@ -349,12 +398,15 @@
 
 .user-message {
     align-self: flex-end;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.4));
-    color: white;
+    background: linear-gradient(135deg, rgba(248, 195, 125, 0.22), rgba(234, 169, 96, 0.12));
+    color: var(--msg-text);
     border-bottom-right-radius: 6px;
-    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
+    box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(234, 169, 96, 0.28) inset;
+    border: 1px solid rgba(248, 195, 125, 0.35);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 }
 
 .user-message::before {
@@ -366,7 +418,7 @@
     bottom: 0;
     border-radius: 18px;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), transparent);
+    background: linear-gradient(135deg, rgba(248, 195, 125, 0.45), transparent 55%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -376,12 +428,15 @@
 
 .admin-message {
     align-self: flex-start;
-    background: linear-gradient(135deg, rgba(30, 30, 45, 0.95), rgba(40, 40, 60, 0.9));
-    color: #E0E7FF;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: linear-gradient(135deg, rgba(8, 6, 20, 0.92), rgba(3, 2, 10, 0.88));
+    color: rgba(232, 230, 248, 0.92);
+    border: 1px solid rgba(234, 169, 96, 0.15);
     border-bottom-left-radius: 6px;
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4), 0 0 40px rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
+    box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.45),
+        0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 }
 
 .message-header {
@@ -412,7 +467,8 @@
 .sender-icon {
     font-size: 0.7rem;
     opacity: 0.9;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    color: var(--msg-gold-bright);
+    filter: drop-shadow(0 1px 3px rgba(234, 169, 96, 0.35));
 }
 
 .sender-you-icon {
@@ -421,26 +477,27 @@
 
 .user-message .message-sender {
     color: rgba(255, 255, 255, 0.95);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .admin-message .message-sender {
-    color: rgba(255, 255, 255, 0.85);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    color: var(--msg-muted);
+    text-shadow: none;
 }
 
 .read-indicator {
     font-size: 0.7rem;
-    color: rgba(16, 185, 129, 0.9);
-    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
+    color: rgba(16, 185, 129, 0.95);
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.45));
 }
 
 .message-time {
     font-size: 0.75rem;
-    opacity: 0.75;
+    opacity: 0.72;
     font-weight: 500;
     white-space: nowrap;
     font-family: 'Space Grotesk', sans-serif;
+    color: var(--msg-muted);
 }
 
 .message-content {
@@ -453,21 +510,25 @@
 
 .user-message .message-content {
     color: rgba(255, 255, 255, 0.98);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .admin-message .message-content {
-    color: #E0E7FF;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    color: rgba(236, 234, 252, 0.92);
+    text-shadow: none;
 }
 
 .message-input-form {
-    background: linear-gradient(135deg, rgba(17, 17, 27, 0.98), rgba(25, 25, 40, 0.95));
+    background: var(--msg-card);
     padding: 25px;
     border-radius: 20px;
-    box-shadow: 0 -8px 32px rgba(255, 255, 255, 0.15), 0 0 40px rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+        var(--msg-glass-shadow),
+        0 0 0 1px rgba(234, 169, 96, 0.1) inset,
+        0 -4px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(22px) saturate(1.06);
+    -webkit-backdrop-filter: blur(22px) saturate(1.06);
+    border: 1px solid rgba(234, 169, 96, 0.18);
 }
 
 .message-input-container {
@@ -479,43 +540,47 @@
 .message-input {
     flex: 1;
     padding: 18px 24px;
-    background: linear-gradient(135deg, rgba(30, 30, 45, 0.95), rgba(40, 40, 60, 0.9));
-    border: 2px solid rgba(255, 255, 255, 0.35);
+    background: rgba(2, 1, 8, 0.65);
+    border: 1px solid rgba(234, 169, 96, 0.2);
     border-radius: 30px;
-    color: #E0E7FF;
+    color: var(--msg-text);
     font-size: 1rem;
     outline: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, background 0.25s ease;
+    box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.35);
     font-family: 'Space Grotesk', sans-serif;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .message-input:focus {
-    border-color: rgba(255, 255, 255, 0.7);
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.3), inset 0 2px 10px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(135deg, rgba(35, 35, 50, 0.98), rgba(45, 45, 65, 0.95));
+    border-color: rgba(248, 195, 125, 0.45);
+    box-shadow:
+        0 0 0 2px rgba(234, 169, 96, 0.12),
+        inset 0 2px 12px rgba(0, 0, 0, 0.35);
+    background: rgba(8, 6, 20, 0.75);
     transform: translateY(-1px);
 }
 
 .message-input::placeholder {
-    color: rgba(255, 255, 255, 0.15);
-    opacity: 0.6;
+    color: rgba(200, 196, 232, 0.35);
+    opacity: 1;
 }
 
 .send-button {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5));
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    color: white;
+    background: linear-gradient(135deg, #f8c37d 0%, #eaa960 45%, #d48d44 100%);
+    border: 1px solid rgba(234, 169, 96, 0.45);
+    color: #0a0704;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.2);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 6px 24px rgba(234, 169, 96, 0.32);
     position: relative;
     overflow: hidden;
 }
@@ -528,16 +593,14 @@
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.25);
     transform: translate(-50%, -50%);
     transition: width 0.4s, height 0.4s;
 }
 
 .send-button:hover:not(:disabled) {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 0 8px 35px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.3);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.6));
-    border-color: rgba(255, 255, 255, 0.6);
+    transform: scale(1.06) translateY(-2px);
+    box-shadow: 0 10px 32px rgba(234, 169, 96, 0.4);
 }
 
 .send-button:hover:not(:disabled)::before {
@@ -546,15 +609,14 @@
 }
 
 .send-button:active:not(:disabled) {
-    transform: scale(1.05) translateY(0);
+    transform: scale(1.02) translateY(0);
 }
 
 .send-button:disabled {
-    opacity: 0.4;
+    opacity: 0.38;
     cursor: not-allowed;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .messages-page-container {
         padding-top: 70px;

@@ -313,8 +313,43 @@
 
 .trade-validator-shell .tv-score-card {
   background: var(--bg-glass) !important;
-  border-color: var(--border) !important;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: var(--glass-shadow);
+  border: 1px solid rgba(234, 169, 96, 0.2) !important;
+  backdrop-filter: blur(18px) saturate(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.05);
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 1px rgba(234, 169, 96, 0.08) inset !important;
+}
+
+/* Checklist: section cards + tab cards + setup rows — glass + gold rim */
+.trade-validator-shell .tv-section-card,
+.trade-validator-shell .tv-checklist-tab-card,
+.trade-validator-shell .tv-setup-section {
+  background: var(--bg-glass) !important;
+  border: 1px solid rgba(234, 169, 96, 0.18) !important;
+  backdrop-filter: blur(18px) saturate(1.04);
+  -webkit-backdrop-filter: blur(18px) saturate(1.04);
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 0.5px rgba(255, 255, 255, 0.03) inset !important;
+}
+
+.trade-validator-shell .tv-section-card:hover,
+.trade-validator-shell .tv-checklist-tab-card:hover,
+.trade-validator-shell .tv-setup-section:hover {
+  border-color: rgba(248, 195, 125, 0.32) !important;
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 1px rgba(234, 169, 96, 0.1) inset,
+    0 8px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+.trade-validator-shell .tv-section-card-icon {
+  background: rgba(234, 169, 96, 0.1) !important;
+  border: 1px solid rgba(234, 169, 96, 0.2) !important;
+}
+
+.trade-validator-shell .tv-setup-chart {
+  background: rgba(234, 169, 96, 0.08) !important;
+  border: 1px solid rgba(234, 169, 96, 0.12) !important;
 }

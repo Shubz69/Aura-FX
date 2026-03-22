@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
 .aura-leaderboard {
-  background: #0a0a0a;
+  background: #010008;
   color: #ffffff;
   font-family: 'Space Grotesk', sans-serif;
   padding: 0 0 40px;
@@ -57,7 +57,7 @@
 
 .aura-leaderboard-sort-select:focus {
   outline: none;
-  border-color: rgba(139, 92, 246, 0.5);
+  border-color: rgba(234, 169, 96, 0.5);
 }
 
 .aura-leaderboard-order-btn {
@@ -124,11 +124,11 @@
 }
 
 .aura-leaderboard-row-you {
-  background: rgba(123, 92, 255, 0.12);
+  background: rgba(234, 169, 96, 0.12);
 }
 
 .aura-leaderboard-row-you:hover {
-  background: rgba(123, 92, 255, 0.18);
+  background: rgba(234, 169, 96, 0.18);
 }
 
 .aura-leaderboard-trader {

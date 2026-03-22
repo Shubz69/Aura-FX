@@ -166,7 +166,7 @@ export default function RiskLab() {
         <div className="aa-card">
           <div className="aa-section-title">Execution Risk</div>
           <RiskBar label="SL Coverage"  value={a.pctWithSL} max={100} color={a.pctWithSL < 70 ? '#f59e0b' : '#10b981'} fmt={v => fmtPct(v) + '%'} />
-          <RiskBar label="TP Coverage"  value={a.pctWithTP} max={100} color="#8b5cf6" fmt={v => fmtPct(v) + '%'} />
+          <RiskBar label="TP Coverage"  value={a.pctWithTP} max={100} color="#eaa960" fmt={v => fmtPct(v) + '%'} />
           {rorPct != null && (
             <div style={{ marginTop: 12, padding: '10px 12px', background: rorPct > 30 ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)', border: `1px solid ${rorPct > 30 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`, borderRadius: 8 }}>
               <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Risk-of-Ruin Est.</div>

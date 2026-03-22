@@ -233,10 +233,10 @@ export default function GrowthEngine() {
         <div className="aa-grid-3" style={{ gap: 8 }}>
           <Milestone icon="fa-chart-line"    label="First Profitable Month"     value="Complete at least 1 profitable month"          achieved={a.byMonth.some(m => m.pnl > 0)}                color="#10b981" />
           <Milestone icon="fa-fire"          label="Win Streak ≥ 3"             value={`Best: ${a.maxWinStreak} consecutive wins`}     achieved={a.maxWinStreak >= 3}                             color="#f59e0b" />
-          <Milestone icon="fa-trophy"        label="+10% Total Return"          value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 10}                                 color="#8b5cf6" />
+          <Milestone icon="fa-trophy"        label="+10% Total Return"          value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 10}                                 color="#eaa960" />
           <Milestone icon="fa-shield-alt"    label="90% SL Coverage"            value={`Current: ${fmtPct(a.pctWithSL)}%`}            achieved={a.pctWithSL >= 90}                               color="#10b981" />
           <Milestone icon="fa-bullseye"      label="Profit Factor ≥ 2.0"        value={`Current: ${a.profitFactor > 0 ? fmtNum(a.profitFactor) : '—'}`} achieved={a.profitFactor >= 2}   color="#10b981" />
-          <Milestone icon="fa-calendar-check" label="3 Consecutive Profit Months" value={`Current: ${a.profitableMonths} months`}    achieved={a.profitableMonths >= 3}                         color="#8b5cf6" />
+          <Milestone icon="fa-calendar-check" label="3 Consecutive Profit Months" value={`Current: ${a.profitableMonths} months`}    achieved={a.profitableMonths >= 3}                         color="#eaa960" />
           <Milestone icon="fa-percent"        label="+25% Total Return"         value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 25}                                 color="#f59e0b" />
           <Milestone icon="fa-star"           label="Win Rate ≥ 60%"            value={`Current: ${fmtPct(a.winRate)}%`}               achieved={a.winRate >= 60}                                 color="#f59e0b" />
           <Milestone icon="fa-gem"            label="+50% Total Return"         value={`Current: ${fmtPct(returnPct)}%`}               achieved={returnPct >= 50}                                 color="#ef4444" />

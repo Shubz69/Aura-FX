@@ -27,8 +27,8 @@ const TYPE_COLORS = {
   FRIEND_REQUEST: '#FFB800',
   FRIEND_ACCEPTED: '#23A55A',
   FRIEND_DECLINED: '#ED4245',
-  SYSTEM: '#8B5CF6',
-  DAILY_JOURNAL: '#8B5CF6'
+  SYSTEM: '#eaa960',
+  DAILY_JOURNAL: '#eaa960'
 };
 
 // Format relative time
@@ -419,7 +419,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
             <>
               {notifications.map((notification) => {
                 const Icon = TYPE_ICONS[notification.type] || FaBell;
-                const color = TYPE_COLORS[notification.type] || '#8B5CF6';
+                const color = TYPE_COLORS[notification.type] || '#eaa960';
                 const isUnread = notification.status === 'UNREAD';
                 const isProcessing = processingIds.has(notification.id);
                 const isFriendRequest = notification.type === 'FRIEND_REQUEST';
@@ -434,9 +434,13 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
                     onClick={() => handleNotificationClick(notification)}
                   >
                     {/* Icon */}
-                    <div 
+                    <div
                       className="notification-icon"
-                      style={{ backgroundColor: `${color}20`, color }}
+                      style={{
+                        backgroundColor: `${color}24`,
+                        color,
+                        borderColor: `${color}44`
+                      }}
                     >
                       <Icon />
                     </div>

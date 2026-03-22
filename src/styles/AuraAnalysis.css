@@ -1,7 +1,7 @@
 /* Aura Analysis – same font as AURA TERMINAL */
 .aura-analysis-page {
   min-height: 100vh;
-  background: #0a0a0a;
+  background: #010008;
   color: #fff;
   position: relative;
   font-family: 'Space Grotesk', sans-serif;
@@ -35,9 +35,11 @@
 .aura-analysis-placeholder,
 .aura-analysis-incoming {
   padding: 32px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(3, 2, 10, 0.72);
+  border: 1px solid rgba(234, 169, 96, 0.16);
   border-radius: 16px;
+  backdrop-filter: blur(16px) saturate(1.08);
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
 }
 
 .aura-analysis-incoming-text {

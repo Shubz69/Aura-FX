@@ -60,8 +60,8 @@
 }
 
 .trade-calc-banner--linked {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.45);
+  background: rgba(234, 169, 96, 0.15);
+  border-color: rgba(234, 169, 96, 0.45);
 }
 
 .trade-calc-save-wrap {
@@ -80,14 +80,14 @@
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+  background: linear-gradient(135deg, #eaa960 0%, #78350f 100%);
+  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.35);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .trade-calc-save-journal-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.45);
+  box-shadow: 0 6px 24px rgba(234, 169, 96, 0.45);
 }
 
 .trade-calc-save-journal-btn:disabled {
@@ -153,7 +153,7 @@
 
 .trade-calc-input:focus {
   outline: none;
-  border-color: rgba(139, 92, 246, 0.5);
+  border-color: rgba(234, 169, 96, 0.5);
 }
 
 .trade-calc-input::placeholder {
@@ -239,7 +239,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: rgba(255, 255, 255, 0.9);
-  background: rgba(139, 92, 246, 0.25);
+  background: rgba(234, 169, 96, 0.25);
   color: #fff;
   position: sticky;
   top: 0;
@@ -267,7 +267,7 @@
 }
 
 .trade-calc-pair-option.selected {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(234, 169, 96, 0.3);
   color: #fff;
 }
 
@@ -430,7 +430,7 @@
 }
 
 .trade-calc-session-option.selected {
-  background: rgba(139, 92, 246, 0.25);
+  background: rgba(234, 169, 96, 0.25);
   color: #fff;
 }
 
