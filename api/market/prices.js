@@ -295,7 +295,7 @@ const COINGECKO_CACHE_TTL = 5000; // 5s
 
 async function fetchCoinGeckoBatch() {
   if (Date.now() - coingeckoCacheTime < COINGECKO_CACHE_TTL) return coingeckoCache;
-  const ids = Object.keys(COINGECKO_IDS).filter(s => CRYPTO_SYMBOLS.has(s)).map(s => COINGECKO_IDS[s]).join(',');
+  const ids = Object.keys(COINGECKO_IDS).filter(s => CRYPTO_SYMBOL_SET.has(s)).map(s => COINGECKO_IDS[s]).join(',');
   if (!ids) return {};
   try {
     const controller = new AbortController();
