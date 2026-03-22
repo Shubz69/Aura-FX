@@ -161,7 +161,7 @@ const MiniJournalModal = React.memo(({
     
     return (
         <div 
-            className={`journal-modal-overlay ${closing ? 'closing' : ''}`}
+            className={`journal-modal-overlay quick-journal-modal ${closing ? 'closing' : ''}`}
             onClick={handleClose}
         >
             <div 
@@ -257,7 +257,7 @@ const MiniJournalModal = React.memo(({
                     
                     {/* Tasks */}
                     <h4 className="jmodal-section-label">TODAY'S TASKS</h4>
-                    <div className="tasks-container" style={{ minHeight: '200px' }}>
+                    <div className="tasks-container" style={{ minHeight: '140px' }}>
                         {loading && localTasks.length === 0 ? (
                             <div className="jmodal-skeleton">
                                 {[1, 2, 3].map(i => (
@@ -294,7 +294,7 @@ const MiniJournalModal = React.memo(({
                     
                     {/* Notes */}
                     <h4 className="jmodal-section-label">RECENT NOTES</h4>
-                    <div className="notes-container" style={{ minHeight: '100px' }}>
+                    <div className="notes-container" style={{ minHeight: '72px' }}>
                         {loading && localNotes.length === 0 ? (
                             <div className="jmodal-skeleton">
                                 {[1, 2].map(i => (

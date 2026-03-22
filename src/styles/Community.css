@@ -46,27 +46,31 @@
     --safe-right:  env(safe-area-inset-right, 0px);
 }
 
-/* ── Journal Modal Variables ────────────────────────────────── */
+/* ── Journal Modal Variables (Quick Journal — navy / glass) ─── */
 :root {
-    --jm-bg:        #0c0c0f;
-    --jm-surface:   #111115;
-    --jm-surface-2: #16161b;
-    --jm-surface-3: #1c1c23;
-    --jm-border:    rgba(255,255,255,0.07);
-    --jm-border-h:  rgba(234,169,96,0.3);
+    --jm-bg:        #050810;
+    --jm-surface:   rgba(10, 16, 32, 0.82);
+    --jm-surface-2: rgba(14, 22, 42, 0.75);
+    --jm-surface-3: rgba(18, 28, 52, 0.7);
+    --jm-border:    rgba(255,255,255,0.1);
+    --jm-border-h:  rgba(255,255,255,0.22);
     --jm-gold:      #eaa960;
-    --jm-indigo:    #c9a05c;
-    --jm-sky:       #f8c37d;
+    --jm-indigo:    #a8b8e0;
+    --jm-sky:       #c8d4f0;
     --jm-green:     #f8c37d;
     --jm-rose:      #f43f5e;
     --jm-amber:     #c9a05c;
-    --jm-text:      #f0f0f5;
-    --jm-muted:     rgba(255,255,255,0.4);
-    --jm-dim:       rgba(255,255,255,0.18);
+    --jm-text:      #f8fafc;
+    --jm-muted:     rgba(255,255,255,0.45);
+    --jm-dim:       rgba(255,255,255,0.2);
     --jm-radius:    16px;
     --jm-radius-sm: 10px;
     --jm-ease:      cubic-bezier(0.4,0,0.2,1);
     --jm-spring:    cubic-bezier(0.34,1.56,0.64,1);
+    --qj-glass:     rgba(255,255,255,0.06);
+    --qj-glass-h:   rgba(255,255,255,0.1);
+    --qj-stroke:    rgba(255,255,255,0.12);
+    --qj-gold-soft: rgba(234,169,96,0.35);
 }
 
 /* ============================================================
@@ -1419,12 +1423,12 @@ body.sidebar-open-mobile {
     66%    { transform:translateY(-3px) rotate(1deg) }
 }
 @keyframes jm-pulse-ring {
-    0%,100%{ box-shadow:0 0 0 2px rgba(234,169,96,0.5),0 0 12px rgba(234,169,96,0.15) }
-    50%    { box-shadow:0 0 0 2px rgba(234,169,96,0.9),0 0 20px rgba(234,169,96,0.35) }
+    0%,100%{ box-shadow:0 0 0 1px rgba(255,255,255,0.22),0 0 14px rgba(130,160,220,0.12) }
+    50%    { box-shadow:0 0 0 1px rgba(255,255,255,0.38),0 0 20px rgba(130,160,220,0.18) }
 }
 @keyframes jm-sel-glow {
-    0%,100%{ box-shadow:0 2px 14px rgba(234,169,96,0.45) }
-    50%    { box-shadow:0 4px 28px rgba(234,169,96,0.7) }
+    0%,100%{ box-shadow:0 2px 14px rgba(255,255,255,0.06) }
+    50%    { box-shadow:0 4px 22px rgba(255,255,255,0.1) }
 }
 @keyframes jm-stat-slide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 @keyframes jm-fadeUp     { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
@@ -1433,12 +1437,13 @@ body.sidebar-open-mobile {
 @keyframes jm-tick-pop   { 0%{transform:scale(0) rotate(-15deg);opacity:0} 60%{transform:scale(1.2) rotate(3deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
 @keyframes jm-progress-fill { from{width:0} }
 
+/* Quick Journal modal (Community only — MiniJournalModal) */
 .journal-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(4,4,8,0.82);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: rgba(4, 10, 24, 0.78);
+    backdrop-filter: blur(22px) saturate(1.15);
+    -webkit-backdrop-filter: blur(22px) saturate(1.15);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1446,7 +1451,6 @@ body.sidebar-open-mobile {
     padding: 16px;
     box-sizing: border-box;
     animation: jm-overlayIn 0.2s ease-out both;
-    /* FIX: safe area for the overlay itself */
     padding-top: max(16px, env(safe-area-inset-top, 16px));
     padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
 }
@@ -1458,35 +1462,38 @@ body.sidebar-open-mobile {
 
 .journal-modal-content {
     position: relative;
-    width: 100%; max-width: 440px;
-    height: min(84vh, 660px);
+    width: 100%;
+    max-width: 540px;
+    height: min(88vh, 700px);
     display: flex !important; flex-direction: column !important;
     overflow: hidden !important;
-    background: var(--jm-surface);
+    background: linear-gradient(165deg, rgba(14, 22, 42, 0.72) 0%, rgba(8, 12, 28, 0.88) 45%, rgba(5, 8, 20, 0.92) 100%);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
     border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--qj-stroke);
     box-shadow:
-        0 0 0 1px rgba(234,169,96,0.12) inset,
-        0 40px 80px rgba(0,0,0,0.85),
-        0 0 80px rgba(234,169,96,0.06);
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 32px 64px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(0,0,0,0.35);
     animation: jm-cardIn 0.36s var(--jm-spring) both;
     isolation: isolate;
     -webkit-font-smoothing: antialiased;
-    max-height: min(84vh, 660px) !important;
+    max-height: min(88vh, 700px) !important;
 }
 
 .journal-modal-content::before {
     content:'';
     position:absolute; top:0; left:0; right:0; height:1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(234,169,96,0.9) 20%, rgba(201,160,92,0.7) 50%, rgba(56,189,248,0.5) 80%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 35%, rgba(200,210,240,0.25) 55%, transparent 100%);
     pointer-events:none; z-index:20;
 }
 
 .journal-modal-content::after {
     content:'';
-    position:absolute; top:-60px; right:-40px;
-    width:200px; height:200px; border-radius:50%;
-    background: radial-gradient(circle, rgba(234,169,96,0.08) 0%, transparent 70%);
+    position:absolute; top:-50px; right:-30px;
+    width:180px; height:180px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 68%);
     pointer-events:none; z-index:0;
 }
 
@@ -1498,8 +1505,10 @@ body.sidebar-open-mobile {
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 20px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    background: rgba(0,0,0,0.18);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     position: relative; z-index: 5;
 }
 
@@ -1508,31 +1517,31 @@ body.sidebar-open-mobile {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 0.6rem; font-weight: 700;
     letter-spacing: 0.36em; text-transform: uppercase;
-    background: linear-gradient(125deg, #fff 20%, #f8c37d 55%, #eaa960 90%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    color: rgba(248, 250, 252, 0.95);
     display: flex; align-items: center; gap: 10px;
 }
 
 .journal-modal-header h3::before {
     content: '';
     display: inline-block;
-    width: 7px; height: 7px; border-radius: 50%;
-    background: linear-gradient(135deg, #eaa960, #f8c37d);
-    box-shadow: 0 0 10px rgba(234,169,96,0.8);
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 0 0 1px var(--qj-gold-soft), 0 0 8px rgba(234,169,96,0.25);
     flex-shrink: 0;
-    -webkit-text-fill-color: unset; background-clip: unset; -webkit-background-clip: unset;
     animation: jm-dot-breathe 2.8s ease-in-out infinite;
 }
 
 .journal-modal-close {
     width: 30px; height: 30px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: var(--qj-glass);
+    border: 1px solid var(--qj-stroke);
     border-radius: 9px;
-    color: rgba(255,255,255,0.28);
+    color: rgba(255,255,255,0.45);
     font-size: 1.1rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.15s; line-height:1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .journal-modal-close:hover {
@@ -1545,28 +1554,30 @@ body.sidebar-open-mobile {
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden;
-    padding: 20px 18px 10px;
+    padding: 20px 20px 10px;
     padding-bottom: 20px !important;
     max-height: none !important;
     position: relative; z-index: 1;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: rgba(234,169,96,0.18) transparent;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
 }
 
-.journal-modal-body::-webkit-scrollbar { width: 3px; }
+.journal-modal-body::-webkit-scrollbar { width: 4px; }
 .journal-modal-body::-webkit-scrollbar-track { background: transparent; }
-.journal-modal-body::-webkit-scrollbar-thumb { background: rgba(234,169,96,0.22); border-radius:2px; }
+.journal-modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 4px; }
 
 .journal-modal-footer {
     flex-shrink: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 14px 18px !important;
-    border-top: 2px solid rgba(234,169,96,0.4) !important;
-    background: rgba(0,0,0,0.3) !important;
+    padding: 14px 20px !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(255,255,255,0.04) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     width: 100% !important;
     min-height: 70px !important;
     position: relative !important;
@@ -1577,8 +1588,8 @@ body.sidebar-open-mobile {
 
 .journal-modal-footer::before {
     content:'';
-    position:absolute; bottom:100%; left:0; right:0; height:32px;
-    background: linear-gradient(to top, rgba(0,0,0,0.25), transparent);
+    position:absolute; bottom:100%; left:0; right:0; height:28px;
+    background: linear-gradient(to top, rgba(5,8,18,0.35), transparent);
     pointer-events:none;
 }
 
@@ -1588,10 +1599,10 @@ body.sidebar-open-mobile {
     gap: 10px;
     width: 100% !important;
     padding: 13px 20px !important;
-    background: linear-gradient(135deg, #eaa960 0%, #c9a05c 50%, #f8c37d 100%) !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
+    background: rgba(255,255,255,0.92) !important;
+    border: 1px solid rgba(255,255,255,0.35) !important;
     border-radius: 99px !important;
-    color: #fff !important;
+    color: #0c1224 !important;
     font-family: 'Space Grotesk', sans-serif;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
@@ -1599,20 +1610,23 @@ body.sidebar-open-mobile {
     text-transform: uppercase;
     cursor: pointer !important;
     text-decoration: none !important;
-    box-shadow: 0 0 30px rgba(234,169,96,0.38), 0 1px 0 rgba(255,255,255,0.16) inset;
-    transition: transform 0.24s var(--jm-spring), box-shadow 0.24s ease !important;
+    box-shadow:
+        0 4px 24px rgba(0,0,0,0.35),
+        inset 0 -2px 0 rgba(234,169,96,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: transform 0.24s var(--jm-spring), box-shadow 0.24s ease, background 0.2s ease !important;
     isolation: isolate; position: relative; overflow: hidden;
 }
 
 .go-to-journal-btn::before {
     content:''; position:absolute; inset:0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.14), transparent 55%);
+    background: linear-gradient(135deg, rgba(255,255,255,0.35), transparent 50%);
     opacity:0; transition:opacity 0.2s;
 }
 
 .go-to-journal-btn::after {
-    content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    content:''; position:absolute; top:0; left:-100%; width:55%; height:100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
     transition: left 0.5s ease;
 }
 
@@ -1620,21 +1634,26 @@ body.sidebar-open-mobile {
 .go-to-journal-btn:hover::after  { left:150%; }
 .go-to-journal-btn:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 48px rgba(234,169,96,0.6), 0 10px 28px rgba(0,0,0,0.45) !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 -2px 0 rgba(234,169,96,0.55), inset 0 1px 0 #fff !important;
 }
 
 .go-to-journal-btn:active { transform:scale(0.97) !important; }
 
-/* ── Journal Stats ─────────────────────────────────────────── */
+/* ── Journal Stats (glass tiles) ───────────────────────────── */
 .mini-stats-bar {
     display: grid; grid-template-columns: repeat(3,1fr);
-    gap: 8px; margin-bottom: 20px;
+    gap: 10px; margin-bottom: 20px;
 }
 
 .mini-stat-item {
-    position: relative; padding: 13px 8px 11px;
-    background: rgba(255,255,255,0.024); border: 1px solid rgba(255,255,255,0.065);
-    border-radius: 14px; text-align: center; overflow: hidden;
+    position: relative; padding: 14px 8px 12px;
+    background: var(--qj-glass);
+    border: 1px solid var(--qj-stroke);
+    border-radius: 16px; text-align: center; overflow: hidden;
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset;
     transition: border-color 0.2s, background 0.2s, transform 0.22s var(--jm-spring);
     animation: jm-stat-slide 0.32s ease-out both; isolation: isolate; cursor: default;
 }
@@ -1644,76 +1663,80 @@ body.sidebar-open-mobile {
 
 .mini-stat-item::before {
     content:''; position:absolute; top:0; left:0; right:0; height:1px;
-    background: linear-gradient(90deg, transparent, rgba(234,169,96,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
     opacity:0; transition:opacity 0.2s;
 }
 
 .mini-stat-item::after {
-    content:''; position:absolute; bottom:0; left:0; right:0; height:35%;
-    background: linear-gradient(to top, rgba(234,169,96,0.05), transparent);
+    content:''; position:absolute; bottom:0; left:0; right:0; height:40%;
+    background: linear-gradient(to top, rgba(255,255,255,0.04), transparent);
     pointer-events:none;
 }
 
-.mini-stat-item:hover { border-color:rgba(234,169,96,0.3); transform:translateY(-2px); background:rgba(255,255,255,0.04); }
+.mini-stat-item:hover {
+    border-color: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+    background: var(--qj-glass-h);
+}
 .mini-stat-item:hover::before { opacity:1; }
 
 .mini-stat-label {
     display: block; font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.48rem; font-weight: 700; color: rgba(255,255,255,0.26);
+    font-size: 0.48rem; font-weight: 700; color: rgba(255,255,255,0.38);
     text-transform: uppercase; letter-spacing: 0.24em; margin-bottom: 7px;
 }
 
 .mini-stat-value {
     display: block; font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.5rem; font-weight: 300; line-height: 1;
-    background: linear-gradient(135deg, #fff 25%, #f8c37d 65%, #eaa960 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    font-size: 1.5rem; font-weight: 400; line-height: 1;
+    color: rgba(248, 250, 252, 0.98);
     letter-spacing: -0.03em;
 }
 
 .mini-stat-value.completed {
-    background: linear-gradient(135deg, #eaa960, #eaa960, #fcd9a8);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    color: rgba(230, 238, 255, 0.98);
 }
 
 .jmodal-section-label {
     display: flex; align-items: center; gap: 8px;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.5rem; font-weight: 700; color: rgba(255,255,255,0.22);
+    font-size: 0.5rem; font-weight: 700; color: rgba(255,255,255,0.32);
     text-transform: uppercase; letter-spacing: 0.3em;
     margin: 0 0 10px; user-select: none;
 }
 
 .jmodal-section-label::after {
     content:''; flex:1; height:1px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.07), transparent);
+    background: linear-gradient(90deg, rgba(255,255,255,0.12), transparent);
 }
 
-/* ── Journal Calendar ──────────────────────────────────────── */
+/* ── Journal Calendar (glass shell) ───────────────────────── */
 .journal-modal-body .mini-calendar,
 .journal-modal-body .journal-calendar {
-    position: relative; background: rgba(255,255,255,0.018);
-    border: 1px solid rgba(255,255,255,0.065); border-radius: 20px;
+    position: relative;
+    background: var(--qj-glass);
+    border: 1px solid var(--qj-stroke);
+    border-radius: 20px;
     padding: 16px 14px 14px; margin-bottom: 20px;
     width: 100%; box-sizing: border-box; overflow: hidden; isolation: isolate;
+    backdrop-filter: blur(16px) saturate(1.12);
+    -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset;
 }
 
 .journal-modal-body .mini-calendar::before,
 .journal-modal-body .journal-calendar::before {
     content:''; position:absolute; top:0; left:12px; right:12px; height:1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(234,169,96,0.7) 30%, rgba(56,189,248,0.5) 70%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.22) 45%, transparent 100%);
     pointer-events:none; z-index:2;
 }
 
 .journal-modal-body .mini-calendar::after,
 .journal-modal-body .journal-calendar::after {
     content:''; position:absolute; inset:0;
-    background-image:
-        radial-gradient(circle, rgba(234,169,96,0.12) 1px, transparent 1px),
-        radial-gradient(circle, rgba(56,189,248,0.08) 1px, transparent 1px);
-    background-size: 22px 22px, 37px 37px;
-    background-position: 0 0, 11px 11px;
-    pointer-events:none; z-index:0; opacity:0.5;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events:none; z-index:0; opacity:0.45;
 }
 
 .journal-modal-body .mini-calendar-header,
@@ -1725,17 +1748,22 @@ body.sidebar-open-mobile {
 
 .journal-modal-body .mini-calendar-nav-btn,
 .journal-modal-body .journal-calendar-btn {
-    flex-shrink: 0; width: 26px; height: 26px;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px; color: rgba(255,255,255,0.4);
+    flex-shrink: 0; width: 28px; height: 28px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--qj-stroke);
+    border-radius: 10px; color: rgba(255,255,255,0.55);
     font-size: 0.75rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .journal-modal-body .mini-calendar-nav-btn:hover,
 .journal-modal-body .journal-calendar-btn:hover {
-    background: rgba(234,169,96,0.16); border-color: rgba(234,169,96,0.45);
-    color: #f8c37d; transform: scale(1.1);
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.22);
+    color: #f8fafc;
+    transform: scale(1.06);
 }
 
 .journal-modal-body .mini-calendar-nav-btn:active,
@@ -1746,8 +1774,7 @@ body.sidebar-open-mobile {
 .journal-modal-body .journal-calendar-month {
     flex: 1; text-align: center; font-family: 'Space Grotesk', sans-serif;
     font-size: 0.62rem; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
-    background: linear-gradient(90deg, #f8c37d, #eaa960);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    color: rgba(248, 250, 252, 0.95);
     margin: 0; user-select: none;
 }
 
@@ -1785,8 +1812,11 @@ body.sidebar-open-mobile {
 
 .journal-modal-body .mini-calendar-day:hover,
 .journal-modal-body .journal-calendar-day:hover {
-    background: rgba(234,169,96,0.16); color: #f5ead8;
-    border-color: rgba(234,169,96,0.32); transform: scale(1.14); z-index: 2;
+    background: rgba(255,255,255,0.1);
+    color: #f8fafc;
+    border-color: rgba(255,255,255,0.15);
+    transform: scale(1.08);
+    z-index: 2;
 }
 
 .journal-modal-body .mini-calendar-day.empty,
@@ -1795,37 +1825,49 @@ body.sidebar-open-mobile {
 
 .journal-modal-body .mini-calendar-day.today,
 .journal-modal-body .journal-calendar-day--today {
-    color: #f8c37d; font-weight: 700; border-color: rgba(234,169,96,0.55);
-    background: rgba(234,169,96,0.1); animation: jm-pulse-ring 2.8s ease-in-out infinite;
+    color: #f8fafc;
+    font-weight: 700;
+    border-color: rgba(255,255,255,0.28);
+    background: rgba(255,255,255,0.08);
+    animation: jm-pulse-ring 2.8s ease-in-out infinite;
 }
 
 .journal-modal-body .mini-calendar-day.selected,
 .journal-modal-body .journal-calendar-day--selected {
-    background: linear-gradient(135deg, #eaa960 0%, #c9a05c 55%, #3d3428 100%);
-    color: #fff; font-weight: 700; border-color: transparent;
+    background: rgba(255,255,255,0.16);
+    color: #fff;
+    font-weight: 700;
+    border-color: rgba(255,255,255,0.28);
     animation: jm-sel-glow 2.6s ease-in-out infinite;
-    transform: scale(1.08); border-radius: 12px; box-shadow: 0 4px 12px rgba(234,169,96,0.5);
+    transform: scale(1.06);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
 }
 
 .journal-modal-body .mini-calendar-day.selected:hover,
 .journal-modal-body .journal-calendar-day--selected:hover {
-    background: linear-gradient(135deg, #eaa960, #f8c37d); transform: scale(1.14);
+    background: rgba(255,255,255,0.22);
+    transform: scale(1.1);
 }
 
 .journal-modal-body .mini-calendar-day.today.selected,
 .journal-modal-body .journal-calendar-day--today.journal-calendar-day--selected {
-    background: linear-gradient(135deg, #eaa960, #c9a05c); border-color: rgba(248,195,125,0.6);
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.35);
 }
 
 .journal-modal-body .mini-calendar-day.has-tasks::after,
 .journal-modal-body .journal-calendar-day-dot {
     content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
     width: 3px; height: 3px; border-radius: 50%;
-    background: #eaa960; box-shadow: 0 0 6px rgba(234,169,96,0.8); display: block;
+    background: rgba(200, 210, 245, 0.95);
+    box-shadow: 0 0 6px rgba(180, 195, 240, 0.45);
+    display: block;
 }
 
 .journal-modal-body .mini-calendar-day.selected.has-tasks::after {
-    background: rgba(255,255,255,0.7); box-shadow: none;
+    background: rgba(255,255,255,0.85);
+    box-shadow: none;
 }
 
 .journal-modal-body .journal-calendar-footer {
@@ -1835,32 +1877,45 @@ body.sidebar-open-mobile {
 
 .journal-calendar-footer-done {
     font-family: 'Space Grotesk', sans-serif; font-size: 0.48rem; font-weight: 700;
-    color: #eaa960; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.18em; text-transform: uppercase;
     display: flex; align-items: center; gap: 5px;
 }
 
 .journal-calendar-footer-done-dot {
     width: 5px; height: 5px; border-radius: 50%;
-    background: #eaa960; box-shadow: 0 0 6px rgba(234,169,96,0.7); display: inline-block;
+    background: rgba(255,255,255,0.65);
+    box-shadow: 0 0 0 1px var(--qj-gold-soft);
+    display: inline-block;
     animation: jm-dot-breathe 1.8s ease-in-out infinite;
 }
 
 .journal-calendar-footer-today-btn {
     font-family: 'Space Grotesk', sans-serif; font-size: 0.48rem; font-weight: 600;
-    color: rgba(248,195,125,0.5); letter-spacing: 0.14em; text-transform: uppercase;
-    background: none; border: 1px solid rgba(234,169,96,0.18); border-radius: 6px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--qj-stroke);
+    border-radius: 8px;
     padding: 3px 10px; cursor: pointer; transition: all 0.15s;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 
 .journal-calendar-footer-today-btn:hover {
-    background: rgba(234,169,96,0.12); border-color: rgba(234,169,96,0.4); color: #f8c37d;
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+    color: rgba(248,250,252,0.9);
 }
 
 /* ── Journal Progress ──────────────────────────────────────── */
 .jmodal-progress-wrap {
     display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-    background: rgba(255,255,255,0.018); border: 1px solid rgba(255,255,255,0.06);
+    background: var(--qj-glass);
+    border: 1px solid var(--qj-stroke);
     border-radius: 14px; margin-bottom: 18px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .jmodal-progress-ring { flex-shrink: 0; width: 44px; height: 44px; position: relative; }
@@ -1876,8 +1931,7 @@ body.sidebar-open-mobile {
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
     font-family: 'Space Grotesk', sans-serif; font-size: 0.56rem; font-weight: 700;
-    background: linear-gradient(135deg, #f8c37d, #eaa960);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    color: rgba(248, 250, 252, 0.95);
 }
 
 .jmodal-progress-info { flex: 1; min-width: 0; }
@@ -1903,18 +1957,22 @@ body.sidebar-open-mobile {
 
 .jmodal-progress-sub strong { color: rgba(248,195,125,0.7); font-weight: 600; }
 
-/* ── Journal Tasks ─────────────────────────────────────────── */
+/* ── Journal Tasks (glass rows) ────────────────────────────── */
 .mini-task-item {
     display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-    background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.065);
-    border-radius: 12px; margin-bottom: 6px;
+    background: var(--qj-glass);
+    border: 1px solid var(--qj-stroke);
+    border-radius: 14px; margin-bottom: 6px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
     transition: border-color 0.16s, background 0.16s, transform 0.18s var(--jm-spring);
     animation: jm-fadeUp 0.26s ease-out both; isolation: isolate; position: relative; overflow: hidden;
 }
 
 .mini-task-item::before {
     content:''; position:absolute; left:0; top:0; bottom:0; width:2px;
-    background: linear-gradient(180deg, #eaa960, #f8c37d);
+    background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(200,210,245,0.6));
     opacity:0; border-radius:0 2px 2px 0; transition: opacity 0.2s;
 }
 
@@ -1923,18 +1981,27 @@ body.sidebar-open-mobile {
 .mini-task-item:nth-child(4){ animation-delay:0.12s; }
 .mini-task-item:nth-child(5){ animation-delay:0.16s; }
 
-.mini-task-item:hover { background: rgba(255,255,255,0.04); border-color: rgba(234,169,96,0.28); transform: translateX(4px); }
+.mini-task-item:hover {
+    background: var(--qj-glass-h);
+    border-color: rgba(255,255,255,0.18);
+    transform: translateX(3px);
+}
 .mini-task-item:hover::before { opacity:1; }
 
 .mini-task-checkbox {
     flex-shrink: 0; width: 18px; height: 18px; border-radius: 6px;
-    border: 1.5px solid rgba(255,255,255,0.18); background: transparent; cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.04);
+    cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.55rem; color: #eaa960; transition: all 0.16s; -webkit-tap-highlight-color: transparent;
+    font-size: 0.55rem; color: rgba(248,250,252,0.95); transition: all 0.16s; -webkit-tap-highlight-color: transparent;
 }
 
-.mini-task-checkbox:hover { border-color: rgba(255,255,255,0.35); transform:scale(1.1); }
-.mini-task-checkbox.checked { background: rgba(234,169,96,0.18); border-color: rgba(234,169,96,0.6); }
+.mini-task-checkbox:hover { border-color: rgba(255,255,255,0.4); transform:scale(1.08); }
+.mini-task-checkbox.checked {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.45);
+}
 .mini-task-checkbox.checked span { animation: jm-tick-pop 0.3s var(--jm-spring) both; }
 
 .mini-task-title {
@@ -1947,9 +2014,11 @@ body.sidebar-open-mobile {
 
 .mini-task-xp {
     flex-shrink: 0; font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.54rem; font-weight: 700; color: #eaa960;
-    padding: 2px 7px; background: rgba(234,169,96,0.1);
-    border: 1px solid rgba(234,169,96,0.22); border-radius: 99px; white-space: nowrap;
+    font-size: 0.54rem; font-weight: 700; color: rgba(230, 238, 255, 0.95);
+    padding: 2px 7px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--qj-stroke);
+    border-radius: 99px; white-space: nowrap;
 }
 
 .jmodal-more-hint {
@@ -1958,18 +2027,23 @@ body.sidebar-open-mobile {
     margin: -2px 0 14px; text-transform: uppercase;
 }
 
-/* ── Journal Notes ─────────────────────────────────────────── */
+/* ── Journal Notes (glass) ───────────────────────────────── */
 .mini-note-item {
-    padding: 10px 12px; background: rgba(255,255,255,0.018);
-    border: 1px solid rgba(255,255,255,0.06); border-left: 2px solid rgba(56,189,248,0.5);
-    border-radius: 12px; margin-bottom: 7px;
+    padding: 10px 12px;
+    background: var(--qj-glass);
+    border: 1px solid var(--qj-stroke);
+    border-left: 2px solid rgba(200, 210, 245, 0.45);
+    border-radius: 14px; margin-bottom: 7px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     transition: border-color 0.16s, transform 0.18s var(--jm-spring);
     animation: jm-fadeUp 0.26s ease-out 0.1s both;
 }
 
 .mini-note-item:hover {
-    border-color: rgba(56,189,248,0.18); border-left-color: rgba(56,189,248,0.75);
-    transform: translateX(4px);
+    border-color: rgba(255,255,255,0.16);
+    border-left-color: rgba(220, 228, 255, 0.75);
+    transform: translateX(3px);
 }
 
 .mini-note-item p {
@@ -1983,9 +2057,12 @@ body.sidebar-open-mobile {
 /* ── Journal Empty State ───────────────────────────────────── */
 .jmodal-empty {
     padding: 18px 12px; text-align: center; font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.64rem; font-weight: 300; color: rgba(255,255,255,0.16); letter-spacing: 0.1em;
-    background: rgba(255,255,255,0.012); border: 1px dashed rgba(255,255,255,0.055);
-    border-radius: 12px; margin-bottom: 12px;
+    font-size: 0.64rem; font-weight: 300; color: rgba(255,255,255,0.28); letter-spacing: 0.1em;
+    background: rgba(255,255,255,0.04);
+    border: 1px dashed rgba(255,255,255,0.12);
+    border-radius: 14px; margin-bottom: 12px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 /* ============================================================
@@ -2050,9 +2127,9 @@ body.sidebar-open-mobile {
     }
 
     .journal-modal-content {
-        max-width: 400px;
-        height: min(80vh, 620px);
-        max-height: min(80vh, 620px) !important;
+        max-width: 500px;
+        height: min(82vh, 680px);
+        max-height: min(82vh, 680px) !important;
     }
 }
 
@@ -2440,9 +2517,11 @@ body.sidebar-open-mobile {
         border-radius: 24px 24px 0 0;
         animation: jm-sheetIn 0.34s cubic-bezier(0.22,1,0.36,1) both;
         position: relative;
-        background: var(--jm-surface);
-        border: 1px solid rgba(255,255,255,0.06);
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        background: linear-gradient(165deg, rgba(14, 22, 42, 0.78) 0%, rgba(8, 12, 28, 0.9) 50%, rgba(5, 8, 20, 0.94) 100%);
+        backdrop-filter: blur(20px) saturate(1.15);
+        -webkit-backdrop-filter: blur(20px) saturate(1.15);
+        border: 1px solid var(--qj-stroke);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.55);
     }
 
     .journal-modal-overlay.closing .journal-modal-content {
@@ -2451,8 +2530,10 @@ body.sidebar-open-mobile {
 
     .journal-modal-header {
         padding: 16px 20px 12px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        background: rgba(0,0,0,0.3);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.04);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         border-radius: 24px 24px 0 0;
         position: relative; z-index: 10;
         min-height: 56px;
@@ -2486,8 +2567,10 @@ body.sidebar-open-mobile {
     .journal-modal-footer {
         padding: 14px 18px !important;
         padding-bottom: max(14px, calc(14px + env(safe-area-inset-bottom, 0px))) !important;
-        border-top: 2px solid rgba(234,169,96,0.4) !important;
-        background: rgba(0,0,0,0.4) !important;
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
+        background: rgba(255,255,255,0.04) !important;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
         min-height: 68px !important;
         border-radius: 0;
         margin-top: 0;
