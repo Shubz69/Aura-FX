@@ -1,0 +1,709 @@
+/* =============================================================================
+   Terminal routes under .journal-page — navy / white glass chrome.
+   Import after Journal.css (AuraTerminalThemeShell). Gold stays on progress
+   fills (.aa-bar-fill-*) and similar data viz; borders and panels use journal blue.
+   ============================================================================= */
+
+/* ── Re-tokens (inherit to descendants) ─────────────────────────────────── */
+.journal-page .connection-hub-page {
+  --border-h: rgba(160, 185, 240, 0.28);
+  --accent: rgba(175, 200, 255, 0.55);
+  --accent-blue: rgba(140, 170, 255, 0.45);
+  --up: #e4eaff;
+  --blue: #c5d4ff;
+  --gold: #d2dcff;
+  --gold-glow: rgba(70, 100, 190, 0.22);
+  --blue-glow: rgba(90, 120, 220, 0.2);
+}
+
+.journal-page .aa-page {
+  --border-h: rgba(160, 185, 240, 0.28);
+  --border-acc: rgba(160, 185, 240, 0.38);
+  --accent: #c8d6ff;
+  --accent-glow: rgba(70, 100, 190, 0.22);
+  --accent-soft: rgba(160, 185, 240, 0.12);
+  --green: #c8d6ff;
+  --green-soft: rgba(160, 185, 240, 0.14);
+  --green-glow: rgba(70, 100, 190, 0.28);
+}
+
+.journal-page .messages-page-container {
+  --msg-gold: #c8d6ff;
+  --msg-gold-bright: #e4eaff;
+  --msg-gold-dim: rgba(160, 185, 240, 0.26);
+  --msg-gold-glow: rgba(70, 100, 190, 0.16);
+}
+
+.journal-page .aff-page {
+  --aff-border-gold: rgba(160, 185, 240, 0.28);
+  --aff-gold: #c8d6ff;
+  --aff-gold-bright: #e4eaff;
+  --aff-gold-dim: rgba(160, 185, 240, 0.14);
+  --aff-gold-glow: 0 0 24px rgba(70, 100, 190, 0.18);
+}
+
+.journal-page .admin-panel-container {
+  --ap-border-gold: rgba(160, 185, 240, 0.26);
+  --ap-gold: #c8d6ff;
+  --ap-gold-bright: #e4eaff;
+  --ap-gold-soft: rgba(160, 185, 240, 0.12);
+}
+
+.journal-page .settings-page {
+  --border-h: rgba(160, 185, 240, 0.28);
+  --border-accent: rgba(160, 185, 240, 0.38);
+  --accent: #c8d6ff;
+  --accent-blue: #e4eaff;
+  --accent-rgb: 175, 190, 255;
+  --accent-blue-rgb: 200, 214, 255;
+  --up: #e4eaff;
+}
+
+.journal-page .admin-inbox-page {
+  --border-h: rgba(160, 185, 240, 0.3);
+  --accent: rgba(175, 200, 255, 0.55);
+  --accent-solid: #a8b8e8;
+  --accent-light: #d8def8;
+  --accent-blue: rgba(175, 190, 255, 0.45);
+  --up: #d8def8;
+}
+
+.journal-page .rp-page {
+  /* Default accent = navy; loading spinner keeps gold below */
+  --rp-accent: #c8d6ff;
+  --rp-border-h: rgba(160, 185, 240, 0.35);
+  --rp-accent-soft: rgba(160, 185, 240, 0.14);
+  --rp-green: #c8d6ff;
+}
+
+.journal-page .rp-page .rp-spinner {
+  border-top-color: #eaa960 !important;
+}
+
+/* ═══════════ Connection Hub ═══════════ */
+.journal-page .connection-hub-page::before {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(100, 130, 220, 0.07) 0%,
+    rgba(70, 90, 180, 0.03) 35%,
+    rgba(255, 255, 255, 0.01) 60%,
+    transparent 100%
+  ) !important;
+}
+
+.journal-page .connection-hub-page::after {
+  background: radial-gradient(
+    circle at top right,
+    rgba(140, 170, 255, 0.05) 0%,
+    rgba(90, 110, 200, 0.02) 40%,
+    transparent 80%
+  ) !important;
+}
+
+.journal-page .connection-hub-header::after {
+  background: radial-gradient(ellipse, rgba(120, 150, 230, 0.12) 0%, transparent 70%) !important;
+}
+
+.journal-page .connection-hub-live-badge {
+  border-color: rgba(160, 185, 240, 0.25) !important;
+}
+
+.journal-page .connection-hub-title {
+  background: linear-gradient(125deg, #ffffff 35%, #d2dcff 72%, #a8b8e8 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 24px rgba(70, 100, 190, 0.2)) !important;
+}
+
+.journal-page .connection-hub-title::before {
+  background: linear-gradient(90deg, transparent, rgba(200, 210, 255, 0.9), rgba(140, 165, 240, 0.7), transparent) !important;
+}
+
+.journal-page .hub-stat-number {
+  background: linear-gradient(125deg, #ffffff 35%, #d2dcff 70%, #b8c8f0 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 12px rgba(70, 100, 190, 0.25)) !important;
+}
+
+.journal-page .hub-stat:hover .hub-stat-number {
+  filter: drop-shadow(0 0 18px rgba(100, 130, 220, 0.45)) !important;
+}
+
+.journal-page .connection-hub-section-label::before,
+.journal-page .connection-hub-section-label::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), rgba(160, 185, 240, 0.22), transparent) !important;
+}
+
+.journal-page .connection-card::before {
+  background: linear-gradient(135deg, transparent, rgba(160, 185, 240, 0.28), rgba(200, 210, 255, 0.2), transparent) !important;
+}
+
+.journal-page .connection-card::after {
+  background: radial-gradient(ellipse at top left, rgba(100, 130, 220, 0.1) 0%, transparent 70%) !important;
+}
+
+.journal-page .connection-card:hover {
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(160, 185, 240, 0.22),
+    0 0 30px rgba(70, 100, 190, 0.14) !important;
+}
+
+.journal-page .connection-card:hover .connection-card-icon {
+  background: rgba(160, 185, 240, 0.12) !important;
+  border-color: rgba(160, 185, 240, 0.32) !important;
+}
+
+.journal-page .connection-hub-enter::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), rgba(160, 185, 240, 0.28), rgba(200, 210, 255, 0.22), transparent) !important;
+}
+
+.journal-page .connection-hub-enter::after {
+  background: radial-gradient(ellipse at center, rgba(100, 130, 220, 0.12) 0%, transparent 70%) !important;
+}
+
+.journal-page .connection-hub-bypass-note {
+  background: rgba(160, 185, 240, 0.08) !important;
+  border-color: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .connection-hub-enter-btn {
+  background: linear-gradient(135deg, #1a2244, #2a3a72, #4a62a8, #7a90d8) !important;
+  background-size: 300% 300% !important;
+  box-shadow:
+    0 8px 20px rgba(40, 60, 140, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.journal-page .connection-hub-enter-btn:hover:not(:disabled) {
+  box-shadow:
+    0 12px 30px rgba(50, 70, 160, 0.45),
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.journal-page .connection-hub-enter-btn:active:not(:disabled) {
+  box-shadow: 0 5px 15px rgba(40, 60, 140, 0.35) !important;
+}
+
+.journal-page .connection-hub-enter-hint i {
+  color: rgba(200, 210, 255, 0.85) !important;
+}
+
+.journal-page .chub-modal {
+  border-color: rgba(160, 185, 240, 0.35) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(160, 185, 240, 0.12) !important;
+}
+
+.journal-page .chub-modal-info {
+  background: rgba(160, 185, 240, 0.08) !important;
+  border-color: rgba(160, 185, 240, 0.22) !important;
+}
+
+.journal-page .chub-modal-info i,
+.journal-page .chub-modal-info a {
+  color: #d2dcff !important;
+}
+
+.journal-page .chub-modal-input-wrap input:focus {
+  border-color: rgba(160, 185, 240, 0.55) !important;
+  background: rgba(160, 185, 240, 0.06) !important;
+}
+
+.journal-page .chub-modal-submit {
+  background: linear-gradient(135deg, #243058, #3d5290) !important;
+}
+
+/* ═══════════ Aura dashboard chrome ═══════════ */
+.journal-page .aura-dashboard-tabs-wrap {
+  border-bottom: 1px solid rgba(160, 185, 240, 0.2) !important;
+  box-shadow: 0 1px 0 rgba(160, 185, 240, 0.12), 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+.journal-page .aura-db-brand-slash {
+  color: rgba(175, 200, 255, 0.82) !important;
+}
+
+.journal-page .aura-dashboard-tab.active::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(95, 125, 210, 0.18) 55%, rgba(160, 185, 240, 0.08) 100%) !important;
+}
+
+.journal-page .aura-db-page-icon {
+  background: rgba(160, 185, 240, 0.15) !important;
+  border-color: rgba(160, 185, 240, 0.35) !important;
+  color: #e4eaff !important;
+}
+
+.journal-page .aura-db-status-dot {
+  background: #7ab8ff !important;
+  box-shadow: 0 0 6px rgba(100, 160, 255, 0.65) !important;
+}
+
+.journal-page .aura-db-status-label {
+  color: rgba(200, 215, 255, 0.9) !important;
+}
+
+.journal-page .aura-db-filter-pill.active {
+  color: #e4eaff !important;
+  background: rgba(160, 185, 240, 0.14) !important;
+  border-color: rgba(160, 185, 240, 0.38) !important;
+}
+
+.journal-page .aura-db-filter-select:hover {
+  border-color: rgba(160, 185, 240, 0.35) !important;
+}
+
+.journal-page .aura-db-refresh-btn:hover:not(:disabled) {
+  background: rgba(160, 185, 240, 0.1) !important;
+  border-color: rgba(160, 185, 240, 0.28) !important;
+  color: #e4eaff !important;
+}
+
+.journal-page .aura-dashboard,
+.journal-page .aura-dashboard * {
+  scrollbar-color: rgba(160, 185, 240, 0.32) transparent;
+}
+
+.journal-page .aura-dashboard *::-webkit-scrollbar-thumb {
+  background: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .aura-dashboard *::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 200, 255, 0.45) !important;
+}
+
+/* ═══════════ Aura shared cards / KPIs (not bar fills) ═══════════ */
+.journal-page .aa-page .aa-card {
+  border-color: rgba(160, 185, 240, 0.14) !important;
+}
+
+.journal-page .aa-page .aa-card::before {
+  background: linear-gradient(90deg, transparent, rgba(160, 185, 240, 0.45), rgba(200, 210, 255, 0.28), transparent) !important;
+}
+
+.journal-page .aa-page .aa-card:hover {
+  border-color: rgba(160, 185, 240, 0.22) !important;
+  box-shadow: 0 0 30px rgba(70, 100, 190, 0.08) !important;
+}
+
+.journal-page .aa-page .aa-card--accent {
+  box-shadow: 0 0 24px rgba(70, 100, 190, 0.1) !important;
+}
+
+.journal-page .aa-page .aa-card--green {
+  border-color: rgba(160, 185, 240, 0.3) !important;
+  box-shadow: 0 0 20px rgba(70, 100, 190, 0.06) !important;
+}
+
+.journal-page .aa-page .aa-kpi::before {
+  background: linear-gradient(90deg, transparent, rgba(160, 185, 240, 0.38), transparent) !important;
+}
+
+.journal-page .aa-page .aa-pill--green {
+  border-color: rgba(160, 185, 240, 0.32) !important;
+}
+
+.journal-page .aa-page .aa-pill--accent {
+  color: #e4eaff !important;
+}
+
+.journal-page .aa-page .aa-wd-cell--pos {
+  border-color: rgba(160, 185, 240, 0.24) !important;
+}
+
+.journal-page .aa-page .aa-wd-bar-mini--pos {
+  background: rgba(160, 185, 240, 0.55) !important;
+}
+
+/* ═══════════ Messages ═══════════ */
+.journal-page .messages-page-container .messages-page-header {
+  box-shadow:
+    var(--msg-glass-shadow),
+    0 0 0 1px rgba(160, 185, 240, 0.08) inset,
+    0 12px 40px rgba(0, 0, 0, 0.45) !important;
+}
+
+.journal-page .messages-page-container .messages-page-header::before {
+  background: linear-gradient(90deg, transparent, rgba(200, 210, 255, 0.5), rgba(160, 185, 240, 0.32), transparent) !important;
+}
+
+.journal-page .messages-page-container .back-button {
+  background: rgba(160, 185, 240, 0.08) !important;
+  border-color: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .messages-page-container .back-button::before {
+  background: linear-gradient(90deg, transparent, rgba(200, 210, 255, 0.14), transparent) !important;
+}
+
+.journal-page .messages-page-container .back-button:hover {
+  background: rgba(160, 185, 240, 0.14) !important;
+  border-color: rgba(200, 210, 255, 0.42) !important;
+  box-shadow: 0 6px 24px rgba(70, 100, 190, 0.14) !important;
+}
+
+.journal-page .messages-page-container .admin-avatar {
+  animation: none !important;
+  background: linear-gradient(145deg, rgba(160, 185, 240, 0.2), rgba(100, 130, 220, 0.1)) !important;
+  box-shadow:
+    0 0 24px rgba(70, 100, 190, 0.2),
+    0 0 0 1px rgba(160, 185, 240, 0.3) inset !important;
+  border-color: rgba(160, 185, 240, 0.35) !important;
+}
+
+.journal-page .messages-page-container .admin-avatar .admin-icon {
+  filter: drop-shadow(0 2px 6px rgba(70, 100, 190, 0.35)) !important;
+}
+
+.journal-page .messages-page-container .admin-title-text {
+  filter: drop-shadow(0 0 18px rgba(70, 100, 190, 0.14)) !important;
+}
+
+.journal-page .messages-page-container .admin-badge {
+  background: linear-gradient(135deg, rgba(160, 185, 240, 0.18), rgba(100, 130, 220, 0.1)) !important;
+  box-shadow: 0 2px 12px rgba(70, 100, 190, 0.08) !important;
+}
+
+.journal-page .messages-page-container .status-dot,
+.journal-page .messages-page-container .status-dot::before {
+  background: #7ab8ff !important;
+  box-shadow: 0 0 12px rgba(100, 160, 255, 0.55) !important;
+}
+
+.journal-page .messages-page-container .messages-list {
+  box-shadow:
+    var(--msg-glass-shadow),
+    0 0 0 1px rgba(160, 185, 240, 0.1) inset,
+    0 20px 56px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(160, 185, 240, 0.2) !important;
+}
+
+.journal-page .messages-page-container .messages-date-separator-label {
+  background: rgba(160, 185, 240, 0.08) !important;
+  border-color: rgba(160, 185, 240, 0.22) !important;
+}
+
+.journal-page .messages-page-container .empty-icon-wrapper {
+  background: linear-gradient(145deg, rgba(160, 185, 240, 0.12), rgba(80, 100, 180, 0.06)) !important;
+  box-shadow:
+    0 0 32px rgba(70, 100, 190, 0.1),
+    0 0 0 1px rgba(160, 185, 240, 0.2) inset !important;
+  border-color: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .messages-page-container .empty-icon {
+  filter: drop-shadow(0 4px 12px rgba(70, 100, 190, 0.3)) !important;
+}
+
+.journal-page .messages-page-container .user-message {
+  background: linear-gradient(135deg, rgba(160, 185, 240, 0.18), rgba(80, 100, 180, 0.1)) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(160, 185, 240, 0.22) inset !important;
+  border-color: rgba(180, 200, 255, 0.32) !important;
+}
+
+.journal-page .messages-page-container .user-message::before {
+  background: linear-gradient(135deg, rgba(200, 210, 255, 0.35), transparent 55%) !important;
+}
+
+.journal-page .messages-page-container .admin-message {
+  border-color: rgba(160, 185, 240, 0.18) !important;
+}
+
+.journal-page .messages-page-container .sender-icon {
+  filter: drop-shadow(0 1px 3px rgba(70, 100, 190, 0.3)) !important;
+}
+
+.journal-page .messages-page-container .message-input-form {
+  box-shadow:
+    var(--msg-glass-shadow),
+    0 0 0 1px rgba(160, 185, 240, 0.1) inset,
+    0 -4px 32px rgba(0, 0, 0, 0.4) !important;
+  border-color: rgba(160, 185, 240, 0.2) !important;
+}
+
+.journal-page .messages-page-container .message-input {
+  border-color: rgba(160, 185, 240, 0.22) !important;
+}
+
+.journal-page .messages-page-container .message-input:focus {
+  border-color: rgba(200, 210, 255, 0.42) !important;
+  box-shadow:
+    0 0 0 2px rgba(160, 185, 240, 0.12),
+    inset 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+.journal-page .messages-page-container .send-button {
+  background: linear-gradient(135deg, #d8e2ff 0%, #a8b8e8 45%, #6a7ec0 100%) !important;
+  border-color: rgba(160, 185, 240, 0.45) !important;
+  color: #0a0e18 !important;
+  box-shadow: 0 6px 24px rgba(50, 70, 140, 0.28) !important;
+}
+
+.journal-page .messages-page-container .send-button:hover:not(:disabled) {
+  box-shadow: 0 10px 32px rgba(50, 70, 140, 0.38) !important;
+}
+
+/* ═══════════ Affiliation ═══════════ */
+.journal-page .aff-hero__eyebrow {
+  color: rgba(200, 210, 255, 0.92) !important;
+}
+
+.journal-page .aff-hero__title {
+  background: linear-gradient(125deg, #fff 25%, #d2dcff 55%, #a8b8e8 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 20px rgba(70, 100, 190, 0.12)) !important;
+}
+
+.journal-page .aff-chip {
+  background: rgba(160, 185, 240, 0.1) !important;
+  border-color: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .aff-steps__icon {
+  border-color: rgba(160, 185, 240, 0.35) !important;
+  box-shadow: 0 0 20px rgba(70, 100, 190, 0.12) !important;
+}
+
+.journal-page .aff-steps__connector {
+  background: linear-gradient(180deg, rgba(160, 185, 240, 0.35), rgba(160, 185, 240, 0.08)) !important;
+}
+
+.journal-page .aff-stat {
+  border-color: rgba(160, 185, 240, 0.2) !important;
+}
+
+.journal-page .aff-link-box {
+  border-color: rgba(160, 185, 240, 0.28) !important;
+  box-shadow: 0 0 0 1px rgba(160, 185, 240, 0.06) inset !important;
+}
+
+.journal-page .aff-copy-btn {
+  border-color: rgba(160, 185, 240, 0.35) !important;
+  background: rgba(160, 185, 240, 0.1) !important;
+}
+
+.journal-page .aff-tips {
+  border-color: rgba(160, 185, 240, 0.26) !important;
+}
+
+.journal-page .aff-tips__head {
+  color: rgba(200, 210, 255, 0.92) !important;
+}
+
+.journal-page .aff-progress-panel,
+.journal-page .aff-tier-bar-section {
+  border-color: rgba(160, 185, 240, 0.26) !important;
+  box-shadow: var(--aff-shadow), 0 0 0 1px rgba(160, 185, 240, 0.06) inset !important;
+}
+
+.journal-page .aff-dial-svg {
+  filter: drop-shadow(0 0 20px rgba(70, 100, 190, 0.2)) !important;
+}
+
+/* ═══════════ Admin panel ═══════════ */
+.journal-page .admin-panel-container::after {
+  background: radial-gradient(ellipse at center, rgba(100, 130, 220, 0.08) 0%, transparent 68%) !important;
+}
+
+.journal-page .admin-panel-container .admin-header {
+  border-color: var(--ap-border-gold) !important;
+  box-shadow: var(--ap-shadow), 0 0 0 1px rgba(160, 185, 240, 0.06) inset !important;
+}
+
+.journal-page .admin-panel-container .admin-header::before {
+  background: linear-gradient(90deg, transparent, rgba(200, 210, 255, 0.5), rgba(160, 185, 240, 0.32), transparent) !important;
+}
+
+.journal-page .admin-panel-container .admin-title {
+  background: linear-gradient(125deg, #fff 28%, #d2dcff 62%, #a8b8e8 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 18px rgba(70, 100, 190, 0.12)) !important;
+}
+
+.journal-page .admin-panel-container .admin-tab-btn:hover {
+  border-color: rgba(160, 185, 240, 0.2) !important;
+}
+
+.journal-page .admin-panel-container .admin-tab-btn.active {
+  color: #0a0e18 !important;
+  background: linear-gradient(135deg, rgba(220, 230, 255, 0.95) 0%, rgba(170, 190, 240, 0.92) 50%, rgba(120, 150, 210, 0.88) 100%) !important;
+  border-color: rgba(160, 185, 240, 0.45) !important;
+  box-shadow: 0 4px 20px rgba(70, 100, 190, 0.2) !important;
+}
+
+/* ═══════════ Settings ═══════════ */
+.journal-page .settings-page .settings-container {
+  background:
+    radial-gradient(ellipse 60% 40% at 25% -5%, rgba(100, 130, 220, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 80% 10%, rgba(140, 170, 255, 0.08) 0%, transparent 55%),
+    rgba(3, 2, 10, 0.94) !important;
+}
+
+.journal-page .settings-page .settings-container::before {
+  background: radial-gradient(
+    circle at center,
+    rgba(100, 130, 220, 0.07) 0%,
+    rgba(140, 170, 255, 0.04) 35%,
+    transparent 70%
+  ) !important;
+}
+
+.journal-page .settings-page .settings-container::after {
+  background: linear-gradient(
+    135deg,
+    rgba(160, 185, 240, 0.28) 0%,
+    rgba(200, 210, 255, 0.12) 50%,
+    transparent 80%
+  ) !important;
+}
+
+.journal-page .settings-page .settings-header h1 {
+  background: linear-gradient(125deg, #ffffff 20%, #d2dcff 55%, #a8b8e8 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 22px rgba(70, 100, 190, 0.22)) !important;
+}
+
+.journal-page .settings-page .super-admin-badge,
+.journal-page .settings-page .admin-badge {
+  background: linear-gradient(135deg, rgba(170, 190, 240, 0.88) 0%, rgba(200, 210, 255, 0.72) 100%) !important;
+  box-shadow: 0 0 28px rgba(70, 100, 190, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ═══════════ Admin inbox ═══════════ */
+.journal-page .admin-inbox-sidebar {
+  border-color: rgba(160, 185, 240, 0.24) !important;
+}
+
+.journal-page .admin-inbox-sidebar::before {
+  background: linear-gradient(90deg, transparent, rgba(200, 210, 255, 0.75), rgba(160, 185, 240, 0.45), transparent) !important;
+}
+
+.journal-page .admin-inbox-tab.active {
+  color: var(--accent-light) !important;
+  border-bottom-color: var(--accent-solid) !important;
+}
+
+/* ═══════════ Reports (Aura terminal) — keep rp-progress-bar gold (progress) ═══════════ */
+.journal-page .rp-page .rp-eyebrow {
+  color: rgba(160, 185, 240, 0.62) !important;
+}
+
+.journal-page .rp-page .rp-title {
+  background: linear-gradient(125deg, #ffffff 0%, #d2dcff 45%, #a8b8e8 88%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.journal-page .rp-page .rp-empty-card {
+  border-color: rgba(160, 185, 240, 0.22) !important;
+}
+
+.journal-page .rp-page .rp-empty-card::before {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(100, 130, 220, 0.1), transparent 70%) !important;
+}
+
+.journal-page .rp-page .rp-eligibility::before {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0%, rgba(160, 185, 240, 0.22) 55%, transparent 100%) !important;
+}
+
+.journal-page .rp-page .rp-eligibility-status--ready {
+  color: #d2dcff !important;
+  text-shadow: 0 0 20px rgba(70, 100, 190, 0.22) !important;
+}
+
+.journal-page .rp-page .rp-eligibility-stats {
+  border-color: rgba(160, 185, 240, 0.18) !important;
+}
+
+.journal-page .rp-page .rp-current-period {
+  border-color: rgba(160, 185, 240, 0.28) !important;
+  box-shadow: 0 0 24px rgba(70, 100, 190, 0.08) !important;
+}
+
+.journal-page .rp-page .rp-csv-drop {
+  border-color: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .rp-page .rp-csv-drop:hover {
+  border-color: rgba(180, 200, 255, 0.45) !important;
+  background: rgba(160, 185, 240, 0.05) !important;
+}
+
+.journal-page .rp-page .rp-auto-notice {
+  background: rgba(160, 185, 240, 0.07) !important;
+  border-color: rgba(160, 185, 240, 0.22) !important;
+}
+
+.journal-page .rp-page .rp-auto-icon {
+  color: #d2dcff !important;
+  filter: drop-shadow(0 0 8px rgba(70, 100, 190, 0.28)) !important;
+}
+
+.journal-page .rp-page .rp-report-ready {
+  background: rgba(160, 185, 240, 0.08) !important;
+  border-color: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .rp-page .rp-report-ready-icon {
+  color: #d2dcff !important;
+}
+
+.journal-page .rp-page .rp-btn--primary {
+  background: linear-gradient(130deg, #2a3a62 0%, #5a6fa8 42%, #8fa0d8 100%) !important;
+  color: #0a0e18 !important;
+  border-color: rgba(200, 210, 255, 0.35) !important;
+  box-shadow:
+    0 0 0 1px rgba(160, 185, 240, 0.32),
+    0 6px 24px rgba(50, 70, 140, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+.journal-page .rp-page .rp-btn--primary:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgba(200, 210, 255, 0.45),
+    0 10px 32px rgba(50, 70, 140, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.journal-page .rp-page .rp-btn--secondary {
+  border-color: rgba(160, 185, 240, 0.32) !important;
+  color: #d2dcff !important;
+}
+
+.journal-page .rp-page .rp-btn--secondary:hover {
+  background: rgba(160, 185, 240, 0.12) !important;
+  border-color: rgba(200, 210, 255, 0.42) !important;
+  color: #fff !important;
+}
+
+.journal-page .rp-page .rp-history::before {
+  background: linear-gradient(90deg, transparent, rgba(160, 185, 240, 0.38), transparent) !important;
+}
+
+.journal-page .rp-page .rp-history-title {
+  color: rgba(160, 185, 240, 0.55) !important;
+}
+
+.journal-page .rp-page .rp-history-item:hover {
+  border-color: rgba(160, 185, 240, 0.28) !important;
+  box-shadow: 0 0 0 1px rgba(160, 185, 240, 0.08) !important;
+}
+
+.journal-page .rp-page .rp-locked-title {
+  background: linear-gradient(125deg, #fff 0%, #d2dcff 55%, #a8b8e8 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}

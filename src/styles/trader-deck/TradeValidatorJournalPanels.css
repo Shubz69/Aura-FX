@@ -68,7 +68,7 @@
     rgba(255, 255, 255, 0.95) 0%,
     rgba(255, 255, 255, 0.48) 32%,
     rgba(175, 200, 255, 0.42) 58%,
-    rgba(248, 195, 125, 0.12) 88%,
+    rgba(212, 175, 55, 0.14) 88%,
     transparent 100%
   ) !important;
   opacity: 1 !important;
@@ -107,6 +107,69 @@
   box-shadow: var(--journal-panel-outer-glow) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Overview tab — at-a-glance metric boxes (same journal glass stack as .aura-card) */
+.journal-page .trade-validator-shell .aura-overview-kpi-card {
+  position: relative !important;
+  overflow: hidden !important;
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-kpi-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 4% !important;
+  right: 14% !important;
+  height: 1px !important;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.48) 32%,
+    rgba(175, 200, 255, 0.42) 58%,
+    rgba(212, 175, 55, 0.14) 88%,
+    transparent 100%
+  ) !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-kpi-card::after {
+  content: '' !important;
+  position: absolute !important;
+  top: -30px !important;
+  right: -30px !important;
+  width: 110px !important;
+  height: 110px !important;
+  background: radial-gradient(circle, rgba(85, 118, 205, 0.12) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 70%) !important;
+  pointer-events: none !important;
+  border-radius: 50% !important;
+  z-index: 0 !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-kpi-card .aura-overview-kpi-label,
+.journal-page .trade-validator-shell .aura-overview-kpi-card .aura-overview-kpi-value {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.journal-page .trade-validator-shell .aura-overview-kpi-card:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
+  box-shadow: var(--journal-panel-outer-glow-hover) !important;
+  border-color: transparent !important;
+  transform: translateY(-2px);
+}
+
+.journal-page .trade-validator-shell .aura-overview-kpi-card:focus-within {
+  border-color: transparent !important;
+  box-shadow: var(--journal-panel-outer-glow-hover), var(--journal-focus-ring) !important;
 }
 
 .journal-page .trade-validator-shell .trade-calc-banner--linked {

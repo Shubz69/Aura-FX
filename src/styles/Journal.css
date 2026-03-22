@@ -95,8 +95,8 @@
   to   { width: 100%; }
 }
 @keyframes streakFlicker {
-  0%,100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.22)) drop-shadow(0 0 16px rgba(90,120,200,0.28)) drop-shadow(0 0 12px rgba(248,195,125,0.12)); }
-  50%      { filter: drop-shadow(0 0 14px rgba(255,255,255,0.32)) drop-shadow(0 0 22px rgba(100,135,215,0.38)) drop-shadow(0 0 14px rgba(248,195,125,0.16)); }
+  0%,100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.22)) drop-shadow(0 0 16px rgba(90,120,200,0.28)) drop-shadow(0 0 12px rgba(212,175,55,0.14)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(255,255,255,0.32)) drop-shadow(0 0 22px rgba(100,135,215,0.38)) drop-shadow(0 0 14px rgba(212,175,55,0.22)); }
 }
 
 /* ── Twinkling star animations — different speeds & phases ── */
@@ -146,20 +146,20 @@
   /* Borders — white > navy; gold last (whisper only) */
   --border:         rgba(255, 255, 255, 0.12);
   --border-h:       rgba(160, 185, 240, 0.28);
-  --border-gold:    rgba(248, 195, 125, 0.22);
+  --border-gold:    rgba(212, 175, 55, 0.26);
   --border-box:     rgba(255, 255, 255, 0.16);
   --border-box-hover: rgba(190, 210, 255, 0.38);
 
-  /* Gold system — sparse accents only */
-  --gold:           #EAA960;
-  --gold-bright:    #F8C37D;
-  --gold-warm:      #D48D44;
-  --gold-soft:      rgba(248, 215, 185, 0.78);
-  --gold-pale:      rgba(255, 248, 235, 0.92);
-  --gold-dim:       rgba(248, 195, 125, 0.28);
-  --gold-glow:      rgba(234, 169, 96, 0.08);
-  --gold-glass:     rgba(70, 95, 160, 0.10);
-  --gold-ultra:     rgba(50, 70, 130, 0.05);
+  /* Luxury metal gold (branding ref: #D4AF37 · rgb(212, 175, 55)) */
+  --gold:           #D4AF37;
+  --gold-bright:    #E8C658;
+  --gold-warm:      #9A7B22;
+  --gold-soft:      rgba(235, 218, 160, 0.82);
+  --gold-pale:      rgba(248, 240, 210, 0.94);
+  --gold-dim:       rgba(212, 175, 55, 0.32);
+  --gold-glow:      rgba(212, 175, 55, 0.14);
+  --gold-glass:     rgba(212, 175, 55, 0.12);
+  --gold-ultra:     rgba(212, 175, 55, 0.06);
 
   /* Text — higher contrast “power” white */
   --text:           #FFFFFF;
@@ -193,10 +193,10 @@
     rgba(252, 253, 255, 0.99) 28%,
     rgba(200, 215, 255, 0.96) 58%,
     rgba(120, 150, 220, 0.92) 82%,
-    rgba(248, 205, 160, 0.42) 100%);
+    rgba(212, 175, 55, 0.48) 100%);
   --grad-green: linear-gradient(130deg, #6FFFC9, var(--green));
   --grad-red:   linear-gradient(130deg, #FF8FA0, var(--red));
-  --line-gold:  linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55) 22%, rgba(160, 185, 240, 0.45) 48%, rgba(255, 255, 255, 0.75) 72%, rgba(248, 195, 125, 0.18) 92%, transparent);
+  --line-gold:  linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55) 22%, rgba(160, 185, 240, 0.45) 48%, rgba(255, 255, 255, 0.75) 72%, rgba(212, 175, 55, 0.22) 92%, transparent);
 
   /* Frame: powerful white corner → navy body → gold whisper at far edge */
   --journal-panel-fill: linear-gradient(168deg, rgba(4, 5, 18, 0.92) 0%, rgba(5, 6, 20, 0.89) 100%);
@@ -208,7 +208,7 @@
     rgba(185, 205, 255, 0.42) 44%,
     rgba(85, 115, 195, 0.58) 64%,
     rgba(38, 52, 105, 0.72) 84%,
-    rgba(248, 195, 125, 0.14) 100%);
+    rgba(212, 175, 55, 0.18) 100%);
   --journal-panel-border-hover: linear-gradient(135deg,
     rgba(255, 255, 255, 1) 0%,
     rgba(255, 255, 255, 0.92) 9%,
@@ -216,7 +216,7 @@
     rgba(195, 215, 255, 0.48) 42%,
     rgba(95, 125, 210, 0.65) 62%,
     rgba(45, 58, 118, 0.78) 82%,
-    rgba(248, 200, 150, 0.20) 100%);
+    rgba(212, 175, 55, 0.24) 100%);
   --journal-panel-outer-glow:
     0 18px 52px rgba(0, 0, 0, 0.64),
     0 0 0 1px rgba(255, 255, 255, 0.20),
@@ -527,7 +527,7 @@
     rgba(255, 255, 255, 0.95) 0%,
     rgba(255, 255, 255, 0.48) 32%,
     rgba(175, 200, 255, 0.42) 58%,
-    rgba(248, 195, 125, 0.12) 88%,
+    rgba(212, 175, 55, 0.12) 88%,
     transparent 100%
   );
   pointer-events: none;
@@ -673,7 +673,7 @@
     rgba(255, 255, 255, 0.95) 0%,
     rgba(255, 255, 255, 0.48) 32%,
     rgba(175, 200, 255, 0.42) 58%,
-    rgba(248, 195, 125, 0.12) 88%,
+    rgba(212, 175, 55, 0.12) 88%,
     transparent 100%
   );
   pointer-events: none;
@@ -1053,7 +1053,7 @@
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 0.92) 0%,
     rgba(190, 210, 255, 0.42) 45%,
-    rgba(248, 195, 125, 0.14) 78%,
+    rgba(212, 175, 55, 0.14) 78%,
     transparent 100%);
 }
 
@@ -1136,10 +1136,10 @@
   height: 56px;
   border-radius: 50%;
   background: conic-gradient(
-    #fde8c4 0deg,
-    #f8c37d calc(var(--pct) * 1.05deg),
-    #eaa960 calc(var(--pct) * 2.2deg),
-    #d48d44 calc(var(--pct) * 3.6deg),
+    #f5ebd4 0deg,
+    #e8c658 calc(var(--pct) * 1.05deg),
+    #d4af37 calc(var(--pct) * 2.2deg),
+    #9a7b22 calc(var(--pct) * 3.6deg),
     rgba(255, 255, 255, 0.06) calc(var(--pct) * 3.6deg)
   );
   display: flex;
@@ -1147,8 +1147,8 @@
   justify-content: center;
   transition: background 0.6s ease;
   box-shadow:
-    0 0 14px rgba(248, 195, 125, 0.42),
-    0 0 24px rgba(234, 169, 96, 0.22);
+    0 0 14px rgba(212, 175, 55, 0.45),
+    0 0 24px rgba(212, 175, 55, 0.22);
 }
 
 .journal-stat-circle-ring::before {
@@ -1165,7 +1165,7 @@
   z-index: 1;
   font-size: 0.70rem;
   font-weight: 600;
-  color: rgba(255, 236, 210, 0.96);
+  color: rgba(240, 228, 195, 0.96);
 }
 
 .journal-stat-circle-label {
@@ -1212,7 +1212,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.38)) drop-shadow(0 0 36px rgba(100, 135, 215, 0.28)) drop-shadow(0 0 52px rgba(248, 195, 125, 0.08));
+  filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.38)) drop-shadow(0 0 36px rgba(100, 135, 215, 0.28)) drop-shadow(0 0 52px rgba(212, 175, 55, 0.12));
 }
 
 .journal-main-meta {
@@ -1266,7 +1266,7 @@
     rgba(255, 255, 255, 0.05) 26%,
     transparent 46%,
     rgba(120, 150, 220, 0.10) 78%,
-    rgba(248, 195, 125, 0.04) 100%);
+    rgba(212, 175, 55, 0.04) 100%);
 }
 
 /* Top rim: bright white → periwinkle → faint warm tail */
@@ -1280,7 +1280,7 @@
     rgba(255, 255, 255, 0.98) 0%,
     rgba(255, 255, 255, 0.58) 28%,
     rgba(175, 200, 255, 0.42) 55%,
-    rgba(248, 195, 125, 0.12) 86%,
+    rgba(212, 175, 55, 0.12) 86%,
     transparent 100%);
   pointer-events: none;
 }
@@ -1330,12 +1330,12 @@
 
 .journal-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #c87830 0%, #d48d44 18%, #eaa960 45%, #f0b565 72%, #f8c37d 100%);
+  background: linear-gradient(90deg, #6b5a1c 0%, #9a7b22 18%, #d4af37 45%, #dfc056 72%, #e8c658 100%);
   border-radius: 99px;
   transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
   box-shadow:
-    0 0 14px rgba(248, 195, 125, 0.55),
-    0 0 26px rgba(234, 169, 96, 0.32);
+    0 0 14px rgba(212, 175, 55, 0.55),
+    0 0 26px rgba(212, 175, 55, 0.32);
   position: relative;
   overflow: hidden;
   animation: journal-progressReveal 1.2s cubic-bezier(0.22,1,0.36,1) both;
@@ -1600,7 +1600,7 @@
     transparent,
     rgba(255, 255, 255, 0.68) 26%,
     rgba(175, 200, 255, 0.35) 52%,
-    rgba(248, 195, 125, 0.10) 78%,
+    rgba(212, 175, 55, 0.10) 78%,
     transparent
   );
   pointer-events: none;
@@ -2378,7 +2378,7 @@
     rgba(255, 255, 255, 0.95) 0%,
     rgba(255, 255, 255, 0.45) 32%,
     rgba(175, 200, 255, 0.38) 62%,
-    rgba(248, 195, 125, 0.10) 88%,
+    rgba(212, 175, 55, 0.10) 88%,
     transparent 100%);
 }
 

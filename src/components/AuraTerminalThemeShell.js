@@ -1,5 +1,6 @@
 import React from 'react';
 import '../styles/Journal.css';
+import '../styles/TerminalRoutesNavyGlass.css';
 
 /**
  * Reuses Journal page space background, star layers, and CSS variable scope

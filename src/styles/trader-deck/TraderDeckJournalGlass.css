@@ -122,7 +122,7 @@
 
 /* ── Economic calendar strip ──────────────────────────────────────────────── */
 .journal-page .td-deck-with-tabs.td-layout-page .td-ff-wrap::before {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35) 30%, rgba(160, 185, 240, 0.4) 55%, rgba(248, 195, 125, 0.14) 78%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35) 30%, rgba(160, 185, 240, 0.4) 55%, rgba(212, 175, 55, 0.16) 78%, transparent);
 }
 
 .journal-page .td-deck-with-tabs.td-layout-page .td-ff-wrap {
