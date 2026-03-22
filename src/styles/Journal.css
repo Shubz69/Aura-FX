@@ -95,8 +95,8 @@
   to   { width: 100%; }
 }
 @keyframes streakFlicker {
-  0%,100% { filter: drop-shadow(0 0 8px rgba(90,130,220,0.55)); }
-  50%      { filter: drop-shadow(0 0 18px rgba(120,165,255,0.88)); }
+  0%,100% { filter: drop-shadow(0 0 8px rgba(248,195,125,0.45)) drop-shadow(0 0 14px rgba(255,255,255,0.12)); }
+  50%      { filter: drop-shadow(0 0 16px rgba(234,169,96,0.72)) drop-shadow(0 0 22px rgba(255,248,235,0.18)); }
 }
 
 /* ── Twinkling star animations — different speeds & phases ── */
@@ -143,23 +143,23 @@
   --bg-card-h:      rgba(8, 6, 20, 0.85);
   --bg-glass:       rgba(2, 1, 8, 0.65);
 
-  /* Borders — white + navy (no gold wash on chrome) */
-  --border:         rgba(255, 255, 255, 0.09);
-  --border-h:       rgba(130, 165, 230, 0.26);
-  --border-gold:    rgba(120, 160, 235, 0.50);
-  --border-box:     rgba(95, 135, 215, 0.42);
-  --border-box-hover: rgba(165, 195, 255, 0.62);
+  /* Borders — crisp white + hints of gold (less navy) */
+  --border:         rgba(255, 255, 255, 0.11);
+  --border-h:       rgba(255, 235, 200, 0.22);
+  --border-gold:    rgba(248, 195, 125, 0.48);
+  --border-box:     rgba(255, 255, 255, 0.14);
+  --border-box-hover: rgba(255, 220, 175, 0.42);
 
-  /* Gold system (accents / CTAs only) */
+  /* Gold system — warm accents + glass */
   --gold:           #EAA960;
   --gold-bright:    #F8C37D;
   --gold-warm:      #D48D44;
-  --gold-soft:      #B8C8FF;
-  --gold-pale:      #E8EEFF;
-  --gold-dim:       rgba(140, 170, 240, 0.55);
-  --gold-glow:      rgba(80, 120, 210, 0.22);
-  --gold-glass:     rgba(70, 110, 200, 0.08);
-  --gold-ultra:     rgba(50, 80, 160, 0.04);
+  --gold-soft:      #EABB80;
+  --gold-pale:      #FDE8C4;
+  --gold-dim:       rgba(248, 195, 125, 0.48);
+  --gold-glow:      rgba(234, 169, 96, 0.20);
+  --gold-glass:     rgba(234, 169, 96, 0.07);
+  --gold-ultra:     rgba(234, 169, 96, 0.03);
 
   /* Text — higher contrast “power” white */
   --text:           #FFFFFF;
@@ -187,45 +187,49 @@
   --transition: 0.26s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-s: 0.16s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Heading / metric numerals — ice white (Analytics-style punch) */
+  /* Heading / metric numerals — powerful white → warm gold */
   --grad-gold:  linear-gradient(125deg,
     #ffffff 0%,
-    rgba(248, 250, 255, 0.98) 18%,
-    rgba(200, 215, 255, 0.95) 48%,
-    rgba(130, 165, 235, 0.90) 100%);
+    rgba(255, 252, 245, 0.98) 22%,
+    rgba(248, 215, 175, 0.95) 52%,
+    rgba(234, 169, 96, 0.92) 100%);
   --grad-green: linear-gradient(130deg, #6FFFC9, var(--green));
   --grad-red:   linear-gradient(130deg, #FF8FA0, var(--red));
-  --line-gold:  linear-gradient(90deg, transparent, rgba(180, 205, 255, 0.7) 35%, rgba(255, 255, 255, 0.85) 70%, transparent);
+  --line-gold:  linear-gradient(90deg, transparent, rgba(248, 195, 125, 0.5) 28%, rgba(255, 255, 255, 0.92) 58%, rgba(248, 195, 125, 0.45) 82%, transparent);
 
-  /* Frame: strong white top-left → navy glow (KPI reference) */
-  --journal-panel-fill: linear-gradient(168deg, rgba(3, 5, 18, 0.90) 0%, rgba(6, 8, 28, 0.86) 100%);
-  --journal-panel-fill-hover: linear-gradient(168deg, rgba(6, 8, 26, 0.94) 0%, rgba(10, 13, 34, 0.90) 100%);
+  /* Frame: strong white rim → champagne / gold hints (soft navy anchor only) */
+  --journal-panel-fill: linear-gradient(168deg, rgba(4, 4, 12, 0.91) 0%, rgba(6, 5, 16, 0.88) 100%);
+  --journal-panel-fill-hover: linear-gradient(168deg, rgba(8, 7, 18, 0.94) 0%, rgba(10, 8, 20, 0.90) 100%);
   --journal-panel-border: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.58) 7%,
-    rgba(255, 255, 255, 0.20) 24%,
-    rgba(150, 180, 245, 0.32) 46%,
-    rgba(55, 90, 175, 0.68) 72%,
-    rgba(22, 38, 88, 0.92) 100%);
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.72) 10%,
+    rgba(255, 255, 255, 0.32) 26%,
+    rgba(255, 230, 195, 0.28) 44%,
+    rgba(248, 195, 125, 0.42) 62%,
+    rgba(200, 155, 95, 0.35) 80%,
+    rgba(28, 32, 58, 0.62) 100%);
   --journal-panel-border-hover: linear-gradient(135deg,
     rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 0.66) 6%,
-    rgba(255, 255, 255, 0.26) 22%,
-    rgba(165, 195, 255, 0.42) 44%,
-    rgba(70, 110, 205, 0.78) 70%,
-    rgba(28, 48, 108, 0.98) 100%);
+    rgba(255, 255, 255, 0.78) 8%,
+    rgba(255, 255, 255, 0.38) 22%,
+    rgba(255, 220, 175, 0.36) 40%,
+    rgba(248, 200, 130, 0.52) 58%,
+    rgba(212, 160, 95, 0.42) 76%,
+    rgba(35, 38, 68, 0.72) 100%);
   --journal-panel-outer-glow:
     0 18px 52px rgba(0, 0, 0, 0.64),
-    0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 0 50px -12px rgba(55, 95, 185, 0.40),
-    0 10px 38px -16px rgba(22, 42, 105, 0.50),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 0 36px -8px rgba(255, 255, 255, 0.08),
+    0 0 48px -10px rgba(248, 195, 125, 0.16),
+    0 8px 28px -12px rgba(15, 20, 45, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   --journal-panel-outer-glow-hover:
     0 22px 60px rgba(0, 0, 0, 0.70),
-    0 0 0 1px rgba(255, 255, 255, 0.16),
-    0 0 60px -8px rgba(75, 120, 215, 0.48),
-    0 12px 44px -12px rgba(32, 55, 125, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    0 0 0 1px rgba(255, 255, 255, 0.20),
+    0 0 44px -6px rgba(255, 255, 255, 0.10),
+    0 0 56px -8px rgba(248, 195, 125, 0.22),
+    0 10px 32px -10px rgba(20, 24, 48, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 /* ══ Scroll anchor ═══════════════════════════════════════════════════════════ */
@@ -468,7 +472,8 @@
   width: 300px;
   flex-shrink: 0;
   padding: 28px 22px;
-  border-right: 1px solid rgba(90, 125, 200, 0.38);
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset -1px 0 0 rgba(248, 195, 125, 0.12);
   background: rgba(1, 0, 8, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -478,7 +483,6 @@
   overflow-x: hidden;
 }
 
-/* White → navy hairline across top */
 .journal-sidebar::before {
   content: '';
   position: absolute;
@@ -486,8 +490,9 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(255, 255, 255, 0.35) 22%,
-    rgba(130, 165, 230, 0.45) 52%,
+    rgba(255, 255, 255, 0.55) 18%,
+    rgba(248, 210, 160, 0.42) 48%,
+    rgba(255, 255, 255, 0.35) 78%,
     transparent
   );
   pointer-events: none;
@@ -498,7 +503,7 @@
   position: absolute;
   top: -40px; right: -30px;
   width: 160px; height: 160px;
-  background: radial-gradient(circle, rgba(50, 85, 170, 0.10) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.06) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -556,16 +561,16 @@
   box-shadow: var(--journal-panel-outer-glow-hover);
 }
 
-/* Crisp white → ice top edge */
 .journal-calendar::before {
   content: '';
   position: absolute;
-  top: 0; left: 4%; right: 18%;
+  top: 0; left: 4%; right: 14%;
   height: 1px;
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.75) 0%,
-    rgba(255, 255, 255, 0.35) 35%,
-    rgba(140, 175, 240, 0.35) 65%,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(255, 255, 255, 0.42) 32%,
+    rgba(248, 205, 160, 0.38) 58%,
+    rgba(248, 195, 125, 0.22) 82%,
     transparent 100%
   );
   pointer-events: none;
@@ -576,7 +581,7 @@
   position: absolute;
   top: -30px; right: -30px;
   width: 110px; height: 110px;
-  background: radial-gradient(circle, rgba(45, 75, 160, 0.14) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.08) 0%, rgba(255, 255, 255, 0.03) 45%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -604,10 +609,10 @@
 .journal-calendar-btn {
   width: clamp(28px, 5vw, 34px);
   height: clamp(28px, 5vw, 34px);
-  border: 1px solid rgba(120, 155, 220, 0.48);
+  border: 1px solid rgba(248, 195, 125, 0.38);
   border-radius: 10px;
-  background: rgba(40, 70, 150, 0.12);
-  color: rgba(200, 215, 255, 0.82);
+  background: rgba(234, 169, 96, 0.06);
+  color: rgba(248, 215, 185, 0.88);
   font-size: 0.95rem;
   cursor: pointer;
   display: flex;
@@ -620,11 +625,11 @@
 }
 
 .journal-calendar-btn:hover {
-  background: rgba(55, 95, 180, 0.22);
-  border-color: rgba(170, 200, 255, 0.72);
+  background: rgba(234, 169, 96, 0.14);
+  border-color: rgba(255, 220, 175, 0.62);
   color: #ffffff;
   transform: scale(1.08);
-  box-shadow: 0 0 18px rgba(80, 120, 210, 0.35);
+  box-shadow: 0 0 16px rgba(248, 195, 125, 0.28);
 }
 
 .journal-calendar-btn:active { transform: scale(0.93); }
@@ -940,11 +945,12 @@
 .journal-streak-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 5%; right: 15%;
+  top: 0; left: 5%; right: 12%;
   height: 1px;
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.65) 0%,
-    rgba(160, 190, 250, 0.45) 45%,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(248, 215, 175, 0.48) 42%,
+    rgba(248, 195, 125, 0.28) 72%,
     transparent 100%);
 }
 
@@ -953,7 +959,7 @@
   position: absolute;
   bottom: -30px; right: -30px;
   width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(45, 78, 165, 0.14) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.09) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -1008,7 +1014,8 @@
   gap: 12px;
   justify-content: space-between;
   padding: 16px 0 0;
-  border-top: 1px solid rgba(120, 155, 220, 0.28);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(248, 195, 125, 0.10);
 }
 
 .journal-stat-circle {
@@ -1026,15 +1033,16 @@
   height: 56px;
   border-radius: 50%;
   background: conic-gradient(
-    rgba(200, 220, 255, 0.95) 0deg,
-    rgba(90, 130, 220, 0.92) calc(var(--pct) * 3.6deg),
-    rgba(255,255,255,0.05) calc(var(--pct) * 3.6deg)
+    rgba(255, 255, 255, 0.98) 0deg,
+    rgba(248, 210, 175, 0.96) calc(var(--pct) * 1.15deg),
+    rgba(234, 169, 96, 0.92) calc(var(--pct) * 3.6deg),
+    rgba(255, 255, 255, 0.06) calc(var(--pct) * 3.6deg)
   );
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.6s ease;
-  box-shadow: 0 0 14px rgba(60, 100, 200, 0.28);
+  box-shadow: 0 0 12px rgba(248, 195, 125, 0.22), 0 0 18px rgba(255, 255, 255, 0.06);
 }
 
 .journal-stat-circle-ring::before {
@@ -1098,7 +1106,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 20px rgba(100, 140, 220, 0.35)) drop-shadow(0 0 36px rgba(40, 70, 150, 0.25));
+  filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.22)) drop-shadow(0 0 28px rgba(248, 195, 125, 0.28)) drop-shadow(0 0 48px rgba(234, 169, 96, 0.12));
 }
 
 .journal-main-meta {
@@ -1139,7 +1147,7 @@
 .journal-progress-card:nth-child(2) { animation-delay: 0.12s; }
 .journal-progress-card:nth-child(3) { animation-delay: 0.18s; }
 
-/* Inner wash: bright white corner → navy falloff */
+/* Inner wash: white corner → subtle gold bottom-right */
 .journal-progress-card::before {
   content: '';
   position: absolute;
@@ -1148,23 +1156,25 @@
   pointer-events: none;
   z-index: 0;
   background: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.10) 0%,
-    rgba(255, 255, 255, 0.03) 28%,
-    transparent 48%,
-    rgba(35, 58, 130, 0.12) 100%);
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 26%,
+    transparent 46%,
+    rgba(248, 195, 125, 0.06) 78%,
+    rgba(234, 169, 96, 0.05) 100%);
 }
 
-/* Crisp top hairline (Analytics-style) */
+/* Top rim: bright white flare → warm gold tail */
 .journal-progress-card::after {
   content: '';
   position: absolute;
-  top: 0; left: 6%; right: 18%;
+  top: 0; left: 5%; right: 14%;
   height: 1px;
   z-index: 1;
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.88) 0%,
-    rgba(255, 255, 255, 0.42) 30%,
-    rgba(150, 185, 245, 0.38) 62%,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.55) 28%,
+    rgba(248, 215, 175, 0.45) 58%,
+    rgba(248, 195, 125, 0.28) 82%,
     transparent 100%);
   pointer-events: none;
 }
@@ -1204,19 +1214,22 @@
 
 .journal-progress-bar {
   height: 3px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 99px;
   overflow: hidden;
   position: relative;
   z-index: 1;
+  box-shadow: 0 1px 0 rgba(248, 195, 125, 0.12);
 }
 
 .journal-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #1a3568, #3a62b8, #6b95f0);
+  background: linear-gradient(90deg, #b8742e, #eaa960, #f8c37d, #fff4e6, #ffffff);
   border-radius: 99px;
   transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-  box-shadow: 0 0 14px rgba(80, 125, 220, 0.55);
+  box-shadow:
+    0 0 12px rgba(248, 195, 125, 0.45),
+    0 0 20px rgba(255, 255, 255, 0.15);
   position: relative;
   overflow: hidden;
   animation: journal-progressReveal 1.2s cubic-bezier(0.22,1,0.36,1) both;
@@ -1258,7 +1271,7 @@
   overflow-wrap: break-word;
   position: relative;
   background-image:
-    linear-gradient(168deg, rgba(40, 70, 150, 0.10) 0%, rgba(3, 4, 14, 0.88) 100%) padding-box,
+    linear-gradient(168deg, rgba(234, 169, 96, 0.05) 0%, rgba(3, 3, 12, 0.90) 100%) padding-box,
     var(--journal-panel-border) border-box;
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
@@ -1268,12 +1281,13 @@
 .journal-xp-info::before {
   content: '';
   position: absolute;
-  top: 0; left: 8%; right: 22%;
+  top: 0; left: 6%; right: 18%;
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(255, 255, 255, 0.45) 35%,
-    rgba(140, 175, 240, 0.40) 65%,
+    rgba(255, 255, 255, 0.55) 32%,
+    rgba(248, 210, 170, 0.42) 55%,
+    rgba(255, 255, 255, 0.35) 72%,
     transparent);
 }
 
@@ -1298,16 +1312,16 @@
 
 .journal-section-title::before {
   content: '';
-  width: 28px; height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(150, 185, 255, 0.85));
-  box-shadow: 0 0 10px rgba(120, 160, 230, 0.45);
+  width: 32px; height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.98), rgba(248, 205, 150, 0.85));
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25), 0 0 14px rgba(248, 195, 125, 0.28);
   flex-shrink: 0;
 }
 
 .journal-section-title::after {
   content: '';
   flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(120, 155, 220, 0.22), transparent);
+  background: linear-gradient(90deg, rgba(248, 195, 125, 0.22), rgba(255, 255, 255, 0.08), transparent);
 }
 
 /* ── Completion Banner ───────────────────────────────────────── */
@@ -1375,9 +1389,9 @@
 .journal-add-input:focus {
   outline: none;
   background-image:
-    linear-gradient(168deg, rgba(50, 85, 170, 0.12) 0%, rgba(3, 4, 14, 0.90) 100%) padding-box,
+    linear-gradient(168deg, rgba(234, 169, 96, 0.07) 0%, rgba(3, 3, 12, 0.90) 100%) padding-box,
     var(--journal-panel-border-hover) border-box;
-  box-shadow: var(--journal-panel-outer-glow-hover), 0 0 0 3px rgba(80, 120, 210, 0.12);
+  box-shadow: var(--journal-panel-outer-glow-hover), 0 0 0 3px rgba(248, 195, 125, 0.10);
 }
 
 .journal-add-btn {
@@ -1385,10 +1399,10 @@
   align-items: center;
   gap: 7px;
   padding: 13px 22px;
-  background: linear-gradient(135deg, #1a3568 0%, #2d4a8c 45%, #4a72c4 100%);
+  background: linear-gradient(135deg, var(--gold-warm) 0%, var(--gold) 48%, var(--gold-bright) 100%);
   border: none;
   border-radius: var(--radius);
-  color: #f4f7ff;
+  color: #0a0610;
   font-size: 0.80rem;
   font-weight: 700;
   font-family: 'Space Grotesk', sans-serif;
@@ -1396,7 +1410,7 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 0 22px rgba(70, 110, 200, 0.45), inset 0 1px 0 rgba(255,255,255,0.22);
+  box-shadow: 0 0 24px rgba(248, 195, 125, 0.35), 0 0 36px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255,255,255,0.35);
   position: relative;
   overflow: hidden;
 }
@@ -1411,8 +1425,8 @@
 
 .journal-add-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 0 40px rgba(90, 130, 220, 0.55), 0 8px 24px rgba(0,0,0,0.48);
-  filter: brightness(1.08);
+  box-shadow: 0 0 40px rgba(248, 195, 125, 0.45), 0 0 28px rgba(255, 255, 255, 0.10), 0 8px 24px rgba(0,0,0,0.48);
+  filter: brightness(1.06);
 }
 
 .journal-add-btn:hover::before { opacity: 1; }
@@ -1474,12 +1488,13 @@
 .journal-task-item::before {
   content: '';
   position: absolute;
-  top: 0; left: 8%; right: 18%;
+  top: 0; left: 8%; right: 16%;
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(255, 255, 255, 0.55) 28%,
-    rgba(140, 175, 240, 0.40) 62%,
+    rgba(255, 255, 255, 0.62) 26%,
+    rgba(248, 205, 165, 0.38) 52%,
+    rgba(248, 195, 125, 0.22) 74%,
     transparent
   );
   pointer-events: none;
@@ -1500,9 +1515,9 @@
   background-image:
     linear-gradient(168deg, rgba(15, 217, 138, 0.06) 0%, rgba(3, 2, 10, 0.82) 55%) padding-box,
     linear-gradient(135deg,
-      rgba(255, 255, 255, 0.38) 0%,
-      rgba(15, 217, 138, 0.24) 38%,
-      rgba(55, 95, 175, 0.55) 100%) border-box;
+      rgba(255, 255, 255, 0.40) 0%,
+      rgba(15, 217, 138, 0.22) 38%,
+      rgba(248, 195, 125, 0.38) 100%) border-box;
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
 }
@@ -1520,12 +1535,12 @@
 
 .journal-task-item--mandatory {
   box-shadow:
-    inset 3px 0 0 rgba(130, 170, 245, 0.88),
+    inset 3px 0 0 rgba(248, 195, 125, 0.72),
     var(--journal-panel-outer-glow);
 }
 .journal-task-item--mandatory:hover {
   box-shadow:
-    inset 3px 0 0 rgba(200, 220, 255, 0.95),
+    inset 3px 0 0 rgba(255, 220, 175, 0.88),
     var(--journal-panel-outer-glow-hover);
 }
 
@@ -1565,8 +1580,8 @@
 }
 
 .journal-task-check:hover {
-  border-color: rgba(170, 200, 255, 0.72);
-  background: rgba(50, 85, 160, 0.18);
+  border-color: rgba(248, 195, 125, 0.65);
+  background: rgba(234, 169, 96, 0.08);
   transform: scale(1.1);
 }
 
@@ -1726,8 +1741,8 @@
 
 .journal-task-edit-input:focus {
   outline: none;
-  border-color: rgba(140, 175, 240, 0.85);
-  box-shadow: 0 0 0 3px rgba(80, 120, 210, 0.12);
+  border-color: rgba(248, 195, 125, 0.65);
+  box-shadow: 0 0 0 3px rgba(248, 195, 125, 0.10);
 }
 
 .journal-task-edit-actions { display: flex; gap: 6px; }
@@ -1737,8 +1752,8 @@
   padding: 6px 0;
   border: none;
   border-radius: 7px;
-  background: linear-gradient(135deg, #1a3568, #3a5aa8, #5a82d4);
-  color: #f4f7ff;
+  background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
+  color: #0a0610;
   cursor: pointer;
   font-size: 0.70rem;
   font-weight: 700;
@@ -1752,9 +1767,9 @@
 }
 
 .journal-task-edit-btn:hover {
-  box-shadow: 0 4px 16px rgba(80, 120, 210, 0.45);
+  box-shadow: 0 4px 18px rgba(248, 195, 125, 0.38);
   transform: translateY(-1px);
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .journal-task-edit-btn--cancel {
@@ -1881,9 +1896,9 @@
 .journal-proof-add-more {
   width: 42px; height: 42px;
   border-radius: 9px;
-  border: 1px dashed rgba(130, 165, 230, 0.50);
+  border: 1px dashed rgba(248, 195, 125, 0.42);
   background: var(--gold-ultra);
-  color: rgba(190, 210, 255, 0.82);
+  color: rgba(248, 210, 175, 0.85);
   font-size: 1.2rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -1893,10 +1908,10 @@
 
 .journal-proof-add-more:hover {
   background: var(--gold-glass);
-  border-color: rgba(170, 200, 255, 0.65);
+  border-color: rgba(255, 220, 175, 0.65);
   color: #ffffff;
   transform: scale(1.08);
-  box-shadow: 0 0 16px rgba(70, 110, 200, 0.35);
+  box-shadow: 0 0 16px rgba(248, 195, 125, 0.28);
 }
 
 .journal-proof-count-badge {
@@ -1904,12 +1919,12 @@
   align-items: center; justify-content: center;
   min-width: 16px; height: 16px;
   padding: 0 4px; border-radius: 99px;
-  background: linear-gradient(135deg, #1a3568, #4a72c4);
-  color: #f4f7ff;
+  background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
+  color: #0a0610;
   font-size: 0.56rem; font-weight: 700;
   font-family: 'DM Mono', monospace;
   margin-left: 2px; letter-spacing: 0;
-  box-shadow: 0 0 10px rgba(70, 110, 200, 0.40);
+  box-shadow: 0 0 10px rgba(248, 195, 125, 0.35);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2045,7 +2060,8 @@
    ════════════════════════════════════════════════════════════════════════════ */
 .journal-notes-section {
   margin-top: 32px; padding-top: 28px;
-  border-top: 1px solid rgba(120, 155, 220, 0.32);
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1px 0 rgba(248, 195, 125, 0.12);
   animation: journal-fadeIn 0.45s ease-out 0.12s both;
 }
 
@@ -2059,7 +2075,7 @@
   display: inline-flex; align-items: center; gap: 8px;
 }
 
-.journal-reflection-icon { color: rgba(200, 220, 255, 0.95); }
+.journal-reflection-icon { color: rgba(248, 195, 125, 0.88); }
 
 .journal-reflection-prompt {
   font-size: 0.78rem; font-weight: 300; color: var(--text-muted);
@@ -2085,7 +2101,7 @@
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   box-shadow:
-    inset 2px 0 0 rgba(120, 160, 235, 0.82),
+    inset 2px 0 0 rgba(248, 195, 125, 0.55),
     var(--journal-panel-outer-glow);
 }
 
@@ -2093,7 +2109,7 @@
   background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover);
   transform: translateX(4px);
   box-shadow:
-    inset 2px 0 0 rgba(190, 215, 255, 0.92),
+    inset 2px 0 0 rgba(255, 214, 160, 0.72),
     var(--journal-panel-outer-glow-hover);
 }
 
@@ -2121,8 +2137,8 @@
 
 .journal-note-edit-input:focus {
   outline: none;
-  border-color: rgba(140, 175, 240, 0.85);
-  box-shadow: 0 0 0 3px rgba(80, 120, 210, 0.12);
+  border-color: rgba(248, 195, 125, 0.65);
+  box-shadow: 0 0 0 3px rgba(248, 195, 125, 0.10);
 }
 
 .journal-note-actions {
@@ -2156,20 +2172,20 @@
 .journal-note-save-btn {
   padding: 0 10px; height: 30px;
   border: none; border-radius: 8px;
-  background: linear-gradient(135deg, #1a3568 0%, #3a5aa8 55%, #5a82d4 100%);
-  color: #f4f7ff;
+  background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright));
+  color: #0a0610;
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.10em;
   text-transform: uppercase; cursor: pointer;
   display: inline-flex; align-items: center; gap: 4px;
   transition: all var(--transition-s);
   font-family: 'Space Grotesk', sans-serif; white-space: nowrap;
-  box-shadow: 0 0 14px rgba(70, 110, 200, 0.40);
+  box-shadow: 0 0 14px rgba(248, 195, 125, 0.32);
 }
 
 .journal-note-save-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(90, 130, 220, 0.50);
-  filter: brightness(1.08);
+  box-shadow: 0 4px 20px rgba(248, 195, 125, 0.42);
+  filter: brightness(1.06);
 }
 
 .journal-note-save-btn:disabled { opacity: 0.40; cursor: not-allowed; }
@@ -2198,33 +2214,33 @@
 .journal-add-note-input:focus {
   outline: none;
   background-image:
-    linear-gradient(168deg, rgba(50, 85, 170, 0.12) 0%, rgba(3, 4, 14, 0.90) 100%) padding-box,
+    linear-gradient(168deg, rgba(234, 169, 96, 0.07) 0%, rgba(3, 3, 12, 0.90) 100%) padding-box,
     var(--journal-panel-border-hover) border-box;
-  box-shadow: var(--journal-panel-outer-glow-hover), 0 0 0 3px rgba(80, 120, 210, 0.12);
+  box-shadow: var(--journal-panel-outer-glow-hover), 0 0 0 3px rgba(248, 195, 125, 0.10);
 }
 
 .journal-add-note-btn,
 .journal-add-note-btn-gold {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #1a3568 0%, #2d4a8c 45%, #4a72c4 100%) !important;
+  background: linear-gradient(135deg, var(--gold-warm) 0%, var(--gold) 48%, var(--gold-bright) 100%) !important;
   border: none !important;
   border-radius: var(--radius);
-  color: #f4f7ff !important;
+  color: #0a0610 !important;
   font-size: 0.76rem; font-weight: 700 !important;
   font-family: 'Space Grotesk', sans-serif;
   letter-spacing: 0.14em; text-transform: uppercase;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 0 22px rgba(70, 110, 200, 0.42);
+  box-shadow: 0 0 24px rgba(248, 195, 125, 0.34), 0 0 28px rgba(255, 255, 255, 0.06) !important;
   white-space: nowrap;
 }
 
 .journal-add-note-btn:hover:not(:disabled),
 .journal-add-note-btn-gold:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 0 38px rgba(90, 130, 220, 0.52), 0 6px 20px rgba(0,0,0,0.45);
-  filter: brightness(1.08);
+  box-shadow: 0 0 40px rgba(248, 195, 125, 0.42), 0 6px 20px rgba(0,0,0,0.45) !important;
+  filter: brightness(1.06);
 }
 
 .journal-add-note-btn:disabled,
@@ -2249,13 +2265,14 @@
 
 .journal-daily-section::before {
   content: '';
-  position: absolute; top: 0; left: 6%; right: 16%;
+  position: absolute; top: 0; left: 5%; right: 14%;
   height: 1px;
   z-index: 1;
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.82) 0%,
-    rgba(255, 255, 255, 0.38) 35%,
-    rgba(140, 175, 240, 0.42) 70%,
+    rgba(255, 255, 255, 0.90) 0%,
+    rgba(255, 255, 255, 0.42) 32%,
+    rgba(248, 210, 170, 0.40) 62%,
+    rgba(248, 195, 125, 0.22) 85%,
     transparent 100%);
 }
 
@@ -2278,25 +2295,25 @@
 
 .journal-mood-btn {
   width: 44px; height: 44px;
-  border: 1px solid rgba(120, 155, 220, 0.45);
+  border: 1px solid rgba(248, 195, 125, 0.38);
   border-radius: 13px;
-  background: rgba(40, 70, 150, 0.12);
+  background: rgba(234, 169, 96, 0.06);
   font-size: 1.2rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all var(--transition-s);
 }
 
 .journal-mood-btn:hover {
-  background: rgba(55, 95, 180, 0.26);
-  border-color: rgba(180, 205, 255, 0.62);
+  background: rgba(234, 169, 96, 0.14);
+  border-color: rgba(255, 220, 175, 0.55);
   transform: scale(1.12) translateY(-2px);
-  box-shadow: 0 0 18px rgba(70, 110, 200, 0.32);
+  box-shadow: 0 0 18px rgba(248, 195, 125, 0.22);
 }
 
 .journal-mood-btn--active {
-  border-color: rgba(190, 215, 255, 0.75);
-  background: rgba(50, 85, 170, 0.28);
-  box-shadow: 0 0 22px rgba(80, 120, 210, 0.38);
+  border-color: rgba(255, 220, 175, 0.72);
+  background: rgba(234, 169, 96, 0.16);
+  box-shadow: 0 0 20px rgba(248, 195, 125, 0.28);
   transform: scale(1.06);
 }
 
@@ -2328,9 +2345,9 @@
 .journal-notes-input:focus {
   outline: none;
   background-image:
-    linear-gradient(168deg, rgba(50, 85, 170, 0.12) 0%, rgba(3, 4, 14, 0.90) 100%) padding-box,
+    linear-gradient(168deg, rgba(234, 169, 96, 0.07) 0%, rgba(3, 3, 12, 0.90) 100%) padding-box,
     var(--journal-panel-border-hover) border-box;
-  box-shadow: var(--journal-panel-outer-glow-hover), 0 0 0 3px rgba(80, 120, 210, 0.12);
+  box-shadow: var(--journal-panel-outer-glow-hover), 0 0 0 3px rgba(248, 195, 125, 0.10);
 }
 
 .journal-save-notes-btn {
@@ -2350,7 +2367,7 @@
 
 .journal-save-notes-btn:hover:not(:disabled) {
   background-image:
-    linear-gradient(168deg, rgba(50, 85, 170, 0.12) 0%, rgba(5, 6, 20, 0.90) 100%) padding-box,
+    linear-gradient(168deg, rgba(234, 169, 96, 0.08) 0%, rgba(5, 5, 18, 0.90) 100%) padding-box,
     var(--journal-panel-border-hover) border-box;
   box-shadow: var(--journal-panel-outer-glow-hover);
   color: #ffffff;
@@ -2363,9 +2380,9 @@
   background-image:
     linear-gradient(168deg, rgba(15, 217, 138, 0.08) 0%, rgba(3, 2, 10, 0.86) 100%) padding-box,
     linear-gradient(135deg,
-      rgba(255, 255, 255, 0.34) 0%,
+      rgba(255, 255, 255, 0.36) 0%,
       rgba(15, 217, 138, 0.24) 45%,
-      rgba(55, 95, 175, 0.52) 100%) border-box;
+      rgba(248, 195, 125, 0.35) 100%) border-box;
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
 }
@@ -2377,12 +2394,12 @@
   border-radius: var(--radius);
   animation: journal-fadeIn 0.35s ease-out;
   background-image:
-    linear-gradient(168deg, rgba(40, 70, 150, 0.10) 0%, rgba(3, 4, 14, 0.90) 100%) padding-box,
+    linear-gradient(168deg, rgba(234, 169, 96, 0.05) 0%, rgba(3, 3, 12, 0.90) 100%) padding-box,
     var(--journal-panel-border) border-box;
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   box-shadow:
-    inset 2px 0 0 rgba(130, 170, 245, 0.85),
+    inset 2px 0 0 rgba(248, 195, 125, 0.62),
     var(--journal-panel-outer-glow);
 }
 
@@ -2454,7 +2471,7 @@
 /* Stacked ≤ 900px */
 @media (max-width: 900px) {
   .journal-layout { flex-direction: column; }
-  .journal-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(100, 135, 210, 0.36); padding: 22px 18px; overflow-x: hidden; }
+  .journal-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.10); box-shadow: inset 0 -1px 0 rgba(248, 195, 125, 0.10); padding: 22px 18px; overflow-x: hidden; }
   .journal-calendar { width: 100%; max-width: 360px; margin-left: auto; margin-right: auto; padding: 20px clamp(12px, 4%, 20px) 18px; }
   .journal-stats-sidebar,
   .journal-streak-card,
@@ -2523,8 +2540,8 @@
 /* ── Scrollbar ───────────────────────────────────────────────── */
 .journal-page ::-webkit-scrollbar       { width: 4px; height: 4px; }
 .journal-page ::-webkit-scrollbar-track { background: transparent; }
-.journal-page ::-webkit-scrollbar-thumb { background: rgba(80, 120, 200, 0.35); border-radius: 99px; }
-.journal-page ::-webkit-scrollbar-thumb:hover { background: rgba(120, 160, 230, 0.52); }
+.journal-page ::-webkit-scrollbar-thumb { background: rgba(248, 195, 125, 0.22); border-radius: 99px; }
+.journal-page ::-webkit-scrollbar-thumb:hover { background: rgba(248, 210, 170, 0.38); }
 
 /* ════════════════════════════════════════════════════════════════════════════
    TWINKLING STARS — Individual animated star elements
