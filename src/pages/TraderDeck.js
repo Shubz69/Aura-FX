@@ -1,3 +1,7 @@
+/**
+ * Trader Desk route (/trader-deck). UI structure/CSS imports are presentation-only;
+ * data flow: state here + Api.* in MarketOutlookView / MarketIntelligenceBriefsView.
+ */
 import React, { useState, useMemo, useCallback } from 'react';
 import CosmicBackground from '../components/CosmicBackground';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +16,7 @@ import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
 import '../styles/TraderDeckNews.css';
 import '../styles/trader-deck/TraderDeckJournalGlass.css';
+import '../styles/trader-deck/TraderDeckContentModern.css';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -142,85 +147,90 @@ export default function TraderDeck() {
       )}
 
       <div className="td-deck-layout">
-        <header className="td-deck-header">
-          <nav className="td-deck-header-nav td-deck-header-left" aria-label="Trader Desk sections">
-            <button
-              type="button"
-              className={`td-deck-tab${mainTab === 'outlook' ? ' td-deck-tab--active' : ''}`}
-              onClick={() => setMainTab('outlook')}
-            >
-              MARKET OUTLOOK
-            </button>
-          </nav>
-          <h1 className="td-deck-page-title">Trader Desk</h1>
-          <nav className="td-deck-header-nav td-deck-header-right" aria-label="Trader Desk sections">
-            <button
-              type="button"
-              className={`td-deck-tab${mainTab === 'intelligence' ? ' td-deck-tab--active' : ''}`}
-              onClick={() => setMainTab('intelligence')}
-            >
-              MARKET INTELLIGENCE
-            </button>
-          </nav>
-        </header>
+        <div className="td-deck-tab-zone" aria-label="Trader Desk navigation">
+          <header className="td-deck-header td-deck-header--tab-zone">
+            <nav className="td-deck-header-nav td-deck-header-left td-deck-main-tab-rail" aria-label="Trader Desk sections">
+              <button
+                type="button"
+                className={`td-deck-tab${mainTab === 'outlook' ? ' td-deck-tab--active' : ''}`}
+                onClick={() => setMainTab('outlook')}
+              >
+                MARKET OUTLOOK
+              </button>
+            </nav>
+            <h1 className="td-deck-page-title">Trader Desk</h1>
+            <nav className="td-deck-header-nav td-deck-header-right td-deck-main-tab-rail" aria-label="Trader Desk sections">
+              <button
+                type="button"
+                className={`td-deck-tab${mainTab === 'intelligence' ? ' td-deck-tab--active' : ''}`}
+                onClick={() => setMainTab('intelligence')}
+              >
+                MARKET INTELLIGENCE
+              </button>
+            </nav>
+          </header>
 
-        <div className="td-deck-divider-row">
-          <div className="td-deck-header-line-left" aria-hidden="true" />
-          <div className="td-deck-calendar-bar-wrap">
-            <TraderDeckCalendarBar
-              selectedDate={selectedDate}
-              calendarMonth={calendarMonth}
-              period={subTab}
-              onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
-              onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
-              onOpenCalendar={() => setCalendarOverlayOpen(true)}
-            />
+          <div className="td-deck-divider-row td-deck-tab-zone-calendar">
+            <div className="td-deck-header-line-left" aria-hidden="true" />
+            <div className="td-deck-calendar-bar-wrap">
+              <TraderDeckCalendarBar
+                selectedDate={selectedDate}
+                calendarMonth={calendarMonth}
+                period={subTab}
+                onPrevMonth={subTab === 'weekly' ? handlePrevWeek : handlePrevDay}
+                onNextMonth={subTab === 'weekly' ? handleNextWeek : handleNextDay}
+                onOpenCalendar={() => setCalendarOverlayOpen(true)}
+              />
+            </div>
+            <div className="td-deck-header-line-right" aria-hidden="true" />
           </div>
-          <div className="td-deck-header-line-right" aria-hidden="true" />
+
+          <div className="td-deck-below-header td-deck-tab-zone-period">
+            <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left td-deck-period-segment" aria-label="Period">
+              <button
+                type="button"
+                className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
+                onClick={() => setSubTab('daily')}
+              >
+                Daily
+              </button>
+              <button
+                type="button"
+                className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
+                onClick={() => setSubTab('weekly')}
+              >
+                Weekly
+              </button>
+            </nav>
+          </div>
         </div>
 
-        <div className="td-deck-below-header">
-          <nav className="td-deck-sub-tabs td-deck-sub-tabs-under-left" aria-label="Period">
-            <button
-              type="button"
-              className={`td-deck-sub-tab${subTab === 'daily' ? ' td-deck-sub-tab--active' : ''}`}
-              onClick={() => setSubTab('daily')}
-            >
-              Daily
-            </button>
-            <button
-              type="button"
-              className={`td-deck-sub-tab${subTab === 'weekly' ? ' td-deck-sub-tab--active' : ''}`}
-              onClick={() => setSubTab('weekly')}
-            >
-              Weekly
-            </button>
-          </nav>
-        </div>
-
-        <div className="td-deck-content">
-          <div className="td-deck-content-box">
+        <div className="td-deck-content td-deck-content--modern">
+          <div className="td-deck-content-box td-deck-content-box--modern">
             <div className="td-deck-body td-deck-body-single">
               <main className="td-deck-main">
-                <div className="td-deck-main-inner">
-                  <div className="td-deck-dashboard-wrap">
-                    {mainTab === 'outlook' && (
-                      <MarketOutlookView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
-                    )}
-                    {mainTab === 'intelligence' && (
-                      <MarketIntelligenceBriefsView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
-                    )}
-                  </div>
-
-                  <div className="td-deck-inbox-footer" aria-label="Sessions and headlines">
-                    <div className="td-deck-inbox-footer-block td-deck-inbox-sessions">
-                      <h2 className="td-deck-inbox-footer-title">Market sessions</h2>
-                      <MarketSessionStatus />
-                    </div>
-                    <div className="td-deck-inbox-footer-block td-deck-inbox-headlines">
-                      <NewsHeadlines />
+                <div className="td-deck-main-inner td-deck-main-inner--modern">
+                  <div className="td-deck-main-stage">
+                    <div className="td-deck-dashboard-wrap">
+                      {mainTab === 'outlook' && (
+                        <MarketOutlookView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
+                      )}
+                      {mainTab === 'intelligence' && (
+                        <MarketIntelligenceBriefsView selectedDate={selectedDate} period={subTab} canEdit={canEdit} />
+                      )}
                     </div>
                   </div>
+                  <aside className="td-deck-rail" aria-label="Sessions and headlines">
+                    <div className="td-deck-inbox-footer" aria-label="Sessions and headlines">
+                      <div className="td-deck-inbox-footer-block td-deck-inbox-sessions">
+                        <h2 className="td-deck-inbox-footer-title">Market sessions</h2>
+                        <MarketSessionStatus />
+                      </div>
+                      <div className="td-deck-inbox-footer-block td-deck-inbox-headlines">
+                        <NewsHeadlines />
+                      </div>
+                    </div>
+                  </aside>
                 </div>
               </main>
             </div>

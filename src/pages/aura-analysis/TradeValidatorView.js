@@ -261,19 +261,21 @@ export default function TradeValidatorView() {
           </header>
         )}
 
-        <div className="tv-tab-row" role="tablist" aria-label="Execution style">
-          {CHECKLIST_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              className={`tv-tab-btn ${activeTab === tab.id ? 'tv-tab-btn-active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="tv-tab-rail">
+          <div className="tv-tab-row tv-tab-row--segmented" role="tablist" aria-label="Execution style">
+            {CHECKLIST_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                className={`tv-tab-btn ${activeTab === tab.id ? 'tv-tab-btn-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <section className="tv-score-card">

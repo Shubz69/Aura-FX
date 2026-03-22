@@ -1,6 +1,7 @@
 /* =============================================================================
-   TRADE VALIDATOR SHELL — Journal glass / gold / navy (Trade Validator routes only)
-   Tokens mirror src/styles/Journal.css (.journal-page). Loaded after AuraAnalysisShell.css.
+   TRADE VALIDATOR SHELL ONLY — src/components/trader-deck/TradeValidatorShell.js
+   All rules scoped with .trade-validator-shell. Presentation only; no logic.
+   Loaded after AuraAnalysisShell.css. Does not affect /aura-analysis or other pages.
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');

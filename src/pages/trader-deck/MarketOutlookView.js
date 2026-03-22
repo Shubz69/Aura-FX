@@ -309,13 +309,14 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
       {saveSuccess && <p className="td-mi-save-success" role="status">{saveSuccess}</p>}
-      <div className="td-trader-desk-shell">
-        <div className="td-trader-desk-shell-glow" aria-hidden />
-        <div className="td-trader-desk-shell-inner">
-          <header className="td-outlook-unified-header">
-            <h1 className="td-outlook-main-title">{mainTitle}</h1>
+      <div className="td-deck-mo-root td-deck-mo-outlook">
+          <header className="td-outlook-unified-header td-deck-mo-outlook-hero">
+            <div className="td-deck-mo-outlook-hero-text">
+              <p className="td-deck-mo-eyebrow">Market outlook</p>
+              <h1 className="td-outlook-main-title">{mainTitle}</h1>
+            </div>
             {canEdit && (
-              <div className="td-mi-shell-actions">
+              <div className="td-mi-shell-actions td-deck-mo-outlook-actions">
                 {!editMode ? (
                   <button type="button" className="td-mi-btn td-mi-btn-edit" onClick={handleEditToggle} aria-label="Edit content">Edit</button>
                 ) : (
@@ -327,8 +328,8 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               </div>
             )}
           </header>
-          <div className="td-outlook-dashboard td-outlook-dashboard--unified">
-            <div className="td-outlook-unified-grid">
+          <div className="td-outlook-dashboard td-outlook-dashboard--unified td-deck-mo-outlook-dash">
+            <div className="td-outlook-unified-grid td-deck-mo-bento">
               <DashboardPanel title="▲ Aurax Market Regime" className="td-outlook-panel td-outlook-panel--regime">{renderRegime()}</DashboardPanel>
               <DashboardPanel title="Aurax Market Pulse" className="td-outlook-panel td-outlook-panel--pulse">{renderPulse()}</DashboardPanel>
               <DashboardPanel title="Key Market Drivers" className="td-outlook-panel td-outlook-panel--drivers">
@@ -352,11 +353,10 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           </div>
           {/* Forex Factory live economic calendar — daily view only */}
           {period !== 'weekly' && (
-            <div className="td-outlook-ff-section">
+            <div className="td-outlook-ff-section td-deck-mo-ff">
               <ForexFactoryNews date={selectedDate} onlyToday={true} />
             </div>
           )}
-        </div>
       </div>
     </>
   );

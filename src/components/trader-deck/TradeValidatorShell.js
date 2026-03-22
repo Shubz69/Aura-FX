@@ -1,8 +1,13 @@
+/**
+ * Trade Validator route shell (/trader-deck/trade-validator/*). Nav + Outlet only;
+ * tab pages own their logic. Theme CSS is scoped with .trade-validator-shell.
+ */
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { TradeValidatorAccountProvider } from '../../context/TradeValidatorAccountContext';
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
 import '../../styles/trader-deck/TradeValidatorJournalGlass.css';
+import '../../styles/trader-deck/TradeValidatorTabModern.css';
 
 const BASE = '/trader-deck/trade-validator';
 const TABS = [
@@ -29,18 +34,20 @@ export default function TradeValidatorShell() {
         </div>
       </header>
 
-      <nav className="aura-shell-tabs-wrap" aria-label="Trade Validator sections">
-        <div className="aura-shell-tabs-inner">
-          {TABS.map((tab) => (
-            <NavLink
-              key={tab.path}
-              to={tab.path}
-              end={tab.path === `${BASE}/checklist`}
-              className={({ isActive }) => `aura-shell-tab ${isActive ? 'active' : ''}`}
-            >
-              {tab.label}
-            </NavLink>
-          ))}
+      <nav className="aura-shell-tabs-wrap aura-shell-tabs-wrap--validator" aria-label="Trade Validator sections">
+        <div className="aura-shell-tabs-rail">
+          <div className="aura-shell-tabs-inner aura-shell-tabs-inner--validator">
+            {TABS.map((tab) => (
+              <NavLink
+                key={tab.path}
+                to={tab.path}
+                end={tab.path === `${BASE}/checklist`}
+                className={({ isActive }) => `aura-shell-tab aura-shell-tab--validator ${isActive ? 'active' : ''}`}
+              >
+                {tab.label}
+              </NavLink>
+            ))}
+          </div>
         </div>
       </nav>
 

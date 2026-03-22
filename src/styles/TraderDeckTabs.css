@@ -375,7 +375,8 @@
   padding: 0;
 }
 
-.td-deck-dashboard-wrap:has(.td-trader-desk-shell) {
+.td-deck-with-tabs .td-deck-dashboard-wrap:has(.td-trader-desk-shell),
+.td-deck-with-tabs .td-deck-dashboard-wrap:has(.td-deck-mo-root) {
   max-width: 1700px;
 }
 

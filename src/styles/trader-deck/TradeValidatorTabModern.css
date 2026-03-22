@@ -1,0 +1,465 @@
+/* =============================================================================
+   TRADE VALIDATOR SHELL ONLY — tab layout + interiors under /trader-deck/trade-validator/*
+   Scoped with .trade-validator-shell. UI only; no hooks, API, or route logic.
+   Same shared components (e.g. Overview.js) elsewhere are NOT styled by this file.
+   ============================================================================= */
+
+.trade-validator-shell .aura-shell-content {
+  padding-left: clamp(12px, 2.5vw, 28px) !important;
+  padding-right: clamp(12px, 2.5vw, 28px) !important;
+}
+
+/* ── Shell tab bar — glass rail + scroll on small screens ──────────────── */
+.trade-validator-shell .aura-shell-tabs-wrap--validator {
+  padding: 10px 0 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.trade-validator-shell .aura-shell-tabs-rail {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 clamp(10px, 2.5vw, 24px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.trade-validator-shell .aura-shell-tabs-inner--validator {
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px !important;
+  width: max-content;
+  min-width: 100%;
+  margin: 0 auto !important;
+  padding: 8px 10px !important;
+  box-sizing: border-box;
+  border-radius: 18px !important;
+  background: rgba(3, 2, 10, 0.58) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(18px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.06) !important;
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+@media (min-width: 1100px) {
+  .trade-validator-shell .aura-shell-tabs-rail {
+    overflow-x: visible;
+  }
+
+  .trade-validator-shell .aura-shell-tabs-inner--validator {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+.trade-validator-shell .aura-shell-tab--validator {
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+
+/* ── Overview ───────────────────────────────────────────────────────────── */
+.trade-validator-shell .aura-overview-page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-bottom: 48px !important;
+}
+
+.trade-validator-shell .aura-overview-account-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  border-radius: 16px;
+  background: rgba(3, 2, 10, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(1.06);
+  -webkit-backdrop-filter: blur(18px) saturate(1.06);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.4);
+}
+
+.trade-validator-shell .aura-overview-account-pills {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px !important;
+  padding: 6px 8px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.trade-validator-shell .aura-overview-account-pill {
+  border-radius: 10px !important;
+}
+
+.trade-validator-shell .aura-overview-account-pill.active {
+  border-color: rgba(234, 169, 96, 0.48) !important;
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.2), rgba(234, 169, 96, 0.14)) !important;
+  color: #fff !important;
+}
+
+.trade-validator-shell .aura-overview-glance-title {
+  margin-bottom: 16px !important;
+}
+
+.trade-validator-shell .aura-overview-kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)) !important;
+  gap: 14px !important;
+  margin-bottom: 28px !important;
+}
+
+.trade-validator-shell .aura-overview-kpi-card {
+  border-radius: 14px !important;
+  padding: 16px 14px !important;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.trade-validator-shell .aura-overview-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(234, 169, 96, 0.22) !important;
+}
+
+.trade-validator-shell .aura-overview-monthly {
+  border-radius: 18px !important;
+  padding: 20px 20px 22px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  background: rgba(3, 2, 10, 0.55) !important;
+  backdrop-filter: blur(20px) saturate(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(1.05);
+  box-shadow: 0 14px 48px rgba(0, 0, 0, 0.42);
+}
+
+.trade-validator-shell .aura-overview-monthly-header {
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.trade-validator-shell .aura-overview-calendar-grid {
+  gap: 8px !important;
+}
+
+/* ── Checklist (TradeValidatorView) ─────────────────────────────────────── */
+.trade-validator-shell .trade-validator-inner.tv-new-layout {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 22px 28px !important;
+  border-radius: 20px !important;
+}
+
+.trade-validator-shell .tv-header {
+  margin-bottom: 20px;
+}
+
+.trade-validator-shell .tv-tab-rail {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.trade-validator-shell .tv-tab-row--segmented {
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0 !important;
+  margin: 0 auto 20px !important;
+  padding: 6px !important;
+  width: 100%;
+  max-width: 560px;
+  border-radius: 16px !important;
+  background: rgba(3, 2, 10, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(16px) saturate(1.05);
+  -webkit-backdrop-filter: blur(16px) saturate(1.05);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.trade-validator-shell .tv-tab-row--segmented .tv-tab-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 12px 10px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: none !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.trade-validator-shell .tv-tab-row--segmented .tv-tab-btn:hover {
+  color: rgba(255, 255, 255, 0.95) !important;
+  background: rgba(234, 169, 96, 0.08) !important;
+}
+
+.trade-validator-shell .tv-tab-row--segmented .tv-tab-btn-active {
+  color: #0a0704 !important;
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.96), rgba(234, 169, 96, 0.9), rgba(212, 141, 68, 0.88)) !important;
+  box-shadow: 0 4px 16px rgba(234, 169, 96, 0.28) !important;
+}
+
+.trade-validator-shell .tv-tab-row--segmented .tv-tab-btn-active:hover {
+  color: #0a0704 !important;
+  background: linear-gradient(135deg, rgba(248, 195, 125, 1), rgba(234, 169, 96, 0.95), rgba(212, 141, 68, 0.92)) !important;
+}
+
+.trade-validator-shell .tv-score-card {
+  border-radius: 16px !important;
+  padding: 20px 22px !important;
+  margin-bottom: 22px !important;
+}
+
+.trade-validator-shell .tv-cards-grid.tv-checklist-tab-cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+.trade-validator-shell .tv-section-card {
+  border-radius: 14px !important;
+  padding: 18px 18px 16px !important;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.trade-validator-shell .tv-setup-block {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+/* ── AI Chart Check ─────────────────────────────────────────────────────── */
+.trade-validator-shell .acc-page {
+  max-width: 1220px;
+  margin: 0 auto;
+}
+
+.trade-validator-shell .acc-header {
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: rgba(3, 2, 10, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Checklist mode pills — horizontal tile row */
+.trade-validator-shell .acc-type-pills {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 10px !important;
+  flex-direction: unset !important;
+}
+
+.trade-validator-shell .acc-type-pill {
+  border-radius: 12px !important;
+  min-height: 76px;
+  box-sizing: border-box;
+}
+
+.trade-validator-shell .acc-type-pill.active {
+  border-color: rgba(234, 169, 96, 0.5) !important;
+  background: rgba(234, 169, 96, 0.12) !important;
+  box-shadow: 0 0 22px rgba(234, 169, 96, 0.14) !important;
+}
+
+/* Buy / Sell / Unsure — segmented rail */
+.trade-validator-shell .acc-dir-pills {
+  display: flex !important;
+  flex-wrap: nowrap;
+  gap: 0 !important;
+  padding: 5px;
+  max-width: 420px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.trade-validator-shell .acc-dir-pill {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  border-radius: 8px !important;
+  border: none !important;
+  padding: 10px 12px !important;
+}
+
+.trade-validator-shell .acc-dir-pill.active {
+  background: linear-gradient(135deg, rgba(248, 195, 125, 0.88), rgba(234, 169, 96, 0.82)) !important;
+  color: #0a0704 !important;
+  box-shadow: 0 4px 14px rgba(234, 169, 96, 0.22);
+}
+
+.trade-validator-shell .acc-layout {
+  display: grid !important;
+  gap: 18px !important;
+  grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 1024px) {
+  .trade-validator-shell .acc-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px) !important;
+    align-items: start;
+  }
+
+  .trade-validator-shell .acc-config-card {
+    position: sticky;
+    top: calc(70px + env(safe-area-inset-top, 0px) + 8px);
+  }
+}
+
+.trade-validator-shell .acc-card {
+  border-radius: 16px !important;
+}
+
+.trade-validator-shell .acc-slots-grid {
+  gap: 12px !important;
+}
+
+.trade-validator-shell .acc-sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trade-validator-shell .acc-section-card {
+  border-radius: 14px !important;
+}
+
+.trade-validator-shell .acc-insights-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  gap: 14px !important;
+}
+
+/* ── Trade Calculator ───────────────────────────────────────────────────── */
+.trade-validator-shell .trade-calc-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.trade-validator-shell .trade-calc-title {
+  margin-bottom: 18px !important;
+}
+
+.trade-validator-shell .trade-calc-banner {
+  border-radius: 14px !important;
+  margin-bottom: 20px !important;
+}
+
+.trade-validator-shell .trade-calc-columns {
+  display: grid !important;
+  gap: 18px !important;
+  grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 960px) {
+  .trade-validator-shell .trade-calc-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: start;
+  }
+}
+
+.trade-validator-shell .trade-calc-panel {
+  border-radius: 16px !important;
+  padding: 20px 20px 18px !important;
+}
+
+/* ── Trade Journal ──────────────────────────────────────────────────────── */
+.trade-validator-shell .td-journal {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.trade-validator-shell .td-journal-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.trade-validator-shell .td-journal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.trade-validator-shell .td-journal-table-wrap {
+  border-radius: 16px !important;
+  overflow: auto;
+}
+
+/* ── Analytics ──────────────────────────────────────────────────────────── */
+.trade-validator-shell .aura-analytics {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.trade-validator-shell .aura-analytics-title {
+  margin-bottom: 20px !important;
+}
+
+.trade-validator-shell .aura-analytics-kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+  gap: 14px !important;
+  margin-bottom: 24px !important;
+}
+
+.trade-validator-shell .aura-analytics-kpi-card {
+  border-radius: 14px !important;
+  min-height: 92px;
+}
+
+/* ── Leaderboard ────────────────────────────────────────────────────────── */
+.trade-validator-shell .aura-leaderboard {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.trade-validator-shell .aura-leaderboard-header {
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.trade-validator-shell .aura-leaderboard-table-wrap {
+  border-radius: 16px !important;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(3, 2, 10, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ── Trader CV ──────────────────────────────────────────────────────────── */
+.trade-validator-shell .trader-cv {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.trade-validator-shell .trader-cv-hero {
+  border-radius: 18px !important;
+  margin-bottom: 22px !important;
+}

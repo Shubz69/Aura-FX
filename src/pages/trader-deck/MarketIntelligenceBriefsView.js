@@ -4,7 +4,6 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import Api from '../../services/Api';
-import TraderDeckDashboardShell from '../../components/trader-deck/TraderDeckDashboardShell';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
@@ -125,107 +124,101 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     <>
       {error && <p className="td-mi-fallback-msg" role="status">{error}</p>}
       {addSuccess && <p className="td-mi-save-success" role="status">{addSuccess}</p>}
-      <div className="td-outlook-dashboard">
-        <aside className="td-outlook-sidebar" aria-label="Briefs management">
-          <TraderDeckDashboardShell
-            title={`Market Intelligence — ${period === 'weekly' ? 'Weekly' : 'Daily'} (${selectedDate})`}
-            canEdit={false}
-          >
-            <div className="td-intel-briefs-panel">
-              <p className="td-mi-source td-mi-source--readonly">
-                View briefs for the selected date. Preview only (no download).
-              </p>
-              {canEdit && (
-                <>
-                  <div className="td-intel-upload-row">
-                    <input
-                      type="text"
-                      className="td-mi-edit-input td-intel-upload-title"
-                      placeholder="Brief title"
-                      value={uploadTitle}
-                      onChange={(e) => setUploadTitle(e.target.value)}
-                    />
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pptx,.ppt,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
-                    />
-                    <button
-                      type="button"
-                      className="td-mi-btn td-mi-btn-edit"
-                      onClick={handleUploadClick}
-                      disabled={uploading}
-                    >
-                      <FaPlus /> {uploading ? 'Uploading…' : 'Add brief'}
-                    </button>
-                  </div>
-                  <div className="td-intel-upload-row td-intel-upload-row--url">
-                    <input
-                      type="url"
-                      className="td-mi-edit-input td-intel-upload-url"
-                      placeholder="Or paste a view-only link (optional)"
-                      value={uploadUrl}
-                      onChange={(e) => setUploadUrl(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="td-mi-btn td-mi-btn-small"
-                      onClick={handleAddByUrl}
-                      disabled={uploading || !uploadUrl.trim()}
-                    >
-                      Add link
-                    </button>
-                  </div>
-                </>
-              )}
-              <ul className="td-intel-briefs-list">
-                {briefs.length === 0 ? (
-                  <li className="td-intel-brief-empty">No briefs for this date. {canEdit && 'Add one above.'}</li>
-                ) : (
-                  briefs.map((b) => (
-                    <li key={b.id} className="td-intel-brief-item">
-                      <span className="td-intel-brief-title">{b.title}</span>
-                      <div className="td-intel-brief-actions">
-                        <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)} title="Preview">
-                          <FaEye /> Preview
-                        </button>
-                        {canEdit && (
-                          <button type="button" className="td-mi-btn td-mi-btn-remove" onClick={() => handleDelete(b.id)} title="Remove">
-                            <FaTrash />
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          </TraderDeckDashboardShell>
-        </aside>
-        <div className="td-outlook-main">
-          <div className="td-outlook-main-card">
-            <header className="td-outlook-main-header">
-              <h1 className="td-outlook-main-title">{mainTitle}</h1>
-            </header>
-            <div className="td-outlook-divider" aria-hidden />
-            <div className="td-outlook-sections">
-              <section className="td-outlook-section" aria-labelledby="intel-main-heading">
-                <h2 id="intel-main-heading" className="td-outlook-section-title">Overview</h2>
-                <div className="td-outlook-section-body">
-                  <p className="td-mi-source td-mi-source--readonly">
-                    Add and manage briefs for this date using the form on the left. Use <strong>Preview</strong> to open a brief in a new tab (view only). Upload PowerPoint or PDF, or add a view-only link.
-                  </p>
-                  {briefs.length > 0 && (
-                    <p className="td-outlook-empty" style={{ marginTop: 12 }}>
-                      {briefs.length} brief{briefs.length !== 1 ? 's' : ''} for this date.
-                    </p>
-                  )}
-                </div>
-              </section>
-            </div>
+      <div className="td-deck-mi-modern">
+        <header className="td-deck-mi-modern-hero">
+          <div className="td-deck-mi-modern-hero-copy">
+            <p className="td-deck-mo-eyebrow">Market intelligence</p>
+            <h1 className="td-deck-mi-modern-title">{mainTitle}</h1>
+            <p className="td-deck-mi-modern-sub">
+              View briefs for the selected date. Preview only (no download). Upload PowerPoint or PDF, or add a view-only link.
+            </p>
           </div>
+          {briefs.length > 0 && (
+            <div className="td-deck-mi-modern-stat" aria-hidden>
+              <span className="td-deck-mi-modern-stat-value">{briefs.length}</span>
+              <span className="td-deck-mi-modern-stat-label">brief{briefs.length !== 1 ? 's' : ''} this date</span>
+            </div>
+          )}
+        </header>
+
+        <div className="td-deck-mi-modern-grid">
+          {canEdit && (
+            <section className="td-deck-mi-tile td-deck-mi-tile--upload" aria-labelledby="intel-upload-heading">
+              <h2 id="intel-upload-heading" className="td-deck-mi-tile-title">Add brief</h2>
+              <p className="td-deck-mi-tile-hint">Title, file upload, or paste a view-only URL.</p>
+              <div className="td-deck-mi-upload-stack">
+                <input
+                  type="text"
+                  className="td-mi-edit-input td-deck-mi-input-full"
+                  placeholder="Brief title"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pptx,.ppt,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+                <div className="td-deck-mi-upload-actions">
+                  <button
+                    type="button"
+                    className="td-mi-btn td-mi-btn-edit"
+                    onClick={handleUploadClick}
+                    disabled={uploading}
+                  >
+                    <FaPlus aria-hidden /> {uploading ? 'Uploading…' : 'Upload file'}
+                  </button>
+                </div>
+                <div className="td-deck-mi-url-row">
+                  <input
+                    type="url"
+                    className="td-mi-edit-input td-deck-mi-input-grow"
+                    placeholder="Or paste a view-only link"
+                    value={uploadUrl}
+                    onChange={(e) => setUploadUrl(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="td-mi-btn td-mi-btn-small"
+                    onClick={handleAddByUrl}
+                    disabled={uploading || !uploadUrl.trim()}
+                  >
+                    Add link
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <section className="td-deck-mi-tile td-deck-mi-tile--list" aria-labelledby="intel-list-heading">
+            <div className="td-deck-mi-tile-head">
+              <h2 id="intel-list-heading" className="td-deck-mi-tile-title">Briefs</h2>
+              <span className="td-deck-mi-tile-badge">{briefs.length}</span>
+            </div>
+            <ul className="td-deck-mi-brief-cards">
+              {briefs.length === 0 ? (
+                <li className="td-deck-mi-brief-empty">No briefs for this date. {canEdit && 'Use Add brief to upload or link one.'}</li>
+              ) : (
+                briefs.map((b) => (
+                  <li key={b.id} className="td-deck-mi-brief-card">
+                    <span className="td-deck-mi-brief-card-title">{b.title}</span>
+                    <div className="td-deck-mi-brief-card-actions">
+                      <button type="button" className="td-mi-btn td-mi-btn-small" onClick={() => handlePreview(b)} title="Preview">
+                        <FaEye /> Preview
+                      </button>
+                      {canEdit && (
+                        <button type="button" className="td-mi-btn td-mi-btn-remove" onClick={() => handleDelete(b.id)} title="Remove">
+                          <FaTrash />
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
         </div>
       </div>
 
