@@ -49,6 +49,7 @@ function FreeLockedView() {
   return (
     <div className="rp-locked">
       <div className="rp-locked-icon">📊</div>
+      <p className="rp-eyebrow rp-eyebrow--center">Premium feature</p>
       <h2 className="rp-locked-title">Monthly Reports</h2>
       <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
         Enter Your DNA
@@ -461,7 +462,11 @@ function ReportViewer({ report, onClose }) {
 /* ── Report history list ─────────────────────────────────────────────── */
 function ReportHistoryList({ token, reports, onView }) {
   if (!reports?.length) {
-    return <p className="rp-empty">No reports generated yet. Generate your first monthly report above.</p>;
+    return (
+      <div className="rp-empty-card">
+        <p className="rp-empty">No reports generated yet. Generate your first monthly report above.</p>
+      </div>
+    );
   }
   return (
     <div className="rp-history">
@@ -552,6 +557,7 @@ export default function ReportsPage() {
     <div className="rp-page">
       <div className="rp-header">
         <div className="rp-header-stack">
+          <p className="rp-eyebrow">Performance intelligence</p>
           <h2 className="rp-title">Monthly Reports</h2>
           <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
             Enter Your DNA

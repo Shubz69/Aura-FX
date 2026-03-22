@@ -109,11 +109,24 @@
 
 .td-deck-with-tabs.td-layout-page .td-deck-content--modern {
   margin-top: 4px;
+  /* Let the page scroll — avoid a scrollbar inside the glass box */
+  overflow: visible;
+  flex: 1 1 auto;
+  min-height: min-content;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content-box--modern {
+.td-deck-with-tabs.td-layout-page .td-deck-content-box.td-deck-content-box--modern {
   padding: 20px 22px 26px !important;
   border-radius: 20px !important;
+  overflow: visible !important;
+  flex: 1 1 auto;
+  min-height: min-content;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-content--modern .td-deck-body.td-deck-body-single {
+  overflow: visible !important;
+  min-height: min-content;
+  flex: 0 0 auto;
 }
 
 /* Main + sticky rail */
@@ -129,12 +142,13 @@
     grid-template-columns: minmax(0, 1fr) minmax(268px, 300px);
   }
 
+  /* Rail scrolls with the page — no nested scrollbar */
   .td-deck-with-tabs.td-layout-page .td-deck-rail {
-    position: sticky;
-    top: calc(70px + env(safe-area-inset-top, 0px) + 12px);
-    max-height: calc(100vh - 90px - env(safe-area-inset-top, 0px));
-    overflow: auto;
-    padding-right: 4px;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    align-self: start;
   }
 }
 
@@ -198,8 +212,8 @@
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-headlines {
-  min-height: 0;
-  flex: 1;
+  flex: none;
+  min-height: min-content;
 }
 
 /* ── Shared eyebrow ─────────────────────────────────────────────────────── */

@@ -307,7 +307,8 @@
   font-size: 1.35rem;
   font-weight: 700;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase !important;
   background: linear-gradient(112deg,
     var(--eaa-pale) 0%,
     var(--eaa-bright) 32%,

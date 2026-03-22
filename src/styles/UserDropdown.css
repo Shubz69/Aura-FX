@@ -109,30 +109,45 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.055);
   backdrop-filter: blur(22px) saturate(1.1);
   -webkit-backdrop-filter: blur(22px) saturate(1.1);
-  /* Cap height (iPad landscape / long admin menus); body scrolls inside */
-  display: flex;
-  flex-direction: column;
-  max-height: min(560px, calc(100vh - 55px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px));
-  max-height: min(560px, calc(100dvh - 55px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px));
-  overflow: hidden;
+  /* Desktop (mouse + fine pointer): natural height, no inner scrollbar */
+  display: block;
+  overflow: visible;
   z-index: 10002;
 
   animation: dropdownAppear 0.30s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transform-origin: top right;
 }
 
-.user-dropdown-header {
-  flex-shrink: 0;
+.user-dropdown-body {
+  overflow: visible;
 }
 
-.user-dropdown-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+/*
+ * Touch + narrow: cap height and scroll inside (iPad landscape with desktop nav, phones, etc.)
+ * Matches same logic as Navbar body-scroll lock for the user menu.
+ */
+@media (max-width: 1150px), (hover: none), (pointer: coarse) {
+  .user-dropdown {
+    display: flex;
+    flex-direction: column;
+    max-height: min(560px, calc(100vh - 55px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px));
+    max-height: min(560px, calc(100dvh - 55px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px));
+    overflow: hidden;
+  }
+
+  .user-dropdown-header {
+    flex-shrink: 0;
+  }
+
+  .user-dropdown-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
 }
 
 /* Gold shimmer line on top */
@@ -448,6 +463,7 @@
       0 0 0 0.5px rgba(234, 169, 96, 0.12),
       0 0 40px rgba(234, 169, 96, 0.06),
       inset 0 1px 0 rgba(255, 255, 255, 0.055);
+    /* Nav uses 56px offset here; overrides 55px max-height from touch scroll block */
     max-height: min(560px, calc(100vh - 56px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px));
     max-height: min(560px, calc(100dvh - 56px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px));
   }

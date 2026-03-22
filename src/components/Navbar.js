@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import ReactDOM from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -29,6 +29,21 @@ import A7Logo from "./A7Logo";
 import { triggerNotification } from "./NotificationSystem";
 import NavbarNotifications from "./NavbarNotifications";
 
+const userMenuScrollLockMql =
+  typeof window !== "undefined"
+    ? window.matchMedia("(max-width: 1150px), (hover: none), (pointer: coarse)")
+    : null;
+
+function subscribeUserMenuScrollLock(callback) {
+  if (!userMenuScrollLockMql) return () => {};
+  userMenuScrollLockMql.addEventListener("change", callback);
+  return () => userMenuScrollLockMql.removeEventListener("change", callback);
+}
+
+function getUserMenuScrollLockSnapshot() {
+  return userMenuScrollLockMql ? userMenuScrollLockMql.matches : false;
+}
+
 const Navbar = () => {
   const { user, loading, logout } = useAuth();
   const showSuperAdminLinks = !loading && user && isSuperAdmin(user);
@@ -37,16 +52,22 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const userMenuNeedsScrollLock = useSyncExternalStore(
+    subscribeUserMenuScrollLock,
+    getUserMenuScrollLockSnapshot,
+    getUserMenuScrollLockSnapshot
+  );
+
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + "/");
 
-  // Lock body scroll when mobile menu or user dropdown is open (touch: page won't steal scroll)
+  // Lock body when hamburger menu is open, or when user menu is open on touch / narrow (inner scroll)
   useEffect(() => {
-    const lock = mobileMenuOpen || dropdownOpen;
+    const lock = mobileMenuOpen || (dropdownOpen && userMenuNeedsScrollLock);
     document.body.style.overflow = lock ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [mobileMenuOpen, dropdownOpen]);
+  }, [mobileMenuOpen, dropdownOpen, userMenuNeedsScrollLock]);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
   const toggleDropdown = () => setDropdownOpen((prev) => !prev);

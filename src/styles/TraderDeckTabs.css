@@ -50,8 +50,9 @@
   font-weight: 600;
   color: #fff;
   margin: 0;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.1em;
   text-align: center;
+  text-transform: uppercase !important;
 }
 
 .td-deck-main-tabs {
@@ -187,9 +188,10 @@
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   color: rgba(255, 255, 255, 0.95);
   text-shadow: 0 0 20px rgba(234, 169, 96, 0.15);
+  text-transform: uppercase;
 }
 
 /* Full-screen calendar overlay */

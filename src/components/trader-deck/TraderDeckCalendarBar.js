@@ -76,7 +76,7 @@ export default function TraderDeckCalendarBar({
       tabIndex={0}
       onClick={onOpenCalendar}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenCalendar(); } }}
-      aria-label={`${period === 'weekly' ? 'Week' : 'Date'}: ${label}. Click to open calendar.`}
+      aria-label={`${period === 'weekly' ? 'Week' : 'Date'}: ${label.toUpperCase()}. Click to open calendar.`}
     >
       <button
         type="button"

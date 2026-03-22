@@ -209,6 +209,7 @@
 /* ── Override TraderDeckTabs.css purple chrome (this route only) ─────────── */
 .td-deck-with-tabs.td-layout-page .td-deck-calendar-bar-label {
   text-shadow: 0 0 20px rgba(234, 169, 96, 0.18) !important;
+  text-transform: uppercase !important;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-calendar-overlay-close:hover {
