@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
 import { AuraAnalysisProvider, useAuraAnalysis, DATE_RANGE_OPTIONS } from '../../context/AuraAnalysisContext';
+import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraDashboard.css';
 
 const TABS = [
@@ -115,7 +116,7 @@ function AuraDashboardInner() {
   const dateStr = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div className="aura-dashboard">
+    <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad">
 
       {/* ══ Primary Tab Header ══ */}
       <div className="aura-dashboard-tabs-wrap">
@@ -190,7 +191,9 @@ function AuraDashboardInner() {
 export default function AuraDashboardLayout() {
   return (
     <AuraAnalysisProvider>
-      <AuraDashboardInner />
+      <AuraTerminalThemeShell>
+        <AuraDashboardInner />
+      </AuraTerminalThemeShell>
     </AuraAnalysisProvider>
   );
 }

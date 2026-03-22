@@ -5,9 +5,10 @@ import Api from '../../services/Api';
 import TraderDnaIntroSequence from '../../components/trader-dna/TraderDnaIntroSequence';
 import TraderDnaReport, { hasRenderableDnaReport } from '../../components/trader-dna/TraderDnaReport';
 import TraderDnaNotReady from '../../components/trader-dna/TraderDnaNotReady';
+import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/trader-dna/TraderDna.css';
 
-export default function ReportsDnaPage() {
+function ReportsDnaPageInner() {
   const [loading, setLoading] = useState(true);
   const [dna, setDna] = useState(null);
   const [error, setError] = useState('');
@@ -112,7 +113,7 @@ export default function ReportsDnaPage() {
   const remLabel = dna?.cooldown?.remaining?.label;
 
   return (
-    <div className="tdna-page">
+    <div className="tdna-page journal-glass-panel journal-glass-panel--pad">
       {introOpen && <TraderDnaIntroSequence onComplete={handleIntroComplete} />}
 
       {resolving && (
@@ -215,5 +216,13 @@ export default function ReportsDnaPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ReportsDnaPage() {
+  return (
+    <AuraTerminalThemeShell>
+      <ReportsDnaPageInner />
+    </AuraTerminalThemeShell>
   );
 }

@@ -5,7 +5,7 @@ import Api from "../services/Api";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import "../styles/Profile.css";
 import { useNavigate } from 'react-router-dom';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
 import { getPlaceholderColor, setPlaceholderColor as savePlaceholderColor, PLACEHOLDER_COLORS } from '../utils/avatar';
 import { setUserInLocalStorage } from '../utils/userLocalStorage';
@@ -817,25 +817,21 @@ if (!avatarToSave && avatarColor) {
 
     if (loading) {
         return (
+            <AuraTerminalThemeShell>
             <div className="pf-container">
-                <CosmicBackground />
-                <div className="pf-loading">
+                <div className="pf-loading journal-glass-panel journal-glass-panel--pad">
                     <div className="pf-spinner"></div>
                     <span className="pf-loading-text">Loading Profile</span>
                 </div>
             </div>
+            </AuraTerminalThemeShell>
         );
     }
 
     return (
+        <AuraTerminalThemeShell>
         <div className="pf-container">
-            <CosmicBackground />
-            <div className="pf-ambient" aria-hidden="true">
-                <div className="pf-orb pf-orb-1"></div>
-                <div className="pf-orb pf-orb-2"></div>
-            </div>
-
-            <div className="pf-content">
+            <div className="pf-content journal-glass-panel journal-glass-panel--pad">
                 {/* Banner section */}
                 <div className="pf-banner-wrap">
                     {bannerPreview || formData.banner ? (
@@ -1308,6 +1304,7 @@ if (!avatarToSave && avatarColor) {
                 )}
             </div>
         </div>
+        </AuraTerminalThemeShell>
     );
 };
 

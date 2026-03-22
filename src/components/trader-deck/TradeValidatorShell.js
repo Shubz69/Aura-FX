@@ -5,6 +5,7 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { TradeValidatorAccountProvider } from '../../context/TradeValidatorAccountContext';
+import AuraTerminalThemeShell from '../AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraAnalysisShell.css';
 import '../../styles/trader-deck/TradeValidatorJournalGlass.css';
 import '../../styles/trader-deck/TradeValidatorTabModern.css';
@@ -25,7 +26,8 @@ const TABS = [
 export default function TradeValidatorShell() {
   return (
     <TradeValidatorAccountProvider>
-    <div className="aura-shell trade-validator-shell">
+    <AuraTerminalThemeShell>
+    <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad">
       <header className="aura-shell-hero">
         <div className="aura-shell-hero-inner">
           <div className="aura-shell-titles">
@@ -56,6 +58,7 @@ export default function TradeValidatorShell() {
         <Outlet />
       </main>
     </div>
+    </AuraTerminalThemeShell>
     </TradeValidatorAccountProvider>
   );
 }

@@ -16,6 +16,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import { toast } from 'react-toastify';
 import { FaSearch, FaUserShield, FaCrown, FaFilter, FaChevronLeft, FaChevronRight, FaTimes } from 'react-icons/fa';
 import '../styles/Settings.css';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 
 const ITEMS_PER_PAGE = 50; // Optimized for large user lists
 
@@ -355,9 +356,11 @@ const Settings = () => {
 
   if (loading) {
     return (
+      <AuraTerminalThemeShell>
       <div className="settings-page">
-        <div className="settings-loading">Loading...</div>
+        <div className="settings-loading journal-glass-panel journal-glass-panel--pad">Loading...</div>
       </div>
+      </AuraTerminalThemeShell>
     );
   }
 
@@ -366,8 +369,9 @@ const Settings = () => {
   }
 
   return (
+    <AuraTerminalThemeShell>
     <div className="settings-page">
-    <div className="settings-container">
+    <div className="settings-container journal-glass-panel journal-glass-panel--pad">
       <div className="settings-header">
         <h1>Admin Panel</h1>
         {superAdmin && (
@@ -824,6 +828,7 @@ const Settings = () => {
       />
     </div>
     </div>
+    </AuraTerminalThemeShell>
   );
 };
 

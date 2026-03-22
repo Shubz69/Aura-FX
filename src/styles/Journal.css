@@ -474,6 +474,63 @@
   overflow-x: hidden;
 }
 
+/* ══ Shared terminal routes — same shell / tokens as Journal ═══════════════════ */
+.journal-layout--terminal {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: min(1320px, 100%);
+  margin: 0 auto;
+  padding-left: clamp(14px, 3vw, 28px);
+  padding-right: clamp(14px, 3vw, 28px);
+  box-sizing: border-box;
+}
+
+.journal-terminal-body {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  padding-bottom: 32px;
+}
+
+.journal-page .journal-glass-panel {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+}
+
+.journal-page .journal-glass-panel--pad {
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.journal-page .aura-shell,
+.journal-page .aura-dashboard,
+.journal-page .td-layout-page,
+.journal-page .admin-panel-container,
+.journal-page .messages-page-container,
+.journal-page .pf-container,
+.journal-page .settings-page,
+.journal-page .connection-hub-page,
+.journal-page .rp-page,
+.journal-page .tdna-page,
+.journal-page .aff-page,
+.journal-page .admin-inbox-page,
+.journal-page .trade-validator-page {
+  background: transparent !important;
+  min-height: 0;
+}
+
+.journal-page .connection-hub-particles {
+  display: none !important;
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    SIDEBAR
    ════════════════════════════════════════════════════════════════════════════ */

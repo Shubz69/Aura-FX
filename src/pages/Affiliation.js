@@ -16,7 +16,7 @@ import {
   FaLightbulb,
   FaChevronDown,
 } from 'react-icons/fa';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
 import '../styles/Affiliation.css';
 
@@ -191,10 +191,9 @@ export default function Affiliation() {
   ];
 
   return (
+    <AuraTerminalThemeShell>
     <div className="aff-page">
-      <CosmicBackground />
-
-      <div className="aff-content">
+      <div className="aff-content journal-glass-panel journal-glass-panel--pad">
         <header className="aff-hero">
           <div className="aff-hero__eyebrow">Referral programme</div>
           <h1 className="aff-hero__title">Refer &amp; earn</h1>
@@ -467,5 +466,6 @@ export default function Affiliation() {
         </footer>
       </div>
     </div>
+    </AuraTerminalThemeShell>
   );
 }

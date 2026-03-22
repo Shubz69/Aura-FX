@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuraConnection, useCanEnterAuraDashboard } from '../../context/AuraConnectionContext';
 import { isSuperAdmin } from '../../utils/roles';
-import CosmicBackground from '../../components/CosmicBackground';
+import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import AuraEnterTransition from '../../components/aura-analysis/AuraEnterTransition';
 import '../../styles/aura-analysis/ConnectionHub.css';
 
@@ -116,34 +116,6 @@ const PLATFORM_COLORS = {
   coinbase: '#8a7d72',
 };
 
-// Particles component for background effect
-const Particles = () => {
-  const particlesRef = useRef(null);
-
-  useEffect(() => {
-    const particles = particlesRef.current;
-    if (!particles) return;
-
-    const particleCount = 50;
-    for (let i = 0; i < particleCount; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = `${Math.random() * 100}%`;
-      particle.style.animationDelay = `${Math.random() * 15}s`;
-      particle.style.animationDuration = `${10 + Math.random() * 10}s`;
-      particles.appendChild(particle);
-    }
-
-    return () => {
-      while (particles.firstChild) {
-        particles.removeChild(particles.firstChild);
-      }
-    };
-  }, []);
-
-  return <div className="connection-hub-particles" ref={particlesRef} />;
-};
-
 export default function ConnectionHub() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -205,8 +177,8 @@ export default function ConnectionHub() {
     new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
   return (
+    <AuraTerminalThemeShell>
     <div className="connection-hub-page">
-      <Particles />
       {transitioning && <AuraEnterTransition onComplete={handleTransitionComplete} />}
       {modalPlatform && (
         <ConnectModal
@@ -217,9 +189,7 @@ export default function ConnectionHub() {
           error={connectError}
         />
       )}
-      <CosmicBackground />
-
-      <div className="connection-hub-container">
+      <div className="connection-hub-container journal-glass-panel journal-glass-panel--pad">
         <header className="connection-hub-header">
           <h1 className="connection-hub-title">Connection Hub</h1>
           <p className="connection-hub-sub">
@@ -399,5 +369,6 @@ export default function ConnectionHub() {
         </section>
       </div>
     </div>
+    </AuraTerminalThemeShell>
   );
 }

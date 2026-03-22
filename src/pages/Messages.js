@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Messages.css';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { FaPaperPlane, FaArrowLeft, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
 import Api from '../services/Api';
 
@@ -174,9 +174,8 @@ const Messages = () => {
     }, [messages]);
 
     return (
-        <>
-            <CosmicBackground />
-            <div className="messages-page-container">
+        <AuraTerminalThemeShell>
+            <div className="messages-page-container journal-glass-panel journal-glass-panel--pad">
                 <div className="messages-page-header">
                     <button className="back-button" onClick={() => navigate(-1)}>
                         <FaArrowLeft /> Back
@@ -266,7 +265,7 @@ const Messages = () => {
                     </form>
                 </div>
             </div>
-        </>
+        </AuraTerminalThemeShell>
     );
 };
 

@@ -3,7 +3,7 @@
  * data flow: state here + Api.* in MarketOutlookView / MarketIntelligenceBriefsView.
  */
 import React, { useState, useMemo, useCallback } from 'react';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
 import TraderDeckCalendar from '../components/trader-deck/TraderDeckCalendar';
@@ -11,7 +11,6 @@ import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarB
 import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
 import NewsHeadlines from '../components/NewsHeadlines';
-import '../styles/Journal.css';
 import '../styles/TraderDeckMarket.css';
 import '../styles/TraderDeckTabs.css';
 import '../styles/TraderDeckNews.css';
@@ -124,9 +123,8 @@ export default function TraderDeck() {
   const datesWithContent = useMemo(() => ({}), []);
 
   return (
+    <AuraTerminalThemeShell>
     <div className="td-layout-page td-deck-with-tabs" id="td-deck-top">
-      <CosmicBackground />
-
       {calendarOverlayOpen && (
         <div className="td-deck-calendar-overlay" role="dialog" aria-modal="true" aria-label="Pick a date">
           <div className="td-deck-calendar-overlay-backdrop" onClick={() => setCalendarOverlayOpen(false)} />
@@ -206,7 +204,7 @@ export default function TraderDeck() {
         </div>
 
         <div className="td-deck-content td-deck-content--modern">
-          <div className="td-deck-content-box td-deck-content-box--modern">
+          <div className="td-deck-content-box td-deck-content-box--modern journal-glass-panel journal-glass-panel--pad">
             <div className="td-deck-body td-deck-body-single">
               <main className="td-deck-main">
                 <div className="td-deck-main-inner td-deck-main-inner--modern">
@@ -238,5 +236,6 @@ export default function TraderDeck() {
         </div>
       </div>
     </div>
+    </AuraTerminalThemeShell>
   );
 }

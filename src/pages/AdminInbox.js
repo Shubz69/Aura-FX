@@ -4,7 +4,7 @@ import { FaPaperclip, FaPaperPlane, FaSearch } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import WebSocketService from '../services/WebSocketService';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { FriendsUpgradeRequired } from '../components/RouteGuards';
 import '../styles/AdminInbox.css';
 
@@ -449,9 +449,8 @@ useEffect(() => {
   );
 
   return (
-    <>
-      <CosmicBackground />
-      <div className="admin-inbox-page">
+    <AuraTerminalThemeShell>
+      <div className="admin-inbox-page journal-glass-panel journal-glass-panel--pad">
         <div className="admin-inbox-layout">
 
           {/* ── Sidebar ── */}
@@ -746,7 +745,7 @@ useEffect(() => {
 
         </div>
       </div>
-    </>
+    </AuraTerminalThemeShell>
   );
 };
 

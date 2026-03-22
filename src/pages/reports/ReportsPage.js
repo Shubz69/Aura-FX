@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/reports/ReportsPage.css';
 
 const BASE_URL = process.env.REACT_APP_API_URL || '';
@@ -495,7 +496,7 @@ function ReportHistoryList({ token, reports, onView }) {
 }
 
 /* ── Main component ─────────────────────────────────────────────────── */
-export default function ReportsPage() {
+function ReportsPageInner() {
   const { token } = useAuth();
   const { eligibility, loading, error, reload } = useReportsData(token);
   const [viewingReport, setViewingReport] = useState(null);
@@ -515,7 +516,7 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="rp-loading">
+      <div className="rp-loading journal-glass-panel journal-glass-panel--pad">
         <span className="rp-spinner" />
         <span>Loading reports…</span>
       </div>
@@ -524,7 +525,7 @@ export default function ReportsPage() {
 
   if (error) {
     return (
-      <div className="rp-error-state">
+      <div className="rp-error-state journal-glass-panel journal-glass-panel--pad">
         <p>{error}</p>
         <button className="rp-btn rp-btn--secondary" onClick={reload} type="button">Retry</button>
       </div>
@@ -537,7 +538,7 @@ export default function ReportsPage() {
 
   // Free users
   if (role === 'free') return (
-    <div className="rp-page">
+    <div className="rp-page journal-glass-panel journal-glass-panel--pad">
       <FreeLockedView />
     </div>
   );
@@ -547,14 +548,14 @@ export default function ReportsPage() {
 
   if (viewingReport) {
     return (
-      <div className="rp-page">
+      <div className="rp-page journal-glass-panel journal-glass-panel--pad">
         <ReportViewer report={viewingReport} onClose={() => setViewingReport(null)} />
       </div>
     );
   }
 
   return (
-    <div className="rp-page">
+    <div className="rp-page journal-glass-panel journal-glass-panel--pad">
       <div className="rp-header">
         <div className="rp-header-stack">
           <p className="rp-eyebrow">Performance intelligence</p>
@@ -644,5 +645,13 @@ export default function ReportsPage() {
         onView={handleViewReport}
       />
     </div>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <AuraTerminalThemeShell>
+      <ReportsPageInner />
+    </AuraTerminalThemeShell>
   );
 }

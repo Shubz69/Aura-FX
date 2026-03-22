@@ -187,15 +187,16 @@ body.pai-active [class*="Footer"] {
   scrollbar-color: rgba(255,255,255,0.08) transparent;
 }
 
-/* Empty state: anchor hero + chips above the composer (removes the “void” gap) */
+/* Empty state: pin hero + chips to the bottom (above composer) — no dead middle gap */
 .pai-body--welcome {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: 8px;
+  padding-bottom: 10px;
+  justify-content: flex-end;
 }
 .pai-body--welcome .pai-messages {
-  flex: 1;
+  flex: 0 0 auto;
+  width: 100%;
   min-height: 0;
-  justify-content: flex-end;
   gap: 14px;
 }
 .pai-body::-webkit-scrollbar { width: 3px; }

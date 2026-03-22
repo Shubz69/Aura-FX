@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../utils/useWebSocket';
 import ConfirmationModal from '../components/ConfirmationModal';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
 import { FaSearch, FaUserShield } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
@@ -451,9 +451,9 @@ const AdminPanel = () => {
     const offlineUsersCount = users.length - onlineUsersCount;
 
     return (
+  <AuraTerminalThemeShell>
   <div className="admin-panel-container">
-    <CosmicBackground />
-    <div className="admin-panel">
+    <div className="admin-panel journal-glass-panel journal-glass-panel--pad">
       <div className="admin-header">
         <h1 className="admin-title">ADMIN PANEL</h1>
         <div className="admin-tabs">
@@ -731,6 +731,7 @@ const AdminPanel = () => {
       type="danger"
     />
   </div>
+  </AuraTerminalThemeShell>
 );
 };
 
