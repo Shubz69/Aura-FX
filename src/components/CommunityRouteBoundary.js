@@ -42,8 +42,8 @@ export default class CommunityRouteBoundary extends React.Component {
                         style={{
                             padding: '10px 20px',
                             borderRadius: '8px',
-                            border: '1px solid rgba(234, 169, 96, 0.5)',
-                            background: 'rgba(234, 169, 96, 0.25)',
+                            border: '1px solid rgba(139, 92, 246, 0.5)',
+                            background: 'rgba(139, 92, 246, 0.25)',
                             color: '#fff',
                             fontWeight: 600,
                             cursor: 'pointer'

@@ -97,12 +97,12 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsLoading(true);
         errorRef.current = '';
         setPasswordError(false);
         setEmailError(false);
         setError('');
         setErrorType(null);
+        setIsLoading(true);
 
         const emailTrimmed = (email || '').trim();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

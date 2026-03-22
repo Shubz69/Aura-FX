@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuraConnection, useCanEnterAuraDashboard } from '../../context/AuraConnectionContext';
 import { isSuperAdmin } from '../../utils/roles';
-import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
+import CosmicBackground from '../../components/CosmicBackground';
 import AuraEnterTransition from '../../components/aura-analysis/AuraEnterTransition';
 import '../../styles/aura-analysis/ConnectionHub.css';
 
@@ -105,15 +105,43 @@ const PLATFORM_ICONS = {
 };
 
 const PLATFORM_COLORS = {
-  mt5: '#eaa960',
-  mt4: '#f8c37d',
-  ctrader: '#d4a574',
-  dxtrade: '#c9a05c',
-  tradovate: '#b47830',
-  binance: '#fcd9a8',
-  bybit: '#6b6560',
-  kraken: '#5c534a',
-  coinbase: '#8a7d72',
+  mt5: '#8b5cf6',
+  mt4: '#6366f1',
+  ctrader: '#3b82f6',
+  dxtrade: '#10b981',
+  tradovate: '#f59e0b',
+  binance: '#fbbf24',
+  bybit: '#6b7280',
+  kraken: '#4f46e5',
+  coinbase: '#2563eb',
+};
+
+// Particles component for background effect
+const Particles = () => {
+  const particlesRef = useRef(null);
+
+  useEffect(() => {
+    const particles = particlesRef.current;
+    if (!particles) return;
+
+    const particleCount = 50;
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.animationDelay = `${Math.random() * 15}s`;
+      particle.style.animationDuration = `${10 + Math.random() * 10}s`;
+      particles.appendChild(particle);
+    }
+
+    return () => {
+      while (particles.firstChild) {
+        particles.removeChild(particles.firstChild);
+      }
+    };
+  }, []);
+
+  return <div className="connection-hub-particles" ref={particlesRef} />;
 };
 
 export default function ConnectionHub() {
@@ -131,9 +159,6 @@ export default function ConnectionHub() {
   const [disconnecting, setDisconnecting] = useState(null);
 
   const connectedCount = connections.length;
-
-  /** Only MT5 is live for members; superadmins can test every platform. */
-  const platformIsComingSoon = (platformId) => !superAdmin && platformId !== 'mt5';
 
   const openModal = (platform) => {
     setConnectError('');
@@ -180,8 +205,8 @@ export default function ConnectionHub() {
     new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
   return (
-    <AuraTerminalThemeShell>
     <div className="connection-hub-page">
+      <Particles />
       {transitioning && <AuraEnterTransition onComplete={handleTransitionComplete} />}
       {modalPlatform && (
         <ConnectModal
@@ -192,7 +217,9 @@ export default function ConnectionHub() {
           error={connectError}
         />
       )}
-      <div className="connection-hub-container journal-glass-panel journal-glass-panel--pad">
+      <CosmicBackground />
+
+      <div className="connection-hub-container">
         <header className="connection-hub-header">
           <h1 className="connection-hub-title">Connection Hub</h1>
           <p className="connection-hub-sub">
@@ -236,24 +263,19 @@ export default function ConnectionHub() {
             const isSuccess = successPlatform === p.id;
             const isDisconnecting = disconnecting === p.id;
             const info = conn?.accountInfo || {};
-            const comingSoon = platformIsComingSoon(p.id);
 
             return (
               <div
                 key={p.id}
-                className={`connection-card ${isConn ? 'connected' : ''}${comingSoon && !isConn ? ' connection-card--coming-soon' : ''}`}
+                className={`connection-card ${isConn ? 'connected' : ''}`}
                 onMouseEnter={() => setHoveredCard(p.id)}
                 onMouseLeave={() => setHoveredCard(null)}
-                style={{ '--platform-color': PLATFORM_COLORS[p.id] || '#eaa960' }}
+                style={{ '--platform-color': PLATFORM_COLORS[p.id] || '#8b5cf6' }}
               >
                 <div className="connection-card-header">
                   <span className="connection-card-icon">{PLATFORM_ICONS[p.id] || '📊'}</span>
                   <span className="connection-card-name">{p.name}</span>
-                  {comingSoon && !isConn ? (
-                    <span className="connection-card-badge connection-card-badge--soon">Coming soon</span>
-                  ) : (
-                    <span className="connection-card-badge">{p.category}</span>
-                  )}
+                  <span className="connection-card-badge">{p.category}</span>
                 </div>
 
                 {isConn ? (
@@ -295,23 +317,6 @@ export default function ConnectionHub() {
                         ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />Disconnecting…</>
                         : <><i className="fas fa-unlink" style={{ marginRight: 8 }} />Disconnect</>
                       }
-                    </button>
-                  </>
-                ) : comingSoon ? (
-                  <>
-                    <div className="connection-card-status">
-                      <span className="status-dot off" />
-                      <span>Coming soon</span>
-                    </div>
-                    <div className="connection-card-meta connection-card-meta--soon">
-                      <span>
-                        <i className="fas fa-hourglass-half" />
-                        This integration is not available yet. MetaTrader 5 is ready to connect below.
-                      </span>
-                    </div>
-                    <button type="button" className="connection-card-connect connection-card-connect--soon" disabled>
-                      <i className="fas fa-clock" style={{ marginRight: 8 }} />
-                      Coming soon
                     </button>
                   </>
                 ) : (
@@ -387,13 +392,12 @@ export default function ConnectionHub() {
           
           {canEnter && (
             <p className="connection-hub-enter-hint">
-              <i className="fas fa-check-circle" style={{ color: '#f8c37d' }} />
+              <i className="fas fa-check-circle" style={{ color: '#10b981' }} />
               Ready to analyze — {connectedCount} platform{connectedCount !== 1 ? 's' : ''} connected
             </p>
           )}
         </section>
       </div>
     </div>
-    </AuraTerminalThemeShell>
   );
 }

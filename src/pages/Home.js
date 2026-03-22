@@ -93,7 +93,7 @@ const SLIDES = [
         title:           'Professional Analytics Suite',
         subtitle:        'Institutional tools built for serious traders',
         statBadge:       '50+ Indicators',
-        chartColor:      '#f8c37d',
+        chartColor:      '#63B3ED',
         backgroundImage: null,
         bgGradient:      'linear-gradient(135deg, #030B1A 0%, #071624 45%, #0B2238 100%)',
     },

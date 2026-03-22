@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/WhyInfinity.css";
-import "../styles/contactPageHero.css";
 import CosmicBackground from "../components/CosmicBackground";
 import MarketTicker from "../components/MarketTicker";
 import { FaChartLine, FaGraduationCap, FaArrowRight, FaUsers, FaLock, FaRocket, FaChartPie, FaTimesCircle, FaCheckCircle } from "react-icons/fa";
@@ -126,20 +125,7 @@ const WhyInfinity = () => {
             <div className="content-wrapper">
                 {/* Header Section */}
                 <header className="why-header">
-                    <div className="contact-header">
-                        <div className="contact-eyebrow">
-                            <span className="contact-eyebrow__dot" />
-                            <span>The platform</span>
-                            <span className="contact-eyebrow__dot" />
-                        </div>
-                        <h1 className="contact-title">Why Aura Terminal</h1>
-                        <p className="contact-subtitle">
-                            Institutional-grade education, live transparency, and tools built for serious traders.
-                        </p>
-                        <div className="contact-header__rule">
-                            <span /><span /><span />
-                        </div>
-                    </div>
+                    <h1 className="why-main-title">Why Aura Terminal</h1>
                     <MarketTicker 
                         compact={true}
                         showTabs={false}

@@ -153,12 +153,10 @@ html, body {
     50%      { opacity:.55; transform:translate(-50%,-50%) scale(1.05); }
 }
 .loading-brand-text {
-    display: inline-block; font-family: var(--font);
+    display: block; font-family: var(--font);
     font-size: 2.1rem; font-weight: 700;
     letter-spacing: .36em; text-transform: uppercase;
     margin-bottom: .40rem;
-    /* Wide tracking adds space after the last letter — nudge right so the word sits visually centered in the ring */
-    transform: translateX(0.2em);
     animation: titleGlow 2.6s ease-in-out infinite alternate;
     background: linear-gradient(135deg, var(--text) 0%, var(--eaa-bright) 52%, var(--eaa-core) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -186,14 +184,6 @@ html, body {
     50%    {opacity:1;transform:scale(1.35);box-shadow:0 0 9px var(--eaa-glow)}
 }
 
-@media (max-width: 480px) {
-    .loading-brand-text {
-        font-size: 1.65rem;
-        letter-spacing: 0.28em;
-        transform: translateX(0.16em);
-    }
-}
-
 /* ══════════════════════════════════════════════
    HOME LAYOUT
 ══════════════════════════════════════════════ */
@@ -201,8 +191,7 @@ html, body {
     position: relative; z-index: 10;
     width: 100%; max-width: 1500px;
     margin: 0 auto;
-    /* Top: small offset only — navbar clearance lives on .page-wrapper */
-    padding: 40px 3.2rem 300px;
+    padding: 112px 3.2rem 300px;
     display: flex; flex-direction: column; align-items: center;
     box-sizing: border-box;
     animation: fadeInUp 1.1s ease-out both;
@@ -219,7 +208,7 @@ html, body {
     display: grid; grid-template-columns: 1fr 1fr;
     align-items: center; gap: 4.5rem;
     width: 100%; margin-bottom: 5.5rem;
-    padding-top: 0;
+    padding-top: 1rem;
     position: relative; z-index: 10; min-height: 540px;
 }
 
@@ -1141,36 +1130,6 @@ html, body {
 ══════════════════════════════════════════════ */
 .market-ticker-wrapper { width: 100%; }
 
-/* ── All home titles / labels in capitals (scoped; wins over stray globals) ── */
-.loading-screen .loading-brand-text,
-.loading-screen .loading-subtitle {
-    text-transform: uppercase !important;
-}
-.home-container .hero-eyebrow-text,
-.home-container .brand-name,
-.home-container .brand-name-line,
-.home-container .powered-by-glitch,
-.home-container .powered-by-glitch strong,
-.home-container .intro-text,
-.home-container .home-cta-button,
-.home-container .home-secondary-button,
-.home-container .feature-title,
-.home-container .section-title,
-.home-container .why-title,
-.home-container .trade-markets-section__title,
-.home-container .trade-markets-section__card-title,
-.home-container .feature-item-title,
-.home-container .stat-label,
-.home-container .slide-title,
-.home-container .slide-tag,
-.home-container .slide-stat-badge,
-.home-container .trust-badge,
-.home-container .partner-logo,
-.home-container .view-all-markets-btn,
-.home-container .ticker-symbol {
-    text-transform: uppercase !important;
-}
-
 /* ══════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════ */
@@ -1180,18 +1139,18 @@ html, body {
     .stat-number    { font-size: 3.4rem; }
 }
 @media (max-width: 1280px) {
-    .home-content   { padding: 36px 2.6rem 270px; }
+    .home-content   { padding: 96px 2.6rem 270px; }
     .brand-name     { font-size: 3.9rem; }
     .home-logo-section { gap: 3.2rem; min-height: 480px; }
     .stat-number    { font-size: 2.6rem; }
 }
 @media (min-width: 1024px) and (max-width: 1366px) {
-    .home-content   { padding: 36px 2.2rem 260px; max-width: 1220px; }
+    .home-content   { padding: 98px 2.2rem 260px; max-width: 1220px; }
     .brand-name     { font-size: 3.5rem; }
     .home-logo-section { gap: 2.8rem; min-height: 440px; }
 }
 @media (min-width: 768px) and (max-width: 1023px) {
-    .home-content   { padding: 28px 1.90rem 230px; }
+    .home-content   { padding: 78px 1.90rem 230px; }
     .home-main-content { gap: 4.4rem; }
     .home-logo-section { grid-template-columns: 1fr; min-height: auto; gap: 2.8rem; margin-bottom: 4.4rem; }
     .hero-left      { align-items: center; }
@@ -1215,10 +1174,9 @@ html, body {
     .trade-markets-section__title { font-size: 1.72rem; }
 }
 @media (max-width: 767px) {
-    .home-content   { padding: 40px 1.5rem 190px; }
+    .home-content   { padding: 68px 1.5rem 190px; }
     .home-main-content { gap: 3.4rem; }
     .home-logo-section { grid-template-columns: 1fr; min-height: auto; gap: 2.2rem; margin-bottom: 3.4rem; }
-    .hero-left .a7-logo-wrap { transform: translateX(-14px); }
     .hero-left      { align-items: center; }
     .hero-left::before { display: none; }
     .hero-right     { justify-content: center; perspective: none; }
@@ -1265,7 +1223,7 @@ html, body {
     .section-title, .trade-markets-section__title { font-size: 1.50rem; }
 }
 @media (max-width: 374px) {
-    .home-content   { padding: 20px .85rem 155px; }
+    .home-content   { padding: 50px .85rem 155px; }
     .brand-name     { font-size: 1.82rem; }
     .home-cta-button, .home-secondary-button { padding: .90rem 1.55rem; font-size: .77rem; }
     .stat-number    { font-size: 1.70rem; }
@@ -1278,11 +1236,11 @@ html, body {
     .home-main-content { gap: 2.8rem; }
 }
 @media (min-height: 1000px) {
-    .home-content { padding-top: 48px; padding-bottom: 340px; }
+    .home-content { padding-top: 140px; padding-bottom: 340px; }
     .home-main-content { gap: 6.5rem; }
 }
 @media (max-width: 896px) and (orientation: landscape) {
-    .home-content { padding-top: 28px; padding-bottom: 190px; }
+    .home-content { padding-top: 52px; padding-bottom: 190px; }
     .home-logo-section { margin-bottom: 1.8rem; grid-template-columns: 1fr 1fr; min-height: auto; }
     .hero-left  { align-items: flex-start; }
     .hero-left::before { display: block; }

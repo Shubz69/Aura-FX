@@ -8,7 +8,7 @@ const STYLES = `
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: #010008;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,19 +35,19 @@ const STYLES = `
 .aet-glow-3 {
   width: 900px; height: 900px;
   background: radial-gradient(ellipse at center,
-    rgba(70, 100, 190, 0.05) 0%, transparent 65%);
+    rgba(139,92,246,0.04) 0%, transparent 65%);
   animation: gp1 6s ease-in-out infinite reverse;
 }
 .aet-glow-2 {
   width: 580px; height: 580px;
   background: radial-gradient(ellipse at center,
-    rgba(160, 185, 240, 0.08) 0%, rgba(85, 115, 195, 0.06) 42%, transparent 70%);
+    rgba(139,92,246,0.09) 0%, rgba(99,179,237,0.06) 40%, transparent 70%);
   animation: gp2 4s ease-in-out infinite;
 }
 .aet-glow-1 {
   width: 300px; height: 300px;
   background: radial-gradient(ellipse at center,
-    rgba(255, 255, 255, 0.14) 0%, rgba(200, 215, 255, 0.10) 38%, rgba(248, 195, 125, 0.04) 62%, transparent 72%);
+    rgba(139,92,246,0.22) 0%, rgba(99,179,237,0.12) 35%, transparent 70%);
   animation: gp1 3s ease-in-out infinite;
 }
 @keyframes gp1 {
@@ -72,10 +72,9 @@ const STYLES = `
   border-radius: 50%;
   background: radial-gradient(circle, #000 55%, rgba(20,0,50,0.85) 80%, transparent 100%);
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.22),
-    0 0 18px rgba(160, 185, 240, 0.45),
-    0 0 42px rgba(70, 100, 190, 0.22),
-    0 0 60px rgba(248, 195, 125, 0.06),
+    0 0 0 2px rgba(139,92,246,0.28),
+    0 0 22px rgba(139,92,246,0.55),
+    0 0 55px rgba(139,92,246,0.25),
     inset 0 0 22px #000;
   animation: coreBreath 2.2s ease-in-out infinite;
   position: relative; z-index: 5;
@@ -88,26 +87,26 @@ const STYLES = `
 }
 .aet-core-ring:nth-child(1) {
   width: 94px; height: 94px;
-  border-top-color: rgba(255, 255, 255, 0.55);
-  border-right-color: rgba(200, 215, 255, 0.14);
+  border-top-color: rgba(139,92,246,0.65);
+  border-right-color: rgba(139,92,246,0.18);
   animation-duration: 2.3s;
 }
 .aet-core-ring:nth-child(2) {
   width: 122px; height: 122px;
-  border-bottom-color: rgba(120, 150, 220, 0.42);
-  border-left-color: rgba(85, 115, 195, 0.12);
+  border-bottom-color: rgba(99,179,237,0.55);
+  border-left-color: rgba(99,179,237,0.12);
   animation-duration: 3.7s;
   animation-direction: reverse;
 }
 .aet-core-ring:nth-child(3) {
   width: 154px; height: 154px;
-  border-top-color: rgba(160, 185, 240, 0.28);
-  border-right-color: rgba(248, 195, 125, 0.10);
+  border-top-color: rgba(167,139,250,0.38);
+  border-right-color: rgba(167,139,250,0.07);
   animation-duration: 5.4s;
 }
 @keyframes coreBreath {
-  0%,100% { box-shadow: 0 0 0 2px rgba(255,255,255,.18), 0 0 18px rgba(160,185,240,.4), 0 0 42px rgba(70,100,190,.2), 0 0 60px rgba(248,195,125,.05), inset 0 0 22px #000; }
-  50%      { box-shadow: 0 0 0 2px rgba(255,255,255,.28), 0 0 26px rgba(180,205,255,.55), 0 0 58px rgba(90,125,210,.28), 0 0 72px rgba(248,195,125,.09), inset 0 0 22px #000; }
+  0%,100% { box-shadow: 0 0 0 2px rgba(139,92,246,.28), 0 0 22px rgba(139,92,246,.55), 0 0 55px rgba(139,92,246,.25), inset 0 0 22px #000; }
+  50%      { box-shadow: 0 0 0 3px rgba(139,92,246,.5),  0 0 36px rgba(139,92,246,.75), 0 0 90px rgba(139,92,246,.4),  inset 0 0 22px #000; }
 }
 @keyframes rr {
   from { transform: rotate(0deg); }
@@ -138,12 +137,12 @@ const STYLES = `
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.45) 22%, rgba(160,185,240,.38) 48%, rgba(255,255,255,.65) 72%, rgba(248,195,125,.14) 92%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,.7), rgba(99,179,237,.5), transparent);
 }
 .aet-hud::after {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at top, rgba(160,185,240,.06) 0%, rgba(70,100,190,.04) 40%, transparent 68%);
+  background: radial-gradient(ellipse at top, rgba(139,92,246,.07) 0%, transparent 65%);
   pointer-events: none;
 }
 @keyframes hudIn {
@@ -164,12 +163,8 @@ const STYLES = `
 }
 .aet-hud-fill {
   height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.82) 0%,
-    rgba(200, 215, 255, 0.72) 38%,
-    rgba(95, 125, 210, 0.78) 72%,
-    rgba(248, 195, 125, 0.35) 100%);
-  box-shadow: 0 0 12px rgba(160, 185, 240, 0.35), 0 0 20px rgba(248, 195, 125, 0.08);
+  background: linear-gradient(90deg, rgba(139,92,246,.9), rgba(99,179,237,.8));
+  box-shadow: 0 0 10px rgba(139,92,246,.6);
   position: relative;
   transition: width .1s cubic-bezier(.22,1,.36,1);
 }
@@ -183,14 +178,9 @@ const STYLES = `
 
 .aet-hud-pct {
   font-size: .68rem; font-weight: 300; letter-spacing: .2em; margin: 0;
-  background: linear-gradient(125deg,
-    #ffffff 0%,
-    rgba(252, 253, 255, 0.99) 28%,
-    rgba(200, 215, 255, 0.96) 58%,
-    rgba(120, 150, 220, 0.92) 82%,
-    rgba(248, 205, 160, 0.42) 100%);
+  background: linear-gradient(125deg, #fff 30%, #c4b5fd 70%, #93c5fd 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  filter: drop-shadow(0 0 6px rgba(160, 185, 240, 0.25));
+  filter: drop-shadow(0 0 8px rgba(139,92,246,.4));
   position: relative; z-index: 1;
 }
 
@@ -250,21 +240,14 @@ class Galaxy {
 
   _buildParticles() {
     const N = window.innerWidth < 480 ? 300 : 500;
-    const COLS = [
-      'rgba(255,255,255,',
-      'rgba(200,215,255,',
-      'rgba(160,185,240,',
-      'rgba(95,125,210,',
-      'rgba(120,150,220,',
-      'rgba(248,195,125,',
-    ];
+    const COLS = ['rgba(139,92,246,', 'rgba(99,179,237,', 'rgba(167,139,250,', 'rgba(196,181,253,', 'rgba(255,255,255,', 'rgba(52,211,153,'];
     this.pts = Array.from({ length: N }, (_, i) => {
       const arm = i % 3;
       const t = Math.random();
       const base = (arm / 3) * Math.PI * 2 + t * Math.PI * 3.8;
       const ang = base + (Math.random() - 0.5) * 0.3;
       const dist = 36 + t * (this.maxR - 36) + (Math.random() - 0.5) * 26;
-      const ci = Math.random() < 0.06 ? 5 : Math.floor(Math.random() * 5);
+      const ci = Math.random() < 0.05 ? 5 : Math.floor(Math.random() * 5);
       return {
         ang, dist,
         spd: (0.0005 + Math.random() * 0.0009) * (Math.random() < 0.5 ? 1 : -0.55),
@@ -327,17 +310,14 @@ class Galaxy {
       ctx.fill();
     }
 
-    // Accretion arcs (white → navy; gold whisper on alternate)
+    // Accretion arcs
     for (let i = 0; i < 3; i++) {
       const sweep = (time * 0.24 + (i / 3) * Math.PI * 2) % (Math.PI * 2);
       ctx.beginPath();
       ctx.arc(cx, cy, 58 + i * 6, sweep, sweep + 0.5);
-      const styles = [
-        `rgba(200,215,255,${0.14 + suck * 0.12})`,
-        `rgba(95,125,210,${0.12 + suck * 0.10})`,
-        `rgba(248,195,125,${0.06 + suck * 0.08})`,
-      ];
-      ctx.strokeStyle = styles[i];
+      ctx.strokeStyle = i % 2 === 0
+        ? `rgba(139,92,246,${0.16 + suck * 0.14})`
+        : `rgba(99,179,237,${0.13 + suck * 0.11})`;
       ctx.lineWidth = 10;
       ctx.lineCap = 'round';
       ctx.stroke();
@@ -352,7 +332,7 @@ class Galaxy {
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len * 0.42);
-        ctx.strokeStyle = `rgba(160,185,240,${(suck * 0.09).toFixed(2)})`;
+        ctx.strokeStyle = `rgba(167,139,250,${(suck * 0.1).toFixed(2)})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }

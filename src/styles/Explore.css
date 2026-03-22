@@ -79,8 +79,7 @@ html, body {
     position: relative;
     display: flex;
     flex-direction: column;
-    /* Let fixed CosmicBackground canvas show through (index.css used an opaque scrim) */
-    background: transparent;
+    background: var(--bg);
     color: var(--text);
     width: 100%;
     max-width: 100%;
@@ -144,8 +143,7 @@ html, body {
     z-index: 2;
     max-width: 1500px;
     margin: 0 auto;
-    /* Top: small offset — navbar clearance is on .page-wrapper */
-    padding: 40px 3.2rem 140px;
+    padding: 112px 3.2rem 280px;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -160,17 +158,135 @@ html, body {
 }
 
 /* ══════════════════════════════════════════════════════════
-   HEADER — eyebrow / title / subtitle / rule: contactPageHero.css
+   HEADER
    ══════════════════════════════════════════════════════════ */
 .explore-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 6rem;
     width: 100%;
     position: relative;
 }
 
-.explore-header .contact-header {
-    margin-bottom: 0;
+/* Eyebrow pill — gold like home hero-eyebrow */
+.explore-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1.6rem;
+    padding: 0.34rem 0.90rem 0.34rem 0.60rem;
+    background: rgba(234,169,96,0.080);
+    border: 1px solid rgba(234,169,96,0.22);
+    border-radius: 100px;
+    animation: brandFadeIn 1.2s ease-out 0.05s both;
+}
+
+.explore-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--eaa-core);
+    box-shadow: 0 0 7px var(--eaa-glow);
+    animation: eyebrowPulse 2.2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes eyebrowPulse {
+    0%,100% { opacity: 0.65; transform: scale(0.85); }
+    50%     { opacity: 1;    transform: scale(1.2); }
+}
+
+.explore-eyebrow-text {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--eaa-soft);
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+}
+
+/* Main title — gold gradient, same as brand-name line 2 */
+.explore-main-title {
+    font-size: 3.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0 0 1.6rem;
+    display: block;
+    line-height: 1.05;
+    animation: brandFadeIn 1.2s ease-out 0.18s both;
+    text-shadow: 0 2px 22px rgba(0,0,0,0.78);
+}
+
+.explore-main-title .title-line-white {
+    display: block;
+    color: #fff;
+}
+
+.explore-main-title .title-line-gold {
+    display: block;
+    background: linear-gradient(112deg,
+        var(--eaa-pale) 0%,
+        var(--eaa-bright) 30%,
+        var(--eaa-core) 60%,
+        var(--eaa-warm) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+@keyframes brandFadeIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Subtitle under title */
+.explore-header-sub {
+    font-size: 1.02rem;
+    font-weight: 400;
+    color: rgba(225,220,255,0.78);
+    letter-spacing: 0.02em;
+    line-height: 1.76;
+    max-width: 520px;
+    margin: 0 auto 2rem;
+    animation: brandFadeIn 1.2s ease-out 0.32s both;
+}
+
+/* Gold divider line */
+.explore-header-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+    animation: brandFadeIn 1.2s ease-out 0.46s both;
+}
+
+.explore-header-divider::before,
+.explore-header-divider::after {
+    content: '';
+    width: 80px;
+    height: 1px;
+}
+
+.explore-header-divider::before {
+    background: linear-gradient(90deg, transparent, var(--eaa-core));
+}
+
+.explore-header-divider::after {
+    background: linear-gradient(90deg, var(--eaa-warm), transparent);
+}
+
+.explore-header-diamond {
+    width: 6px;
+    height: 6px;
+    background: var(--eaa-core);
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px var(--eaa-glow);
+    animation: diamondPulse 2s ease-in-out infinite;
+}
+
+@keyframes diamondPulse {
+    0%, 100% { transform: rotate(45deg) scale(1); opacity: 1; }
+    50%       { transform: rotate(45deg) scale(1.8); opacity: 0.6; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -233,7 +349,7 @@ html, body {
     font-size: 0.97rem;
     line-height: 1.78;
     color: rgba(210,206,248,0.74);
-    margin-bottom: 1rem;
+    margin-bottom: 1.4rem;
     font-weight: 400;
 }
 
@@ -348,7 +464,7 @@ html, body {
 .explore-features-section {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 1.15rem;
 }
 
 .explore-feature-card {
@@ -463,8 +579,7 @@ html, body {
 /* ══════════════════════════════════════════════════════════
    SECTION TITLE — same as home section-title
    ══════════════════════════════════════════════════════════ */
-.explore-section-title,
-.explore-section-heading {
+.explore-section-title {
     font-family: var(--font);
     font-size: 1.95rem;
     font-weight: 700;
@@ -478,8 +593,7 @@ html, body {
     text-shadow: 0 2px 16px rgba(0,0,0,0.68);
 }
 
-.explore-section-title::before,
-.explore-section-heading::before {
+.explore-section-title::before {
     content: '';
     position: absolute;
     left: 50%;
@@ -495,7 +609,7 @@ html, body {
     font-size: 0.95rem;
     color: var(--text-muted);
     text-align: center;
-    margin: 1rem 0 1.75rem;
+    margin: 1.6rem 0 3rem;
     font-weight: 400;
     max-width: 540px;
     line-height: 1.72;
@@ -538,8 +652,8 @@ html, body {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    padding: 2.25rem 0;
-    margin-bottom: 1.25rem;
+    padding: 4rem 0;
+    margin-bottom: 2rem;
 }
 
 /* ── Pages Grid ───────────────────────────────────────────── */
@@ -1044,27 +1158,27 @@ html, body {
 @media (min-width: 1600px) {
     .explore-content-wrapper {
         max-width: 1640px;
-        padding: 44px 4rem 180px;
+        padding: 128px 4rem 320px;
     }
 
-    .explore-section-title,
-    .explore-section-heading { font-size: 2.2rem; }
+    .explore-main-title { font-size: 4.2rem; }
+    .explore-section-title { font-size: 2.2rem; }
 }
 
 /* Desktop */
 @media (max-width: 1280px) {
-    .explore-content-wrapper { padding: 36px 2.6rem 140px; }
-    .explore-section-title,
-    .explore-section-heading { font-size: 1.75rem; }
+    .explore-content-wrapper { padding: 96px 2.6rem 260px; }
+    .explore-main-title { font-size: 3.0rem; }
+    .explore-section-title { font-size: 1.75rem; }
 }
 
 /* Large Tablet */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .explore-content-wrapper { padding: 28px 1.9rem 120px; }
+    .explore-content-wrapper { padding: 78px 1.9rem 220px; }
 
     .explore-main-content {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 3rem;
     }
 
     .explore-text-section {
@@ -1087,13 +1201,18 @@ html, body {
 /* Tablet */
 @media (max-width: 767px) {
     .explore-content-wrapper {
-        padding: 40px 1.5rem 96px;
+        padding: 68px 1.5rem 180px;
+    }
+
+    .explore-main-title {
+        font-size: 2.3rem;
+        letter-spacing: 0.05em;
     }
 
     .explore-main-content {
         grid-template-columns: 1fr;
-        gap: 1.75rem;
-        margin-bottom: 3rem;
+        gap: 2.5rem;
+        margin-bottom: 5rem;
     }
 
     .explore-text-section {
@@ -1102,8 +1221,7 @@ html, body {
 
     .explore-text-section::before { display: none; }
 
-    .explore-section-title,
-    .explore-section-heading { font-size: 1.68rem; margin-bottom: 1.25rem; }
+    .explore-section-title { font-size: 1.68rem; margin-bottom: 1.9rem; }
 
     .explore-courses-grid {
         grid-template-columns: 1fr;
@@ -1122,13 +1240,7 @@ html, body {
 
     .explore-feature-card { padding: 1.25rem; gap: 1rem; }
 
-    .explore-header { margin-bottom: 2rem; }
-
-    .explore-pages-section,
-    .explore-courses-section {
-        padding: 1.5rem 0;
-        margin-bottom: 0.75rem;
-    }
+    .explore-header { margin-bottom: 4rem; }
 
     .explore-stats-row { grid-template-columns: repeat(2, 1fr); gap: 1.1rem; }
 
@@ -1141,11 +1253,15 @@ html, body {
 /* Mobile */
 @media (max-width: 480px) {
     .explore-content-wrapper {
-        padding: 24px 1.1rem 88px;
+        padding: 58px 1.1rem 160px;
     }
 
-    .explore-section-title,
-    .explore-section-heading { font-size: 1.50rem; }
+    .explore-main-title {
+        font-size: 1.85rem;
+        letter-spacing: 0.04em;
+    }
+
+    .explore-section-title { font-size: 1.50rem; }
 
     .explore-page-card { padding: 1.75rem 1.25rem; }
 
@@ -1162,8 +1278,8 @@ html, body {
 
 /* iPhone SE / Very Small */
 @media (max-width: 375px) {
-    .explore-section-title,
-    .explore-section-heading { font-size: 1.34rem; }
+    .explore-main-title { font-size: 1.55rem; }
+    .explore-section-title { font-size: 1.34rem; }
     .explore-feature-icon { width: 42px; height: 42px; font-size: 0.9rem; }
     .explore-feature-title { font-size: 0.84rem; }
     .explore-feature-text { font-size: 0.79rem; }
@@ -1172,21 +1288,22 @@ html, body {
 
 /* Short screens */
 @media (max-height: 700px) {
-    .explore-content-wrapper { padding-top: 28px; padding-bottom: 100px; }
-    .explore-header { margin-bottom: 2rem; }
-    .explore-main-content { margin-bottom: 2.5rem; }
+    .explore-content-wrapper { padding-top: 52px; padding-bottom: 160px; }
+    .explore-header { margin-bottom: 3rem; }
+    .explore-main-content { margin-bottom: 4rem; }
 }
 
 /* Tall screens */
 @media (min-height: 1000px) {
-    .explore-content-wrapper { padding-top: 48px; padding-bottom: 200px; }
+    .explore-content-wrapper { padding-top: 140px; padding-bottom: 340px; }
 }
 
 /* Landscape on mobile */
 @media (max-width: 896px) and (orientation: landscape) {
-    .explore-content-wrapper { padding-top: 28px; padding-bottom: 96px; }
-    .explore-header { margin-bottom: 1.75rem; }
-    .explore-main-content { grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.25rem; }
+    .explore-content-wrapper { padding-top: 52px; padding-bottom: 180px; }
+    .explore-header { margin-bottom: 2.5rem; }
+    .explore-main-title { font-size: clamp(1.5rem, 4vw, 2rem); }
+    .explore-main-content { grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem; }
     .explore-text-section::before { display: block; }
     .explore-courses-grid { grid-template-columns: repeat(2, 1fr); }
     .explore-course-image-wrapper,

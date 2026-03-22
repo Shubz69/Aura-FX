@@ -109,45 +109,11 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.055);
   backdrop-filter: blur(22px) saturate(1.1);
   -webkit-backdrop-filter: blur(22px) saturate(1.1);
-  /* Desktop (mouse + fine pointer): natural height, no inner scrollbar */
-  display: block;
-  overflow: visible;
+  overflow: hidden;
   z-index: 10002;
 
   animation: dropdownAppear 0.30s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transform-origin: top right;
-}
-
-.user-dropdown-body {
-  overflow: visible;
-}
-
-/*
- * Touch + narrow: cap height and scroll inside (iPad landscape with desktop nav, phones, etc.)
- * Matches same logic as Navbar body-scroll lock for the user menu.
- */
-@media (max-width: 1150px), (hover: none), (pointer: coarse) {
-  .user-dropdown {
-    display: flex;
-    flex-direction: column;
-    max-height: min(560px, calc(100vh - 55px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px));
-    max-height: min(560px, calc(100dvh - 55px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px));
-    overflow: hidden;
-  }
-
-  .user-dropdown-header {
-    flex-shrink: 0;
-  }
-
-  .user-dropdown-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
-  }
 }
 
 /* Gold shimmer line on top */
@@ -191,7 +157,7 @@
 }
 
 /* ── Email Header ──────────────────────────────────────────── */
-.user-dropdown-header > p {
+.user-dropdown > p {
   margin: 0;
   padding: 16px 18px 14px;
   font-size: 0.72rem;
@@ -208,7 +174,7 @@
 }
 
 /* Gold dot indicator before email */
-.user-dropdown-header > p::before {
+.user-dropdown > p::before {
   content: '◈';
   margin-right: 7px;
   color: rgba(234, 169, 96, 0.50);
@@ -217,8 +183,8 @@
 }
 
 /* ── Menu Items ────────────────────────────────────────────── */
-.user-dropdown-body a,
-.user-dropdown-body button {
+.user-dropdown a,
+.user-dropdown button {
   display: flex;
   align-items: center;
   padding: 11px 18px;
@@ -241,8 +207,8 @@
 }
 
 /* Gold left accent bar */
-.user-dropdown-body a::before,
-.user-dropdown-body button::before {
+.user-dropdown a::before,
+.user-dropdown button::before {
   content: '';
   position: absolute;
   left: 0;
@@ -262,27 +228,27 @@
 }
 
 /* Hover state */
-.user-dropdown-body a:hover,
-.user-dropdown-body button:hover {
+.user-dropdown a:hover,
+.user-dropdown button:hover {
   background: var(--gold-ultra);
   color: #ffffff;
   padding-left: 22px;
 }
 
-.user-dropdown-body a:hover::before,
-.user-dropdown-body button:hover::before {
+.user-dropdown a:hover::before,
+.user-dropdown button:hover::before {
   opacity: 1;
   transform: scaleY(1);
 }
 
 /* Logout / danger */
-.user-dropdown-body button:last-child {
+.user-dropdown button:last-child {
   color: rgba(240, 61, 95, 0.72);
   border-top: 1px solid rgba(255, 255, 255, 0.045);
   margin-top: 2px;
 }
 
-.user-dropdown-body button:last-child::before {
+.user-dropdown button:last-child::before {
   background: linear-gradient(180deg,
     transparent 0%,
     rgba(240, 61, 95, 0.9) 50%,
@@ -291,9 +257,9 @@
   box-shadow: 0 0 6px rgba(240, 61, 95, 0.4);
 }
 
-.user-dropdown-body button:last-child:hover {
+.user-dropdown button:last-child:hover {
   background: rgba(240, 61, 95, 0.07);
-  color: #9a8f84;
+  color: #f87171;
 }
 
 /* ── Dropdown Icon ─────────────────────────────────────────── */
@@ -314,8 +280,8 @@
   border: 1px solid rgba(234, 169, 96, 0.15);
 }
 
-.user-dropdown-body a:hover .dropdown-icon,
-.user-dropdown-body button:hover .dropdown-icon {
+.user-dropdown a:hover .dropdown-icon,
+.user-dropdown button:hover .dropdown-icon {
   color: var(--gold-bright);
   background: var(--gold-glass);
   border-color: var(--gold-dim);
@@ -323,14 +289,14 @@
 }
 
 /* Logout icon override */
-.user-dropdown-body button:last-child .dropdown-icon {
+.user-dropdown button:last-child .dropdown-icon {
   color: rgba(240, 61, 95, 0.70);
   background: rgba(240, 61, 95, 0.06);
   border-color: rgba(240, 61, 95, 0.14);
 }
 
-.user-dropdown-body button:last-child:hover .dropdown-icon {
-  color: #9a8f84;
+.user-dropdown button:last-child:hover .dropdown-icon {
+  color: #f87171;
   background: rgba(240, 61, 95, 0.10);
   border-color: rgba(240, 61, 95, 0.28);
   box-shadow: 0 0 8px rgba(240, 61, 95, 0.30);
@@ -384,8 +350,8 @@
 }
 
 /* ── Staggered fade-in ─────────────────────────────────────── */
-.user-dropdown-body a,
-.user-dropdown-body button {
+.user-dropdown a,
+.user-dropdown button {
   animation: fadeInItem 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
@@ -394,18 +360,16 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.user-dropdown-body a:nth-child(1),  .user-dropdown-body button:nth-child(1)  { animation-delay: 0.04s; }
-.user-dropdown-body a:nth-child(2),  .user-dropdown-body button:nth-child(2)  { animation-delay: 0.08s; }
-.user-dropdown-body a:nth-child(3),  .user-dropdown-body button:nth-child(3)  { animation-delay: 0.12s; }
-.user-dropdown-body a:nth-child(4),  .user-dropdown-body button:nth-child(4)  { animation-delay: 0.16s; }
-.user-dropdown-body a:nth-child(5),  .user-dropdown-body button:nth-child(5)  { animation-delay: 0.20s; }
-.user-dropdown-body a:nth-child(6),  .user-dropdown-body button:nth-child(6)  { animation-delay: 0.24s; }
-.user-dropdown-body a:nth-child(7),  .user-dropdown-body button:nth-child(7)  { animation-delay: 0.28s; }
-.user-dropdown-body a:nth-child(8),  .user-dropdown-body button:nth-child(8)  { animation-delay: 0.32s; }
-.user-dropdown-body a:nth-child(9),  .user-dropdown-body button:nth-child(9)  { animation-delay: 0.36s; }
-.user-dropdown-body a:nth-child(10), .user-dropdown-body button:nth-child(10) { animation-delay: 0.40s; }
-.user-dropdown-body a:nth-child(11), .user-dropdown-body button:nth-child(11) { animation-delay: 0.44s; }
-.user-dropdown-body a:nth-child(12), .user-dropdown-body button:nth-child(12) { animation-delay: 0.48s; }
+.user-dropdown a:nth-child(1),  .user-dropdown button:nth-child(1)  { animation-delay: 0.04s; }
+.user-dropdown a:nth-child(2),  .user-dropdown button:nth-child(2)  { animation-delay: 0.08s; }
+.user-dropdown a:nth-child(3),  .user-dropdown button:nth-child(3)  { animation-delay: 0.12s; }
+.user-dropdown a:nth-child(4),  .user-dropdown button:nth-child(4)  { animation-delay: 0.16s; }
+.user-dropdown a:nth-child(5),  .user-dropdown button:nth-child(5)  { animation-delay: 0.20s; }
+.user-dropdown a:nth-child(6),  .user-dropdown button:nth-child(6)  { animation-delay: 0.24s; }
+.user-dropdown a:nth-child(7),  .user-dropdown button:nth-child(7)  { animation-delay: 0.28s; }
+.user-dropdown a:nth-child(8),  .user-dropdown button:nth-child(8)  { animation-delay: 0.32s; }
+.user-dropdown a:nth-child(9),  .user-dropdown button:nth-child(9)  { animation-delay: 0.36s; }
+.user-dropdown a:nth-child(10), .user-dropdown button:nth-child(10) { animation-delay: 0.40s; }
 
 /* ── Avatar ────────────────────────────────────────────────── */
 .avatar-img {
@@ -463,19 +427,16 @@
       0 0 0 0.5px rgba(234, 169, 96, 0.12),
       0 0 40px rgba(234, 169, 96, 0.06),
       inset 0 1px 0 rgba(255, 255, 255, 0.055);
-    /* Nav uses 56px offset here; overrides 55px max-height from touch scroll block */
-    max-height: min(560px, calc(100vh - 56px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px));
-    max-height: min(560px, calc(100dvh - 56px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px));
   }
 
-  .user-dropdown-header > p {
+  .user-dropdown > p {
     font-size: 0.68rem;
     letter-spacing: 0.12em;
     padding: 14px 16px 12px;
   }
 
-  .user-dropdown-body a,
-  .user-dropdown-body button {
+  .user-dropdown a,
+  .user-dropdown button {
     padding: 13px 16px;
     font-size: 0.72rem;
     letter-spacing: 0.15em;
@@ -483,7 +444,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .user-dropdown-body .dropdown-icon {
+  .user-dropdown .dropdown-icon {
     width: 30px;
     height: 30px;
     font-size: 1rem;

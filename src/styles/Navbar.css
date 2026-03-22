@@ -222,12 +222,6 @@ body.loading-active .navbar {
     drop-shadow(0 0 28px rgba(234, 169, 96, 0.45));
 }
 
-.logo-link:hover .a7-logo-container--navbar .a7-logo-gradient {
-  filter:
-    drop-shadow(0 0 8px rgba(240, 195, 109, 0.45))
-    drop-shadow(0 1px 2px rgba(62, 38, 8, 0.35));
-}
-
 /* Hexagon badge — glass inner + gold gradient */
 .logo-square {
   width: 36px; height: 36px;
@@ -273,32 +267,23 @@ body.loading-active .navbar {
 
 .navbar-ai-head { display: none; }
 
-/* Wordmark — solid white, wide tracking (navbar brand reference); weight from index.css .logo */
+/* Wordmark — crisp gradient text */
 .logo {
   font-family: var(--font);
   font-size: 0.80rem;
-  font-weight: 200;
-  letter-spacing: 0.38em;
+  font-weight: 700;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: #ffffff;
-  background: none;
-  -webkit-background-clip: border-box;
-  background-clip: border-box;
-  -webkit-text-fill-color: #ffffff;
-  filter: none;
+  background: linear-gradient(110deg, #FFFFFF 0%, var(--eaa-bright) 50%, var(--eaa-core) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 1px 12px rgba(234, 169, 96, 0.32));
+  transition: filter var(--transition);
 }
 
 .logo-link:hover .logo {
-  color: #ffffff;
-  -webkit-text-fill-color: #ffffff;
-}
-
-.logo .logo-wordmark-bold {
-  font-weight: 600 !important;
-}
-.logo .logo-wordmark-rest {
-  font-weight: 200;
-  margin-left: 0.3em;
+  filter: drop-shadow(0 1px 20px rgba(234, 169, 96, 0.65));
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -378,116 +363,60 @@ body.loading-active .navbar {
   left: 0.95rem;
 }
 
-/* Active state — navy pill, white type, gold rim + underline */
+/* Active state */
 .nav-links li a.active {
-  color: #ffffff;
+  color: var(--eaa-core);
   background: linear-gradient(
-    145deg,
-    rgba(10, 20, 46, 0.96) 0%,
-    rgba(18, 34, 68, 0.92) 48%,
-    rgba(8, 14, 36, 0.98) 100%
+    135deg,
+    rgba(234, 169, 96, 0.10) 0%,
+    rgba(234, 169, 96, 0.055) 100%
   );
-  border-color: rgba(212, 175, 55, 0.48);
+  border-color: rgba(234, 169, 96, 0.18);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 0 rgba(212, 175, 55, 0.14),
-    0 0 22px rgba(0, 0, 0, 0.35),
-    0 0 26px rgba(212, 175, 55, 0.09);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 20px rgba(234, 169, 96, 0.08),
+    0 2px 12px rgba(0, 0, 0, 0.18);
   font-weight: 600;
 }
 
 .nav-links li a.active::after {
   width: calc(100% - 1.9rem);
   left: 0.95rem;
-  background: linear-gradient(
-    90deg,
-    rgba(212, 175, 55, 0.85),
-    rgba(248, 220, 150, 0.98),
-    rgba(212, 175, 55, 0.85)
-  );
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.45);
 }
 
-/* Aura AI — same language: navy glass, white label, gold frame */
+/* Aura AI special link */
 .nav-links li a.nav-aura-ai {
-  color: #ffffff;
+  color: var(--eaa-core);
   font-weight: 600;
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  border: 1px solid rgba(234, 169, 96, 0.28);
   background: linear-gradient(
-    145deg,
-    rgba(12, 22, 50, 0.9) 0%,
-    rgba(20, 38, 76, 0.86) 100%
+    135deg,
+    rgba(234, 169, 96, 0.06) 0%,
+    rgba(234, 169, 96, 0.02) 100%
   );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.11),
-    0 0 18px rgba(0, 0, 0, 0.3),
-    0 0 22px rgba(212, 175, 55, 0.07);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 16px rgba(234, 169, 96, 0.06);
   letter-spacing: 0.14em;
 }
 
 .nav-links li a.nav-aura-ai:hover {
-  color: #ffffff;
   background: linear-gradient(
-    145deg,
-    rgba(16, 30, 62, 0.95) 0%,
-    rgba(26, 48, 92, 0.9) 100%
+    135deg,
+    rgba(234, 169, 96, 0.12) 0%,
+    rgba(234, 169, 96, 0.06) 100%
   );
-  border-color: rgba(232, 198, 88, 0.55);
+  border-color: rgba(234, 169, 96, 0.55);
+  color: var(--eaa-bright);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 28px rgba(212, 175, 55, 0.12),
-    0 2px 16px rgba(0, 0, 0, 0.32);
-}
-
-.nav-links li a.nav-aura-ai.active {
-  color: #ffffff;
-  background: linear-gradient(
-    145deg,
-    rgba(8, 16, 40, 0.98) 0%,
-    rgba(14, 28, 58, 0.95) 50%,
-    rgba(6, 12, 32, 1) 100%
-  );
-  border-color: rgba(212, 175, 55, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(212, 175, 55, 0.18),
-    0 0 28px rgba(212, 175, 55, 0.14),
-    0 2px 14px rgba(0, 0, 0, 0.28);
-}
-
-.nav-links li a.nav-aura-ai.active::after {
-  background: linear-gradient(
-    90deg,
-    rgba(212, 175, 55, 0.85),
-    rgba(248, 220, 150, 0.98),
-    rgba(212, 175, 55, 0.85)
-  );
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 0 24px rgba(234, 169, 96, 0.18),
+    0 2px 16px rgba(0, 0, 0, 0.28);
 }
 
 .mobile-aura-ai-link {
-  color: #ffffff !important;
+  color: var(--eaa-core) !important;
   font-weight: 600 !important;
-  border-color: rgba(212, 175, 55, 0.4) !important;
-  background: linear-gradient(
-    145deg,
-    rgba(12, 22, 50, 0.9) 0%,
-    rgba(20, 38, 76, 0.86) 100%
-  ) !important;
-}
-
-.mobile-nav-links-primary li a.mobile-aura-ai-link.active {
-  border-color: rgba(212, 175, 55, 0.55) !important;
-  background: linear-gradient(
-    145deg,
-    rgba(8, 16, 40, 0.98) 0%,
-    rgba(14, 28, 58, 0.95) 50%,
-    rgba(6, 12, 32, 1) 100%
-  ) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(212, 175, 55, 0.16),
-    0 0 24px rgba(212, 175, 55, 0.12) !important;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1205,7 +1134,7 @@ body.loading-active .navbar {
 }
 
 .mobile-menu-section-label {
-  margin: 0 auto 1rem auto; padding: 0;
+  margin: 0 0 1rem 0; padding: 0;
   width: 100%; max-width: 520px;
   font-family: var(--font);
   font-size: 0.65rem;
@@ -1213,7 +1142,7 @@ body.loading-active .navbar {
   letter-spacing: 0.34em;
   text-transform: uppercase;
   color: rgba(234, 169, 96, 0.50);
-  text-align: center;
+  text-align: left;
   box-sizing: border-box;
   position: relative; z-index: 1;
 }
@@ -1238,27 +1167,23 @@ body.loading-active .navbar {
 }
 
 .mobile-nav-links-primary li a:hover {
-  color: #ffffff !important;
+  color: var(--eaa-bright) !important;
   background: linear-gradient(
-    145deg,
-    rgba(16, 30, 62, 0.88) 0%,
-    rgba(24, 46, 88, 0.82) 100%
+    135deg,
+    rgba(234, 169, 96, 0.10) 0%,
+    rgba(234, 169, 96, 0.04) 100%
   ) !important;
-  border-color: rgba(212, 175, 55, 0.38) !important;
+  border-color: rgba(234, 169, 96, 0.35) !important;
 }
 
 .mobile-nav-links-primary li a.active {
-  color: #ffffff !important;
+  color: var(--eaa-core) !important;
   background: linear-gradient(
-    145deg,
-    rgba(10, 20, 46, 0.95) 0%,
-    rgba(18, 34, 68, 0.9) 48%,
-    rgba(8, 14, 36, 0.98) 100%
+    135deg,
+    rgba(234, 169, 96, 0.12) 0%,
+    rgba(234, 169, 96, 0.06) 100%
   ) !important;
-  border-color: rgba(212, 175, 55, 0.48) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 20px rgba(212, 175, 55, 0.08) !important;
+  border-color: rgba(234, 169, 96, 0.40) !important;
 }
 
 .mobile-menu-account-hint {
@@ -1376,14 +1301,7 @@ body.loading-active .navbar {
 }
 
 @media (min-width: 768px) and (max-width: 1150px) {
-  .navbar {
-    padding-left: 2rem;
-    padding-right: 2rem;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: 0;
-    height: calc(64px + env(safe-area-inset-top, 0px));
-    min-height: calc(64px + env(safe-area-inset-top, 0px));
-  }
+  .navbar { padding: 0 2rem; height: 64px; min-height: 64px; }
   .nav-buttons { gap: 0.75rem; }
   .notifications-wrapper .messages-btn { padding: 0.45rem; font-size: 1.1rem; }
   .mobile-menu-toggle { width: 44px; height: 44px; font-size: 1.35rem; }
@@ -1396,18 +1314,12 @@ body.loading-active .navbar {
   .logo-link      { display: flex !important; align-items: center; gap: 10px; }
   .navbar-logo-wrapper { display: flex !important; align-items: center; gap: 10px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 30px; height: 30px; flex-shrink: 0; }
-  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 44px; height: 44px; }
   .logo { font-size: 0.74rem; letter-spacing: 0.24em; white-space: nowrap; }
 }
 
 @media (min-width: 375px) and (max-width: 767px) {
   .navbar {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: 0;
-    height: calc(58px + env(safe-area-inset-top, 0px));
-    min-height: calc(58px + env(safe-area-inset-top, 0px));
+    padding: 0 1rem; height: 58px; min-height: 58px;
     width: 100%; max-width: 100vw; box-sizing: border-box;
     position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   }
@@ -1417,36 +1329,19 @@ body.loading-active .navbar {
   .logo-link       { display: flex !important; align-items: center; gap: 8px; }
   .navbar-logo-wrapper { display: flex !important; align-items: center; gap: 8px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 26px; height: 26px; flex-shrink: 0; }
-  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 37px; height: 37px; }
-  .logo { display: block !important; font-size: 0.70rem; letter-spacing: 0.22em; white-space: nowrap; }
+  .logo { display: block !important; font-size: 0.70rem; letter-spacing: 0.20em; white-space: nowrap; }
 }
 
 @media (min-width: 375px) and (max-width: 667px) {
-  .navbar {
-    padding-left: 0.9rem;
-    padding-right: 0.9rem;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: 0;
-    height: calc(56px + env(safe-area-inset-top, 0px));
-    min-height: calc(56px + env(safe-area-inset-top, 0px));
-  }
+  .navbar { padding: 0 0.9rem; height: 56px; min-height: 56px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 24px; height: 24px; }
-  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 35px; height: 35px; }
   .logo { font-size: 0.66rem; letter-spacing: 0.17em; }
 }
 
 @media (max-width: 480px) {
-  .navbar {
-    padding-left: 0.9rem;
-    padding-right: 0.9rem;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: 0;
-    height: calc(56px + env(safe-area-inset-top, 0px));
-    min-height: calc(56px + env(safe-area-inset-top, 0px));
-  }
+  .navbar { padding: 0 0.9rem; height: 56px; min-height: 56px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 24px; height: 24px; }
-  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 30px; height: 30px; }
-  .logo { display: block !important; font-size: 0.66rem; letter-spacing: 0.17em; white-space: nowrap; }
+  .logo { display: block !important; font-size: 0.66rem; letter-spacing: 0.16em; white-space: nowrap; }
   .notifications-wrapper .messages-btn { padding: 0.35rem; font-size: 1rem; min-width: 36px; min-height: 36px; }
   .notifications-wrapper .notification-badge { width: 14px; height: 14px; font-size: 0.6rem; top: -1px; right: -1px; border-width: 1.5px; }
   .mobile-menu-toggle { display: flex !important; width: 40px; height: 40px; font-size: 1.2rem; flex-shrink: 0; align-items: center; justify-content: center; }
@@ -1454,52 +1349,12 @@ body.loading-active .navbar {
 }
 
 @media (max-width: 374px) {
-  .navbar {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: 0;
-    height: calc(54px + env(safe-area-inset-top, 0px));
-    min-height: calc(54px + env(safe-area-inset-top, 0px));
-  }
+  .navbar { padding: 0 0.75rem; height: 54px; min-height: 54px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 22px; height: 22px; }
-  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 32px; height: 32px; }
-  .logo { display: block !important; font-size: 0.62rem; letter-spacing: 0.14em; white-space: nowrap; }
+  .logo { display: block !important; font-size: 0.62rem; letter-spacing: 0.13em; white-space: nowrap; }
   .notifications-wrapper .messages-btn { padding: 0.3rem; font-size: 0.95rem; min-width: 34px; min-height: 34px; }
   .notifications-wrapper .notification-badge { width: 13px; height: 13px; font-size: 0.55rem; }
   .mobile-menu-toggle { display: flex !important; width: 38px; height: 38px; font-size: 1.1rem; flex-shrink: 0; align-items: center; justify-content: center; }
-}
-
-/* iOS / Android “Add to Home Screen”: extra top inset so controls sit below status bar */
-@media (display-mode: standalone) and (min-width: 768px) and (max-width: 1150px) {
-  .navbar {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
-    height: calc(64px + env(safe-area-inset-top, 0px) + 10px) !important;
-    min-height: calc(64px + env(safe-area-inset-top, 0px) + 10px) !important;
-  }
-}
-
-@media (display-mode: standalone) and (max-width: 767px) {
-  .navbar {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
-    height: calc(56px + env(safe-area-inset-top, 0px) + 10px) !important;
-    min-height: calc(56px + env(safe-area-inset-top, 0px) + 10px) !important;
-  }
-}
-
-@media (display-mode: standalone) and (max-width: 374px) {
-  .navbar {
-    height: calc(54px + env(safe-area-inset-top, 0px) + 10px) !important;
-    min-height: calc(54px + env(safe-area-inset-top, 0px) + 10px) !important;
-  }
-}
-
-/* Wordmark optical center on small phones (icon + text balance) */
-@media (max-width: 480px) {
-  .logo-link .logo {
-    position: relative;
-    left: 4px;
-  }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1598,17 +1453,3 @@ body > div > .mobile-menu.active {
 
 /* Smooth scroll */
 html { scroll-behavior: smooth; }
-
-/* Home route: primary nav link labels match all-caps home hero */
-.app-container--home .navbar .nav-links a,
-.app-container--home .navbar .nav-links .nav-aura-ai {
-  text-transform: uppercase;
-}
-.mobile-menu.mobile-menu--home .mobile-nav-links li a,
-.mobile-menu.mobile-menu--home .mobile-nav-links-primary li a,
-.mobile-menu.mobile-menu--home .mobile-aura-ai-link {
-  text-transform: uppercase;
-}
-.mobile-menu.mobile-menu--home .mobile-menu-section-label {
-  text-transform: uppercase;
-}
