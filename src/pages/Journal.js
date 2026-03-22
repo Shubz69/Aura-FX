@@ -42,6 +42,14 @@ function isSameDay(a, b) {
   return a && b && String(a).slice(0, 10) === String(b).slice(0, 10);
 }
 
+/** Saturday = rest day for mandatory tasks (matches API / UTC). */
+function isJournalSaturdayUTC(dateStr) {
+  const s = String(dateStr).slice(0, 10);
+  const [y, m, d] = s.split('-').map(Number);
+  if (!y || !m || !d) return false;
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 6;
+}
+
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
@@ -147,6 +155,7 @@ export default function Journal() {
   const [newNoteContent, setNewNoteContent]   = useState('');
   const [addingNote, setAddingNote]           = useState(false);
   const [completionBannerDismissed, setCompletionBannerDismissed] = useState(false);
+  const [journalTab, setJournalTab] = useState('mandatory');
 
   // Multi-photo proof: { [taskId]: string[] }
   const [proofPhotos, setProofPhotos]     = useState({});
@@ -244,6 +253,10 @@ export default function Journal() {
   const dayTasks           = monthTasks.filter((t) => isSameDay(t.date, selectedDate));
   const dayMandatoryTasks  = dayTasks.filter((t) => t.isMandatory);
   const dayRegularTasks    = dayTasks.filter((t) => !t.isMandatory);
+  const mandatoryTabCount  = dayMandatoryTasks.length;
+  const personalTabCount   = dayRegularTasks.length;
+  const reflectionTabCount =
+    dailyNotesList.length + (dailyNotes.trim() ? 1 : 0) + (dailyMood ? 1 : 0);
   const weekTasks          = monthTasks.filter((t) => t.date >= weekStart && t.date <= weekEnd);
   const monthTasksForMonth = monthTasks.filter((t) => t.date >= monthStart && t.date <= monthEnd);
 
@@ -467,6 +480,8 @@ export default function Journal() {
     ? 'Today'
     : (() => { const d = new Date(selectedDate + 'T12:00:00'); return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; })();
 
+  const isMandatoryRestDay = isJournalSaturdayUTC(selectedDate);
+
   /* ── Proof strip renderer ────────────────────────────── */
   const renderProofStrip = (taskId) => {
     const photos = proofPhotos[taskId] || [];
@@ -606,7 +621,7 @@ export default function Journal() {
         <aside className="journal-sidebar">
           <header className="journal-sidebar-header">
             <h2 className="journal-sidebar-title">Aura Journal</h2>
-            <p className="journal-sidebar-sub">Tasks &amp; Progress</p>
+            <p className="journal-sidebar-sub">Mandatory · Personal · Reflection</p>
           </header>
 
           {/* Calendar */}
@@ -716,127 +731,297 @@ export default function Journal() {
 
           {/* XP info */}
           <div className="journal-xp-info">
-            <strong>Earn XP:</strong> Add tasks (+5), save notes (+5), complete tasks with picture proof (+25).
-            Day / Week / Month % XP (min 5 tasks) when you view the journal.
+            <strong>Earn XP:</strong> Add personal tasks (+5), save diary or notes (+5), complete tasks with picture proof (+25).
+            Day / week / month completion XP (min 5 tasks) when you open the journal.
           </div>
 
-          {/* ── Mandatory tasks ── */}
-          {dayMandatoryTasks.length > 0 && (
-            <>
-              <h3 className="journal-section-title">Mandatory Tasks</h3>
-              <p className="journal-mandatory-hint">
-                Daily tasks for your subscription tier (every day except Saturday — rest day).
-                Same percentage system — complete these and your own tasks to hit 100%.
-              </p>
+          {/* Section tabs */}
+          <nav className="journal-tabs" role="tablist" aria-label="Journal sections">
+            <button
+              type="button"
+              role="tab"
+              id="journal-tab-mandatory"
+              aria-selected={journalTab === 'mandatory'}
+              aria-controls="journal-panel-mandatory"
+              className={`journal-tab${journalTab === 'mandatory' ? ' journal-tab--active' : ''}`}
+              onClick={() => setJournalTab('mandatory')}
+            >
+              <span className="journal-tab-label">Mandatory Tasks</span>
+              {mandatoryTabCount > 0 && (
+                <span className="journal-tab-badge">{mandatoryTabCount}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="journal-tab-personal"
+              aria-selected={journalTab === 'personal'}
+              aria-controls="journal-panel-personal"
+              className={`journal-tab${journalTab === 'personal' ? ' journal-tab--active' : ''}`}
+              onClick={() => setJournalTab('personal')}
+            >
+              <span className="journal-tab-label">Personal Tasks</span>
+              {personalTabCount > 0 && (
+                <span className="journal-tab-badge">{personalTabCount}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="journal-tab-reflection"
+              aria-selected={journalTab === 'reflection'}
+              aria-controls="journal-panel-reflection"
+              className={`journal-tab${journalTab === 'reflection' ? ' journal-tab--active' : ''}`}
+              onClick={() => setJournalTab('reflection')}
+            >
+              <span className="journal-tab-label">Reflection</span>
+              {reflectionTabCount > 0 && (
+                <span className="journal-tab-badge journal-tab-badge--soft">{reflectionTabCount}</span>
+              )}
+            </button>
+          </nav>
+
+          {/* ── Tab: Mandatory (tier / platform tasks) ── */}
+          <div
+            id="journal-panel-mandatory"
+            role="tabpanel"
+            aria-labelledby="journal-tab-mandatory"
+            hidden={journalTab !== 'mandatory'}
+            className="journal-tab-panel"
+          >
+            <p className="journal-tab-lede">
+              Set by Aura for your plan. They count toward your daily completion — same rules as your personal list (Saturday is a rest day).
+            </p>
+            {loading ? (
+              <div className="journal-loading">Loading…</div>
+            ) : isMandatoryRestDay ? (
+              <div className="journal-tab-empty journal-glass-card">
+                <span className="journal-tab-empty-title">Rest day</span>
+                <p>No mandatory tasks on Saturday. Use Personal Tasks or Reflection if you still want to log something.</p>
+              </div>
+            ) : mandatoryTabCount === 0 ? (
+              <div className="journal-tab-empty journal-glass-card">
+                <span className="journal-tab-empty-title">Nothing scheduled</span>
+                <p>Mandatory tasks for your tier will show here for this date. Try another day or check back after refresh.</p>
+              </div>
+            ) : (
               <ul className="journal-task-list journal-task-list-mandatory">
                 {dayMandatoryTasks.map(renderTaskCard)}
               </ul>
-            </>
-          )}
-
-          {/* ── Regular tasks ── */}
-          <h3 className="journal-section-title">Tasks</h3>
-          <form className="journal-add-form" onSubmit={handleAddTask}>
-            <input type="text" className="journal-add-input" placeholder="Add a new task..."
-              value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} disabled={adding} />
-            <button type="submit" className="journal-add-btn" disabled={adding || !newTaskTitle.trim()}>
-              <FaPlus /> Add
-            </button>
-          </form>
-
-          {loading ? (
-            <div className="journal-loading">Loading…</div>
-          ) : (
-            <ul className="journal-task-list">
-              {dayRegularTasks.length === 0
-                ? <li className="journal-task-empty">No tasks for this day. Add one above.</li>
-                : dayRegularTasks.map(renderTaskCard)
-              }
-            </ul>
-          )}
-
-          {/* Completion banner */}
-          {dayPct >= 100 && dayTotal > 0 && !completionBannerDismissed && (
-            <div className="journal-completion-banner">
-              ✦ All tasks completed — outstanding work.
-              <button type="button" className="journal-completion-dismiss"
-                onClick={() => setCompletionBannerDismissed(true)}>✕</button>
-            </div>
-          )}
-
-          {/* ── Reflection / Notes ── */}
-          <section className="journal-notes-section journal-reflection-section">
-            <h3 className="journal-section-title">
-              <FaBolt className="journal-reflection-icon" /> Reflection
-            </h3>
-            <p className="journal-reflection-prompt">What did you improve today?</p>
-            <p className="journal-notes-hint">Save multiple notes. Click the edit icon to update any note.</p>
-
-            {dailyNotesList.length > 0 && (
-              <ul className="journal-notes-list">
-                {dailyNotesList.map((note) => (
-                  <li key={note.id} className="journal-note-item">
-                    {editingNoteId === note.id ? (
-                      <>
-                        <textarea className="journal-note-edit-input" value={editingNoteText}
-                          onChange={(e) => setEditingNoteText(e.target.value)} autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleNoteEditSave(note.id);
-                            if (e.key === 'Escape') handleNoteEditCancel();
-                          }} />
-                        <div className="journal-note-actions">
-                          <button type="button" className="journal-note-save-btn"
-                            onClick={() => handleNoteEditSave(note.id)}
-                            disabled={!editingNoteText.trim()} title="Save (Ctrl+Enter)">
-                            <FaSave /> Save
-                          </button>
-                          <button type="button" className="journal-note-action-btn journal-note-delete"
-                            onClick={handleNoteEditCancel} title="Cancel"><FaTimes /></button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <span className="journal-note-content">{note.content}</span>
-                        <div className="journal-note-actions">
-                          <button type="button" className="journal-note-action-btn journal-note-edit-btn"
-                            onClick={() => handleNoteEditStart(note)} title="Edit note" aria-label="Edit note"><FaEdit /></button>
-                          <button type="button" className="journal-note-action-btn journal-note-delete"
-                            onClick={() => handleDeleteNote(note.id)} title="Delete note" aria-label="Delete note"><FaTrash /></button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
             )}
+          </div>
 
-            <form className="journal-add-note-form" onSubmit={handleAddNote}>
-              <input type="text" className="journal-add-note-input" placeholder="Add a reflection note..."
-                value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} disabled={addingNote} />
-              <button type="submit" className="journal-add-note-btn journal-add-note-btn-gold"
-                disabled={addingNote || !newNoteContent.trim()}>
-                <FaPlus /> Add Note
+          {/* ── Tab: Personal ── */}
+          <div
+            id="journal-panel-personal"
+            role="tabpanel"
+            aria-labelledby="journal-tab-personal"
+            hidden={journalTab !== 'personal'}
+            className="journal-tab-panel"
+          >
+            <p className="journal-tab-lede">
+              Your own tasks for {label}. Add anything you want to track — edit or delete anytime.
+            </p>
+            <form className="journal-add-form" onSubmit={handleAddTask}>
+              <input
+                type="text"
+                className="journal-add-input"
+                placeholder="Add a personal task…"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                disabled={adding}
+              />
+              <button type="submit" className="journal-add-btn" disabled={adding || !newTaskTitle.trim()}>
+                <FaPlus /> Add
               </button>
             </form>
-          </section>
+            {loading ? (
+              <div className="journal-loading">Loading…</div>
+            ) : (
+              <ul className="journal-task-list">
+                {dayRegularTasks.length === 0 ? (
+                  <li className="journal-task-empty">No personal tasks yet — add one above.</li>
+                ) : (
+                  dayRegularTasks.map(renderTaskCard)
+                )}
+              </ul>
+            )}
+          </div>
 
-          {/* ── Mood ── */}
-          <section className="journal-daily-section">
-            <h3 className="journal-section-title">Mood</h3>
-            <div className="journal-mood-row">
-              <div className="journal-mood-options">
-                {MOOD_OPTIONS.map((opt) => (
-                  <button key={opt.value} type="button"
-                    className={`journal-mood-btn${dailyMood === opt.value ? ' journal-mood-btn--active' : ''}`}
-                    onClick={() => { const m = dailyMood === opt.value ? null : opt.value; setDailyMood(m); saveDailyNote({ mood: m }); }}
-                    title={opt.label}>
-                    {opt.emoji}
-                  </button>
-                ))}
+          {/* ── Tab: Reflection (diary, mood, quick notes) ── */}
+          <div
+            id="journal-panel-reflection"
+            role="tabpanel"
+            aria-labelledby="journal-tab-reflection"
+            hidden={journalTab !== 'reflection'}
+            className="journal-tab-panel"
+          >
+            <p className="journal-tab-lede">
+              Everything here is saved per day, just for you — diary entry, mood, and short reflection notes.
+            </p>
+
+            <section className="journal-glass-card journal-diary-section">
+              <h3 className="journal-subsection-title">Daily diary</h3>
+              <p className="journal-diary-hint">
+                Long-form space for the day: wins, frustrations, lessons, or a full journal entry. Saved for this date only.
+              </p>
+              <textarea
+                className="journal-diary-textarea"
+                value={dailyNotes}
+                onChange={(e) => setDailyNotes(e.target.value)}
+                placeholder="Write freely… (saved when you click Save diary)"
+                maxLength={8000}
+                rows={10}
+                spellCheck
+              />
+              <div className="journal-diary-actions">
+                <button
+                  type="button"
+                  className="journal-diary-save-btn"
+                  disabled={dailySaving}
+                  onClick={() => saveDailyNote()}
+                >
+                  {dailySaving ? 'Saving…' : 'Save diary'}
+                </button>
+                {savedFeedback && journalTab === 'reflection' && (
+                  <span className="journal-diary-saved">Saved ✓</span>
+                )}
               </div>
-            </div>
-            {savedFeedback && <span className="journal-mood-saved">Saved ✓</span>}
-          </section>
+            </section>
+
+            <section className="journal-glass-card journal-mood-section">
+              <h3 className="journal-subsection-title">Mood today</h3>
+              <p className="journal-diary-hint">Tap to set how you felt — saves automatically.</p>
+              <div className="journal-mood-row">
+                <div className="journal-mood-options">
+                  {MOOD_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`journal-mood-btn${dailyMood === opt.value ? ' journal-mood-btn--active' : ''}`}
+                      onClick={() => {
+                        const m = dailyMood === opt.value ? null : opt.value;
+                        setDailyMood(m);
+                        saveDailyNote({ mood: m });
+                      }}
+                      title={opt.label}
+                    >
+                      {opt.emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {savedFeedback && <span className="journal-mood-saved">Saved ✓</span>}
+            </section>
+
+            <section className="journal-notes-section journal-reflection-section">
+              <h3 className="journal-subsection-title">
+                <FaBolt className="journal-reflection-icon" aria-hidden /> Quick notes
+              </h3>
+              <p className="journal-reflection-prompt">Short bullets or reminders alongside your diary.</p>
+              <p className="journal-notes-hint">Add as many as you like. Edit or delete with the icons.</p>
+
+              {dailyNotesList.length > 0 && (
+                <ul className="journal-notes-list">
+                  {dailyNotesList.map((note) => (
+                    <li key={note.id} className="journal-note-item">
+                      {editingNoteId === note.id ? (
+                        <>
+                          <textarea
+                            className="journal-note-edit-input"
+                            value={editingNoteText}
+                            onChange={(e) => setEditingNoteText(e.target.value)}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleNoteEditSave(note.id);
+                              if (e.key === 'Escape') handleNoteEditCancel();
+                            }}
+                          />
+                          <div className="journal-note-actions">
+                            <button
+                              type="button"
+                              className="journal-note-save-btn"
+                              onClick={() => handleNoteEditSave(note.id)}
+                              disabled={!editingNoteText.trim()}
+                              title="Save (Ctrl+Enter)"
+                            >
+                              <FaSave /> Save
+                            </button>
+                            <button
+                              type="button"
+                              className="journal-note-action-btn journal-note-delete"
+                              onClick={handleNoteEditCancel}
+                              title="Cancel"
+                            >
+                              <FaTimes />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="journal-note-content">{note.content}</span>
+                          <div className="journal-note-actions">
+                            <button
+                              type="button"
+                              className="journal-note-action-btn journal-note-edit-btn"
+                              onClick={() => handleNoteEditStart(note)}
+                              title="Edit note"
+                              aria-label="Edit note"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              type="button"
+                              className="journal-note-action-btn journal-note-delete"
+                              onClick={() => handleDeleteNote(note.id)}
+                              title="Delete note"
+                              aria-label="Delete note"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <form className="journal-add-note-form" onSubmit={handleAddNote}>
+                <input
+                  type="text"
+                  className="journal-add-note-input"
+                  placeholder="Add a quick note…"
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                  disabled={addingNote}
+                />
+                <button
+                  type="submit"
+                  className="journal-add-note-btn journal-add-note-btn-gold"
+                  disabled={addingNote || !newNoteContent.trim()}
+                >
+                  <FaPlus /> Add note
+                </button>
+              </form>
+            </section>
+          </div>
+
+          {(journalTab === 'mandatory' || journalTab === 'personal') &&
+            dayPct >= 100 &&
+            dayTotal > 0 &&
+            !completionBannerDismissed && (
+              <div className="journal-completion-banner">
+                ✦ All tasks completed for this day — outstanding work.
+                <button
+                  type="button"
+                  className="journal-completion-dismiss"
+                  onClick={() => setCompletionBannerDismissed(true)}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
           {/* Hidden multi-file proof input */}
           <input type="file" ref={proofInputRef} accept="image/*" multiple

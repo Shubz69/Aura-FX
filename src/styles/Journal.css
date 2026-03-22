@@ -1363,6 +1363,249 @@
   text-transform: uppercase;
 }
 
+/* ── Main tabs (Mandatory / Personal / Reflection) ───────────── */
+.journal-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 6px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background-image: var(--journal-subtle-fill) padding-box, var(--journal-panel-border) border-box;
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+}
+
+.journal-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.journal-tab:hover {
+  color: rgba(248, 250, 252, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.journal-tab--active {
+  color: rgba(248, 250, 252, 0.98);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(175, 200, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.journal-tab-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.journal-tab-badge {
+  flex-shrink: 0;
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: rgba(212, 175, 55, 0.22);
+  color: rgba(253, 240, 220, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+.journal-tab-badge--soft {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(230, 236, 255, 0.92);
+}
+
+.journal-tab-panel {
+  margin-bottom: 8px;
+  animation: journal-fadeIn 0.35s ease-out both;
+}
+
+.journal-tab-panel[hidden] {
+  display: none !important;
+}
+
+.journal-tab-lede {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+  max-width: 52rem;
+}
+
+.journal-glass-card {
+  position: relative;
+  padding: 22px 22px 20px;
+  margin-bottom: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.journal-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 6%;
+  right: 14%;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(175, 200, 255, 0.4) 55%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+.journal-subsection-title {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.journal-tab-empty {
+  text-align: center;
+  padding: 28px 22px;
+}
+
+.journal-tab-empty-title {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(248, 250, 252, 0.88);
+  margin-bottom: 10px;
+}
+
+.journal-tab-empty p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.journal-diary-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.journal-diary-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 200px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(3, 6, 18, 0.45);
+  color: rgba(248, 250, 252, 0.95);
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.journal-diary-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.journal-diary-textarea:focus {
+  outline: none;
+  border-color: rgba(175, 200, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(100, 130, 210, 0.15);
+}
+
+.journal-diary-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.journal-diary-save-btn {
+  padding: 11px 22px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+  color: rgba(248, 250, 252, 0.95);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.journal-diary-save-btn:hover:not(:disabled) {
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.journal-diary-save-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.journal-diary-saved {
+  font-size: 0.78rem;
+  color: rgba(111, 255, 201, 0.9);
+  letter-spacing: 0.12em;
+}
+
+.journal-mood-section {
+  padding-bottom: 18px;
+}
+
+@media (max-width: 720px) {
+  .journal-tabs {
+    flex-direction: column;
+  }
+
+  .journal-tab {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 /* ── XP Info Banner ──────────────────────────────────────────── */
 .journal-xp-info {
   font-size: 0.78rem;
