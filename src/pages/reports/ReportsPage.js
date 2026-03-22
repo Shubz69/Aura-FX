@@ -289,8 +289,8 @@ function ReportViewer({ report, onClose }) {
       <title>${c.coverTitle || 'Monthly Report'}</title>
       <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #1a1a2e; }
-        h1 { color: #4c1d95; } h2 { color: #6d28d9; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-        h3 { color: #5b21b6; } .section { margin-bottom: 32px; }
+        h1 { color: #4c1d95; } h2 { color: #b47830; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+        h3 { color: #6b4423; } .section { margin-bottom: 32px; }
         .metric { display: inline-block; margin: 4px 8px 4px 0; padding: 4px 10px; background: #f3f0ff; border-radius: 6px; font-size: 0.85em; }
         ul { padding-left: 20px; } li { margin-bottom: 5px; }
         .disclaimer { font-size: 0.8em; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 32px; }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Api from '../../services/Api';
 import '../../styles/aura-analysis/AuraLeaderboard.css';
@@ -17,6 +17,77 @@ function formatPnL(n) {
   const v = Number(n);
   const abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return v >= 0 ? `$${abs}` : `-$${abs}`;
+}
+
+/** Custom listbox — avoids OS-native select popup (often white on Windows). */
+function LeaderboardSortMenu({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) close();
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open, close]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, close]);
+
+  const current = SORT_OPTIONS.find((o) => o.value === value) || SORT_OPTIONS[0];
+
+  return (
+    <div className="aura-lb-sort-dd" ref={wrapRef}>
+      <button
+        type="button"
+        className="aura-lb-sort-dd-trigger"
+        id="aura-lb-sort-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="aura-lb-sort-listbox"
+        aria-label={`Sort leaderboard by, currently ${current.label}. Open to change.`}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span>{current.label}</span>
+        <span className="aura-lb-sort-dd-chevron" aria-hidden>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <ul
+          id="aura-lb-sort-listbox"
+          className="aura-lb-sort-dd-list"
+          role="listbox"
+          aria-labelledby="aura-lb-sort-trigger"
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <li key={opt.value} role="presentation">
+              <button
+                type="button"
+                role="option"
+                aria-selected={opt.value === value}
+                className={`aura-lb-sort-dd-option${opt.value === value ? ' aura-lb-sort-dd-option--active' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  close();
+                }}
+              >
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export default function AuraLeaderboard() {
@@ -52,19 +123,10 @@ export default function AuraLeaderboard() {
       <div className="aura-leaderboard-header">
         <h1 className="aura-leaderboard-title">Leaderboard</h1>
         <div className="aura-leaderboard-controls">
-          <label className="aura-leaderboard-sort-label">
-            Sort by
-            <select
-              className="aura-leaderboard-sort-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              aria-label="Sort by"
-            >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </label>
+          <div className="aura-leaderboard-sort-label">
+            <span id="aura-lb-sort-label">Sort by</span>
+            <LeaderboardSortMenu value={sortBy} onChange={setSortBy} />
+          </div>
           <button
             type="button"
             className="aura-leaderboard-order-btn"

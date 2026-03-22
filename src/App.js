@@ -16,6 +16,7 @@ import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
 import './styles/AppCosmicBackground.css';
+import './styles/GlassSystem.css';
 import { shouldUseAppCosmicBackground } from './utils/appCosmicBackground';
 
 

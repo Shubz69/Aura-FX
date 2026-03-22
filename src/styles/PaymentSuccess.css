@@ -10,8 +10,8 @@
   min-height: 80vh;
   padding: 2rem;
   background:
-    radial-gradient(ellipse 60% 45% at 25% 10%, rgba(139,92,246,0.14) 0%, transparent 58%),
-    radial-gradient(ellipse 50% 40% at 80% 15%,  rgba(99,179,237,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 45% at 25% 10%, rgba(234,169,96,0.14) 0%, transparent 58%),
+    radial-gradient(ellipse 50% 40% at 80% 15%,  rgba(248,195,125,0.08) 0%, transparent 55%),
     #0a0a0a;
   color: #fff;
   position: relative;
@@ -32,8 +32,8 @@
   height: 900px;
   background: radial-gradient(
     ellipse at center,
-    rgba(139,92,246,0.08) 0%,
-    rgba(99,179,237,0.04) 35%,
+    rgba(234,169,96,0.08) 0%,
+    rgba(248,195,125,0.04) 35%,
     transparent 70%
   );
   border-radius: 50%;
@@ -88,14 +88,14 @@
   box-sizing: border-box;
 
   background:
-    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(139,92,246,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(234,169,96,0.12) 0%, transparent 60%),
     rgba(14, 15, 20, 0.97);
 
   border-radius: 24px;
-  border: 1px solid rgba(139, 92, 246, 0.22);
+  border: 1px solid rgba(234, 169, 96, 0.22);
   box-shadow:
     0 32px 80px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(139, 92, 246, 0.1),
+    0 0 0 1px rgba(234, 169, 96, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -117,8 +117,8 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(139, 92, 246, 0.65),
-    rgba(99, 179, 237, 0.4),
+    rgba(234, 169, 96, 0.65),
+    rgba(248, 195, 125, 0.4),
     transparent
   );
   pointer-events: none;
@@ -134,8 +134,8 @@
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(139, 92, 246, 0.25) 0%,
-    rgba(99, 179, 237, 0.1) 50%,
+    rgba(234, 169, 96, 0.25) 0%,
+    rgba(248, 195, 125, 0.1) 50%,
     transparent 75%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -153,7 +153,7 @@
   position: relative;
   z-index: 1;
   animation: iconPop 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
-  filter: drop-shadow(0 0 24px rgba(139,92,246,0.5));
+  filter: drop-shadow(0 0 24px rgba(234,169,96,0.5));
 }
 
 @keyframes iconPop {
@@ -169,11 +169,11 @@
   font-weight: 200;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  background: linear-gradient(125deg, #ffffff 20%, #c4b5fd 60%, #93c5fd 100%);
+  background: linear-gradient(125deg, #ffffff 20%, #fcd9a8 60%, #e8c992 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 18px rgba(139,92,246,0.35));
+  filter: drop-shadow(0 0 18px rgba(234,169,96,0.35));
   position: relative;
   z-index: 1;
 }
@@ -191,9 +191,9 @@
 .spinner {
   width: 44px;
   height: 44px;
-  border: 2px solid rgba(139, 92, 246, 0.15);
-  border-top-color: #8B5CF6;
-  border-right-color: #63b3ed;
+  border: 2px solid rgba(234, 169, 96, 0.15);
+  border-top-color: #eaa960;
+  border-right-color: #f8c37d;
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
   margin-bottom: 1.25rem;
@@ -229,9 +229,9 @@
   left: 0; top: 15%; bottom: 15%;
   width: 2px;
   background: linear-gradient(180deg,
-    rgba(139,92,246,0),
-    rgba(139,92,246,0.8),
-    rgba(99,179,237,0.5)
+    rgba(234,169,96,0),
+    rgba(234,169,96,0.8),
+    rgba(248,195,125,0.5)
   );
   border-radius: 2px;
 }
@@ -263,8 +263,8 @@
   cursor: pointer;
   border: none;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.85) 0%, rgba(99,179,237,0.75) 100%);
-  box-shadow: 0 0 28px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, rgba(234,169,96,0.85) 0%, rgba(248,195,125,0.75) 100%);
+  box-shadow: 0 0 28px rgba(234,169,96,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
   transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -282,14 +282,14 @@
 
 .primary-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 48px rgba(139,92,246,0.52), 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 0 48px rgba(234,169,96,0.52), 0 8px 24px rgba(0,0,0,0.4);
 }
 
 .primary-button:hover::before { left: 100%; }
 
 .primary-button:active {
   transform: translateY(0);
-  box-shadow: 0 0 22px rgba(139,92,246,0.3);
+  box-shadow: 0 0 22px rgba(234,169,96,0.3);
 }
 
 /* Secondary — outlined pill */

@@ -39,11 +39,14 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + "/");
 
-  // Lock body scroll when mobile menu is open
+  // Lock body scroll when mobile menu or user dropdown is open (touch: page won't steal scroll)
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [mobileMenuOpen]);
+    const lock = mobileMenuOpen || dropdownOpen;
+    document.body.style.overflow = lock ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen, dropdownOpen]);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
   const toggleDropdown = () => setDropdownOpen((prev) => !prev);
@@ -171,49 +174,53 @@ const Navbar = () => {
                 {dropdownOpen && ReactDOM.createPortal(
                   <div className="user-dropdown-overlay" onClick={() => setDropdownOpen(false)}>
                     <div className="user-dropdown" onClick={(e) => e.stopPropagation()} style={dropdownPosition}>
-                      <p>{user.email}</p>
-                      <Link to="/trader-deck" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaThLarge className="dropdown-icon" /> Trader Desk
-                      </Link>
-                      <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaBook className="dropdown-icon" /> Journal
-                      </Link>
-                      <Link to="/trader-deck/trade-validator/overview" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaCheckSquare className="dropdown-icon" /> Trade Validator
-                      </Link>
-                      <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaChartLine className="dropdown-icon" /> Aura Analysis
-                      </Link>
-                      {isPremium(user) && (
-                        <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                          <FaFileAlt className="dropdown-icon" /> Monthly Reports / DNA
+                      <div className="user-dropdown-header">
+                        <p>{user.email}</p>
+                      </div>
+                      <div className="user-dropdown-body">
+                        <Link to="/trader-deck" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaThLarge className="dropdown-icon" /> Trader Desk
                         </Link>
-                      )}
-                      <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaUserCircle className="dropdown-icon" /> Profile
-                      </Link>
-                      <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaEnvelope className="dropdown-icon" /> Messages
-                      </Link>
-                      <Link to="/affiliation" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                        <FaLink className="dropdown-icon" /> Affiliation
-                      </Link>
-                      {showSuperAdminLinks && (
-                        <>
-                          <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaCog className="dropdown-icon" /> Admin Panel
+                        <Link to="/journal" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaBook className="dropdown-icon" /> Journal
+                        </Link>
+                        <Link to="/trader-deck/trade-validator/overview" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaCheckSquare className="dropdown-icon" /> Trade Validator
+                        </Link>
+                        <Link to="/aura-analysis" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaChartLine className="dropdown-icon" /> Aura Analysis
+                        </Link>
+                        {isPremium(user) && (
+                          <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                            <FaFileAlt className="dropdown-icon" /> Monthly Reports / DNA
                           </Link>
-                          <Link to="/settings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaSlidersH className="dropdown-icon" /> Settings
-                          </Link>
-                          <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                            <FaHeadset className="dropdown-icon" /> Contact Submissions
-                          </Link>
-                        </>
-                      )}
-                      <button onClick={() => { setDropdownOpen(false); logout(); }} className="dropdown-item">
-                        <FaSignOutAlt className="dropdown-icon" /> Logout
-                      </button>
+                        )}
+                        <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaUserCircle className="dropdown-icon" /> Profile
+                        </Link>
+                        <Link to="/admin/inbox" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaEnvelope className="dropdown-icon" /> Messages
+                        </Link>
+                        <Link to="/affiliation" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                          <FaLink className="dropdown-icon" /> Affiliation
+                        </Link>
+                        {showSuperAdminLinks && (
+                          <>
+                            <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                              <FaCog className="dropdown-icon" /> Admin Panel
+                            </Link>
+                            <Link to="/settings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                              <FaSlidersH className="dropdown-icon" /> Settings
+                            </Link>
+                            <Link to="/admin/messages" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                              <FaHeadset className="dropdown-icon" /> Contact Submissions
+                            </Link>
+                          </>
+                        )}
+                        <button type="button" onClick={() => { setDropdownOpen(false); logout(); }} className="dropdown-item">
+                          <FaSignOutAlt className="dropdown-icon" /> Logout
+                        </button>
+                      </div>
                     </div>
                   </div>,
                   document.body,

@@ -3,6 +3,8 @@ html {
     background: url('/assets/my-bg.jpg') no-repeat center center fixed !important;
     background-size: cover !important;
     min-height: 100%;
+    /* Native <select> menus follow OS theme; dark hints consistent dropdowns in Chromium/WebKit */
+    color-scheme: dark;
 }
 
 :root {
@@ -78,6 +80,17 @@ html, body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+}
+
+/* Native <select> option lists: dark surface where UA honors it (Firefox; partial Chromium) */
+select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: #0a0812;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 /* iOS Safari: -webkit-fill-available for correct viewport */

@@ -11,8 +11,8 @@
   --ov-card-h:       var(--aa-bg-card-h, rgba(255, 255, 255, 0.048));
   --ov-border:       var(--aa-border, rgba(255, 255, 255, 0.08));
   --ov-border-h:     var(--aa-border-h, rgba(255, 255, 255, 0.18));
-  --ov-purple:       var(--aa-accent, rgba(234, 169, 96, 0.85));
-  --ov-purple-dim:   var(--aa-accent-soft, rgba(234, 169, 96, 0.15));
+  --ov-gold:         var(--aa-accent, rgba(234, 169, 96, 0.85));
+  --ov-gold-dim:     var(--aa-accent-soft, rgba(234, 169, 96, 0.15));
   --ov-blue:         var(--aa-accent-blue, rgba(248, 195, 125, 0.75));
   --ov-green:        var(--aa-success, #f8c37d);
   --ov-green-dim:    rgba(234, 169, 96, 0.18);
@@ -150,7 +150,7 @@
 }
 
 .aura-overview-kpi-card:focus-within {
-  border-color: var(--ov-purple);
+  border-color: var(--ov-gold);
   outline: none;
 }
 
@@ -264,8 +264,8 @@
 
 .aura-overview-month-nav-btn:focus-visible {
   outline: none;
-  border-color: var(--ov-purple);
-  box-shadow: 0 0 0 2px var(--ov-purple-dim);
+  border-color: var(--ov-gold);
+  box-shadow: 0 0 0 2px var(--ov-gold-dim);
 }
 
 .aura-overview-month-nav-label {
@@ -321,8 +321,8 @@
 
 .aura-overview-cal-day:focus-visible {
   outline: none;
-  border-color: var(--ov-purple);
-  box-shadow: 0 0 0 2px var(--ov-purple-dim);
+  border-color: var(--ov-gold);
+  box-shadow: 0 0 0 2px var(--ov-gold-dim);
 }
 
 .aura-overview-cal-day--empty {
@@ -357,14 +357,14 @@
 
 .aura-overview-cal-day--selected {
   background: linear-gradient(135deg, rgba(234, 169, 96, 0.35) 0%, rgba(234, 169, 96, 0.2) 100%);
-  border-color: var(--ov-purple);
-  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 4px 16px rgba(234, 169, 96, 0.2);
+  border-color: var(--ov-gold);
+  box-shadow: 0 0 0 2px var(--ov-gold-dim), 0 4px 16px rgba(234, 169, 96, 0.2);
   transform: scale(1.02);
 }
 
 .aura-overview-cal-day--selected:hover {
   background: linear-gradient(135deg, rgba(234, 169, 96, 0.45) 0%, rgba(234, 169, 96, 0.28) 100%);
-  box-shadow: 0 0 0 2px var(--ov-purple-dim), 0 6px 20px rgba(234, 169, 96, 0.25);
+  box-shadow: 0 0 0 2px var(--ov-gold-dim), 0 6px 20px rgba(234, 169, 96, 0.25);
 }
 
 .aura-overview-cal-num {
@@ -436,7 +436,7 @@
 
 .aura-overview-selected-day-close:focus-visible {
   outline: none;
-  border-color: var(--ov-purple);
+  border-color: var(--ov-gold);
 }
 
 .aura-overview-selected-day-empty {
@@ -666,8 +666,8 @@
 
 .aura-summary-value.positive { color: var(--ov-green); }
 
-.aura-summary-value.purple {
-  color: var(--ov-purple);
+.aura-summary-value.gold {
+  color: var(--ov-gold);
   font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -734,7 +734,7 @@
   box-shadow: 0 0 8px rgba(34,197,94,0.12);
 }
 
-.aura-calendar-day.purple {
+.aura-calendar-day.gold {
   background: rgba(234, 169, 96,0.15);
   color: #f8c37d;
   border: 1px solid rgba(234, 169, 96,0.22);
@@ -978,7 +978,7 @@
   z-index: 1;
 }
 
-.aura-donut-legend .win  { color: var(--ov-purple); font-weight: 600; }
+.aura-donut-legend .win  { color: var(--ov-gold); font-weight: 600; }
 .aura-donut-legend .loss { color: var(--ov-red); font-weight: 600; }
 
 .aura-best-worst {
@@ -1645,7 +1645,7 @@
   letter-spacing: 0.05em;
 }
 
-.ov2-ks-tag.purple { background: rgba(234, 169, 96,0.15); color: #f8c37d; border: 1px solid rgba(234, 169, 96,0.3); }
+.ov2-ks-tag.gold { background: rgba(234, 169, 96,0.15); color: #f8c37d; border: 1px solid rgba(234, 169, 96,0.3); }
 .ov2-ks-tag.teal   { background: rgba(234,169,96,0.12); color: #e8c992; border: 1px solid rgba(234,169,96,0.25); }
 .ov2-ks-tag.blue   { background: rgba(59,130,246,0.12); color: #fcd9a8; border: 1px solid rgba(59,130,246,0.25); }
 .ov2-ks-tag.dim    { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
@@ -1914,7 +1914,7 @@
   vertical-align: middle;
 }
 
-.ov2-wl-dot.purple { background: #f8c37d; box-shadow: 0 0 6px rgba(248, 195, 125,0.6); }
+.ov2-wl-dot.gold { background: #f8c37d; box-shadow: 0 0 6px rgba(248, 195, 125,0.6); }
 .ov2-wl-dot.red    { background: #9a8f84; box-shadow: 0 0 6px rgba(154,143,132,0.6); }
 
 .ov2-wl-delta {

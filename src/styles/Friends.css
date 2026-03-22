@@ -37,7 +37,7 @@
 }
 
 .header-icon {
-  color: #8B5CF6;
+  color: #eaa960;
 }
 
 /* Tabs */
@@ -52,8 +52,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(234, 169, 96, 0.1);
+  border: 1px solid rgba(234, 169, 96, 0.2);
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.95rem;
@@ -63,13 +63,13 @@
 }
 
 .friends-tabs .tab:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(234, 169, 96, 0.2);
   color: white;
 }
 
 .friends-tabs .tab.active {
-  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-  border-color: #8B5CF6;
+  background: linear-gradient(135deg, #eaa960 0%, #b47830 100%);
+  border-color: #eaa960;
   color: white;
 }
 
@@ -87,7 +87,7 @@
 /* Main Content */
 .friends-main {
   background: rgba(30, 30, 46, 0.6);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(234, 169, 96, 0.2);
   border-radius: 16px;
   min-height: 400px;
 }
@@ -114,7 +114,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  background: linear-gradient(135deg, #eaa960 0%, #b47830 100%);
   border: none;
   border-radius: 10px;
   color: white;
@@ -126,7 +126,7 @@
 
 .add-friends-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 5px 20px rgba(234, 169, 96, 0.4);
 }
 
 .spinner {
@@ -159,7 +159,7 @@
   width: 100%;
   padding: 14px 14px 14px 45px;
   background: rgba(20, 20, 35, 0.8);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(234, 169, 96, 0.2);
   border-radius: 12px;
   color: white;
   font-size: 1rem;
@@ -167,7 +167,7 @@
 
 .search-box input:focus {
   outline: none;
-  border-color: #8B5CF6;
+  border-color: #eaa960;
 }
 
 /* Friends Section */
@@ -219,15 +219,15 @@
   align-items: center;
   gap: 12px;
   padding: 14px;
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.15);
+  background: rgba(234, 169, 96, 0.08);
+  border: 1px solid rgba(234, 169, 96, 0.15);
   border-radius: 12px;
   transition: all 0.2s;
 }
 
 .friend-card:hover {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(234, 169, 96, 0.15);
+  border-color: rgba(234, 169, 96, 0.3);
 }
 
 .friend-card.offline {
@@ -349,8 +349,8 @@
   align-items: center;
   gap: 15px;
   padding: 16px 20px;
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.15);
+  background: rgba(234, 169, 96, 0.08);
+  border: 1px solid rgba(234, 169, 96, 0.15);
   border-radius: 12px;
 }
 
@@ -458,8 +458,8 @@
   margin: 0 auto;
   text-align: center;
   padding: 30px;
-  background: rgba(139, 92, 246, 0.05);
-  border: 1px solid rgba(139, 92, 246, 0.15);
+  background: rgba(234, 169, 96, 0.05);
+  border: 1px solid rgba(234, 169, 96, 0.15);
   border-radius: 16px;
 }
 
@@ -490,7 +490,7 @@
   width: 100%;
   padding: 16px 45px;
   background: rgba(20, 20, 35, 0.9);
-  border: 2px solid rgba(139, 92, 246, 0.3);
+  border: 2px solid rgba(234, 169, 96, 0.3);
   border-radius: 12px;
   color: white;
   font-size: 1rem;
@@ -498,13 +498,13 @@
 
 .search-input-wrapper input:focus {
   outline: none;
-  border-color: #8B5CF6;
+  border-color: #eaa960;
 }
 
 .search-input-wrapper .spinner {
   position: absolute;
   right: 15px;
-  color: #8B5CF6;
+  color: #eaa960;
 }
 
 /* Search Results */
@@ -523,8 +523,8 @@
   align-items: center;
   gap: 15px;
   padding: 14px 18px;
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.15);
+  background: rgba(234, 169, 96, 0.08);
+  border: 1px solid rgba(234, 169, 96, 0.15);
   border-radius: 12px;
 }
 
@@ -589,9 +589,9 @@
     background-color: transparent;
   }
   10%, 30%, 50% {
-    background-color: rgba(139, 92, 246, 0.3);
+    background-color: rgba(234, 169, 96, 0.3);
   }
   20%, 40% {
-    background-color: rgba(139, 92, 246, 0.15);
+    background-color: rgba(234, 169, 96, 0.15);
   }
 }

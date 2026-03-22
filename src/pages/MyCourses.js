@@ -129,7 +129,7 @@ const MyCourses = () => {
                     }} style={{
                         marginTop: '12px',
                         padding: '8px 16px',
-                        background: 'rgba(139, 92, 246, 0.8)',
+                        background: 'rgba(234, 169, 96, 0.8)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',

@@ -25,10 +25,10 @@
   --radius-lg: 16px;
   --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  --purple: #eaa960;
+  --gold: #eaa960;
   --blue: #f8c37d;
   --green: #10b981;
-  --purple-glow: rgba(234, 169, 96, 0.25);
+  --gold-glow: rgba(234, 169, 96, 0.25);
   --blue-glow: rgba(248, 195, 125, 0.2);
   --green-glow: rgba(16, 185, 129, 0.2);
   min-height: 100vh;
@@ -219,7 +219,7 @@
   transform: translateX(-50%);
   width: 60px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--purple), var(--blue), transparent);
+  background: linear-gradient(90deg, transparent, var(--gold), var(--blue), transparent);
 }
 
 .connection-hub-sub {
@@ -857,7 +857,7 @@
 }
 
 .connection-hub-enter-hint i {
-  color: var(--purple);
+  color: var(--gold);
   font-size: 0.7rem;
 }
 
@@ -1022,7 +1022,7 @@
 }
 
 .connection-hub-enter-hint i {
-  color: var(--purple);
+  color: var(--gold);
   font-size: 0.7rem;
 }
 

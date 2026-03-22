@@ -354,35 +354,42 @@
 
 /* ── Trade Calculator ───────────────────────────────────────────────────── */
 .trade-validator-shell .trade-calc-page {
-  max-width: 1200px;
+  max-width: 1220px;
   margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .trade-validator-shell .trade-calc-title {
-  margin-bottom: 18px !important;
+  margin-bottom: 20px !important;
 }
 
 .trade-validator-shell .trade-calc-banner {
-  border-radius: 14px !important;
-  margin-bottom: 20px !important;
+  border-radius: 16px !important;
+  margin-bottom: 24px !important;
 }
 
 .trade-validator-shell .trade-calc-columns {
   display: grid !important;
-  gap: 18px !important;
+  gap: 22px !important;
   grid-template-columns: 1fr !important;
+  align-items: stretch !important;
 }
 
 @media (min-width: 960px) {
   .trade-validator-shell .trade-calc-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    align-items: start;
+    align-items: stretch !important;
+  }
+
+  .trade-validator-shell .trade-calc-calculated {
+    min-height: 480px;
   }
 }
 
 .trade-validator-shell .trade-calc-panel {
-  border-radius: 16px !important;
-  padding: 20px 20px 18px !important;
+  border-radius: 18px !important;
+  padding: 24px 22px 22px !important;
 }
 
 /* ── Trade Journal ──────────────────────────────────────────────────────── */
@@ -407,7 +414,7 @@
 
 .trade-validator-shell .td-journal-table-wrap {
   border-radius: 16px !important;
-  overflow: auto;
+  max-width: 100%;
 }
 
 /* ── Analytics ──────────────────────────────────────────────────────────── */

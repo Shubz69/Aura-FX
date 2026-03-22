@@ -629,7 +629,7 @@ select.acc-input:focus {
   padding: 3px 9px;
   border-radius: 5px;
   background: rgba(217, 119, 6,0.15);
-  color: #818cf8;
+  color: #f8c37d;
 }
 .acc-result-badge--iq { background: rgba(255,255,255,0.06); color: var(--acc-muted); }
 .acc-iq--good     { color: #6ee7b7; background: rgba(16,185,129,0.1); }
@@ -766,7 +766,7 @@ select.acc-input:focus {
 }
 .acc-insight--pos     .acc-insight-title { color: #6ee7b7; }
 .acc-insight--neg     .acc-insight-title { color: #fca5a5; }
-.acc-insight--missing .acc-insight-title { color: #818cf8; }
+.acc-insight--missing .acc-insight-title { color: #f8c37d; }
 .acc-insight--manual  .acc-insight-title { color: #fde68a; }
 
 .acc-insight ul { margin: 0; padding: 0 0 0 14px; }

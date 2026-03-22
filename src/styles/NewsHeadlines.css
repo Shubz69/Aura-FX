@@ -14,7 +14,7 @@
 }
 
 .news-headlines__icon {
-  color: #a78bfa;
+  color: #f8c37d;
   font-size: 1rem;
   flex-shrink: 0;
 }
@@ -53,7 +53,7 @@
 }
 
 .news-headlines__refresh:hover {
-  color: #a78bfa;
+  color: #f8c37d;
   border-color: rgba(167,139,250,0.4);
 }
 
@@ -89,7 +89,7 @@
 }
 
 .news-headlines__link:hover .news-headlines__item-title {
-  color: #a78bfa;
+  color: #f8c37d;
 }
 
 .news-headlines__item-content {
@@ -115,7 +115,7 @@
 }
 
 .news-headlines__source {
-  color: #7c3aed;
+  color: #b47830;
   font-weight: 500;
 }
 

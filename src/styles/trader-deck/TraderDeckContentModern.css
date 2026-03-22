@@ -178,6 +178,25 @@
     0 0 0 0.5px rgba(234, 169, 96, 0.06) inset;
 }
 
+/* Rail ~280px wide: viewport ≥900px still must not use 4 columns (TraderDeckTabs.css MQ). */
+.td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-sessions {
+  min-width: 0;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-sessions .td-deck-sessions-list {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-sessions .td-deck-session-item {
+  min-width: 0;
+}
+
+.td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-sessions .td-deck-session-name {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
 .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-headlines {
   min-height: 0;
   flex: 1;

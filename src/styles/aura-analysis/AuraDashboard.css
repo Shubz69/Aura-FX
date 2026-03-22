@@ -14,8 +14,13 @@ html, body, #root {
   padding: 0;
 }
 
-/* ── Dashboard shell ──────────────────────────────────────── */
+/* ── Dashboard shell ────────────────────────────────────────
+   Clear the fixed site navbar (Navbar.css) so tabs are not stacked on it. */
 .aura-dashboard {
+  box-sizing: border-box;
+  /* Mirrors effective .navbar height + safe-area; breakpoints align with Navbar.css */
+  --aura-nav-offset: calc(var(--nav-height, 62px) + env(safe-area-inset-top, 0px));
+  padding-top: var(--aura-nav-offset);
   min-height: 100vh;
   width: 100%;
   background: #010008;
@@ -24,12 +29,36 @@ html, body, #root {
   overflow-x: hidden;
 }
 
+@media (min-width: 768px) and (max-width: 1150px) {
+  .aura-dashboard {
+    --aura-nav-offset: calc(64px + env(safe-area-inset-top, 0px));
+  }
+}
+
+@media (min-width: 481px) and (max-width: 767px) {
+  .aura-dashboard {
+    --aura-nav-offset: calc(58px + env(safe-area-inset-top, 0px));
+  }
+}
+
+@media (max-width: 480px) {
+  .aura-dashboard {
+    --aura-nav-offset: calc(56px + env(safe-area-inset-top, 0px));
+  }
+}
+
+@media (max-width: 374px) {
+  .aura-dashboard {
+    --aura-nav-offset: calc(54px + env(safe-area-inset-top, 0px));
+  }
+}
+
 /* ══════════════════════════════════════════════════════════
    PRIMARY TAB BAR
    ══════════════════════════════════════════════════════════ */
 .aura-dashboard-tabs-wrap {
   position: sticky;
-  top: 0;
+  top: var(--aura-nav-offset);
   z-index: 200;
   width: 100%;
   background: rgba(1, 0, 8, 0.94);

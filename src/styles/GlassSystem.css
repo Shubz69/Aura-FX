@@ -1,0 +1,83 @@
+/* =============================================================================
+   GLOBAL GLASS SYSTEM — matches Home.css .glass-card (Aura Terminal)
+   Imported once from App.js. Use .no-aura-glass on any element to opt out.
+   ============================================================================= */
+
+:root {
+  --aura-glass-bg: rgba(7, 8, 20, 0.44);
+  --aura-glass-border: rgba(255, 255, 255, 0.072);
+  --aura-glass-blur: 6px;
+  --aura-glass-sat: 1.04;
+  --aura-glass-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.42),
+    0 1px 0 rgba(255, 255, 255, 0.055) inset,
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+  --aura-glass-radius: 16px;
+}
+
+/* Drop-in utility (same as Home .glass-card) */
+.glass-card {
+  background: var(--aura-glass-bg);
+  backdrop-filter: blur(var(--aura-glass-blur)) saturate(var(--aura-glass-sat));
+  -webkit-backdrop-filter: blur(var(--aura-glass-blur)) saturate(var(--aura-glass-sat));
+  border: 1px solid var(--aura-glass-border);
+  border-radius: var(--aura-glass-radius);
+  box-shadow: var(--aura-glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 6%;
+  right: 28%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(234, 169, 96, 0.1) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  /*
+   * Unified glass: home-equivalent blur + saturation on typical “box” surfaces.
+   * Pattern: class substring -card / -panel / -box / -tile on main content.
+   * Excludes inner BEM pieces (card-header, card-value, …) so only shells get the effect.
+   */
+  .page-wrapper [class*='-card']:not(.no-aura-glass):not([class*='__']):not([class*='card-header']):not([class*='card-body']):not([class*='card-footer']):not([class*='card-title']):not([class*='card-inner']):not([class*='card-label']):not([class*='card-value']):not([class*='card-icon']):not([class*='card-bar']):not([class*='card-fill']):not([class*='cards-wrap']):not([class*='cards-grid']):not([class*='stat-cards']),
+  .page-wrapper [class*='-panel']:not(.no-aura-glass):not([class*='__']):not([class*='panel-header']):not([class*='panel-body']):not([class*='panel-row']):not([class*='panel-label']),
+  .page-wrapper [class*='-box']:not(.no-aura-glass):not([class*='__']):not([class*='checkbox']):not([class*='textbox']):not([class*='input-box']),
+  .page-wrapper [class*='-tile']:not(.no-aura-glass):not([class*='__']),
+  /* Auth & profile shells */
+  .page-wrapper .login-form-container:not(.no-aura-glass),
+  .page-wrapper .register-form-container:not(.no-aura-glass),
+  .page-wrapper .forgot-password-form-container:not(.no-aura-glass),
+  .page-wrapper .reset-password-form-container:not(.no-aura-glass),
+  .page-wrapper .login-box:not(.no-aura-glass),
+  /* Common named surfaces */
+  .page-wrapper .contact-form-container:not(.no-aura-glass),
+  .page-wrapper .contact-info-container:not(.no-aura-glass),
+  .page-wrapper .not-found-content:not(.no-aura-glass),
+  .page-wrapper .settings-container:not(.no-aura-glass),
+  .page-wrapper .admin-panel-container:not(.no-aura-glass),
+  .page-wrapper .messages-list:not(.no-aura-glass),
+  .page-wrapper .subscription-container:not(.no-aura-glass),
+  .page-wrapper .payment-success-card:not(.no-aura-glass),
+  .page-wrapper .terms-content:not(.no-aura-glass),
+  .page-wrapper .privacy-content:not(.no-aura-glass),
+  .page-wrapper .why-platform-feature:not(.no-aura-glass),
+  .page-wrapper .why-additional-features:not(.no-aura-glass),
+  /* Chatbot window sits outside main in App — still in app-container */
+  .app-container .chatbot-window:not(.no-aura-glass),
+  /* GDPR modal card */
+  .app-container .gdpr-modal:not(.no-aura-glass) {
+    backdrop-filter: blur(var(--aura-glass-blur)) saturate(var(--aura-glass-sat));
+    -webkit-backdrop-filter: blur(var(--aura-glass-blur)) saturate(var(--aura-glass-sat));
+  }
+}

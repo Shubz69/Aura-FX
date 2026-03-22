@@ -160,7 +160,7 @@ const ChoosePlan = () => {
             fontWeight: 'normal',
             marginBottom: '12px',
             textAlign: 'center',
-            background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+            background: 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',

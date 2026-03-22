@@ -177,7 +177,7 @@ export default function OverviewDashboard() {
         <div className="aa-card aa-card--accent" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(234,169,96,0.18)', border: '1px solid rgba(234,169,96,0.38)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
-              <i className="fas fa-chart-line" style={{ color: '#c4b5fd' }} />
+              <i className="fas fa-chart-line" style={{ color: '#fcd9a8' }} />
             </div>
             <div>
               <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{account.name || 'MT5 Account'}</div>
@@ -392,7 +392,7 @@ export default function OverviewDashboard() {
                     border: `1px solid ${isSel ? 'rgba(234,169,96,0.55)' : isToday ? 'rgba(234,169,96,0.35)' : cell.pnl == null ? 'rgba(255,255,255,0.06)' : cell.pnl >= 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
                     borderRadius: 6, padding: '4px 2px 3px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s',
                   }}>
-                  <div style={{ fontSize: '0.62rem', fontWeight: isToday ? 700 : 400, color: isToday ? '#c4b5fd' : 'rgba(255,255,255,0.65)' }}>{cell.d}</div>
+                  <div style={{ fontSize: '0.62rem', fontWeight: isToday ? 700 : 400, color: isToday ? '#fcd9a8' : 'rgba(255,255,255,0.65)' }}>{cell.d}</div>
                   {cell.pnl != null && (
                     <div style={{ fontSize: '0.52rem', fontWeight: 700, color: cell.pnl >= 0 ? '#f8c37d' : '#9a8f84', marginTop: 1, fontVariantNumeric: 'tabular-nums' }}>
                       {cell.pnl >= 0 ? '+' : ''}{cell.pnl >= 1000 || cell.pnl <= -1000 ? fmtNum(cell.pnl / 1000, 1) + 'k' : fmtNum(cell.pnl, 0)}

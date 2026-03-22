@@ -125,7 +125,7 @@ export default function CalendarIntelligence() {
                 <button key={cell.key} type="button"
                   onClick={() => setSelDay(p => p === cell.key ? null : cell.key)}
                   style={{ background: bg, border: `1px solid ${bdr}`, borderRadius: 7, padding: '5px 3px 4px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s', minHeight: 48 }}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: isToday ? 700 : 400, color: isToday ? '#c4b5fd' : 'rgba(255,255,255,0.65)', marginBottom: 2 }}>{cell.d}</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: isToday ? 700 : 400, color: isToday ? '#fcd9a8' : 'rgba(255,255,255,0.65)', marginBottom: 2 }}>{cell.d}</div>
                   {cell.pnl != null && (
                     <>
                       <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isPos ? '#f8c37d' : '#9a8f84', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>

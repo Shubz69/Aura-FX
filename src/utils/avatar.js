@@ -1,6 +1,6 @@
 /**
  * Avatar helpers: only "real" avatars (user-uploaded) are shown as images.
- * When there is no real avatar, UI should show a clean purple transparent circle (CSS .avatar-placeholder).
+ * When there is no real avatar, UI should show a clean gold-tinted transparent circle (CSS .avatar-placeholder).
  */
 
 const DEFAULT_NAMES = [
@@ -54,8 +54,8 @@ export function resolveAvatarUrlForUi(avatar, baseUrl = '') {
 
 /** Colours users can pick for their placeholder circle when they have no profile pic. */
 export const PLACEHOLDER_COLORS = [
-    '#8B5CF6', '#6366F1', '#3B82F6', '#0EA5E9', '#06B6D4', '#10B981', '#22C55E', '#84CC16',
-    '#EAB308', '#F59E0B', '#EF4444', '#EC4899', '#A855F7', '#14B8A6'
+    '#eaa960', '#c9a05c', '#3B82F6', '#0EA5E9', '#06B6D4', '#10B981', '#22C55E', '#84CC16',
+    '#EAB308', '#F59E0B', '#EF4444', '#EC4899', '#b47830', '#14B8A6'
 ];
 
 const STORAGE_KEY_PREFIX = 'avatar_placeholder_';

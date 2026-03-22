@@ -8,7 +8,7 @@ import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 
 const ROLE_LABEL = { free: 'Free', premium: 'Premium', elite: 'Elite', a7fx: 'A7FX', admin: 'Admin', super_admin: 'Super Admin' };
-const ROLE_COLOR = { free: '#6b7280', premium: '#8b5cf6', elite: '#f59e0b', a7fx: '#ec4899', admin: '#10b981', super_admin: '#ef4444' };
+const ROLE_COLOR = { free: '#6b7280', premium: '#eaa960', elite: '#f59e0b', a7fx: '#ec4899', admin: '#10b981', super_admin: '#ef4444' };
 
 const ContactUs = () => {
     const location = useLocation();

@@ -248,8 +248,8 @@ export default function AuraAnalytics() {
                 <svg viewBox="0 0 500 180" preserveAspectRatio="none" className="aura-analytics-equity-svg">
                   <defs>
                     <linearGradient id="aura-equity-fill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgba(99,179,237,0.35)" />
-                      <stop offset="100%" stopColor="rgba(99,179,237,0)" />
+                      <stop offset="0%" stopColor="rgba(248,195,125,0.35)" />
+                      <stop offset="100%" stopColor="rgba(248,195,125,0)" />
                     </linearGradient>
                   </defs>
                   <path
@@ -266,7 +266,7 @@ export default function AuraAnalytics() {
                   />
                   <path
                     fill="none"
-                    stroke="rgba(99,179,237,0.95)"
+                    stroke="rgba(248,195,125,0.95)"
                     strokeWidth="2"
                     d={equityCurve
                       .map((p, i) => {

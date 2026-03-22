@@ -1,10 +1,10 @@
 /* Fancy AI Head Styles - Landing Page Theme */
 :root {
-    /* Purple-Blue Colors */
-    --primary: rgba(255, 255, 255, 0.3);      /* Indigo */
-    --secondary: rgba(255, 255, 255, 0.2);    /* Purple-Blue */
-    --accent: rgba(255, 255, 255, 0.15);       /* Light Purple */
-    --dark-purple: rgba(255, 255, 255, 0.1);  /* Deep Purple */
+    /* Neutral chrome (landing AI head) */
+    --primary: rgba(255, 255, 255, 0.3);
+    --secondary: rgba(255, 255, 255, 0.2);
+    --accent: rgba(255, 255, 255, 0.15);
+    --chrome-dim: rgba(255, 255, 255, 0.1);
 
     /* Greys */
     --bg-dark: #0F0F1E;

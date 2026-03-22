@@ -157,7 +157,7 @@ const PublicProfile = () => {
                                 loading="lazy"
                             />
                         ) : (
-                            <div className="profile-avatar-large" aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(profile.id ?? profile.username), border: '4px solid rgba(139, 92, 246, 0.6)', boxSizing: 'border-box' }} />
+                            <div className="profile-avatar-large" aria-hidden style={{ width: '100%', height: '100%', borderRadius: '50%', background: getPlaceholderColor(profile.id ?? profile.username), border: '4px solid rgba(234, 169, 96, 0.6)', boxSizing: 'border-box' }} />
                         )}
                     </div>
                 </div>

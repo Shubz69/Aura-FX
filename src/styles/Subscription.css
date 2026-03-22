@@ -16,8 +16,8 @@
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
   --text-muted: rgba(255, 255, 255, 0.5);
-  --accent-purple: #8B5CF6;
-  --accent-purple-light: rgba(139, 92, 246, 0.15);
+  --accent-gold: #eaa960;
+  --accent-gold-light: rgba(234, 169, 96, 0.15);
   --accent-blue: #3B82F6;
   --accent-green: #eaa960;
   --accent-orange: #F59E0B;
@@ -71,7 +71,7 @@
   background-image: 
     radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.08), transparent),
     radial-gradient(1px 1px at 90% 50%, rgba(255,255,255,0.08), transparent),
-    radial-gradient(1px 1px at 30% 70%, rgba(139, 92, 246, 0.1), transparent),
+    radial-gradient(1px 1px at 30% 70%, rgba(234, 169, 96, 0.1), transparent),
     radial-gradient(1px 1px at 70% 30%, rgba(59, 130, 246, 0.1), transparent);
   background-size: 200px 200px;
   pointer-events: none;
@@ -107,7 +107,7 @@
   color: var(--text-primary);
   margin-bottom: 16px;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #ffffff, #c4b5fd, #93c5fd);
+  background: linear-gradient(135deg, #ffffff, #fcd9a8, #e8c992);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -313,7 +313,7 @@
 /* Checkmark styling */
 .plan-benefits li::before {
   content: "✓";
-  color: var(--accent-purple);
+  color: var(--accent-gold);
   font-weight: 600;
   font-size: 1rem;
   flex-shrink: 0;
@@ -342,8 +342,8 @@
 }
 
 .plan-select-button:hover:not(:disabled) {
-  background: var(--accent-purple-light);
-  border-color: var(--accent-purple);
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold);
   transform: translateY(-2px);
 }
 
@@ -623,7 +623,7 @@
   width: 48px;
   height: 48px;
   border: 2px solid var(--border-color);
-  border-top-color: var(--accent-purple);
+  border-top-color: var(--accent-gold);
   border-right-color: var(--accent-blue);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -733,7 +733,7 @@
 .contact-input:focus,
 .contact-textarea:focus {
   outline: none;
-  border-color: var(--accent-purple);
+  border-color: var(--accent-gold);
   background: rgba(0, 0, 0, 0.4);
 }
 
@@ -766,7 +766,7 @@
 }
 
 .contact-submit-button {
-  background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+  background: linear-gradient(135deg, var(--accent-gold), #b47830);
   color: white;
   border: none;
   padding: 14px 28px;
@@ -781,7 +781,7 @@
 
 .contact-submit-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.3);
 }
 
 .contact-submit-button:disabled {

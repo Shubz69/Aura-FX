@@ -394,7 +394,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     const getBannerAccent = (level) => {
         if (level >= 100) return '#FFD700';
-        if (level >= 75) return '#63b3ed';
+        if (level >= 75) return '#f8c37d';
         if (level >= 50) return '#eaa960';
         if (level >= 25) return '#f8c37d';
         if (level >= 10) return '#eaa960';
@@ -436,9 +436,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     const SettingsModal = () => (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(20px)', zIndex: 100001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', pointerEvents: 'auto' }} onClick={() => setShowSettings(false)}>
-            <div style={{ background: 'linear-gradient(145deg, rgba(14,14,22,0.99) 0%, rgba(10,10,18,0.99) 100%)', borderRadius: '20px', maxWidth: '560px', width: '100%', maxHeight: '85vh', overflow: 'auto', padding: '32px', border: '1px solid rgba(139,92,246,0.2)', boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(139,92,246,0.08)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <div style={{ background: 'linear-gradient(145deg, rgba(14,14,22,0.99) 0%, rgba(10,10,18,0.99) 100%)', borderRadius: '20px', maxWidth: '560px', width: '100%', maxHeight: '85vh', overflow: 'auto', padding: '32px', border: '1px solid rgba(234,169,96,0.2)', boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(234,169,96,0.08)', position: 'relative' }} onClick={e => e.stopPropagation()}>
                 {/* Top shimmer */}
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.7), rgba(99,179,237,0.5), transparent)', borderRadius: '20px 20px 0 0' }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(234,169,96,0.7), rgba(248,195,125,0.5), transparent)', borderRadius: '20px 20px 0 0' }} />
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
                     <div>
@@ -450,7 +450,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                 {/* Trading Identity */}
                 <div style={{ marginBottom: '28px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(139,92,246,0.12)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(234,169,96,0.12)' }}>
                         <FaChartLine style={{ color: tierColor, fontSize: '0.85rem' }} />
                         <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>Trading Identity</span>
                     </div>
@@ -475,7 +475,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                                         const current = settings?.trading_sessions || [];
                                         const updated = current.includes(session) ? current.filter(s => s !== session) : [...current, session];
                                         handleSettingsUpdate({ trading_sessions: updated });
-                                    }} style={{ padding: '7px 14px', borderRadius: '99px', cursor: 'pointer', background: settings?.trading_sessions?.includes(session) ? 'rgba(99,179,237,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${settings?.trading_sessions?.includes(session) ? 'rgba(99,179,237,0.5)' : 'rgba(255,255,255,0.08)'}`, color: settings?.trading_sessions?.includes(session) ? '#63b3ed' : 'rgba(255,255,255,0.45)', fontSize: '0.72rem', fontWeight: 500, textTransform: 'capitalize', transition: 'all 0.22s', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{session}</button>
+                                    }} style={{ padding: '7px 14px', borderRadius: '99px', cursor: 'pointer', background: settings?.trading_sessions?.includes(session) ? 'rgba(248,195,125,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${settings?.trading_sessions?.includes(session) ? 'rgba(248,195,125,0.5)' : 'rgba(255,255,255,0.08)'}`, color: settings?.trading_sessions?.includes(session) ? '#f8c37d' : 'rgba(255,255,255,0.45)', fontSize: '0.72rem', fontWeight: 500, textTransform: 'capitalize', transition: 'all 0.22s', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{session}</button>
                                 ))}
                             </div>
                         </div>
@@ -492,8 +492,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
                 {/* Privacy */}
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(139,92,246,0.12)' }}>
-                        <FaShieldAlt style={{ color: '#63b3ed', fontSize: '0.85rem' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(234,169,96,0.12)' }}>
+                        <FaShieldAlt style={{ color: '#f8c37d', fontSize: '0.85rem' }} />
                         <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.32em', fontFamily: "'Space Grotesk', sans-serif" }}>Privacy</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -507,7 +507,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         ))}
                     </div>
                 </div>
-                {settingsLoading && <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(139,92,246,0.7)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Saving…</div>}
+                {settingsLoading && <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(234,169,96,0.7)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Saving…</div>}
             </div>
         </div>
     );
@@ -525,8 +525,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             <div style={{
                 background: 'linear-gradient(145deg, rgba(12,12,20,0.99) 0%, rgba(8,8,16,0.99) 100%)',
                 borderRadius: '22px',
-                border: `1px solid rgba(139,92,246,0.18)`,
-                boxShadow: `0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(139,92,246,0.06), 0 0 60px ${tierColor}12`,
+                border: `1px solid rgba(234,169,96,0.18)`,
+                boxShadow: `0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(234,169,96,0.06), 0 0 60px ${tierColor}12`,
                 maxWidth: '860px', width: '100%',
                 maxHeight: 'calc(100vh - 32px)',
                 overflowY: 'auto', overflowX: 'hidden',
@@ -536,7 +536,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
             }} onClick={e => e.stopPropagation()}>
 
                 {/* Top shimmer line */}
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}80, rgba(99,179,237,0.5), transparent)`, borderRadius: '22px 22px 0 0', zIndex: 10 }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${tierColor}80, rgba(248,195,125,0.5), transparent)`, borderRadius: '22px 22px 0 0', zIndex: 10 }} />
 
                 {/* Action Buttons — all icon-only, uniform 38×38 squares */}
                 <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px', zIndex: 20 }}>
@@ -669,8 +669,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             alignItems: 'flex-start',
                             gap: '12px',
                             padding: '16px 20px',
-                            background: 'linear-gradient(135deg, rgba(139,92,246,0.05) 0%, rgba(99,179,237,0.02) 100%)',
-                            border: '1px solid rgba(139,92,246,0.15)',
+                            background: 'linear-gradient(135deg, rgba(234,169,96,0.05) 0%, rgba(248,195,125,0.02) 100%)',
+                            border: '1px solid rgba(234,169,96,0.15)',
                             borderRadius: '14px',
                             position: 'relative',
                             overflow: 'hidden'
@@ -750,7 +750,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 </div>
 
                 {/* Thin divider */}
-                <div style={{ height: '1px', margin: '0 clamp(16px, 4vw, 32px)', background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.2), transparent)' }} />
+                <div style={{ height: '1px', margin: '0 clamp(16px, 4vw, 32px)', background: 'linear-gradient(90deg, transparent, rgba(234,169,96,0.2), transparent)' }} />
 
                 {/* ─── TABS ───────────────────────────────────────────── */}
                 <div style={{ display: 'flex', gap: '2px', padding: '0 clamp(16px, 4vw, 32px)', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', scrollbarWidth: 'none', marginTop: '4px' }}>
@@ -812,8 +812,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                             {/* Visible trading stats chosen by the user */}
                             {profile.visibleStats && Object.keys(profile.visibleStats).length > 0 && (() => {
                                 const STAT_META = {
-                                    discipline_score: { icon: '🎯', label: 'Discipline', color: '#a78bfa', fmt: v => `${v}%` },
-                                    journal_score:    { icon: '📓', label: 'Journal',    color: '#63b3ed', fmt: v => `${v}%` },
+                                    discipline_score: { icon: '🎯', label: 'Discipline', color: '#f8c37d', fmt: v => `${v}%` },
+                                    journal_score:    { icon: '📓', label: 'Journal',    color: '#f8c37d', fmt: v => `${v}%` },
                                     consistency_score:{ icon: '📈', label: 'Consistency',color: '#f8c37d', fmt: v => `${v}%` },
                                     win_rate:         { icon: '✅', label: 'Win Rate',   color: '#f59e0b', fmt: v => `${v}%` },
                                     total_trades:     { icon: '📊', label: 'Trades',     color: '#eaa960', fmt: v => String(v) },
@@ -867,9 +867,9 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
                             {[
                                 { icon: <FaChartLine />, color: tierColor, label: 'Preferred Markets', content: (settings?.preferred_markets || ['forex', 'gold']).map((m, i) => <span key={i} style={{ padding: '5px 12px', background: `${tierColor}18`, border: `1px solid ${tierColor}40`, borderRadius: '99px', color: tierColor, fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{m}</span>) },
-                                { icon: <FaClock />, color: '#63b3ed', label: 'Trading Sessions', content: (settings?.trading_sessions || ['london', 'newyork']).map((s, i) => <span key={i} style={{ padding: '5px 12px', background: 'rgba(99,179,237,0.1)', border: '1px solid rgba(99,179,237,0.3)', borderRadius: '99px', color: '#63b3ed', fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{s}</span>) },
+                                { icon: <FaClock />, color: '#f8c37d', label: 'Trading Sessions', content: (settings?.trading_sessions || ['london', 'newyork']).map((s, i) => <span key={i} style={{ padding: '5px 12px', background: 'rgba(248,195,125,0.1)', border: '1px solid rgba(248,195,125,0.3)', borderRadius: '99px', color: '#f8c37d', fontSize: '0.7rem', fontWeight: 500, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{s}</span>) },
                                 { icon: <FaShieldAlt />, color: '#f8c37d', label: 'Risk Profile', content: [<span key="r" style={{ fontSize: '1.1rem', color: '#f8c37d', fontWeight: 300, textTransform: 'capitalize', letterSpacing: '0.08em', fontFamily: "'Space Grotesk', sans-serif" }}>{settings?.risk_profile === 'conservative' ? '🛡️ ' : settings?.risk_profile === 'aggressive' ? '🔥 ' : '⚖️ '}{settings?.risk_profile || 'Moderate'}</span>] },
-                                { icon: <FaRobot />, color: '#a78bfa', label: 'AI Usage', content: [<span key="ai" style={{ fontSize: '1.1rem', color: '#a78bfa', fontWeight: 300, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif" }}>{stats?.ai_chats_count || 0} conversations</span>] }
+                                { icon: <FaRobot />, color: '#f8c37d', label: 'AI Usage', content: [<span key="ai" style={{ fontSize: '1.1rem', color: '#f8c37d', fontWeight: 300, letterSpacing: '0.04em', fontFamily: "'Space Grotesk', sans-serif" }}>{stats?.ai_chats_count || 0} conversations</span>] }
                             ].map((card, i) => (
                                 <div key={i} style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '2px', background: `linear-gradient(180deg, transparent, ${card.color}60, transparent)` }} />
@@ -887,8 +887,8 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     {activeTab === 'statistics' && (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                             {[
-                                { icon: <FaRobot />, label: 'AI Chats', value: stats?.ai_chats_count || 0, color: '#a78bfa' },
-                                { icon: <FaComments />, label: 'Messages', value: stats?.community_messages || 0, color: '#63b3ed' },
+                                { icon: <FaRobot />, label: 'AI Chats', value: stats?.ai_chats_count || 0, color: '#f8c37d' },
+                                { icon: <FaComments />, label: 'Messages', value: stats?.community_messages || 0, color: '#f8c37d' },
                                 { icon: <FaGraduationCap />, label: 'Courses', value: stats?.courses_completed || 0, color: '#f8c37d' },
                                 { icon: <FaFire />, label: 'Best Streak', value: `${stats?.longest_streak || loginStreak}d`, color: '#f59e0b' },
                                 { icon: <FaCalendarCheck />, label: 'Login Days', value: stats?.total_login_days || 0, color: '#eaa960' },
@@ -936,7 +936,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                     #profile-modal-root button:hover { opacity: 0.9; }
                     #profile-modal-root ::-webkit-scrollbar { width: 4px; }
                     #profile-modal-root ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
-                    #profile-modal-root ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 99px; }
+                    #profile-modal-root ::-webkit-scrollbar-thumb { background: rgba(234,169,96,0.3); border-radius: 99px; }
 
                     /* ── Mobile: ≤ 480px ─────────────────────────────── */
                     @media (max-width: 480px) {

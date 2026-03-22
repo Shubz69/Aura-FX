@@ -33,15 +33,15 @@
 
   /* Same layered background as settings-container */
   background:
-    radial-gradient(ellipse 65% 45% at 25% 0%,  rgba(139,92,246,0.14) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 80% 10%,  rgba(99,179,237,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 65% 45% at 25% 0%,  rgba(234,169,96,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 10%,  rgba(248,195,125,0.08) 0%, transparent 55%),
     rgba(14, 15, 20, 0.97);
 
   border-radius: 22px;
-  border: 1px solid rgba(139, 92, 246, 0.22);
+  border: 1px solid rgba(234, 169, 96, 0.22);
   box-shadow:
     0 32px 80px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(139, 92, 246, 0.1),
+    0 0 0 1px rgba(234, 169, 96, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(24px);
 
@@ -61,8 +61,8 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(139, 92, 246, 0.65),
-    rgba(99, 179, 237, 0.45),
+    rgba(234, 169, 96, 0.65),
+    rgba(248, 195, 125, 0.45),
     transparent
   );
   pointer-events: none;
@@ -77,8 +77,8 @@
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(139, 92, 246, 0.28) 0%,
-    rgba(99, 179, 237, 0.1) 50%,
+    rgba(234, 169, 96, 0.28) 0%,
+    rgba(248, 195, 125, 0.1) 50%,
     transparent 75%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -96,11 +96,11 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   text-align: center;
-  background: linear-gradient(125deg, #ffffff 20%, #c4b5fd 60%, #93c5fd 100%);
+  background: linear-gradient(125deg, #ffffff 20%, #fcd9a8 60%, #e8c992 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 18px rgba(139, 92, 246, 0.38));
+  filter: drop-shadow(0 0 18px rgba(234, 169, 96, 0.38));
 }
 
 /* ── Body Text ────────────────────────────────────────────── */
@@ -119,8 +119,8 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(139, 92, 246, 0.25),
-    rgba(99, 179, 237, 0.15),
+    rgba(234, 169, 96, 0.25),
+    rgba(248, 195, 125, 0.15),
     transparent
   );
   margin: 1.25rem 0;
@@ -140,8 +140,8 @@
   cursor: pointer;
   border: none;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.85) 0%, rgba(99,179,237,0.75) 100%);
-  box-shadow: 0 0 28px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, rgba(234,169,96,0.85) 0%, rgba(248,195,125,0.75) 100%);
+  box-shadow: 0 0 28px rgba(234,169,96,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
   transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -159,12 +159,12 @@
 
 .gdpr-modal button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 44px rgba(139,92,246,0.52), 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 0 44px rgba(234,169,96,0.52), 0 8px 24px rgba(0,0,0,0.4);
 }
 
 .gdpr-modal button:hover::before { opacity: 1; }
 
 .gdpr-modal button:active {
   transform: translateY(0);
-  box-shadow: 0 0 20px rgba(139,92,246,0.3);
+  box-shadow: 0 0 20px rgba(234,169,96,0.3);
 }

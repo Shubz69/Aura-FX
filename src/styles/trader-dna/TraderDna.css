@@ -31,7 +31,7 @@
   margin-bottom: 20px;
 }
 .tdna-back:hover {
-  color: #c4b5fd;
+  color: #fcd9a8;
 }
 
 .tdna-landing-head {
@@ -154,10 +154,10 @@
   inset: 0;
   z-index: 100000;
   background:
-    radial-gradient(ellipse 120% 80% at 50% 100%, rgba(49, 46, 129, 0.45) 0%, transparent 55%),
-    radial-gradient(ellipse 90% 60% at 80% 20%, rgba(76, 29, 149, 0.25) 0%, transparent 45%),
-    radial-gradient(ellipse 70% 50% at 10% 30%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
-    #020205;
+    radial-gradient(ellipse 120% 80% at 50% 100%, rgba(212, 141, 68, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 80% 20%, rgba(234, 169, 96, 0.16) 0%, transparent 45%),
+    radial-gradient(ellipse 70% 50% at 10% 30%, rgba(248, 195, 125, 0.09) 0%, transparent 50%),
+    #030201;
   overflow: hidden;
   font-family: var(--tdna-sans);
 }
@@ -174,7 +174,7 @@
   height: min(90vw, 720px);
   top: -20%;
   right: -15%;
-  background: radial-gradient(circle, rgba(234, 169, 96, 0.5) 0%, rgba(59, 7, 100, 0.2) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(248, 195, 125, 0.42) 0%, rgba(60, 42, 18, 0.28) 45%, transparent 70%);
   animation: tdna-nebula-drift 22s ease-in-out infinite alternate;
 }
 .tdna-intro-nebula--b {
@@ -182,7 +182,7 @@
   height: min(70vw, 520px);
   bottom: -25%;
   left: -20%;
-  background: radial-gradient(circle, rgba(234, 169, 96, 0.22) 0%, rgba(15, 23, 42, 0.3) 50%, transparent 68%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.22) 0%, rgba(14, 11, 8, 0.38) 50%, transparent 68%);
   animation: tdna-nebula-drift 28s ease-in-out infinite alternate;
   animation-delay: -7s;
 }
@@ -191,7 +191,7 @@
   height: min(50vw, 400px);
   top: 40%;
   left: 50%;
-  background: radial-gradient(circle, rgba(244, 114, 182, 0.15) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.14) 0%, transparent 65%);
   animation: tdna-nebula-drift-center 18s ease-in-out infinite alternate;
   animation-delay: -14s;
 }
@@ -222,7 +222,7 @@
   position: absolute;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.9), 0 0 10px rgba(196, 181, 253, 0.4);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.85), 0 0 10px rgba(248, 195, 125, 0.35);
   opacity: 0.35;
   animation-name: tdna-star-pulse;
   animation-timing-function: ease-in-out;
@@ -283,8 +283,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background:
-    radial-gradient(circle, rgba(124, 58, 237, 0.22) 0%, transparent 42%),
-    radial-gradient(circle at 30% 40%, rgba(248, 195, 125, 0.08) 0%, transparent 35%);
+    radial-gradient(circle, rgba(234, 169, 96, 0.16) 0%, transparent 42%),
+    radial-gradient(circle at 30% 40%, rgba(248, 195, 125, 0.1) 0%, transparent 35%);
   pointer-events: none;
 }
 
@@ -327,7 +327,7 @@
   color: #eaa960;
   text-shadow: 0 0 10px rgba(248, 195, 125, 0.4);
 }
-.tdna-matrix-col--violet {
+.tdna-matrix-col--gold {
   color: #fcd9a8;
   text-shadow: 0 0 10px rgba(234, 169, 96, 0.35);
 }
@@ -402,7 +402,7 @@
   font-family: var(--tdna-mono);
   font-size: 0.62rem;
   line-height: 1.45;
-  color: rgba(165, 243, 252, 0.75);
+  color: rgba(236, 224, 204, 0.82);
   overflow: hidden;
   text-align: left;
 }
@@ -499,7 +499,7 @@
   flex: 1;
   text-align: center;
   letter-spacing: 0.04em;
-  color: rgba(196, 181, 253, 0.65);
+  color: rgba(248, 195, 125, 0.72);
 }
 .tdna-intro-chrome-meta {
   flex-shrink: 0;
@@ -507,7 +507,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   color: #f8c37d;
-  text-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
+  text-shadow: 0 0 12px rgba(234, 169, 96, 0.45);
 }
 
 .tdna-intro-panel {
@@ -923,7 +923,7 @@
   color: rgba(255, 255, 255, 0.4);
 }
 .tdna-hero-next {
-  color: #c4b5fd;
+  color: #fcd9a8;
 }
 
 .tdna-score-orb {

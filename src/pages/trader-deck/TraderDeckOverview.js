@@ -273,8 +273,8 @@ export default function TraderDeckOverview() {
               <svg viewBox="0 0 400 120" preserveAspectRatio="none" className="td-overview-equity-svg">
                 <defs>
                   <linearGradient id="td-equity-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgba(99,179,237,0.4)" />
-                    <stop offset="100%" stopColor="rgba(99,179,237,0)" />
+                    <stop offset="0%" stopColor="rgba(248,195,125,0.4)" />
+                    <stop offset="100%" stopColor="rgba(248,195,125,0)" />
                   </linearGradient>
                 </defs>
                 <path
@@ -289,7 +289,7 @@ export default function TraderDeckOverview() {
                 />
                 <path
                   fill="none"
-                  stroke="rgba(99,179,237,0.9)"
+                  stroke="rgba(248,195,125,0.9)"
                   strokeWidth="2"
                   d={equityCurve
                     .map((p, i) => {

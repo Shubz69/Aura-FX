@@ -813,7 +813,7 @@ export default function Journal() {
             <form className="journal-add-note-form" onSubmit={handleAddNote}>
               <input type="text" className="journal-add-note-input" placeholder="Add a reflection note..."
                 value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} disabled={addingNote} />
-              <button type="submit" className="journal-add-note-btn journal-add-note-btn-purple"
+              <button type="submit" className="journal-add-note-btn journal-add-note-btn-gold"
                 disabled={addingNote || !newNoteContent.trim()}>
                 <FaPlus /> Add Note
               </button>

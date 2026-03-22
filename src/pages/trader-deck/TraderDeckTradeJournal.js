@@ -253,7 +253,7 @@ export default function TraderDeckTradeJournal() {
         <p className="td-journal-account-line">Account: {selectedAccountName}</p>
       )}
 
-      <div className="td-journal-toolbar">
+      <div className="td-journal-toolbar" role="search" aria-label="Journal filters">
         <input
           type="text"
           className="td-journal-search"
@@ -261,7 +261,7 @@ export default function TraderDeckTradeJournal() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <div className="td-journal-filters">
+        <div className="td-journal-filters" aria-label="Filter trades">
           <select
             className="td-journal-select"
             value={filterPair}
@@ -325,23 +325,40 @@ export default function TraderDeckTradeJournal() {
           <p className="td-journal-loading">Loading trades…</p>
         ) : (
           <table className="td-journal-table">
+            <colgroup>
+              <col className="td-journal-col td-journal-col--date" />
+              <col className="td-journal-col td-journal-col--pair" />
+              <col className="td-journal-col td-journal-col--asset" />
+              <col className="td-journal-col td-journal-col--dir" />
+              <col className="td-journal-col td-journal-col--num" />
+              <col className="td-journal-col td-journal-col--num" />
+              <col className="td-journal-col td-journal-col--num" />
+              <col className="td-journal-col td-journal-col--risk" />
+              <col className="td-journal-col td-journal-col--result" />
+              <col className="td-journal-col td-journal-col--pnl" />
+              <col className="td-journal-col td-journal-col--proof" />
+              <col className="td-journal-col td-journal-col--r" />
+              <col className="td-journal-col td-journal-col--session" />
+              <col className="td-journal-col td-journal-col--grade" />
+              <col className="td-journal-col td-journal-col--action" />
+            </colgroup>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Pair</th>
-                <th>Asset class</th>
-                <th>Dir</th>
-                <th>Entry</th>
-                <th>SL</th>
-                <th>TP</th>
-                <th>Risk %</th>
-                <th>Result</th>
-                <th>PnL</th>
-                <th>Proof</th>
-                <th>R</th>
-                <th>Session</th>
-                <th>Grade</th>
-                <th>Action</th>
+                <th scope="col">Date</th>
+                <th scope="col">Pair</th>
+                <th scope="col">Asset</th>
+                <th scope="col">Dir</th>
+                <th scope="col">Entry</th>
+                <th scope="col">SL</th>
+                <th scope="col">TP</th>
+                <th scope="col">Risk</th>
+                <th scope="col">Result</th>
+                <th scope="col">PnL</th>
+                <th scope="col">Proof</th>
+                <th scope="col">R</th>
+                <th scope="col">Session</th>
+                <th scope="col">Grade</th>
+                <th scope="col">Action</th>
               </tr>
             </thead>
             <tbody>

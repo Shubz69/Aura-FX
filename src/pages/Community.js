@@ -1788,7 +1788,7 @@ const renderMessageContent = (content, messageFile) => {
                         window.open(fullUrl, '_blank', 'noopener,noreferrer');
                     }}
                     style={{
-                        color: '#a78bfa',
+                        color: '#f8c37d',
                         textDecoration: 'none',
                         borderBottom: '1px solid rgba(167,139,250,0.45)',
                         cursor: 'pointer',
@@ -1796,11 +1796,11 @@ const renderMessageContent = (content, messageFile) => {
                         display: 'inline-block'
                     }}
                     onMouseEnter={(e) => {
-                        e.target.style.color = '#c4b5fd';
+                        e.target.style.color = '#fcd9a8';
                         e.target.style.borderBottomColor = 'rgba(196,181,253,0.85)';
                     }}
                     onMouseLeave={(e) => {
-                        e.target.style.color = '#a78bfa';
+                        e.target.style.color = '#f8c37d';
                         e.target.style.borderBottomColor = 'rgba(167,139,250,0.45)';
                     }}
                 >
@@ -2161,7 +2161,7 @@ useEffect(() => {
                     messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
                     // Highlight the message briefly
-                    messageElement.style.backgroundColor = 'rgba(139, 92, 246, 0.3)';
+                    messageElement.style.backgroundColor = 'rgba(234, 169, 96, 0.3)';
                     messageElement.style.transition = 'background-color 0.3s ease';
                     
                     setTimeout(() => {
@@ -4824,7 +4824,7 @@ useEffect(() => {
                                                         borderRadius: '50%',
                                                         overflow: 'hidden',
                                                         flexShrink: 0,
-                                                        background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                                        background: 'linear-gradient(135deg, var(--gold-primary), var(--gold-dark))',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
@@ -5018,9 +5018,9 @@ useEffect(() => {
                                                 <div style={{
                                                     marginTop: '20px',
                                                     padding: '16px',
-                                                    background: 'rgba(99, 102, 241, 0.1)',
+                                                    background: 'rgba(201, 160, 92, 0.1)',
                                                     borderRadius: '8px',
-                                                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                                                    border: '1px solid rgba(201, 160, 92, 0.3)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     gap: '12px',
@@ -5028,8 +5028,8 @@ useEffect(() => {
                                                     transition: 'all 0.3s ease'
                                                 }}
                                                 onClick={handleWelcomeAcknowledgment}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(201, 160, 92, 0.2)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(201, 160, 92, 0.1)'}
                                                 >
                                                     <span style={{ fontSize: '1.5rem' }}>✅</span>
                                                     <span style={{ fontWeight: 600 }}>I've read and agree to the rules</span>
@@ -5282,7 +5282,7 @@ if (!isAuthenticated && !hasToken) {
                     top: 0,
                     left: 0,
                     right: 0,
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #b47830 100%)',
                     color: 'white',
                     padding: '16px 24px',
                     zIndex: 1000,
@@ -5290,7 +5290,7 @@ if (!isAuthenticated && !hasToken) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                    borderBottom: '2px solid #6D28D9'
+                    borderBottom: '2px solid #b47830'
                 }}>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
@@ -5304,7 +5304,7 @@ if (!isAuthenticated && !hasToken) {
                         onClick={() => handleSubscribe()}
                         style={{
                             background: 'white',
-                            color: '#6D28D9',
+                            color: '#b47830',
                             border: 'none',
                             padding: '12px 32px',
                             borderRadius: '8px',
@@ -5393,7 +5393,7 @@ if (!isAuthenticated && !hasToken) {
                                 <button
                                     onClick={handleSubscribe}
                                     style={{
-                                        background: 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)',
+                                        background: 'linear-gradient(135deg, #b47830 0%, #eaa960 100%)',
                                         color: 'white',
                                         border: 'none',
                                         padding: '16px 32px',
@@ -5496,8 +5496,8 @@ if (!isAuthenticated && !hasToken) {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    background: 'rgba(139, 92, 246, 0.15)',
-                                    border: '1px solid rgba(139, 92, 246, 0.4)',
+                                    background: 'rgba(234, 169, 96, 0.15)',
+                                    border: '1px solid rgba(234, 169, 96, 0.4)',
                                     color: 'rgba(255, 255, 255, 0.9)',
                                     padding: '6px 10px',
                                     borderRadius: '6px',
@@ -5507,10 +5507,10 @@ if (!isAuthenticated && !hasToken) {
                                     transition: 'all 0.2s ease'
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.25)';
+                                    e.currentTarget.style.background = 'rgba(234, 169, 96, 0.25)';
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                                    e.currentTarget.style.background = 'rgba(234, 169, 96, 0.15)';
                                 }}
                             >
                                 <FaPlus size={10} /> Manage
@@ -5558,8 +5558,8 @@ if (!isAuthenticated && !hasToken) {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    background: 'rgba(139, 92, 246, 0.15)',
-                                    border: '1px solid rgba(139, 92, 246, 0.4)',
+                                    background: 'rgba(234, 169, 96, 0.15)',
+                                    border: '1px solid rgba(234, 169, 96, 0.4)',
                                     color: 'rgba(255, 255, 255, 0.15)',
                                     padding: '6px 10px',
                                     borderRadius: '6px',
@@ -5569,10 +5569,10 @@ if (!isAuthenticated && !hasToken) {
                                     transition: 'all 0.2s ease'
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.25)';
+                                    e.currentTarget.style.background = 'rgba(234, 169, 96, 0.25)';
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                                    e.currentTarget.style.background = 'rgba(234, 169, 96, 0.15)';
                                 }}
                             >
                                 <FaPlus size={10} /> Manage
@@ -6080,7 +6080,7 @@ if (!isAuthenticated && !hasToken) {
                                                         borderRadius: '10px',
                                                         background: hasMentions 
                                                             ? 'linear-gradient(135deg, #5c534a, #9a8f84)' 
-                                                            : 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                                            : 'linear-gradient(135deg, var(--gold-primary), var(--gold-dark))',
                                                         color: 'white',
                                                         fontSize: '0.75rem',
                                                         fontWeight: '700',
@@ -6220,7 +6220,7 @@ if (!isAuthenticated && !hasToken) {
                         }
                     }}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                        e.currentTarget.style.background = 'rgba(234, 169, 96, 0.1)';
                         e.currentTarget.style.transform = 'translateY(-2px)';
                     }}
                     onMouseLeave={(e) => {
@@ -6234,7 +6234,7 @@ if (!isAuthenticated && !hasToken) {
                         gap: '12px'
                     }}>
                         {/* Your profile picture */}
-                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(139, 92, 246, 0.5)', boxShadow: '0 0 15px rgba(139, 92, 246, 0.3)' }}>
+                        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(234, 169, 96, 0.5)', boxShadow: '0 0 15px rgba(234, 169, 96, 0.3)' }}>
                             {resolveAvatarUrl(storedUser?.avatar, window.location?.origin) ? (
                                 <img src={resolveAvatarUrl(storedUser?.avatar, window.location?.origin)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
                             ) : (
@@ -6262,12 +6262,12 @@ if (!isAuthenticated && !hasToken) {
                             }}>
                                 <span style={{ 
                                     fontWeight: 600,
-                                    color: '#C4B5FD'
+                                    color: '#fcd9a8'
                                 }}>Level {userLevel}</span>
                                 <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>•</span>
                                 <span style={{ 
                                     fontWeight: 600,
-                                    color: '#A78BFA'
+                                    color: '#f8c37d'
                                 }}>{Math.floor(storedUser?.xp || 0).toLocaleString()} XP</span>
                             </div>
                         </div>
@@ -6302,13 +6302,13 @@ if (!isAuthenticated && !hasToken) {
                                 textAlign: 'center',
                                 background: 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%)',
                                 borderRadius: '16px',
-                                border: '2px solid rgba(139, 92, 246, 0.3)',
-                                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.2)'
+                                border: '2px solid rgba(234, 169, 96, 0.3)',
+                                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(234, 169, 96, 0.2)'
                             }}>
                                 <div style={{ 
                                     fontSize: '64px', 
                                     marginBottom: '24px',
-                                    filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))'
+                                    filter: 'drop-shadow(0 0 10px rgba(234, 169, 96, 0.5))'
                                 }}>🔒</div>
                                 <h2 style={{ 
                                     color: '#fff', 
@@ -6342,13 +6342,13 @@ if (!isAuthenticated && !hasToken) {
                                     return (
                                         <>
                                             <div style={{
-                                                background: 'rgba(139, 92, 246, 0.1)',
+                                                background: 'rgba(234, 169, 96, 0.1)',
                                                 borderRadius: '12px',
                                                 padding: '24px',
                                                 marginBottom: '24px',
                                                 maxWidth: '500px',
                                                 width: '100%',
-                                                border: '1px solid rgba(139, 92, 246, 0.3)'
+                                                border: '1px solid rgba(234, 169, 96, 0.3)'
                                             }}>
                                                 <p style={{ 
                                                     color: '#fff', 
@@ -6356,7 +6356,7 @@ if (!isAuthenticated && !hasToken) {
                                                     fontSize: '16px',
                                                     lineHeight: '1.6'
                                                 }}>
-                                                    This channel requires an <strong style={{ color: '#8B5CF6' }}>{subscriptionType}</strong> subscription ({price}) to access.
+                                                    This channel requires an <strong style={{ color: '#eaa960' }}>{subscriptionType}</strong> subscription ({price}) to access.
                                                 </p>
                                                 
                                                 {accessLevel === 'premium' ? (
@@ -6385,13 +6385,13 @@ if (!isAuthenticated && !hasToken) {
                                                         </div>
                                                     ) : (
                                                         <div style={{
-                                                            background: 'rgba(139, 92, 246, 0.2)',
+                                                            background: 'rgba(234, 169, 96, 0.2)',
                                                             borderRadius: '8px',
                                                             padding: '16px',
-                                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                                            border: '1px solid rgba(234, 169, 96, 0.4)'
                                                         }}>
                                                             <p style={{
-                                                                color: '#A78BFA',
+                                                                color: '#f8c37d',
                                                                 fontSize: '14px',
                                                                 margin: '0 0 8px 0',
                                                                 fontWeight: '600'
@@ -6433,13 +6433,13 @@ if (!isAuthenticated && !hasToken) {
                                                         </div>
                                                     ) : currentRole === 'premium' ? (
                                                         <div style={{
-                                                            background: 'rgba(139, 92, 246, 0.2)',
+                                                            background: 'rgba(234, 169, 96, 0.2)',
                                                             borderRadius: '8px',
                                                             padding: '16px',
-                                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                                            border: '1px solid rgba(234, 169, 96, 0.4)'
                                                         }}>
                                                             <p style={{
-                                                                color: '#A78BFA',
+                                                                color: '#f8c37d',
                                                                 fontSize: '14px',
                                                                 margin: '0 0 8px 0',
                                                                 fontWeight: '600'
@@ -6483,7 +6483,7 @@ if (!isAuthenticated && !hasToken) {
                                             <button
                                                 onClick={() => handleSubscribe(accessLevel === 'premium' ? 'premium' : 'a7fx')}
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                                    background: 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)',
                                                     color: 'white',
                                                     border: 'none',
                                                     padding: '14px 32px',
@@ -6745,7 +6745,7 @@ if (!isAuthenticated && !hasToken) {
         {editingMessageId && (
             <div style={{
                 padding: '12px 16px',
-                background: 'linear-gradient(135deg, rgba(88, 101, 242, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                background: 'linear-gradient(135deg, rgba(88, 101, 242, 0.15) 0%, rgba(234, 169, 96, 0.1) 100%)',
                 border: '1px solid rgba(88, 101, 242, 0.3)',
                 borderRadius: '8px',
                 marginBottom: '12px',
@@ -7219,7 +7219,7 @@ if (!isAuthenticated && !hasToken) {
                             width: '100%',
                             maxWidth: '520px',
                             boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
-                            border: '1px solid rgba(139, 92, 246, 0.2)'
+                            border: '1px solid rgba(234, 169, 96, 0.2)'
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -7356,7 +7356,7 @@ if (!isAuthenticated && !hasToken) {
                                 type="submit"
                                 disabled={channelActionLoading}
                                 style={{
-                                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #6D28D9 100%)',
+                                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, #b47830 100%)',
                                     border: 'none',
                                     borderRadius: '8px',
                                     padding: '12px',
@@ -7459,7 +7459,7 @@ if (!isAuthenticated && !hasToken) {
                             padding: '24px',
                             maxWidth: '500px',
                             width: '90%',
-                            border: '1px solid rgba(139, 92, 246, 0.3)',
+                            border: '1px solid rgba(234, 169, 96, 0.3)',
                             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
                         }}
                         onClick={(e) => e.stopPropagation()}
@@ -7868,7 +7868,7 @@ if (!isAuthenticated && !hasToken) {
                                 disabled={channelActionLoading}
                                 style={{
                                     padding: '10px 20px',
-                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                    background: 'linear-gradient(135deg, var(--gold-primary), var(--gold-dark))',
                                     border: 'none',
                                     borderRadius: '6px',
                                     color: '#fff',
@@ -7947,7 +7947,7 @@ if (!isAuthenticated && !hasToken) {
                                 onClick={() => handleEditCategory(editingCategory.oldName, editingCategory.newName)}
                                 style={{
                                     padding: '10px 20px',
-                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                    background: 'linear-gradient(135deg, var(--gold-primary), var(--gold-dark))',
                                     border: 'none',
                                     borderRadius: '6px',
                                     color: '#fff',
@@ -7996,7 +7996,7 @@ if (!isAuthenticated && !hasToken) {
                                 margin: 0, 
                                 fontSize: '1.75rem',
                                 fontWeight: 'bold',
-                                background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                background: 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)',
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
                                 backgroundClip: 'text'
@@ -8028,8 +8028,8 @@ if (!isAuthenticated && !hasToken) {
                         
                         {requiredSubscriptionType && (
                             <div style={{
-                                background: 'rgba(139, 92, 246, 0.2)',
-                                border: '1px solid rgba(139, 92, 246, 0.4)',
+                                background: 'rgba(234, 169, 96, 0.2)',
+                                border: '1px solid rgba(234, 169, 96, 0.4)',
                                 borderRadius: '8px',
                                 padding: '12px 16px',
                                 marginBottom: '24px'
@@ -8057,7 +8057,7 @@ if (!isAuthenticated && !hasToken) {
                                 transition: 'all 0.3s ease'
                             }}>
                                 <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Free Monthly</h3>
-                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£0</div>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#eaa960', marginBottom: '8px' }}>£0</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
@@ -8079,7 +8079,7 @@ if (!isAuthenticated && !hasToken) {
                                     disabled={selectingFreePlan}
                                     style={{
                                         width: '100%',
-                                        background: selectingFreePlan ? 'rgba(139, 92, 246, 0.5)' : 'rgba(139, 92, 246, 0.3)',
+                                        background: selectingFreePlan ? 'rgba(234, 169, 96, 0.5)' : 'rgba(234, 169, 96, 0.3)',
                                         color: 'white',
                                         border: 'none',
                                         padding: '12px 24px',
@@ -8091,14 +8091,14 @@ if (!isAuthenticated && !hasToken) {
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!selectingFreePlan) {
-                                            e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
+                                            e.target.style.background = 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)';
                                             e.target.style.transform = 'translateY(-2px)';
-                                            e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                            e.target.style.boxShadow = '0 6px 20px rgba(234, 169, 96, 0.6)';
                                         }
                                     }}
                                     onMouseLeave={(e) => {
                                         if (!selectingFreePlan) {
-                                            e.target.style.background = 'rgba(139, 92, 246, 0.3)';
+                                            e.target.style.background = 'rgba(234, 169, 96, 0.3)';
                                             e.target.style.transform = 'translateY(0)';
                                             e.target.style.boxShadow = 'none';
                                         }
@@ -8112,11 +8112,11 @@ if (!isAuthenticated && !hasToken) {
                             <div style={{
                                 padding: '24px',
                                 background: requiredSubscriptionType === 'premium' 
-                                    ? 'rgba(139, 92, 246, 0.2)' 
+                                    ? 'rgba(234, 169, 96, 0.2)' 
                                     : 'rgba(255, 255, 255, 0.05)',
                                 borderRadius: '12px',
                                 border: requiredSubscriptionType === 'premium'
-                                    ? '2px solid rgba(139, 92, 246, 0.6)'
+                                    ? '2px solid rgba(234, 169, 96, 0.6)'
                                     : '1px solid rgba(255, 255, 255, 0.1)',
                                 textAlign: 'center',
                                 position: 'relative',
@@ -8127,7 +8127,7 @@ if (!isAuthenticated && !hasToken) {
                                         position: 'absolute',
                                         top: '12px',
                                         right: '12px',
-                                        background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                        background: 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)',
                                         color: 'white',
                                         padding: '4px 12px',
                                         borderRadius: '12px',
@@ -8136,7 +8136,7 @@ if (!isAuthenticated && !hasToken) {
                                     }}>REQUIRED</div>
                                 )}
                                 <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>Aura FX</h3>
-                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£99</div>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#eaa960', marginBottom: '8px' }}>£99</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
@@ -8157,8 +8157,8 @@ if (!isAuthenticated && !hasToken) {
                                     style={{
                                         width: '100%',
                                         background: requiredSubscriptionType === 'premium'
-                                            ? 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)'
-                                            : 'rgba(139, 92, 246, 0.3)',
+                                            ? 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)'
+                                            : 'rgba(234, 169, 96, 0.3)',
                                         color: 'white',
                                         border: 'none',
                                         padding: '12px 24px',
@@ -8168,17 +8168,17 @@ if (!isAuthenticated && !hasToken) {
                                         cursor: 'pointer',
                                         transition: 'all 0.3s ease',
                                         boxShadow: requiredSubscriptionType === 'premium'
-                                            ? '0 4px 12px rgba(139, 92, 246, 0.4)'
+                                            ? '0 4px 12px rgba(234, 169, 96, 0.4)'
                                             : 'none'
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
+                                        e.target.style.background = 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)';
                                         e.target.style.transform = 'translateY(-2px)';
-                                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                        e.target.style.boxShadow = '0 6px 20px rgba(234, 169, 96, 0.6)';
                                     }}
                                     onMouseLeave={(e) => {
                                         if (requiredSubscriptionType !== 'premium') {
-                                            e.target.style.background = 'rgba(139, 92, 246, 0.3)';
+                                            e.target.style.background = 'rgba(234, 169, 96, 0.3)';
                                             e.target.style.boxShadow = 'none';
                                         }
                                         e.target.style.transform = 'translateY(0)';
@@ -8192,12 +8192,12 @@ if (!isAuthenticated && !hasToken) {
                             <div style={{
                                 padding: '24px',
                                 background: requiredSubscriptionType === 'a7fx'
-                                    ? 'rgba(139, 92, 246, 0.2)'
-                                    : 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(167, 139, 250, 0.1) 100%)',
+                                    ? 'rgba(234, 169, 96, 0.2)'
+                                    : 'linear-gradient(135deg, rgba(234, 169, 96, 0.15) 0%, rgba(167, 139, 250, 0.1) 100%)',
                                 borderRadius: '12px',
                                 border: requiredSubscriptionType === 'a7fx'
-                                    ? '2px solid rgba(139, 92, 246, 0.6)'
-                                    : '2px solid rgba(139, 92, 246, 0.4)',
+                                    ? '2px solid rgba(234, 169, 96, 0.6)'
+                                    : '2px solid rgba(234, 169, 96, 0.4)',
                                 textAlign: 'center',
                                 position: 'relative',
                                 transition: 'all 0.3s ease'
@@ -8206,7 +8206,7 @@ if (!isAuthenticated && !hasToken) {
                                     position: 'absolute',
                                     top: '12px',
                                     right: '12px',
-                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                    background: 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)',
                                     color: 'white',
                                     padding: '4px 12px',
                                     borderRadius: '12px',
@@ -8214,7 +8214,7 @@ if (!isAuthenticated && !hasToken) {
                                     fontWeight: 'bold'
                                 }}>{requiredSubscriptionType === 'a7fx' ? 'REQUIRED' : 'ELITE'}</div>
                                 <h3 style={{ color: '#fff', fontSize: '22px', marginBottom: '12px', fontWeight: 'bold' }}>A7FX Elite</h3>
-                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '8px' }}>£250</div>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#eaa960', marginBottom: '8px' }}>£250</div>
                                 <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px', marginBottom: '20px' }}>per month</div>
                                 <ul style={{ 
                                     textAlign: 'left', 
@@ -8236,8 +8236,8 @@ if (!isAuthenticated && !hasToken) {
                                     style={{
                                         width: '100%',
                                         background: requiredSubscriptionType === 'a7fx'
-                                            ? 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)'
-                                            : 'rgba(139, 92, 246, 0.3)',
+                                            ? 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)'
+                                            : 'rgba(234, 169, 96, 0.3)',
                                         color: 'white',
                                         border: 'none',
                                         padding: '12px 24px',
@@ -8247,17 +8247,17 @@ if (!isAuthenticated && !hasToken) {
                                         cursor: 'pointer',
                                         transition: 'all 0.3s ease',
                                         boxShadow: requiredSubscriptionType === 'a7fx'
-                                            ? '0 4px 12px rgba(139, 92, 246, 0.4)'
+                                            ? '0 4px 12px rgba(234, 169, 96, 0.4)'
                                             : 'none'
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)';
+                                        e.target.style.background = 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)';
                                         e.target.style.transform = 'translateY(-2px)';
-                                        e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.6)';
+                                        e.target.style.boxShadow = '0 6px 20px rgba(234, 169, 96, 0.6)';
                                     }}
                                     onMouseLeave={(e) => {
                                         if (requiredSubscriptionType !== 'a7fx') {
-                                            e.target.style.background = 'rgba(139, 92, 246, 0.3)';
+                                            e.target.style.background = 'rgba(234, 169, 96, 0.3)';
                                             e.target.style.boxShadow = 'none';
                                         }
                                         e.target.style.transform = 'translateY(0)';
@@ -8467,8 +8467,8 @@ if (!isAuthenticated && !hasToken) {
                         padding: '32px',
                         maxWidth: '500px',
                         width: '100%',
-                        border: '2px solid rgba(139, 92, 246, 0.3)',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.2)',
+                        border: '2px solid rgba(234, 169, 96, 0.3)',
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(234, 169, 96, 0.2)',
                         position: 'relative'
                     }} onClick={(e) => e.stopPropagation()}>
                         {/* Close button */}
@@ -8514,7 +8514,7 @@ if (!isAuthenticated && !hasToken) {
                             <div style={{
                                 fontSize: '48px',
                                 marginBottom: '16px',
-                                filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))'
+                                filter: 'drop-shadow(0 0 10px rgba(234, 169, 96, 0.5))'
                             }}>🔒</div>
                             <h2 style={{
                                 color: '#fff',
@@ -8536,11 +8536,11 @@ if (!isAuthenticated && !hasToken) {
 
                         {/* Message based on user type */}
                         <div style={{
-                            background: 'rgba(139, 92, 246, 0.1)',
+                            background: 'rgba(234, 169, 96, 0.1)',
                             borderRadius: '12px',
                             padding: '20px',
                             marginBottom: '24px',
-                            border: '1px solid rgba(139, 92, 246, 0.3)'
+                            border: '1px solid rgba(234, 169, 96, 0.3)'
                         }}>
                             {lockedChannelInfo.accessLevel === 'premium' ? (
                                 <>
@@ -8550,7 +8550,7 @@ if (!isAuthenticated && !hasToken) {
                                         lineHeight: '1.6',
                                         margin: '0 0 16px 0'
                                     }}>
-                                        This channel requires an <strong style={{ color: '#8B5CF6' }}>Aura FX Premium</strong> subscription (£99/month) to access.
+                                        This channel requires an <strong style={{ color: '#eaa960' }}>Aura FX Premium</strong> subscription (£99/month) to access.
                                     </p>
                                     {lockedChannelInfo.currentRole === 'free' ? (
                                         <div style={{
@@ -8577,13 +8577,13 @@ if (!isAuthenticated && !hasToken) {
                                         </div>
                                     ) : (
                                         <div style={{
-                                            background: 'rgba(139, 92, 246, 0.2)',
+                                            background: 'rgba(234, 169, 96, 0.2)',
                                             borderRadius: '8px',
                                             padding: '12px',
-                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                            border: '1px solid rgba(234, 169, 96, 0.4)'
                                         }}>
                                             <p style={{
-                                                color: '#A78BFA',
+                                                color: '#f8c37d',
                                                 fontSize: '14px',
                                                 margin: 0,
                                                 fontWeight: '600'
@@ -8635,13 +8635,13 @@ if (!isAuthenticated && !hasToken) {
                                         </div>
                                     ) : lockedChannelInfo.currentRole === 'premium' ? (
                                         <div style={{
-                                            background: 'rgba(139, 92, 246, 0.2)',
+                                            background: 'rgba(234, 169, 96, 0.2)',
                                             borderRadius: '8px',
                                             padding: '12px',
-                                            border: '1px solid rgba(139, 92, 246, 0.4)'
+                                            border: '1px solid rgba(234, 169, 96, 0.4)'
                                         }}>
                                             <p style={{
-                                                color: '#A78BFA',
+                                                color: '#f8c37d',
                                                 fontSize: '14px',
                                                 margin: 0,
                                                 fontWeight: '600'
@@ -8722,7 +8722,7 @@ if (!isAuthenticated && !hasToken) {
                                     handleSubscribe(lockedChannelInfo.accessLevel === 'premium' ? 'premium' : 'a7fx');
                                 }}
                                 style={{
-                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                                    background: 'linear-gradient(135deg, #eaa960 0%, #f8c37d 100%)',
                                     color: 'white',
                                     border: 'none',
                                     padding: '12px 24px',

@@ -139,7 +139,7 @@ export default function TraderDnaIntroSequence({ onComplete }) {
       duration: 12 + Math.random() * 12,
       delay: Math.random() * 5,
       key: i,
-      tint: i % 3 === 0 ? 'violet' : i % 3 === 1 ? 'cyan' : 'emerald',
+      tint: i % 3 === 0 ? 'gold' : i % 3 === 1 ? 'cyan' : 'emerald',
     }))
   ).current;
 

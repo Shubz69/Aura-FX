@@ -143,10 +143,12 @@
   --bg-card-h:      rgba(8, 6, 20, 0.85);
   --bg-glass:       rgba(2, 1, 8, 0.65);
 
-  /* Borders */
-  --border:         rgba(255, 255, 255, 0.05);
-  --border-h:       rgba(255, 255, 255, 0.12);
-  --border-gold:    rgba(234, 169, 96, 0.28);
+  /* Borders — neutral + bright gold frames on cards/boxes */
+  --border:         rgba(255, 255, 255, 0.06);
+  --border-h:       rgba(248, 195, 125, 0.20);
+  --border-gold:    rgba(248, 195, 125, 0.55);
+  --border-box:     rgba(248, 195, 125, 0.48);
+  --border-box-hover: rgba(255, 214, 160, 0.68);
 
   /* Gold system */
   --gold:           #EAA960;
@@ -154,7 +156,7 @@
   --gold-warm:      #D48D44;
   --gold-soft:      #EABB80;
   --gold-pale:      #FDE8C4;
-  --gold-dim:       rgba(234, 169, 96, 0.28);
+  --gold-dim:       rgba(248, 195, 125, 0.52);
   --gold-glow:      rgba(234, 169, 96, 0.18);
   --gold-glass:     rgba(234, 169, 96, 0.06);
   --gold-ultra:     rgba(234, 169, 96, 0.02);
@@ -432,7 +434,7 @@
   width: 300px;
   flex-shrink: 0;
   padding: 28px 22px;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid rgba(248,195,125,0.32);
   background: rgba(1, 0, 8, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -463,7 +465,7 @@
   position: absolute;
   top: -40px; right: -30px;
   width: 160px; height: 160px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.04) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -499,7 +501,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 .journal-calendar {
   background: rgba(3, 2, 10, 0.70);
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius-xl);
   padding: 22px clamp(10px, 3.5%, 20px) 18px;
   margin-bottom: 18px;
@@ -518,11 +520,11 @@
 }
 
 .journal-calendar:hover {
-  border-color: rgba(234,169,96,0.12);
+  border-color: var(--border-box-hover);
   box-shadow:
-    0 0 0 0.5px rgba(234,169,96,0.08) inset,
+    0 0 0 0.5px rgba(248,195,125,0.14) inset,
     0 32px 72px rgba(0,0,0,0.70),
-    0 0 40px rgba(234,169,96,0.04);
+    0 0 40px rgba(234,169,96,0.12);
 }
 
 /* Gold shimmer top - subtle */
@@ -540,13 +542,13 @@
   pointer-events: none;
 }
 
-/* Removed gold corner glow - replaced with subtle purple */
+/* Removed gold corner glow - replaced with subtle gold wash */
 .journal-calendar::after {
   content: '';
   position: absolute;
   top: -30px; right: -30px;
   width: 110px; height: 110px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.05) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -574,7 +576,7 @@
 .journal-calendar-btn {
   width: clamp(28px, 5vw, 34px);
   height: clamp(28px, 5vw, 34px);
-  border: 1px solid rgba(234,169,96,0.18);
+  border: 1px solid rgba(248,195,125,0.42);
   border-radius: 10px;
   background: rgba(234,169,96,0.05);
   color: rgba(234,169,96,0.65);
@@ -591,7 +593,7 @@
 
 .journal-calendar-btn:hover {
   background: rgba(234,169,96,0.12);
-  border-color: rgba(234,169,96,0.42);
+  border-color: rgba(248,195,125,0.72);
   color: var(--gold-bright);
   transform: scale(1.08);
   box-shadow: 0 0 16px rgba(234,169,96,0.22);
@@ -685,7 +687,7 @@
 
 .journal-calendar-day:hover {
   background: rgba(234,169,96,0.08);
-  border-color: rgba(234,169,96,0.24);
+  border-color: rgba(248,195,125,0.58);
   color: #fff;
   transform: scale(1.12) translateY(-1px);
   box-shadow: 0 4px 16px rgba(234,169,96,0.12);
@@ -732,7 +734,7 @@
     rgba(248,195,125,0.78) 50%,
     rgba(212,141,68,0.72) 100%
   );
-  border-color: rgba(234,169,96,0.55);
+  border-color: rgba(255,214,160,0.95);
   color: #010008;
   font-weight: 700;
   transform: scale(1.08);
@@ -874,7 +876,7 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   background: none;
-  border: 1px solid rgba(234,169,96,0.20);
+  border: 1px solid rgba(248,195,125,0.48);
   border-radius: 100px;
   padding: 4px 12px;
   cursor: pointer;
@@ -893,7 +895,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 .journal-streak-card {
   background: var(--bg-card);
-  border: 1px solid rgba(234,169,96,0.12);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius-lg);
   padding: 20px 18px;
   margin-bottom: 16px;
@@ -920,14 +922,14 @@
   position: absolute;
   bottom: -30px; right: -30px;
   width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234, 169, 96, 0.04) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 50%;
 }
 
 .journal-streak-card:hover {
-  border-color: rgba(234,169,96,0.24);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 0 24px rgba(234,169,96,0.06);
+  border-color: var(--border-box-hover);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 0 24px rgba(234,169,96,0.14);
 }
 
 .journal-streak-flame {
@@ -975,7 +977,7 @@
   gap: 12px;
   justify-content: space-between;
   padding: 16px 0 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(248,195,125,0.28);
 }
 
 .journal-stat-circle {
@@ -1091,7 +1093,7 @@
   position: relative;
   padding: 20px 20px 18px 22px;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(12px);
   overflow: hidden;
@@ -1129,12 +1131,12 @@
 
 .journal-progress-card:hover {
   background: var(--bg-card-h);
-  border-color: rgba(234,169,96,0.20);
+  border-color: var(--border-box-hover);
   transform: translateY(-5px);
   box-shadow:
     0 14px 38px rgba(0,0,0,0.55),
-    0 0 0 1px rgba(234,169,96,0.06),
-    0 0 20px rgba(234,169,96,0.04);
+    0 0 0 1px rgba(248,195,125,0.22),
+    0 0 28px rgba(234,169,96,0.14);
 }
 
 .journal-progress-card:hover::before { opacity: 0.80; top: 6%; bottom: 6%; }
@@ -1214,7 +1216,7 @@
   font-weight: 400;
   color: var(--text-muted);
   background: var(--gold-ultra);
-  border: 1px solid rgba(234,169,96,0.10);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius);
   padding: 12px 16px;
   margin-bottom: 22px;
@@ -1312,7 +1314,7 @@
 .journal-add-input {
   flex: 1;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius);
   padding: 13px 16px;
   font-size: 0.88rem;
@@ -1402,7 +1404,7 @@
   gap: 0;
   padding: 0;
   background: rgba(3, 2, 10, 0.72);
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid var(--border-box);
   border-radius: 16px;
   margin-bottom: 0;
   position: relative;
@@ -1439,11 +1441,11 @@
 
 .journal-task-item:hover {
   transform: translateY(-4px);
-  border-color: rgba(234,169,96,0.22);
+  border-color: var(--border-box-hover);
   box-shadow:
     0 12px 32px rgba(0,0,0,0.52),
-    0 0 0 1px rgba(234,169,96,0.05),
-    0 0 20px rgba(234,169,96,0.05);
+    0 0 0 1px rgba(248,195,125,0.18),
+    0 0 24px rgba(234,169,96,0.12);
 }
 
 .journal-task-item:hover::before { opacity: 1; }
@@ -1461,9 +1463,9 @@
 
 /* Mandatory card — gold left stripe */
 .journal-task-item--mandatory {
-  border-left: 2px solid rgba(234,169,96,0.42);
+  border-left: 2px solid rgba(248,195,125,0.72);
 }
-.journal-task-item--mandatory:hover { border-left-color: rgba(234,169,96,0.70); }
+.journal-task-item--mandatory:hover { border-left-color: rgba(255,214,160,0.92); }
 
 /* ── Card Top: checkbox + XP ─────────────────────────────────── */
 .journal-task-card-top {
@@ -1501,7 +1503,7 @@
 }
 
 .journal-task-check:hover {
-  border-color: rgba(234,169,96,0.52);
+  border-color: rgba(248,195,125,0.78);
   background: rgba(234,169,96,0.06);
   transform: scale(1.1);
 }
@@ -1817,7 +1819,7 @@
 .journal-proof-add-more {
   width: 42px; height: 42px;
   border-radius: 9px;
-  border: 1px dashed rgba(234,169,96,0.35);
+  border: 1px dashed rgba(248,195,125,0.55);
   background: var(--gold-ultra);
   color: rgba(234,169,96,0.62);
   font-size: 1.2rem;
@@ -1981,7 +1983,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 .journal-notes-section {
   margin-top: 32px; padding-top: 28px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(248,195,125,0.32);
   animation: journal-fadeIn 0.45s ease-out 0.12s both;
 }
 
@@ -2012,8 +2014,8 @@
   align-items: flex-start; gap: 10px;
   padding: 12px 14px;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-left: 2px solid rgba(234,169,96,0.40);
+  border: 1px solid var(--border-box);
+  border-left: 2px solid rgba(248,195,125,0.72);
   border-radius: var(--radius);
   margin-bottom: 7px;
   animation: journal-fadeIn 0.3s ease-out both;
@@ -2023,8 +2025,8 @@
 
 .journal-note-item:hover {
   background: var(--bg-card-h);
-  border-color: rgba(234,169,96,0.18);
-  border-left-color: rgba(234,169,96,0.65);
+  border-color: var(--border-box-hover);
+  border-left-color: rgba(255,214,160,0.92);
   transform: translateX(4px);
 }
 
@@ -2113,7 +2115,7 @@
 .journal-add-note-input {
   flex: 1;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius);
   padding: 12px 16px;
   font-size: 0.86rem; font-weight: 300;
@@ -2131,7 +2133,7 @@
 }
 
 .journal-add-note-btn,
-.journal-add-note-btn-purple {
+.journal-add-note-btn-gold {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 12px 20px;
   background: linear-gradient(135deg, var(--gold-warm), var(--gold), var(--gold-bright)) !important;
@@ -2148,21 +2150,21 @@
 }
 
 .journal-add-note-btn:hover:not(:disabled),
-.journal-add-note-btn-purple:hover:not(:disabled) {
+.journal-add-note-btn-gold:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 0 34px rgba(234,169,96,0.42), 0 6px 20px rgba(0,0,0,0.45);
   filter: brightness(1.06);
 }
 
 .journal-add-note-btn:disabled,
-.journal-add-note-btn-purple:disabled { opacity: 0.38; cursor: not-allowed; }
+.journal-add-note-btn-gold:disabled { opacity: 0.38; cursor: not-allowed; }
 
 /* ════════════════════════════════════════════════════════════════════════════
    MOOD / DAILY SECTION
    ════════════════════════════════════════════════════════════════════════════ */
 .journal-daily-section {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius-lg);
   padding: 22px 24px;
   margin-bottom: 24px;
@@ -2181,7 +2183,7 @@
 
 .journal-daily-section:hover {
   background: var(--bg-card-h);
-  border-color: rgba(234,169,96,0.14);
+  border-color: var(--border-box-hover);
 }
 
 .journal-mood-row { margin-bottom: 10px; }
@@ -2198,7 +2200,7 @@
 
 .journal-mood-btn {
   width: 44px; height: 44px;
-  border: 1px solid rgba(234,169,96,0.12);
+  border: 1px solid rgba(248,195,125,0.42);
   border-radius: 13px;
   background: rgba(234,169,96,0.03);
   font-size: 1.2rem; cursor: pointer;
@@ -2230,7 +2232,7 @@
 .journal-notes-input {
   width: 100%; box-sizing: border-box;
   background: rgba(255,255,255,0.02);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-box);
   border-radius: var(--radius);
   padding: 12px 14px;
   font-size: 0.86rem; font-weight: 300;
@@ -2250,7 +2252,7 @@
 .journal-save-notes-btn {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 10px 18px;
-  background: var(--bg-card); border: 1px solid var(--border);
+  background: var(--bg-card); border: 1px solid var(--border-box);
   border-radius: var(--radius); color: var(--text);
   font-size: 0.76rem; font-weight: 500;
   font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.10em;
@@ -2275,8 +2277,8 @@
 .journal-note-display {
   margin-bottom: 18px; padding: 16px 18px;
   background: var(--gold-ultra);
-  border: 1px solid rgba(234,169,96,0.12);
-  border-left: 2px solid rgba(234,169,96,0.48);
+  border: 1px solid var(--border-box);
+  border-left: 2px solid rgba(248,195,125,0.78);
   border-radius: var(--radius);
   animation: journal-fadeIn 0.35s ease-out;
 }
@@ -2349,7 +2351,7 @@
 /* Stacked ≤ 900px */
 @media (max-width: 900px) {
   .journal-layout { flex-direction: column; }
-  .journal-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 22px 18px; overflow-x: hidden; }
+  .journal-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(248,195,125,0.32); padding: 22px 18px; overflow-x: hidden; }
   .journal-calendar { width: 100%; max-width: 360px; margin-left: auto; margin-right: auto; padding: 20px clamp(12px, 4%, 20px) 18px; }
   .journal-stats-sidebar,
   .journal-streak-card,

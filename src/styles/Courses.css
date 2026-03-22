@@ -14,9 +14,9 @@
     --border-h: rgba(255, 255, 255, 0.22);
     --text: #ffffff;
     --text-muted: rgba(255, 255, 255, 0.55);
-    --accent: rgba(139, 92, 246, 0.55);
-    --accent-solid: #8B5CF6;
-    --accent-blue: rgba(99, 179, 237, 0.45);
+    --accent: rgba(234, 169, 96, 0.55);
+    --accent-solid: #eaa960;
+    --accent-blue: rgba(248, 195, 125, 0.45);
     --accent-blue-solid: #3B82F6;
     --up: #f8c37d;
     --down: #9a8f84;
@@ -68,8 +68,8 @@ html, body {
     height: 900px;
     background: radial-gradient(
         ellipse at center,
-        rgba(139, 92, 246, 0.07) 0%,
-        rgba(99, 179, 237, 0.04) 35%,
+        rgba(234, 169, 96, 0.07) 0%,
+        rgba(248, 195, 125, 0.04) 35%,
         rgba(255, 255, 255, 0.015) 60%,
         transparent 100%
     );
@@ -114,10 +114,10 @@ html, body {
     font-size: 0.68rem;
     font-weight: 500;
     letter-spacing: 0.35em;
-    color: #a78bfa;
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #f8c37d;
+    border: 1px solid rgba(234, 169, 96, 0.3);
     border-radius: 999px;
-    background: rgba(139, 92, 246, 0.06);
+    background: rgba(234, 169, 96, 0.06);
     text-transform: uppercase;
 }
 
@@ -130,7 +130,7 @@ html, body {
     max-width: 1100px;
     padding: 0 20px;
     display: block;
-    background: linear-gradient(270deg, #ffffff 0%, #c4b5fd 30%, #93c5fd 55%, #c4b5fd 75%, #ffffff 100%);
+    background: linear-gradient(270deg, #ffffff 0%, #fcd9a8 30%, #e8c992 55%, #fcd9a8 75%, #ffffff 100%);
     background-size: 300% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -167,19 +167,19 @@ html, body {
 }
 
 .courses-header-line::before {
-    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.65));
+    background: linear-gradient(90deg, transparent, rgba(234, 169, 96, 0.65));
 }
 
 .courses-header-line::after {
-    background: linear-gradient(90deg, rgba(99, 179, 237, 0.65), transparent);
+    background: linear-gradient(90deg, rgba(248, 195, 125, 0.65), transparent);
 }
 
 .courses-header-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #a78bfa, #93c5fd);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+    background: linear-gradient(135deg, #f8c37d, #e8c992);
+    box-shadow: 0 0 12px rgba(234, 169, 96, 0.6);
     animation: dotPulse 2s ease-in-out infinite;
 }
 
@@ -254,9 +254,9 @@ html, body {
     background: linear-gradient(
         135deg,
         transparent 0%,
-        rgba(139, 92, 246, 0.5) 25%,
-        rgba(99, 179, 237, 0.5) 50%,
-        rgba(139, 92, 246, 0.5) 75%,
+        rgba(234, 169, 96, 0.5) 25%,
+        rgba(248, 195, 125, 0.5) 50%,
+        rgba(234, 169, 96, 0.5) 75%,
         transparent 100%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -283,7 +283,7 @@ html, body {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.15), transparent 70%);
+    background: radial-gradient(circle at 50% 0%, rgba(234, 169, 96, 0.15), transparent 70%);
     opacity: 0;
     transition: opacity var(--transition);
     pointer-events: none;
@@ -299,14 +299,14 @@ html, body {
     border-color: transparent;
     box-shadow: 
         0 30px 60px -15px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(139, 92, 246, 0.2),
-        0 0 30px rgba(139, 92, 246, 0.2);
+        0 0 0 1px rgba(234, 169, 96, 0.2),
+        0 0 30px rgba(234, 169, 96, 0.2);
 }
 
 /* Course Image Section */
 .course-image {
     height: 180px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 179, 237, 0.1));
+    background: linear-gradient(135deg, rgba(234, 169, 96, 0.1), rgba(248, 195, 125, 0.1));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -326,7 +326,7 @@ html, body {
     background: linear-gradient(
         45deg,
         transparent 0%,
-        rgba(139, 92, 246, 0.2) 50%,
+        rgba(234, 169, 96, 0.2) 50%,
         transparent 100%
     );
     transform: translateX(-100%);
@@ -356,7 +356,7 @@ html, body {
     justify-content: center;
     font-size: 72px;
     color: var(--text);
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 179, 237, 0.15));
+    background: linear-gradient(135deg, rgba(234, 169, 96, 0.15), rgba(248, 195, 125, 0.15));
 }
 
 /* Course Info */
@@ -381,7 +381,7 @@ html, body {
 
 /* Gradient text for course titles */
 .course-info h3 span {
-    background: linear-gradient(135deg, #fff, rgba(139, 92, 246, 0.8));
+    background: linear-gradient(135deg, #fff, rgba(234, 169, 96, 0.8));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -407,8 +407,8 @@ html, body {
 
 .meta-item {
     padding: 6px 14px;
-    background: rgba(139, 92, 246, 0.08);
-    border: 1px solid rgba(139, 92, 246, 0.15);
+    background: rgba(234, 169, 96, 0.08);
+    border: 1px solid rgba(234, 169, 96, 0.15);
     border-radius: 30px;
     font-size: 12px;
     font-weight: 400;
@@ -419,8 +419,8 @@ html, body {
 }
 
 .course-card:hover .meta-item {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(234, 169, 96, 0.15);
+    border-color: rgba(234, 169, 96, 0.3);
     transform: translateY(-2px);
 }
 
@@ -507,12 +507,12 @@ html, body {
 }
 
 .enroll-button:hover {
-    background: rgba(139, 92, 246, 0.15);
+    background: rgba(234, 169, 96, 0.15);
     border-color: var(--accent-solid);
     transform: translateY(-3px) scale(1.05);
     box-shadow: 
-        0 10px 20px -10px rgba(139, 92, 246, 0.5),
-        0 0 0 1px rgba(139, 92, 246, 0.3);
+        0 10px 20px -10px rgba(234, 169, 96, 0.5),
+        0 0 0 1px rgba(234, 169, 96, 0.3);
     color: white;
     letter-spacing: 0.2em;
 }
@@ -535,7 +535,7 @@ html, body {
 /* Coming Soon Badge */
 .coming-soon-badge {
     display: inline-block;
-    background: rgba(139, 92, 246, 0.15);
+    background: rgba(234, 169, 96, 0.15);
     color: var(--text);
     padding: 8px 20px;
     border-radius: 30px;
@@ -544,7 +544,7 @@ html, body {
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid rgba(234, 169, 96, 0.3);
     position: relative;
     overflow: hidden;
 }
@@ -631,7 +631,7 @@ html, body {
 .loading-spinner {
     width: 60px;
     height: 60px;
-    border: 3px solid rgba(139, 92, 246, 0.1);
+    border: 3px solid rgba(234, 169, 96, 0.1);
     border-top-color: var(--accent-solid);
     border-right-color: var(--accent-blue-solid);
     border-radius: 50%;
@@ -690,9 +690,9 @@ html, body {
     text-align: center;
     margin: 32px auto;
     padding: 16px 32px;
-    background: rgba(139, 92, 246, 0.08);
+    background: rgba(234, 169, 96, 0.08);
     border-radius: 50px;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(234, 169, 96, 0.2);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all var(--transition);
@@ -711,10 +711,10 @@ html, body {
 }
 
 .all-courses:hover {
-    background: rgba(139, 92, 246, 0.12);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(234, 169, 96, 0.12);
+    border-color: rgba(234, 169, 96, 0.4);
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px -10px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 10px 25px -10px rgba(234, 169, 96, 0.4);
 }
 
 .courses-heading {
@@ -725,7 +725,7 @@ html, body {
     text-transform: uppercase;
     font-family: 'Space Grotesk', sans-serif;
     letter-spacing: 0.25em;
-    background: linear-gradient(135deg, #fff, rgba(139, 92, 246, 0.8));
+    background: linear-gradient(135deg, #fff, rgba(234, 169, 96, 0.8));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -754,7 +754,7 @@ html, body {
     margin: 0 0 0.5rem;
     display: inline-block;
     position: relative;
-    background: linear-gradient(270deg, #ffffff 0%, #c4b5fd 30%, #93c5fd 55%, #c4b5fd 75%, #ffffff 100%);
+    background: linear-gradient(270deg, #ffffff 0%, #fcd9a8 30%, #e8c992 55%, #fcd9a8 75%, #ffffff 100%);
     background-size: 300% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -826,9 +826,9 @@ html, body {
     background: linear-gradient(
         135deg,
         transparent 0%,
-        rgba(139, 92, 246, 0.3) 25%,
-        rgba(99, 179, 237, 0.3) 50%,
-        rgba(139, 92, 246, 0.3) 75%,
+        rgba(234, 169, 96, 0.3) 25%,
+        rgba(248, 195, 125, 0.3) 50%,
+        rgba(234, 169, 96, 0.3) 75%,
         transparent 100%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -846,15 +846,15 @@ html, body {
 
 /* Premium Plan */
 .subscription-plan-card.premium {
-    background: linear-gradient(145deg, rgba(139, 92, 246, 0.12), rgba(99, 179, 237, 0.08));
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    background: linear-gradient(145deg, rgba(234, 169, 96, 0.12), rgba(248, 195, 125, 0.08));
+    border: 1px solid rgba(234, 169, 96, 0.25);
     transform: scale(1.02);
 }
 
 /* Elite Plan */
 .subscription-plan-card.elite {
-    background: linear-gradient(145deg, rgba(139, 92, 246, 0.18), rgba(99, 179, 237, 0.12));
-    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: linear-gradient(145deg, rgba(234, 169, 96, 0.18), rgba(248, 195, 125, 0.12));
+    border: 1px solid rgba(234, 169, 96, 0.4);
 }
 
 .elite-badge {
@@ -869,13 +869,13 @@ html, body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 5px 15px rgba(234, 169, 96, 0.4);
     animation: badgePulse 2s infinite;
 }
 
 @keyframes badgePulse {
-    0%, 100% { box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4); }
-    50% { box-shadow: 0 5px 25px rgba(139, 92, 246, 0.8); }
+    0%, 100% { box-shadow: 0 5px 15px rgba(234, 169, 96, 0.4); }
+    50% { box-shadow: 0 5px 25px rgba(234, 169, 96, 0.8); }
 }
 
 .subscription-plan-card:hover {
@@ -884,8 +884,8 @@ html, body {
     border-color: transparent;
     box-shadow: 
         0 30px 60px -15px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(139, 92, 246, 0.3),
-        0 0 40px rgba(139, 92, 246, 0.2);
+        0 0 0 1px rgba(234, 169, 96, 0.3),
+        0 0 40px rgba(234, 169, 96, 0.2);
 }
 
 .subscription-plan-card.premium:hover,
@@ -901,7 +901,7 @@ html, body {
     line-height: 1.2;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+    text-shadow: 0 0 30px rgba(234, 169, 96, 0.3);
 }
 
 .subscription-plan-price {
@@ -1045,12 +1045,12 @@ html, body {
 }
 
 .subscription-plan-button:hover {
-    background: rgba(139, 92, 246, 0.15);
+    background: rgba(234, 169, 96, 0.15);
     border-color: var(--accent-solid);
     transform: translateY(-3px);
     box-shadow: 
-        0 10px 20px -10px rgba(139, 92, 246, 0.5),
-        0 0 0 1px rgba(139, 92, 246, 0.3);
+        0 10px 20px -10px rgba(234, 169, 96, 0.5),
+        0 0 0 1px rgba(234, 169, 96, 0.3);
     color: white;
     letter-spacing: 0.22em;
 }
@@ -1058,17 +1058,17 @@ html, body {
 /* Premium/Elite button variants */
 .subscription-plan-button.premium,
 .subscription-plan-button.elite {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 179, 237, 0.2));
-    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: linear-gradient(135deg, rgba(234, 169, 96, 0.2), rgba(248, 195, 125, 0.2));
+    border: 1px solid rgba(234, 169, 96, 0.4);
 }
 
 .subscription-plan-button.premium:hover,
 .subscription-plan-button.elite:hover {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(99, 179, 237, 0.3));
+    background: linear-gradient(135deg, rgba(234, 169, 96, 0.3), rgba(248, 195, 125, 0.3));
     border-color: var(--accent-solid);
     box-shadow: 
-        0 10px 25px -8px rgba(139, 92, 246, 0.6),
-        0 0 0 1px rgba(139, 92, 246, 0.5);
+        0 10px 25px -8px rgba(234, 169, 96, 0.6),
+        0 0 0 1px rgba(234, 169, 96, 0.5);
 }
 
 /* ===== Responsive Design - FIXED ===== */

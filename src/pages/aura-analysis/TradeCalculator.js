@@ -353,14 +353,14 @@ export default function TradeCalculator() {
             <div className="trade-calc-direction">
               <button
                 type="button"
-                className={`trade-calc-dir-btn ${form.direction === 'buy' ? 'active' : ''}`}
+                className={`trade-calc-dir-btn trade-calc-dir-btn--buy ${form.direction === 'buy' ? 'active' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, direction: 'buy' }))}
               >
                 Buy
               </button>
               <button
                 type="button"
-                className={`trade-calc-dir-btn ${form.direction === 'sell' ? 'active' : ''}`}
+                className={`trade-calc-dir-btn trade-calc-dir-btn--sell ${form.direction === 'sell' ? 'active' : ''}`}
                 onClick={() => setForm((f) => ({ ...f, direction: 'sell' }))}
               >
                 Sell

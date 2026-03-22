@@ -34,46 +34,123 @@
 .aura-leaderboard-sort-label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.65);
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.55);
 }
 
-.aura-leaderboard-sort-select {
-  padding: 8px 12px;
-  padding-right: 28px;
+/* Custom sort menu (native <select> lists are often forced white by the OS on Windows) */
+.aura-lb-sort-dd {
+  position: relative;
+}
+
+.aura-lb-sort-dd-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 148px;
+  padding: 10px 14px;
+  padding-right: 12px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: #fff;
-  font-size: 0.9rem;
+  border: 1px solid rgba(234, 169, 96, 0.32);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.88rem;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.6)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.aura-leaderboard-sort-select:focus {
+.aura-lb-sort-dd-trigger:hover {
+  background: rgba(234, 169, 96, 0.08);
+  border-color: rgba(234, 169, 96, 0.45);
+}
+
+.aura-lb-sort-dd-trigger:focus {
   outline: none;
-  border-color: rgba(234, 169, 96, 0.5);
+  border-color: rgba(234, 169, 96, 0.65);
+  box-shadow: 0 0 0 3px rgba(234, 169, 96, 0.18);
+}
+
+.aura-lb-sort-dd-chevron {
+  font-size: 0.6rem;
+  color: #f8c37d;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.aura-lb-sort-dd-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 100%;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  z-index: 80;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.4);
+  background: rgba(6, 5, 16, 0.98);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.aura-lb-sort-dd-list li {
+  margin: 0;
+}
+
+.aura-lb-sort-dd-option {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.86rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.aura-lb-sort-dd-option:hover {
+  background: rgba(234, 169, 96, 0.12);
+  color: #fff;
+}
+
+.aura-lb-sort-dd-option--active {
+  background: rgba(234, 169, 96, 0.2);
+  color: #f8c37d;
 }
 
 .aura-leaderboard-order-btn {
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.85rem;
+  padding: 10px 16px;
+  background: rgba(234, 169, 96, 0.1);
+  border: 1px solid rgba(234, 169, 96, 0.35);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   font-family: inherit;
   cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .aura-leaderboard-order-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(234, 169, 96, 0.18);
+  border-color: rgba(234, 169, 96, 0.5);
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.12);
 }
 
 .aura-leaderboard-error {

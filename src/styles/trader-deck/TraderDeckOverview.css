@@ -43,8 +43,8 @@
 }
 
 .td-overview-kpi-card:hover {
-  border-color: rgba(139, 92, 246, 0.35);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.08);
+  border-color: rgba(234, 169, 96, 0.35);
+  box-shadow: 0 0 20px rgba(234, 169, 96, 0.08);
 }
 
 .td-overview-kpi-label {
@@ -141,7 +141,7 @@
 
 .td-overview-month-nav-btn:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(139, 92, 246, 0.4);
+  border-color: rgba(234, 169, 96, 0.4);
 }
 
 .td-overview-month-nav-label {
@@ -201,13 +201,13 @@
 }
 
 .td-overview-cal-day--today {
-  border-color: rgba(99, 179, 237, 0.5);
-  box-shadow: 0 0 0 1px rgba(99, 179, 237, 0.3);
+  border-color: rgba(248, 195, 125, 0.5);
+  box-shadow: 0 0 0 1px rgba(248, 195, 125, 0.3);
 }
 
 .td-overview-cal-day--selected {
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3);
+  border-color: rgba(234, 169, 96, 0.5);
+  box-shadow: 0 0 0 1px rgba(234, 169, 96, 0.3);
 }
 
 .td-overview-cal-num {
@@ -357,7 +357,7 @@
 
 .td-overview-view-all {
   font-size: 0.8rem;
-  color: rgba(139, 92, 246, 0.9);
+  color: rgba(234, 169, 96, 0.9);
   text-decoration: none;
 }
 

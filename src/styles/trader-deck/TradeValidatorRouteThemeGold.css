@@ -1,13 +1,13 @@
 /* =============================================================================
    TRADE VALIDATOR ROUTE ONLY — import after TradeValidatorTabModern.css in
    TradeValidatorShell.js. High specificity (.trade-validator-shell …) so lazy
-   tab styles (Overview, AiChartCheck, TraderCV, etc.) cannot reintroduce purple.
+   tab styles (Overview, AiChartCheck, TraderCV, etc.) cannot reintroduce violet accents.
    ============================================================================= */
 
-/* ── Overview: tokens + hardcoded purple/violet replacements ──────────────── */
+/* ── Overview: tokens + gold accent overrides ───────────────────────────── */
 .trade-validator-shell .aura-overview-page {
-  --ov-purple: rgba(234, 169, 96, 0.92);
-  --ov-purple-dim: rgba(234, 169, 96, 0.12);
+  --ov-gold: rgba(234, 169, 96, 0.92);
+  --ov-gold-dim: rgba(234, 169, 96, 0.12);
   --ov-blue: rgba(248, 195, 125, 0.75);
 }
 
@@ -65,7 +65,7 @@
   border-color: rgba(234, 169, 96, 0.42) !important;
 }
 
-.trade-validator-shell .aura-overview-page .aura-calendar-day.purple {
+.trade-validator-shell .aura-overview-page .aura-calendar-day.gold {
   background: rgba(234, 169, 96, 0.14) !important;
   color: #f8c37d !important;
   border: 1px solid rgba(234, 169, 96, 0.28) !important;
@@ -176,13 +176,13 @@
   background: linear-gradient(180deg, #f8c37d, rgba(234, 169, 96, 0.32)) !important;
 }
 
-.trade-validator-shell .ov2-ks-tag.purple {
+.trade-validator-shell .ov2-ks-tag.gold {
   background: rgba(234, 169, 96, 0.14) !important;
   color: #f8c37d !important;
   border: 1px solid rgba(234, 169, 96, 0.3) !important;
 }
 
-.trade-validator-shell .ov2-wl-dot.purple {
+.trade-validator-shell .ov2-wl-dot.gold {
   background: #eaa960 !important;
   box-shadow: 0 0 8px rgba(234, 169, 96, 0.45) !important;
 }
@@ -191,7 +191,7 @@
   background: linear-gradient(180deg, #f8c37d 0%, rgba(234, 169, 96, 0.28) 100%) !important;
 }
 
-/* ── AI Chart Check — re-token + purple literals ─────────────────────────── */
+/* ── AI Chart Check — re-token + accent literals ─────────────────────────── */
 .trade-validator-shell .acc-page {
   --acc-border-h: rgba(234, 169, 96, 0.42);
   --acc-accent: #eaa960;

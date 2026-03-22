@@ -30,7 +30,7 @@ const LoadingSpinner = () => (
         width: '40px',
         height: '40px',
         border: '3px solid rgba(255,255,255,0.1)',
-        borderTop: '3px solid #8B5CF6',
+        borderTop: '3px solid #eaa960',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite'
       }} />
@@ -187,7 +187,7 @@ export const FriendsUpgradeRequired = () => (
       maxWidth: 420,
       padding: '32px 28px',
       background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(139,92,246,0.25)',
+      border: '1px solid rgba(234,169,96,0.25)',
       borderRadius: 16,
       boxShadow: '0 8px 40px rgba(0,0,0,0.4)'
     }}>

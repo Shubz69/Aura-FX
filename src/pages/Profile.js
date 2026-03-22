@@ -979,7 +979,7 @@ if (!avatarToSave && avatarColor) {
                             key={`xp-${formData.xp}-${formData.level}`}
                             style={{
                                 width: `${xpPct}%`,
-                                background: `linear-gradient(90deg, rgba(139,92,246,0.9), rgba(99,179,237,0.8))`
+                                background: `linear-gradient(90deg, rgba(234,169,96,0.9), rgba(248,195,125,0.8))`
                             }}
                         />
                     </div>
@@ -1030,9 +1030,9 @@ if (!avatarToSave && avatarColor) {
                             <div className="pf-rings-row">
                                 <RingProgress pct={journalDayPct} color="rgba(16,185,129,0.85)"
                                     value={dayTotal ? `${journalDayPct}%` : '—'} label="Today" />
-                                <RingProgress pct={journalWeekPct} color="rgba(139,92,246,0.85)"
+                                <RingProgress pct={journalWeekPct} color="rgba(234,169,96,0.85)"
                                     value={weekTotal ? `${journalWeekPct}%` : '—'} label="This Week" />
-                                <RingProgress pct={journalMonthPct} color="rgba(99,179,237,0.85)"
+                                <RingProgress pct={journalMonthPct} color="rgba(248,195,125,0.85)"
                                     value={monthTotal ? `${journalMonthPct}%` : '—'} label="This Month" />
                             </div>
                             <p className="pf-journal-hint">Task completion from your Aura Journal. Add and complete tasks to improve your stats.</p>
@@ -1191,7 +1191,7 @@ if (!avatarToSave && avatarColor) {
                                         onClick={pushSubscribed ? disablePush : enablePush}
                                         disabled={pushLoading || pushPermission === 'denied'}
                                         style={{
-                                            background: pushSubscribed ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+                                            background: pushSubscribed ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#b47830,#c9a05c)',
                                             border: pushSubscribed ? '1px solid rgba(239,68,68,0.3)' : 'none',
                                             color: pushSubscribed ? '#c9a05c' : '#fff',
                                             borderRadius: 8, padding: '7px 14px', fontSize: '0.78rem',

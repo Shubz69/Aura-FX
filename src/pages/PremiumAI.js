@@ -64,20 +64,20 @@ const ChevronIcon = ({ up }) => (
 
 /* ── Quick actions ───────────────────────────────────────── */
 const CHIPS = [
-  { glyph: '◆', label: 'Gold drivers',    prompt: 'What are the main drivers for gold (XAUUSD) today? Include key levels and market sentiment.' },
-  { glyph: '◇', label: 'Analyse chart',   prompt: 'Please analyse this chart and provide key observations, support/resistance levels, and potential trade setups.' },
-  { glyph: '◎', label: 'Position sizing', prompt: 'Help me calculate proper position size for a trade. I need to know the risk/reward.' },
-  { glyph: '▣', label: 'News impact',     prompt: 'What major news or economic events are affecting markets today? How should I position?' },
-  { glyph: '◈', label: 'Entry / Exit',    prompt: 'What are the key entry and exit levels I should watch for?' },
-  { glyph: '✦', label: 'Quick overview',  prompt: 'Give me a quick market overview with actionable insights.' },
+  { glyph: '📈', label: 'Gold drivers',    prompt: 'What are the main drivers for gold (XAUUSD) today? Include key levels and market sentiment.' },
+  { glyph: '📊', label: 'Analyse chart',   prompt: 'Please analyse this chart and provide key observations, support/resistance levels, and potential trade setups.' },
+  { glyph: '💰', label: 'Position sizing', prompt: 'Help me calculate proper position size for a trade. I need to know the risk/reward.' },
+  { glyph: '📰', label: 'News impact',     prompt: 'What major news or economic events are affecting markets today? How should I position?' },
+  { glyph: '🎯', label: 'Entry / Exit',    prompt: 'What are the key entry and exit levels I should watch for?' },
+  { glyph: '✨', label: 'Quick overview',  prompt: 'Give me a quick market overview with actionable insights.' },
 ];
 
 /* ── Capability cards data ───────────────────────────────── */
 const CAPS = [
-  { icon: '◈', label: 'Market Analysis',  desc: 'Real-time insights on any instrument' },
-  { icon: '◎', label: 'Trade Setups',      desc: 'Entry, exit and risk levels' },
-  { icon: '▣', label: 'Chart Analysis',    desc: 'Upload charts for instant review' },
-  { icon: '◆', label: 'Risk Management',   desc: 'Position sizing & R:R calculations' },
+  { icon: '📈', label: 'Market Analysis',  desc: 'Real-time insights on any instrument' },
+  { icon: '📊', label: 'Trade Setups',      desc: 'Entry, exit and risk levels' },
+  { icon: '🖼️', label: 'Chart Analysis',    desc: 'Upload charts for instant review' },
+  { icon: '⚖️', label: 'Risk Management',   desc: 'Position sizing & R:R calculations' },
 ];
 
 /* ── Shared markdown component map ──────────────────────── */
@@ -529,7 +529,7 @@ const PremiumAI = () => {
       </header>
 
       {/* ROW 2 — Scrollable chat body */}
-      <main className="pai-body">
+      <main className={`pai-body${isEmpty ? ' pai-body--welcome' : ''}`}>
         <div className="pai-messages">
 
           {isEmpty && (
