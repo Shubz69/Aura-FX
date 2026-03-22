@@ -14,6 +14,7 @@ import Footer from './components/Footer';
 import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import './styles/index.css';
 import './styles/Courses.css';
 import './styles/AppCosmicBackground.css';
 import './styles/GlassSystem.css';

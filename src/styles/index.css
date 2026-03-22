@@ -1,6 +1,6 @@
 /* ========== VARIABLES (From Landing Page) ========== */
 html {
-    background: url('/assets/my-bg.jpg') no-repeat center center fixed !important;
+    background: #0a0a0a no-repeat center center fixed !important;
     background-size: cover !important;
     min-height: 100%;
     /* Native <select> menus follow OS theme; dark hints consistent dropdowns in Chromium/WebKit */
@@ -1024,8 +1024,8 @@ html, body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    height: calc(100dvh - 62px) !important;
-    margin-top: 62px !important;
+    height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
+    margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
@@ -1082,8 +1082,8 @@ html, body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    height: calc(100dvh - 58px) !important;
-    margin-top: 58px !important;
+    height: calc(100dvh - 58px - env(safe-area-inset-top, 0px)) !important;
+    margin-top: calc(58px + env(safe-area-inset-top, 0px)) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
@@ -1124,16 +1124,42 @@ html, body {
   }
 }
 
-/* ── Small mobile navbar height adjustment ── */
+/* ── Small mobile navbar height adjustment (must include notch / status bar) ── */
 @media (max-width: 480px) {
   .page-wrapper {
-    height: calc(100dvh - 56px) !important;
-    margin-top: 56px !important;
+    height: calc(100dvh - 56px - env(safe-area-inset-top, 0px)) !important;
+    margin-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
   }
 }
 @media (max-width: 374px) {
   .page-wrapper {
-    height: calc(100dvh - 54px) !important;
-    margin-top: 54px !important;
+    height: calc(100dvh - 54px - env(safe-area-inset-top, 0px)) !important;
+    margin-top: calc(54px + env(safe-area-inset-top, 0px)) !important;
+  }
+}
+
+/* Home-screen PWA: navbar gains extra top inset (see Navbar.css); push main content to match */
+@media (display-mode: standalone) and (min-width: 768px) and (max-width: 1366px) {
+  .page-wrapper {
+    margin-top: calc(64px + env(safe-area-inset-top, 0px) + 10px) !important;
+    height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - 10px) !important;
+  }
+}
+@media (display-mode: standalone) and (max-width: 767px) {
+  .page-wrapper {
+    margin-top: calc(58px + env(safe-area-inset-top, 0px) + 10px) !important;
+    height: calc(100dvh - 58px - env(safe-area-inset-top, 0px) - 10px) !important;
+  }
+}
+@media (display-mode: standalone) and (max-width: 480px) {
+  .page-wrapper {
+    margin-top: calc(56px + env(safe-area-inset-top, 0px) + 10px) !important;
+    height: calc(100dvh - 56px - env(safe-area-inset-top, 0px) - 10px) !important;
+  }
+}
+@media (display-mode: standalone) and (max-width: 374px) {
+  .page-wrapper {
+    margin-top: calc(54px + env(safe-area-inset-top, 0px) + 10px) !important;
+    height: calc(100dvh - 54px - env(safe-area-inset-top, 0px) - 10px) !important;
   }
 }
