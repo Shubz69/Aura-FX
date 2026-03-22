@@ -153,10 +153,12 @@ html, body {
     50%      { opacity:.55; transform:translate(-50%,-50%) scale(1.05); }
 }
 .loading-brand-text {
-    display: block; font-family: var(--font);
+    display: inline-block; font-family: var(--font);
     font-size: 2.1rem; font-weight: 700;
     letter-spacing: .36em; text-transform: uppercase;
     margin-bottom: .40rem;
+    /* Wide tracking adds space after the last letter — nudge right so the word sits visually centered in the ring */
+    transform: translateX(0.2em);
     animation: titleGlow 2.6s ease-in-out infinite alternate;
     background: linear-gradient(135deg, var(--text) 0%, var(--eaa-bright) 52%, var(--eaa-core) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -182,6 +184,14 @@ html, body {
 @keyframes dotPulse  {
     0%,100%{opacity:.20;transform:scale(.58)}
     50%    {opacity:1;transform:scale(1.35);box-shadow:0 0 9px var(--eaa-glow)}
+}
+
+@media (max-width: 480px) {
+    .loading-brand-text {
+        font-size: 1.65rem;
+        letter-spacing: 0.28em;
+        transform: translateX(0.16em);
+    }
 }
 
 /* ══════════════════════════════════════════════
@@ -1177,6 +1187,7 @@ html, body {
     .home-content   { padding: 68px 1.5rem 190px; }
     .home-main-content { gap: 3.4rem; }
     .home-logo-section { grid-template-columns: 1fr; min-height: auto; gap: 2.2rem; margin-bottom: 3.4rem; }
+    .hero-left .a7-logo-wrap { transform: translateX(-14px); }
     .hero-left      { align-items: center; }
     .hero-left::before { display: none; }
     .hero-right     { justify-content: center; perspective: none; }

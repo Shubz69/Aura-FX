@@ -177,6 +177,8 @@
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     line-height: 1.2;
+    display: inline-block;
+    transform: translateX(0.125em);
     background: linear-gradient(270deg, #ffffff 0%, #fcd9a8 30%, #e8c992 55%, #fcd9a8 75%, #ffffff 100%);
     background-size: 300% 100%;
     -webkit-background-clip: text;
@@ -453,6 +455,7 @@
     .loading-title {
         font-size: 1.5rem;
         letter-spacing: 0.12em;
+        transform: translateX(0.06em);
     }
     
     .loading-subtitle {
