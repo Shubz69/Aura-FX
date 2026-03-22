@@ -2,33 +2,65 @@
  * Applies a scheduled downgrade if the user has cancel_at_period_end set and period has ended.
  * Returns the current user row (after applying downgrade if applicable).
  * Call this when loading user for entitlements so tier reflects the downgrade.
+ *
+ * When callers already hold a pooled connection (e.g. getDbConnection()), pass it as the second
+ * argument. On Vercel the pool has connectionLimit 1 — using executeQuery while holding that
+ * connection deadlocks until the serverless invocation times out.
  */
 
 const { executeQuery } = require('../db');
 
-async function ensureDowngradeColumns() {
+/** After first successful column check (or migration), skip extra probes on warm instances */
+let downgradeColumnsReady = false;
+
+async function runUserSql(dbConn, query, params = []) {
+  const safeParams = (params || []).map((p) => (p === undefined ? null : p));
+  if (dbConn && typeof dbConn.execute === 'function') {
+    return dbConn.execute(query, safeParams);
+  }
+  return executeQuery(query, safeParams);
+}
+
+async function ensureDowngradeColumns(dbConn = null) {
+  if (downgradeColumnsReady) return;
   try {
-    await executeQuery('SELECT cancel_at_period_end FROM users LIMIT 1');
+    await runUserSql(dbConn, 'SELECT cancel_at_period_end, downgrade_to_plan FROM users LIMIT 1');
+    downgradeColumnsReady = true;
   } catch (e) {
     if (e.code === 'ER_BAD_FIELD_ERROR' || (e.message && e.message.includes('Unknown column'))) {
-      await executeQuery('ALTER TABLE users ADD COLUMN cancel_at_period_end BOOLEAN DEFAULT FALSE');
-      await executeQuery('ALTER TABLE users ADD COLUMN downgrade_to_plan VARCHAR(50) DEFAULT NULL');
+      try {
+        await runUserSql(dbConn, 'ALTER TABLE users ADD COLUMN cancel_at_period_end BOOLEAN DEFAULT FALSE');
+      } catch (alterErr) {
+        if (!isDuplicateColumnError(alterErr)) throw alterErr;
+      }
+      try {
+        await runUserSql(dbConn, 'ALTER TABLE users ADD COLUMN downgrade_to_plan VARCHAR(50) DEFAULT NULL');
+      } catch (alterErr) {
+        if (!isDuplicateColumnError(alterErr)) throw alterErr;
+      }
+      downgradeColumnsReady = true;
     } else {
       throw e;
     }
   }
 }
 
-async function applyScheduledDowngrade(userId) {
+function isDuplicateColumnError(err) {
+  if (!err) return false;
+  if (err.code === 'ER_DUP_FIELDNAME') return true;
+  const errno = Number(err.errno);
+  if (errno === 1060) return true;
+  const msg = `${err.message || ''} ${err.sqlMessage || ''}`;
+  return /duplicate column name/i.test(msg);
+}
+
+async function applyScheduledDowngrade(userId, dbConn = null) {
   if (userId == null || userId === '') return null;
   const id = Number(userId);
   if (!Number.isFinite(id) || id <= 0) return null;
-  await ensureDowngradeColumns();
+  await ensureDowngradeColumns(dbConn);
 
-  const [rows] = await executeQuery(
-    'SELECT * FROM users WHERE id = ?',
-    [id]
-  );
+  const [rows] = await runUserSql(dbConn, 'SELECT * FROM users WHERE id = ?', [id]);
   const user = rows && rows[0];
   if (!user) return null;
 
@@ -41,7 +73,8 @@ async function applyScheduledDowngrade(userId) {
   }
 
   const newRole = downgradeTo === 'free' ? 'user' : (downgradeTo === 'a7fx' ? 'elite' : 'premium');
-  await executeQuery(
+  await runUserSql(
+    dbConn,
     `UPDATE users SET
        subscription_plan = ?,
        role = ?,
@@ -54,7 +87,7 @@ async function applyScheduledDowngrade(userId) {
     [downgradeTo, newRole, id]
   );
 
-  const [updated] = await executeQuery('SELECT * FROM users WHERE id = ?', [id]);
+  const [updated] = await runUserSql(dbConn, 'SELECT * FROM users WHERE id = ?', [id]);
   return updated && updated[0] ? updated[0] : user;
 }
 

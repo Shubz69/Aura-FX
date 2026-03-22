@@ -80,8 +80,8 @@ const Navbar = () => {
                 Aura AI
               </Link>
             </li>
+            <li><Link to="/courses" onClick={closeMobileMenu} className={isActive('/courses') ? 'active' : ''}>C &amp; S</Link></li>
             <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>Leaderboard</Link></li>
-            <li><Link to="/contact" onClick={closeMobileMenu} className={isActive('/contact') ? 'active' : ''}>Contact Us</Link></li>
           </ul>
           <p className="mobile-menu-account-hint">
             Tap the <strong>profile icon</strong> (next to the bell) for Trader Desk, Journal, Profile, Settings &amp; more — same menu as desktop.
@@ -130,8 +130,8 @@ const Navbar = () => {
                   🤖 Aura AI
                 </Link>
               </li>
+              <li><Link to="/courses" className={isActive("/courses") ? "active" : ""}>C &amp; S</Link></li>
               <li><Link to="/leaderboard" className={isActive("/leaderboard") ? "active" : ""}>Leaderboard</Link></li>
-              <li><Link to="/contact" className={isActive("/contact") ? "active" : ""}>Contact Us</Link></li>
             </>
           ) : (
             <>

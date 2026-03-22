@@ -3044,8 +3044,8 @@ if (window.requestAnimationFrame) {
         const handleClickOutside = (e) => {
             if (!sidebarOpen) return;
             const sidebar = document.querySelector('.community-sidebar');
-            const toggleButton = document.querySelector('.mobile-sidebar-toggle');
-            if (sidebar && !sidebar.contains(e.target) && !toggleButton?.contains(e.target)) {
+            const channelMenuBtn = document.querySelector('.mobile-back-button');
+            if (sidebar && !sidebar.contains(e.target) && !channelMenuBtn?.contains(e.target)) {
                 setSidebarOpen(false);
             }
         };
@@ -5448,41 +5448,13 @@ if (!isAuthenticated && !hasToken) {
                 </>
             )}
             
-            {/* MOBILE SIDEBAR TOGGLE BUTTON */}
-            {isMobile && (
-                <button
-                    className="mobile-sidebar-toggle"
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    aria-label="Toggle channels"
-                   style={{
-    display: 'none'
-}}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(43, 45, 49, 1)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(43, 45, 49, 0.95)';
-                    }}
-                >
-                    <FaBars size={18} />
-                </button>
-            )}
-            
-            {/* MOBILE OVERLAY - Dark backdrop when sidebar is open */}
+            {/* MOBILE OVERLAY — styles from Community.css (top aligns below navbar; z-index below drawer) */}
             {isMobile && sidebarOpen && (
                 <div
                     className="mobile-sidebar-overlay"
                     onClick={() => setSidebarOpen(false)}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0, 0, 0, 0.5)',
-                        zIndex: 1000,
-                        animation: 'fadeIn 0.2s ease'
-                    }}
+                    role="presentation"
+                    aria-hidden="true"
                 />
             )}
             
@@ -5928,6 +5900,17 @@ if (!isAuthenticated && !hasToken) {
                                                 {/* Channel item */}
                                                 <li 
                                                     className={`channel-item ${isActive ? 'active' : ''} ${hasUnread || hasMentions ? 'unread' : ''} ${isLocked ? 'locked' : ''} ${isDragging ? 'dragging' : ''} ${showDropAbove ? 'drop-above' : ''} ${showDropBelow ? 'drop-below' : ''}`}
+                                                    role={isSuperAdminUser && !isLocked ? undefined : 'button'}
+                                                    tabIndex={isSuperAdminUser && !isLocked ? undefined : (isMobile ? 0 : -1)}
+                                                    onKeyDown={
+                                                        isSuperAdminUser && !isLocked
+                                                            ? undefined
+                                                            : (e) => {
+                                                                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                                                                  e.preventDefault();
+                                                                  e.currentTarget.click();
+                                                              }
+                                                    }
                                                     draggable={!isLocked && isSuperAdminUser}
                                                     onContextMenu={(e) => {
                                                         if (!isSuperAdminUser) return;
@@ -6533,8 +6516,10 @@ if (!isAuthenticated && !hasToken) {
                         <div className="chat-header">
                             {isMobile && (
                                 <button
+                                    type="button"
                                     className="mobile-back-button"
                                     onClick={() => setSidebarOpen(true)}
+                                    aria-label="Open channels"
                                     style={{
                                         background: 'transparent',
                                         border: 'none',
@@ -7161,10 +7146,49 @@ if (!isAuthenticated && !hasToken) {
                         )}
                     </>
                 ) : (
-                    <div className="no-channel-selected">
-                        <h2>Welcome to AURA FX Community</h2>
-                        <p>Select a channel to start chatting</p>
-                    </div>
+                    <>
+                        {isMobile && (
+                            <div className="chat-header community-mobile-channel-picker-header">
+                                <button
+                                    type="button"
+                                    className="mobile-back-button"
+                                    onClick={() => setSidebarOpen(true)}
+                                    aria-label="Open channels"
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#ffffff',
+                                        fontSize: '1.25rem',
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        marginRight: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <FaBars />
+                                </button>
+                                <h2 className="community-mobile-channel-picker-title">Channels</h2>
+                            </div>
+                        )}
+                        <div
+                            className="no-channel-selected"
+                            style={
+                                isMobile
+                                    ? {
+                                          flex: 1,
+                                          minHeight: 0,
+                                          height: 'auto',
+                                          width: '100%'
+                                      }
+                                    : undefined
+                            }
+                        >
+                            <h2>Welcome to AURA FX Community</h2>
+                            <p>Select a channel to start chatting</p>
+                        </div>
+                    </>
                 )}
             </div>
 
