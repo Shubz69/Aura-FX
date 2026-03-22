@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
 import { AuraAnalysisProvider, useAuraAnalysis, DATE_RANGE_OPTIONS } from '../../context/AuraAnalysisContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraDashboard.css';
@@ -15,11 +15,6 @@ const TABS = [
 ];
 
 const base = '/aura-analysis/dashboard';
-
-function getActiveLabel(pathname) {
-  const match = TABS.find(t => pathname.includes(`/dashboard/${t.path}`));
-  return match ? match.label : 'Dashboard';
-}
 
 /** Filter + refresh bar — rendered inside the provider so it can read context */
 function AuraFilterBar() {
@@ -102,10 +97,7 @@ function AuraFilterBar() {
 }
 
 function AuraDashboardInner() {
-  const location = useLocation();
   const [time, setTime] = useState(new Date());
-
-  const activeLabel = getActiveLabel(location.pathname);
 
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 60000);
@@ -145,22 +137,10 @@ function AuraDashboardInner() {
               <span className="aura-db-time">{timeStr}</span>
               <span className="aura-db-date">{dateStr}</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ══ Page sub-header (title + status only — tabs live in the bar above) ══ */}
-      <div className="aura-db-subheader">
-        <div className="aura-db-subheader-inner">
-          <div className="aura-db-page-title">
-            <span className="aura-db-page-icon">
-              <i className={`fas ${TABS.find(t => location.pathname.includes(`/dashboard/${t.path}`))?.icon || 'fa-th-large'}`} />
-            </span>
-            {activeLabel}
-          </div>
-          <div className="aura-db-sub-right">
-            <div className="aura-db-status-dot" title="Live data" />
-            <span className="aura-db-status-label">Live</span>
+            <div className="aura-db-live-pill" title="Live data">
+              <span className="aura-db-status-dot" aria-hidden="true" />
+              <span className="aura-db-status-label">Live</span>
+            </div>
           </div>
         </div>
       </div>
