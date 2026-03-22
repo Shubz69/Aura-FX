@@ -752,7 +752,6 @@ img, video, canvas {
 /* All devices: containers with semi-transparent background */
 .page-wrapper:has(.contact-container),
 .page-wrapper:has(.why-container),
-.page-wrapper:has(.explore-container),
 .page-wrapper:has(.profile-container),
 .page-wrapper:has(.home-container),
 .page-wrapper:has(.courses-container),
