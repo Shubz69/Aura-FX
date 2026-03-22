@@ -222,6 +222,12 @@ body.loading-active .navbar {
     drop-shadow(0 0 28px rgba(234, 169, 96, 0.45));
 }
 
+.logo-link:hover .a7-logo-container--navbar .a7-logo-gradient {
+  filter:
+    drop-shadow(0 0 8px rgba(240, 195, 109, 0.45))
+    drop-shadow(0 1px 2px rgba(62, 38, 8, 0.35));
+}
+
 /* Hexagon badge — glass inner + gold gradient */
 .logo-square {
   width: 36px; height: 36px;
@@ -267,23 +273,24 @@ body.loading-active .navbar {
 
 .navbar-ai-head { display: none; }
 
-/* Wordmark — crisp gradient text */
+/* Wordmark — solid white, wide tracking (navbar brand reference); weight from index.css .logo */
 .logo {
   font-family: var(--font);
   font-size: 0.80rem;
-  font-weight: 700;
-  letter-spacing: 0.32em;
+  font-weight: 200;
+  letter-spacing: 0.38em;
   text-transform: uppercase;
-  background: linear-gradient(110deg, #FFFFFF 0%, var(--eaa-bright) 50%, var(--eaa-core) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 1px 12px rgba(234, 169, 96, 0.32));
-  transition: filter var(--transition);
+  color: #ffffff;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: #ffffff;
+  filter: none;
 }
 
 .logo-link:hover .logo {
-  filter: drop-shadow(0 1px 20px rgba(234, 169, 96, 0.65));
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -363,75 +370,116 @@ body.loading-active .navbar {
   left: 0.95rem;
 }
 
-/* Active state */
+/* Active state — navy pill, white type, gold rim + underline */
 .nav-links li a.active {
-  color: var(--eaa-core);
+  color: #ffffff;
   background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.10) 0%,
-    rgba(234, 169, 96, 0.055) 100%
+    145deg,
+    rgba(10, 20, 46, 0.96) 0%,
+    rgba(18, 34, 68, 0.92) 48%,
+    rgba(8, 14, 36, 0.98) 100%
   );
-  border-color: rgba(234, 169, 96, 0.18);
+  border-color: rgba(212, 175, 55, 0.48);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 20px rgba(234, 169, 96, 0.08),
-    0 2px 12px rgba(0, 0, 0, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(212, 175, 55, 0.14),
+    0 0 22px rgba(0, 0, 0, 0.35),
+    0 0 26px rgba(212, 175, 55, 0.09);
   font-weight: 600;
 }
 
 .nav-links li a.active::after {
   width: calc(100% - 1.9rem);
   left: 0.95rem;
+  background: linear-gradient(
+    90deg,
+    rgba(212, 175, 55, 0.85),
+    rgba(248, 220, 150, 0.98),
+    rgba(212, 175, 55, 0.85)
+  );
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.45);
 }
 
-/* Aura AI special link */
+/* Aura AI — same language: navy glass, white label, gold frame */
 .nav-links li a.nav-aura-ai {
-  color: var(--eaa-core);
+  color: #ffffff;
   font-weight: 600;
-  border: 1px solid rgba(234, 169, 96, 0.28);
+  border: 1px solid rgba(212, 175, 55, 0.4);
   background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.06) 0%,
-    rgba(234, 169, 96, 0.02) 100%
+    145deg,
+    rgba(12, 22, 50, 0.9) 0%,
+    rgba(20, 38, 76, 0.86) 100%
   );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 16px rgba(234, 169, 96, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 0 18px rgba(0, 0, 0, 0.3),
+    0 0 22px rgba(212, 175, 55, 0.07);
   letter-spacing: 0.14em;
 }
 
 .nav-links li a.nav-aura-ai:hover {
+  color: #ffffff;
   background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.12) 0%,
-    rgba(234, 169, 96, 0.06) 100%
+    145deg,
+    rgba(16, 30, 62, 0.95) 0%,
+    rgba(26, 48, 92, 0.9) 100%
   );
-  border-color: rgba(234, 169, 96, 0.55);
-  color: var(--eaa-bright);
+  border-color: rgba(232, 198, 88, 0.55);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    0 0 24px rgba(234, 169, 96, 0.18),
-    0 2px 16px rgba(0, 0, 0, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 28px rgba(212, 175, 55, 0.12),
+    0 2px 16px rgba(0, 0, 0, 0.32);
 }
 
-/* Aura AI + active route: keep gold pill (no generic active tint winning) */
 .nav-links li a.nav-aura-ai.active {
-  color: var(--eaa-bright);
+  color: #ffffff;
   background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.14) 0%,
-    rgba(234, 169, 96, 0.07) 100%
+    145deg,
+    rgba(8, 16, 40, 0.98) 0%,
+    rgba(14, 28, 58, 0.95) 50%,
+    rgba(6, 12, 32, 1) 100%
   );
-  border-color: rgba(234, 169, 96, 0.42);
+  border-color: rgba(212, 175, 55, 0.55);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    0 0 22px rgba(234, 169, 96, 0.14),
-    0 2px 14px rgba(0, 0, 0, 0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(212, 175, 55, 0.18),
+    0 0 28px rgba(212, 175, 55, 0.14),
+    0 2px 14px rgba(0, 0, 0, 0.28);
+}
+
+.nav-links li a.nav-aura-ai.active::after {
+  background: linear-gradient(
+    90deg,
+    rgba(212, 175, 55, 0.85),
+    rgba(248, 220, 150, 0.98),
+    rgba(212, 175, 55, 0.85)
+  );
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.45);
 }
 
 .mobile-aura-ai-link {
-  color: var(--eaa-core) !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
+  border-color: rgba(212, 175, 55, 0.4) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(12, 22, 50, 0.9) 0%,
+    rgba(20, 38, 76, 0.86) 100%
+  ) !important;
+}
+
+.mobile-nav-links-primary li a.mobile-aura-ai-link.active {
+  border-color: rgba(212, 175, 55, 0.55) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(8, 16, 40, 0.98) 0%,
+    rgba(14, 28, 58, 0.95) 50%,
+    rgba(6, 12, 32, 1) 100%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(212, 175, 55, 0.16),
+    0 0 24px rgba(212, 175, 55, 0.12) !important;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1182,23 +1230,27 @@ body.loading-active .navbar {
 }
 
 .mobile-nav-links-primary li a:hover {
-  color: var(--eaa-bright) !important;
+  color: #ffffff !important;
   background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.10) 0%,
-    rgba(234, 169, 96, 0.04) 100%
+    145deg,
+    rgba(16, 30, 62, 0.88) 0%,
+    rgba(24, 46, 88, 0.82) 100%
   ) !important;
-  border-color: rgba(234, 169, 96, 0.35) !important;
+  border-color: rgba(212, 175, 55, 0.38) !important;
 }
 
 .mobile-nav-links-primary li a.active {
-  color: var(--eaa-core) !important;
+  color: #ffffff !important;
   background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.12) 0%,
-    rgba(234, 169, 96, 0.06) 100%
+    145deg,
+    rgba(10, 20, 46, 0.95) 0%,
+    rgba(18, 34, 68, 0.9) 48%,
+    rgba(8, 14, 36, 0.98) 100%
   ) !important;
-  border-color: rgba(234, 169, 96, 0.40) !important;
+  border-color: rgba(212, 175, 55, 0.48) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(212, 175, 55, 0.08) !important;
 }
 
 .mobile-menu-account-hint {
@@ -1329,6 +1381,7 @@ body.loading-active .navbar {
   .logo-link      { display: flex !important; align-items: center; gap: 10px; }
   .navbar-logo-wrapper { display: flex !important; align-items: center; gap: 10px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 30px; height: 30px; flex-shrink: 0; }
+  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 38px; height: 38px; }
   .logo { font-size: 0.74rem; letter-spacing: 0.24em; white-space: nowrap; }
 }
 
@@ -1344,19 +1397,22 @@ body.loading-active .navbar {
   .logo-link       { display: flex !important; align-items: center; gap: 8px; }
   .navbar-logo-wrapper { display: flex !important; align-items: center; gap: 8px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 26px; height: 26px; flex-shrink: 0; }
-  .logo { display: block !important; font-size: 0.70rem; letter-spacing: 0.20em; white-space: nowrap; }
+  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 32px; height: 32px; }
+  .logo { display: block !important; font-size: 0.70rem; letter-spacing: 0.22em; white-space: nowrap; }
 }
 
 @media (min-width: 375px) and (max-width: 667px) {
   .navbar { padding: 0 0.9rem; height: 56px; min-height: 56px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 24px; height: 24px; }
+  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 30px; height: 30px; }
   .logo { font-size: 0.66rem; letter-spacing: 0.17em; }
 }
 
 @media (max-width: 480px) {
   .navbar { padding: 0 0.9rem; height: 56px; min-height: 56px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 24px; height: 24px; }
-  .logo { display: block !important; font-size: 0.66rem; letter-spacing: 0.16em; white-space: nowrap; }
+  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 30px; height: 30px; }
+  .logo { display: block !important; font-size: 0.66rem; letter-spacing: 0.17em; white-space: nowrap; }
   .notifications-wrapper .messages-btn { padding: 0.35rem; font-size: 1rem; min-width: 36px; min-height: 36px; }
   .notifications-wrapper .notification-badge { width: 14px; height: 14px; font-size: 0.6rem; top: -1px; right: -1px; border-width: 1.5px; }
   .mobile-menu-toggle { display: flex !important; width: 40px; height: 40px; font-size: 1.2rem; flex-shrink: 0; align-items: center; justify-content: center; }
@@ -1366,7 +1422,8 @@ body.loading-active .navbar {
 @media (max-width: 374px) {
   .navbar { padding: 0 0.75rem; height: 54px; min-height: 54px; }
   .navbar-logo-wrapper .aura-logo-symbol { width: 22px; height: 22px; }
-  .logo { display: block !important; font-size: 0.62rem; letter-spacing: 0.13em; white-space: nowrap; }
+  .navbar-logo-wrapper .a7-logo-container--navbar .a7-logo-gradient { width: 28px; height: 28px; }
+  .logo { display: block !important; font-size: 0.62rem; letter-spacing: 0.14em; white-space: nowrap; }
   .notifications-wrapper .messages-btn { padding: 0.3rem; font-size: 0.95rem; min-width: 34px; min-height: 34px; }
   .notifications-wrapper .notification-badge { width: 13px; height: 13px; font-size: 0.55rem; }
   .mobile-menu-toggle { display: flex !important; width: 38px; height: 38px; font-size: 1.1rem; flex-shrink: 0; align-items: center; justify-content: center; }

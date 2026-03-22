@@ -137,7 +137,7 @@ const Navbar = () => {
         <div className="logo-container">
           <Link to="/" className="logo-link">
             <div className="navbar-logo-wrapper">
-              <A7Logo />
+              <A7Logo variant="navbar" />
               <span className="logo">AURA TERMINAL</span>
             </div>
           </Link>
