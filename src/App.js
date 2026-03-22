@@ -177,7 +177,7 @@ function AppRoutes() {
     }
 
     return (
-        <div className="app-container">
+        <div className={`app-container${isHomePage ? ' app-container--home' : ''}`}>
             {showGDPR && <GDPRModal onAgree={handleAgreeGDPR} />}
 
             <Navbar />

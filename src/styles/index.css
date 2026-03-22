@@ -319,17 +319,7 @@ button {
   margin-top: 3rem;
 }
 
-/* Custom Navbar overrides */
-.navbar {
-  background-color: var(--primary-color) !important;
-}
-.navbar-brand, .nav-link {
-  color: #fff !important;
-  font-weight: 500;
-}
-.nav-link.active {
-  border-bottom: 2px solid var(--secondary-color);
-}
+/* Navbar glass / colors: src/styles/Navbar.css (do not set solid background here — it kills backdrop-filter) */
 
 /* Footer styling */
 footer {

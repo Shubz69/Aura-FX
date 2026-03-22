@@ -88,7 +88,7 @@ const Navbar = () => {
 
   // ── Mobile full-screen menu (portalled to body)
   const mobileMenuPortal = ReactDOM.createPortal(
-    <div className={`mobile-menu ${mobileMenuOpen ? "active" : ""}`}>
+    <div className={`mobile-menu ${mobileMenuOpen ? "active" : ""}${location.pathname === "/" ? " mobile-menu--home" : ""}`}>
       <button className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Close menu">
         <FaTimes />
       </button>
@@ -138,7 +138,10 @@ const Navbar = () => {
           <Link to="/" className="logo-link">
             <div className="navbar-logo-wrapper">
               <A7Logo variant="navbar" />
-              <span className="logo">AURA TERMINAL</span>
+              <span className="logo">
+                <span className="logo-wordmark-bold">AURA</span>
+                <span className="logo-wordmark-rest">TERMINAL</span>
+              </span>
             </div>
           </Link>
         </div>

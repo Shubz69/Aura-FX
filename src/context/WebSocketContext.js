@@ -35,7 +35,12 @@ function resolveWsBaseUrl() {
     const { origin, hostname } = window.location ?? {};
     if (hostname === 'localhost' || hostname === '127.0.0.1') return origin;
     const wsHost = process.env.REACT_APP_WS_HOST || 'https://aura-fx-production.up.railway.app';
-    if (hostname && (hostname.includes('vercel.app') || hostname.includes('aurafx.com'))) {
+    if (
+      hostname &&
+      (hostname.includes('vercel.app') ||
+        hostname.includes('aurafx.com') ||
+        hostname.includes('auraterminal.ai'))
+    ) {
       return wsHost;
     }
     return wsHost;
@@ -303,9 +308,10 @@ export const WebSocketProvider = ({ children }) => {
     if (!ENABLED || !channelId || !token) return false;
     if (!client?.connected) return false;
     const ws = client?.webSocket;
-    if (!ws || ws.readyState !== 1) return false; // 1 = OPEN; skip if CLOSING (2) or CLOSED (3)
+    const OPEN = typeof WebSocket !== 'undefined' ? WebSocket.OPEN : 1;
+    if (!ws || ws.readyState !== OPEN) return false;
     try {
-      if (ws.readyState !== 1) return false; // Re-check right before send (avoid race)
+      if (ws.readyState !== OPEN) return false;
       client.publish({
         destination: `/app/chat/${channelId}`,
         headers: { Authorization: `Bearer ${token}` },
@@ -314,7 +320,7 @@ export const WebSocketProvider = ({ children }) => {
       return true;
     } catch (e) {
       const msg = e?.message || String(e);
-      if (msg.includes('CLOSING') || msg.includes('CLOSED')) return false; // Normal during disconnect; don't log
+      if (msg.includes('CLOSING') || msg.includes('CLOSED')) return false;
       if (process.env.NODE_ENV === 'development') console.warn('WebSocket send failed:', msg);
       return false;
     }

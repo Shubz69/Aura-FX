@@ -2,6 +2,57 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 
+const CHUNK_RELOAD_KEY = "aura_chunk_reload_v1";
+
+/**
+ * After a new deploy, a cached main.*.js may still request removed chunk files → 404 (often text/plain) → MIME / ChunkLoadError.
+ * Reload lets the browser re-fetch index.html + entry (especially with must-revalidate on /).
+ * Cap attempts so a broken cache cannot infinite-loop.
+ */
+function scheduleChunkLoadRecovery() {
+  if (typeof window === "undefined" || typeof sessionStorage === "undefined") return;
+  try {
+    const n = parseInt(sessionStorage.getItem(CHUNK_RELOAD_KEY) || "0", 10);
+    if (n >= 2) return;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(n + 1));
+  } catch {
+    return;
+  }
+  window.location.reload();
+}
+
+function isChunkLoadFailure(err, message) {
+  const name = err?.name || "";
+  const msg = message || err?.message || String(err || "");
+  return (
+    name === "ChunkLoadError" ||
+    msg.includes("ChunkLoadError") ||
+    msg.includes("Loading chunk") ||
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("Importing a module script failed")
+  );
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener(
+    "error",
+    (event) => {
+      if (isChunkLoadFailure(event.error, event.message)) {
+        event.preventDefault();
+        scheduleChunkLoadRecovery();
+      }
+    },
+    true
+  );
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+    if (isChunkLoadFailure(reason, reason?.message)) {
+      event.preventDefault();
+      scheduleChunkLoadRecovery();
+    }
+  });
+}
+
 function flattenConsoleArgs(args) {
   return args
     .map((a) => {
@@ -49,7 +100,9 @@ if (process.env.NODE_ENV === 'production') {
       message.includes('aria-describedby') ||
       message.includes('zustand') ||
       (message.includes('Fetch failed') && message.includes('feedback.js')) ||
-      message.includes('Snapshot fetch error')
+      message.includes('Snapshot fetch error') ||
+      message.includes('WebSocket is already in CLOSING') ||
+      message.includes('WebSocket is already in CLOSED')
     ) {
       return;
     }

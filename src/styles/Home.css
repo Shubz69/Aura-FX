@@ -1141,6 +1141,36 @@ html, body {
 ══════════════════════════════════════════════ */
 .market-ticker-wrapper { width: 100%; }
 
+/* ── All home titles / labels in capitals (scoped; wins over stray globals) ── */
+.loading-screen .loading-brand-text,
+.loading-screen .loading-subtitle {
+    text-transform: uppercase !important;
+}
+.home-container .hero-eyebrow-text,
+.home-container .brand-name,
+.home-container .brand-name-line,
+.home-container .powered-by-glitch,
+.home-container .powered-by-glitch strong,
+.home-container .intro-text,
+.home-container .home-cta-button,
+.home-container .home-secondary-button,
+.home-container .feature-title,
+.home-container .section-title,
+.home-container .why-title,
+.home-container .trade-markets-section__title,
+.home-container .trade-markets-section__card-title,
+.home-container .feature-item-title,
+.home-container .stat-label,
+.home-container .slide-title,
+.home-container .slide-tag,
+.home-container .slide-stat-badge,
+.home-container .trust-badge,
+.home-container .partner-logo,
+.home-container .view-all-markets-btn,
+.home-container .ticker-symbol {
+    text-transform: uppercase !important;
+}
+
 /* ══════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════ */

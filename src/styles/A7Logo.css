@@ -12,8 +12,8 @@
     flex-shrink: 0;
     align-self: flex-end;
     margin-bottom: 3px;
-    width: 52px;
-    height: 52px;
+    width: 60px;
+    height: 60px;
     background: linear-gradient(
         135deg,
         #f0c36d 0%,
@@ -39,8 +39,8 @@
 
 /* For navbar - larger size to match AURA TERMINAL text */
 .navbar-logo-wrapper .a7-logo-image {
-    width: 52px;
-    height: 52px;
+    width: 60px;
+    height: 60px;
     align-self: flex-end; /* Align to bottom to match text baseline */
     margin-bottom: 3px; /* Fine-tune alignment with text */
 }
@@ -53,9 +53,14 @@
 
 /* Adjust proportions for different sizes (767: avoid overlap with Navbar 768–1150px rules) */
 @media (max-width: 767px) {
+    .a7-logo-container--navbar .a7-logo-gradient {
+        width: 50px;
+        height: 50px;
+    }
+
     .navbar-logo-wrapper .a7-logo-image {
-        width: 44px;
-        height: 44px;
+        width: 50px;
+        height: 50px;
     }
 
     .home-logo-section .a7-logo-image {
