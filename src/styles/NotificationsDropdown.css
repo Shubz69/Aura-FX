@@ -1,13 +1,14 @@
 /* ============================================================
-   NOTIFICATIONS DROPDOWN — frost white panel · navy ink · gold
+   NOTIFICATIONS DROPDOWN — journal navy / gold glass
    ============================================================ */
 
+/* ── Overlay ──────────────────────────────────────────────── */
 .notifications-dropdown-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 24, 48, 0.22);
-  backdrop-filter: blur(10px) saturate(1.05);
-  -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
   z-index: 99998;
   animation: overlayFadeIn 0.22s ease both;
 }
@@ -24,18 +25,20 @@
   max-width: calc(100vw - 40px);
   max-height: 72vh;
   font-family: 'Space Grotesk', sans-serif;
-  color: #132043;
 
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #e8ecf6 100%);
+  background:
+    radial-gradient(ellipse 70% 40% at 20% 0%, rgba(234, 169, 96, 0.11) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 85% 12%, rgba(248, 195, 125, 0.06) 0%, transparent 55%),
+    rgba(3, 2, 10, 0.78);
 
-  border: 1px solid rgba(15, 27, 56, 0.12);
+  border: 1px solid rgba(234, 169, 96, 0.22);
   border-radius: 20px;
   box-shadow:
-    0 24px 64px rgba(15, 24, 48, 0.16),
-    0 0 0 1px rgba(255, 255, 255, 0.85) inset,
-    0 1px 0 rgba(212, 175, 55, 0.18) inset;
-  backdrop-filter: blur(22px) saturate(1.15);
-  -webkit-backdrop-filter: blur(22px) saturate(1.15);
+    0 28px 70px rgba(0, 0, 0, 0.72),
+    0 0 0 0.5px rgba(255, 255, 255, 0.03) inset,
+    0 1px 0 rgba(248, 195, 125, 0.07) inset;
+  backdrop-filter: blur(36px) saturate(1.18);
+  -webkit-backdrop-filter: blur(36px) saturate(1.18);
 
   display: flex;
   flex-direction: column;
@@ -54,18 +57,18 @@
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 2px;
+  height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(212, 175, 55, 0.55),
-    rgba(255, 255, 255, 0.9) 48%,
-    rgba(212, 175, 55, 0.45),
+    rgba(234, 169, 96, 0.55),
+    rgba(248, 195, 125, 0.35),
     transparent
   );
   pointer-events: none;
   z-index: 10;
 }
 
+/* Hairline gradient border */
 .notifications-dropdown::after {
   content: '';
   position: absolute;
@@ -74,9 +77,9 @@
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(212, 175, 55, 0.32) 0%,
-    rgba(15, 27, 56, 0.08) 50%,
-    rgba(212, 175, 55, 0.2) 100%
+    rgba(234, 169, 96, 0.28) 0%,
+    rgba(248, 195, 125, 0.12) 50%,
+    transparent 75%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask:         linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -91,8 +94,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(15, 27, 56, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(232, 236, 246, 0.55) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   position: relative;
   z-index: 2;
   flex-shrink: 0;
@@ -102,17 +107,17 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #0f1b38;
-  font-weight: 600;
+  color: #fff;
+  font-weight: 300;
   font-size: 0.85rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
 .notifications-icon {
-  color: #d4af37;
+  color: #eaa960;
   font-size: 1.05rem;
-  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.35));
+  filter: drop-shadow(0 0 8px rgba(234, 169, 96, 0.35));
 }
 
 /* Unread count badge */
@@ -144,9 +149,9 @@
   align-items: center;
   gap: 5px;
   padding: 0.42rem 1rem;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #047857;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #f8c37d;
   border-radius: 999px;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.68rem;
@@ -171,18 +176,18 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  background: rgba(15, 27, 56, 0.05);
-  border: 1px solid rgba(15, 27, 56, 0.12);
-  color: #3d4d6f;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
   border-radius: 999px;
   cursor: pointer;
   transition: all 0.28s ease;
 }
 
 .close-btn:hover {
-  background: rgba(212, 175, 55, 0.12);
-  border-color: rgba(212, 175, 55, 0.35);
-  color: #0f1b38;
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
   transform: rotate(90deg);
 }
 
@@ -193,13 +198,12 @@
   padding: 8px;
   position: relative;
   z-index: 1;
-  background: #f6f7fb;
 }
 
 .notifications-list::-webkit-scrollbar { width: 3px; }
-.notifications-list::-webkit-scrollbar-track { background: rgba(15, 27, 56, 0.04); }
+.notifications-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
 .notifications-list::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.75), rgba(232, 198, 88, 0.5));
+  background: linear-gradient(180deg, rgba(234, 169, 96, 0.65), rgba(248, 195, 125, 0.45));
   border-radius: 3px;
 }
 
@@ -211,7 +215,7 @@
   align-items: center;
   justify-content: center;
   padding: 3rem 1.5rem;
-  color: #3d4d6f;
+  color: rgba(255, 255, 255, 0.35);
   gap: 10px;
   text-align: center;
 }
@@ -229,17 +233,17 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 600;
-  color: #0f1b38;
-  background: rgba(212, 175, 55, 0.15);
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(234, 169, 96, 0.14);
+  border: 1px solid rgba(234, 169, 96, 0.42);
   border-radius: 10px;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .notifications-retry-btn:hover {
-  background: rgba(212, 175, 55, 0.24);
-  border-color: rgba(232, 198, 88, 0.55);
+  background: rgba(234, 169, 96, 0.24);
+  border-color: rgba(248, 195, 125, 0.55);
 }
 
 .notifications-empty p,
@@ -247,14 +251,15 @@
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #3d4d6f;
-  font-weight: 500;
+  color: rgba(255,255,255,0.3);
+  font-weight: 300;
   margin: 0;
 }
 
+/* Spinner */
 .spinner {
   animation: spin 0.9s linear infinite;
-  color: #d4af37;
+  color: #eaa960;
 }
 
 @keyframes spin {
@@ -265,7 +270,7 @@
   display: flex;
   justify-content: center;
   padding: 12px;
-  color: rgba(212, 175, 55, 0.85);
+  color: rgba(248, 195, 125, 0.75);
 }
 
 /* ── Notification Item ────────────────────────────────────── */
@@ -291,8 +296,8 @@
     -45deg,
     transparent,
     transparent 18px,
-    rgba(15, 27, 56, 0.02) 18px,
-    rgba(15, 27, 56, 0.02) 19px
+    rgba(255,255,255,0.008) 18px,
+    rgba(255,255,255,0.008) 19px
   );
   pointer-events: none;
   opacity: 0;
@@ -300,36 +305,37 @@
 }
 
 .notification-item:hover {
-  background: rgba(212, 175, 55, 0.09);
-  border-color: rgba(212, 175, 55, 0.22);
+  background: rgba(234, 169, 96, 0.08);
+  border-color: rgba(234, 169, 96, 0.22);
   transform: translateX(3px);
-  box-shadow: 0 4px 18px rgba(15, 24, 48, 0.08), 0 0 0 1px rgba(212, 175, 55, 0.12);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(234, 169, 96, 0.1);
 }
 
 .notification-item:hover::after { opacity: 1; }
 
 .notification-item.unread {
-  background: rgba(212, 175, 55, 0.07);
-  border-color: rgba(212, 175, 55, 0.16);
+  background: rgba(234, 169, 96, 0.06);
+  border-color: rgba(234, 169, 96, 0.14);
 }
 
 .notification-item.unread:hover {
-  background: rgba(212, 175, 55, 0.12);
-  border-color: rgba(232, 198, 88, 0.32);
+  background: rgba(234, 169, 96, 0.11);
+  border-color: rgba(248, 195, 125, 0.28);
 }
 
+/* Left glow bar on unread */
 .notification-item.unread::before {
   content: '';
   position: absolute;
   left: 0; top: 15%; bottom: 15%;
-  width: 3px;
+  width: 2px;
   background: linear-gradient(180deg,
-    rgba(212, 175, 55, 0),
-    rgba(212, 175, 55, 0.95),
-    rgba(232, 198, 88, 0.65)
+    rgba(234, 169, 96, 0),
+    rgba(234, 169, 96, 0.95),
+    rgba(248, 195, 125, 0.55)
   );
   border-radius: 2px;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 /* ── Notification Icon Container ─────────────────────────── */
@@ -342,16 +348,16 @@
   justify-content: center;
   flex-shrink: 0;
   font-size: 0.95rem;
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(234, 169, 96, 0.1);
+  border: 1px solid rgba(234, 169, 96, 0.22);
   position: relative;
   z-index: 1;
   transition: all 0.28s ease;
 }
 
 .notification-item:hover .notification-icon {
-  background: rgba(212, 175, 55, 0.18);
-  border-color: rgba(232, 198, 88, 0.4);
+  background: rgba(234, 169, 96, 0.16);
+  border-color: rgba(248, 195, 125, 0.35);
 }
 
 /* ── Notification Content ─────────────────────────────────── */
@@ -427,9 +433,9 @@
 }
 
 .action-btn.accept {
-  background: rgba(16, 185, 129, 0.12);
-  color: #047857;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.1);
+  color: #f8c37d;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .action-btn.accept:hover:not(:disabled) {
@@ -441,7 +447,7 @@
 
 .action-btn.decline {
   background: rgba(239, 68, 68, 0.08);
-  color: #6b4c4c;
+  color: #9a8f84;
   border: 1px solid rgba(239, 68, 68, 0.28);
 }
 
@@ -486,8 +492,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #d4af37, #e8c658);
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  background: linear-gradient(135deg, #eaa960, #f8c37d);
+  box-shadow: 0 0 10px rgba(234, 169, 96, 0.55);
   z-index: 1;
 }
 

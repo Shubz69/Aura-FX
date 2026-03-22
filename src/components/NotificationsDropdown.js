@@ -27,8 +27,8 @@ const TYPE_COLORS = {
   FRIEND_REQUEST: '#FFB800',
   FRIEND_ACCEPTED: '#23A55A',
   FRIEND_DECLINED: '#ED4245',
-  SYSTEM: '#d4af37',
-  DAILY_JOURNAL: '#d4af37'
+  SYSTEM: '#eaa960',
+  DAILY_JOURNAL: '#eaa960'
 };
 
 // Format relative time
@@ -419,7 +419,7 @@ const NotificationsDropdown = ({ isOpen, onClose, anchorRef, user, onUnreadCount
             <>
               {notifications.map((notification) => {
                 const Icon = TYPE_ICONS[notification.type] || FaBell;
-                const color = TYPE_COLORS[notification.type] || '#d4af37';
+                const color = TYPE_COLORS[notification.type] || '#eaa960';
                 const isUnread = notification.status === 'UNREAD';
                 const isProcessing = processingIds.has(notification.id);
                 const isFriendRequest = notification.type === 'FRIEND_REQUEST';
