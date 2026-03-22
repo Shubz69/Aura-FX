@@ -23,6 +23,17 @@ let snapshotInterval = null;
 let fetchInFlight = false;
 let isConnected = false;
 let lastFetchTime = 0;
+let lastSnapshotIssueLogMs = 0;
+const SNAPSHOT_ISSUE_LOG_MS = 120000;
+
+function logSnapshotIssueOnce(statusOrTag, detail) {
+  const now = Date.now();
+  if (now - lastSnapshotIssueLogMs < SNAPSHOT_ISSUE_LOG_MS) return;
+  lastSnapshotIssueLogMs = now;
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('[markets/snapshot]', statusOrTag, detail || '');
+  }
+}
 let watchlistConfig = null;
 let activeSymbols = new Set();
 
@@ -106,9 +117,13 @@ async function fetchSnapshot() {
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const data = await response.json();
+    let data = {};
+    try {
+      const text = await response.text();
+      if (text) data = JSON.parse(text);
+    } catch (_) {
+      data = {};
+    }
 
     if (data.success && data.prices && typeof data.snapshotTimestamp === 'number') {
       healthStats.avgLatency = (healthStats.avgLatency * healthStats.totalUpdates + (Date.now() - startTime)) / (healthStats.totalUpdates + 1);
@@ -141,11 +156,18 @@ async function fetchSnapshot() {
       lastFetchTime = Date.now();
       isConnected = true;
       notifyListeners();
+    } else {
+      healthStats.errors++;
+      if (!response.ok) {
+        logSnapshotIssueOnce(response.status, data?.message);
+      } else if (data.success === false || data.unavailable) {
+        logSnapshotIssueOnce('unavailable', data?.message);
+      }
     }
   } catch (error) {
-    console.error('Snapshot fetch error:', error.message);
     healthStats.errors++;
-    // Keep existing data; next 60s poll will retry
+    logSnapshotIssueOnce('network', error?.message);
+    // Keep existing data; next poll will retry
   } finally {
     fetchInFlight = false;
   }

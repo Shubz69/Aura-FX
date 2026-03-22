@@ -160,7 +160,8 @@ html, body {
     z-index: 2;
     max-width: 1500px;
     margin: 0 auto;
-    padding: 112px 3.2rem 280px;
+    /* Top: small offset — navbar clearance is on .page-wrapper */
+    padding: 40px 3.2rem 280px;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -944,7 +945,7 @@ html, body {
 @media (min-width: 1600px) {
     .content-wrapper {
         max-width: 1640px;
-        padding: 128px 4rem 320px;
+        padding: 44px 4rem 320px;
     }
 
     .why-section-heading { font-size: 2.2rem; }
@@ -952,7 +953,7 @@ html, body {
 
 /* Desktop */
 @media (max-width: 1280px) {
-    .content-wrapper { padding: 96px 2.6rem 260px; }
+    .content-wrapper { padding: 36px 2.6rem 260px; }
     .why-section-heading { font-size: 1.75rem; }
     .why-additional-features,
     .why-not-for-you-box { padding: 3.5rem 2.5rem; }
@@ -960,7 +961,7 @@ html, body {
 
 /* Large Tablet */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .content-wrapper { padding: 78px 1.9rem 220px; }
+    .content-wrapper { padding: 28px 1.9rem 220px; }
 
     .why-main-content {
         grid-template-columns: 1fr;
@@ -994,7 +995,7 @@ html, body {
 
 /* Tablet */
 @media (max-width: 767px) {
-    .content-wrapper { padding: 68px 1.5rem 180px; }
+    .content-wrapper { padding: 40px 1.5rem 180px; }
 
     .why-main-content {
         grid-template-columns: 1fr;
@@ -1027,7 +1028,7 @@ html, body {
 
 /* Mobile */
 @media (max-width: 480px) {
-    .content-wrapper { padding: 58px 1.1rem 160px; }
+    .content-wrapper { padding: 24px 1.1rem 160px; }
 
     .why-section-heading { font-size: 1.50rem; }
 
@@ -1057,28 +1058,28 @@ html, body {
 
 /* Extra small */
 @media (max-width: 320px) {
-    .content-wrapper { padding: 50px 0.85rem 155px; }
+    .content-wrapper { padding: 20px 0.85rem 155px; }
     .why-platform-feature { padding: 1.1rem 0.9rem; }
     .vs-card { padding: 1.25rem 0.9rem; }
 }
 
 /* Short screens */
 @media (max-height: 700px) {
-    .content-wrapper { padding-top: 52px; padding-bottom: 160px; }
+    .content-wrapper { padding-top: 28px; padding-bottom: 160px; }
     .why-header { margin-bottom: 3rem; }
     .why-main-content { margin-bottom: 4rem; }
 }
 
 /* Tall screens */
 @media (min-height: 1000px) {
-    .content-wrapper { padding-top: 140px; padding-bottom: 340px; }
+    .content-wrapper { padding-top: 48px; padding-bottom: 340px; }
     .why-header { margin-bottom: 8rem; }
     .why-main-content { margin-bottom: 10rem; }
 }
 
 /* Landscape on mobile */
 @media (max-width: 896px) and (orientation: landscape) {
-    .content-wrapper { padding-top: 52px; padding-bottom: 180px; }
+    .content-wrapper { padding-top: 28px; padding-bottom: 180px; }
     .why-header { margin-bottom: 2.5rem; }
     .why-main-content {
         grid-template-columns: 1fr 1fr;

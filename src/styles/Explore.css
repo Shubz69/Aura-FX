@@ -143,7 +143,8 @@ html, body {
     z-index: 2;
     max-width: 1500px;
     margin: 0 auto;
-    padding: 112px 3.2rem 140px;
+    /* Top: small offset — navbar clearance is on .page-wrapper */
+    padding: 40px 3.2rem 140px;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -1042,7 +1043,7 @@ html, body {
 @media (min-width: 1600px) {
     .explore-content-wrapper {
         max-width: 1640px;
-        padding: 128px 4rem 180px;
+        padding: 44px 4rem 180px;
     }
 
     .explore-section-title,
@@ -1051,14 +1052,14 @@ html, body {
 
 /* Desktop */
 @media (max-width: 1280px) {
-    .explore-content-wrapper { padding: 96px 2.6rem 140px; }
+    .explore-content-wrapper { padding: 36px 2.6rem 140px; }
     .explore-section-title,
     .explore-section-heading { font-size: 1.75rem; }
 }
 
 /* Large Tablet */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .explore-content-wrapper { padding: 78px 1.9rem 120px; }
+    .explore-content-wrapper { padding: 28px 1.9rem 120px; }
 
     .explore-main-content {
         grid-template-columns: 1fr;
@@ -1085,7 +1086,7 @@ html, body {
 /* Tablet */
 @media (max-width: 767px) {
     .explore-content-wrapper {
-        padding: 1.25rem 1.5rem 96px;
+        padding: 40px 1.5rem 96px;
     }
 
     .explore-main-content {
@@ -1139,7 +1140,7 @@ html, body {
 /* Mobile */
 @media (max-width: 480px) {
     .explore-content-wrapper {
-        padding: 1rem 1.1rem 88px;
+        padding: 24px 1.1rem 88px;
     }
 
     .explore-section-title,
@@ -1170,19 +1171,19 @@ html, body {
 
 /* Short screens */
 @media (max-height: 700px) {
-    .explore-content-wrapper { padding-top: 52px; padding-bottom: 100px; }
+    .explore-content-wrapper { padding-top: 28px; padding-bottom: 100px; }
     .explore-header { margin-bottom: 2rem; }
     .explore-main-content { margin-bottom: 2.5rem; }
 }
 
 /* Tall screens */
 @media (min-height: 1000px) {
-    .explore-content-wrapper { padding-top: 140px; padding-bottom: 200px; }
+    .explore-content-wrapper { padding-top: 48px; padding-bottom: 200px; }
 }
 
 /* Landscape on mobile */
 @media (max-width: 896px) and (orientation: landscape) {
-    .explore-content-wrapper { padding-top: 52px; padding-bottom: 96px; }
+    .explore-content-wrapper { padding-top: 28px; padding-bottom: 96px; }
     .explore-header { margin-bottom: 1.75rem; }
     .explore-main-content { grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.25rem; }
     .explore-text-section::before { display: block; }
