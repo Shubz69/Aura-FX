@@ -5,8 +5,20 @@ import { jwtDecode } from 'jwt-decode';
 import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 
-/** Full-screen LoadingSpinner after successful sign-in (not on failure — keeps Login mounted for errors). */
-const POST_LOGIN_SPLASH_MS = 1600;
+/** Session handoff: login writes /api/me JSON here so EntitlementsProvider can render /community without a second loading gate. */
+const ME_ENTITLEMENTS_SEED_KEY = 'aura_me_entitlements_seed';
+
+function writeMeEntitlementsSeed(mePayload) {
+  try {
+    if (!mePayload?.success || !mePayload?.entitlements || !mePayload?.user) return;
+    sessionStorage.setItem(
+      ME_ENTITLEMENTS_SEED_KEY,
+      JSON.stringify({ ts: Date.now(), payload: mePayload }),
+    );
+  } catch (_) {
+    /* quota / private mode */
+  }
+}
 
 // Create the context
 const AuthContext = createContext(null);
@@ -319,7 +331,6 @@ export const AuthProvider = ({ children }) => {
   const login = async (emailOrToken, passwordOrRole, userData = null) => {
     try {
       // Never set global `loading` during failed login — App would unmount Login and lose error state.
-      // On success only, we show the same LoadingSpinner as cold boot for a short handoff.
       setError(null);
 
       // Check which login method is being used
@@ -331,8 +342,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('mfaVerified', 'true');
         setMfaVerified(true);
         const nextUser = persistUser({ ...userData, role });
-        setLoading(true);
-        setTimeout(() => setLoading(false), POST_LOGIN_SPLASH_MS);
+        setLoading(false);
         return nextUser;
       } else {
         // This is an email/password login
@@ -489,6 +499,7 @@ export const AuthProvider = ({ children }) => {
           if (meResponse.ok) {
             const meData = await meResponse.json();
             if (meData.success && meData.entitlements) {
+              writeMeEntitlementsSeed(meData);
               canAccessCommunity = meData.entitlements.canAccessCommunity === true;
               if (canAccessCommunity) {
                 localStorage.setItem('hasActiveSubscription', 'true');
@@ -507,21 +518,17 @@ export const AuthProvider = ({ children }) => {
         // ============= DETERMINISTIC ROUTING =============
         // canAccessCommunity === true → /community (plan selected or admin)
         // canAccessCommunity === false → /choose-plan (select Free/Premium/Elite)
-        setLoading(true);
+        setLoading(false);
         const redirectInfo = applyPostAuthRedirect();
         if (redirectInfo) {
-          setTimeout(() => setLoading(false), POST_LOGIN_SPLASH_MS);
           return data;
         }
 
         if (canAccessCommunity) {
-          console.log('✅ Community access granted - redirecting to /community');
           navigate('/community');
         } else {
-          console.log('No plan selected - redirecting to /choose-plan');
           navigate('/choose-plan');
         }
-        setTimeout(() => setLoading(false), POST_LOGIN_SPLASH_MS);
         return data;
       }
     } catch (error) {

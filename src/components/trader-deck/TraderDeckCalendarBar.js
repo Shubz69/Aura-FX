@@ -1,6 +1,6 @@
 /**
- * Compact date bar for Trader Deck. Daily: full date (e.g. 12 March 2026).
- * Weekly: week range (e.g. 20th - 27th March 2026). Click opens full calendar overlay.
+ * Compact date bar for Trader Desk. Daily: full date in ALL CAPS (e.g. SUNDAY, 22 MARCH 2026).
+ * Weekly: week range in ALL CAPS. Click opens full calendar overlay.
  */
 import React, { useMemo } from 'react';
 
@@ -59,14 +59,14 @@ export default function TraderDeckCalendarBar({
       const endYear = end.getFullYear();
       const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
       if (sameMonth) {
-        return `${ordinal(startDay)} - ${ordinal(endDay)} ${monthName} ${year}`;
+        return `${ordinal(startDay)} - ${ordinal(endDay)} ${monthName} ${year}`.toUpperCase();
       }
-      return `${ordinal(startDay)} ${monthName} - ${ordinal(endDay)} ${endMonth} ${endYear}`;
+      return `${ordinal(startDay)} ${monthName} - ${ordinal(endDay)} ${endMonth} ${endYear}`.toUpperCase();
     }
 
     const d = new Date(str + 'T12:00:00');
     const weekday = d.toLocaleDateString('en-GB', { weekday: 'long' });
-    return `${weekday}, ${day || 1} ${monthName} ${year}`;
+    return `${weekday}, ${day || 1} ${monthName} ${year}`.toUpperCase();
   }, [selectedDate, period]);
 
   return (
@@ -76,7 +76,7 @@ export default function TraderDeckCalendarBar({
       tabIndex={0}
       onClick={onOpenCalendar}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenCalendar(); } }}
-      aria-label={`${period === 'weekly' ? 'Week' : 'Date'}: ${label.toUpperCase()}. Click to open calendar.`}
+      aria-label={`${period === 'weekly' ? 'Week' : 'Date'}: ${label}. Click to open calendar.`}
     >
       <button
         type="button"

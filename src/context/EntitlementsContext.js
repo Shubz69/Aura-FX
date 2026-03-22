@@ -9,6 +9,10 @@ import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/use
 
 const CACHE_MS = 45 * 1000; // 45s cache for near-instant repeat loads, fresh enough for tier/onboarding
 
+/** Must match AuthContext — one-shot handoff after login /api/me so CommunityGuard does not spin twice. */
+const ME_ENTITLEMENTS_SEED_KEY = 'aura_me_entitlements_seed';
+const ME_SEED_MAX_AGE_MS = 120_000;
+
 const EntitlementsContext = createContext(null);
 
 export const useEntitlements = () => {
@@ -89,6 +93,7 @@ export const EntitlementsProvider = ({ children }) => {
     if (!token || !user?.id) {
       setData(null);
       setLoading(false);
+      cachedAt.current = 0;
       return;
     }
     fetchMe();
