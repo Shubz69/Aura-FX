@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { AuraAnalysisProvider, useAuraAnalysis, DATE_RANGE_OPTIONS } from '../../context/AuraAnalysisContext';
 import '../../styles/aura-analysis/AuraDashboard.css';
 
@@ -102,15 +101,9 @@ function AuraFilterBar() {
 }
 
 function AuraDashboardInner() {
-  const { user } = useAuth();
   const location = useLocation();
-  const [notifOpen, setNotifOpen] = useState(false);
   const [time, setTime] = useState(new Date());
 
-  const displayName = user?.displayName || user?.username || user?.name || 'Trader';
-  const xp = user?.xp || user?.experience || 0;
-  const avatar = user?.avatar || user?.profilePicture || null;
-  const initial = displayName.charAt(0).toUpperCase();
   const activeLabel = getActiveLabel(location.pathname);
 
   useEffect(() => {
@@ -146,29 +139,10 @@ function AuraDashboardInner() {
             ))}
           </nav>
 
-          <div className="aura-db-right">
-            <div className="aura-db-clock">
+          <div className="aura-db-right" title={`${dateStr} · local time`}>
+            <div className="aura-db-clock" aria-label={`Local time ${timeStr}, ${dateStr}`}>
               <span className="aura-db-time">{timeStr}</span>
               <span className="aura-db-date">{dateStr}</span>
-            </div>
-            <button
-              className={`aura-db-icon-btn${notifOpen ? ' active' : ''}`}
-              title="Notifications"
-              onClick={() => setNotifOpen(v => !v)}
-              aria-label="Notifications"
-            >
-              <i className="fas fa-bell" />
-              <span className="aura-db-notif-dot" />
-            </button>
-            <div className="aura-db-user">
-              <div className="aura-db-avatar">
-                {avatar ? <img src={avatar} alt={displayName} /> : <span>{initial}</span>}
-                <span className="aura-db-avatar-ring" />
-              </div>
-              <div className="aura-db-user-info">
-                <span className="aura-db-user-name">{displayName}</span>
-                <span className="aura-db-xp">{xp.toLocaleString()} <span className="aura-db-xp-gem">◆</span></span>
-              </div>
             </div>
           </div>
         </div>
