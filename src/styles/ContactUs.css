@@ -42,7 +42,7 @@ html, body {
     position: relative;
     display: flex;
     flex-direction: column;
-    background: var(--c-bg);
+    background: transparent;
     width: 100%;
     max-width: 100%;
     margin: 0;

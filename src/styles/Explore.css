@@ -79,7 +79,8 @@ html, body {
     position: relative;
     display: flex;
     flex-direction: column;
-    background: var(--bg);
+    /* Let fixed CosmicBackground canvas show through (index.css used an opaque scrim) */
+    background: transparent;
     color: var(--text);
     width: 100%;
     max-width: 100%;

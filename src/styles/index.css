@@ -407,20 +407,29 @@ html.community-page-active .page-wrapper {
   contain-intrinsic-size: auto 800px;
 }
 
-/* Specific page adjustments with semi-transparent backgrounds */
-.community-container,
-.home-container,
-.courses-container,
-.explore-container,
-.why-container,
-.contact-container,
-.profile-container,
-.leaderboard-container {
+/* Community: keep a light scrim over the shell (Discord-style panels) */
+.community-container {
   padding-bottom: 0;
   min-height: calc(100vh - 160px);
   background: rgba(10, 10, 10, 0.85) !important;
   border-radius: 0;
   backdrop-filter: blur(2px);
+}
+
+/* Canvas CosmicBackground sits fixed z-index:0 — opaque shells hid the earth/stars image */
+.home-container,
+.courses-container,
+.explore-container,
+.why-container,
+.contact-container,
+.my-courses-container,
+.profile-container,
+.leaderboard-container {
+  padding-bottom: 0;
+  min-height: calc(100vh - 160px);
+  background: transparent !important;
+  border-radius: 0;
+  backdrop-filter: none !important;
 }
 
 * {
@@ -774,7 +783,7 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    background: rgba(10, 10, 10, 0.85) !important;
+    background: transparent !important;
 }
 
 /* iPhone: Home */
@@ -806,7 +815,7 @@ img, video, canvas {
         left: 0 !important;
         right: 0 !important;
         box-sizing: border-box !important;
-        background: rgba(10, 10, 10, 0.85) !important;
+        background: transparent !important;
     }
     .page-wrapper:has(.login-container),
     .page-wrapper:has(.register-container) {
@@ -849,7 +858,7 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    background: rgba(10, 10, 10, 0.85) !important;
+    background: transparent !important;
 }
 
 /* Login & Register: inner container is the scroll area */
@@ -890,7 +899,7 @@ img, video, canvas {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        background: rgba(10, 10, 10, 0.85) !important;
+        background: transparent !important;
     }
     .page-wrapper .login-container,
     .page-wrapper .register-container {
@@ -988,9 +997,17 @@ html, body {
   .explore-container,
   .profile-container,
   .courses-container,
-  .login-container,
-  .register-container,
+  .my-courses-container,
   .leaderboard-container {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding-top: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+  .login-container,
+  .register-container {
     height: auto !important;
     max-height: none !important;
     overflow-y: visible !important;
@@ -1041,9 +1058,19 @@ html, body {
   .explore-container,
   .profile-container,
   .courses-container,
-  .login-container,
-  .register-container,
+  .my-courses-container,
   .leaderboard-container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding-top: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+  .login-container,
+  .register-container {
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -1099,9 +1126,19 @@ html, body {
   .explore-container,
   .profile-container,
   .courses-container,
-  .login-container,
-  .register-container,
+  .my-courses-container,
   .leaderboard-container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding-top: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+  .login-container,
+  .register-container {
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;

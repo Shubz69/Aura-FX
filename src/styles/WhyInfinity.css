@@ -106,7 +106,7 @@ html, body {
     position: relative;
     display: flex;
     flex-direction: column;
-    background: var(--bg);
+    background: transparent;
     color: var(--text);
     width: 100%;
     max-width: 100%;
