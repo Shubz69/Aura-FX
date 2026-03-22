@@ -8,7 +8,7 @@
  * - Prices stable for the full minute, then update together
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 const API_BASE_URL = window.location.origin;
 const SNAPSHOT_POLL_MS = 20000; // 20 seconds - fresher updates for accuracy
@@ -232,6 +232,18 @@ export function useLivePrices(options = {}) {
   
   const symbolsRef = useRef([]);
 
+  const displayNameBySymbol = useMemo(() => {
+    const m = {};
+    if (watchlist?.groups) {
+      Object.values(watchlist.groups).forEach((g) => {
+        (g.symbols || []).forEach((s) => {
+          m[s.symbol] = s.displayName || s.symbol;
+        });
+      });
+    }
+    return m;
+  }, [watchlist]);
+
   // Update prices when global data changes
   const handleUpdate = useCallback((newPrices) => {
     setPrices(prev => {
@@ -360,17 +372,18 @@ export function useLivePrices(options = {}) {
     Object.entries(watchlist.groups).forEach(([key, group]) => {
       grouped[key] = {
         ...group,
-        prices: group.symbols.map(s => {
+        prices: group.symbols.map((s) => {
           const priceData = prices[s.symbol];
-          
+          const marketClosed = !!priceData?.marketClosed;
+
           if (priceData && priceData.price && parseFloat(priceData.price) > 0) {
             return {
               ...s,
-              ...priceData
+              ...priceData,
+              marketClosed,
             };
           }
-          
-          // No valid price - loading state
+
           return {
             ...s,
             price: null,
@@ -378,9 +391,10 @@ export function useLivePrices(options = {}) {
             changePercent: null,
             isUp: true,
             loading: true,
-            delayed: priceData?.delayed || false
+            delayed: priceData?.delayed || false,
+            marketClosed,
           };
-        })
+        }),
       };
     });
     return grouped;

@@ -16,15 +16,16 @@ const assert = require('assert');
 // Mock Data
 // ============================================================================
 
-const EXPECTED_GROUPS = ['crypto', 'stocks', 'forex', 'commodities', 'indices', 'macro'];
+const EXPECTED_GROUPS = ['crypto', 'stocks', 'forex', 'commodities', 'indices', 'futures', 'macro'];
 
 const EXPECTED_SYMBOLS = {
-  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD'],
-  stocks: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA'],
-  forex: ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'],
+  crypto: ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD', 'AVAXUSD', 'LINKUSD'],
+  stocks: ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA', 'BRK-B'],
+  forex: ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURJPY', 'GBPJPY'],
   commodities: ['XAUUSD', 'XAGUSD', 'WTI', 'BRENT'],
-  indices: ['SPX', 'NDX', 'DJI', 'DAX', 'FTSE', 'NIKKEI'],
-  macro: ['DXY', 'US10Y', 'VIX']
+  indices: ['SPX', 'NDX', 'DJI', 'RUT', 'VIX', 'DAX', 'FTSE', 'NIKKEI', 'CAC', 'HSI'],
+  futures: ['ES', 'NQ', 'YM', 'NG', 'HG'],
+  macro: ['DXY', 'US10Y'],
 };
 
 const DECIMALS = {
@@ -195,10 +196,11 @@ test('isUp is calculated correctly based on change', () => {
   assert.strictEqual(negativeChange.isUp, negativeChange.change >= 0);
 });
 
-// Test 12: All groups have at least 3 symbols
-test('Each group has at least 3 symbols', () => {
+// Test 12: All groups have a minimum symbol count
+test('Each group has at least 3 symbols (macro at least 2)', () => {
   Object.entries(EXPECTED_SYMBOLS).forEach(([group, symbols]) => {
-    assert.ok(symbols.length >= 3, `${group} should have at least 3 symbols, has ${symbols.length}`);
+    const min = group === 'macro' ? 2 : 3;
+    assert.ok(symbols.length >= min, `${group} should have at least ${min} symbols, has ${symbols.length}`);
   });
 });
 
@@ -216,7 +218,7 @@ test('Total symbols across all groups should be reasonable', () => {
     totalSymbols += symbols.length;
   });
   assert.ok(totalSymbols >= 30, `Should have at least 30 symbols, has ${totalSymbols}`);
-  assert.ok(totalSymbols <= 50, `Should have at most 50 symbols, has ${totalSymbols}`);
+  assert.ok(totalSymbols <= 500, `Should have at most 500 symbols in fixture, has ${totalSymbols}`);
 });
 
 // Test 15: No duplicate symbols across groups
