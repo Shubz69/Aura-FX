@@ -16,7 +16,8 @@ const Register = () => {
         phone: '',
         password: '',
         confirmPassword: '',
-        name: ''
+        name: '',
+        referralCode: '',
     });
     const [emailCode, setEmailCode] = useState('');
     const [phoneCode, setPhoneCode] = useState('');
@@ -45,6 +46,13 @@ const Register = () => {
             savePostAuthRedirect({ next: nextParam, plan: planParam, from: `${location.pathname}${location.search}` });
         }
     }, [location.pathname, location.search]);
+
+    useEffect(() => {
+        const ref = new URLSearchParams(location.search).get('ref');
+        if (ref && ref.trim()) {
+            setFormData((prev) => ({ ...prev, referralCode: ref.trim() }));
+        }
+    }, [location.search]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -142,6 +150,8 @@ const Register = () => {
             }
             setSuccess("Creating your account...");
             const refParam = new URLSearchParams(location.search).get('ref');
+            const refManual = (formData.referralCode || '').trim();
+            const referralMerged = refManual || (refParam && refParam.trim()) || '';
             const submitData = {
                 username: formData.username.trim(),
                 email: formData.email.trim().toLowerCase(),
@@ -149,7 +159,7 @@ const Register = () => {
                 password: formData.password,
                 name: (formData.name || '').trim(),
                 avatar: null,
-                ...(refParam && refParam.trim() ? { referralCode: refParam.trim() } : {})
+                ...(referralMerged ? { referralCode: referralMerged } : {})
             };
             localStorage.setItem('newSignup', 'true');
             localStorage.setItem('pendingSubscription', 'true');
@@ -256,6 +266,22 @@ const Register = () => {
                                 <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
                                 <input type="password" id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange}
                                     required placeholder="Confirm password" className="form-input" disabled={isLoading} />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label htmlFor="referralCode" className="form-label">Referral code <span style={{ opacity: 0.6, fontWeight: 400 }}>(optional)</span></label>
+                                <input
+                                    type="text"
+                                    id="referralCode"
+                                    name="referralCode"
+                                    value={formData.referralCode}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g. AURA-XXXXXXXX or AT-000123"
+                                    className="form-input"
+                                    disabled={isLoading}
+                                    autoComplete="off"
+                                />
                             </div>
                         </div>
                         <label className="terms-checkbox" htmlFor="terms">

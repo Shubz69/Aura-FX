@@ -178,12 +178,12 @@
 
 .aff-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
 }
 
 .aff-stat {
-  background: var(--aff-card);
+  background: linear-gradient(155deg, rgba(12, 10, 28, 0.92) 0%, rgba(6, 5, 16, 0.88) 100%);
   border: 1px solid var(--aff-border-gold);
   border-radius: 16px;
   padding: 22px 18px;
@@ -191,7 +191,10 @@
   transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  box-shadow: var(--aff-shadow), 0 0 0 0.5px rgba(255, 255, 255, 0.02) inset;
+  box-shadow:
+    var(--aff-shadow),
+    0 0 0 0.5px rgba(255, 255, 255, 0.02) inset,
+    0 0 40px rgba(234, 169, 96, 0.06);
 }
 
 .aff-stat:hover {

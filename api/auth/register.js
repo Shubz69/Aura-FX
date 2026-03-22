@@ -3,6 +3,10 @@ const bcrypt = require('bcrypt'); // bcrypt is in package.json
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { sendSignupNotification } = require('../utils/email');
+const {
+  resolveReferrerIdFromInput,
+  ensureUserReferralCode,
+} = require('../referral/referralService');
 
 // Get database connection
 const getDbConnection = async () => {
@@ -199,14 +203,10 @@ module.exports = async (req, res) => {
 
       const refRaw = (referralCode || ref || '').toString().trim();
       let referredBy = null;
-      const refMatch = refRaw.match(/^AT-(\d+)$/i);
-      if (refMatch) {
-        referredBy = parseInt(refMatch[1], 10);
-        if (referredBy === userId || referredBy < 1) referredBy = null;
-        else {
-          const [refRows] = await db.execute('SELECT id FROM users WHERE id = ? LIMIT 1', [referredBy]);
-          if (!refRows || refRows.length === 0) referredBy = null;
-        }
+      try {
+        referredBy = await resolveReferrerIdFromInput(refRaw, userId);
+      } catch (refErr) {
+        console.warn('Referral resolve skipped:', refErr.message);
       }
       if (referredBy) {
         try {
@@ -217,6 +217,12 @@ module.exports = async (req, res) => {
             await db.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referredBy, userId]);
           }
         }
+      }
+
+      try {
+        await ensureUserReferralCode(userId);
+      } catch (codeErr) {
+        console.warn('Referral code init:', codeErr.message);
       }
 
       // Notify support with signup count (for milestones e.g. 10th user prize)

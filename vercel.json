@@ -217,6 +217,10 @@
       "destination": "/api/referral/stats.js"
     },
     {
+      "source": "/api/payments/complete",
+      "destination": "/api/payments/complete.js"
+    },
+    {
       "source": "/api/push/subscribe",
       "destination": "/api/push/subscribe.js"
     },

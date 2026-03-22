@@ -31,7 +31,7 @@ const TIERS = [
 const FAQ_ITEMS = [
   {
     q: 'When does a referral count?',
-    a: 'Someone must register using your full referral link (or code at signup, if supported). Self-referrals and duplicate accounts do not count.',
+    a: 'Sign-ups count when someone registers with your link or enters your code (e.g. AURA-XXXXXXXX or legacy AT-000123). Course and subscription columns count once per referred user when they complete a tracked payment while logged in.',
   },
   {
     q: 'How long until rewards apply?',
@@ -89,13 +89,23 @@ export default function Affiliation() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const dialGradId = `aff-dial-grad-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
-  const [stats, setStats] = useState({ referrals: 0, active: 0, earned: 0 });
+  const [stats, setStats] = useState({
+    signups: 0,
+    referrals: 0,
+    coursePurchases: 0,
+    subscriptionPurchases: 0,
+    active: 0,
+    earned: 0,
+  });
+  const [referralCode, setReferralCode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
 
-  const referralCode = user?.id ? `AT-${String(user.id).padStart(6, '0')}` : null;
-  const referralLink = referralCode ? `${window.location.origin}/register?ref=${referralCode}` : null;
+  const referralLink =
+    referralCode && typeof window !== 'undefined'
+      ? `${window.location.origin}/register?ref=${encodeURIComponent(referralCode)}`
+      : null;
 
   const fetchStats = useCallback(async () => {
     if (!user) return;
@@ -104,8 +114,13 @@ export default function Affiliation() {
       const res = await Api.getReferralStats();
       const d = res?.data;
       if (d && typeof d === 'object') {
+        const signups = Number(d.signups ?? d.referrals) || 0;
+        setReferralCode(d.referralCode || d.legacyAtCode || null);
         setStats({
-          referrals: Number(d.referrals) || 0,
+          signups,
+          referrals: signups,
+          coursePurchases: Number(d.coursePurchases) || 0,
+          subscriptionPurchases: Number(d.subscriptionPurchases) || 0,
           active: Number(d.active) || 0,
           earned: Number(d.earned) || 0,
         });
@@ -176,18 +191,28 @@ export default function Affiliation() {
     );
   };
 
-  const nextTier = TIERS.find((t) => t.referrals > stats.referrals);
-  const prevTier = [...TIERS].filter((t) => t.referrals <= stats.referrals).pop();
+  const tierBasis = stats.signups || stats.referrals;
+  const nextTier = TIERS.find((t) => t.referrals > tierBasis);
+  const prevTier = [...TIERS].filter((t) => t.referrals <= tierBasis).pop();
   const progressPct = nextTier
-    ? Math.min(100, (stats.referrals / nextTier.referrals) * 100)
+    ? Math.min(100, (tierBasis / nextTier.referrals) * 100)
     : 100;
 
-  const referralsToNext = nextTier ? Math.max(0, nextTier.referrals - stats.referrals) : 0;
+  const referralsToNext = nextTier ? Math.max(0, nextTier.referrals - tierBasis) : 0;
 
   const statCards = [
-    { label: 'Total referrals', value: loading ? '—' : stats.referrals, hint: 'All-time signups' },
-    { label: 'Active', value: loading ? '—' : stats.active ?? 0, hint: 'Engaged accounts' },
-    { label: 'Rewards earned', value: loading ? '—' : stats.earned ?? 0, hint: 'Milestones credited' },
+    { label: 'Sign-ups', value: loading ? '—' : tierBasis, hint: 'Registered with your code' },
+    {
+      label: 'Subscriptions',
+      value: loading ? '—' : stats.subscriptionPurchases,
+      hint: 'Referred users who bought a subscription',
+    },
+    {
+      label: 'Courses',
+      value: loading ? '—' : stats.coursePurchases,
+      hint: 'Referred users who completed a course payment',
+    },
+    { label: 'Active plans', value: loading ? '—' : stats.active ?? 0, hint: 'Referred users · active or trialing' },
   ];
 
   return (
@@ -222,7 +247,7 @@ export default function Affiliation() {
               <FaUserPlus />
             </div>
             <h3 className="aff-steps__title">They sign up</h3>
-            <p className="aff-steps__text">Friends register through your link. We attribute the referral when the account is valid.</p>
+            <p className="aff-steps__text">Friends register through your link or paste your code on the sign-up form.</p>
           </div>
           <div className="aff-steps__connector" aria-hidden />
           <div className="aff-steps__item">
@@ -317,7 +342,7 @@ export default function Affiliation() {
                 <div className="aff-milestone-progress">
                   <div className="aff-milestone-progress__top">
                     <span>
-                      <strong>{stats.referrals}</strong> / {nextTier.referrals} referrals → <em>{nextTier.reward}</em>
+                      <strong>{tierBasis}</strong> / {nextTier.referrals} sign-ups → <em>{nextTier.reward}</em>
                     </span>
                     <span className="aff-milestone-progress__pct">{Math.round(progressPct)}%</span>
                   </div>
@@ -389,7 +414,7 @@ export default function Affiliation() {
           <div className="aff-tier-track">
             <div className="aff-tier-track__line" />
             {TIERS.map((tier, i) => {
-              const achieved = stats.referrals >= tier.referrals;
+              const achieved = tierBasis >= tier.referrals;
               const isNext = nextTier?.referrals === tier.referrals;
               return (
                 <div key={tier.referrals} className={`aff-tier-node ${achieved ? 'achieved' : ''} ${isNext ? 'next' : ''}`}>
@@ -415,7 +440,7 @@ export default function Affiliation() {
           <p className="aff-section-lead">Each tier stacks on your progress — check what you have unlocked and what is next.</p>
           <div className="aff-how__grid">
             {TIERS.map((tier) => {
-              const achieved = stats.referrals >= tier.referrals;
+              const achieved = tierBasis >= tier.referrals;
               return (
                 <div
                   key={tier.referrals}

@@ -666,6 +666,49 @@
   display: block;
 }
 
+.td-intel-preview-box--protected {
+  display: flex;
+  flex-direction: column;
+  max-height: 92vh;
+}
+
+.td-intel-preview-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(28, 28, 36, 0.98), rgba(18, 18, 26, 0.96));
+  border-bottom: 1px solid rgba(234, 169, 96, 0.22);
+  flex-shrink: 0;
+}
+
+.td-intel-preview-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.52);
+  user-select: none;
+}
+
+.td-intel-preview-chrome .td-intel-preview-close {
+  position: relative;
+  top: auto;
+  right: auto;
+  flex-shrink: 0;
+}
+
+.td-intel-preview-frame-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.td-intel-preview-box--protected .td-intel-preview-iframe {
+  height: min(78vh, calc(92vh - 52px));
+  min-height: 320px;
+}
+
 /* ══════════════════════════════════════════════════════════
    JOURNAL-STYLE TRADER DECK LAYOUT
    Uses journal-page / journal-layout / journal-sidebar / journal-main

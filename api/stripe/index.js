@@ -263,6 +263,15 @@ module.exports = async (req, res) => {
         console.log(`✅ Subscription activated for user ${userId}: role=${userRole}, plan=${planType}, expiry=${expiryDate}`);
         invalidateEntitlementsCache(userId);
 
+        if (planType !== 'free') {
+          try {
+            const { recordReferralConversion } = require('../referral/referralService');
+            await recordReferralConversion(Number(userId), 'subscription');
+          } catch (refErr) {
+            console.warn('Referral subscription attribution:', refErr.message);
+          }
+        }
+
         const [updatedUser] = await db.execute(
           'SELECT id, subscription_status, subscription_expiry FROM users WHERE id = ?',
           [userId]
@@ -367,6 +376,12 @@ module.exports = async (req, res) => {
                 );
                 console.log(`✅ Webhook: Subscription activated for ${customerEmail} (user ${userId}): role=${userRole}, plan=${planType}`);
                 invalidateEntitlementsCache(userId);
+                try {
+                  const { recordReferralConversion } = require('../referral/referralService');
+                  await recordReferralConversion(Number(userId), 'subscription');
+                } catch (refErr) {
+                  console.warn('Webhook referral attribution:', refErr.message);
+                }
               }
               await db.end();
             } catch (dbErr) {

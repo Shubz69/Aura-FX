@@ -1,10 +1,13 @@
 /**
- * GET /api/referral/stats — referral counts for the logged-in user (Bearer JWT).
- * Uses users.referred_by (referrer user id) when present.
+ * GET /api/referral/stats — referral metrics + unique code for the logged-in user.
  */
 
-const { executeQuery, addColumnIfNotExists } = require('../db');
+const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
+const {
+  ensureReferralSchema,
+  ensureUserReferralCode,
+} = require('./referralService');
 
 function getRows(result) {
   if (!result) return [];
@@ -35,32 +38,51 @@ module.exports = async (req, res) => {
   }
 
   try {
-    await addColumnIfNotExists('users', 'referred_by', 'INT NULL DEFAULT NULL');
-  } catch (_) {}
+    await ensureReferralSchema();
+    const referralCode = await ensureUserReferralCode(userId);
+    const legacyAtCode = `AT-${String(userId).padStart(6, '0')}`;
 
-  try {
     const [totalR] = await executeQuery(
       'SELECT COUNT(*) AS c FROM users WHERE referred_by = ?',
-      [userId]
+      [userId],
     );
-    const referrals = Number(getRows(totalR)[0]?.c ?? 0);
+    const signups = Number(getRows(totalR)[0]?.c ?? 0);
 
-    let active = referrals;
+    const [courseR] = await executeQuery(
+      `SELECT COUNT(*) AS c FROM referral_conversion
+       WHERE referrer_user_id = ? AND event_type = 'course'`,
+      [userId],
+    );
+    const coursePurchases = Number(getRows(courseR)[0]?.c ?? 0);
+
+    const [subR] = await executeQuery(
+      `SELECT COUNT(*) AS c FROM referral_conversion
+       WHERE referrer_user_id = ? AND event_type = 'subscription'`,
+      [userId],
+    );
+    const subscriptionPurchases = Number(getRows(subR)[0]?.c ?? 0);
+
+    let active = signups;
     try {
       const [activeR] = await executeQuery(
         `SELECT COUNT(*) AS c FROM users u
          WHERE u.referred_by = ?
            AND LOWER(COALESCE(u.subscription_status, '')) IN ('active', 'trialing')`,
-        [userId]
+        [userId],
       );
       active = Number(getRows(activeR)[0]?.c ?? 0);
     } catch (_) {
-      active = referrals;
+      active = signups;
     }
 
     return res.status(200).json({
       success: true,
-      referrals,
+      referralCode,
+      legacyAtCode,
+      signups,
+      referrals: signups,
+      coursePurchases,
+      subscriptionPurchases,
       active,
       earned: 0,
     });
@@ -68,7 +90,12 @@ module.exports = async (req, res) => {
     console.error('referral/stats:', e.message);
     return res.status(200).json({
       success: true,
+      referralCode: null,
+      legacyAtCode: `AT-${String(userId).padStart(6, '0')}`,
+      signups: 0,
       referrals: 0,
+      coursePurchases: 0,
+      subscriptionPurchases: 0,
       active: 0,
       earned: 0,
     });
