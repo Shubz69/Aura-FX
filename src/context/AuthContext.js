@@ -5,6 +5,9 @@ import { jwtDecode } from 'jwt-decode';
 import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 
+/** Full-screen LoadingSpinner after successful sign-in (not on failure — keeps Login mounted for errors). */
+const POST_LOGIN_SPLASH_MS = 1600;
+
 // Create the context
 const AuthContext = createContext(null);
 
@@ -315,9 +318,8 @@ export const AuthProvider = ({ children }) => {
   // Login function - supports both email/password login and token-based login from MFA
   const login = async (emailOrToken, passwordOrRole, userData = null) => {
     try {
-      // Do not toggle global `loading` here: AppRoutes replaces the entire tree with
-      // a spinner while loading is true, which unmounts Login/Register and drops their
-      // local error state when login fails. Bootstrap-only loading stays in checkAuth.
+      // Never set global `loading` during failed login — App would unmount Login and lose error state.
+      // On success only, we show the same LoadingSpinner as cold boot for a short handoff.
       setError(null);
 
       // Check which login method is being used
@@ -328,7 +330,10 @@ export const AuthProvider = ({ children }) => {
         persistTokens(token, localStorage.getItem('refreshToken'));
         localStorage.setItem('mfaVerified', 'true');
         setMfaVerified(true);
-        return persistUser({ ...userData, role });
+        const nextUser = persistUser({ ...userData, role });
+        setLoading(true);
+        setTimeout(() => setLoading(false), POST_LOGIN_SPLASH_MS);
+        return nextUser;
       } else {
         // This is an email/password login
         const email = emailOrToken;
@@ -502,8 +507,10 @@ export const AuthProvider = ({ children }) => {
         // ============= DETERMINISTIC ROUTING =============
         // canAccessCommunity === true → /community (plan selected or admin)
         // canAccessCommunity === false → /choose-plan (select Free/Premium/Elite)
+        setLoading(true);
         const redirectInfo = applyPostAuthRedirect();
         if (redirectInfo) {
+          setTimeout(() => setLoading(false), POST_LOGIN_SPLASH_MS);
           return data;
         }
 
@@ -514,7 +521,7 @@ export const AuthProvider = ({ children }) => {
           console.log('No plan selected - redirecting to /choose-plan');
           navigate('/choose-plan');
         }
-        
+        setTimeout(() => setLoading(false), POST_LOGIN_SPLASH_MS);
         return data;
       }
     } catch (error) {

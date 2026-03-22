@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
@@ -116,12 +117,14 @@ function ReportsDnaPageInner() {
     <div className="tdna-page journal-glass-panel journal-glass-panel--pad">
       {introOpen && <TraderDnaIntroSequence onComplete={handleIntroComplete} />}
 
-      {resolving && (
-        <div className="tdna-resolving">
-          <div className="tdna-resolving-spinner" />
-          <span>Sealing profile · writing DNA snapshot</span>
-        </div>
-      )}
+      {resolving &&
+        createPortal(
+          <div className="tdna-resolving">
+            <div className="tdna-resolving-spinner" />
+            <span>Sealing profile · writing DNA snapshot</span>
+          </div>,
+          document.body
+        )}
 
       <Link to="/reports" className="tdna-back">
         ← Monthly Reports

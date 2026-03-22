@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 
 const PHASES = [
   { label: 'Initialising DNA engine', sub: 'Secure channel · trader data vault', cmd: 'vault.mount --encrypt=AES256' },
@@ -145,7 +146,9 @@ export default function TraderDnaIntroSequence({ onComplete }) {
 
   const phase = PHASES[phaseIdx];
 
-  return (
+  /* Portal: .journal-glass-panel uses backdrop-filter, which creates a containing block —
+     fixed inset was binding to the narrow panel instead of the viewport. */
+  return createPortal(
     <div className="tdna-intro-root" role="presentation">
       <div className="tdna-intro-nebula tdna-intro-nebula--a" aria-hidden />
       <div className="tdna-intro-nebula tdna-intro-nebula--b" aria-hidden />
@@ -238,6 +241,7 @@ export default function TraderDnaIntroSequence({ onComplete }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
