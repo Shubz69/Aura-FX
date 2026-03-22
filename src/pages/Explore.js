@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Explore.css';
+import '../styles/contactPageHero.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { 
@@ -167,11 +168,21 @@ const Explore = () => {
       
       <div className="explore-content-wrapper">
 
-        {/* ── Header ── */}
+        {/* ── Header (same hero pattern as Contact Us) ── */}
         <header className="explore-header">
-          <h1 className="explore-main-title">Explore</h1>
-          <div className="explore-header-line">
-            <span className="explore-header-dot" />
+          <div className="contact-header">
+            <div className="contact-eyebrow">
+              <span className="contact-eyebrow__dot" />
+              <span>Discover</span>
+              <span className="contact-eyebrow__dot" />
+            </div>
+            <h1 className="contact-title">Explore</h1>
+            <p className="contact-subtitle">
+              Your map to courses, community, AI tools, and everything AURA TERMINAL offers.
+            </p>
+            <div className="contact-header__rule">
+              <span /><span /><span />
+            </div>
           </div>
         </header>
 

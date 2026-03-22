@@ -175,7 +175,7 @@ html, body {
 }
 
 /* ══════════════════════════════════════════════════════════
-   HEADER
+   HEADER — eyebrow / title / subtitle / rule: contactPageHero.css
    ══════════════════════════════════════════════════════════ */
 .why-header {
     text-align: center;
@@ -184,125 +184,8 @@ html, body {
     position: relative;
 }
 
-/* Eyebrow pill — gold, matches hero-eyebrow */
-.why-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    margin-bottom: 1.6rem;
-    padding: 0.34rem 0.90rem 0.34rem 0.60rem;
-    background: rgba(234,169,96,0.080);
-    border: 1px solid rgba(234,169,96,0.22);
-    border-radius: 100px;
-    animation: brandFadeIn 1.2s ease-out 0.05s both;
-}
-
-.why-eyebrow-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--eaa-core);
-    box-shadow: 0 0 7px var(--eaa-glow);
-    animation: eyebrowPulse 2.2s ease-in-out infinite;
-    flex-shrink: 0;
-}
-
-@keyframes eyebrowPulse {
-    0%,100% { opacity: 0.65; transform: scale(0.85); }
-    50%     { opacity: 1;    transform: scale(1.2); }
-}
-
-.why-eyebrow-text {
-    font-size: 0.66rem;
-    font-weight: 600;
-    color: var(--eaa-soft);
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-}
-
-/* Main title — two-line gold gradient */
-.why-main-title {
-    font-size: 3.6rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin: 0 0 1.6rem;
-    display: block;
-    line-height: 1.05;
-    animation: brandFadeIn 1.2s ease-out 0.18s both;
-    text-shadow: 0 2px 22px rgba(0,0,0,0.78);
-}
-
-.why-main-title .title-white {
-    display: block;
-    color: #fff;
-}
-
-.why-main-title .title-gold {
-    display: block;
-    background: linear-gradient(112deg,
-        var(--eaa-pale) 0%,
-        var(--eaa-bright) 30%,
-        var(--eaa-core) 60%,
-        var(--eaa-warm) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-@keyframes brandFadeIn {
-    from { opacity: 0; transform: translateY(18px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Header subtitle */
-.why-header-sub {
-    font-size: 1.02rem;
-    font-weight: 400;
-    color: rgba(225,220,255,0.78);
-    line-height: 1.76;
-    max-width: 520px;
-    margin: 0 auto 0;
-    animation: brandFadeIn 1.2s ease-out 0.32s both;
-}
-
-/* Gold divider decoration */
-.why-header-divider {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.8rem;
-    margin-top: 1.5rem;
-    animation: brandFadeIn 1.2s ease-out 0.46s both;
-}
-
-.why-header-divider::before,
-.why-header-divider::after {
-    content: '';
-    width: 80px;
-    height: 1px;
-}
-
-.why-header-divider::before {
-    background: linear-gradient(90deg, transparent, var(--eaa-core));
-}
-
-.why-header-divider::after {
-    background: linear-gradient(90deg, var(--eaa-warm), transparent);
-}
-
-.why-header-diamond {
-    width: 6px;
-    height: 6px;
-    background: var(--eaa-core);
-    transform: rotate(45deg);
-    box-shadow: 0 0 10px var(--eaa-glow);
-    animation: diamondPulse 2s ease-in-out infinite;
-}
-
-@keyframes diamondPulse {
-    0%, 100% { transform: rotate(45deg) scale(1); opacity: 1; }
-    50%       { transform: rotate(45deg) scale(1.8); opacity: 0.6; }
+.why-header .contact-header {
+    margin-bottom: 0;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1064,14 +947,12 @@ html, body {
         padding: 128px 4rem 320px;
     }
 
-    .why-main-title { font-size: 4.2rem; }
     .why-section-heading { font-size: 2.2rem; }
 }
 
 /* Desktop */
 @media (max-width: 1280px) {
     .content-wrapper { padding: 96px 2.6rem 260px; }
-    .why-main-title { font-size: 3.0rem; }
     .why-section-heading { font-size: 1.75rem; }
     .why-additional-features,
     .why-not-for-you-box { padding: 3.5rem 2.5rem; }
@@ -1115,11 +996,6 @@ html, body {
 @media (max-width: 767px) {
     .content-wrapper { padding: 68px 1.5rem 180px; }
 
-    .why-main-title {
-        font-size: 2.3rem;
-        letter-spacing: 0.05em;
-    }
-
     .why-main-content {
         grid-template-columns: 1fr;
         gap: 2.5rem;
@@ -1153,11 +1029,6 @@ html, body {
 @media (max-width: 480px) {
     .content-wrapper { padding: 58px 1.1rem 160px; }
 
-    .why-main-title {
-        font-size: 1.85rem;
-        letter-spacing: 0.04em;
-    }
-
     .why-section-heading { font-size: 1.50rem; }
 
     .why-platform-feature,
@@ -1171,7 +1042,6 @@ html, body {
 
 /* iPhone SE / Very Small */
 @media (max-width: 375px) {
-    .why-main-title { font-size: 1.55rem; }
     .why-section-heading { font-size: 1.34rem; }
     .why-subtitle { font-size: 1.34rem; }
 
@@ -1188,7 +1058,6 @@ html, body {
 /* Extra small */
 @media (max-width: 320px) {
     .content-wrapper { padding: 50px 0.85rem 155px; }
-    .why-main-title { font-size: 1.3rem; }
     .why-platform-feature { padding: 1.1rem 0.9rem; }
     .vs-card { padding: 1.25rem 0.9rem; }
 }
@@ -1211,7 +1080,6 @@ html, body {
 @media (max-width: 896px) and (orientation: landscape) {
     .content-wrapper { padding-top: 52px; padding-bottom: 180px; }
     .why-header { margin-bottom: 2.5rem; }
-    .why-main-title { font-size: clamp(1.5rem, 4vw, 2rem); }
     .why-main-content {
         grid-template-columns: 1fr 1fr;
         gap: 2rem;

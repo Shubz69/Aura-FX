@@ -117,7 +117,7 @@ const Navbar = () => {
             <li><Link to="/" onClick={closeMobileMenu}>Home</Link></li>
             <li><Link to="/courses" onClick={closeMobileMenu}>C &amp; S</Link></li>
             <li><Link to="/explore" onClick={closeMobileMenu}>Explore</Link></li>
-            <li><Link to="/why-glitch" onClick={closeMobileMenu}>Why Aura FX</Link></li>
+            <li><Link to="/why-glitch" onClick={closeMobileMenu}>Why Aura Terminal</Link></li>
             <li><Link to="/contact" onClick={closeMobileMenu}>Contact Us</Link></li>
           </ul>
           <div className="mobile-buttons">
@@ -162,7 +162,7 @@ const Navbar = () => {
               <li><Link to="/">Home</Link></li>
               <li><Link to="/courses">C &amp; S</Link></li>
               <li><Link to="/explore">Explore</Link></li>
-              <li><Link to="/why-glitch">Why Aura FX</Link></li>
+              <li><Link to="/why-glitch">Why Aura Terminal</Link></li>
               <li><Link to="/contact">Contact Us</Link></li>
             </>
           )}
