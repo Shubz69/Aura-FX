@@ -1,32 +1,30 @@
 /* ============================================================
-   USER PROFILE DROPDOWN — AURA TERMINAL  |  Gold Theme
+   USER PROFILE DROPDOWN — frost white · navy ink · luxury gold
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-/* ── CSS Variables ─────────────────────────────────────────── */
-:root {
-  --bg:           #03020D;
-  --gold:         #EAA960;
-  --gold-bright:  #F8C37D;
-  --gold-warm:    #D48D44;
-  --gold-soft:    #EABB80;
-  --gold-pale:    #FDE8C4;
-  --gold-dim:     rgba(234, 169, 96, 0.32);
-  --gold-glow:    rgba(234, 169, 96, 0.22);
-  --gold-glass:   rgba(234, 169, 96, 0.08);
-  --gold-ultra:   rgba(234, 169, 96, 0.035);
-  --border:       rgba(255, 255, 255, 0.072);
-  --border-h:     rgba(255, 255, 255, 0.16);
-  --text:         #ffffff;
-  --text-muted:   rgba(200, 196, 232, 0.72);
-  --text-dim:     rgba(178, 175, 218, 0.45);
-  --radius:       10px;
-  --transition:   0.26s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ── Wrapper ───────────────────────────────────────────────── */
+/* Scoped tokens — do not use :root (would override site-wide vars) */
 .user-profile {
+  --ud-navy:        #0f1b38;
+  --ud-ink:         #132043;
+  --ud-ink-muted:   #3d4d6f;
+  --ud-frost:       #f6f7fb;
+  --ud-frost-deep:  #e8ecf6;
+  --gold:           #d4af37;
+  --gold-bright:    #e8c658;
+  --gold-warm:      #b8942a;
+  --gold-soft:      #dfc056;
+  --gold-pale:      #f2e6b8;
+  --gold-dim:       rgba(212, 175, 55, 0.38);
+  --gold-glow:      rgba(212, 175, 55, 0.28);
+  --gold-glass:     rgba(212, 175, 55, 0.12);
+  --gold-ultra:     rgba(212, 175, 55, 0.08);
+  --border:         rgba(15, 27, 56, 0.1);
+  --border-h:       rgba(15, 27, 56, 0.16);
+  --radius:         10px;
+  --transition:     0.26s cubic-bezier(0.4, 0, 0.2, 1);
+
   position: relative;
   display: inline-block;
   font-family: 'Space Grotesk', sans-serif;
@@ -69,8 +67,8 @@
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(234, 169, 96, 0.6),
-    rgba(248, 195, 125, 0.5),
+    rgba(212, 175, 55, 0.6),
+    rgba(232, 198, 88, 0.5),
     transparent
   );
   opacity: 0;
@@ -83,7 +81,7 @@
   background: var(--gold-glass);
   box-shadow:
     0 0 18px var(--gold-glow),
-    0 0 0 1px rgba(234, 169, 96, 0.12);
+    0 0 0 1px rgba(212, 175, 55, 0.12);
 }
 
 .user-icon:hover::before {
@@ -97,18 +95,17 @@
   right: 16px;
   width: 268px;
   font-family: 'Space Grotesk', sans-serif;
+  color: var(--ud-ink);
 
-  /* Deep glass with gold tint */
-  background: rgba(5, 5, 18, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.082);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, var(--ud-frost-deep) 100%);
+  border: 1px solid rgba(15, 27, 56, 0.12);
   border-radius: 18px;
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.75),
-    0 0 0 0.5px rgba(234, 169, 96, 0.10),
-    0 0 40px rgba(234, 169, 96, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.055);
-  backdrop-filter: blur(22px) saturate(1.1);
-  -webkit-backdrop-filter: blur(22px) saturate(1.1);
+    0 24px 56px rgba(15, 24, 48, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+    0 1px 0 rgba(212, 175, 55, 0.2) inset;
+  backdrop-filter: blur(20px) saturate(1.12);
+  -webkit-backdrop-filter: blur(20px) saturate(1.12);
   /* Desktop (mouse + fine pointer): natural height, no inner scrollbar */
   display: block;
   overflow: visible;
@@ -155,25 +152,24 @@
   content: '';
   position: absolute;
   top: 0; left: 6%; right: 18%;
-  height: 1px;
+  height: 2px;
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(234, 169, 96, 0.55) 40%,
-    rgba(248, 195, 125, 0.40) 70%,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(212, 175, 55, 0.65) 38%,
+    rgba(232, 198, 88, 0.5) 68%,
     transparent 100%
   );
   z-index: 1;
 }
 
-/* Ambient gold glow at top */
 .user-dropdown::after {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 140px;
+  height: 120px;
   background: radial-gradient(ellipse at top center,
-    rgba(234, 169, 96, 0.065) 0%,
-    transparent 72%
+    rgba(212, 175, 55, 0.08) 0%,
+    transparent 70%
   );
   pointer-events: none;
   z-index: 0;
@@ -196,8 +192,8 @@
   padding: 16px 18px 14px;
   font-size: 0.72rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.38);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.058);
+  color: var(--ud-ink-muted);
+  border-bottom: 1px solid rgba(15, 27, 56, 0.08);
   text-align: center;
   letter-spacing: 0.10em;
   overflow: hidden;
@@ -205,13 +201,13 @@
   white-space: nowrap;
   position: relative;
   z-index: 2;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
 }
 
-/* Gold dot indicator before email */
 .user-dropdown-header > p::before {
   content: '◈';
   margin-right: 7px;
-  color: rgba(234, 169, 96, 0.50);
+  color: rgba(212, 175, 55, 0.85);
   font-size: 0.55rem;
   vertical-align: middle;
 }
@@ -222,7 +218,7 @@
   display: flex;
   align-items: center;
   padding: 11px 18px;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--ud-ink);
   text-decoration: none;
   transition: all var(--transition);
   border: none;
@@ -264,8 +260,8 @@
 /* Hover state */
 .user-dropdown-body a:hover,
 .user-dropdown-body button:hover {
-  background: var(--gold-ultra);
-  color: #ffffff;
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--ud-navy);
   padding-left: 22px;
 }
 
@@ -277,8 +273,8 @@
 
 /* Logout / danger */
 .user-dropdown-body button:last-child {
-  color: rgba(240, 61, 95, 0.72);
-  border-top: 1px solid rgba(255, 255, 255, 0.045);
+  color: #b91c4a;
+  border-top: 1px solid rgba(15, 27, 56, 0.08);
   margin-top: 2px;
 }
 
@@ -292,15 +288,15 @@
 }
 
 .user-dropdown-body button:last-child:hover {
-  background: rgba(240, 61, 95, 0.07);
-  color: #9a8f84;
+  background: rgba(240, 61, 95, 0.08);
+  color: #7a1d3a;
 }
 
 /* ── Dropdown Icon ─────────────────────────────────────────── */
 .dropdown-icon {
   margin-right: 12px;
   font-size: 0.95rem;
-  color: rgba(234, 169, 96, 0.72);
+  color: #b8942a;
   flex-shrink: 0;
   transition: color var(--transition), background var(--transition),
               border-color var(--transition), box-shadow var(--transition);
@@ -310,8 +306,8 @@
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: var(--gold-ultra);
-  border: 1px solid rgba(234, 169, 96, 0.15);
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.28);
 }
 
 .user-dropdown-body a:hover .dropdown-icon,
@@ -365,7 +361,7 @@
 
 @keyframes badgePulse {
   0%, 100% { box-shadow: 0 0 8px var(--gold-glow); transform: scale(1); }
-  50%       { box-shadow: 0 0 16px rgba(234, 169, 96, 0.55); transform: scale(1.12); }
+  50%       { box-shadow: 0 0 16px rgba(212, 175, 55, 0.5); transform: scale(1.12); }
 }
 
 /* ── Divider ───────────────────────────────────────────────── */
@@ -374,8 +370,8 @@
   margin: 4px 14px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(234, 169, 96, 0.12),
-    rgba(255, 255, 255, 0.05),
+    rgba(212, 175, 55, 0.22),
+    rgba(15, 27, 56, 0.08),
     transparent
   );
   border: none;
@@ -418,7 +414,7 @@
 
 .avatar-img:hover {
   border-color: var(--gold);
-  box-shadow: 0 0 24px rgba(234, 169, 96, 0.40);
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.38);
 }
 
 /* ── Avatar Select ─────────────────────────────────────────── */
@@ -426,10 +422,10 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(15, 27, 56, 0.12);
   margin-top: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ud-ink);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.80rem;
   font-weight: 500;
@@ -459,10 +455,9 @@
     max-width: min(300px, calc(100vw - 20px));
     border-radius: 18px;
     box-shadow:
-      0 28px 72px rgba(0, 0, 0, 0.80),
-      0 0 0 0.5px rgba(234, 169, 96, 0.12),
-      0 0 40px rgba(234, 169, 96, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.055);
+      0 28px 56px rgba(15, 24, 48, 0.18),
+      0 0 0 1px rgba(255, 255, 255, 0.9) inset,
+      0 1px 0 rgba(212, 175, 55, 0.18) inset;
     /* Nav uses 56px offset here; overrides 55px max-height from touch scroll block */
     max-height: min(560px, calc(100vh - 56px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px));
     max-height: min(560px, calc(100dvh - 56px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px));
@@ -487,9 +482,9 @@
     width: 30px;
     height: 30px;
     font-size: 1rem;
-    color: var(--gold-soft);
-    background: var(--gold-glass);
-    border-color: rgba(234, 169, 96, 0.20);
+    color: #b8942a;
+    background: rgba(212, 175, 55, 0.14);
+    border-color: rgba(212, 175, 55, 0.3);
   }
 }
 

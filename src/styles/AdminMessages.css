@@ -1,4 +1,4 @@
-/* AdminMessages — Contact submissions (journal navy / gold glass, scoped) */
+/* AdminMessages — Contact submissions (navy · white · luxury gold, scoped) */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
@@ -44,8 +44,8 @@
 }
 
 @keyframes messageGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 169, 96, 0); }
-  50% { box-shadow: 0 0 20px 0 rgba(234, 169, 96, 0.18); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+  50% { box-shadow: 0 0 20px 0 rgba(212, 175, 55, 0.18); }
 }
 
 /* ============================================================
@@ -53,26 +53,26 @@
    ============================================================ */
 
 .admin-messages-container {
-  --bg-primary: #010008;
-  --bg-elevated: rgba(3, 2, 10, 0.72);
-  --bg-card: rgba(3, 2, 10, 0.65);
-  --bg-card-hover: rgba(8, 6, 20, 0.88);
-  --bg-gradient-start: rgba(234, 169, 96, 0.85);
-  --bg-gradient-end: rgba(248, 195, 125, 0.55);
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(234, 169, 96, 0.28);
-  --border-gold: rgba(234, 169, 96, 0.16);
+  --bg-primary: #070d18;
+  --bg-elevated: rgba(15, 27, 56, 0.55);
+  --bg-card: rgba(12, 22, 42, 0.58);
+  --bg-card-hover: rgba(19, 32, 67, 0.82);
+  --bg-gradient-start: rgba(212, 175, 55, 0.75);
+  --bg-gradient-end: rgba(232, 198, 88, 0.45);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(212, 175, 55, 0.32);
+  --border-gold: rgba(212, 175, 55, 0.18);
   --text-primary: #ffffff;
-  --text-muted: rgba(200, 196, 232, 0.65);
-  --accent-gold: #eaa960;
-  --accent-gold-bright: #f8c37d;
-  --accent-gold-light: rgba(234, 169, 96, 0.18);
-  --accent-gold-glow: rgba(234, 169, 96, 0.28);
-  --accent-blue: #f8c37d;
-  --accent-green: #f8c37d;
+  --text-muted: rgba(210, 218, 235, 0.62);
+  --accent-gold: #d4af37;
+  --accent-gold-bright: #e8c658;
+  --accent-gold-light: rgba(212, 175, 55, 0.16);
+  --accent-gold-glow: rgba(212, 175, 55, 0.26);
+  --accent-blue: #e8c658;
+  --accent-green: #e8c658;
   --accent-red: #9a8f84;
   --accent-orange: #c9a05c;
-  --up: #f8c37d;
+  --up: #e8c658;
   --down: #9a8f84;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -106,7 +106,7 @@
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-color: #010008;
+  background-color: #070d18;
   background-image:
     radial-gradient(1px 1px at 8% 12%, rgba(255,255,255,0.55), transparent),
     radial-gradient(1px 1px at 28% 8%, rgba(255,255,255,0.45), transparent),
@@ -136,8 +136,8 @@
   height: 800px;
   background: radial-gradient(
     ellipse at center,
-    rgba(234, 169, 96, 0.07) 0%,
-    rgba(248, 195, 125, 0.04) 35%,
+    rgba(212, 175, 55, 0.07) 0%,
+    rgba(232, 198, 88, 0.04) 35%,
     transparent 70%
   );
   border-radius: 50%;
@@ -187,8 +187,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(234, 169, 96, 0.7),
-    rgba(248, 195, 125, 0.5),
+    rgba(212, 175, 55, 0.7),
+    rgba(232, 198, 88, 0.5),
     transparent
   );
 }
@@ -200,11 +200,11 @@
   margin-bottom: 16px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  background: linear-gradient(125deg, #ffffff 30%, #f8c37d 65%, #eaa960 100%);
+  background: linear-gradient(125deg, #ffffff 30%, #e8c658 65%, #d4af37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 30px rgba(234, 169, 96, 0.3));
+  filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.3));
   position: relative;
   display: inline-block;
 }
@@ -280,11 +280,11 @@
 .submission-filter-btn.is-active {
   color: #fff;
   font-weight: 600;
-  background: linear-gradient(135deg, rgba(234, 169, 96, 0.22), rgba(248, 195, 125, 0.1));
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.22), rgba(232, 198, 88, 0.1));
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  outline: 1px solid rgba(234, 169, 96, 0.35);
+  outline: 1px solid rgba(212, 175, 55, 0.35);
 }
 
 .submission-filter-count {
@@ -325,9 +325,9 @@
 }
 
 .submission-role-badge[data-role='premium'] {
-  background: rgba(234, 169, 96, 0.15);
+  background: rgba(212, 175, 55, 0.15);
   color: var(--accent-gold);
-  border: 1px solid rgba(234, 169, 96, 0.35);
+  border: 1px solid rgba(212, 175, 55, 0.35);
 }
 
 .submission-role-badge[data-role='elite'] {
@@ -344,7 +344,7 @@
 
 .submission-role-badge[data-role='admin'] {
   background: rgba(16, 185, 129, 0.15);
-  color: #f8c37d;
+  color: #e8c658;
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
@@ -360,7 +360,7 @@
   border-radius: 9px;
   font-weight: 600;
   background: rgba(16, 185, 129, 0.15);
-  color: #f8c37d;
+  color: #e8c658;
   border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
@@ -485,7 +485,7 @@
   font-size: 5rem;
   margin-bottom: 25px;
   opacity: 0.7;
-  filter: drop-shadow(0 0 20px rgba(234, 169, 96, 0.3));
+  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.3));
   animation: messageGlow 3s infinite;
 }
 
@@ -529,8 +529,8 @@
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(234, 169, 96, 0.3),
-    rgba(248, 195, 125, 0.1),
+    rgba(212, 175, 55, 0.3),
+    rgba(232, 198, 88, 0.1),
     transparent 70%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -561,7 +561,7 @@
 .messages-header h3::before {
   content: '📨';
   font-size: 1.5rem;
-  filter: drop-shadow(0 0 10px rgba(234, 169, 96, 0.5));
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
 }
 
 /* Counter badge */
@@ -569,8 +569,8 @@
   display: inline-block;
   margin-left: 12px;
   padding: 4px 12px;
-  background: linear-gradient(135deg, var(--accent-gold-light), rgba(248, 195, 125, 0.1));
-  border: 1px solid rgba(234, 169, 96, 0.3);
+  background: linear-gradient(135deg, var(--accent-gold-light), rgba(232, 198, 88, 0.1));
+  border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 40px;
   font-size: 0.8rem;
   color: var(--accent-gold);
@@ -623,8 +623,8 @@
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(234, 169, 96, 0.3),
-    rgba(248, 195, 125, 0.1),
+    rgba(212, 175, 55, 0.3),
+    rgba(232, 198, 88, 0.1),
     transparent 70%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -656,7 +656,7 @@
 .message-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-  border-color: rgba(234, 169, 96, 0.2);
+  border-color: rgba(212, 175, 55, 0.2);
   background: rgba(17, 18, 23, 0.8);
 }
 
@@ -689,13 +689,13 @@
   width: 55px;
   height: 55px;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(234, 169, 96, 0.2), rgba(248, 195, 125, 0.1));
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(232, 198, 88, 0.1));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(234, 169, 96, 0.3);
-  box-shadow: 0 0 20px rgba(234, 169, 96, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -711,7 +711,7 @@
   font-size: 1.8rem;
   font-weight: 500;
   color: var(--text-primary);
-  filter: drop-shadow(0 0 10px rgba(234, 169, 96, 0.5));
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
   position: relative;
   z-index: 1;
 }
@@ -776,7 +776,7 @@
 
 .time-icon {
   font-size: 0.9rem;
-  filter: drop-shadow(0 0 5px rgba(234, 169, 96, 0.5));
+  filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
 }
 
 /* Message Content */
@@ -797,8 +797,8 @@
 
 .message-content:hover {
   background: rgba(0, 0, 0, 0.4);
-  border-color: rgba(234, 169, 96, 0.2);
-  box-shadow: 0 0 30px rgba(234, 169, 96, 0.1);
+  border-color: rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.1);
 }
 
 /* Quote decoration */
@@ -888,14 +888,14 @@
 
 /* Mark Read Button */
 .mark-read-btn {
-  background: linear-gradient(135deg, rgba(234, 169, 96, 0.55), rgba(90, 60, 28, 0.85));
-  border: 1px solid rgba(248, 195, 125, 0.35);
-  box-shadow: 0 0 18px rgba(234, 169, 96, 0.2);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.55), rgba(90, 60, 28, 0.85));
+  border: 1px solid rgba(232, 198, 88, 0.35);
+  box-shadow: 0 0 18px rgba(212, 175, 55, 0.2);
   color: var(--text-primary);
 }
 
 .mark-read-btn:hover {
-  box-shadow: 0 0 25px rgba(234, 169, 96, 0.4);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
 }
 
 .mark-read-btn::after {
