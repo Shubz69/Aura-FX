@@ -204,7 +204,7 @@ export default function TraderDeck() {
         </div>
 
         <div className="td-deck-content td-deck-content--modern">
-          <div className="td-deck-content-box td-deck-content-box--modern journal-glass-panel journal-glass-panel--pad">
+          <div className="td-deck-content-box td-deck-content-box--modern journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
             <div className="td-deck-body td-deck-body-single">
               <main className="td-deck-main">
                 <div className="td-deck-main-inner td-deck-main-inner--modern">

@@ -10,6 +10,7 @@ import '../../styles/aura-analysis/AuraAnalysisShell.css';
 import '../../styles/trader-deck/TradeValidatorJournalGlass.css';
 import '../../styles/trader-deck/TradeValidatorTabModern.css';
 import '../../styles/trader-deck/TradeValidatorRouteThemeGold.css';
+import '../../styles/trader-deck/TradeValidatorJournalPanels.css';
 
 const BASE = '/trader-deck/trade-validator';
 const TABS = [
@@ -27,7 +28,7 @@ export default function TradeValidatorShell() {
   return (
     <TradeValidatorAccountProvider>
     <AuraTerminalThemeShell>
-    <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad">
+    <div className="aura-shell trade-validator-shell journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
       <header className="aura-shell-hero">
         <div className="aura-shell-hero-inner">
           <div className="aura-shell-titles">

@@ -1,6 +1,7 @@
 /* =============================================================================
-   TRADER DESK PAGE ONLY — src/pages/TraderDeck.js
-   Scoped: .td-deck-with-tabs.td-layout-page. Glass/tokens only; no business logic.
+   TRADER DESK — src/pages/TraderDeck.js
+   Scoped: .journal-page .td-deck-with-tabs.td-layout-page
+   Uses the same panel tokens as Aura Journal (.journal-page / Journal.css).
    ============================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
@@ -10,253 +11,207 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Journal.css variable block (same as .journal-page) ───────────────────── */
-.td-deck-with-tabs.td-layout-page {
-  --bg:             #010008;
-  --bg-card:        rgba(3, 2, 10, 0.70);
-  --bg-card-h:      rgba(8, 6, 20, 0.85);
-  --bg-glass:       rgba(2, 1, 8, 0.65);
-  --border:         rgba(255, 255, 255, 0.05);
-  --border-h:       rgba(255, 255, 255, 0.12);
-  --border-gold:    rgba(234, 169, 96, 0.28);
-  --gold:           #EAA960;
-  --gold-bright:    #F8C37D;
-  --gold-warm:      #D48D44;
-  --gold-soft:      #EABB80;
-  --gold-pale:      #FDE8C4;
-  --gold-dim:       rgba(234, 169, 96, 0.28);
-  --gold-glow:      rgba(234, 169, 96, 0.18);
-  --gold-glass:     rgba(234, 169, 96, 0.06);
-  --gold-ultra:     rgba(234, 169, 96, 0.02);
-  --text:           #FFFFFF;
-  --text-muted:     rgba(200, 196, 232, 0.65);
-  --text-dim:       rgba(178, 175, 218, 0.38);
-  --green:          #0FD98A;
-  --green-glass:    rgba(15, 217, 138, 0.08);
-  --radius:         12px;
-  --radius-lg:      18px;
-  --radius-xl:      22px;
-  --glass-shadow:
-    0 8px 32px rgba(0,0,0,0.65),
-    0 1px 0 rgba(255,255,255,0.03) inset,
-    0 0 0 0.5px rgba(255,255,255,0.02) inset;
-  --grad-gold:  linear-gradient(130deg, var(--gold-pale) 0%, var(--gold-bright) 35%, var(--gold) 65%, var(--gold-warm) 100%);
-  --line-gold:  linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-bright) 70%, transparent);
-  --transition: 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+.journal-page .td-deck-with-tabs.td-layout-page,
+.journal-page .td-deck-with-tabs.td-layout-page * {
+  box-sizing: border-box;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page {
   font-family: 'Space Grotesk', sans-serif;
   color: var(--text);
 }
 
-.td-deck-with-tabs.td-layout-page,
-.td-deck-with-tabs.td-layout-page * {
-  box-sizing: border-box;
-}
-
-/* Header row + date + Daily/Weekly: intentionally NOT styled here — keep TraderDeckTabs.css */
-
-/* ── Main glass canvas — journal card stack ──────────────────────────────── */
-.td-deck-with-tabs.td-layout-page .td-deck-content-box {
-  background: var(--bg-card) !important;
-  border: 1px solid rgba(234, 169, 96, 0.22) !important;
-  border-radius: var(--radius-xl) !important;
-  padding: 22px 26px 28px !important;
-  box-shadow:
-    var(--glass-shadow),
-    0 0 0 1px rgba(234, 169, 96, 0.12) inset,
-    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
-    0 24px 64px rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(22px) saturate(1.06) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.06) !important;
-  position: relative;
-  overflow: hidden;
+/* Main canvas: .journal-glass-panel + --rim supply fill/border/rim; only tune motion + blur */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content-box.journal-glass-panel {
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(20px) saturate(1.06);
+  -webkit-backdrop-filter: blur(20px) saturate(1.06);
   animation: tdj-fadeIn 0.45s ease both;
+  transition: box-shadow 0.35s ease, background-image 0.35s ease;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content-box::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 8%;
-  right: 22%;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(234,169,96,0.25) 50%, transparent 100%);
-  pointer-events: none;
-  z-index: 2;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content-box.journal-glass-panel:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover);
+  box-shadow: var(--journal-panel-outer-glow-hover);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content-box::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(ellipse at top right, rgba(234, 169, 96, 0.08) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.td-deck-with-tabs.td-layout-page .td-deck-content-box:hover {
-  border-color: rgba(248, 195, 125, 0.38) !important;
-  box-shadow:
-    var(--glass-shadow),
-    0 0 0 1px rgba(234, 169, 96, 0.2) inset,
-    0 0 24px rgba(234, 169, 96, 0.12),
-    0 28px 72px rgba(0, 0, 0, 0.55) !important;
-}
-
-.td-deck-with-tabs.td-layout-page .td-deck-content-box .td-deck-body {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content-box .td-deck-body {
   position: relative;
-  z-index: 1;
+  z-index: 3;
 }
 
-/* ── Footer strip: sessions + headlines — journal note cards ─────────────── */
-.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer {
-  border-top: 1px solid var(--border) !important;
+/* ── Footer / rail copy — Journal eyebrow line ───────────────────────────── */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-inbox-footer {
+  border-top: 1px solid var(--border);
   padding-top: 28px;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer-title {
-  color: var(--text-dim) !important;
-  letter-spacing: 0.28em !important;
-  font-size: 0.65rem !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-inbox-footer-title {
+  color: var(--text-dim);
+  letter-spacing: 0.28em;
+  font-size: 0.65rem;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer-title::before {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-inbox-footer-title::before {
   content: '';
   display: inline-block;
   width: 20px;
   height: 1px;
   margin-right: 10px;
   vertical-align: middle;
-  background: linear-gradient(90deg, var(--gold), var(--gold-bright));
-  box-shadow: 0 0 6px var(--gold-glow);
+  background: var(--line-gold);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-inbox-sessions .td-deck-session-item {
-  background: var(--bg-glass) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: var(--glass-shadow);
-  transition: border-color var(--transition), transform 0.2s ease;
+/* ── Session chips — same stack as .journal-progress-card ────────────────── */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-inbox-sessions .td-deck-session-item {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.28s ease, background-image 0.28s ease, border-color 0.2s ease;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-inbox-sessions .td-deck-session-item:hover {
-  border-color: var(--border-gold) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-inbox-sessions .td-deck-session-item:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover);
+  box-shadow: var(--journal-panel-outer-glow-hover);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-session-dot--open {
-  background: var(--green) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-session-dot--open {
+  background: var(--green);
   box-shadow: 0 0 8px rgba(15, 217, 138, 0.45);
 }
 
-/* ── Market Intelligence panels inside deck ─────────────────────────────── */
-.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius-lg) !important;
-  backdrop-filter: blur(18px) saturate(1.05);
-  -webkit-backdrop-filter: blur(18px) saturate(1.05);
-  box-shadow: var(--glass-shadow) !important;
+/* ── Market Intelligence panels ───────────────────────────────────────────── */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.28s ease, background-image 0.28s ease;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel:hover {
-  border-color: rgba(234, 169, 96, 0.2) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover);
+  box-shadow: var(--journal-panel-outer-glow-hover);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel-title {
-  color: var(--text) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-panel-title {
+  color: var(--text);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-header {
-  border-bottom-color: var(--border) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-header {
+  border-bottom-color: var(--border);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-header::after {
-  background: linear-gradient(90deg, var(--gold), rgba(234,169,96,0.12), transparent) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-header::after {
+  background: var(--line-gold);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-eyebrow {
-  background: var(--gold-glass) !important;
-  border-color: var(--border-gold) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-content .td-mi-page-eyebrow {
+  background: rgba(58, 86, 165, 0.12);
+  border-color: var(--border-h);
 }
 
-/* ── Economic calendar strip — gold top accent (was purple) ───────────────── */
-.td-deck-with-tabs.td-layout-page .td-ff-wrap::before {
-  background: linear-gradient(90deg, transparent, rgba(234,169,96,0.55), rgba(140,175,255,0.35), transparent) !important;
+/* ── Economic calendar strip ──────────────────────────────────────────────── */
+.journal-page .td-deck-with-tabs.td-layout-page .td-ff-wrap::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35) 30%, rgba(160, 185, 240, 0.4) 55%, rgba(248, 195, 125, 0.14) 78%, transparent);
 }
 
-.td-deck-with-tabs.td-layout-page .td-ff-wrap {
-  background: var(--bg-glass) !important;
-  border-color: var(--border) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: var(--glass-shadow);
+.journal-page .td-deck-with-tabs.td-layout-page .td-ff-wrap {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(16px) saturate(1.05);
+  -webkit-backdrop-filter: blur(16px) saturate(1.05);
 }
 
-/* ── Calendar overlay ───────────────────────────────────────────────────── */
-.td-deck-with-tabs.td-layout-page .td-deck-calendar-overlay-content {
-  background: var(--bg-card-h) !important;
-  border: 1px solid var(--border-gold) !important;
-  border-radius: var(--radius-xl) !important;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: var(--glass-shadow), 0 0 60px rgba(0,0,0,0.6);
+/* ── Calendar overlay modal ───────────────────────────────────────────────── */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-calendar-overlay-content {
+  border: 1px solid transparent;
+  border-radius: var(--radius-xl);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow), 0 24px 64px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(22px) saturate(1.06);
+  -webkit-backdrop-filter: blur(22px) saturate(1.06);
 }
 
-/* ── Override TraderDeckTabs.css purple chrome (this route only) ─────────── */
-.td-deck-with-tabs.td-layout-page .td-deck-calendar-bar-label {
-  text-shadow: 0 0 20px rgba(234, 169, 96, 0.18) !important;
-  text-transform: uppercase !important;
+/* ── Tabs / chrome — white → navy, gold whisper (matches dashboard / journal) */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-calendar-bar-label {
+  text-transform: uppercase;
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-calendar-overlay-close:hover {
-  background: rgba(234, 169, 96, 0.22) !important;
-  border-color: rgba(234, 169, 96, 0.45) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-calendar-overlay-close:hover {
+  background: rgba(160, 185, 240, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-tab:hover {
-  background: rgba(234, 169, 96, 0.1) !important;
-  border-color: rgba(234, 169, 96, 0.32) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(160, 185, 240, 0.28);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-tab--active {
-  background: linear-gradient(135deg, rgba(248, 195, 125, 0.32), rgba(234, 169, 96, 0.26)) !important;
-  border-color: rgba(234, 169, 96, 0.48) !important;
-  box-shadow: 0 0 22px rgba(234, 169, 96, 0.18) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab--active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(160, 185, 240, 0.42);
+  box-shadow:
+    0 0 18px rgba(70, 100, 190, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-sub-tab:hover {
-  background: rgba(234, 169, 96, 0.08) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-sub-tab--active {
-  background: rgba(234, 169, 96, 0.18) !important;
-  border-color: rgba(234, 169, 96, 0.42) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-sub-tab--active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(160, 185, 240, 0.38);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-main-datestr {
-  text-shadow: 0 0 20px rgba(234, 169, 96, 0.15) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-main-datestr {
+  color: var(--text-muted);
+  text-shadow: none;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-main-tab-btn:hover {
-  background: rgba(234, 169, 96, 0.1) !important;
-  border-color: rgba(234, 169, 96, 0.3) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-main-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(160, 185, 240, 0.28);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-main-tab-btn--active {
-  background: linear-gradient(135deg, rgba(248, 195, 125, 0.3), rgba(234, 169, 96, 0.24)) !important;
-  border-color: rgba(234, 169, 96, 0.48) !important;
-  box-shadow: 0 0 18px rgba(234, 169, 96, 0.16) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-main-tab-btn--active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(160, 185, 240, 0.42);
+  box-shadow:
+    0 0 16px rgba(70, 100, 190, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-inbox-footer {
-  border-top-color: rgba(234, 169, 96, 0.18) !important;
-}
-
-.td-deck-with-tabs.td-layout-page .td-intel-preview-box {
-  border-color: rgba(234, 169, 96, 0.35) !important;
-  box-shadow: 0 0 60px rgba(234, 169, 96, 0.12), 0 24px 48px rgba(0, 0, 0, 0.5) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-intel-preview-box {
+  border: 1px solid transparent;
+  border-radius: var(--radius-xl);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }

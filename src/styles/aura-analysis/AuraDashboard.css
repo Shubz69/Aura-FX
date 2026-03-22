@@ -162,10 +162,12 @@ html, body, #root {
 
 .aura-dashboard-tab.active {
   color: #ffffff;
-  background: rgba(234, 169, 96, 0.25);
-  border-color: rgba(234, 169, 96, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(160, 185, 240, 0.42);
   font-weight: 600;
-  box-shadow: 0 0 20px rgba(234, 169, 96, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+  box-shadow:
+    0 0 18px rgba(70, 100, 190, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .aura-dashboard-tab.active i { opacity: 1; }
@@ -175,7 +177,10 @@ html, body, #root {
   position: absolute;
   inset: 0;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(234, 169, 96,0.15), rgba(217, 119, 6,0.08));
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(95, 125, 210, 0.14) 55%,
+    rgba(248, 195, 125, 0.06) 100%);
   pointer-events: none;
 }
 
@@ -233,6 +238,7 @@ html, body, #root {
   height: 40px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -266,41 +272,10 @@ html, body, #root {
   color: #f8c37d;
 }
 
-.aura-db-sub-tabs {
-  display: flex;
-  gap: 0;
-  flex: 1;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.aura-db-sub-tabs::-webkit-scrollbar { display: none; }
-
-.aura-db-sub-tab {
-  padding: 4px 12px;
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: rgba(255,255,255,0.35);
-  text-decoration: none;
-  white-space: nowrap;
-  border-radius: 4px;
-  transition: all 0.18s;
-  letter-spacing: 0.03em;
-}
-
-.aura-db-sub-tab:hover { color: rgba(255,255,255,0.7); }
-
-.aura-db-sub-tab.active {
-  color: #f8c37d;
-  font-weight: 600;
-  background: rgba(234, 169, 96,0.1);
-}
-
 .aura-db-sub-right {
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-left: auto;
   flex-shrink: 0;
 }
 

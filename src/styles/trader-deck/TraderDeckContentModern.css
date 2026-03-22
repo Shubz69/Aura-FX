@@ -4,57 +4,66 @@
    Scoped to .td-deck-with-tabs.td-layout-page so other routes are unaffected.
    ============================================================================= */
 
-/* ── Tab zone: glass shell + calendar strip + segmented period ─────────── */
-.td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+/* ── Tab zone: same glass stack as Aura Journal (.journal-page) ─────────── */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
   margin-bottom: 18px;
   padding: 18px 18px 16px;
-  border-radius: 20px;
-  background: rgba(3, 2, 10, 0.48);
-  border: 1px solid rgba(234, 169, 96, 0.16);
-  backdrop-filter: blur(22px) saturate(1.08);
-  -webkit-backdrop-filter: blur(22px) saturate(1.08);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.38),
-    0 0 0 1px rgba(234, 169, 96, 0.08) inset,
-    0 0 0 0.5px rgba(255, 255, 255, 0.03) inset;
+  border-radius: var(--radius-xl);
+  border: 1px solid transparent;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(20px) saturate(1.06);
+  -webkit-backdrop-filter: blur(20px) saturate(1.06);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-header--tab-zone {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-header--tab-zone {
   padding-bottom: 14px;
   margin-bottom: 0;
   border-bottom: none;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar {
   margin-top: 4px;
   margin-bottom: 12px;
   padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar .td-deck-header-line-left,
-.td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar .td-deck-header-line-right {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar .td-deck-header-line-left,
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-calendar .td-deck-header-line-right {
+  background: var(--line-gold);
   height: 1px;
+  opacity: 0.85;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-tab-zone-period {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone-period {
   margin-bottom: 0;
   justify-content: flex-start;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-period-segment {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment {
   display: inline-flex;
   flex-direction: row;
   align-items: stretch;
   gap: 0;
   padding: 5px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
@@ -74,15 +83,18 @@
   transition: color 0.2s ease, background 0.2s ease;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab:hover {
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab:hover {
   color: rgba(255, 255, 255, 0.92);
-  background: rgba(234, 169, 96, 0.12);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab--active {
-  color: #0a0704 !important;
-  background: linear-gradient(135deg, rgba(248, 195, 125, 0.92), rgba(234, 169, 96, 0.88) 50%, rgba(212, 141, 68, 0.82)) !important;
-  box-shadow: 0 4px 20px rgba(234, 169, 96, 0.28) !important;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab--active {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(160, 185, 240, 0.38) !important;
+  box-shadow:
+    0 0 14px rgba(70, 100, 190, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
 .td-deck-with-tabs.td-layout-page .td-deck-main-tab-rail .td-deck-tab {
@@ -93,12 +105,12 @@
 }
 
 @media (max-width: 640px) {
-  .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-tab-zone {
     padding: 14px 12px 12px;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
   }
 
-  .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
+  .journal-page .td-deck-with-tabs.td-layout-page .td-deck-period-segment .td-deck-sub-tab {
     min-width: 0;
     flex: 1;
     padding: 10px 14px;
@@ -180,16 +192,16 @@
   gap: 18px;
 }
 
-.td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block {
-  background: rgba(3, 2, 10, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-rail .td-deck-inbox-footer-block {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   padding: 16px 16px 14px;
-  backdrop-filter: blur(16px) saturate(1.06);
-  -webkit-backdrop-filter: blur(16px) saturate(1.06);
-  box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.45),
-    0 0 0 0.5px rgba(234, 169, 96, 0.06) inset;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px) saturate(1.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.05);
 }
 
 /* Rail ~280px wide: viewport ≥900px still must not use 4 columns (TraderDeckTabs.css MQ). */
@@ -528,4 +540,111 @@
   .td-deck-with-tabs.td-layout-page .td-deck-mi-modern {
     animation: none;
   }
+}
+
+/* ── Aura Journal panel stack (same as Journal.css) — outlook / intelligence ─ */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mo-eyebrow {
+  color: var(--text-dim);
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mo-outlook-hero,
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-hero {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-modern-stat-value {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-tile {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background-image: var(--journal-panel-fill), var(--journal-panel-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--journal-panel-outer-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-tile-badge {
+  background: rgba(58, 86, 165, 0.14);
+  border: 1px solid var(--border-h);
+  color: var(--text-muted);
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-mi-brief-card:hover {
+  border-color: rgba(160, 185, 240, 0.32);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Market Outlook bento tiles — same glass stack as journal-progress-card */
+.journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel {
+  border: 1px solid transparent !important;
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel::before {
+  display: block !important;
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 5% !important;
+  right: 14% !important;
+  height: 1px !important;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.58) 28%,
+    rgba(175, 200, 255, 0.42) 55%,
+    rgba(248, 195, 125, 0.12) 86%,
+    transparent 100%
+  ) !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
+  box-shadow: var(--journal-panel-outer-glow-hover) !important;
+  border-color: transparent !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-panel-title {
+  border-bottom-color: var(--border) !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-outlook-panel .td-mi-panel-title::after {
+  box-shadow: none !important;
+  background: var(--line-gold) !important;
 }

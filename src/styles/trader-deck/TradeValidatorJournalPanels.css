@@ -1,0 +1,199 @@
+/* =============================================================================
+   Trade Validator — final pass under .journal-page (import LAST in shell).
+   Matches Journal.css panel fill, gradient border, rim line, and tab chrome.
+   ============================================================================= */
+
+/* Outer shell: Journal.css clears .aura-shell background; restore journal glass */
+.journal-page .trade-validator-shell.journal-glass-panel {
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .trade-validator-shell .aura-shell-hero {
+  background: transparent !important;
+  border-bottom-color: var(--border) !important;
+}
+
+.journal-page .trade-validator-shell .aura-shell-title {
+  filter: none !important;
+}
+
+.journal-page .trade-validator-shell .aura-shell-tabs-wrap {
+  background: rgba(4, 5, 18, 0.88) !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.5) !important;
+}
+
+.journal-page .trade-validator-shell .aura-shell-tab:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(160, 185, 240, 0.28) !important;
+  color: var(--text) !important;
+}
+
+.journal-page .trade-validator-shell .aura-shell-tab.active {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(160, 185, 240, 0.42) !important;
+  font-weight: 600 !important;
+  box-shadow:
+    0 0 18px rgba(70, 100, 190, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Overview / shared aura cards */
+.journal-page .trade-validator-shell .aura-card {
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .trade-validator-shell .aura-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 4% !important;
+  right: 14% !important;
+  height: 1px !important;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.48) 32%,
+    rgba(175, 200, 255, 0.42) 58%,
+    rgba(248, 195, 125, 0.12) 88%,
+    transparent 100%
+  ) !important;
+  opacity: 1 !important;
+  transition: opacity 0.28s ease !important;
+}
+
+.journal-page .trade-validator-shell .aura-card::after {
+  content: '' !important;
+  position: absolute !important;
+  top: -30px !important;
+  right: -30px !important;
+  width: 110px !important;
+  height: 110px !important;
+  background: radial-gradient(circle, rgba(85, 118, 205, 0.12) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 70%) !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  border-radius: 50% !important;
+  transition: opacity 0.28s ease !important;
+}
+
+.journal-page .trade-validator-shell .aura-card:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
+  box-shadow: var(--journal-panel-outer-glow-hover) !important;
+  border-color: transparent !important;
+  transform: translateY(-2px);
+}
+
+/* Trade calculator + analytics KPIs */
+.journal-page .trade-validator-shell .trade-calc-panel,
+.journal-page .trade-validator-shell .aura-analytics-kpi-card {
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .trade-validator-shell .trade-calc-banner--linked {
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+}
+
+.journal-page .trade-validator-shell .td-journal-table-wrap,
+.journal-page .trade-validator-shell .trade-validator-inner {
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .trade-validator-shell .tv-tab-btn-active,
+.journal-page .trade-validator-shell .tv-tab-btn-active:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(160, 185, 240, 0.4) !important;
+  box-shadow:
+    0 0 14px rgba(70, 100, 190, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.journal-page .trade-validator-shell .tv-score-card,
+.journal-page .trade-validator-shell .tv-section-card,
+.journal-page .trade-validator-shell .tv-checklist-tab-card,
+.journal-page .trade-validator-shell .tv-setup-section {
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .trade-validator-shell .tv-section-card:hover,
+.journal-page .trade-validator-shell .tv-checklist-tab-card:hover,
+.journal-page .trade-validator-shell .tv-setup-section:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
+  box-shadow: var(--journal-panel-outer-glow-hover) !important;
+  border-color: transparent !important;
+}
+
+.journal-page .trade-validator-shell .tv-section-card-icon {
+  background: rgba(58, 86, 165, 0.14) !important;
+  border: 1px solid var(--border-h) !important;
+}
+
+.journal-page .trade-validator-shell .tv-setup-chart {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.journal-page .trade-validator-shell .trader-cv-hero {
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+}
+
+/* AI Chart Check — same glass stack as journal cards */
+.journal-page .trade-validator-shell .acc-card {
+  background: none !important;
+  background-image: var(--journal-panel-fill), var(--journal-panel-border) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.journal-page .trade-validator-shell .acc-card:hover {
+  background-image: var(--journal-panel-fill-hover), var(--journal-panel-border-hover) !important;
+  border-color: transparent !important;
+  box-shadow: var(--journal-panel-outer-glow-hover) !important;
+}

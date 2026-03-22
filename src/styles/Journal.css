@@ -510,6 +510,43 @@
   padding: clamp(18px, 3vw, 28px);
 }
 
+/* Same top rim + cool corner accent as .journal-calendar (main glass blocks on terminal routes) */
+.journal-page .journal-glass-panel--rim {
+  position: relative;
+  overflow: hidden;
+}
+
+.journal-page .journal-glass-panel--rim::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4%;
+  right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.48) 32%,
+    rgba(175, 200, 255, 0.42) 58%,
+    rgba(248, 195, 125, 0.12) 88%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.journal-page .journal-glass-panel--rim::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 110px;
+  height: 110px;
+  background: radial-gradient(circle, rgba(85, 118, 205, 0.12) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 0;
+}
+
 .journal-page .aura-shell,
 .journal-page .aura-dashboard,
 .journal-page .td-layout-page,

@@ -149,26 +149,14 @@ function AuraDashboardInner() {
         </div>
       </div>
 
-      {/* ══ Page sub-header ══ */}
+      {/* ══ Page sub-header (title + status only — tabs live in the bar above) ══ */}
       <div className="aura-db-subheader">
         <div className="aura-db-subheader-inner">
           <div className="aura-db-page-title">
             <span className="aura-db-page-icon">
-              <i className={`fas ${TABS.find(t => location.pathname.includes(t.path))?.icon || 'fa-th-large'}`} />
+              <i className={`fas ${TABS.find(t => location.pathname.includes(`/dashboard/${t.path}`))?.icon || 'fa-th-large'}`} />
             </span>
             {activeLabel}
-          </div>
-          <div className="aura-db-sub-tabs">
-            {TABS.map(({ path, label }) => (
-              <NavLink
-                key={path}
-                to={`${base}/${path}`}
-                className={({ isActive }) => `aura-db-sub-tab${isActive ? ' active' : ''}`}
-                end={path === 'overview'}
-              >
-                {label}
-              </NavLink>
-            ))}
           </div>
           <div className="aura-db-sub-right">
             <div className="aura-db-status-dot" title="Live data" />
