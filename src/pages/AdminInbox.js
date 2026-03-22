@@ -27,6 +27,7 @@ const AdminInbox = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const threadFromUrl = searchParams.get('thread');
+  const userIdFromUrl = searchParams.get('user');
   const [activeTab, setActiveTab] = useState('admin');
   const [users, setUsers] = useState([]);
   const [threads, setThreads] = useState([]);
@@ -48,6 +49,10 @@ const AdminInbox = () => {
   const isThreadChanging = useRef(false);
   const shouldScrollToBottom = useRef(false);
   const prevMessagesLength = useRef(0);
+  const threadsRef = useRef(threads);
+  useEffect(() => {
+    threadsRef.current = threads;
+  }, [threads]);
 
   // Scroll to bottom function - only called when explicitly needed
   const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -250,6 +255,72 @@ useEffect(() => {
       setEnsuringThread(false);
     }
   };
+
+  /* ── Deep-link from contact submissions: ?user=<id> ── */
+  useEffect(() => {
+    if (!isAdminRole(user?.role) || !userIdFromUrl || loadingUsers) return;
+    const targetId = parseInt(userIdFromUrl, 10);
+    if (!Number.isFinite(targetId) || targetId <= 0) {
+      setSearchParams((prev) => {
+        const n = new URLSearchParams(prev);
+        n.delete('user');
+        return n;
+      }, { replace: true });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setActiveTab('admin');
+      const match = users.find((u) => Number(u.id) === targetId);
+      const stub = {
+        id: targetId,
+        username: match?.username || '',
+        name: match?.name || match?.username || 'User',
+        email: match?.email || '',
+      };
+      const existing = threadsRef.current.find((t) => Number(t.userId) === targetId);
+      try {
+        if (existing) {
+          if (!cancelled) {
+            setSelectedUserId(targetId);
+            setActiveThreadId(existing.id);
+          }
+        } else {
+          setSelectedUserId(targetId);
+          setEnsuringThread(true);
+          const resp = await Api.ensureAdminThreadForUser(targetId);
+          const thread = resp.data?.thread;
+          if (!cancelled && thread) {
+            setThreads((prev) => {
+              const merged = {
+                ...thread,
+                username: stub.username || stub.name || `User ${targetId}`,
+                name: stub.name || stub.username || `User ${targetId}`,
+                email: stub.email || '',
+              };
+              if (prev.some((t) => t.id === thread.id)) {
+                return prev.map((t) => (t.id === thread.id ? merged : t));
+              }
+              return [merged, ...prev];
+            });
+            setActiveThreadId(thread.id);
+          }
+        }
+      } catch (e) {
+        console.error('Open inbox for linked user failed', e);
+      } finally {
+        if (!cancelled) setEnsuringThread(false);
+        setSearchParams((prev) => {
+          const n = new URLSearchParams(prev);
+          n.delete('user');
+          return n;
+        }, { replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.role, userIdFromUrl, loadingUsers, users, setSearchParams]);
 
   /* ── Select friend (Friends tab) ── */
   const handleSelectFriend = async (friend) => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/AdminMessages.css';
 import AdminApi from '../services/AdminApi';
@@ -13,6 +14,7 @@ function normalizeSubmissionRole(role) {
 
 const AdminMessages = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -43,6 +45,37 @@ const AdminMessages = () => {
         }
         fetchMessages();
     }, [user, isAdmin, fetchMessages]);
+
+    const buildMailtoReplyHref = (msg) => {
+        const email = (msg.email || '').trim();
+        if (!email) return '#';
+        const subj = msg.subject
+            ? `Re: ${msg.subject}`
+            : 'Re: Your message to AURA TERMINAL';
+        const bodyLines = [
+            `Hi ${(msg.name || 'there').split(/\s+/)[0] || 'there'},`,
+            '',
+            '',
+            '—',
+            `Regarding your message (${msg.createdAt ? new Date(msg.createdAt).toLocaleString() : 'recent'}):`,
+            (msg.message || '').slice(0, 2000),
+        ];
+        const params = new URLSearchParams({
+            subject: subj,
+            body: bodyLines.join('\n'),
+        });
+        return `mailto:${email}?${params.toString()}`;
+    };
+
+    const handleReplyClick = (msg, e) => {
+        const uid = msg.userId != null ? Number(msg.userId) : NaN;
+        if (Number.isFinite(uid) && uid > 0) {
+            e.preventDefault();
+            navigate(`/admin/inbox?user=${uid}`);
+            return;
+        }
+        /* Guest / no account — mailto opens the default mail client */
+    };
 
     const markDealt = async (msgId, dealt) => {
         setActionLoading(prev => ({ ...prev, [msgId]: true }));
@@ -165,7 +198,13 @@ const AdminMessages = () => {
                                     )}
                                     <div className="message-content">{msg.message || 'No message content'}</div>
                                     <div className="message-actions">
-                                        <a href={`mailto:${msg.email}`} className="action-btn reply-btn">Reply</a>
+                                        <a
+                                            href={buildMailtoReplyHref(msg)}
+                                            className="action-btn reply-btn"
+                                            onClick={(e) => handleReplyClick(msg, e)}
+                                        >
+                                            Reply
+                                        </a>
                                         <button
                                             type="button"
                                             className={`action-btn action-btn--toggle ${msg.dealtWith ? 'mark-read-btn' : 'delete-btn'}`}

@@ -19,6 +19,7 @@ import './styles/Courses.css';
 import './styles/AppCosmicBackground.css';
 import './styles/GlassSystem.css';
 import { shouldUseAppCosmicBackground } from './utils/appCosmicBackground';
+import { usePwaInstallAlerts } from './hooks/usePwaInstallAlerts';
 
 
 /* Lazy-load pages so each route loads only when visited (faster initial load) */
@@ -148,6 +149,7 @@ function AppRoutes() {
     const [showGDPR, setShowGDPR] = useState(false);
 
     usePrefetchRoutes();
+    usePwaInstallAlerts();
 
     useEffect(() => {
         const accepted = localStorage.getItem("gdprAccepted");

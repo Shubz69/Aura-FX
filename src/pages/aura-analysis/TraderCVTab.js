@@ -14,8 +14,8 @@ import { resolveAvatarUrlForUi } from '../../utils/avatar';
 import { setTraderPassportShare } from '../../utils/traderPassportShare';
 import '../../styles/aura-analysis/TraderCV.css';
 
-function getDisplayInitials(u) {
-  const n = (u?.username || u?.name || 'Trader').trim();
+function getDisplayInitials(u, displayLabel) {
+  const n = (displayLabel || u?.name || u?.username || 'Trader').trim();
   const parts = n.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase() || 'T';
   return (n.slice(0, 2) || 'T').toUpperCase();
@@ -116,10 +116,30 @@ export default function TraderCVTab() {
 
   const rawUsername = (user?.username && String(user.username).trim()) || '';
   const rawName = (user?.name && String(user.name).trim()) || '';
-  const passportHandle = rawUsername ? `@${rawUsername}` : rawName || 'Trader';
+  /** Passport headline: real name first, then username, then fallback (not @handle as the only line). */
+  const passportPrimaryName = rawName || rawUsername || 'Trader';
   const passportAltName =
-    rawUsername && rawName && rawName.toLowerCase() !== rawUsername.toLowerCase() ? rawName : null;
-  const passportAvatarUrl = resolveAvatarUrlForUi(user?.avatar);
+    rawUsername && rawName && rawName.toLowerCase() !== rawUsername.toLowerCase()
+      ? `@${rawUsername}`
+      : null;
+
+  const passportAvatarSource = useMemo(() => {
+    const fromUser = user?.avatar && String(user.avatar).trim();
+    if (typeof window === 'undefined') return fromUser || null;
+    try {
+      if (user?.id != null) {
+        const dedicated = localStorage.getItem(`user_avatar_${user.id}`);
+        if (dedicated && dedicated.trim()) return dedicated.trim();
+      }
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      if (stored.avatar && String(stored.avatar).trim()) return String(stored.avatar).trim();
+    } catch (_) {
+      /* ignore */
+    }
+    return fromUser || null;
+  }, [user?.id, user?.avatar]);
+
+  const passportAvatarUrl = resolveAvatarUrlForUi(passportAvatarSource || '');
   const showPassportPhoto = Boolean(passportAvatarUrl);
   const issuedDate = useMemo(() => new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), []);
 
@@ -415,7 +435,7 @@ export default function TraderCVTab() {
                           : {})}
                       />
                     ) : (
-                      <span className="trader-cv-passport-photo-initials">{getDisplayInitials(user)}</span>
+                      <span className="trader-cv-passport-photo-initials">{getDisplayInitials(user, passportPrimaryName)}</span>
                     )}
                   </div>
                 </div>
@@ -424,7 +444,7 @@ export default function TraderCVTab() {
 
               <div className="trader-cv-passport-identity">
                 <p className="trader-cv-passport-hud">HOLDER // TRADER ID</p>
-                <p className="trader-cv-passport-handle">{passportHandle}</p>
+                <p className="trader-cv-passport-handle">{passportPrimaryName}</p>
                 {passportAltName ? (
                   <p className="trader-cv-passport-altname">{passportAltName}</p>
                 ) : null}
