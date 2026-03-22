@@ -178,6 +178,13 @@
   background-clip: padding-box, border-box !important;
   border: 1px solid transparent !important;
   box-shadow: var(--journal-panel-outer-glow) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}
+
+.journal-page .trade-validator-shell .aura-leaderboard-order-btn {
+  background: rgba(58, 86, 165, 0.16) !important;
+  border-color: rgba(160, 185, 240, 0.38) !important;
 }
 
 /* AI Chart Check — same glass stack as journal cards */

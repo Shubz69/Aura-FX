@@ -6,6 +6,27 @@
   color: #fff;
   max-width: 900px;
   margin: 0 auto;
+  /* Match Journal panels when outside .journal-page (fallbacks) */
+  --tcv-fill: var(--journal-panel-fill, linear-gradient(168deg, rgba(4, 5, 18, 0.92) 0%, rgba(5, 6, 20, 0.89) 100%));
+  --tcv-fill-h: var(--journal-panel-fill-hover, linear-gradient(168deg, rgba(7, 8, 24, 0.95) 0%, rgba(9, 10, 28, 0.91) 100%));
+  --tcv-border: var(--journal-panel-border, linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(185, 205, 255, 0.42) 44%,
+    rgba(85, 115, 195, 0.58) 64%,
+    rgba(38, 52, 105, 0.72) 84%,
+    rgba(248, 195, 125, 0.12) 100%));
+  --tcv-border-h: var(--journal-panel-border-hover, linear-gradient(135deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(195, 215, 255, 0.48) 42%,
+    rgba(95, 125, 210, 0.65) 62%,
+    rgba(45, 58, 118, 0.78) 82%,
+    rgba(248, 200, 150, 0.18) 100%));
+  --tcv-glow: var(--journal-panel-outer-glow,
+    0 18px 52px rgba(0, 0, 0, 0.64),
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 0 40px -12px rgba(70, 100, 190, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22));
+  --tcv-line: var(--line-gold, linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5) 35%, rgba(160, 185, 240, 0.45) 55%, rgba(248, 195, 125, 0.14) 85%, transparent));
 }
 
 .trader-cv-loading,
@@ -32,12 +53,16 @@
 /* Hero */
 .trader-cv-hero {
   position: relative;
-  border-radius: 20px;
+  border-radius: var(--radius-lg, 18px);
   padding: 28px 24px 32px;
   margin-bottom: 28px;
-  background: linear-gradient(145deg, rgba(18,18,28,0.98), rgba(12,12,20,0.98));
-  border: 1px solid rgba(234, 169, 96,0.25);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 24px 48px rgba(0,0,0,0.4), 0 0 60px rgba(234, 169, 96,0.08);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   overflow: hidden;
 }
 
@@ -47,7 +72,7 @@
   right: -20%;
   width: 60%;
   height: 120%;
-  background: radial-gradient(ellipse, rgba(234, 169, 96,0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(70, 100, 190, 0.14) 0%, rgba(255, 255, 255, 0.04) 40%, transparent 70%);
   pointer-events: none;
 }
 
@@ -72,7 +97,7 @@
 
 .trader-cv-hero-rank {
   font-size: 0.85rem;
-  color: rgba(234, 169, 96,0.95);
+  color: rgba(210, 216, 248, 0.72);
   margin: 0 0 20px 0;
   font-weight: 500;
 }
@@ -88,11 +113,14 @@
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background: conic-gradient(rgba(234, 169, 96,0.9) calc(var(--score, 0) * 1%), rgba(255,255,255,0.08) 0);
+  background: conic-gradient(
+    rgba(95, 125, 210, 0.95) calc(var(--score, 0) * 1%),
+    rgba(255, 255, 255, 0.08) 0
+  );
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 0 4px rgba(10,10,18,0.9), 0 0 24px rgba(234, 169, 96,0.25);
+  box-shadow: inset 0 0 0 4px rgba(10, 10, 18, 0.92), 0 0 20px rgba(70, 100, 190, 0.2);
 }
 
 .trader-cv-hero-score-value {
@@ -131,8 +159,10 @@
 .trader-cv-chip {
   padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(4, 6, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   min-width: 140px;
 }
 
@@ -173,9 +203,14 @@
 
 .trader-cv-breakdown-card {
   padding: 16px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius, 12px);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .trader-cv-breakdown-header {
@@ -192,7 +227,7 @@
 
 .trader-cv-breakdown-weight {
   font-size: 0.7rem;
-  color: rgba(234, 169, 96,0.8);
+  color: rgba(160, 185, 240, 0.75);
 }
 
 .trader-cv-breakdown-bar-wrap {
@@ -206,7 +241,7 @@
 .trader-cv-breakdown-bar {
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, rgba(234, 169, 96,0.7), rgba(248, 195, 125,0.6));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55) 0%, rgba(234, 169, 96, 0.75) 45%, rgba(248, 195, 125, 0.65) 100%);
   transition: width 0.4s ease;
 }
 
@@ -233,9 +268,14 @@
 
 .trader-cv-quality-card {
   padding: 20px 24px;
-  border-radius: 14px;
-  background: rgba(234, 169, 96,0.1);
-  border: 1px solid rgba(234, 169, 96,0.25);
+  border-radius: var(--radius-lg, 18px);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .trader-cv-quality-value {
@@ -268,10 +308,10 @@
   font-weight: 500;
 }
 
-.trader-cv-quality-badge--excellent { background: rgba(234,169,96,0.18); color: #f8c37d; }
-.trader-cv-quality-badge--good { background: rgba(234,169,96,0.12); color: #eaa960; }
-.trader-cv-quality-badge--needs-work { background: rgba(201,160,92,0.18); color: #c9a05c; }
-.trader-cv-quality-badge--poor { background: rgba(130,118,108,0.2); color: #9a8f84; }
+.trader-cv-quality-badge--excellent { background: rgba(58, 86, 165, 0.22); color: rgba(230, 236, 255, 0.95); border: 1px solid rgba(160, 185, 240, 0.35); }
+.trader-cv-quality-badge--good { background: rgba(45, 65, 130, 0.2); color: rgba(200, 215, 255, 0.9); border: 1px solid rgba(140, 170, 235, 0.28); }
+.trader-cv-quality-badge--needs-work { background: rgba(255, 255, 255, 0.06); color: rgba(248, 195, 125, 0.85); border: 1px solid rgba(248, 195, 125, 0.22); }
+.trader-cv-quality-badge--poor { background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.45); border: 1px solid rgba(255, 255, 255, 0.1); }
 
 /* Conditions */
 .trader-cv-conditions-grid {
@@ -283,8 +323,13 @@
 .trader-cv-condition {
   padding: 14px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .trader-cv-condition-label {
@@ -321,9 +366,14 @@
 
 .trader-cv-streak-card {
   padding: 18px 24px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius, 12px);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   text-align: center;
   min-width: 120px;
 }
@@ -332,7 +382,7 @@
   display: block;
   font-size: 1.75rem;
   font-weight: 700;
-  color: rgba(234, 169, 96,0.95);
+  color: #fff;
 }
 
 .trader-cv-streak-label {
@@ -343,8 +393,13 @@
 .trader-cv-rank-bar {
   padding: 14px 18px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .trader-cv-rank-title {
@@ -370,7 +425,7 @@
 .trader-cv-rank-fill {
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, rgba(234, 169, 96,0.8), rgba(248, 195, 125,0.7));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.45) 0%, rgba(234, 169, 96, 0.82) 50%, rgba(248, 195, 125, 0.72) 100%);
   transition: width 0.4s ease;
 }
 
@@ -384,8 +439,13 @@
 .trader-cv-trend-card {
   padding: 14px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .trader-cv-trend-label {
@@ -413,9 +473,14 @@
 
 .trader-cv-review-col {
   padding: 18px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg, 18px);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .trader-cv-review-heading {
@@ -433,14 +498,24 @@
   line-height: 1.6;
 }
 
-.trader-cv-review-list--weak { color: rgba(245,158,11,0.9); }
-.trader-cv-review-list--action { color: rgba(234, 169, 96,0.9); }
+.trader-cv-review-list li::marker {
+  color: rgba(160, 185, 240, 0.85);
+}
+
+.trader-cv-review-list--weak { color: rgba(200, 215, 255, 0.88); }
+.trader-cv-review-list--action { color: rgba(255, 255, 255, 0.82); }
 
 .trader-cv-monthly-stats {
   margin-top: 16px;
   padding: 12px 16px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: 0.85rem;
   color: rgba(255,255,255,0.7);
   display: flex;
@@ -452,10 +527,15 @@
   margin-top: 24px;
   padding: 20px;
   text-align: center;
-  border-radius: 14px;
-  background: rgba(234, 169, 96,0.08);
-  border: 1px solid rgba(234, 169, 96,0.2);
-  color: rgba(255,255,255,0.8);
+  border-radius: var(--radius-lg, 18px);
+  border: 1px solid transparent;
+  background-image: var(--journal-subtle-fill, linear-gradient(168deg, rgba(58, 86, 165, 0.14) 0%, rgba(3, 4, 14, 0.92) 100%)), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255,255,255,0.82);
   font-size: 0.9rem;
 }
 
@@ -483,15 +563,15 @@
   --tp-mono: 'IBM Plex Mono', ui-monospace, monospace;
   position: relative;
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  border-radius: 20px;
+  border-radius: var(--radius-xl, 22px);
   overflow: hidden;
-  border: 1px solid rgba(234, 169, 96,0.4);
-  background: #030308;
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,0.5),
-    0 28px 80px rgba(0,0,0,0.55),
-    0 0 100px rgba(91,33,182,0.12),
-    inset 0 1px 0 rgba(255,255,255,0.07);
+  border: 1px solid transparent;
+  background-image: var(--tcv-fill), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   max-width: 720px;
 }
 
@@ -500,10 +580,11 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 90% 70% at 10% 20%, rgba(234, 169, 96,0.18) 0%, transparent 45%),
-    radial-gradient(ellipse 80% 60% at 95% 80%, rgba(6,182,212,0.12) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(49,46,129,0.35) 0%, transparent 55%),
-    linear-gradient(165deg, #08081a 0%, #030308 40%, #050510 100%);
+    radial-gradient(ellipse 90% 70% at 12% 18%, rgba(70, 100, 190, 0.2) 0%, transparent 48%),
+    radial-gradient(ellipse 80% 60% at 92% 78%, rgba(6, 182, 212, 0.1) 0%, transparent 52%),
+    radial-gradient(ellipse 60% 45% at 50% 100%, rgba(25, 35, 85, 0.45) 0%, transparent 58%),
+    linear-gradient(165deg, rgba(6, 8, 22, 0.95) 0%, rgba(3, 3, 12, 0.98) 45%, rgba(5, 6, 18, 0.96) 100%);
+  opacity: 0.92;
 }
 
 .trader-cv-passport-scan {
@@ -540,7 +621,7 @@
   position: absolute;
   width: 22px;
   height: 22px;
-  border-color: rgba(248, 195, 125,0.45);
+  border-color: rgba(255, 255, 255, 0.45);
   border-style: solid;
   pointer-events: none;
   z-index: 2;
@@ -565,8 +646,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 18px 20px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  background: linear-gradient(90deg, rgba(234, 169, 96,0.08), transparent 55%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, transparent 55%);
 }
 
 .trader-cv-passport-brand-block {
@@ -597,8 +678,10 @@
   gap: 8px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(234, 169, 96,0.35);
+  background: rgba(4, 6, 18, 0.65);
+  border: 1px solid rgba(160, 185, 240, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   font-family: var(--tp-mono);
   font-size: 0.58rem;
   font-weight: 500;
@@ -670,8 +753,8 @@
   position: absolute;
   inset: -4px;
   border-radius: 22px;
-  background: linear-gradient(135deg, rgba(248, 195, 125,0.9), rgba(34,211,238,0.5), rgba(234, 169, 96,0.4));
-  opacity: 0.95;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(120, 160, 230, 0.65) 45%, rgba(34, 211, 238, 0.45) 100%);
+  opacity: 0.9;
   filter: blur(0.5px);
 }
 
@@ -741,7 +824,7 @@
   letter-spacing: -0.03em;
   color: #fff;
   line-height: 1.15;
-  text-shadow: 0 0 40px rgba(234, 169, 96,0.35);
+  text-shadow: 0 0 28px rgba(100, 140, 220, 0.25);
   word-break: break-word;
 }
 
@@ -764,13 +847,18 @@
   text-align: right;
   padding: 12px 16px;
   border-radius: 14px;
-  background: linear-gradient(145deg, rgba(234, 169, 96,0.15), rgba(15,23,42,0.5));
-  border: 1px solid rgba(234, 169, 96,0.28);
+  border: 1px solid transparent;
+  background-image: linear-gradient(168deg, rgba(58, 86, 165, 0.18) 0%, rgba(4, 6, 18, 0.75) 100%), var(--tcv-border);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--tcv-glow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   min-width: 108px;
 }
 
 .trader-cv-passport-aurax-block .trader-cv-passport-hud {
-  color: rgba(248, 195, 125,0.9);
+  color: rgba(200, 215, 255, 0.88);
   text-align: inherit;
 }
 
@@ -810,10 +898,12 @@
 .trader-cv-passport-metric {
   padding: 10px 8px 12px;
   border-radius: 12px;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(4, 6, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .trader-cv-passport-metric-code {
@@ -821,7 +911,7 @@
   font-family: var(--tp-mono);
   font-size: 0.48rem;
   letter-spacing: 0.08em;
-  color: rgba(248, 195, 125,0.65);
+  color: rgba(175, 200, 255, 0.75);
   margin-bottom: 4px;
 }
 
@@ -919,13 +1009,15 @@
 }
 
 .trader-cv-passport-btn--primary {
-  background: linear-gradient(135deg, rgba(234, 169, 96,0.9), rgba(217, 119, 6,0.85));
+  background: var(--journal-cta-fill, linear-gradient(135deg, #283d68 0%, #3a5490 50%, #5a7ed8 100%));
   color: #fff;
-  border-color: rgba(255,255,255,0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: var(--journal-cta-shadow, 0 0 22px rgba(75, 110, 205, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22));
 }
 
 .trader-cv-passport-btn--primary:hover:not(:disabled) {
-  filter: brightness(1.06);
+  filter: brightness(1.05);
+  box-shadow: var(--journal-cta-shadow-hover, 0 0 36px rgba(90, 125, 220, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28));
 }
 
 .trader-cv-passport-btn--secondary {
