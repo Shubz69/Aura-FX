@@ -1,13 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import '../styles/Terms.css';
 
 const Terms = () => {
     return (
-        <div className="terms-container">
-            <CosmicBackground />
-            <div className="terms-content">
+        <AuraTerminalThemeShell bodyClassName="legal-terminal-shell">
+        <div className="legal-terminal-page terms-legal-page">
+            <div className="terms-content journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
                 <div className="terms-header">
                     <h1>Terms and conditions</h1>
                     <p className="terms-subtitle">Last Updated: January 2025</p>
@@ -137,9 +136,9 @@ const Terms = () => {
                     </section>
                 </div>
 
-                
             </div>
         </div>
+        </AuraTerminalThemeShell>
     );
 };
 

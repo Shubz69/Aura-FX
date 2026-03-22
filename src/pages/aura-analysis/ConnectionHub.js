@@ -132,6 +132,9 @@ export default function ConnectionHub() {
 
   const connectedCount = connections.length;
 
+  /** Only MT5 is live for members; superadmins can test every platform. */
+  const platformIsComingSoon = (platformId) => !superAdmin && platformId !== 'mt5';
+
   const openModal = (platform) => {
     setConnectError('');
     setModalPlatform(platform);
@@ -233,11 +236,12 @@ export default function ConnectionHub() {
             const isSuccess = successPlatform === p.id;
             const isDisconnecting = disconnecting === p.id;
             const info = conn?.accountInfo || {};
+            const comingSoon = platformIsComingSoon(p.id);
 
             return (
               <div
                 key={p.id}
-                className={`connection-card ${isConn ? 'connected' : ''}`}
+                className={`connection-card ${isConn ? 'connected' : ''}${comingSoon && !isConn ? ' connection-card--coming-soon' : ''}`}
                 onMouseEnter={() => setHoveredCard(p.id)}
                 onMouseLeave={() => setHoveredCard(null)}
                 style={{ '--platform-color': PLATFORM_COLORS[p.id] || '#eaa960' }}
@@ -245,7 +249,11 @@ export default function ConnectionHub() {
                 <div className="connection-card-header">
                   <span className="connection-card-icon">{PLATFORM_ICONS[p.id] || '📊'}</span>
                   <span className="connection-card-name">{p.name}</span>
-                  <span className="connection-card-badge">{p.category}</span>
+                  {comingSoon && !isConn ? (
+                    <span className="connection-card-badge connection-card-badge--soon">Coming soon</span>
+                  ) : (
+                    <span className="connection-card-badge">{p.category}</span>
+                  )}
                 </div>
 
                 {isConn ? (
@@ -287,6 +295,23 @@ export default function ConnectionHub() {
                         ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 8 }} />Disconnecting…</>
                         : <><i className="fas fa-unlink" style={{ marginRight: 8 }} />Disconnect</>
                       }
+                    </button>
+                  </>
+                ) : comingSoon ? (
+                  <>
+                    <div className="connection-card-status">
+                      <span className="status-dot off" />
+                      <span>Coming soon</span>
+                    </div>
+                    <div className="connection-card-meta connection-card-meta--soon">
+                      <span>
+                        <i className="fas fa-hourglass-half" />
+                        This integration is not available yet. MetaTrader 5 is ready to connect below.
+                      </span>
+                    </div>
+                    <button type="button" className="connection-card-connect connection-card-connect--soon" disabled>
+                      <i className="fas fa-clock" style={{ marginRight: 8 }} />
+                      Coming soon
                     </button>
                   </>
                 ) : (

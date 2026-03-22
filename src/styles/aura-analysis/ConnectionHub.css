@@ -633,6 +633,30 @@
   background: linear-gradient(135deg, #4b5563, #6b7280);
 }
 
+.connection-card--coming-soon {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.connection-card-badge--soon {
+  background: rgba(120, 130, 160, 0.2) !important;
+  border-color: rgba(180, 190, 220, 0.28) !important;
+  color: rgba(220, 225, 245, 0.85) !important;
+  letter-spacing: 0.12em;
+}
+
+.connection-card-meta--soon span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.connection-card-connect--soon:disabled {
+  opacity: 0.72;
+  background: linear-gradient(135deg, rgba(55, 62, 88, 0.9), rgba(72, 80, 108, 0.95)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(230, 232, 245, 0.88) !important;
+}
+
 /* Disconnect button — premium outline */
 .connection-card-disconnect {
   background: transparent;

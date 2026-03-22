@@ -1,13 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import CosmicBackground from '../components/CosmicBackground';
+import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import '../styles/Privacy.css';
 
 const Privacy = () => {
     return (
-        <div className="privacy-container">
-            <CosmicBackground />
-            <div className="privacy-content">
+        <AuraTerminalThemeShell bodyClassName="legal-terminal-shell">
+        <div className="legal-terminal-page privacy-legal-page">
+            <div className="privacy-content journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
                 <div className="privacy-header">
                     <h1>Privacy policy</h1>
                     <p className="privacy-subtitle">Last Updated: January 2025</p>
@@ -156,6 +155,7 @@ const Privacy = () => {
 
             </div>
         </div>
+        </AuraTerminalThemeShell>
     );
 };
 

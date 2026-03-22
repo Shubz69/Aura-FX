@@ -19,24 +19,17 @@
     --transition:  0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ── Base ─────────────────────────────────────────────────── */
-.privacy-container,
-.privacy-container * {
+/* ── Base (inside Aura Terminal / journal starfield) ─────── */
+.privacy-legal-page,
+.privacy-legal-page * {
     font-family: 'Space Grotesk', sans-serif;
     box-sizing: border-box;
 }
 
-.privacy-container {
-    min-height: 100vh;
-    background: var(--bg);
+.privacy-legal-page {
     color: var(--text);
     position: relative;
     width: 100%;
-    max-width: 100vw;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 120px 20px 60px;
     animation: privacyFadeIn 0.9s ease-out both;
 }
 
@@ -45,35 +38,14 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Ambient Glow (matches central-glow in home) ─────────── */
-.privacy-container::before {
-    content: '';
-    position: fixed;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(
-        ellipse at center,
-        rgba(234,169,96,0.06) 0%,
-        rgba(248,195,125,0.03) 35%,
-        transparent 70%
-    );
-    border-radius: 50%;
-    z-index: 0;
-    pointer-events: none;
-    animation: glowPulse 5s ease-in-out infinite;
-}
-
 @keyframes glowPulse {
     0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
     50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* ── Content Wrapper ──────────────────────────────────────── */
+/* ── Glass panel = .privacy-content + journal-glass-panel ── */
 .privacy-content {
-    max-width: 900px;
+    max-width: 100%;
     margin: 0 auto;
     position: relative;
     z-index: 1;
@@ -338,12 +310,12 @@
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 1024px) {
-    .privacy-container { padding: 100px 24px 50px; }
+    .privacy-legal-page { padding-left: 4px; padding-right: 4px; }
     .privacy-header h1 { font-size: 2.5rem; }
 }
 
 @media (max-width: 768px) {
-    .privacy-container { padding: 90px 16px 40px; }
+    .privacy-legal-page { padding-left: 2px; padding-right: 2px; }
     .privacy-header { margin-bottom: 40px; padding-bottom: 30px; }
     .privacy-header h1 { font-size: 2rem; letter-spacing: 0.18em; }
     .privacy-body section { padding: 1.75rem 1.5rem; }
@@ -351,7 +323,7 @@
 }
 
 @media (max-width: 480px) {
-    .privacy-container { padding: 80px 12px 30px; }
+    .privacy-legal-page { padding-left: 0; padding-right: 0; }
     .privacy-header h1 { font-size: 1.6rem; letter-spacing: 0.14em; }
     .privacy-subtitle  { font-size: 0.7rem; letter-spacing: 0.25em; }
     .privacy-body section { padding: 1.25rem 1.1rem; margin-bottom: 1rem; }

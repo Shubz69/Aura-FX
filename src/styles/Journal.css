@@ -548,6 +548,16 @@
   z-index: 0;
 }
 
+/* Legal pages (Privacy / Terms) — same shell as Connection Hub */
+.journal-page .legal-terminal-page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 36px) clamp(12px, 2.5vw, 22px) 48px;
+  box-sizing: border-box;
+  background: transparent !important;
+}
+
 .journal-page .aura-shell,
 .journal-page .aura-dashboard,
 .journal-page .td-layout-page,
@@ -555,6 +565,7 @@
 .journal-page .messages-page-container,
 .journal-page .pf-container,
 .journal-page .settings-page,
+.journal-page .legal-terminal-page,
 .journal-page .connection-hub-page,
 .journal-page .rp-page,
 .journal-page .tdna-page,
