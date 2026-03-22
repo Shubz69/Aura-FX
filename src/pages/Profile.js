@@ -83,7 +83,7 @@ const RingProgress = ({ pct, color, value, label, size = 80 }) => {
 
 const Profile = () => {
     const { user, setUser } = useAuth();
-    const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, permission: pushPermission, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
+    const { supported: pushSupported, subscribed: pushSubscribed, loading: pushLoading, permission: pushPermission, error: pushError, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
     const [activeTab, setActiveTab] = useState('overview');
     const [status, setStatus] = useState("");
     const [formData, setFormData] = useState({
@@ -1179,12 +1179,29 @@ if (!avatarToSave && avatarColor) {
                                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0' }}>Push Notifications</div>
                                         <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
                                             {pushPermission === 'denied' ? 'Blocked — enable in browser settings' :
-                                             pushSubscribed ? 'Active — you will receive alerts for mentions and announcements' :
+                                             pushSubscribed ? 'Active — device alerts for mentions, messages, and announcements. Disable to keep alerts only in the bell menu.' :
                                              'Get alerts for mentions, announcements, and new messages'}
                                         </div>
+                                        {pushError ? (
+                                            <div style={{ fontSize: '0.72rem', color: '#f87171', marginTop: 6 }} role="alert">{pushError}</div>
+                                        ) : null}
                                     </div>
                                     <button
-                                        onClick={pushSubscribed ? disablePush : enablePush}
+                                        onClick={async () => {
+                                            if (pushSubscribed) {
+                                                const serverOk = await disablePush();
+                                                if (serverOk) {
+                                                    setStatus('Push disabled — notifications stay in the bell menu only.');
+                                                    setTimeout(() => setStatus(''), 4000);
+                                                }
+                                            } else {
+                                                const ok = await enablePush();
+                                                if (ok) {
+                                                    setStatus('Push enabled — your device can show alerts.');
+                                                    setTimeout(() => setStatus(''), 4000);
+                                                }
+                                            }
+                                        }}
                                         disabled={pushLoading || pushPermission === 'denied'}
                                         style={{
                                             background: pushSubscribed ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#b47830,#c9a05c)',

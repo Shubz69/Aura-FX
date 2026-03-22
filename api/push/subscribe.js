@@ -51,7 +51,10 @@ module.exports = async (req, res) => {
     );
   }
 
-  const db = await createPool();
+  const db = await getDbConnection();
+  if (!db) {
+    return res.status(500).json({ success: false, message: 'Database error' });
+  }
   try {
     await ensureTable(db);
 

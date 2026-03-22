@@ -186,6 +186,22 @@ async function createNotification(data) {
     INSERT INTO notifications (id, user_id, type, title, body, channel_id, message_id, from_user_id, friend_request_id, action_status, scheduled_for_utc, local_date, meta)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [id, userId, type, title, body, channelId, messageId, fromUserId, friendRequestId, actionStatus, scheduledForUTC, localDate, metaStr]);
+
+  try {
+    const { sendWebPushForNotification } = require('../push/webPushNotify');
+    await sendWebPushForNotification({
+      userId,
+      notificationId: id,
+      type,
+      title,
+      body: body || '',
+      meta,
+      channelId
+    });
+  } catch (pushErr) {
+    console.warn('[notifications] web push:', pushErr.message);
+  }
+
   return id;
 }
 

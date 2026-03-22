@@ -10,7 +10,7 @@ import { computeBehaviourBreakdown } from '../../lib/aura-analysis/trader-cv/beh
 import { getAverageTradeQuality } from '../../lib/aura-analysis/trader-cv/tradeQualityCalculator';
 import { computeStreaks } from '../../lib/aura-analysis/trader-cv/streakEngine';
 import { getBestConditions, getReviewSummary, getMonthlyReviewStats } from '../../lib/aura-analysis/trader-cv/traderInsightsEngine';
-import { resolveAvatarUrlForUi, getPlaceholderColor } from '../../utils/avatar';
+import { resolveAvatarUrlForUi } from '../../utils/avatar';
 import { setTraderPassportShare } from '../../utils/traderPassportShare';
 import '../../styles/aura-analysis/TraderCV.css';
 
@@ -121,7 +121,6 @@ export default function TraderCVTab() {
     rawUsername && rawName && rawName.toLowerCase() !== rawUsername.toLowerCase() ? rawName : null;
   const passportAvatarUrl = resolveAvatarUrlForUi(user?.avatar);
   const showPassportPhoto = Boolean(passportAvatarUrl);
-  const placeholderColor = getPlaceholderColor(user?.id ?? user?.username ?? rawName ?? passportHandle);
   const issuedDate = useMemo(() => new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }), []);
 
   const capturePassportDataUrl = useCallback(async () => {
@@ -129,7 +128,7 @@ export default function TraderCVTab() {
     if (!el) return null;
     const canvas = await html2canvas(el, {
       scale: 2,
-      backgroundColor: '#030308',
+      backgroundColor: '#070b18',
       useCORS: true,
       allowTaint: false,
       logging: false,
@@ -167,7 +166,7 @@ export default function TraderCVTab() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success('Passport saved — you can share the file anywhere you trust.');
+      toast.success('Passport saved — same premium look as on screen, ready to share.');
     } catch (e) {
       console.warn(e);
       toast.error('Save failed. Try again in a moment.');
@@ -395,7 +394,7 @@ export default function TraderCVTab() {
               </div>
               <div className="trader-cv-passport-chip">
                 <span className="trader-cv-passport-chip-pulse" aria-hidden />
-                <span className="trader-cv-passport-chip-text">PASSPORT · LIVE</span>
+                <span className="trader-cv-passport-chip-text">PASSPORT · VERIFIED</span>
               </div>
             </header>
 
@@ -404,8 +403,8 @@ export default function TraderCVTab() {
                 <div className="trader-cv-passport-avatar-shell">
                   <div className="trader-cv-passport-avatar-ring" aria-hidden />
                   <div
-                    className="trader-cv-passport-photo"
-                    style={{ background: showPassportPhoto ? '#0a0a12' : placeholderColor }}
+                    className={`trader-cv-passport-photo${showPassportPhoto ? '' : ' trader-cv-passport-photo--placeholder'}`}
+                    style={showPassportPhoto ? { background: '#0a1020' } : undefined}
                   >
                     {showPassportPhoto ? (
                       <img

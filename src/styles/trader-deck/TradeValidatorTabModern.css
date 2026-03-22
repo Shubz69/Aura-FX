@@ -9,6 +9,13 @@
   padding-right: clamp(12px, 2.5vw, 28px) !important;
 }
 
+/* Wider than default aura shell (1200px) so Trade Journal table (~1320px) fits without a horizontal scrollbar */
+.trade-validator-shell .aura-shell-hero-inner,
+.trade-validator-shell .aura-shell-tabs-inner,
+.trade-validator-shell .aura-shell-content {
+  max-width: 1540px;
+}
+
 /* ── Shell tab bar — glass rail + scroll on small screens ──────────────── */
 .trade-validator-shell .aura-shell-tabs-wrap--validator {
   padding: 10px 0 12px !important;
@@ -16,7 +23,7 @@
 }
 
 .trade-validator-shell .aura-shell-tabs-rail {
-  max-width: 1320px;
+  max-width: 1540px;
   margin: 0 auto;
   padding: 0 clamp(10px, 2.5vw, 24px);
   overflow-x: auto;
@@ -394,7 +401,7 @@
 
 /* ── Trade Journal ──────────────────────────────────────────────────────── */
 .trade-validator-shell .td-journal {
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
 }
 

@@ -74,21 +74,34 @@ export function usePushNotifications() {
 
   const unsubscribe = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    let serverRemoved = true;
     try {
       const reg = await navigator.serviceWorker.getRegistration(SW_URL);
-      if (!reg) return;
+      if (!reg) {
+        setSubscribed(false);
+        return true;
+      }
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         const token = localStorage.getItem('token');
-        await axios.delete(`${API_BASE}/api/push/subscribe`, {
-          data: { endpoint: sub.endpoint },
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        try {
+          await axios.delete(`${API_BASE}/api/push/subscribe`, {
+            data: { endpoint: sub.endpoint },
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (apiErr) {
+          serverRemoved = false;
+          console.warn('Push unsubscribe API:', apiErr?.message);
+          setError('Could not remove push on server — try again or you may still get device alerts.');
+        }
         await sub.unsubscribe();
       }
       setSubscribed(false);
+      return serverRemoved;
     } catch (e) {
-      setError(e.message);
+      setError(e.message || 'Failed to disable push notifications.');
+      return false;
     } finally {
       setLoading(false);
     }

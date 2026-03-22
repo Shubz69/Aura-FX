@@ -1,10 +1,10 @@
 /* Trader CV – premium behavioural scorecard inside Trade Validator */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 .trader-cv {
   font-family: 'Space Grotesk', sans-serif;
   color: #fff;
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
   /* Match Journal panels when outside .journal-page (fallbacks) */
   --tcv-fill: var(--journal-panel-fill, linear-gradient(168deg, rgba(4, 5, 18, 0.92) 0%, rgba(5, 6, 20, 0.89) 100%));
@@ -539,7 +539,7 @@
   font-size: 0.9rem;
 }
 
-/* Trader Passport — galactic ID export card */
+/* Trader Passport — premium credential (navy / white / gold); matches PNG export */
 .trader-cv-passport-section {
   margin-top: 8px;
   padding-top: 8px;
@@ -548,31 +548,37 @@
 
 .trader-cv-passport-intro {
   font-size: 0.88rem;
-  line-height: 1.5;
-  color: rgba(255,255,255,0.62);
-  margin: 0 0 20px 0;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.58);
+  margin: 0 0 22px 0;
   max-width: 52rem;
 }
 
 .trader-cv-passport-intro strong {
-  color: rgba(196,181,253,0.95);
+  color: rgba(248, 195, 125, 0.95);
   font-weight: 600;
 }
 
 .trader-cv-passport-card {
   --tp-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --tp-gold: #e8c27a;
+  --tp-gold-deep: #c9a05c;
+  --tp-navy-mid: #0f172a;
+  --tp-navy-deep: #070b18;
   position: relative;
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  border-radius: var(--radius-xl, 22px);
+  border-radius: 24px;
   overflow: hidden;
-  border: 1px solid transparent;
-  background-image: var(--tcv-fill), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  max-width: 720px;
+  border: 1px solid rgba(234, 169, 96, 0.35);
+  background: linear-gradient(145deg, rgba(18, 24, 42, 0.98) 0%, var(--tp-navy-deep) 55%, #050810 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 0 rgba(234, 169, 96, 0.12) inset,
+    0 32px 64px rgba(0, 0, 0, 0.55),
+    0 0 80px rgba(234, 169, 96, 0.07);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-width: 920px;
 }
 
 .trader-cv-passport-cosmos {
@@ -580,21 +586,21 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 90% 70% at 12% 18%, rgba(70, 100, 190, 0.2) 0%, transparent 48%),
-    radial-gradient(ellipse 80% 60% at 92% 78%, rgba(6, 182, 212, 0.1) 0%, transparent 52%),
-    radial-gradient(ellipse 60% 45% at 50% 100%, rgba(25, 35, 85, 0.45) 0%, transparent 58%),
-    linear-gradient(165deg, rgba(6, 8, 22, 0.95) 0%, rgba(3, 3, 12, 0.98) 45%, rgba(5, 6, 18, 0.96) 100%);
-  opacity: 0.92;
+    radial-gradient(ellipse 100% 70% at 8% 12%, rgba(234, 169, 96, 0.11) 0%, transparent 45%),
+    radial-gradient(ellipse 90% 60% at 96% 88%, rgba(212, 175, 55, 0.07) 0%, transparent 48%),
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 42%),
+    linear-gradient(168deg, #0c1224 0%, var(--tp-navy-deep) 42%, #04060e 100%);
+  opacity: 1;
 }
 
 .trader-cv-passport-scan {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.04;
-  background-image: linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px);
-  background-size: 100% 4px;
-  animation: trader-cv-passport-scan 10s linear infinite;
+  opacity: 0.035;
+  background-image: linear-gradient(rgba(248, 195, 125, 0.25) 1px, transparent 1px);
+  background-size: 100% 5px;
+  animation: trader-cv-passport-scan 12s linear infinite;
 }
 
 @keyframes trader-cv-passport-scan {
@@ -619,83 +625,95 @@
 .trader-cv-passport-card-inner::after {
   content: '';
   position: absolute;
-  width: 22px;
-  height: 22px;
-  border-color: rgba(255, 255, 255, 0.45);
+  width: 28px;
+  height: 28px;
+  border-color: rgba(234, 169, 96, 0.55);
   border-style: solid;
   pointer-events: none;
   z-index: 2;
+  box-shadow: 0 0 12px rgba(234, 169, 96, 0.15);
 }
 
 .trader-cv-passport-card-inner::before {
-  top: 12px;
-  left: 12px;
+  top: 14px;
+  left: 14px;
   border-width: 2px 0 0 2px;
-  border-radius: 4px 0 0 0;
+  border-radius: 2px 0 0 0;
 }
 
 .trader-cv-passport-card-inner::after {
-  bottom: 36px;
-  right: 12px;
+  bottom: 42px;
+  right: 14px;
   border-width: 0 2px 2px 0;
-  border-radius: 0 0 4px 0;
+  border-radius: 0 0 2px 0;
 }
 
 .trader-cv-passport-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, transparent 55%);
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(234, 169, 96, 0.22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(7, 11, 24, 0.4) 100%);
 }
 
 .trader-cv-passport-brand-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
+  padding-left: 2px;
 }
 
 .trader-cv-passport-brand-mark {
-  font-family: var(--tp-mono);
-  font-size: 0.82rem;
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  font-size: 1.15rem;
   font-weight: 600;
-  letter-spacing: 0.28em;
-  color: #fff;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff 0%, #f5ebe0 38%, var(--tp-gold) 95%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 1px 8px rgba(234, 169, 96, 0.2));
 }
 
 .trader-cv-passport-brand-sub {
   font-family: var(--tp-mono);
-  font-size: 0.58rem;
+  font-size: 0.52rem;
   font-weight: 500;
-  letter-spacing: 0.22em;
-  color: rgba(6,182,212,0.85);
+  letter-spacing: 0.32em;
+  color: rgba(255, 255, 255, 0.42);
+  margin-top: 4px;
 }
 
 .trader-cv-passport-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 10px;
+  padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(4, 6, 18, 0.65);
-  border: 1px solid rgba(160, 185, 240, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(12, 18, 36, 0.95) 0%, rgba(6, 10, 22, 0.92) 100%);
+  border: 1px solid rgba(234, 169, 96, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-family: var(--tp-mono);
-  font-size: 0.58rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  color: rgba(255,255,255,0.75);
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .trader-cv-passport-chip-pulse {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #22d3ee;
-  box-shadow: 0 0 10px rgba(34,211,238,0.9);
-  animation: trader-cv-passport-pulse 2s ease-in-out infinite;
+  background: radial-gradient(circle at 30% 30%, #fde8c4, var(--tp-gold-deep));
+  box-shadow: 0 0 12px rgba(234, 169, 96, 0.85), 0 0 4px rgba(255, 255, 255, 0.4);
+  animation: trader-cv-passport-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes trader-cv-passport-pulse {
@@ -712,9 +730,9 @@
 .trader-cv-passport-hero {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 20px;
+  gap: 24px;
   align-items: center;
-  padding: 22px 20px 18px;
+  padding: 24px 24px 20px;
 }
 
 @media (max-width: 600px) {
@@ -751,19 +769,22 @@
 
 .trader-cv-passport-avatar-ring {
   position: absolute;
-  inset: -4px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(120, 160, 230, 0.65) 45%, rgba(34, 211, 238, 0.45) 100%);
-  opacity: 0.9;
-  filter: blur(0.5px);
+  inset: -3px;
+  border-radius: 20px;
+  background: linear-gradient(145deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(234, 169, 96, 0.75) 35%,
+    rgba(201, 160, 92, 0.9) 55%,
+    rgba(15, 23, 42, 0.95) 100%);
+  opacity: 1;
 }
 
 .trader-cv-passport-avatar-ring::after {
   content: '';
   position: absolute;
   inset: 2px;
-  border-radius: 18px;
-  background: #030308;
+  border-radius: 17px;
+  background: linear-gradient(165deg, #0a1022 0%, #070b18 100%);
 }
 
 .trader-cv-passport-photo {
@@ -771,15 +792,19 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  border-radius: 18px;
-  border: 2px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  border: 1px solid rgba(234, 169, 96, 0.35);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.06),
-    0 12px 40px rgba(0,0,0,0.5);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.trader-cv-passport-photo--placeholder {
+  background: linear-gradient(155deg, #0c1528 0%, #121c32 42%, #1a2740 100%) !important;
 }
 
 .trader-cv-passport-photo img {
@@ -789,19 +814,23 @@
 }
 
 .trader-cv-passport-photo-initials {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.04em;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  letter-spacing: 0.08em;
+  background: linear-gradient(180deg, #ffffff 0%, #f8e8c8 45%, var(--tp-gold-deep) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
 }
 
 .trader-cv-passport-avatar-caption {
   margin: 0;
   font-family: var(--tp-mono);
-  font-size: 0.52rem;
-  letter-spacing: 0.2em;
-  color: rgba(255,255,255,0.38);
+  font-size: 0.5rem;
+  letter-spacing: 0.24em;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .trader-cv-passport-identity {
@@ -810,83 +839,88 @@
 
 .trader-cv-passport-hud {
   font-family: var(--tp-mono);
-  font-size: 0.58rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  color: rgba(6,182,212,0.75);
-  margin: 0 0 6px 0;
+  font-size: 0.54rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.42);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
 }
 
 .trader-cv-passport-handle {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #fff;
-  line-height: 1.15;
-  text-shadow: 0 0 28px rgba(100, 140, 220, 0.25);
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  line-height: 1.12;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
   word-break: break-word;
 }
 
 .trader-cv-passport-altname {
-  margin: 6px 0 0 0;
+  margin: 8px 0 0 0;
   font-size: 0.8rem;
   font-weight: 500;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.48);
 }
 
 .trader-cv-passport-rank {
-  margin: 10px 0 0 0;
-  font-size: 0.88rem;
+  margin: 12px 0 0 0;
+  font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(196,181,253,0.95);
-  line-height: 1.35;
+  color: rgba(248, 195, 125, 0.92);
+  line-height: 1.4;
+  letter-spacing: 0.02em;
 }
 
 .trader-cv-passport-aurax-block {
   text-align: right;
-  padding: 12px 16px;
-  border-radius: 14px;
-  border: 1px solid transparent;
-  background-image: linear-gradient(168deg, rgba(58, 86, 165, 0.18) 0%, rgba(4, 6, 18, 0.75) 100%), var(--tcv-border);
-  background-origin: padding-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: var(--tcv-glow);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  min-width: 108px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(234, 169, 96, 0.32);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, rgba(8, 12, 28, 0.92) 40%, rgba(5, 8, 20, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 4px 0 0 rgba(234, 169, 96, 0.55),
+    0 12px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  min-width: 118px;
 }
 
 .trader-cv-passport-aurax-block .trader-cv-passport-hud {
-  color: rgba(200, 215, 255, 0.88);
+  color: rgba(234, 169, 96, 0.85);
   text-align: inherit;
 }
 
 .trader-cv-passport-score-num {
   margin: 0;
   font-family: var(--tp-mono);
-  font-size: 2.35rem;
+  font-size: 2.5rem;
   font-weight: 600;
   line-height: 1;
-  color: #fff;
+  color: #ffffff;
   letter-spacing: -0.04em;
-  text-shadow: 0 0 32px rgba(34,211,238,0.35);
+  text-shadow:
+    0 0 40px rgba(234, 169, 96, 0.25),
+    0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 .trader-cv-passport-score-sub {
-  margin: 6px 0 0 0;
+  margin: 8px 0 0 0;
   font-family: var(--tp-mono);
-  font-size: 0.55rem;
-  letter-spacing: 0.16em;
-  color: rgba(255,255,255,0.35);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.38);
   text-transform: uppercase;
 }
 
 .trader-cv-passport-metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 0 20px 18px;
+  gap: 12px;
+  padding: 0 24px 22px;
 }
 
 @media (max-width: 520px) {
@@ -896,49 +930,54 @@
 }
 
 .trader-cv-passport-metric {
-  padding: 10px 8px 12px;
-  border-radius: 12px;
-  background: rgba(4, 6, 18, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 10px 16px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(6, 10, 24, 0.88) 100%),
+    repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(234, 169, 96, 0.03) 6px, rgba(234, 169, 96, 0.03) 7px);
+  border: 1px solid rgba(234, 169, 96, 0.2);
   text-align: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .trader-cv-passport-metric-code {
   display: block;
   font-family: var(--tp-mono);
-  font-size: 0.48rem;
-  letter-spacing: 0.08em;
-  color: rgba(175, 200, 255, 0.75);
-  margin-bottom: 4px;
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  color: rgba(234, 169, 96, 0.75);
+  margin-bottom: 6px;
 }
 
 .trader-cv-passport-metric-label {
   display: block;
   font-family: var(--tp-mono);
-  font-size: 0.55rem;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 0.1em;
+  font-size: 0.52rem;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .trader-cv-passport-metric-val {
   font-family: var(--tp-mono);
-  font-size: 1.2rem;
+  font-size: 1.28rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #f8fafc;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
 .trader-cv-passport-footer-row {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
   align-items: flex-end;
-  padding: 0 20px 16px;
+  padding: 0 24px 18px;
 }
 
 .trader-cv-passport-footer-cell--right {
@@ -956,51 +995,57 @@
 .trader-cv-passport-quality-sub {
   font-size: 0.72rem;
   font-weight: 500;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.trader-cv-passport-footer-row .trader-cv-passport-hud {
+  color: rgba(234, 169, 96, 0.72);
 }
 
 .trader-cv-passport-issued {
   margin: 4px 0 0 0;
   font-family: var(--tp-mono);
-  font-size: 0.88rem;
-  color: rgba(255,255,255,0.88);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .trader-cv-passport-id {
   margin: 8px 0 0 0;
   font-family: var(--tp-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.45);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .trader-cv-passport-watermark {
   margin: 0;
-  padding: 12px 20px 16px;
+  padding: 14px 24px 18px;
   font-family: var(--tp-mono);
-  font-size: 0.58rem;
-  color: rgba(255,255,255,0.32);
-  letter-spacing: 0.06em;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.52rem;
+  color: rgba(255, 255, 255, 0.28);
+  letter-spacing: 0.08em;
+  border-top: 1px solid rgba(234, 169, 96, 0.12);
+  background: linear-gradient(90deg, transparent 0%, rgba(234, 169, 96, 0.04) 50%, transparent 100%);
 }
 
 .trader-cv-passport-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
-  max-width: 720px;
+  gap: 14px;
+  margin-top: 18px;
+  max-width: 920px;
 }
 
 .trader-cv-passport-btn {
-  padding: 12px 20px;
-  border-radius: 10px;
+  padding: 13px 22px;
+  border-radius: 12px;
   font-size: 0.88rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
 .trader-cv-passport-btn:disabled {
@@ -1009,23 +1054,29 @@
 }
 
 .trader-cv-passport-btn--primary {
-  background: var(--journal-cta-fill, linear-gradient(135deg, #283d68 0%, #3a5490 50%, #5a7ed8 100%));
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: var(--journal-cta-shadow, 0 0 22px rgba(75, 110, 205, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22));
+  background: linear-gradient(135deg, #f8e4c4 0%, #f8c37d 35%, #eaa960 70%, #c9a05c 100%);
+  color: #0a0704;
+  border-color: rgba(234, 169, 96, 0.55);
+  box-shadow:
+    0 4px 20px rgba(234, 169, 96, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .trader-cv-passport-btn--primary:hover:not(:disabled) {
-  filter: brightness(1.05);
-  box-shadow: var(--journal-cta-shadow-hover, 0 0 36px rgba(90, 125, 220, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28));
+  filter: brightness(1.04);
+  box-shadow:
+    0 6px 28px rgba(234, 169, 96, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .trader-cv-passport-btn--secondary {
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.9);
-  border-color: rgba(255,255,255,0.12);
+  background: rgba(12, 18, 36, 0.75);
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(234, 169, 96, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .trader-cv-passport-btn--secondary:hover:not(:disabled) {
-  background: rgba(255,255,255,0.1);
+  background: rgba(20, 28, 48, 0.9);
+  border-color: rgba(234, 169, 96, 0.4);
 }

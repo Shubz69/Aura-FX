@@ -394,61 +394,74 @@
 }
 
 .trade-validator-shell .trader-cv-passport-card {
-  border-color: rgba(234, 169, 96, 0.42) !important;
+  border-color: rgba(234, 169, 96, 0.38) !important;
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 28px 80px rgba(0, 0, 0, 0.55),
-    0 0 100px rgba(234, 169, 96, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 2px 0 rgba(234, 169, 96, 0.1) inset,
+    0 36px 88px rgba(0, 0, 0, 0.58),
+    0 0 120px rgba(234, 169, 96, 0.06) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-cosmos {
   background:
-    radial-gradient(ellipse 90% 70% at 10% 20%, rgba(234, 169, 96, 0.16) 0%, transparent 45%),
-    radial-gradient(ellipse 80% 60% at 95% 80%, rgba(248, 195, 125, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(20, 28, 55, 0.45) 0%, transparent 55%),
-    linear-gradient(165deg, #08081a 0%, #030308 40%, #050510 100%) !important;
+    radial-gradient(ellipse 100% 72% at 6% 10%, rgba(234, 169, 96, 0.12) 0%, transparent 46%),
+    radial-gradient(ellipse 88% 58% at 98% 90%, rgba(248, 195, 125, 0.08) 0%, transparent 52%),
+    radial-gradient(ellipse 55% 40% at 50% 0%, rgba(255, 255, 255, 0.035) 0%, transparent 45%),
+    linear-gradient(168deg, #0b1022 0%, #070b18 45%, #03050c 100%) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-card-inner::before,
 .trade-validator-shell .trader-cv-passport-card-inner::after {
-  border-color: rgba(234, 169, 96, 0.45) !important;
+  border-color: rgba(248, 195, 125, 0.5) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-top {
-  background: linear-gradient(90deg, rgba(234, 169, 96, 0.1), transparent 55%) !important;
+  border-bottom-color: rgba(234, 169, 96, 0.26) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(7, 11, 22, 0.5) 100%) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-chip {
-  border-color: rgba(234, 169, 96, 0.38) !important;
+  border-color: rgba(234, 169, 96, 0.48) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-avatar-ring {
-  background: linear-gradient(135deg, rgba(248, 195, 125, 0.9), rgba(234, 169, 96, 0.55), rgba(212, 141, 68, 0.45)) !important;
+  background: linear-gradient(145deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(248, 195, 125, 0.85) 38%,
+    rgba(201, 160, 92, 0.95) 58%,
+    rgba(15, 23, 42, 1) 100%) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-handle {
-  text-shadow: 0 0 40px rgba(234, 169, 96, 0.28) !important;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-rank {
-  color: rgba(253, 232, 196, 0.95) !important;
+  color: rgba(253, 232, 196, 0.96) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-aurax-block {
-  background: linear-gradient(145deg, rgba(234, 169, 96, 0.14), rgba(15, 23, 42, 0.5)) !important;
-  border-color: rgba(234, 169, 96, 0.3) !important;
+  border-color: rgba(234, 169, 96, 0.36) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 4px 0 0 rgba(234, 169, 96, 0.6),
+    0 14px 36px rgba(0, 0, 0, 0.42) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-aurax-block .trader-cv-passport-hud {
-  color: rgba(248, 195, 125, 0.88) !important;
+  color: rgba(248, 195, 125, 0.9) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-metric-code {
-  color: rgba(248, 195, 125, 0.72) !important;
+  color: rgba(248, 195, 125, 0.78) !important;
+}
+
+.trade-validator-shell .trader-cv-passport-metric {
+  border-color: rgba(234, 169, 96, 0.22) !important;
 }
 
 .trade-validator-shell .trader-cv-passport-btn--primary {
-  background: linear-gradient(135deg, rgba(248, 195, 125, 0.95), rgba(234, 169, 96, 0.88)) !important;
+  background: linear-gradient(135deg, #fde8c4 0%, #f8c37d 38%, #eaa960 72%, #c9a05c 100%) !important;
   color: #0a0704 !important;
+  box-shadow: 0 4px 22px rgba(234, 169, 96, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.42) !important;
 }
