@@ -161,6 +161,7 @@ export default function ConnectionHub() {
   const connectedCount = connections.length;
 
   const openModal = (platform) => {
+    if (platform?.id !== 'mt5') return;
     setConnectError('');
     setModalPlatform(platform);
   };
@@ -260,6 +261,7 @@ export default function ConnectionHub() {
           {platforms.map((p) => {
             const conn = getConnection(p.id);
             const isConn = !!conn;
+            const isMt5 = p.id === 'mt5';
             const isSuccess = successPlatform === p.id;
             const isDisconnecting = disconnecting === p.id;
             const info = conn?.accountInfo || {};
@@ -323,8 +325,8 @@ export default function ConnectionHub() {
                   <>
                     <div className="connection-card-status">
                       <span className="status-dot off" />
-                      <span>Not connected</span>
-                      {hoveredCard === p.id && (
+                      <span>{isMt5 ? 'Not connected' : 'Coming soon'}</span>
+                      {isMt5 && hoveredCard === p.id && (
                         <span style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.6 }}>
                           Click to connect
                         </span>
@@ -334,26 +336,29 @@ export default function ConnectionHub() {
                     <div className="connection-card-meta">
                       <span>
                         <i className="fas fa-info-circle" />
-                        Click connect to link {p.name}
+                        {isMt5 ? `Click connect to link ${p.name}` : `${p.name} support is coming soon`}
                       </span>
                       <span>
                         <i className="fas fa-shield-alt" />
-                        Encrypted connection
+                        {isMt5 ? 'Encrypted connection' : 'Integration in progress'}
                       </span>
                       <span>
                         <i className="fas fa-bolt" />
-                        Real-time sync ready
+                        {isMt5 ? 'Real-time sync ready' : 'MT5 only for now'}
                       </span>
                     </div>
                     
                     <button
                       type="button"
                       className={`connection-card-connect${isSuccess ? ' success' : ''}`}
+                      disabled={!isMt5}
                       onClick={() => openModal(p)}
                     >
                       {isSuccess
                         ? <><i className="fas fa-check connection-success-icon" /> Connected!</>
-                        : <><i className="fas fa-link" style={{ marginRight: 8 }} />Connect Platform</>
+                        : isMt5
+                          ? <><i className="fas fa-link" style={{ marginRight: 8 }} />Connect Platform</>
+                          : <>Coming soon</>
                       }
                     </button>
                   </>
