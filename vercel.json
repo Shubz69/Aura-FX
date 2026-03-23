@@ -607,6 +607,10 @@
       "destination": "/api/reports/csv-upload.js"
     },
     {
+      "source": "/api/reports/csv-metrics",
+      "destination": "/api/reports/csv-metrics.js"
+    },
+    {
       "source": "/api/trader-dna",
       "destination": "/api/trader-dna.js"
     }

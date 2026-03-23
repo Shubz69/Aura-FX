@@ -20,6 +20,34 @@ export function AuraConnectionProvider({ children }) {
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const mapConnectError = useCallback((err) => {
+    const code = err?.response?.data?.code || '';
+    const apiError = err?.response?.data?.error || '';
+    const missing = err?.response?.data?.missing;
+
+    if (code === 'TERMINALSYNC_CONFIG_MISSING' || code === 'TERMINALSYNC_WORKER_URL_NOT_CONFIGURED') {
+      return 'MT5 bridge service is not configured yet. Please contact support to enable live MT5 sync.';
+    }
+    if (code === 'TERMINALSYNC_UNAUTHORIZED_SECRET') {
+      return 'MT5 bridge authentication failed. Please try again shortly while we refresh service credentials.';
+    }
+    if (code === 'TERMINALSYNC_TIMEOUT') {
+      return 'MT5 bridge timed out. Please retry in a few moments.';
+    }
+    if (code === 'TERMINALSYNC_WORKER_URL_INVALID') {
+      return 'MT5 bridge configuration is invalid. Please contact support.';
+    }
+    if (apiError === 'MT5/MT4 credentials are incomplete') {
+      if (Array.isArray(missing) && missing.length) {
+        return `Please complete required fields: ${missing.join(', ')}`;
+      }
+      return 'Please provide login, password, and broker server.';
+    }
+    if (apiError) return apiError;
+    if (err?.response?.status === 400) return 'Invalid MT5 credentials. Please verify login, password, and server.';
+    return err?.message || 'Connection failed';
+  }, []);
+
   // Load connections from backend on mount
   useEffect(() => {
     Api.getAuraPlatformConnections()
@@ -32,7 +60,12 @@ export function AuraConnectionProvider({ children }) {
 
   /** Connect a platform — calls backend with real credentials */
   const connectPlatform = useCallback(async (platformId, credentials) => {
-    const r = await Api.connectAuraPlatform(platformId, credentials);
+    let r;
+    try {
+      r = await Api.connectAuraPlatform(platformId, credentials);
+    } catch (err) {
+      throw new Error(mapConnectError(err));
+    }
     if (!r.data?.success) throw new Error(r.data?.error || 'Connection failed');
     const accountInfo = r.data.accountInfo || {};
     setConnections((prev) => {
@@ -49,7 +82,7 @@ export function AuraConnectionProvider({ children }) {
       return next;
     });
     return accountInfo;
-  }, []);
+  }, [mapConnectError]);
 
   /** Disconnect a platform */
   const disconnectPlatform = useCallback(async (platformId) => {

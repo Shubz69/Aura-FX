@@ -10,7 +10,7 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
-const { hasMtBridgeCredentials, syncAccount } = require('./terminalSyncBridge');
+const { hasMtBridgeCredentials, syncAccount, BRIDGE_ERROR } = require('./terminalSyncBridge');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 
 // ── Encryption helpers ─────────────────────────────────────────────────────
@@ -86,6 +86,20 @@ function toConnectDebugSummary(platformId, credentials) {
     hasMetaAccountId: !!safeString(credentials?.accountId),
     hasMetaToken: !!safeString(credentials?.token),
   };
+}
+
+function resolveConnectErrorStatus(validation) {
+  const code = String(validation?.code || '');
+  const error = String(validation?.error || '');
+  if (code === BRIDGE_ERROR.CONFIG_MISSING || code === BRIDGE_ERROR.WORKER_URL_NOT_CONFIGURED) return 503;
+  if (code === BRIDGE_ERROR.TIMEOUT) return 504;
+  if (code === BRIDGE_ERROR.UNAUTHORIZED_SECRET) return 502;
+  if (code === BRIDGE_ERROR.WORKER_URL_INVALID) return 500;
+  if (
+    code === 'MT5_LOGIN_PASSWORD_SERVER_REQUIRED' ||
+    error === 'MT5_LOGIN_PASSWORD_SERVER_REQUIRED'
+  ) return 400;
+  return 400;
 }
 
 function getEncKey() {
@@ -387,7 +401,13 @@ module.exports = async (req, res) => {
 
     if (!validation.ok) {
       console.warn('Aura connect validation failed', { ...toConnectDebugSummary(platformId, credentials), reason: validation.error });
-      return res.status(400).json({ success: false, error: validation.error });
+      const statusCode = resolveConnectErrorStatus(validation);
+      return res.status(statusCode).json({
+        success: false,
+        error: validation.error,
+        code: validation.code || null,
+        missing: Array.isArray(validation.missing) ? validation.missing : undefined,
+      });
     }
 
     const credEnc = encrypt(JSON.stringify(credentials));

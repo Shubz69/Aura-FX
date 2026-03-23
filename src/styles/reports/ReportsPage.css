@@ -106,6 +106,39 @@
   min-width: 0;
 }
 
+/* ── Hub sub-navigation (Monthly report | MT5 metrics | DNA) ─────── */
+.rp-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin: 0 0 18px;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.rp-subnav-link {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 198, 190, 0.62);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+.rp-subnav-link:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.04);
+}
+.rp-subnav-link--active {
+  color: #f8c37d;
+  border-color: rgba(234, 169, 96, 0.35);
+  background: rgba(234, 169, 96, 0.08);
+}
+
 .rp-eyebrow {
   margin: 0;
   font-size: 0.68rem;
@@ -138,6 +171,31 @@
   margin: 0;
   line-height: 1.5;
 }
+
+/* Not inside Aura Analysis — own route + profile menu */
+.rp-nav-hint {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.55;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(234, 169, 96, 0.06);
+  border: 1px solid rgba(234, 169, 96, 0.12);
+  max-width: 100%;
+}
+.rp-nav-hint strong {
+  color: rgba(248, 195, 125, 0.95);
+}
+.rp-nav-hint-link {
+  color: var(--rp-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.rp-nav-hint-link:hover {
+  text-decoration: underline;
+}
+
 .rp-dna-enter {
   text-decoration: none;
   display: inline-flex;
@@ -340,17 +398,38 @@
 .rp-csv-drop-icon { font-size: 1.4rem; display: block; margin-bottom: 6px; }
 .rp-csv-ready { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .rp-csv-file-name { font-size: 0.82rem; color: rgba(255,255,255,0.7); flex: 1; }
-.rp-csv-parsed { font-size: 0.8rem; color: var(--rp-green); background: rgba(16,185,129,0.08); padding: 6px 12px; border-radius: 6px; }
+.rp-csv-parsed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--rp-green);
+  background: rgba(16,185,129,0.08);
+  padding: 10px 12px;
+  border-radius: 8px;
+}
 .rp-csv-done {
-  display: flex; align-items: center; gap: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 12px 14px;
   background: rgba(16,185,129,0.06);
   border: 1px solid rgba(16,185,129,0.2);
   border-radius: 10px;
 }
+.rp-csv-done-body { flex: 1; min-width: 140px; }
+.rp-csv-done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
 .rp-csv-done-icon { font-size: 1.2rem; color: var(--rp-green); flex-shrink: 0; }
 .rp-csv-done-title { font-size: 0.88rem; font-weight: 600; color: rgba(255,255,255,0.85); margin: 0 0 2px; }
 .rp-csv-done-hint { font-size: 0.76rem; color: var(--rp-muted); margin: 0; }
+.rp-csv-done .rp-field-error { width: 100%; flex-basis: 100%; margin-top: 4px; }
 
 /* ── Elite auto notice ───────────────────────────────────────────── */
 .rp-auto-notice {

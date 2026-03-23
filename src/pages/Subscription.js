@@ -44,7 +44,8 @@ const PLANS = {
             'Priority access to premium course content',
             'Exclusive market insights and expert commentary',
             'Weekly Briefs',
-            'Premium AURA AI'
+            'Premium AURA AI',
+            'Monthly report PDFs: MT5 broker metrics via CSV on Performance & DNA (/reports) — not an Aura Analysis tab'
         ],
         paymentLink: STRIPE_PAYMENT_LINK_AURA,
         isElite: false
@@ -64,7 +65,9 @@ const PLANS = {
             'First access to cutting-edge features and tools',
             'Daily Briefs',
             'Weekly Briefs',
-            'Premium AURA AI'
+            'Premium AURA AI',
+            'Aura Analysis: full platform — live metrics and dashboards with automatic MT5-linked data (no CSV for analysis)',
+            'Monthly Reports: fully automated on /reports — no CSV upload'
         ],
         paymentLink: STRIPE_PAYMENT_LINK_A7FX,
         isElite: true
@@ -660,6 +663,22 @@ const Subscription = () => {
                 <div className="subscription-header">
                     <h1>🔒 PREMIUM COMMUNITY ACCESS</h1>
                     <p className="subscription-subtitle">Join 1,200+ Elite Traders and Unlock Your Path to Financial Freedom</p>
+                    <p className="subscription-reports-note" style={{
+                        marginTop: '16px',
+                        maxWidth: '640px',
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
+                        fontSize: '0.9rem',
+                        lineHeight: 1.55,
+                        color: 'rgba(255,255,255,0.72)',
+                        textAlign: 'center',
+                        padding: '0 12px'
+                    }}>
+                        <strong style={{ color: 'rgba(234,169,96,0.95)' }}>Reports &amp; metrics:</strong>{' '}
+                        <strong>Premium</strong> includes <strong>monthly report PDFs</strong> with optional <strong>MT5 CSV upload</strong> on{' '}
+                        <a href="/reports" style={{ color: '#f8c37d', textDecoration: 'underline' }}>Performance &amp; DNA</a> for broker sections in your PDF.
+                        {' '}<strong>Elite (A7FX)</strong> adds <strong>Aura Analysis</strong> with <strong>automatic</strong> platform + MT5-linked metrics — no CSV for live analysis — and <strong>fully automated</strong> monthly reports.
+                    </p>
                 </div>
 
                 <div className="subscription-content">

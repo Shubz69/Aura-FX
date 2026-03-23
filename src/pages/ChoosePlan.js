@@ -182,6 +182,24 @@ const ChoosePlan = () => {
         >
           Choose the perfect plan for your trading journey. Upgrade, downgrade, or cancel anytime.
         </p>
+        <p
+          style={{
+            color: 'rgba(255, 255, 255, 0.72)',
+            fontSize: '15px',
+            marginBottom: '28px',
+            textAlign: 'center',
+            lineHeight: '1.65',
+            maxWidth: '720px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            padding: '0 20px'
+          }}
+        >
+          <strong style={{ color: '#eaa960' }}>Reports &amp; broker metrics:</strong>{' '}
+          <strong>Premium (AURA TERMINAL)</strong> includes monthly report PDFs — add your MT5 trade history by uploading a CSV on{' '}
+          <strong>Performance &amp; DNA</strong> (<code style={{ fontSize: '13px', opacity: 0.9 }}>/reports</code>).{' '}
+          <strong>Elite (A7FX)</strong> gets <strong>Aura Analysis</strong> with live, automatic platform metrics (no CSV for analysis), and monthly reports are compiled automatically — no CSV upload.
+        </p>
 
         {error && (
           <div style={{ margin: '0 auto 24px', maxWidth: '600px', padding: '16px', background: 'rgba(130, 118, 108, 0.12)', border: '1px solid rgba(234, 169, 96, 0.35)', borderRadius: '8px', color: '#c4bbb2', textAlign: 'center' }}>
@@ -229,6 +247,7 @@ const ChoosePlan = () => {
               <li>✅ Weekly Briefs</li>
               <li>✅ Premium AURA AI</li>
               <li>✅ Advanced trading strategies</li>
+              <li>✅ Monthly Reports — MT5 sections via CSV upload on Monthly Reports (/reports)</li>
             </ul>
             <button className="subscription-plan-button premium" onClick={handleSelectPremium}>
               Select Premium Plan
@@ -248,6 +267,8 @@ const ChoosePlan = () => {
               <li>✅ Daily Briefs</li>
               <li>✅ Weekly Briefs</li>
               <li>✅ Premium AURA AI</li>
+              <li>✅ Aura Analysis — full platform; live metrics from MT5 (no CSV needed)</li>
+              <li>✅ Monthly report PDFs — fully automated (no CSV)</li>
             </ul>
             <button className="subscription-plan-button elite" onClick={handleSelectElite}>
               Select Elite Plan

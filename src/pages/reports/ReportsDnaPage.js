@@ -136,7 +136,7 @@ function ReportsDnaPageInner() {
         )}
 
       <Link to="/reports" className="tdna-back">
-        ← Monthly Reports
+        ← Performance & DNA
       </Link>
 
       <header className="tdna-landing-head">

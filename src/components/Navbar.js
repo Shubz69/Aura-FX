@@ -189,7 +189,7 @@ const Navbar = () => {
                       </Link>
                       {isPremium(user) && (
                         <Link to="/reports" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                          <FaFileAlt className="dropdown-icon" /> Monthly Reports / DNA
+                          <FaFileAlt className="dropdown-icon" /> Performance & DNA
                         </Link>
                       )}
                       <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>

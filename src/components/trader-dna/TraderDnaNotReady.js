@@ -147,7 +147,7 @@ export default function TraderDnaNotReady({ dna, afterIntro = false }) {
         {status === 'DATA_LOAD_FAILED' && (
           <div className="tdna-gap-links" style={{ marginTop: 16 }}>
             <Link to="/reports" className="tdna-gap-link">
-              Back to Monthly Reports
+              Back to Performance & DNA
             </Link>
           </div>
         )}

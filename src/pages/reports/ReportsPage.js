@@ -7,6 +7,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import ReportsHubSubNav from '../../components/reports/ReportsHubSubNav';
 import { useAuth } from '../../context/AuthContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/reports/ReportsPage.css';
@@ -45,13 +46,25 @@ function useReportsData(token) {
   return { eligibility, loading, error, reload: load };
 }
 
+/* ── Where to find this page (not an Aura Analysis tab) ─────────────── */
+function ReportsNavHint() {
+  return (
+    <p className="rp-nav-hint">
+      <strong>Where is this?</strong> Performance &amp; DNA is a <strong>dedicated page</strong> — it is <strong>not</strong> a tab inside Aura Analysis.
+      Open it from your profile menu: <strong>Performance &amp; DNA</strong>, or go to{' '}
+      <Link to="/reports" className="rp-nav-hint-link">/reports</Link>.
+    </p>
+  );
+}
+
 /* ── Locked view for free users ────────────────────────────────────── */
 function FreeLockedView() {
   return (
     <div className="rp-locked">
+      <ReportsNavHint />
       <div className="rp-locked-icon">📊</div>
       <p className="rp-eyebrow rp-eyebrow--center">Premium feature</p>
-      <h2 className="rp-locked-title">Monthly Reports</h2>
+      <h2 className="rp-locked-title">Performance &amp; DNA</h2>
       <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
         Enter Your DNA
       </Link>
@@ -121,9 +134,11 @@ function EligibilityBar({ eligibility }) {
 
 /* ── CSV Upload (Premium only) ──────────────────────────────────────── */
 function CsvUploadSection({ token, year, month, csvStatus, onUploaded }) {
+  const metricsHref = `/reports/mt5-metrics?year=${year}&month=${month}`;
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
   const [error, setError] = useState('');
   const fileRef = useRef();
@@ -138,7 +153,8 @@ function CsvUploadSection({ token, year, month, csvStatus, onUploaded }) {
     setError('');
     setFileName(file.name);
     const reader = new FileReader();
-    reader.onload = e => setCsv(e.target.result);
+    reader.onload = (e) => setCsv(e.target?.result || '');
+    reader.onerror = () => setError('Could not read this file. Try another export or re-save the CSV.');
     reader.readAsText(file);
   };
 
@@ -152,38 +168,67 @@ function CsvUploadSection({ token, year, month, csvStatus, onUploaded }) {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ csv, year, month }),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || `Upload failed (${res.status})`);
+      }
       setUploadResult(data.summary);
       onUploaded?.();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Upload failed.');
     } finally {
       setUploading(false);
     }
   };
 
   const handleRemove = async () => {
+    setError('');
+    setRemoving(true);
     try {
-      await fetch(`${BASE_URL}/api/reports/csv-upload`, {
+      const res = await fetch(`${BASE_URL}/api/reports/csv-upload`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ year, month }),
       });
-      setCsv(''); setFileName(''); setUploadResult(null);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || `Could not remove CSV (${res.status})`);
+      }
+      setCsv('');
+      setFileName('');
+      setUploadResult(null);
       onUploaded?.();
-    } catch {}
+    } catch (err) {
+      setError(err.message || 'Could not remove CSV.');
+    } finally {
+      setRemoving(false);
+    }
   };
 
   if (csvStatus) {
     return (
-      <div className="rp-csv-done">
+      <div className="rp-csv-done" aria-live="polite">
         <span className="rp-csv-done-icon">✓</span>
-        <div>
+        <div className="rp-csv-done-body">
           <p className="rp-csv-done-title">MT5 CSV uploaded — {csvStatus.trade_count} trades</p>
           <p className="rp-csv-done-hint">Your MT5 data will be included in the report.</p>
         </div>
-        <button className="rp-btn rp-btn--ghost" onClick={handleRemove} type="button">Remove</button>
+        <div className="rp-csv-done-actions">
+          <Link to={metricsHref} className="rp-btn rp-btn--primary rp-btn--sm">
+            View MT5 metrics dashboard
+          </Link>
+          <button
+            className="rp-btn rp-btn--ghost"
+            onClick={handleRemove}
+            disabled={removing}
+            type="button"
+            aria-busy={removing}
+            aria-label="Remove uploaded MT5 CSV for this month"
+          >
+            {removing ? 'Removing…' : 'Remove'}
+          </button>
+        </div>
+        {error && <p className="rp-field-error" role="alert">{error}</p>}
       </div>
     );
   }
@@ -193,7 +238,7 @@ function CsvUploadSection({ token, year, month, csvStatus, onUploaded }) {
       <h4 className="rp-csv-title">MT5 Performance Data <span className="rp-badge rp-badge--optional">Optional</span></h4>
       <p className="rp-csv-hint">
         Upload your MT5 trade history CSV to include MT5 performance sections in your report.
-        Export from MT5: History → All History → Save as Report (CSV).
+        Export from MT5: History → All History → Save as Report (CSV). Comma or semicolon exports are supported.
       </p>
 
       {!csv ? (
@@ -202,12 +247,22 @@ function CsvUploadSection({ token, year, month, csvStatus, onUploaded }) {
           onClick={() => fileRef.current?.click()}
           onDrop={e => { e.preventDefault(); handleFile(e.dataTransfer.files?.[0]); }}
           onDragOver={e => e.preventDefault()}
-          role="button" tabIndex={0}
+          role="button"
+          tabIndex={0}
+          aria-label="Upload MT5 trade history CSV file"
+          aria-busy={uploading}
           onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
         >
           <span className="rp-csv-drop-icon">📁</span>
           <span>Drop your MT5 CSV here or <u>browse</u></span>
-          <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={e => handleFile(e.target.files?.[0])} style={{ display: 'none' }} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv"
+            onChange={e => handleFile(e.target.files?.[0])}
+            style={{ display: 'none' }}
+            aria-hidden
+          />
         </div>
       ) : (
         <div className="rp-csv-ready">
@@ -215,16 +270,33 @@ function CsvUploadSection({ token, year, month, csvStatus, onUploaded }) {
           {uploadResult ? (
             <div className="rp-csv-parsed">
               <span>✓ {uploadResult.tradeCount} trades · Win rate {uploadResult.winRate}% · P&L {uploadResult.totalPnl}</span>
+              <Link to={metricsHref} className="rp-btn rp-btn--primary rp-btn--sm">
+                View MT5 metrics dashboard
+              </Link>
             </div>
           ) : (
-            <button className="rp-btn rp-btn--primary rp-btn--sm" onClick={handleSubmit} disabled={uploading} type="button">
+            <button
+              className="rp-btn rp-btn--primary rp-btn--sm"
+              onClick={handleSubmit}
+              disabled={uploading}
+              type="button"
+              aria-busy={uploading}
+              aria-label={uploading ? 'Uploading and parsing CSV' : 'Upload and parse MT5 CSV'}
+            >
               {uploading ? 'Uploading…' : 'Upload & Parse'}
             </button>
           )}
-          <button className="rp-btn rp-btn--ghost" onClick={() => { setCsv(''); setFileName(''); setUploadResult(null); }} type="button">✕</button>
+          <button
+            className="rp-btn rp-btn--ghost"
+            onClick={() => { setCsv(''); setFileName(''); setUploadResult(null); setError(''); }}
+            type="button"
+            aria-label="Clear selected file"
+          >
+            ✕
+          </button>
         </div>
       )}
-      {error && <p className="rp-field-error">{error}</p>}
+      {error && <p className="rp-field-error" role="alert">{error}</p>}
     </div>
   );
 }
@@ -556,23 +628,26 @@ function ReportsPageInner() {
 
   return (
     <div className="rp-page journal-glass-panel journal-glass-panel--pad">
+      <ReportsNavHint />
       <div className="rp-header">
         <div className="rp-header-stack">
           <p className="rp-eyebrow">Performance intelligence</p>
-          <h2 className="rp-title">Monthly Reports</h2>
+          <h2 className="rp-title">Performance &amp; DNA</h2>
           <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-dna-enter">
             Enter Your DNA
           </Link>
           <p className="rp-subtitle">
             {role === 'premium'
-              ? 'Your monthly performance report — powered by your platform data and optional MT5 CSV.'
-              : 'Your fully automated monthly performance report — AI-generated from all your platform data.'}
+              ? 'Your monthly performance report — platform data plus optional MT5 sections when you upload your broker CSV below.'
+              : 'Your fully automated monthly performance report — AI-generated from your platform data (Elite: no CSV upload on this page).'}
           </p>
         </div>
         <span className={`rp-role-badge rp-role-badge--${role}`}>
           {role.charAt(0).toUpperCase() + role.slice(1)}
         </span>
       </div>
+
+      <ReportsHubSubNav role={role} year={year} month={month} />
 
       {/* Eligibility */}
       <EligibilityBar eligibility={eligibility} />

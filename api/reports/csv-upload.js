@@ -10,32 +10,67 @@ const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade'
 const { effectiveReportsRole } = require('./resolveReportsRole');
 
 /**
+ * Prefer semicolon when MT5 exports use EU locale (columns separated by ;).
+ */
+function detectDelimiter(headerLine) {
+  if (!headerLine || typeof headerLine !== 'string') return ',';
+  const commaCols = headerLine.split(',').length;
+  const semiCols = headerLine.split(';').length;
+  if (semiCols > commaCols) return ';';
+  if (semiCols === commaCols && headerLine.includes(';') && !headerLine.includes(',')) return ';';
+  return ',';
+}
+
+/** Parse numeric cells from MT5 (handles comma as decimal when semicolon-delimited EU export). */
+function parseMoneyish(raw) {
+  if (raw == null || raw === '') return 0;
+  const s = String(raw).trim().replace(/\s/g, '');
+  if (!s) return 0;
+  // 1.234,56 or 12.345,67
+  if (/^-?\d{1,3}(\.\d{3})*,\d+$/.test(s)) {
+    return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+  // 123,45
+  if (/^-?\d+,\d+$/.test(s)) {
+    return parseFloat(s.replace(',', '.')) || 0;
+  }
+  return parseFloat(s) || 0;
+}
+
+function splitRow(line, delimiter) {
+  return line.split(delimiter).map((c) => c.trim().replace(/^"|"$/g, ''));
+}
+
+/**
  * Parse an MT5 trade history CSV.
  * MT5 exports typically have columns like:
  * Time,Deal,Symbol,Type,Direction,Volume,Price,Order,Commission,Swap,Profit,Balance,Comment
+ * (comma-separated) or the same with semicolons in EU locales.
  */
 function parseMT5CSV(csvText) {
-  const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = csvText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lines.length < 2) throw new Error('CSV has no data rows');
 
-  // Detect header
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+  const delimiter = detectDelimiter(lines[0]);
+  const header = splitRow(lines[0], delimiter).map((h) => h.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
   const trades = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-    if (cols.length < 4) continue;
+    const cols = splitRow(lines[i], delimiter);
+    if (cols.length < 2) continue;
     const row = {};
-    header.forEach((h, idx) => { row[h] = cols[idx] || ''; });
+    header.forEach((h, idx) => {
+      row[h] = cols[idx] || '';
+    });
 
     // Normalise to a common shape
-    const profit = parseFloat(row.profit || row.pnl || row.net_profit || 0);
+    const profit = parseMoneyish(row.profit || row.pnl || row.net_profit || 0);
     const symbol = row.symbol || row.pair || row.instrument || '';
     const type = (row.type || row.direction || '').toLowerCase();
-    const volume = parseFloat(row.volume || row.lots || row.size || 0);
+    const volume = parseMoneyish(row.volume || row.lots || row.size || 0);
     const time = row.time || row.open_time || row.date || '';
-    const commission = parseFloat(row.commission || 0);
-    const swap = parseFloat(row.swap || 0);
+    const commission = parseMoneyish(row.commission || 0);
+    const swap = parseMoneyish(row.swap || 0);
 
     if (!symbol && profit === 0) continue; // skip blank rows
 
@@ -136,9 +171,16 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     console.error('[reports/csv-upload]', err.message);
-    if (err.message.includes('No valid') || err.message.includes('no data')) {
+    if (
+      err.message.includes('No valid') ||
+      err.message.includes('no data') ||
+      err.message.includes('CSV has no data')
+    ) {
       return res.status(400).json({ success: false, message: err.message });
     }
     return res.status(500).json({ success: false, message: 'CSV processing failed. Please check the file format.' });
   }
 };
+
+/** Exposed for unit / smoke tests of parsing only */
+module.exports.parseMT5CSV = parseMT5CSV;

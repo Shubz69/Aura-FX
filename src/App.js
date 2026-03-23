@@ -84,6 +84,7 @@ const TraderDeckTradeJournal = lazy(() => import('./pages/trader-deck/TraderDeck
 const AiChartCheckTab = lazy(() => import('./pages/aura-analysis/AiChartCheckTab'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
 const ReportsDnaPage = lazy(() => import('./pages/reports/ReportsDnaPage'));
+const Mt5CsvDashboardPage = lazy(() => import('./pages/reports/Mt5CsvDashboardPage'));
 const Affiliation = lazy(() => import('./pages/Affiliation'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
@@ -283,6 +284,7 @@ function AppRoutes() {
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
                         <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/mt5-metrics" element={<AuthenticatedGuard><Mt5CsvDashboardPage /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />
