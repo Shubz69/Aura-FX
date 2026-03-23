@@ -387,6 +387,9 @@ const Api = {
         if (process.env.NODE_ENV === 'development') console.log('Attempting to fetch channels from:', `${API_BASE_URL}/api/community/channels`);
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Authentication required');
+            }
             const response = await axios.get(`${API_BASE_URL}/api/community/channels`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -404,6 +407,9 @@ const Api = {
     getChannelsBootstrap: async (customHeaders = {}) => {
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Authentication required');
+            }
             const response = await axios.get(`${API_BASE_URL}/api/community/channels?bootstrap=true`, {
                 headers: { 'Authorization': `Bearer ${token}`, ...customHeaders }
             });
@@ -706,17 +712,42 @@ const Api = {
         );
     },
 
-    // Platform connections (real MT5/exchange APIs — no relation to Trade Validator)
-    getAuraPlatformConnections: () =>
-        axios.get(`${API_BASE_URL}/api/aura-analysis/platform-connect`),
-    connectAuraPlatform: (platformId, credentials) =>
-        axios.post(`${API_BASE_URL}/api/aura-analysis/platform-connect`, { platformId, credentials }),
-    disconnectAuraPlatform: (platformId) =>
-        axios.delete(`${API_BASE_URL}/api/aura-analysis/platform-connect`, { params: { platformId } }),
-    getAuraPlatformAccount: (platformId) =>
-        axios.get(`${API_BASE_URL}/api/aura-analysis/platform-account`, { params: { platformId } }),
-    getAuraPlatformHistory: (platformId, days = 30) =>
-        axios.get(`${API_BASE_URL}/api/aura-analysis/platform-history`, { params: { platformId, days } }),
+    // Platform connections (real MT5/exchange APIs — requires same JWT as other protected APIs)
+    getAuraPlatformConnections: () => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-connect`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    connectAuraPlatform: (platformId, credentials) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/aura-analysis/platform-connect`,
+            { platformId, credentials },
+            { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+        );
+    },
+    disconnectAuraPlatform: (platformId) => {
+        const token = localStorage.getItem('token');
+        return axios.delete(`${API_BASE_URL}/api/aura-analysis/platform-connect`, {
+            params: { platformId },
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    getAuraPlatformAccount: (platformId) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-account`, {
+            params: { platformId },
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
+    getAuraPlatformHistory: (platformId, days = 30) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/aura-analysis/platform-history`, {
+            params: { platformId, days },
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    },
 
     getAuraAnalysisLeaderboard: (sortBy = 'pnl', order = 'desc') => {
         return axios.get(`${API_BASE_URL}/api/aura-analysis/leaderboard`, {
@@ -724,15 +755,19 @@ const Api = {
         });
     },
 
-    getTraderDeckMarketIntelligence: () => {
-        return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`);
+    getTraderDeckMarketIntelligence: (refresh = false) => {
+        return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`, {
+            params: refresh ? { refresh: '1' } : {},
+        });
     },
     getTraderDeckEconomicCalendar: (days = 7, refresh = false) =>
         axios.get(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
             params: { days, ...(refresh ? { refresh: '1' } : {}) },
         }),
-    getTraderDeckNews: () =>
-        axios.get(`${API_BASE_URL}/api/trader-deck/news`),
+    getTraderDeckNews: (refresh = false) =>
+        axios.get(`${API_BASE_URL}/api/trader-deck/news`, {
+            params: refresh ? { refresh: '1' } : {},
+        }),
 
     getTraderDeckContent: (type, date) => {
         const token = localStorage.getItem('token');

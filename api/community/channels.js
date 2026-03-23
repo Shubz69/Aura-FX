@@ -183,6 +183,103 @@ const releaseDb = (db) => {
   }
 };
 
+/** Heavy INFORMATION_SCHEMA + possible ALTERs — once per warm serverless instance is enough. */
+let channelsHeavySchemaDone = false;
+/** trading→forums migration + settings JSON fix — once per instance. */
+let channelsTradingMigrateDone = false;
+
+function isBenignChannelDdlError(e) {
+  if (!e) return false;
+  if (e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_DUP_KEYNAME') return true;
+  const errno = Number(e.errno);
+  if (errno === 1060 || errno === 1061) return true;
+  const msg = `${e.message || ''} ${e.sqlMessage || ''}`;
+  return /duplicate column name/i.test(msg) || /duplicate key name/i.test(msg);
+}
+
+async function loadChannelColumnSet(db) {
+  if (!process.env.MYSQL_DATABASE) return new Set();
+  try {
+    const [cols] = await db.execute(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels'`,
+      [process.env.MYSQL_DATABASE]
+    );
+    return new Set((cols || []).map((c) => c.COLUMN_NAME));
+  } catch {
+    return new Set();
+  }
+}
+
+async function ensureChannelColumnsFromSet(db, colSet) {
+  const tryAdd = async (colName, ddl) => {
+    if (colSet.has(colName)) return;
+    try {
+      await db.execute(ddl);
+      colSet.add(colName);
+    } catch (e) {
+      if (!isBenignChannelDdlError(e)) {
+        console.log(`Note: channels column ${colName}:`, e.message);
+      } else {
+        colSet.add(colName);
+      }
+    }
+  };
+  await tryAdd('access_level', "ALTER TABLE channels ADD COLUMN access_level VARCHAR(50) DEFAULT 'open'");
+  await tryAdd('category', 'ALTER TABLE channels ADD COLUMN category VARCHAR(100) DEFAULT NULL');
+  await tryAdd('description', 'ALTER TABLE channels ADD COLUMN description TEXT DEFAULT NULL');
+  await tryAdd('is_system_channel', 'ALTER TABLE channels ADD COLUMN is_system_channel BOOLEAN DEFAULT FALSE');
+  await tryAdd('permission_type', "ALTER TABLE channels ADD COLUMN permission_type VARCHAR(50) DEFAULT 'read-write'");
+  await tryAdd('hidden', 'ALTER TABLE channels ADD COLUMN hidden BOOLEAN DEFAULT FALSE');
+}
+
+/** One round-trip seed of default channels (ON DUPLICATE KEY UPDATE). */
+async function bulkUpsertDefaultChannels(db) {
+  const seeds = [
+    ['welcome', 'welcome', 'announcements', 'Welcome to AURA TERMINAL Community. Read the rules and click the checkmark below to unlock your channels.', 'open'],
+    ['announcements', 'announcements', 'announcements', 'Important announcements from AURA TERMINAL.', 'open'],
+    ['levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open'],
+    ['general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open'],
+    ['forex', 'forex-talk', 'forums', 'Forex Talk — discussion and ideas', 'open'],
+    ['crypto', 'crypto-talk', 'forums', 'Crypto Talk — discussion and ideas', 'open'],
+    ['stocks', 'stocks-talk', 'forums', 'Stocks Talk — discussion and ideas', 'open'],
+    ['indices', 'indices-talk', 'forums', 'Indices Talk — discussion and ideas', 'open'],
+    ['day-trading', 'day-trading-talk', 'forums', 'Day Trading Talk — strategies and discussion', 'open'],
+    ['swing-trading', 'swing-trading-talk', 'forums', 'Swing Trading Talk — discussion and ideas', 'open'],
+    ['commodities', 'commodity-talk', 'forums', 'Commodity Talk — metals, energy, and more', 'open'],
+    ['futures', 'futures-talk', 'forums', 'Futures Talk — strategies and setups', 'open'],
+    ['options', 'options-talk', 'forums', 'Options Talk — education and discussion', 'open'],
+    ['prop-trading', 'prop-trading-talk', 'forums', 'Prop Trading Talk — funded accounts and firms', 'open'],
+    ['market-analysis', 'market-analysis-talk', 'forums', 'Market Analysis Talk — ideas and commentary', 'open']
+  ];
+  const rows = seeds.map(([id, name, cat, desc, access]) => {
+    const isSystem = PROTECTED_CHANNEL_IDS.has(id) ? 1 : 0;
+    return [id, name, cat, desc, access, isSystem, 0];
+  });
+  const placeholders = rows.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+  const flat = rows.flat();
+  try {
+    await db.execute(
+      `INSERT INTO channels (id, name, category, description, access_level, is_system_channel, hidden) VALUES ${placeholders}
+       ON DUPLICATE KEY UPDATE name = VALUES(name), category = VALUES(category), description = VALUES(description),
+         access_level = VALUES(access_level), is_system_channel = VALUES(is_system_channel), hidden = VALUES(hidden)`,
+      flat
+    );
+  } catch (e) {
+    if (e.code === 'ER_BAD_FIELD_ERROR' && (e.message || '').includes('description')) {
+      const ph2 = rows.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+      const flat2 = rows.map(([id, name, cat, _d, access, isSystem, hidden]) => [id, name, cat, access, isSystem, hidden]).flat();
+      await db.execute(
+        `INSERT INTO channels (id, name, category, access_level, is_system_channel, hidden) VALUES ${ph2}
+         ON DUPLICATE KEY UPDATE name = VALUES(name), category = VALUES(category), access_level = VALUES(access_level),
+           is_system_channel = VALUES(is_system_channel), hidden = VALUES(hidden)`,
+        flat2
+      );
+      return;
+    }
+    throw e;
+  }
+}
+
 const ensureChannelsTable = async (db) => {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS channels (
@@ -402,163 +499,35 @@ module.exports = async (req, res) => {
         try {
           // Create channels table if it doesn't exist
           await ensureChannelsTable(db);
-          await ensureChannelSchema(db);
-          
-          // Add access_level column if it doesn't exist
-          try {
-            await db.execute(`
-              SELECT COLUMN_NAME 
-              FROM INFORMATION_SCHEMA.COLUMNS 
-              WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'access_level'
-            `, [process.env.MYSQL_DATABASE]).then(([columns]) => {
-              if (columns.length === 0) {
-                return db.execute('ALTER TABLE channels ADD COLUMN access_level VARCHAR(50) DEFAULT \'open\'');
-              }
-            });
-          } catch (alterError) {
-            // Column might already exist, ignore
-            console.log('Note: access_level column check:', alterError.message);
+          if (!channelsHeavySchemaDone) {
+            await ensureChannelSchema(db);
+            channelsHeavySchemaDone = true;
           }
 
-          // Check if channels table has the category column, if not add it
-          try {
-            // MySQL doesn't support IF NOT EXISTS for ALTER TABLE, so we check first
-            const [columns] = await db.execute(`
-              SELECT COLUMN_NAME 
-              FROM INFORMATION_SCHEMA.COLUMNS 
-              WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'category'
-            `, [process.env.MYSQL_DATABASE]);
-            
-            if (columns.length === 0) {
-              await db.execute('ALTER TABLE channels ADD COLUMN category VARCHAR(100) DEFAULT NULL');
-              console.log('Added category column to channels table');
-            }
-          } catch (alterError) {
-            // Column might already exist or other error, log and continue
-            console.log('Note: category column check:', alterError.message);
-          }
+          const colSet = await loadChannelColumnSet(db);
+          await ensureChannelColumnsFromSet(db, colSet);
 
-          // Check if description column exists, add it if it doesn't
-          try {
-            const [descColumns] = await db.execute(`
-              SELECT COLUMN_NAME 
-              FROM INFORMATION_SCHEMA.COLUMNS 
-              WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'description'
-            `, [process.env.MYSQL_DATABASE]);
-            
-            if (descColumns.length === 0) {
-              await db.execute('ALTER TABLE channels ADD COLUMN description TEXT DEFAULT NULL');
-              console.log('Added description column to channels table');
-            }
-          } catch (alterError) {
-            // Column might already exist or other error, log and continue
-            console.log('Note: description column check:', alterError.message);
-          }
-
-          // Check if is_system_channel column exists, add it with default if it doesn't
-          try {
-            const [isSystemColumns] = await db.execute(`
-              SELECT COLUMN_NAME 
-              FROM INFORMATION_SCHEMA.COLUMNS 
-              WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'is_system_channel'
-            `, [process.env.MYSQL_DATABASE]);
-            
-            if (isSystemColumns.length === 0) {
-              await db.execute('ALTER TABLE channels ADD COLUMN is_system_channel BOOLEAN DEFAULT FALSE');
-              console.log('Added is_system_channel column to channels table');
-            }
-          } catch (alterError) {
-            console.log('Note: is_system_channel column check:', alterError.message);
-          }
-
-          // Check if permission_type column exists, add it with default if it doesn't
-          try {
-            const [permissionColumns] = await db.execute(`
-              SELECT COLUMN_NAME 
-              FROM INFORMATION_SCHEMA.COLUMNS 
-              WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'permission_type'
-            `, [process.env.MYSQL_DATABASE]);
-            
-            if (permissionColumns.length === 0) {
-              await db.execute('ALTER TABLE channels ADD COLUMN permission_type VARCHAR(50) DEFAULT \'read-write\'');
-              console.log('Added permission_type column to channels table');
-            }
-          } catch (alterError) {
-            console.log('Note: permission_type column check:', alterError.message);
-          }
-
-          // Fetch channels from database, handle NULL categories safely
           let [rows] = [];
           try {
             [rows] = await db.execute('SELECT * FROM channels ORDER BY COALESCE(category, \'general\'), name');
           } catch (orderError) {
-            // If ordering fails, try without category
             try {
               [rows] = await db.execute('SELECT * FROM channels ORDER BY name');
             } catch (fallbackError) {
               [rows] = await db.execute('SELECT * FROM channels');
             }
           }
-          
-          // Always ensure required channels exist (create/update if needed)
+
           try {
-            // Fetch courses to create channels
-            const [courses] = await db.execute('SELECT * FROM courses');
-            
-            // Helper function to safely insert/update channels with description
-            // Based on actual schema: id, name, category, description, access_level, is_system_channel (bit NOT NULL), hidden (bit NOT NULL), etc.
-            const safeInsertChannel = async (channelId, channelName, channelCategory, channelDescription, channelAccess) => {
+            await bulkUpsertDefaultChannels(db);
+            if (!channelsTradingMigrateDone) {
               try {
-                const isSystemChannel = PROTECTED_CHANNEL_IDS.has(channelId) ? 1 : 0; // bit(1) needs 0 or 1
-                const hidden = 0; // bit(1) NOT NULL - default to not hidden
-                
-                // Both is_system_channel and hidden exist and are NOT NULL, so we must provide them
-                await db.execute(
-                  'INSERT INTO channels (id, name, category, description, access_level, is_system_channel, hidden) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=?, category=?, description=?, access_level=?, is_system_channel=?, hidden=?',
-                  [channelId, channelName, channelCategory, channelDescription || null, channelAccess || 'open', isSystemChannel, hidden, channelName, channelCategory, channelDescription || null, channelAccess || 'open', isSystemChannel, hidden]
-                );
-              } catch (insertError) {
-                // If description column doesn't exist, insert without it
-                if (insertError.code === 'ER_BAD_FIELD_ERROR' && insertError.message.includes('description')) {
-                  const isSystemChannel = PROTECTED_CHANNEL_IDS.has(channelId) ? 1 : 0;
-                  const hidden = 0;
-              await db.execute(
-                    'INSERT INTO channels (id, name, category, access_level, is_system_channel, hidden) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=?, category=?, access_level=?, is_system_channel=?, hidden=?',
-                    [channelId, channelName, channelCategory, channelAccess || 'open', isSystemChannel, hidden, channelName, channelCategory, channelAccess || 'open', isSystemChannel, hidden]
-                  );
-                } else {
-                  throw insertError;
-                }
+                await migrateTradingCategoryToForums(db);
+              } catch (migErr) {
+                console.warn('migrateTradingCategoryToForums:', migErr.message);
               }
-            };
-
-            // Ensure welcome, announcements, levels, and general exist (visible to all / free subscribers)
-            await safeInsertChannel('welcome', 'welcome', 'announcements', 'Welcome to AURA TERMINAL Community. Read the rules and click the checkmark below to unlock your channels.', 'open');
-            await safeInsertChannel('announcements', 'announcements', 'announcements', 'Important announcements from AURA TERMINAL.', 'open');
-            await safeInsertChannel('levels', 'levels', 'announcements', 'Level-up celebrations and progress.', 'open');
-            await safeInsertChannel('general', 'general', 'general', 'General chat for all free subscribers. Say hello and join the conversation.', 'open');
-
-            // FORUMS (formerly Trading) — display names use *-talk slugs → "Forex Talk", "Commodity Talk", etc.
-            const forumsChannels = [
-              { id: 'forex', name: 'forex-talk', category: 'forums', description: 'Forex Talk — discussion and ideas', accessLevel: 'open' },
-              { id: 'crypto', name: 'crypto-talk', category: 'forums', description: 'Crypto Talk — discussion and ideas', accessLevel: 'open' },
-              { id: 'stocks', name: 'stocks-talk', category: 'forums', description: 'Stocks Talk — discussion and ideas', accessLevel: 'open' },
-              { id: 'indices', name: 'indices-talk', category: 'forums', description: 'Indices Talk — discussion and ideas', accessLevel: 'open' },
-              { id: 'day-trading', name: 'day-trading-talk', category: 'forums', description: 'Day Trading Talk — strategies and discussion', accessLevel: 'open' },
-              { id: 'swing-trading', name: 'swing-trading-talk', category: 'forums', description: 'Swing Trading Talk — discussion and ideas', accessLevel: 'open' },
-              { id: 'commodities', name: 'commodity-talk', category: 'forums', description: 'Commodity Talk — metals, energy, and more', accessLevel: 'open' },
-              { id: 'futures', name: 'futures-talk', category: 'forums', description: 'Futures Talk — strategies and setups', accessLevel: 'open' },
-              { id: 'options', name: 'options-talk', category: 'forums', description: 'Options Talk — education and discussion', accessLevel: 'open' },
-              { id: 'prop-trading', name: 'prop-trading-talk', category: 'forums', description: 'Prop Trading Talk — funded accounts and firms', accessLevel: 'open' },
-              { id: 'market-analysis', name: 'market-analysis-talk', category: 'forums', description: 'Market Analysis Talk — ideas and commentary', accessLevel: 'open' }
-            ];
-            
-            for (const channel of forumsChannels) {
-              await safeInsertChannel(channel.id, channel.name, channel.category, channel.description, channel.accessLevel);
+              channelsTradingMigrateDone = true;
             }
-            await migrateTradingCategoryToForums(db);
-            
-            // Re-fetch channels after inserting/updating
             [rows] = await db.execute('SELECT * FROM channels ORDER BY COALESCE(category, \'general\'), name');
           } catch (insertError) {
             console.error('Error creating/updating channels:', insertError.message);

@@ -13,7 +13,7 @@ const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
 const CACHE_KEY = 'trader-deck:economic-calendar:v4';
-const CACHE_TTL_MS = 60 * 1000; // 60 s — short enough to catch actuals quickly
+const CACHE_TTL_MS = 45 * 1000; // 45 s — fresher calendar for release times
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 

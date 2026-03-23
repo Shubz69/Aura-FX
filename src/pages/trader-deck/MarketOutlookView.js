@@ -2,7 +2,7 @@
  * Market Outlook content for Trader Deck – date-scoped Daily or Weekly.
  * Same panels as the main dashboard; data from API for selected date or live/seed fallback.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Api from '../../services/Api';
 import { getMarketIntelligence, SEED_MARKET_INTELLIGENCE } from '../../data/marketIntelligence';
 import DashboardPanel from '../../components/trader-deck/DashboardPanel';
@@ -42,11 +42,16 @@ function normalizeForUI(data) {
     riskRadar: data.riskRadar || [],
     riskRadarDate: data.riskRadarDate || null,
     updatedAt: data.updatedAt,
+    aiSessionBrief: data.aiSessionBrief || '',
+    aiTradingPriorities: Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : [],
+    dataSources: Array.isArray(data.dataSources) ? data.dataSources : [],
   };
 }
 
 const impactOptions = ['high', 'medium', 'low'];
 const directionOptions = ['up', 'down', 'neutral'];
+
+const LIVE_REFRESH_MS = 75 * 1000;
 
 export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   const type = period === 'weekly' ? 'outlook-weekly' : 'outlook-daily';
@@ -56,22 +61,27 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   const [saveSuccess, setSaveSuccess] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editDraft, setEditDraft] = useState(null);
+  /** 'saved' = admin JSON in DB; 'live' = pulled from APIs + OpenAI */
+  const dataSourceRef = useRef('loading');
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
     setSaveSuccess(null);
+    dataSourceRef.current = 'loading';
     const dateStr = String(selectedDate).trim().slice(0, 10);
     Api.getTraderDeckContent(type, dateStr)
       .then((res) => {
         if (cancelled) return;
         const payload = res.data?.payload;
         if (payload && typeof payload === 'object') {
+          dataSourceRef.current = 'saved';
           setData(normalizeForUI(payload));
           return;
         }
-        return getMarketIntelligence().then((raw) => {
+        dataSourceRef.current = 'live';
+        return getMarketIntelligence({ refresh: false }).then((raw) => {
           if (cancelled) return;
           const normalized = normalizeForUI(raw) || normalizeForUI(SEED_MARKET_INTELLIGENCE);
           setData(normalized);
@@ -79,12 +89,28 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
       })
       .catch(() => {
         if (cancelled) return;
+        dataSourceRef.current = 'live';
         const normalized = normalizeForUI(SEED_MARKET_INTELLIGENCE);
         setData(normalized);
         setError('Using fallback data');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
   }, [type, selectedDate]);
+
+  // Refresh live outlook + AI brief on an interval (not when displaying saved admin content)
+  useEffect(() => {
+    if (editMode) return undefined;
+    const iv = setInterval(() => {
+      if (dataSourceRef.current !== 'live') return;
+      getMarketIntelligence({ refresh: true })
+        .then((raw) => {
+          const normalized = normalizeForUI(raw);
+          if (normalized) setData(normalized);
+        })
+        .catch(() => {});
+    }, LIVE_REFRESH_MS);
+    return () => clearInterval(iv);
+  }, [editMode, type, selectedDate]);
 
   const handleEditToggle = () => {
     if (editMode) {
@@ -157,6 +183,9 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     marketChangesToday,
     traderFocus,
     riskRadar,
+    aiSessionBrief,
+    aiTradingPriorities,
+    dataSources,
   } = showing;
 
   const renderRegime = () => {
@@ -328,6 +357,24 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               </div>
             )}
           </header>
+          {!editMode && (aiSessionBrief || (aiTradingPriorities && aiTradingPriorities.length > 0)) && (
+            <section className="td-deck-ai-desk-brief td-deck-mo-ai-brief" aria-label="Live desk intelligence">
+              <p className="td-deck-mo-eyebrow">Live desk intelligence (OpenAI + market data APIs)</p>
+              {aiSessionBrief ? <p className="td-deck-ai-brief-body">{aiSessionBrief}</p> : null}
+              {Array.isArray(aiTradingPriorities) && aiTradingPriorities.length > 0 ? (
+                <ol className="td-deck-ai-priorities">
+                  {aiTradingPriorities.map((line, idx) => (
+                    <li key={idx}>{line}</li>
+                  ))}
+                </ol>
+              ) : null}
+              {Array.isArray(dataSources) && dataSources.length > 0 ? (
+                <p className="td-deck-ai-sources" aria-label="Data sources">
+                  Sources: {dataSources.join(' · ')}
+                </p>
+              ) : null}
+            </section>
+          )}
           <div className="td-outlook-dashboard td-outlook-dashboard--unified td-deck-mo-outlook-dash">
             <div className="td-outlook-unified-grid td-deck-mo-bento">
               <DashboardPanel title="▲ Aurax Market Regime" className="td-outlook-panel td-outlook-panel--regime">{renderRegime()}</DashboardPanel>

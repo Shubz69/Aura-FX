@@ -94,15 +94,22 @@ export default function NewsFeedView() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    Api.getTraderDeckNews()
-      .then((r) => {
-        setArticles(Array.isArray(r.data?.articles) ? r.data.articles : []);
-        setUpdatedAt(r.data?.updatedAt || null);
-      })
-      .catch(() => setError('Could not load headlines. Check back soon.'))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    const load = (refresh) => {
+      if (!refresh) setLoading(true);
+      setError(null);
+      Api.getTraderDeckNews(refresh)
+        .then((r) => {
+          if (cancelled) return;
+          setArticles(Array.isArray(r.data?.articles) ? r.data.articles : []);
+          setUpdatedAt(r.data?.updatedAt || null);
+        })
+        .catch(() => { if (!cancelled) setError('Could not load headlines. Check back soon.'); })
+        .finally(() => { if (!cancelled && !refresh) setLoading(false); });
+    };
+    load(false);
+    const iv = setInterval(() => load(true), 90 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
   }, []);
 
   const filtered = useMemo(() => {
@@ -110,7 +117,8 @@ export default function NewsFeedView() {
       if (category !== 'all' && a.category !== category) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
-        return (a.headline || '').toLowerCase().includes(q) || (a.summary || '').toLowerCase().includes(q);
+        const head = (a.headline || a.title || '').toLowerCase();
+        return head.includes(q) || (a.summary || '').toLowerCase().includes(q);
       }
       return true;
     });
@@ -166,7 +174,8 @@ export default function NewsFeedView() {
       {!loading && !error && (
         <div className="nf-list">
           {filtered.map((article, i) => {
-            const impacts = getPairImpacts(article.headline);
+            const line = article.headline || article.title || '';
+            const impacts = getPairImpacts(line);
             return (
               <div key={i} className="nf-headline-row">
                 <div className="nf-headline-left">
@@ -179,7 +188,7 @@ export default function NewsFeedView() {
                       <span className="nf-headline-src">{article.source}</span>
                     )}
                   </div>
-                  <p className="nf-headline-text">{article.headline}</p>
+                  <p className="nf-headline-text">{line}</p>
                   {article.summary && (
                     <p className="nf-headline-summary">
                       {article.summary.slice(0, 140)}{article.summary.length > 140 ? '…' : ''}

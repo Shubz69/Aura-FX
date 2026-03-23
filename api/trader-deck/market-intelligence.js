@@ -1,14 +1,16 @@
 /**
  * GET /api/trader-deck/market-intelligence
  * Returns Trader Deck market intelligence (regime, pulse, drivers, cross-asset, market changes, trader focus, risk radar).
- * Server-side only; keys never exposed. Cached 2 minutes.
+ * Optional OpenAI desk brief (aiSessionBrief, aiTradingPriorities) when OPENAI_API_KEY is set.
+ * Cache: TRADER_DECK_MI_CACHE_SEC (default 90s). ?refresh=1 bypasses cache.
  */
 
 const { runEngine } = require('./marketIntelligenceEngine');
+const { enrichTraderDeckPayload } = require('./openaiTraderInsights');
 
-// Cache TTL: MARKET_DATA_REFRESH_INTERVAL (seconds) or default 300 (5 min) to avoid API rate limits
-const REFRESH_SEC = Math.max(60, parseInt(process.env.MARKET_DATA_REFRESH_INTERVAL, 10) || 300);
-const CACHE_TTL_MS = REFRESH_SEC * 1000;
+// Default 90s — override with TRADER_DECK_MI_CACHE_SEC (45–300)
+const CACHE_SEC = Math.min(300, Math.max(45, parseInt(process.env.TRADER_DECK_MI_CACHE_SEC, 10) || 90));
+const CACHE_TTL_MS = CACHE_SEC * 1000;
 
 let cached = null;
 let cachedAt = 0;
@@ -76,15 +78,30 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const fromCache = getCached();
+  const forceRefresh = req.query && (req.query.refresh === '1' || req.query.refresh === 'true');
+  const fromCache = forceRefresh ? null : getCached();
   if (fromCache) {
-    return res.status(200).json({ success: true, ...fromCache });
+    res.setHeader('Cache-Control', 'private, max-age=30');
+    return res.status(200).json({ success: true, ...fromCache, cached: true });
   }
 
   try {
-    const payload = await runEngine();
+    const raw = await runEngine();
+    let enriched = null;
+    try {
+      enriched = await enrichTraderDeckPayload(raw);
+    } catch (e) {
+      console.warn('[trader-deck] enrichTraderDeckPayload:', e.message || e);
+    }
+    const { headlineSample: _hs, ...rest } = raw;
+    const payload = {
+      ...rest,
+      ...(enriched || {}),
+      dataSources: ['FRED', 'Finnhub', 'FMP', 'Twelve Data', 'Alpha Vantage', 'Alternative.me', ...(enriched ? ['OpenAI'] : [])],
+    };
     setCache(payload);
-    res.status(200).json({ success: true, ...payload });
+    res.setHeader('Cache-Control', 'private, max-age=30');
+    res.status(200).json({ success: true, ...payload, cached: false });
   } catch (err) {
     console.warn('[trader-deck] market-intelligence error:', err.message || err);
     const fallback = fallbackPayload();

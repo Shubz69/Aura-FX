@@ -91,12 +91,15 @@ function mapBackendToDashboard(apiData) {
       ? rr.map((x) => (typeof x === 'string' ? x : x.title || x.text || ''))
       : SEED_MARKET_INTELLIGENCE.riskRadar,
     updatedAt: apiData.updatedAt || null,
+    aiSessionBrief: typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : '',
+    aiTradingPriorities: Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : [],
+    dataSources: Array.isArray(apiData.dataSources) ? apiData.dataSources : [],
   };
 }
 
-export async function getMarketIntelligence() {
+export async function getMarketIntelligence({ refresh = false } = {}) {
   try {
-    const res = await Api.getTraderDeckMarketIntelligence();
+    const res = await Api.getTraderDeckMarketIntelligence(refresh);
     const data = res && res.data;
     if (data && data.success && (data.marketRegime || data.marketPulse)) {
       return mapBackendToDashboard(data);

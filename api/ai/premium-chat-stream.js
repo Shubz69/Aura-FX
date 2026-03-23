@@ -16,6 +16,7 @@ const { extractInstrument, detectIntent } = require('./tool-router');
 const { toCanonical } = require('./utils/symbol-registry');
 const { validateAndSanitize, generatePricingInstructions } = require('./price-validator');
 const { getOpenAIModelForChat } = require('./openai-config');
+const { verifyToken } = require('../utils/auth');
 
 const marketDataAdapter = new MarketDataAdapter();
 
@@ -24,7 +25,7 @@ const marketDataAdapter = new MarketDataAdapter();
 // ============================================================================
 
 const CONFIG = {
-  ADAPTER_TIMEOUT: 6000,      // 6s — allow provider chain (Twelve Data → Finnhub → …) to respond
+  ADAPTER_TIMEOUT: 10000,     // 10s — provider chain (Twelve Data → Finnhub → …) on cold start / DB
   OPENAI_TIMEOUT: 45000,      // 45s for OpenAI streaming
   MAX_HISTORY: 6,             // Keep last 6 messages for context
   CACHE_TTL: 30000,           // 30s cache for market data
@@ -140,6 +141,21 @@ async function getMarketNews() {
   }
 }
 
+/** When the user says "gold" or "oil" without typing XAUUSD, still fetch live quotes. */
+function inferSymbolsFromKeywords(message) {
+  const t = (message || '').toLowerCase();
+  const out = [];
+  if (/\b(?:gold|spot gold|xau)\b/.test(t)) out.push('XAUUSD');
+  if (/\b(?:silver|xag)\b/.test(t)) out.push('XAGUSD');
+  if (/\b(?:crude|wti|brent|us oil)\b/.test(t)) out.push('CL=F');
+  if (/\b(?:bitcoin|btc)\b/.test(t)) out.push('BTCUSD');
+  if (/\b(?:ethereum|ether)\b/.test(t)) out.push('ETHUSD');
+  if (/\b(?:s\s*&\s*p|sp500|spx)\b/.test(t)) out.push('^GSPC');
+  if (/\b(?:nasdaq|nas\s*100|ndx)\b/.test(t)) out.push('^IXIC');
+  if (/\b(?:dow|djia|us30)\b/.test(t)) out.push('^DJI');
+  return out;
+}
+
 /** Align with quote-snapshot + tool-router so streaming chat gets the same symbol coverage as non-streaming Aura AI. */
 function collectSymbolsForFetch(message, conversationHistory = []) {
   const text = typeof message === 'string' ? message : '';
@@ -167,6 +183,11 @@ function collectSymbolsForFetch(message, conversationHistory = []) {
   let m;
   while ((m = extraIdx.exec(text)) !== null) {
     const c = toCanonical(m[1]);
+    if (c) symbols.add(c);
+  }
+
+  for (const sym of inferSymbolsFromKeywords(text)) {
+    const c = toCanonical(sym);
     if (c) symbols.add(c);
   }
 
@@ -257,10 +278,8 @@ async function fetchAllData(message, conversationHistory, requestId) {
     );
   }
 
-  await Promise.race([
-    Promise.allSettled(fetches),
-    new Promise((resolve) => setTimeout(resolve, CONFIG.ADAPTER_TIMEOUT + 800)),
-  ]);
+  // Wait for all market/news fetches — do not race with a short timer (that dropped live quotes on slow providers).
+  await Promise.allSettled(fetches);
 
   results.fetchTime = Date.now() - startTime;
   log(requestId, 'info', 'Data fetch complete', {
@@ -277,41 +296,19 @@ async function fetchAllData(message, conversationHistory, requestId) {
 // System Prompt (Concise for Speed)
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant powered by OpenAI. You help traders with analysis, position sizing, risk management, and market insights.
+const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant. Your reasoning uses OpenAI; live prices and headlines come only from the "Verified context" block appended to the user message (Twelve Data, Finnhub, Alpha Vantage, Yahoo Finance, or RSS — never invent numbers).
 
-**Expertise**: Forex, crypto, stocks, commodities, indices. You understand technical analysis (support/resistance, market structure, chart patterns), fundamental drivers, and risk/reward calculations.
+Expertise: Forex, crypto, stocks, commodities, indices. You apply technical analysis (support/resistance, structure, patterns), fundamentals, and risk/reward clearly.
 
-**Position sizing & risk**: When asked about position size, use the formula: (Account × Risk%) / (Entry - Stop Loss in price units). For forex use pips (0.0001 for most pairs, 0.01 for JPY). Always show the calculation step-by-step. Recommend 1-2% risk per trade.
+Position sizing: When asked, use (Account × Risk%) / (Entry − Stop in price units). For forex use pip size (0.0001 most pairs, 0.01 for JPY pairs). Show the math step-by-step. Suggest 1–2% risk per trade unless the user states otherwise.
 
-**Truthfulness**: For any current price, bid/ask, or % change, use ONLY values from the verified live data block in the user message. If the user asks for a price and that instrument is not in the live data block, say you do not have a live quote for it and suggest they check their platform—do not guess. For general trading education (patterns, risk concepts) you may explain without live numbers.
+Truthfulness: For last price, bid/ask, or percentage change, use ONLY numbers from the verified live data lines. If an instrument is missing or marked unavailable, say live data is temporarily unavailable and suggest checking the broker platform — do not estimate a price.
 
-**Response style**: Be direct and actionable. Use **bold** for key levels and numbers. Structure with clear steps or sections when explaining concepts.
+Output rules (strict): Write in plain English only. Do not use asterisk characters, markdown, bold markers, or bullet symbols like star or hyphen lists that look like markup. Use short numbered steps (1. 2. 3.) or short paragraphs instead. No asterisks in any sentence.`;
 
-**Format**: Use compact bullet points and numbered steps. Be thorough but concise.`;
-
-// ============================================================================
-// Token Decoding
-// ============================================================================
-
-function decodeToken(token) {
-  if (!token) return null;
-  
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
-    const decoded = JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
-    
-    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
-      return null; // Expired
-    }
-    
-    return decoded;
-  } catch {
-    return null;
-  }
+function stripAsterisksFromAssistantText(text) {
+  if (text == null || typeof text !== 'string') return text;
+  return text.replace(/\*/g, '');
 }
 
 // ============================================================================
@@ -352,10 +349,7 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Invalid request body' });
   }
 
-  // Auth
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const decoded = decodeToken(token);
-
+  const decoded = verifyToken(req.headers.authorization);
   if (!decoded) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
@@ -482,7 +476,7 @@ async function handler(req, res) {
     // Build context (only verified prices; never fabricate)
     let context = '';
     if (fetchedData.market?.length > 0) {
-      context += '\n**Live Market Data (verified — use these exact values only):**\n';
+      context += '\nLive Market Data (verified — use these exact values only):\n';
       for (const m of fetchedData.market) {
         if (m.unavailable || m.price == null || m.price <= 0) {
           context += `- ${m.symbol}: Live market data temporarily unavailable.\n`;
@@ -494,13 +488,13 @@ async function handler(req, res) {
       }
     }
     if (fetchedData.news?.length > 0) {
-      context += '\n**Recent Headlines:**\n';
+      context += '\nRecent Headlines:\n';
       for (const n of fetchedData.news.slice(0, 3)) {
         context += `- ${n.title}\n`;
       }
     }
     if (fetchedData.errors.length > 0) {
-      context += `\n*Note: Some data sources temporarily unavailable*\n`;
+      context += '\nNote: Some data sources were temporarily unavailable.\n';
     }
     
     const quoteContext = buildQuoteContextFromMarketRows(fetchedData.market || []);
@@ -614,7 +608,8 @@ async function handler(req, res) {
       rewrite: true,
       addDisclaimer: true,
     });
-    const finalContent = validation.sanitizedResponse || fullContent;
+    let finalContent = validation.sanitizedResponse || fullContent;
+    finalContent = stripAsterisksFromAssistantText(finalContent);
     if (validation.modified) {
       log(requestId, 'warn', 'Price validator adjusted assistant reply', {
         invalidPrices: validation.validation?.invalidPrices?.length ?? 0,

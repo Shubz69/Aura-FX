@@ -12,12 +12,14 @@
     filter: brightness(0) invert(1); /* Makes the logo white */
 }
 
-/* For navbar — larger mark; asset unchanged */
+/* For navbar — larger mark; gold tint (brand #EAA960 family) */
 .navbar-logo-wrapper .a7-logo-image {
-    width: 54px;
-    height: 54px;
+    width: 64px;
+    height: 64px;
     align-self: center;
     margin-bottom: 0;
+    filter: invert(70%) sepia(58%) saturate(748%) hue-rotate(354deg) brightness(102%) contrast(92%)
+        drop-shadow(0 0 10px rgba(234, 169, 96, 0.38));
 }
 
 /* For home page - much larger size */
@@ -29,8 +31,8 @@
 /* Adjust proportions for different sizes */
 @media (max-width: 1150px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 48px;
-        height: 48px;
+        width: 58px;
+        height: 58px;
     }
 }
 
@@ -48,14 +50,14 @@
 
 @media (max-width: 480px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 38px;
-        height: 38px;
+        width: 48px;
+        height: 48px;
     }
 }
 
 @media (max-width: 374px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 34px;
-        height: 34px;
+        width: 44px;
+        height: 44px;
     }
 }

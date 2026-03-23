@@ -1,9 +1,9 @@
 /**
- * Shared email helpers. Contact and signup notifications go to support@auraterminal.ai.
+ * Shared email helpers. Internal notifications use CONTACT_INBOX (same default as contact form / server).
  */
 const nodemailer = require('nodemailer');
 
-const SUPPORT_EMAIL = 'support@auraterminal.ai';
+const SUPPORT_EMAIL = process.env.CONTACT_INBOX || 'support@auraterminal.ai';
 
 const createTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {

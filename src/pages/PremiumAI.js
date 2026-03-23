@@ -80,6 +80,9 @@ const CAPS = [
   { icon: '⚖️', label: 'Risk Management',   desc: 'Position sizing & R:R calculations' },
 ];
 
+/** Remove markdown asterisks from assistant text (server also strips; this cleans streaming + legacy). */
+const stripAssistantAsterisks = (s) => (s == null ? '' : String(s).replace(/\*/g, ''));
+
 /* ── Shared markdown component map ──────────────────────── */
 const MD = {
   p:          ({ children }) => <p className="md-p">{children}</p>,
@@ -146,7 +149,7 @@ const ChatMessage = ({ msg, copiedId, speakId, spRate, showSrc, onCopy, onSpeak,
           <div className="pai-bubble">
             {isUser
               ? <p>{msg.content}</p>
-              : <ReactMarkdown components={MD}>{msg.content}</ReactMarkdown>
+              : <ReactMarkdown components={MD}>{stripAssistantAsterisks(msg.content)}</ReactMarkdown>
             }
           </div>
         )}
@@ -368,7 +371,7 @@ const PremiumAI = () => {
       window.speechSynthesis.cancel();
       if (speakId === id) { setSpeakId(null); return; }
     }
-    const u = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ''));
+    const u = new SpeechSynthesisUtterance(stripAssistantAsterisks(text).replace(/[#_`]/g, ''));
     u.rate = spRate; u.lang = 'en-US';
     u.onend = () => setSpeakId(null); u.onerror = () => setSpeakId(null);
     setSpeakId(id); window.speechSynthesis.speak(u);
@@ -377,9 +380,10 @@ const PremiumAI = () => {
   /* copy */
   const copy = async (id, text) => {
     if (!text) return;
-    try { await navigator.clipboard.writeText(text); }
+    const toCopy = stripAssistantAsterisks(text);
+    try { await navigator.clipboard.writeText(toCopy); }
     catch {
-      const ta = Object.assign(document.createElement('textarea'), { value: text, style: 'position:fixed;opacity:0' });
+      const ta = Object.assign(document.createElement('textarea'), { value: toCopy, style: 'position:fixed;opacity:0' });
       document.body.appendChild(ta); ta.select();
       try { document.execCommand('copy'); } catch { toast.error('Failed to copy'); }
       document.body.removeChild(ta);
@@ -485,7 +489,7 @@ const PremiumAI = () => {
     if (streamContent) {
       setMessages(p => [...p, {
         id: Date.now(), role: 'assistant',
-        content: streamContent + '\n\n*[Response stopped]*',
+        content: streamContent + '\n\n[Response stopped]',
         sources, timestamp: new Date().toISOString(),
       }]);
       setStreamContent('');
@@ -557,7 +561,7 @@ const PremiumAI = () => {
               <div className="pai-avatar ai">✨</div>
               <div className="pai-bubble-wrap">
                 <div className="pai-bubble">
-                  <ReactMarkdown components={MD}>{streamContent}</ReactMarkdown>
+                  <ReactMarkdown components={MD}>{stripAssistantAsterisks(streamContent)}</ReactMarkdown>
                 </div>
                 <div className="pai-streaming">
                   <span className="pai-pulse" />Generating…

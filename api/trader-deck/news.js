@@ -8,8 +8,8 @@ const { getConfig } = require('./config');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:news:v1';
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_KEY = 'trader-deck:news:v2';
+const CACHE_TTL_MS = Math.min(300, Math.max(60, parseInt(process.env.TRADER_DECK_NEWS_CACHE_SEC, 10) || 90)) * 1000;
 
 function normalise(item, source) {
   return {
@@ -68,6 +68,31 @@ async function fromFinnhubForex() {
   }
 }
 
+/** Yahoo Finance RSS — no API key; keeps headlines fresh when Finnhub/FMP are rate-limited */
+async function fromYahooRss() {
+  try {
+    const url =
+      'https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC,^DJI,GC=F,EURUSD=X&region=US&lang=en-US';
+    const res = await fetchWithTimeout(url, {}, 9000);
+    if (!res.ok) return [];
+    const text = await res.text();
+    const items = [];
+    const re = /<title><!\[CDATA\[(.*?)\]\]><\/title>/g;
+    let m;
+    let i = 0;
+    while ((m = re.exec(text)) !== null) {
+      if (i++ === 0) continue;
+      const headline = (m[1] || '').trim();
+      if (headline) items.push(normalise({ headline, datetime: Math.floor(Date.now() / 1000) }, 'Yahoo Finance'));
+      if (items.length >= 12) break;
+    }
+    return items;
+  } catch (e) {
+    console.warn('[trader-deck/news] Yahoo RSS error:', e.message);
+    return [];
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -76,22 +101,28 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-  const cached = getCached(CACHE_KEY, CACHE_TTL_MS);
-  if (cached) return res.status(200).json({ success: true, ...cached, cached: true });
+  const forceRefresh = req.query && (req.query.refresh === '1' || req.query.refresh === 'true');
+  const cached = forceRefresh ? null : getCached(CACHE_KEY, CACHE_TTL_MS);
+  if (cached) {
+    res.setHeader('Cache-Control', 'private, max-age=30');
+    return res.status(200).json({ success: true, ...cached, cached: true });
+  }
 
-  const [general, fmp, forex] = await Promise.allSettled([
+  const [general, fmp, forex, yahoo] = await Promise.allSettled([
     fromFinnhub(),
     fromFMP(),
     fromFinnhubForex(),
+    fromYahooRss(),
   ]);
 
   const generalItems = general.status === 'fulfilled' ? general.value : [];
   const fmpItems = fmp.status === 'fulfilled' ? fmp.value : [];
   const forexItems = forex.status === 'fulfilled' ? forex.value : [];
+  const yahooItems = yahoo.status === 'fulfilled' ? yahoo.value : [];
 
   // Merge, deduplicate by headline, sort by date
   const seen = new Set();
-  const merged = [...generalItems, ...fmpItems, ...forexItems]
+  const merged = [...generalItems, ...fmpItems, ...forexItems, ...yahooItems]
     .filter((n) => {
       if (!n.headline || seen.has(n.headline)) return false;
       seen.add(n.headline);
@@ -110,5 +141,6 @@ module.exports = async (req, res) => {
     updatedAt: new Date().toISOString(),
   };
   setCached(CACHE_KEY, payload, CACHE_TTL_MS);
+  res.setHeader('Cache-Control', 'private, max-age=30');
   return res.status(200).json({ success: true, ...payload, cached: false });
 };

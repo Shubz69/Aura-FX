@@ -44,5 +44,7 @@ IMPORTANT: To get a Gmail App Password:
 OPTIONAL EMAIL VARIABLES:
 ==========================
 CONTACT_INBOX=support@auraterminal.ai
-CONTACT_FROM=no-reply@aurafx.com
+CONTACT_FROM=no-reply@auraterminal.ai
+
+Note: CONTACT_INBOX receives the contact form and internal signup/referral notifications. Use support@auraterminal.ai (not support@auraxfx.com).
 

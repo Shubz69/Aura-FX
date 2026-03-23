@@ -3,8 +3,9 @@ import { FaExternalLinkAlt, FaNewspaper, FaSyncAlt } from 'react-icons/fa';
 import '../styles/NewsHeadlines.css';
 
 const API_BASE = typeof window !== 'undefined' ? window.location.origin : '';
-const CACHE_KEY = 'at_news_cache';
-const CACHE_TTL = 15 * 60 * 1000;
+const CACHE_KEY = 'at_td_news_cache_v2';
+const CACHE_TTL = 3 * 60 * 1000;
+const AUTO_REFRESH_MS = 3 * 60 * 1000;
 
 const timeAgo = (iso) => {
   if (!iso) return '';
@@ -40,13 +41,20 @@ const NewsHeadlines = () => {
     force ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/news`);
+      const q = force ? '?refresh=1' : '';
+      const res = await fetch(`${API_BASE}/api/trader-deck/news${q}`);
       const json = await res.json();
       if (json.success && json.articles) {
-        setArticles(json.articles);
+        const rows = json.articles.map((a) => ({
+          title: a.title || a.headline || '',
+          url: a.url || '',
+          source: a.source || 'News',
+          publishedAt: a.publishedAt || a.datetime || null,
+        })).filter((a) => a.title);
+        setArticles(rows);
         const now = Date.now();
         setLastFetch(new Date(now));
-        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.articles, ts: now })); } catch (_) {}
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: rows, ts: now })); } catch (_) {}
       } else {
         setError('Could not load headlines.');
       }
@@ -59,6 +67,11 @@ const NewsHeadlines = () => {
   }, []);
 
   useEffect(() => { fetchNews(); }, [fetchNews]);
+
+  useEffect(() => {
+    const id = setInterval(() => fetchNews(true), AUTO_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [fetchNews]);
 
   return (
     <div className="news-headlines">

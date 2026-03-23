@@ -952,7 +952,12 @@ const [journalLoading, setJournalLoading] = useState(false);
     };
 
     useEffect(() => {
+        if (!isAuthenticated || !localStorage.getItem('token')) {
+            return undefined;
+        }
+
         const fetchCategoryOrder = async () => {
+            if (!localStorage.getItem('token')) return;
             try {
                 const response = await fetch(`${apiBase}/api/community/channels?categoryOrder=true`, {
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
@@ -978,6 +983,7 @@ const [journalLoading, setJournalLoading] = useState(false);
         };
 
         const fetchChannelOrder = async () => {
+            if (!localStorage.getItem('token')) return;
             try {
                 const response = await fetch(`${apiBase}/api/community/channels?channelOrder=true`, {
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
@@ -1006,16 +1012,14 @@ const [journalLoading, setJournalLoading] = useState(false);
             }
         };
 
-        fetchCategoryOrder();
-        fetchChannelOrder();
+        // Initial category/channel order is loaded by getChannelsBootstrap — avoid 3× parallel
+        // serverless invocations (504/timeouts) on every Community mount.
 
-        // Poll for order updates every 30s (bootstrap loads orders with channels for fast initial load)
         const intervalId = setInterval(() => {
             fetchCategoryOrder();
             fetchChannelOrder();
         }, 30000);
 
-        // Also check when window regains focus
         const handleFocus = () => {
             fetchCategoryOrder();
             fetchChannelOrder();
@@ -1026,7 +1030,7 @@ const [journalLoading, setJournalLoading] = useState(false);
             clearInterval(intervalId);
             window.removeEventListener('focus', handleFocus);
         };
-    }, [apiBase]);
+    }, [apiBase, isAuthenticated]);
 
 // Toggle task completion in mini modal
 const handleMiniTaskToggle = useCallback(async (task) => {

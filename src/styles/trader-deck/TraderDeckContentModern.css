@@ -648,3 +648,32 @@
   box-shadow: none !important;
   background: var(--line-gold) !important;
 }
+
+/* Live desk intelligence (OpenAI + APIs) */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-desk-brief {
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(248, 195, 125, 0.22);
+  background: rgba(12, 18, 32, 0.45);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+}
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-brief-body {
+  margin: 10px 0 0;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.95rem;
+}
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-priorities {
+  margin: 12px 0 0;
+  padding-left: 1.25rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-ai-sources {
+  margin: 12px 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.45);
+}
