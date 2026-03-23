@@ -70,6 +70,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   const [editDraft, setEditDraft] = useState(null);
   /** 'saved' = admin JSON in DB; 'live' = pulled from live feeds */
   const dataSourceRef = useRef('loading');
+  const liveRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,12 +124,17 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     if (editMode) return undefined;
     const iv = setInterval(() => {
       if (dataSourceRef.current !== 'live') return;
+      if (liveRefreshInFlightRef.current) return;
+      liveRefreshInFlightRef.current = true;
       getMarketIntelligence({ refresh: true })
         .then((raw) => {
           const normalized = normalizeForUI(raw);
           if (normalized) setData(normalized);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          liveRefreshInFlightRef.current = false;
+        });
     }, LIVE_REFRESH_MS);
     return () => clearInterval(iv);
   }, [editMode, type, selectedDate]);

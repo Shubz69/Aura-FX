@@ -10,6 +10,10 @@ try {
   createNotification = null;
 }
 
+let messagesSchemaReady = false;
+let messagesSchemaCheckedAt = 0;
+const SCHEMA_CHECK_TTL_MS = 10 * 60 * 1000;
+
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
 
@@ -159,6 +163,17 @@ const ensureMessagesTable = async (db) => {
     return false;
   }
 };
+
+async function ensureMessagesSchemaCached(db) {
+  const now = Date.now();
+  if (messagesSchemaReady && (now - messagesSchemaCheckedAt) < SCHEMA_CHECK_TTL_MS) {
+    return true;
+  }
+  const ok = await ensureMessagesTable(db);
+  messagesSchemaReady = Boolean(ok);
+  messagesSchemaCheckedAt = now;
+  return ok;
+}
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -479,7 +494,7 @@ module.exports = async (req, res) => {
 
       try {
         // Ensure messages table exists with correct schema
-        const tableExists = await ensureMessagesTable(db);
+        const tableExists = await ensureMessagesSchemaCached(db);
         if (!tableExists) {
           console.error('Failed to ensure messages table exists');
           try {

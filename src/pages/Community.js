@@ -122,12 +122,6 @@ function onSidebarClose() {
     document.body.classList.remove('sidebar-open-mobile');
 }
 
-// Add resize handler
-window.addEventListener('resize', () => {
-    if (document.body.classList.contains('sidebar-open-mobile')) {
-        fixMobileSidebarScroll();
-    }
-});
 // Emoji picker component
 const EmojiPicker = ({ onEmojiSelect, onClose }) => {
     return (
@@ -823,7 +817,10 @@ const [journalLoading, setJournalLoading] = useState(false);
     );
 
     useEffect(() => {
-        const sync = () => setCommunityNotifPerm(getNotificationPermission());
+        const sync = () => {
+            isTabVisibleRef.current = typeof document === 'undefined' ? true : document.visibilityState !== 'hidden';
+            setCommunityNotifPerm(getNotificationPermission());
+        };
         sync();
         document.addEventListener('visibilitychange', sync);
         window.addEventListener('aura-notification-permission-change', sync);
@@ -840,6 +837,7 @@ const [journalLoading, setJournalLoading] = useState(false);
     const channelListRef = useRef([]);
     const selectedChannelRef = useRef(null);
     const isSendingGifRef = useRef(false);
+    const isTabVisibleRef = useRef(typeof document === 'undefined' ? true : document.visibilityState !== 'hidden');
     
 
     // Close context menu when clicking outside
@@ -3066,6 +3064,22 @@ if (window.requestAnimationFrame) {
             document.body.style.overflow = '';
         };
     }, [isMobile, sidebarOpen]);
+
+    // Keep mobile sidebar scroll bounds in sync with viewport while open.
+    useEffect(() => {
+        if (!isMobile || !sidebarOpen) return undefined;
+
+        const handleSidebarResize = () => {
+            if (document.body.classList.contains('sidebar-open-mobile')) {
+                fixMobileSidebarScroll();
+            }
+        };
+
+        // Recalculate immediately and whenever viewport size changes.
+        handleSidebarResize();
+        window.addEventListener('resize', handleSidebarResize);
+        return () => window.removeEventListener('resize', handleSidebarResize);
+    }, [isMobile, sidebarOpen]);
     
     // Handle swipe gestures for mobile sidebar
     const handleTouchStart = (e) => {
@@ -3313,6 +3327,7 @@ if (window.requestAnimationFrame) {
 
         // Update presence immediately
         const updatePresence = async () => {
+            if (!isTabVisibleRef.current) return;
             try {
                 const apiBaseUrl = window.location.origin;
                 await fetch(`${apiBaseUrl}/api/community/update-presence`, {
@@ -3346,6 +3361,7 @@ if (window.requestAnimationFrame) {
 
         // Check connectivity
         const updateConnectionStatus = async () => {
+            if (!isTabVisibleRef.current) return;
             try {
                 // If WebSocket is connected, prioritize that - show connected even if API has minor issues
                 if (isConnected) {
@@ -3458,6 +3474,7 @@ if (window.requestAnimationFrame) {
 
         const pollMessages = async () => {
             if (messagesPollInFlightRef.current) return;
+            if (!isTabVisibleRef.current) return;
             const ch = selectedChannelRef.current;
             const channelId = ch?.id;
             if (!channelId) return;

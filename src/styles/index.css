@@ -284,7 +284,8 @@ button {
   cursor: pointer;
   transition: 0.3s ease-in-out;
   position: relative;
-  z-index: 1001 !important; /* Ensure buttons stay clickable */
+  /* Global z-index caused overlays/transitions to break across pages. */
+  z-index: auto;
 }
 
 /* Fix Video Overlapping */

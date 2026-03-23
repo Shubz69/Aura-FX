@@ -89,22 +89,17 @@ const Affiliation = lazy(() => import('./pages/Affiliation'));
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
 function usePrefetchRoutes() {
     useEffect(() => {
+        const conn = typeof navigator !== 'undefined' ? navigator.connection : null;
+        const saveData = Boolean(conn && conn.saveData);
+        const slowNetwork = Boolean(conn && /2g/i.test(conn.effectiveType || ''));
+        if (saveData || slowNetwork) return undefined;
+
         const prefetch = () => {
-            import('./pages/Courses');
-            import('./pages/Explore');
-            import('./pages/WhyInfinity');
-            import('./pages/ContactUs');
+            // Keep prefetch light: only highest-probability next routes.
             import('./pages/Login');
             import('./pages/SignUp');
-            import('./pages/Leaderboard');
-            import('./pages/Profile');
-            import('./pages/Journal');
-            import('./pages/Messages');
             import('./pages/Community');
-            import('./pages/Subscription');
-            import('./pages/ChoosePlan');
             import('./pages/PremiumAI');
-            import('./pages/PublicProfile');
         };
         if (typeof requestIdleCallback !== 'undefined') {
             const id = requestIdleCallback(prefetch, { timeout: 3000 });

@@ -7,6 +7,10 @@ const getApiBaseUrl = () => {
     if (process.env.REACT_APP_API_URL) {
         return process.env.REACT_APP_API_URL;
     }
+    // In local dev prefer relative URLs so CRA proxy handles routing consistently.
+    if (process.env.NODE_ENV === 'development') {
+        return '';
+    }
     if (typeof window !== 'undefined' && window.location?.origin) {
         return window.location.origin;
     }
@@ -166,6 +170,29 @@ const getCacheKey = (config) => {
 const shouldCacheGet = (config) => {
     const url = resolveRequestUrl(config.url) || (config.baseURL || '') + (config.url || '');
     return config.method === 'get' && !config.skipCache && !GET_CACHE_SKIP_PATTERNS.test(url);
+};
+
+// De-duplicate concurrent GET calls for the same resource.
+const getInFlightStore = (() => {
+    const store = new Map();
+    return () => store;
+})();
+
+const buildInFlightGetKey = (url, options = {}) => {
+    const params = options?.params ? JSON.stringify(options.params) : '';
+    const headers = options?.headers ? JSON.stringify(options.headers) : '';
+    return `GET|${url}|${params}|${headers}`;
+};
+
+const dedupeGet = (url, options = {}) => {
+    const key = buildInFlightGetKey(url, options);
+    const inflight = getInFlightStore();
+    const existing = inflight.get(key);
+    if (existing) return existing;
+    const request = axios.get(url, options)
+        .finally(() => inflight.delete(key));
+    inflight.set(key, request);
+    return request;
 };
 
 axios.interceptors.request.use(
@@ -406,7 +433,7 @@ const Api = {
             if (!token) {
                 throw new Error('Authentication required');
             }
-            const response = await axios.get(`${API_BASE_URL}/api/community/channels`, {
+            const response = await dedupeGet(`${API_BASE_URL}/api/community/channels`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     ...customHeaders
@@ -426,7 +453,7 @@ const Api = {
             if (!token) {
                 throw new Error('Authentication required');
             }
-            const response = await axios.get(`${API_BASE_URL}/api/community/channels?bootstrap=true`, {
+            const response = await dedupeGet(`${API_BASE_URL}/api/community/channels?bootstrap=true`, {
                 headers: { 'Authorization': `Bearer ${token}`, ...customHeaders }
             });
             return response;
@@ -482,7 +509,7 @@ const Api = {
         if (process.env.NODE_ENV === 'development') console.log(`Attempting to fetch messages for channel ${channelId}${afterId ? ` (afterId=${afterId})` : ''}`);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(`${API_BASE_URL}/api/community/channels/${channelId}/messages`, {
+            const response = await dedupeGet(`${API_BASE_URL}/api/community/channels/${channelId}/messages`, {
                 params,
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -772,16 +799,16 @@ const Api = {
     },
 
     getTraderDeckMarketIntelligence: (refresh = false) => {
-        return axios.get(`${API_BASE_URL}/api/trader-deck/market-intelligence`, {
+        return dedupeGet(`${API_BASE_URL}/api/trader-deck/market-intelligence`, {
             params: refresh ? { refresh: '1' } : {},
         });
     },
     getTraderDeckEconomicCalendar: (days = 7, refresh = false) =>
-        axios.get(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
+        dedupeGet(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
             params: { days, ...(refresh ? { refresh: '1' } : {}) },
         }),
     getTraderDeckNews: (refresh = false) =>
-        axios.get(`${API_BASE_URL}/api/trader-deck/news`, {
+        dedupeGet(`${API_BASE_URL}/api/trader-deck/news`, {
             params: refresh ? { refresh: '1' } : {},
         }),
 

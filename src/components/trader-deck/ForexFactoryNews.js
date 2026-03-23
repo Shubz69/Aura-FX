@@ -69,11 +69,14 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   const eventsRef      = useRef([]);
   const precTimersRef  = useRef([]);  // precision setTimeout IDs
   const sinceLastFetch = useRef(0);   // ms since last baseline fetch
+  const fetchInFlightRef = useRef(false);
 
   const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 
   // Core fetch — refresh=true bypasses server cache for precision fetches
   const fetchEvents = useCallback(async (refresh = false) => {
+    if (fetchInFlightRef.current) return null;
+    fetchInFlightRef.current = true;
     try {
       const res  = await Api.getTraderDeckEconomicCalendar(1, refresh);
       const list = res.data?.events || [];
@@ -84,6 +87,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
     } catch (_) {
       return null;
     } finally {
+      fetchInFlightRef.current = false;
       setLoading(false);
     }
   }, []);
