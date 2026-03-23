@@ -143,20 +143,31 @@ const Login = () => {
             const status = err.response?.status;
             const data = err.response?.data;
             const isJsonResponse = data != null && typeof data === 'object' && !Array.isArray(data);
-            const serverErrorCode = isJsonResponse ? (data.error || '') : '';
-            const serverMessage = isJsonResponse ? (data.message || '') : '';
+            const serverErrorCode = isJsonResponse ? String(data.error || '') : '';
+            const serverMessage = isJsonResponse ? String(data.message || '').trim() : '';
             const errMsg = (err.message || '').trim();
 
-            if (status === 401 || serverErrorCode === 'INVALID_PASSWORD') {
+            const isNoAccount =
+                status === 404 ||
+                serverErrorCode === 'NO_ACCOUNT' ||
+                /no account with this email/i.test(serverMessage) ||
+                /no account exists/i.test(errMsg);
+            const isBadPassword =
+                status === 401 ||
+                serverErrorCode === 'INVALID_PASSWORD' ||
+                /incorrect password/i.test(serverMessage) ||
+                /incorrect password/i.test(errMsg);
+
+            if (isBadPassword && !isNoAccount) {
                 setErrorType('password');
                 setPasswordError(true);
                 setEmailError(false);
-                errorMessage = serverMessage || 'The password you entered is incorrect. Try again or use Forgot Password.';
-            } else if (status === 404 || serverErrorCode === 'NO_ACCOUNT') {
+                errorMessage = serverMessage || errMsg || 'The password you entered is incorrect. Try again or use Forgot Password.';
+            } else if (isNoAccount) {
                 setErrorType('email');
                 setPasswordError(false);
                 setEmailError(true);
-                errorMessage = serverMessage || 'No account exists with this email address. Please sign up for an account.';
+                errorMessage = serverMessage || errMsg || 'No account exists with this email address. Please sign up for an account.';
             } else if (err.response) {
                 setErrorType(null);
                 setPasswordError(false);
@@ -380,9 +391,26 @@ const Login = () => {
                             placeholder="Enter your password"
                             className={`form-input ${passwordError ? 'input-error' : ''}`}
                             aria-invalid={passwordError}
-                            aria-describedby={passwordError ? 'password-error' : undefined}
+                            aria-describedby={passwordError ? 'password-error' : emailError ? 'email-error' : undefined}
                         />
                     </div>
+
+                    {error && error.trim() && (
+                        <div
+                            className="error-message-under-button login-error-banner"
+                            role="alert"
+                            aria-live="assertive"
+                            id={passwordError ? 'password-error' : emailError ? 'email-error' : 'login-error-general'}
+                        >
+                            {errorType === 'password' && (
+                                <div className="login-error-label">Incorrect password</div>
+                            )}
+                            {errorType === 'email' && (
+                                <div className="login-error-label">No account for this email</div>
+                            )}
+                            <div className="login-error-body">{error}</div>
+                        </div>
+                    )}
                     
                     <button 
                         type="submit" 
@@ -391,38 +419,6 @@ const Login = () => {
                     >
                         {isLoading ? 'AUTHENTICATING...' : 'LOGIN'}
                     </button>
-
-                    {error && error.trim() && (
-                        <div
-                            className="error-message-under-button"
-                            role="alert"
-                            aria-live="assertive"
-                            id={passwordError ? 'password-error' : emailError ? 'email-error' : undefined}
-                            style={{
-                                display: 'block !important',
-                                visibility: 'visible !important',
-                                opacity: '1 !important',
-                                marginTop: '16px',
-                                marginBottom: '8px',
-                                padding: '16px 20px',
-                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
-                                border: '2px solid #EF4444',
-                                borderRadius: '12px',
-                                color: '#FFFFFF',
-                                fontSize: '15px',
-                                fontWeight: '600',
-                                textAlign: 'center',
-                                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
-                                textTransform: 'none',
-                                lineHeight: '1.5',
-                                wordWrap: 'break-word'
-                            }}
-                        >
-                            {errorType === 'password' && <div style={{ fontSize: '12px', opacity: 0.95, marginBottom: '6px', letterSpacing: '0.5px' }}>PASSWORD INCORRECT</div>}
-                            {errorType === 'email' && <div style={{ fontSize: '12px', opacity: 0.95, marginBottom: '6px', letterSpacing: '0.5px' }}>EMAIL NOT FOUND</div>}
-                            {error}
-                        </div>
-                    )}
                     
                     <Link to="/forgot-password" className="forgot-password">
                         Forgot Password?

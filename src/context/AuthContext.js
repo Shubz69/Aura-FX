@@ -330,8 +330,8 @@ export const AuthProvider = ({ children }) => {
   // Login function - supports both email/password login and token-based login from MFA
   const login = async (emailOrToken, passwordOrRole, userData = null) => {
     try {
-      // Full-app loading spinner during login (transition), matching 3c1f0e3. finally{} always clears `loading`.
-      setLoading(true);
+      // Do not call setLoading(true) here: AppRoutes unmounts the entire tree while `loading` is true,
+      // which wipes Login/Register local state so error messages never appear after a failed attempt.
       setError(null);
 
       // Check which login method is being used
@@ -568,8 +568,6 @@ export const AuthProvider = ({ children }) => {
         }
       }
       throw wrappedError;
-    } finally {
-      setLoading(false);
     }
   };
 

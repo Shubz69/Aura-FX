@@ -371,14 +371,26 @@
     max-width: 100% !important;
 }
 
-/* Small uppercase label inside error (e.g. "PASSWORD INCORRECT") */
-.error-message-under-button > div:first-child {
+/* Optional heading row (wrong password vs unknown email) */
+.login-error-label {
     font-size: 0.68rem !important;
     letter-spacing: 0.2em !important;
     text-transform: uppercase !important;
-    opacity: 0.7 !important;
-    margin-bottom: 5px !important;
+    opacity: 0.85 !important;
+    margin-bottom: 8px !important;
     font-weight: 600 !important;
+}
+
+.login-error-body {
+    font-size: 0.88rem !important;
+    font-weight: 400 !important;
+    text-transform: none !important;
+    letter-spacing: 0.04em !important;
+    line-height: 1.65 !important;
+}
+
+.login-error-banner {
+    margin-bottom: 6px !important;
 }
 
 @keyframes errorReveal {
