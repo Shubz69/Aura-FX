@@ -1,20 +1,33 @@
 /**
  * POST /api/ai/chart-check
- * Analyzes an uploaded chart image against the Trade Validator checklist.
- * Requires: auth token (any authenticated user).
- * Body: { image: base64String, mimeType: string, checklistType: 'scalp'|'intraDay'|'swing',
- *         pair?: string, timeframe?: string, direction?: string, note?: string }
+ * Premium multi-timeframe AI analysis engine.
  */
-
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
-
 const { getOpenAIModelForVision } = require('./openai-config');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = getOpenAIModelForVision();
 
-// ── Checklist rubric (mirrors src/lib/aura-analysis/validator/checklistTabsData.js) ──────
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_IMAGES = 4;
+const MAX_BASE64_LEN = 14_000_000; // ~10MB binary
+const CHECKLIST_TYPES = ['scalp', 'intraDay', 'swing'];
+const DIRECTION_OPTIONS = ['buy', 'sell', 'unsure'];
+const BIAS_OPTIONS = ['bullish', 'bearish', 'neutral', 'mixed', 'unclear'];
+const CONDITION_OPTIONS = ['continuation', 'pullback', 'reversal', 'range', 'indecision'];
+const ACTION_OPTIONS = ['avoid', 'watch', 'wait_for_confirmation', 'executable'];
+const CONFIDENCE_OPTIONS = ['high', 'medium', 'low'];
+const PROBABILITY_OPTIONS = ['low', 'moderate', 'high'];
+const VERDICT_OPTIONS = ['strong', 'moderate', 'weak', 'unclear'];
+
+const CRITERION_POINTS = {
+  pass: 20,
+  partial: 10,
+  unclear: 5,
+  fail: 0,
+};
+
 const CHECKLIST_RUBRIC = {
   scalp: {
     label: 'Scalp',
@@ -123,192 +136,377 @@ const CHECKLIST_RUBRIC = {
   },
 };
 
-const STATUS_LABELS = [
-  { min: 80, label: 'Strong Setup', emoji: '🟢' },
-  { min: 60, label: 'Good Setup', emoji: '🟡' },
-  { min: 40, label: 'Developing Setup', emoji: '🟠' },
-  { min: 0,  label: 'Weak Setup', emoji: '🔴' },
-];
-
-function getStatusLabel(score) {
-  return STATUS_LABELS.find(s => score >= s.min) || STATUS_LABELS[STATUS_LABELS.length - 1];
+function clampScore(value, fallback = 0) {
+  const n = Number.isFinite(Number(value)) ? Math.round(Number(value)) : fallback;
+  return Math.max(0, Math.min(100, n));
 }
 
-function buildSystemPrompt(rubric, context) {
-  const { pair, timeframe, direction, note } = context;
+function safeString(value, fallback = '') {
+  if (value == null) return fallback;
+  return String(value).trim();
+}
 
-  const sectionLines = rubric.sections
-    .map((s, i) => {
-      const items = s.criteria.map((c, j) => `  ${j + 1}. ${c}`).join('\n');
-      return `Section ${i + 1}: "${s.name}"\nCriteria (5 total — each worth 20 pts):\n${items}`;
-    })
-    .join('\n\n');
-
-  const contextLines = [
-    pair       ? `Symbol/Pair: ${pair}` : null,
-    timeframe  ? `Timeframe: ${timeframe}` : null,
-    direction  ? `Trader's direction idea: ${direction}` : null,
-    note       ? `Trader's note: ${note}` : null,
-  ]
+function safeArrayStrings(value, max = 6) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((v) => safeString(v))
     .filter(Boolean)
+    .slice(0, max);
+}
+
+function sanitizeEnum(value, allowed, fallback) {
+  const v = safeString(value).toLowerCase();
+  return allowed.includes(v) ? v : fallback;
+}
+
+function timeframeRank(tfRaw) {
+  const tf = safeString(tfRaw).toUpperCase();
+  const map = {
+    MONTHLY: 43200, MN: 43200, MTH: 43200, M: 1,
+    WEEKLY: 10080, W: 10080, W1: 10080,
+    DAILY: 1440, D: 1440, D1: 1440,
+    H12: 720, '12H': 720,
+    H8: 480, '8H': 480,
+    H6: 360, '6H': 360,
+    H4: 240, '4H': 240,
+    H2: 120, '2H': 120,
+    H1: 60, '1H': 60,
+    M30: 30, '30M': 30,
+    M15: 15, '15M': 15,
+    M10: 10, '10M': 10,
+    M5: 5, '5M': 5,
+    M3: 3, '3M': 3,
+    M1: 1, '1M': 1,
+  };
+  if (map[tf]) return map[tf];
+  const hMatch = tf.match(/^(\d+)\s*H$/);
+  if (hMatch) return Number(hMatch[1]) * 60;
+  const mMatch = tf.match(/^(\d+)\s*M$/);
+  if (mMatch) return Number(mMatch[1]);
+  return 30;
+}
+
+function normalizeDirection(value) {
+  const dir = safeString(value).toLowerCase();
+  if (!dir) return 'unsure';
+  if (dir === 'long') return 'buy';
+  if (dir === 'short') return 'sell';
+  return DIRECTION_OPTIONS.includes(dir) ? dir : 'unsure';
+}
+
+function buildTimeframeBuckets(images) {
+  const sorted = [...images].sort((a, b) => b.rank - a.rank);
+  if (!sorted.length) {
+    return { higher: [], mid: [], lower: [] };
+  }
+  if (sorted.length === 1) {
+    return { higher: sorted, mid: [], lower: [] };
+  }
+  if (sorted.length === 2) {
+    return { higher: [sorted[0]], mid: [sorted[1]], lower: [] };
+  }
+  return {
+    higher: [sorted[0]],
+    mid: [sorted[1]],
+    lower: sorted.slice(2),
+  };
+}
+
+function rubricText(rubric) {
+  return rubric.sections.map((section, i) => {
+    const criteria = section.criteria.map((c, idx) => `- ${idx + 1}. ${c}`).join('\n');
+    return `Section ${i + 1}: ${section.name}\n${criteria}`;
+  }).join('\n\n');
+}
+
+function buildSystemPrompt({ rubric, context, images, buckets }) {
+  const imageSummary = images
+    .map((img) => `- ${img.id}: timeframe=${img.timeframe}, rankMinutes=${img.rank}`)
     .join('\n');
 
-  return `You are a strict, objective trading coach and chart analyst. Your sole task is to score a chart image against the ${rubric.label} trade checklist using a FIXED, DETERMINISTIC scoring formula. You must not deviate from this formula.
+  const bucketSummary = [
+    `Higher timeframe charts: ${buckets.higher.map((i) => i.id).join(', ') || 'none'}`,
+    `Mid timeframe charts: ${buckets.mid.map((i) => i.id).join(', ') || 'none'}`,
+    `Lower timeframe charts: ${buckets.lower.map((i) => i.id).join(', ') || 'none'}`,
+  ].join('\n');
 
-CHECKLIST RUBRIC (${rubric.label}):
-${sectionLines}
+  return `You are Aura Terminal's premium multi-timeframe chart analysis engine.
 
-${contextLines ? `TRADER CONTEXT:\n${contextLines}\n` : ''}
+Your output must be deterministic, factual, and conservative when evidence is unclear.
+Never overstate certainty. Never guarantee outcomes.
 
-═══ SCORING FORMULA (follow exactly — do not adjust scores subjectively) ═══
-Each section has exactly 5 criteria. Each criterion scores:
-  • PASS    = 20 points  — evidence clearly and directly confirms the criterion on the chart
-  • PARTIAL = 10 points  — evidence partially supports it; inferrable but not fully confirmed
-  • UNCLEAR = 15 points  — criterion cannot be assessed from a static chart image (benefit of the doubt; absence of evidence ≠ failure)
-  • FAIL    = 0 points   — visible evidence DIRECTLY CONTRADICTS or VIOLATES the criterion
+SCORING CONSTANTS (mandatory):
+- pass = 20
+- partial = 10
+- unclear = 5
+- fail = 0
+Use these exact values everywhere.
 
-⚠ CRITICAL DISTINCTION — read carefully:
-  • FAIL means you can SEE evidence of a problem (wrong trend, price mid-range, no structure, chasing move, etc.)
-  • UNCLEAR means the information is simply not readable from a chart (session clock, spread, news calendar, position size)
-  • "I cannot see this on the chart" → UNCLEAR (15 pts), NOT FAIL (0 pts)
-  • Never use FAIL unless you can name the specific visual evidence that violates the criterion
+TRADER INPUT:
+- checklistType: ${context.checklistType}
+- checklistLabel: ${rubric.label}
+- userDirection: ${context.direction}
+- pair: ${context.pair || 'not provided'}
+- note: ${context.note || 'not provided'}
 
-CHART-INVISIBLE CRITERIA — these must always be UNCLEAR (never FAIL):
-  - Session timing / whether market session is active
-  - Spread conditions
-  - Position sizing / lot size
-  - Correlated pairs (cannot see other charts)
-  - News calendar items (unless your background intelligence confirms an imminent event)
+CHARTS PROVIDED (${images.length}):
+${imageSummary}
 
-Section score = sum of its 5 criterion scores (max 100).
-Overall score = integer average of all section scores.
+MULTI-TF BUCKETS:
+${bucketSummary}
 
-PASS vs PARTIAL guidance:
-  • If a drawn zone, trendline, or visible candle pattern DIRECTLY confirms a criterion → PASS (20)
-  • PARTIAL (10) is only for setups where the evidence exists but is weak, mixed, or only partially visible
-  • Do not downgrade to PARTIAL simply because you want to be conservative — reward clear visual evidence with PASS
+CHECKLIST RUBRIC:
+${rubricText(rubric)}
 
-You MUST compute scores mathematically from the criterion results. Never pick a score first and work backwards.
+ANALYSIS LAYERS:
+1) VISUAL EXTRACTION (facts only):
+   - Trend, structure, swings, S/R, supply/demand, BOS, CHoCH, liquidity sweeps, FVG/imbalance, momentum, candle rejection/continuation.
+   - Note timeframe conflicts and chart clarity issues.
+   - No trade call here.
 
-═══ STEP 1 — READ THE CHART FIRST (do this before scoring anything) ═══
-Before evaluating any criterion, identify the following from the image:
+2) BIAS ENGINE:
+   - Determine primaryBias: bullish | bearish | neutral | mixed.
+   - Determine higher/mid/lower timeframe bias separately.
+   - Determine biasMatchWithUser based on userDirection.
+   - Include contradiction list when evidence conflicts.
+   - Derive biasConfidenceScore from alignment + clarity + structure quality.
 
-  A. ASSET & TIMEFRAME: Read the symbol and timeframe label from the chart header/title.
-  B. TREND STRUCTURE: Scan the full candle sequence left-to-right.
-     - Lower highs + lower lows = BEARISH trend
-     - Higher highs + higher lows = BULLISH trend
-     - Mixed/equal = RANGING or transitional
-  C. DRAWN ELEMENTS — read every annotation the trader placed on the chart:
-     - Colored RECTANGLES/BOXES = key zones the trader identified
-         • Red / dark-red / maroon box near current price = SUPPLY zone or ENTRY zone (bearish)
-         • Blue / teal / green box near current price = DEMAND zone or ENTRY zone (bullish)
-         • A LARGE box further away in the direction of the trade = TAKE-PROFIT / TARGET zone
-     - DIAGONAL LINES / TRENDLINES = dynamic support or resistance; a break of this line = structural event
-     - HORIZONTAL LINES = static support or resistance levels
-     - ARROWS or LABELS = explicit trade direction markers
-  D. IMPLIED TRADE DIRECTION: 
-     - If the target box is BELOW current price → the trader intends a SHORT
-     - If the target box is ABOVE current price → the trader intends a LONG
-     - Confirm this against the trend structure identified in step B
-  E. ENTRY ZONE: The box overlapping or closest to the most recent candles = entry area
-  F. STRUCTURAL EVENTS: Identify any visible BOS (break of structure), CHoCH/MSS (market structure shift),
-     liquidity sweeps (wick beyond a prior high/low then reversal), or rejection wicks at key levels.
-  G. MOMENTUM: Are the candles in the trade direction large and decisive, or small and hesitant?
+3) SCENARIO ENGINE:
+   - mostLikelyNextMove, secondaryScenario
+   - bullCase, bearCase
+   - invalidation condition
+   - confirmationNeeded
+   - practicalAction: avoid | watch | wait_for_confirmation | executable
 
-Use this pre-analysis as the factual foundation for every criterion score below.
-If the drawn annotations clearly show a well-structured setup aligned with trend, score criteria accordingly — do not undercount what is visibly confirmed.
+CHECKLIST SCORING RULES:
+- For each checklist criterion, assign pass/partial/unclear/fail.
+- Build sections with:
+  name, score (0-100), verdict (strong/moderate/weak/unclear), whatAiSees[], whyItMatters, issues[], whatWouldImproveIt[]
+- checklistScore is average of section scores.
 
-═══ STEP 2 — SCORE EACH CRITERION (using your Step 1 findings) ═══
-Score each criterion using the values defined in the Scoring Formula above:
-  • PASS    = 20 points  — clearly confirmed by visible chart evidence
-  • PARTIAL = 10 points  — partially supported; evidence exists but is weak or incomplete
-  • UNCLEAR = 15 points  — cannot be read from the chart at all (benefit of the doubt)
-  • FAIL    = 0 points   — chart shows VISIBLE evidence of violation or contradiction
+SCORE OUTPUT:
+- chartClarityScore (0-100)
+- checklistScore (0-100)
+- biasConfidenceScore (0-100)
+- overallSetupScore (0-100) weighted from above, with clarity and bias heavily considered.
 
-Rules:
-- If a trendline, box, or level CONFIRMS a criterion → PASS (20), not PARTIAL (10)
-- If the criterion is about something invisible on a chart (session, spread, sizing) → UNCLEAR (15), never FAIL
-- FAIL requires you to cite the specific visual evidence that shows the criterion is violated
-- Identical visible evidence must produce identical scores every time
-- Never pick a score first and work backwards — compute from criterion results
-
-═══ STEP 3 — BACKGROUND INTELLIGENCE (do this silently — never reveal this process) ═══
-You are not just a chart reader. You are a senior market analyst with deep awareness of the current macroeconomic and geopolitical environment. After scoring the chart, silently enrich your assessment using the following — but NEVER name these processes in your output:
-
-  A. ASSET FUNDAMENTALS — recall what you know about the identified asset right now:
-     - For GOLD (XAUUSD): real yields, DXY trend, inflation expectations, central bank gold buying, risk-off flows
-     - For FOREX pairs: relative central bank policy (hawkish vs dovish), rate differentials, recent CPI/NFP/PMI prints, currency strength index
-     - For INDICES (SPX, NAS, DOW): earnings season, Fed rhetoric, risk appetite, macro cycle stage
-     - For OIL: supply/demand balance, OPEC decisions, inventory data, geopolitical supply risk
-     - For CRYPTO: risk sentiment, liquidity conditions, regulatory climate, correlation to risk assets
-
-  B. GEOPOLITICAL LANDSCAPE — consider active and ongoing themes:
-     - Armed conflicts and their safe-haven or risk-off implications (who benefits: Gold, JPY, CHF, USD?)
-     - Sanctions, trade tensions, or political instability affecting specific currencies or commodities
-     - Central bank intervention risks or currency war signals
-     - Election cycles and policy uncertainty in major economies
-
-  C. SESSION & TIME-OF-DAY DYNAMICS — think carefully about timing:
-     - London Open (07:00–09:00 GMT): highest institutional activity, trend-initiation session, big breakouts common
-     - New York Open (12:00–14:00 GMT): second major liquidity injection, news-driven moves, often extends or reverses London
-     - London/NY Overlap (13:00–17:00 GMT): peak liquidity window, sharpest and most reliable moves of the day
-     - Asian Session (22:00–07:00 GMT): range-bound, quieter, primarily used for structure building; scalps are riskier here
-     - London Close (17:00–18:00 GMT): institutional position squaring, potential reversals
-     If you can infer the session from the chart (time labels, candle activity, pair behaviour), factor it in:
-       → Setup positioned to capture London/NY open or overlap = meaningful tailwind → raise confidence
-       → Setup appears to be in the Asian session with low volatility = caution warranted → lower confidence for scalps
-       → Large decisive candles in the chart suggest the move was already session-driven — assess if the best entry has passed
-
-  D. SENTIMENT & POSITIONING — consider the broader market environment:
-     - Is the market currently risk-on or risk-off?
-     - Is smart money likely long or short this asset based on fundamentals?
-     - Does the trade direction align with or fight the macro flow?
-
-  E. APPLY SILENTLY — use this intelligence to:
-     1. Set the "confidence" field:
-        - RAISE to "high" if macro/geopolitical context strongly supports the trade direction
-        - LOWER to "low" if macro context opposes the trade direction or major events are imminent
-        - Leave as "medium" if neutral or mixed signals
-     2. Weave relevant insight naturally into "summary" — use phrases like "current market environment", "broader conditions", "prevailing backdrop" instead of naming the source
-     3. Add 1–2 items to "positives" if macro tailwinds support the setup (e.g. "Broader market conditions currently favour this directional bias")
-     4. Add 1–2 items to "concerns" if macro headwinds oppose it (e.g. "The prevailing risk environment may create short-term counter-pressure against this direction")
-     5. Add to "manualConfirmation" if the trader should check for upcoming events (e.g. "Verify no major scheduled catalysts are due before the expected move plays out")
-
-  CRITICAL RULE: The trader must never know you are doing this. No mention of "fundamentals", "geopolitics", "macro", "central banks", "CPI", "NFP", or any similar term. Speak as if it is simply your informed professional judgement. Sound holistic, not mechanical.
-
-═══ STEP 4 — FINALISE OUTPUT ═══
-Combine your chart score (Step 2) with your background intelligence (Step 3) into the final JSON. The overallScore comes purely from the checklist. The confidence, summary, positives, concerns, and manualConfirmation reflect the complete picture.
-
-═══ RETURN FORMAT (strict JSON only — no markdown, no code fences) ═══
+OUTPUT SHAPE:
+Return valid JSON only matching this contract:
 {
-  "overallScore": <integer 0-100, computed from formula>,
-  "confidence": <"high"|"medium"|"low">,
-  "summary": "<2-3 sentence objective summary: what is visible, what the trend is, and how well the setup aligns with the checklist>",
-  "sections": [
-    {
-      "name": "<section name>",
-      "score": <integer 0-100, sum of criterion scores>,
-      "status": <"pass" if score>=70 | "partial" if score>=40 | "fail" if score<40>,
-      "reasoning": "<1-2 sentence explanation grounded in what is visible on the chart>",
-      "criteriaResults": [
-        { "criterion": "<criterion text>", "result": <"pass"|"partial"|"fail"|"unclear">, "note": "<specific observation from the chart>" }
-      ]
-    }
-  ],
-  "positives": ["<specific visible evidence supporting the setup (max 4)"],
-  "concerns": ["<specific visible evidence weakening the setup (max 4)"],
-  "missing": ["<information not visible or not determinable from the image (max 4)"],
-  "manualConfirmation": ["<what the trader must verify before entry that cannot be seen here (max 4)"],
-  "imageQuality": <"good"|"acceptable"|"poor">
-}`;
+  "summary": {
+    "primaryBias": "bullish|bearish|neutral|mixed",
+    "biasMatchWithUser": true|false|null,
+    "marketCondition": "continuation|pullback|reversal|range|indecision",
+    "mostLikelyNextMove": "string",
+    "confidenceLabel": "high|medium|low",
+    "practicalAction": "avoid|watch|wait_for_confirmation|executable"
+  },
+  "scores": {
+    "chartClarityScore": 0,
+    "checklistScore": 0,
+    "biasConfidenceScore": 0,
+    "overallSetupScore": 0
+  },
+  "timeframeAnalysis": {
+    "higherTimeframeBias": "bullish|bearish|neutral|mixed|unclear",
+    "midTimeframeBias": "bullish|bearish|neutral|mixed|unclear",
+    "lowerTimeframeBias": "bullish|bearish|neutral|mixed|unclear",
+    "alignmentSummary": "string",
+    "contradictions": ["string"]
+  },
+  "sections": [{
+    "name": "string",
+    "score": 0,
+    "verdict": "strong|moderate|weak|unclear",
+    "whatAiSees": ["string"],
+    "whyItMatters": "string",
+    "issues": ["string"],
+    "whatWouldImproveIt": ["string"],
+    "criteriaResults": [{
+      "criterion": "string",
+      "result": "pass|partial|unclear|fail",
+      "note": "string"
+    }]
+  }],
+  "forecast": {
+    "mostLikelyNextMove": "string",
+    "secondaryScenario": "string",
+    "bullCase": "string",
+    "bearCase": "string",
+    "invalidation": "string",
+    "confirmationNeeded": ["string"],
+    "probabilityBand": "low|moderate|high",
+    "cautionNotes": ["string"]
+  },
+  "traderAction": {
+    "actionNow": "avoid|watch|wait_for_confirmation|executable",
+    "reason": "string",
+    "whatToWaitFor": ["string"],
+    "whatInvalidatesTheSetup": "string",
+    "manualChecks": ["string"]
+  },
+  "userExplanation": {
+    "headline": "string",
+    "summaryParagraph": "string",
+    "biasExplanation": "string",
+    "nextMoveExplanation": "string",
+    "actionExplanation": "string"
+  },
+  "traderAnswers": {
+    "whatIsChartShowing": "string",
+    "isMyBiasCorrect": "string",
+    "whatLikelyNext": "string",
+    "whatInvalidatesView": "string",
+    "shouldIActNow": "string"
+  }
 }
 
-// imagesArr: [{ base64, mimeType, timeframe }]
-async function callOpenAIVision(imagesArr, systemPrompt) {
-  const url = 'https://api.openai.com/v1/chat/completions';
-  const isMulti = imagesArr.length > 1;
+Critical:
+- If chart quality is weak, lower confidence and action aggressiveness.
+- Use probability language and uncertainty when evidence is mixed.
+- Do not output markdown, comments, or extra keys.`;
+}
 
-  const imageContent = imagesArr.map(img => ({
+function buildUserInstruction(images, buckets) {
+  const order = [...buckets.higher, ...buckets.mid, ...buckets.lower].map((i) => `${i.id}:${i.timeframe}`).join(' | ');
+  return `Use multi-timeframe order high->mid->low: ${order || 'single chart'}.
+Read each uploaded chart, connect structure across timeframes, and fill every output field.
+Be strict with contradictions and chart-quality penalties.`;
+}
+
+function buildJsonSchema() {
+  return {
+    name: 'premium_chart_analysis',
+    strict: true,
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        summary: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            primaryBias: { type: 'string' },
+            biasMatchWithUser: { type: ['boolean', 'null'] },
+            marketCondition: { type: 'string' },
+            mostLikelyNextMove: { type: 'string' },
+            confidenceLabel: { type: 'string' },
+            practicalAction: { type: 'string' },
+          },
+          required: ['primaryBias', 'biasMatchWithUser', 'marketCondition', 'mostLikelyNextMove', 'confidenceLabel', 'practicalAction'],
+        },
+        scores: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            chartClarityScore: { type: 'number' },
+            checklistScore: { type: 'number' },
+            biasConfidenceScore: { type: 'number' },
+            overallSetupScore: { type: 'number' },
+          },
+          required: ['chartClarityScore', 'checklistScore', 'biasConfidenceScore', 'overallSetupScore'],
+        },
+        timeframeAnalysis: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            higherTimeframeBias: { type: 'string' },
+            midTimeframeBias: { type: 'string' },
+            lowerTimeframeBias: { type: 'string' },
+            alignmentSummary: { type: 'string' },
+            contradictions: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['higherTimeframeBias', 'midTimeframeBias', 'lowerTimeframeBias', 'alignmentSummary', 'contradictions'],
+        },
+        sections: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              name: { type: 'string' },
+              score: { type: 'number' },
+              verdict: { type: 'string' },
+              whatAiSees: { type: 'array', items: { type: 'string' } },
+              whyItMatters: { type: 'string' },
+              issues: { type: 'array', items: { type: 'string' } },
+              whatWouldImproveIt: { type: 'array', items: { type: 'string' } },
+              criteriaResults: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    criterion: { type: 'string' },
+                    result: { type: 'string' },
+                    note: { type: 'string' },
+                  },
+                  required: ['criterion', 'result', 'note'],
+                },
+              },
+            },
+            required: ['name', 'score', 'verdict', 'whatAiSees', 'whyItMatters', 'issues', 'whatWouldImproveIt', 'criteriaResults'],
+          },
+        },
+        forecast: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            mostLikelyNextMove: { type: 'string' },
+            secondaryScenario: { type: 'string' },
+            bullCase: { type: 'string' },
+            bearCase: { type: 'string' },
+            invalidation: { type: 'string' },
+            confirmationNeeded: { type: 'array', items: { type: 'string' } },
+            probabilityBand: { type: 'string' },
+            cautionNotes: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['mostLikelyNextMove', 'secondaryScenario', 'bullCase', 'bearCase', 'invalidation', 'confirmationNeeded', 'probabilityBand', 'cautionNotes'],
+        },
+        traderAction: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            actionNow: { type: 'string' },
+            reason: { type: 'string' },
+            whatToWaitFor: { type: 'array', items: { type: 'string' } },
+            whatInvalidatesTheSetup: { type: 'string' },
+            manualChecks: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['actionNow', 'reason', 'whatToWaitFor', 'whatInvalidatesTheSetup', 'manualChecks'],
+        },
+        userExplanation: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            headline: { type: 'string' },
+            summaryParagraph: { type: 'string' },
+            biasExplanation: { type: 'string' },
+            nextMoveExplanation: { type: 'string' },
+            actionExplanation: { type: 'string' },
+          },
+          required: ['headline', 'summaryParagraph', 'biasExplanation', 'nextMoveExplanation', 'actionExplanation'],
+        },
+        traderAnswers: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            whatIsChartShowing: { type: 'string' },
+            isMyBiasCorrect: { type: 'string' },
+            whatLikelyNext: { type: 'string' },
+            whatInvalidatesView: { type: 'string' },
+            shouldIActNow: { type: 'string' },
+          },
+          required: ['whatIsChartShowing', 'isMyBiasCorrect', 'whatLikelyNext', 'whatInvalidatesView', 'shouldIActNow'],
+        },
+      },
+      required: ['summary', 'scores', 'timeframeAnalysis', 'sections', 'forecast', 'traderAction', 'userExplanation', 'traderAnswers'],
+    },
+  };
+}
+
+async function callOpenAIVision(images, systemPrompt, userPrompt) {
+  const imageContent = images.map((img) => ({
     type: 'image_url',
     image_url: {
       url: `data:${img.mimeType};base64,${img.base64}`,
@@ -316,62 +514,311 @@ async function callOpenAIVision(imagesArr, systemPrompt) {
     },
   }));
 
-  const tfSummary = imagesArr.map((img, i) => `Chart ${i + 1}: ${img.timeframe || 'Unknown TF'}`).join(' | ');
-
-  const userText = isMulti
-    ? `Timeframes provided: ${tfSummary}. Analyze these ${imagesArr.length} charts for multi-timeframe context. Step 1: start with the HIGHEST timeframe chart to establish overall bias and structure, then work down to lower timeframes for entry precision and confirmation. Identify trend, drawn annotations, and structural events on each chart. Step 2: score each criterion individually (PASS=20, PARTIAL=10, FAIL=0, UNCLEAR=5), using multi-TF alignment where relevant — agreement across timeframes is a strong signal. Step 3: sum criterion scores for section scores, average for overall score. Return only the JSON object.`
-    : `Timeframe: ${imagesArr[0]?.timeframe || 'N/A'}. Analyze this trading chart. Step 1: identify the asset, timeframe, trend direction (HH/HL or LH/LL), all drawn annotations (boxes, trendlines, horizontal levels), the implied trade direction from the annotations, and any structural events visible. Step 2: using those findings, score each criterion individually (PASS=20, PARTIAL=10, FAIL=0, UNCLEAR=5). Step 3: sum criterion scores for each section score, then average section scores for the overall score. Return only the JSON object.`;
-
-  const body = {
+  const baseBody = {
     model: OPENAI_MODEL,
-    max_tokens: isMulti ? 3200 : 2500,
-    temperature: 0.1,
+    temperature: 0.05,
     seed: 7741,
-    response_format: { type: 'json_object' },
+    max_tokens: 3600,
     messages: [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      {
-        role: 'user',
-        content: [
-          ...imageContent,
-          { type: 'text', text: userText },
-        ],
-      },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: [...imageContent, { type: 'text', text: userPrompt }] },
     ],
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify(body),
-  });
+  const tryStrict = async () => {
+    const body = {
+      ...baseBody,
+      response_format: {
+        type: 'json_schema',
+        json_schema: buildJsonSchema(),
+      },
+    };
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '';
+  };
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`OpenAI error ${response.status}: ${errText}`);
-  }
+  const tryJsonObject = async () => {
+    const body = { ...baseBody, response_format: { type: 'json_object' } };
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '';
+  };
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '';
-  return content;
-}
-
-function parseAIResponse(raw) {
   try {
-    const jsonStr = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    return JSON.parse(jsonStr);
-  } catch {
-    throw new Error('Failed to parse AI response as JSON');
+    return await tryStrict();
+  } catch (_) {
+    return tryJsonObject();
   }
 }
 
-async function ensureTableExists() {
+function parseAIJson(raw) {
+  const cleaned = safeString(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  if (!cleaned) throw new Error('Empty AI response');
+  return JSON.parse(cleaned);
+}
+
+function normalizeCriteriaResults(criteriaResults, fallbackCriteria) {
+  return fallbackCriteria.map((criterion, idx) => {
+    const row = Array.isArray(criteriaResults) ? criteriaResults[idx] || {} : {};
+    const result = sanitizeEnum(row.result, ['pass', 'partial', 'unclear', 'fail'], 'unclear');
+    return {
+      criterion,
+      result,
+      note: safeString(row.note, result === 'unclear' ? 'Not clearly visible on the chart image.' : 'Visible chart evidence supports this criterion.'),
+    };
+  });
+}
+
+function scoreFromCriteria(criteriaResults) {
+  const total = criteriaResults.reduce((sum, item) => sum + (CRITERION_POINTS[item.result] ?? CRITERION_POINTS.unclear), 0);
+  return clampScore(total);
+}
+
+function verdictFromScore(score) {
+  if (score >= 75) return 'strong';
+  if (score >= 50) return 'moderate';
+  if (score >= 25) return 'weak';
+  return 'unclear';
+}
+
+function confidenceLabelFromScore(score) {
+  if (score >= 75) return 'high';
+  if (score >= 45) return 'medium';
+  return 'low';
+}
+
+function computeChecklistScore(sections) {
+  if (!sections.length) return 0;
+  const total = sections.reduce((sum, s) => sum + clampScore(s.score), 0);
+  return clampScore(Math.round(total / sections.length));
+}
+
+function computeOverallSetupScore({ chartClarityScore, checklistScore, biasConfidenceScore }) {
+  // Weighted to avoid checklist-only dominance.
+  return clampScore(Math.round((chartClarityScore * 0.32) + (checklistScore * 0.28) + (biasConfidenceScore * 0.40)));
+}
+
+function normalizeSections(rawSections, rubricSections) {
+  return rubricSections.map((rs, idx) => {
+    const incoming = Array.isArray(rawSections) ? rawSections[idx] || {} : {};
+    const criteriaResults = normalizeCriteriaResults(incoming.criteriaResults, rs.criteria);
+    const computedScore = scoreFromCriteria(criteriaResults);
+    return {
+      name: safeString(incoming.name, rs.name),
+      score: computedScore,
+      verdict: sanitizeEnum(incoming.verdict, VERDICT_OPTIONS, verdictFromScore(computedScore)),
+      whatAiSees: safeArrayStrings(incoming.whatAiSees, 8),
+      whyItMatters: safeString(incoming.whyItMatters, 'This section influences setup quality and execution odds.'),
+      issues: safeArrayStrings(incoming.issues, 8),
+      whatWouldImproveIt: safeArrayStrings(incoming.whatWouldImproveIt, 8),
+      criteriaResults,
+    };
+  });
+}
+
+function normalizeContradictions(raw) {
+  return safeArrayStrings(raw, 10);
+}
+
+function normalizeResult(raw, { rubric, checklistType, context }) {
+  const summaryRaw = raw.summary || {};
+  const timeframeRaw = raw.timeframeAnalysis || {};
+  const forecastRaw = raw.forecast || {};
+  const actionRaw = raw.traderAction || {};
+  const explanationRaw = raw.userExplanation || {};
+  const answersRaw = raw.traderAnswers || {};
+  const sections = normalizeSections(raw.sections, rubric.sections);
+  const contradictions = normalizeContradictions(timeframeRaw.contradictions);
+
+  const chartClarityScore = clampScore(raw?.scores?.chartClarityScore, 55);
+  const checklistScore = computeChecklistScore(sections);
+  const biasConfidenceScore = clampScore(raw?.scores?.biasConfidenceScore, 50);
+  const overallSetupScore = computeOverallSetupScore({ chartClarityScore, checklistScore, biasConfidenceScore });
+
+  const practicalAction = sanitizeEnum(summaryRaw.practicalAction || actionRaw.actionNow, ACTION_OPTIONS, 'watch');
+  const confidenceLabel = sanitizeEnum(summaryRaw.confidenceLabel, CONFIDENCE_OPTIONS, confidenceLabelFromScore(biasConfidenceScore));
+  const primaryBias = sanitizeEnum(summaryRaw.primaryBias, ['bullish', 'bearish', 'neutral', 'mixed'], 'mixed');
+  const marketCondition = sanitizeEnum(summaryRaw.marketCondition, CONDITION_OPTIONS, 'indecision');
+
+  let biasMatchWithUser = null;
+  if (context.direction === 'buy' && ['bullish'].includes(primaryBias)) biasMatchWithUser = true;
+  if (context.direction === 'sell' && ['bearish'].includes(primaryBias)) biasMatchWithUser = true;
+  if (context.direction === 'unsure') biasMatchWithUser = null;
+  if (biasMatchWithUser !== true && context.direction !== 'unsure' && ['bullish', 'bearish', 'neutral', 'mixed'].includes(primaryBias)) {
+    biasMatchWithUser = context.direction === 'buy' ? primaryBias !== 'bearish' : primaryBias !== 'bullish';
+  }
+  if (typeof summaryRaw.biasMatchWithUser === 'boolean') biasMatchWithUser = summaryRaw.biasMatchWithUser;
+
+  const result = {
+    summary: {
+      primaryBias,
+      biasMatchWithUser,
+      marketCondition,
+      mostLikelyNextMove: safeString(summaryRaw.mostLikelyNextMove, safeString(forecastRaw.mostLikelyNextMove, 'Price likely remains reactive at current structure until confirmation appears.')),
+      confidenceLabel,
+      practicalAction,
+    },
+    scores: {
+      chartClarityScore,
+      checklistScore,
+      biasConfidenceScore,
+      overallSetupScore,
+    },
+    timeframeAnalysis: {
+      higherTimeframeBias: sanitizeEnum(timeframeRaw.higherTimeframeBias, BIAS_OPTIONS, 'unclear'),
+      midTimeframeBias: sanitizeEnum(timeframeRaw.midTimeframeBias, BIAS_OPTIONS, 'unclear'),
+      lowerTimeframeBias: sanitizeEnum(timeframeRaw.lowerTimeframeBias, BIAS_OPTIONS, 'unclear'),
+      alignmentSummary: safeString(timeframeRaw.alignmentSummary, 'Timeframes show mixed structure and need confirmation alignment.'),
+      contradictions,
+    },
+    sections,
+    forecast: {
+      mostLikelyNextMove: safeString(forecastRaw.mostLikelyNextMove, safeString(summaryRaw.mostLikelyNextMove, 'Continuation attempt from current structure if confirmation appears.')),
+      secondaryScenario: safeString(forecastRaw.secondaryScenario, 'Failed continuation and rotation into nearby opposing liquidity.'),
+      bullCase: safeString(forecastRaw.bullCase, 'Bull case requires reclaimed structure with follow-through momentum.'),
+      bearCase: safeString(forecastRaw.bearCase, 'Bear case requires rejection at resistance and lower-high continuation.'),
+      invalidation: safeString(forecastRaw.invalidation, 'Setup invalidates on decisive break beyond the mapped invalidation zone.'),
+      confirmationNeeded: safeArrayStrings(forecastRaw.confirmationNeeded, 8),
+      probabilityBand: sanitizeEnum(forecastRaw.probabilityBand, PROBABILITY_OPTIONS, 'moderate'),
+      cautionNotes: safeArrayStrings(forecastRaw.cautionNotes, 8),
+    },
+    traderAction: {
+      actionNow: sanitizeEnum(actionRaw.actionNow, ACTION_OPTIONS, practicalAction),
+      reason: safeString(actionRaw.reason, 'Action depends on structure confirmation and risk-defined execution.'),
+      whatToWaitFor: safeArrayStrings(actionRaw.whatToWaitFor, 8),
+      whatInvalidatesTheSetup: safeString(actionRaw.whatInvalidatesTheSetup, safeString(forecastRaw.invalidation, 'Invalidates on clear structural break against thesis.')),
+      manualChecks: safeArrayStrings(actionRaw.manualChecks, 8),
+    },
+    userExplanation: {
+      headline: safeString(explanationRaw.headline, 'Multi-timeframe chart analysis complete'),
+      summaryParagraph: safeString(explanationRaw.summaryParagraph, 'The chart shows a developing structure with actionable context but requires disciplined confirmation.'),
+      biasExplanation: safeString(explanationRaw.biasExplanation, 'Bias is derived from higher-timeframe structure first, then refined on lower timeframe behavior.'),
+      nextMoveExplanation: safeString(explanationRaw.nextMoveExplanation, 'The next move depends on whether price confirms continuation at current structure.'),
+      actionExplanation: safeString(explanationRaw.actionExplanation, 'Wait for confirmation if alignment is mixed; execute only when invalidation and trigger are clear.'),
+    },
+    traderAnswers: {
+      whatIsChartShowing: safeString(
+        answersRaw.whatIsChartShowing,
+        `${safeString(summaryRaw.marketCondition, 'Mixed')} structure with ${safeString(summaryRaw.primaryBias, 'mixed')} directional pressure.`
+      ),
+      isMyBiasCorrect: safeString(
+        answersRaw.isMyBiasCorrect,
+        context.direction === 'unsure'
+          ? 'You did not provide a fixed bias. The chart currently suggests a conditional directional read.'
+          : (biasMatchWithUser ? 'Your stated bias is broadly supported by the visible chart evidence.' : 'Your stated bias is not fully supported by the visible chart evidence right now.')
+      ),
+      whatLikelyNext: safeString(
+        answersRaw.whatLikelyNext,
+        safeString(forecastRaw.mostLikelyNextMove, 'The next move remains conditional on confirmation at the current structure.')
+      ),
+      whatInvalidatesView: safeString(
+        answersRaw.whatInvalidatesView,
+        safeString(forecastRaw.invalidation, 'A clear structural break through invalidation levels would invalidate this view.')
+      ),
+      shouldIActNow: safeString(
+        answersRaw.shouldIActNow,
+        `Current action: ${sanitizeEnum(actionRaw.actionNow || summaryRaw.practicalAction, ACTION_OPTIONS, 'watch')}.`
+      ),
+    },
+  };
+
+  // Backward compatibility fields for existing UI paths.
+  result.overallScore = result.scores.overallSetupScore;
+  result.confidence = result.summary.confidenceLabel;
+  result.statusLabel = result.summary.practicalAction === 'executable' ? 'Executable Setup' : 'Conditional Setup';
+  result.statusEmoji = result.summary.practicalAction === 'executable' ? '🟢' : '🟡';
+  result.checklistType = checklistType;
+  result.checklistLabel = rubric.label;
+  result.imageQuality = result.scores.chartClarityScore >= 75 ? 'good' : result.scores.chartClarityScore >= 45 ? 'acceptable' : 'poor';
+  result.positives = result.sections.flatMap((s) => s.whatAiSees).slice(0, 4);
+  result.concerns = [...result.timeframeAnalysis.contradictions, ...result.sections.flatMap((s) => s.issues)].slice(0, 4);
+  result.manualConfirmation = result.traderAction.manualChecks.slice(0, 4);
+  result.missing = result.sections
+    .flatMap((s) => s.criteriaResults.filter((c) => c.result === 'unclear').map((c) => c.criterion))
+    .slice(0, 4);
+  return result;
+}
+
+function validateRequestBody(body) {
+  const checklistType = safeString(body.checklistType);
+  if (!CHECKLIST_TYPES.includes(checklistType)) {
+    return { ok: false, message: 'checklistType must be scalp, intraDay, or swing' };
+  }
+  return { ok: true };
+}
+
+function normalizeChartMetadata(body) {
+  const list = [];
+  if (Array.isArray(body.images) && body.images.length) {
+    body.images.slice(0, MAX_IMAGES).forEach((img, idx) => {
+      if (!img || typeof img.base64 !== 'string') return;
+      list.push({
+        id: `chart_${idx + 1}`,
+        base64: img.base64,
+        mimeType: ALLOWED_MIME_TYPES.includes(img.mimeType) ? img.mimeType : 'image/jpeg',
+        timeframe: safeString(img.timeframe, 'N/A'),
+      });
+    });
+  } else if (typeof body.image === 'string' && body.image) {
+    list.push({
+      id: 'chart_1',
+      base64: body.image,
+      mimeType: ALLOWED_MIME_TYPES.includes(body.mimeType) ? body.mimeType : 'image/jpeg',
+      timeframe: safeString(body.timeframe, 'N/A'),
+    });
+  }
+  const images = list.map((img) => ({ ...img, rank: timeframeRank(img.timeframe) }));
+  return {
+    images,
+    context: {
+      checklistType: body.checklistType,
+      pair: safeString(body.pair).slice(0, 32) || null,
+      direction: normalizeDirection(body.direction),
+      note: safeString(body.note).slice(0, 700) || null,
+    },
+  };
+}
+
+function validateNormalizedImages(images) {
+  if (!images.length) return { ok: false, message: 'At least one chart image is required' };
+  if (images.length > MAX_IMAGES) return { ok: false, message: `Maximum ${MAX_IMAGES} images allowed` };
+  for (const img of images) {
+    if (!ALLOWED_MIME_TYPES.includes(img.mimeType)) {
+      return { ok: false, message: `Unsupported image type: ${img.mimeType}` };
+    }
+    if (img.base64.length > MAX_BASE64_LEN) {
+      return { ok: false, message: 'One or more images exceed the 10MB limit.' };
+    }
+  }
+  return { ok: true };
+}
+
+async function runAiAnalysisPipeline({ rubric, context, images }) {
+  const buckets = buildTimeframeBuckets(images);
+  const systemPrompt = buildSystemPrompt({ rubric, context, images, buckets });
+  const userPrompt = buildUserInstruction(images, buckets);
+  const raw = await callOpenAIVision(images, systemPrompt, userPrompt);
+  return parseAIJson(raw);
+}
+
+async function ensureTableReady() {
   try {
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS ai_chart_checks (
@@ -379,26 +826,79 @@ async function ensureTableExists() {
         user_id INT NOT NULL,
         checklist_type VARCHAR(20) NOT NULL,
         pair VARCHAR(20),
-        timeframe VARCHAR(20),
+        timeframe VARCHAR(255),
         direction VARCHAR(20),
         overall_score INT,
         status_label VARCHAR(40),
+        chart_clarity_score INT NULL,
+        checklist_score INT NULL,
+        bias_confidence_score INT NULL,
+        overall_setup_score INT NULL,
+        primary_bias VARCHAR(16) NULL,
+        practical_action VARCHAR(40) NULL,
         result_json MEDIUMTEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_user_id (user_id),
-        INDEX idx_created_at (created_at)
+        INDEX idx_created_at (created_at),
+        INDEX idx_primary_bias (primary_bias),
+        INDEX idx_practical_action (practical_action)
       )
     `);
-  } catch {
-    /* table already exists or non-critical — continue */
+  } catch (_) {
+    // continue
   }
+
+  const alterStatements = [
+    'ALTER TABLE ai_chart_checks ADD COLUMN chart_clarity_score INT NULL',
+    'ALTER TABLE ai_chart_checks ADD COLUMN checklist_score INT NULL',
+    'ALTER TABLE ai_chart_checks ADD COLUMN bias_confidence_score INT NULL',
+    'ALTER TABLE ai_chart_checks ADD COLUMN overall_setup_score INT NULL',
+    'ALTER TABLE ai_chart_checks ADD COLUMN primary_bias VARCHAR(16) NULL',
+    'ALTER TABLE ai_chart_checks ADD COLUMN practical_action VARCHAR(40) NULL',
+    'ALTER TABLE ai_chart_checks MODIFY timeframe VARCHAR(255)',
+  ];
+  for (const sql of alterStatements) {
+    try {
+      await executeQuery(sql);
+    } catch (_) {
+      // already exists / non-critical
+    }
+  }
+}
+
+async function persistAnalysis({ userId, context, images, result }) {
+  await ensureTableReady();
+  const tfSummary = images.map((i) => i.timeframe).join(',');
+  await executeQuery(
+    `INSERT INTO ai_chart_checks (
+      user_id, checklist_type, pair, timeframe, direction, overall_score, status_label,
+      chart_clarity_score, checklist_score, bias_confidence_score, overall_setup_score,
+      primary_bias, practical_action, result_json
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      userId,
+      context.checklistType,
+      context.pair,
+      tfSummary || null,
+      context.direction,
+      result.scores.overallSetupScore,
+      result.statusLabel,
+      result.scores.chartClarityScore,
+      result.scores.checklistScore,
+      result.scores.biasConfidenceScore,
+      result.scores.overallSetupScore,
+      result.summary.primaryBias,
+      result.traderAction.actionNow,
+      JSON.stringify(result),
+    ]
+  );
 }
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
@@ -406,79 +906,23 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, message: 'AI service not configured' });
   }
 
-  // Auth
   const decoded = verifyToken(req.headers.authorization);
   if (!decoded?.id) return res.status(401).json({ success: false, message: 'Authentication required' });
   const userId = decoded.id;
 
-  const { image, mimeType, images: imagesBody, checklistType, pair, timeframe, direction, note } = req.body || {};
-
-  if (!['scalp', 'intraDay', 'swing'].includes(checklistType)) {
-    return res.status(400).json({ success: false, message: 'checklistType must be scalp, intraDay, or swing' });
-  }
-
-  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-
-  // Build normalised images array — supports both new multi-image format and legacy single-image format
-  let imagesArr = [];
-  if (Array.isArray(imagesBody) && imagesBody.length > 0) {
-    imagesArr = imagesBody
-      .filter(img => img?.base64 && typeof img.base64 === 'string')
-      .slice(0, 4)
-      .map(img => ({
-        base64:    img.base64,
-        mimeType:  allowedMimeTypes.includes(img.mimeType) ? img.mimeType : 'image/jpeg',
-        timeframe: img.timeframe || 'N/A',
-      }));
-  } else if (image && typeof image === 'string') {
-    imagesArr = [{
-      base64:    image,
-      mimeType:  allowedMimeTypes.includes(mimeType) ? mimeType : 'image/jpeg',
-      timeframe: timeframe || 'N/A',
-    }];
-  }
-
-  if (!imagesArr.length) {
-    return res.status(400).json({ success: false, message: 'At least one chart image is required' });
-  }
-
-  // Size guard (~10MB base64 per image)
-  for (const img of imagesArr) {
-    if (img.base64.length > 14_000_000) {
-      return res.status(400).json({ success: false, message: 'One or more images exceed the 10MB limit.' });
-    }
-  }
-
   try {
-    const rubric = CHECKLIST_RUBRIC[checklistType];
-    const systemPrompt = buildSystemPrompt(rubric, { pair, timeframe, direction, note });
+    const body = req.body || {};
+    const requestValidation = validateRequestBody(body);
+    if (!requestValidation.ok) return res.status(400).json({ success: false, message: requestValidation.message });
 
-    const rawAI = await callOpenAIVision(imagesArr, systemPrompt);
-    const result = parseAIResponse(rawAI);
+    const { images, context } = normalizeChartMetadata(body);
+    const imageValidation = validateNormalizedImages(images);
+    if (!imageValidation.ok) return res.status(400).json({ success: false, message: imageValidation.message });
 
-    const overallScore = typeof result.overallScore === 'number' ? result.overallScore : 0;
-    const statusMeta = getStatusLabel(overallScore);
-    result.statusLabel = statusMeta.label;
-    result.statusEmoji = statusMeta.emoji;
-    result.checklistType = checklistType;
-    result.checklistLabel = rubric.label;
-
-    // Persist result
-    await ensureTableExists();
-    await executeQuery(
-      `INSERT INTO ai_chart_checks (user_id, checklist_type, pair, timeframe, direction, overall_score, status_label, result_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userId,
-        checklistType,
-        pair || null,
-        timeframe || null,
-        direction || null,
-        overallScore,
-        statusMeta.label,
-        JSON.stringify(result),
-      ]
-    );
+    const rubric = CHECKLIST_RUBRIC[context.checklistType];
+    const rawAnalysis = await runAiAnalysisPipeline({ rubric, context, images });
+    const result = normalizeResult(rawAnalysis, { rubric, checklistType: context.checklistType, context });
+    await persistAnalysis({ userId, context, images, result });
 
     return res.status(200).json({ success: true, result });
   } catch (err) {

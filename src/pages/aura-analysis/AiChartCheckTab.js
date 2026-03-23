@@ -1,6 +1,6 @@
 /**
  * AI Chart Check Tab
- * Upload a chart → AI scores it against the Trade Validator checklist.
+ * Premium multi-timeframe analysis UI.
  */
 import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,94 +9,88 @@ import { getInstrumentsByCategory } from '../../lib/aura-analysis/instruments';
 import '../../styles/aura-analysis/AiChartCheck.css';
 
 const PAIR_GROUPS = getInstrumentsByCategory();
-
 const BASE_URL = process.env.REACT_APP_API_URL || '';
 
 const CHECKLIST_TYPES = [
-  { id: 'scalp',    label: 'Scalp',      desc: 'Fast execution, precision entry and session control' },
-  { id: 'intraDay', label: 'Intra Day',  desc: 'Structured intraday bias, confirmations and clean execution' },
-  { id: 'swing',    label: 'Swing',      desc: 'Higher-timeframe structure, patience and position quality' },
+  { id: 'scalp', label: 'Scalp', desc: 'Fast execution, precision entry and session control' },
+  { id: 'intraDay', label: 'Intra Day', desc: 'Structured intraday bias, confirmations and clean execution' },
+  { id: 'swing', label: 'Swing', desc: 'Higher-timeframe structure, patience and position quality' },
 ];
 
 const DIRECTION_OPTIONS = ['Buy', 'Sell', 'Unsure'];
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE_MB = 10;
-
-const TIMEFRAME_OPTIONS = ['Monthly','Weekly','Daily','4H','2H','1H','30M','15M','5M','1M'];
-const TF_DEFAULTS      = ['1H','15M','4H','Daily'];
+const TIMEFRAME_OPTIONS = ['Monthly', 'Weekly', 'Daily', '4H', '2H', '1H', '30M', '15M', '5M', '1M'];
+const TF_DEFAULTS = ['1H', '15M', '4H', 'Daily'];
 const makeSlot = (tf = '1H') => ({ id: `${Date.now()}-${Math.random()}`, timeframe: tf, image: null });
 
-function ScoreDial({ score }) {
-  const clamp = Math.max(0, Math.min(100, score));
-  const color = clamp >= 80 ? '#f8c37d' : clamp >= 60 ? '#eaa960' : clamp >= 40 ? '#c9a05c' : '#7a6e62';
-  const radius = 44;
-  const circ = 2 * Math.PI * radius;
-  const offset = circ - (clamp / 100) * circ;
+function scoreTone(score) {
+  if (score >= 75) return 'good';
+  if (score >= 45) return 'mid';
+  return 'risk';
+}
+
+function ScoreCard({ label, value }) {
   return (
-    <div className="acc-dial-wrap">
-      <svg viewBox="0 0 100 100" className="acc-dial-svg">
-        <circle cx="50" cy="50" r={radius} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="8" />
-        <circle
-          cx="50" cy="50" r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth="8"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 50 50)"
-          style={{ transition: 'stroke-dashoffset 0.8s ease, stroke 0.4s' }}
-        />
-        <text x="50" y="54" textAnchor="middle" fill="#fff" fontSize="18" fontWeight="700" fontFamily="inherit">
-          {clamp}
-        </text>
-        <text x="50" y="66" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="7" fontFamily="inherit">
-          / 100
-        </text>
-      </svg>
+    <div className={`acc-score-card acc-score-card--${scoreTone(value)}`}>
+      <span className="acc-score-label">{label}</span>
+      <span className="acc-score-value">{Math.max(0, Math.min(100, Number(value) || 0))}</span>
     </div>
   );
 }
 
+function InfoList({ items }) {
+  if (!Array.isArray(items) || !items.length) return <span className="acc-empty-text">None</span>;
+  return <ul>{items.map((item, i) => <li key={`${item}-${i}`}>{item}</li>)}</ul>;
+}
+
 function SectionCard({ section }) {
   const [open, setOpen] = useState(false);
-  const statusMeta = {
-    pass:    { cls: 'acc-status--pass',    label: 'Pass',    icon: '✓' },
-    partial: { cls: 'acc-status--partial', label: 'Partial', icon: '◑' },
-    fail:    { cls: 'acc-status--fail',    label: 'Fail',    icon: '✗' },
-  };
-  const meta = statusMeta[section.status] || statusMeta.partial;
-
   return (
-    <div className={`acc-section-card ${meta.cls.replace('acc-status--', 'acc-section--')}`}>
-      <button className="acc-section-header" onClick={() => setOpen(v => !v)} type="button">
+    <div className={`acc-section-card acc-section-v2 acc-section-v2--${section.verdict || 'moderate'}`}>
+      <button className="acc-section-header" onClick={() => setOpen((v) => !v)} type="button">
         <div className="acc-section-left">
-          <span className={`acc-section-status ${meta.cls}`}>{meta.icon}</span>
           <span className="acc-section-name">{section.name}</span>
         </div>
         <div className="acc-section-right">
           <span className="acc-section-score">{section.score}%</span>
-          <span className={`acc-section-label ${meta.cls}`}>{meta.label}</span>
+          <span className="acc-section-label">{section.verdict}</span>
           <span className={`acc-section-chevron ${open ? 'open' : ''}`}>›</span>
         </div>
       </button>
       {open && (
         <div className="acc-section-body">
-          <p className="acc-section-reasoning">{section.reasoning}</p>
+          <div className="acc-sub-block">
+            <h5>What AI Sees</h5>
+            <InfoList items={section.whatAiSees} />
+          </div>
+          <div className="acc-sub-block">
+            <h5>Why It Matters</h5>
+            <p>{section.whyItMatters}</p>
+          </div>
+          <div className="acc-sub-grid">
+            <div className="acc-sub-block">
+              <h5>Issues</h5>
+              <InfoList items={section.issues} />
+            </div>
+            <div className="acc-sub-block">
+              <h5>What Would Improve It</h5>
+              <InfoList items={section.whatWouldImproveIt} />
+            </div>
+          </div>
           {Array.isArray(section.criteriaResults) && section.criteriaResults.length > 0 && (
-            <ul className="acc-criteria-list">
-              {section.criteriaResults.map((cr, i) => {
-                const r = cr.result || 'unclear';
-                return (
-                  <li key={i} className={`acc-criteria-item acc-criteria--${r}`}>
+            <div className="acc-sub-block">
+              <h5>Checklist Criteria</h5>
+              <ul className="acc-criteria-list">
+                {section.criteriaResults.map((cr, i) => (
+                  <li key={`${cr.criterion}-${i}`} className={`acc-criteria-item acc-criteria--${cr.result || 'unclear'}`}>
                     <span className="acc-criteria-dot" />
                     <span className="acc-criteria-text">{cr.criterion}</span>
-                    {cr.note && <span className="acc-criteria-note"> — {cr.note}</span>}
-                    <span className={`acc-criteria-badge acc-criteria-badge--${r}`}>{r}</span>
+                    <span className={`acc-criteria-badge acc-criteria-badge--${cr.result || 'unclear'}`}>{cr.result || 'unclear'}</span>
                   </li>
-                );
-              })}
-            </ul>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       )}
@@ -104,120 +98,159 @@ function SectionCard({ section }) {
   );
 }
 
-function RecommendationBanner({ score }) {
-  const navigate = useNavigate();
-  const isGood = score >= 70;
-
+function HeadlineResult({ result }) {
+  const s = result.summary || {};
   return (
-    <div className={`acc-rec-banner ${isGood ? 'acc-rec-banner--good' : 'acc-rec-banner--risk'}`}>
-      <div className="acc-rec-banner-left">
-        <span className="acc-rec-banner-icon">{isGood ? '✅' : '⚠️'}</span>
-        <div className="acc-rec-banner-text">
-          <span className="acc-rec-banner-title">
-            {isGood ? 'Trade Recommendation: Good to Go' : 'Not Recommended — Trade at Your Own Risk'}
-          </span>
-          <span className="acc-rec-banner-body">
-            {isGood
-              ? `Your chart scores ${score}% and meets the 70% threshold. Start your checklist to formally add this trade to the system.`
-              : `Your chart scores ${score}%, which is below the 70% threshold. This setup is not recommended — if you still want to proceed, do so at your own risk.`
-            }
-          </span>
-        </div>
+    <div className="acc-headline-card">
+      <div className="acc-headline-grid">
+        <div><span className="acc-k">Bias</span><strong>{s.primaryBias || 'mixed'}</strong></div>
+        <div><span className="acc-k">Bias Match</span><strong>{s.biasMatchWithUser == null ? 'unclear' : s.biasMatchWithUser ? 'yes' : 'no'}</strong></div>
+        <div><span className="acc-k">Confidence</span><strong>{s.confidenceLabel || 'medium'}</strong></div>
+        <div><span className="acc-k">Action Now</span><strong>{s.practicalAction || 'watch'}</strong></div>
       </div>
-      <button
-        type="button"
-        className={`acc-rec-banner-btn ${isGood ? 'acc-rec-banner-btn--good' : 'acc-rec-banner-btn--risk'}`}
-        onClick={() => navigate('/trader-deck/trade-validator/checklist')}
-      >
-        <span>📋</span>
-        {isGood ? 'Start Checklist' : 'Go to Checklist'}
-      </button>
+      <p className="acc-headline-move">
+        <span>Most likely next move:</span> {s.mostLikelyNextMove || 'Awaiting cleaner confirmation from current structure.'}
+      </p>
     </div>
   );
 }
 
 function ResultPanel({ result, onReset }) {
+  const navigate = useNavigate();
+  const scores = result.scores || {};
+  const tf = result.timeframeAnalysis || {};
+  const forecast = result.forecast || {};
+  const action = result.traderAction || {};
+  const explanation = result.userExplanation || {};
+  const answers = result.traderAnswers || {};
+
   return (
     <div className="acc-result">
-      {/* Overall score */}
-      <div className="acc-result-hero">
-        <ScoreDial score={result.overallScore} />
-        <div className="acc-result-hero-text">
-          <div className="acc-result-status">
-            <span className="acc-result-emoji">{result.statusEmoji}</span>
-            <span className="acc-result-label">{result.statusLabel}</span>
-            <span className={`acc-result-conf acc-result-conf--${result.confidence}`}>
-              {result.confidence} confidence
-            </span>
-          </div>
-          <div className="acc-result-meta">
-            {result.checklistLabel && (
-              <span className="acc-result-badge">{result.checklistLabel} Checklist</span>
-            )}
-            {result.imageQuality && (
-              <span className={`acc-result-badge acc-result-badge--iq acc-iq--${result.imageQuality}`}>
-                Image: {result.imageQuality}
-              </span>
-            )}
-          </div>
-          <p className="acc-result-summary">{result.summary}</p>
+      <HeadlineResult result={result} />
+
+      <div className="acc-score-grid">
+        <ScoreCard label="Chart Clarity" value={scores.chartClarityScore} />
+        <ScoreCard label="Checklist Quality" value={scores.checklistScore} />
+        <ScoreCard label="Bias Confidence" value={scores.biasConfidenceScore} />
+        <ScoreCard label="Overall Setup" value={scores.overallSetupScore} />
+      </div>
+
+      <div className="acc-panel">
+        <h3 className="acc-block-title">Timeframe Alignment</h3>
+        <div className="acc-timeframe-grid">
+          <div><span className="acc-k">HTF</span><strong>{tf.higherTimeframeBias || 'unclear'}</strong></div>
+          <div><span className="acc-k">MTF</span><strong>{tf.midTimeframeBias || 'unclear'}</strong></div>
+          <div><span className="acc-k">LTF</span><strong>{tf.lowerTimeframeBias || 'unclear'}</strong></div>
+        </div>
+        <p className="acc-muted-line">{tf.alignmentSummary || 'Alignment details unavailable.'}</p>
+        <div className="acc-sub-block">
+          <h5>Contradictions</h5>
+          <InfoList items={tf.contradictions} />
         </div>
       </div>
 
-      {/* Recommendation banner */}
-      <RecommendationBanner score={result.overallScore} />
-
-      {/* Section breakdown */}
       {Array.isArray(result.sections) && result.sections.length > 0 && (
         <div className="acc-sections">
-          <h3 className="acc-block-title">Checklist Section Breakdown</h3>
+          <h3 className="acc-block-title">Section Breakdown</h3>
           <div className="acc-sections-list">
-            {result.sections.map((s, i) => <SectionCard key={i} section={s} />)}
+            {result.sections.map((section, i) => <SectionCard key={`${section.name}-${i}`} section={section} />)}
           </div>
         </div>
       )}
 
-      {/* 4-column insight grid */}
-      <div className="acc-insights-grid">
-        {result.positives?.length > 0 && (
-          <div className="acc-insight acc-insight--pos">
-            <div className="acc-insight-title">✓ Supporting</div>
-            <ul>{result.positives.map((p, i) => <li key={i}>{p}</li>)}</ul>
+      <div className="acc-panel">
+        <h3 className="acc-block-title">Forecast / Scenario Engine</h3>
+        <div className="acc-sub-grid">
+          <div className="acc-sub-block">
+            <h5>Most Likely Next Move</h5>
+            <p>{forecast.mostLikelyNextMove || 'Not enough structure for a strong directional call.'}</p>
           </div>
-        )}
-        {result.concerns?.length > 0 && (
-          <div className="acc-insight acc-insight--neg">
-            <div className="acc-insight-title">⚠ Concerns</div>
-            <ul>{result.concerns.map((c, i) => <li key={i}>{c}</li>)}</ul>
+          <div className="acc-sub-block">
+            <h5>Secondary Scenario</h5>
+            <p>{forecast.secondaryScenario || 'Alternative scenario unavailable.'}</p>
           </div>
-        )}
-        {result.missing?.length > 0 && (
-          <div className="acc-insight acc-insight--missing">
-            <div className="acc-insight-title">? Missing</div>
-            <ul>{result.missing.map((m, i) => <li key={i}>{m}</li>)}</ul>
-          </div>
-        )}
-        {result.manualConfirmation?.length > 0 && (
-          <div className="acc-insight acc-insight--manual">
-            <div className="acc-insight-title">✎ Manual Check</div>
-            <ul>{result.manualConfirmation.map((m, i) => <li key={i}>{m}</li>)}</ul>
-          </div>
-        )}
+        </div>
+        <div className="acc-sub-grid">
+          <div className="acc-sub-block"><h5>Bull Case</h5><p>{forecast.bullCase || 'Not provided.'}</p></div>
+          <div className="acc-sub-block"><h5>Bear Case</h5><p>{forecast.bearCase || 'Not provided.'}</p></div>
+        </div>
+        <div className="acc-sub-grid">
+          <div className="acc-sub-block"><h5>Invalidation</h5><p>{forecast.invalidation || 'Invalidation not provided.'}</p></div>
+          <div className="acc-sub-block"><h5>Probability Band</h5><p>{forecast.probabilityBand || 'moderate'}</p></div>
+        </div>
+        <div className="acc-sub-grid">
+          <div className="acc-sub-block"><h5>Confirmation Needed</h5><InfoList items={forecast.confirmationNeeded} /></div>
+          <div className="acc-sub-block"><h5>Caution Notes</h5><InfoList items={forecast.cautionNotes} /></div>
+        </div>
       </div>
 
-      {/* Mandatory disclaimer */}
+      <div className="acc-panel">
+        <h3 className="acc-block-title">Trader Action</h3>
+        <div className="acc-sub-grid">
+          <div className="acc-sub-block"><h5>Action Now</h5><p>{action.actionNow || 'watch'}</p></div>
+          <div className="acc-sub-block"><h5>Reason</h5><p>{action.reason || 'Wait for clearer structure and risk-defined trigger.'}</p></div>
+        </div>
+        <div className="acc-sub-grid">
+          <div className="acc-sub-block"><h5>What To Wait For</h5><InfoList items={action.whatToWaitFor} /></div>
+          <div className="acc-sub-block"><h5>Manual Checks</h5><InfoList items={action.manualChecks} /></div>
+        </div>
+        <div className="acc-sub-block">
+          <h5>What Invalidates The Setup</h5>
+          <p>{action.whatInvalidatesTheSetup || 'Decisive structural break against thesis.'}</p>
+        </div>
+      </div>
+
+      <div className="acc-panel">
+        <h3 className="acc-block-title">Direct Trader Answers</h3>
+        <div className="acc-qa-grid">
+          <div className="acc-qa-item">
+            <h5>What is the chart showing?</h5>
+            <p>{answers.whatIsChartShowing || 'The chart is showing mixed structure with conditional directional pressure.'}</p>
+          </div>
+          <div className="acc-qa-item">
+            <h5>Is my bias correct or not?</h5>
+            <p>{answers.isMyBiasCorrect || 'Bias confirmation is mixed; wait for clearer structural alignment.'}</p>
+          </div>
+          <div className="acc-qa-item">
+            <h5>What is most likely to happen next?</h5>
+            <p>{answers.whatLikelyNext || forecast.mostLikelyNextMove || 'Most likely path needs confirmation before execution.'}</p>
+          </div>
+          <div className="acc-qa-item">
+            <h5>What would invalidate this view?</h5>
+            <p>{answers.whatInvalidatesView || action.whatInvalidatesTheSetup || 'A decisive break through invalidation structure.'}</p>
+          </div>
+          <div className="acc-qa-item">
+            <h5>Should I act now, wait, or avoid it?</h5>
+            <p>{answers.shouldIActNow || `Current action: ${action.actionNow || 'watch'}.`}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="acc-panel">
+        <h3 className="acc-block-title">Premium Analyst Explanation</h3>
+        <p className="acc-expl-headline">{explanation.headline || 'AI market read'}</p>
+        <p>{explanation.summaryParagraph}</p>
+        <p>{explanation.biasExplanation}</p>
+        <p>{explanation.nextMoveExplanation}</p>
+        <p>{explanation.actionExplanation}</p>
+      </div>
+
       <div className="acc-disclaimer">
         <span className="acc-disclaimer-icon">ℹ</span>
         <p>
-          <strong>This AI Chart Check is a supporting tool only.</strong> You must still go through the
-          full checklist manually and confirm your trade plan yourself before entering any trade.
-          This is not financial advice and does not guarantee any trade outcome.
+          <strong>This AI Chart Check is a supporting tool only.</strong> Always complete the Trade Validator checklist manually
+          and confirm your own risk plan before entering any position. Not financial advice.
         </p>
       </div>
 
-      <button className="acc-btn acc-btn--secondary acc-reset-btn" onClick={onReset} type="button">
-        ↺ Analyse Another Chart
-      </button>
+      <div className="acc-result-actions">
+        <button className="acc-btn acc-btn--secondary acc-reset-btn" onClick={onReset} type="button">
+          ↺ Analyse Another Chart
+        </button>
+        <button className="acc-btn acc-btn--primary acc-go-checklist" onClick={() => navigate('/trader-deck/trade-validator/checklist')} type="button">
+          📋 Go To Checklist
+        </button>
+      </div>
     </div>
   );
 }

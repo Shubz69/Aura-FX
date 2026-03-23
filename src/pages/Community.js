@@ -2707,7 +2707,7 @@ if (window.requestAnimationFrame) {
                 accessLevel: (channelData.accessLevel || 'open').toLowerCase(),
                 permissionType: (channelData.permissionType || 'read-write').toLowerCase()
             };
-            const apiBaseUrl = Api.getBaseUrl() || window.location.origin;
+            const apiBaseUrl = Api.getBaseUrl() || '';
             const response = await fetch(`${apiBaseUrl}/api/community/channels`, {
                 method: 'PUT',
                 headers: {
@@ -2875,7 +2875,7 @@ if (window.requestAnimationFrame) {
     // Fetch all users for @mention autocomplete
     const fetchAllUsers = useCallback(async () => {
         try {
-            const apiBaseUrl = Api.getBaseUrl() || window.location.origin;
+            const apiBaseUrl = Api.getBaseUrl() || '';
             const response = await axios.get(`${apiBaseUrl}/api/community/users`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -2975,7 +2975,7 @@ if (window.requestAnimationFrame) {
                 try {
                     const token = localStorage.getItem('token');
                     const response = await axios.post(
-                        `${Api.getBaseUrl() || window.location.origin}/api/stripe/subscription-success`,
+                        `${Api.getBaseUrl() || ''}/api/stripe/subscription-success`,
                         { userId, session_id: sessionId || `stripe-${Date.now()}` },
                         {
                             headers: {
@@ -4082,7 +4082,7 @@ setMessages(prev => {
                 try {
                     let usersForMentions = allUsers;
                     if (usersForMentions.length === 0) {
-                        const usersResponse = await axios.get(`${Api.getBaseUrl() || window.location.origin}/api/community/users`);
+                        const usersResponse = await axios.get(`${Api.getBaseUrl() || ''}/api/community/users`);
                         usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
                         setAllUsers(usersForMentions);
                     }

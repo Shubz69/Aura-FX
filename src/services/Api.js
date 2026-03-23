@@ -346,40 +346,15 @@ const Api = {
     
     // Payment Processing
     initiatePayment: (courseId) => {
-        console.log('Initiating payment for course:', courseId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('Cannot initiate payment: No authentication token');
-            return Promise.reject(new Error('Authentication required'));
-        }
-        
-        // Create a specialized axios instance for payment processing with better error handling
-        const paymentAxios = axios.create({
-            baseURL: API_BASE_URL,
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            timeout: 10000 // 10 second timeout for payment requests
+        // Keep compatibility for existing callers by returning a stable object
+        // while using the live Stripe direct-checkout route.
+        const checkoutUrl = `${API_BASE_URL}/api/stripe/direct-checkout?courseId=${encodeURIComponent(courseId)}&timestamp=${Date.now()}`;
+        return Promise.resolve({
+            data: {
+                success: true,
+                checkoutUrl
+            }
         });
-        
-        return paymentAxios.post('/api/payments/checkout', { courseId })
-            .then(response => {
-                console.log('Payment initiation successful:', response.data);
-                return response;
-            })
-            .catch(error => {
-                console.error('Payment initiation failed:', error);
-                // Add detailed error info
-                if (error.response) {
-                    console.error('Response data:', error.response.data);
-                    console.error('Response status:', error.response.status);
-                } else if (error.request) {
-                    console.error('No response received from server');
-                }
-                throw error;
-            });
     },
     
     completePayment: (sessionId, courseId) => {
@@ -409,8 +384,9 @@ const Api = {
         return await axios.get(`${API_BASE_URL}/api/courses`);
     },
     
-    getCourseById: (id) => {
-        return axios.get(`${API_BASE_URL}/api/courses/${id}`);
+    getCourseById: async (id) => {
+        const response = await axios.get(`${API_BASE_URL}/api/courses/${id}`);
+        return response;
     },
     
     // Admin APIs
@@ -630,7 +606,7 @@ const Api = {
         return axios.put(`${API_BASE_URL}/api/users/${userId}`, profileData);
     },
     
-    getUserLevel: (userId) => {
+    getUserLevel: async (userId) => {
         const baseUrl = getApiBaseUrl();
         const token = localStorage.getItem('token');
         
@@ -639,12 +615,14 @@ const Api = {
             return Promise.reject(new Error('Authentication required'));
         }
         
-        return axios.get(`${baseUrl}/api/users/${userId}/level`, {
+        const response = await axios.get(`${baseUrl}/api/users/${userId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
             }
         });
+        const level = response?.data?.level ?? 1;
+        return { ...response, data: { ...(response?.data || {}), level } };
     },
 
     getUserCourses: (userId) => {

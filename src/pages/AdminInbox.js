@@ -8,7 +8,7 @@ import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { FriendsUpgradeRequired } from '../components/RouteGuards';
 import '../styles/AdminInbox.css';
 
-const API_BASE = () => (typeof window !== 'undefined' ? window.location.origin : '');
+const API_BASE = () => (Api.getBaseUrl() || '');
 
 /* ── Avatar initials helper ── */
 const getInitials = (name) => {
@@ -49,6 +49,7 @@ const AdminInbox = () => {
   const isThreadChanging = useRef(false);
   const shouldScrollToBottom = useRef(false);
   const prevMessagesLength = useRef(0);
+  const loadMessagesInFlightRef = useRef(false);
   const threadsRef = useRef(threads);
   useEffect(() => {
     threadsRef.current = threads;
@@ -352,6 +353,8 @@ useEffect(() => {
     shouldScrollToBottom.current = false;
     
     const loadMessages = async () => {
+      if (loadMessagesInFlightRef.current) return;
+      loadMessagesInFlightRef.current = true;
       try {
         const resp = await Api.getThreadMessages(activeThreadId, { limit: 50 });
         if (!mounted) return;
@@ -360,6 +363,8 @@ useEffect(() => {
         setThreads(prev => prev.map(t => t.id === activeThreadId ? { ...t, adminUnreadCount: 0 } : t));
       } catch (e) {
         if (mounted) console.error('Load messages failed', e);
+      } finally {
+        loadMessagesInFlightRef.current = false;
       }
     };
     
@@ -379,7 +384,8 @@ useEffect(() => {
     });
     
     const pollInterval = setInterval(() => {
-      if (!mounted || !activeThreadId) return;
+      if (!mounted || !activeThreadId || WebSocketService.isConnected) return;
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       Api.getThreadMessages(activeThreadId, { limit: 50 }).then((resp) => {
         if (!mounted) return;
         setMessages(resp.data.messages || []);

@@ -15,12 +15,19 @@ const Messages = () => {
     const messagesContainerRef = useRef(null);
     const isFirstLoad = useRef(true);
     const prevMessagesLength = useRef(0);
+    const threadIdRef = useRef(null);
+    const loadInFlightRef = useRef(false);
 
     const loadMessages = useCallback(async () => {
-        if (!user) return;
+        if (!user || loadInFlightRef.current) return;
+        loadInFlightRef.current = true;
         try {
-            const threadResponse = await Api.ensureAdminThread(user.id);
-            const threadId = threadResponse.data?.thread?.id;
+            let threadId = threadIdRef.current;
+            if (!threadId) {
+                const threadResponse = await Api.ensureAdminThread(user.id);
+                threadId = threadResponse.data?.thread?.id || null;
+                threadIdRef.current = threadId;
+            }
             if (threadId) {
                 const messagesResponse = await Api.getThreadMessages(threadId, { limit: 50 });
                 const apiMessages = messagesResponse.data?.messages || [];
@@ -41,6 +48,8 @@ const Messages = () => {
             console.error('Error loading messages:', error);
             const savedMessages = localStorage.getItem(`messages_${user.id}`);
             if (savedMessages) setMessages(JSON.parse(savedMessages));
+        } finally {
+            loadInFlightRef.current = false;
         }
     }, [user]);
 
@@ -50,7 +59,10 @@ const Messages = () => {
             return;
         }
         loadMessages();
-        const pollInterval = setInterval(loadMessages, 3000);
+        const pollInterval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+            loadMessages();
+        }, 10000);
         return () => clearInterval(pollInterval);
     }, [user, navigate, loadMessages]);
 

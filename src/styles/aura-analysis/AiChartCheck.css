@@ -790,3 +790,183 @@ select.acc-input:focus {
 .acc-disclaimer p { margin: 0; }
 
 .acc-reset-btn { align-self: flex-start; }
+
+/* ══ Premium upgraded result layout ══════════════════════════════════ */
+.acc-headline-card,
+.acc-panel {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--acc-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.acc-headline-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 760px) {
+  .acc-headline-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.acc-headline-grid div {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.acc-k {
+  display: block;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 4px;
+}
+.acc-headline-grid strong {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.acc-headline-move {
+  margin: 12px 0 0;
+  color: rgba(255,255,255,0.76);
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+.acc-headline-move span { color: #f8c37d; font-weight: 700; }
+
+.acc-score-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 760px) {
+  .acc-score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.acc-score-card {
+  border-radius: 10px;
+  border: 1px solid var(--acc-border);
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+}
+.acc-score-label {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 6px;
+}
+.acc-score-value {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+.acc-score-card--good .acc-score-value { color: #6ee7b7; }
+.acc-score-card--mid .acc-score-value { color: #f8c37d; }
+.acc-score-card--risk .acc-score-value { color: #fca5a5; }
+
+.acc-timeframe-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.acc-timeframe-grid div {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 10px;
+}
+.acc-timeframe-grid strong {
+  color: #fff;
+  font-size: 0.88rem;
+  text-transform: capitalize;
+}
+.acc-muted-line {
+  margin: 0 0 10px;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.86rem;
+}
+
+.acc-sub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 760px) {
+  .acc-sub-grid { grid-template-columns: 1fr; }
+}
+.acc-sub-block h5 {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.52);
+}
+.acc-sub-block p {
+  margin: 0;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.5;
+  font-size: 0.86rem;
+}
+.acc-sub-block ul {
+  margin: 0;
+  padding-left: 15px;
+}
+.acc-sub-block li {
+  color: rgba(255,255,255,0.75);
+  margin: 0 0 4px;
+  font-size: 0.84rem;
+}
+.acc-empty-text { color: rgba(255,255,255,0.35); font-size: 0.82rem; }
+
+.acc-section-v2 .acc-section-label {
+  color: rgba(255,255,255,0.65);
+  text-transform: capitalize;
+}
+.acc-section-v2--strong { border-left: 3px solid #6ee7b7; }
+.acc-section-v2--moderate { border-left: 3px solid #f8c37d; }
+.acc-section-v2--weak { border-left: 3px solid #fca5a5; }
+.acc-section-v2--unclear { border-left: 3px solid rgba(255,255,255,0.4); }
+
+.acc-expl-headline {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8c37d;
+  margin: 0 0 8px;
+}
+
+.acc-result-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.acc-go-checklist {
+  width: auto;
+  padding: 10px 18px;
+  margin-top: 0;
+}
+
+.acc-qa-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.acc-qa-item {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.acc-qa-item h5 {
+  margin: 0 0 6px;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.acc-qa-item p {
+  margin: 0;
+  color: rgba(255,255,255,0.78);
+  line-height: 1.5;
+  font-size: 0.86rem;
+}

@@ -248,7 +248,7 @@ const Settings = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/admin/users/${selectedSubUser.id}/subscription`, {
+      const response = await fetch(`${Api.getBaseUrl() || ''}/api/admin/users/${selectedSubUser.id}/subscription`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

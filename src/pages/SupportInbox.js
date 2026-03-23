@@ -15,6 +15,7 @@ const SupportInbox = () => {
   const [input, setInput] = useState('');
   const [file, setFile] = useState(null);
   const endRef = useRef(null);
+  const loadInFlightRef = useRef(false);
 
   const threadId = useMemo(() => thread?.id, [thread]);
 
@@ -44,6 +45,8 @@ const SupportInbox = () => {
     if (!threadId || !user) return;
     let mounted = true;
     const loadMessages = async () => {
+      if (loadInFlightRef.current) return;
+      loadInFlightRef.current = true;
       try {
         const resp = await Api.getThreadMessages(threadId, { limit: 50 });
         if (!mounted) return;
@@ -51,6 +54,8 @@ const SupportInbox = () => {
         await Api.markThreadRead(threadId);
       } catch (e) {
         if (mounted) console.error('Load thread messages failed', e);
+      } finally {
+        loadInFlightRef.current = false;
       }
     };
     WebSocketService.connect({ userId: user.id, role: user.role }, async () => {
@@ -69,7 +74,8 @@ const SupportInbox = () => {
       await loadMessages();
     });
     const pollInterval = setInterval(() => {
-      if (!mounted || !threadId) return;
+      if (!mounted || !threadId || WebSocketService.isConnected) return;
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       Api.getThreadMessages(threadId, { limit: 50 }).then((resp) => {
         if (mounted) setMessages(resp.data.messages || []);
       }).catch(() => {});

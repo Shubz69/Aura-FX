@@ -9,6 +9,7 @@ import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import { validateUsername, canChangeUsername, getCooldownMessage } from '../utils/usernameValidation';
 import { getPlaceholderColor, setPlaceholderColor as savePlaceholderColor, PLACEHOLDER_COLORS } from '../utils/avatar';
 import { setUserInLocalStorage } from '../utils/userLocalStorage';
+import { getStoredUser } from '../utils/storage';
 import {
     getRankTitle,
     getTierName,
@@ -20,10 +21,7 @@ import {
 } from '../utils/xpSystem';
 
 const resolveApiBaseUrl = () => {
-    if (typeof window !== 'undefined' && window.location?.origin) {
-        return window.location.origin;
-    }
-    return process.env.REACT_APP_API_URL || '';
+    return Api.getBaseUrl() || '';
 };
 
 const getIANATimezones = () => {
@@ -155,7 +153,7 @@ useEffect(() => {
     if (initialLoadDone.current) return;
     if (!user?.id) return;
 
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const storedUser = getStoredUser();
     const userBannerKey = userKey(user.id, 'banner');
     
     
@@ -203,7 +201,7 @@ useEffect(() => {
                 setAvatarColor(savedColor);
             }
 
-            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const storedUser = getStoredUser();
             const userBannerKey = userKey(user.id, 'banner');
             const scopedBanner = localStorage.getItem(userBannerKey) || '';
             const localBanner = (storedUser.id === user.id ? storedUser.banner : '') || scopedBanner || '';
@@ -373,7 +371,7 @@ useEffect(() => {
             const { newXP, newLevel } = event.detail;
             setFormData(prev => ({ ...prev, xp: newXP, level: newLevel }));
             try {
-                const u = JSON.parse(localStorage.getItem('user') || '{}');
+                const u = getStoredUser();
                 if (u.id) {
                     setUserInLocalStorage({ ...u, xp: newXP, level: newLevel });
                 }
@@ -388,7 +386,7 @@ useEffect(() => {
         window.addEventListener('levelUp', handleLevelUp);
 
         const xpRefreshInterval = setInterval(() => {
-            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const storedUser = getStoredUser();
             if (storedUser.xp !== undefined && storedUser.level !== undefined) {
                 const currentXP = parseFloat(storedUser.xp || 0);
                 const currentLevel = parseInt(storedUser.level || 1);
@@ -604,7 +602,7 @@ const handleSaveChanges = async () => {
             return;
         }
 
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const storedUser = getStoredUser();
         
         const currentUsername = (user.username || storedUser.username || '').toString().trim();
         const newUsername = (formData.username || '').toString().trim();
@@ -1107,7 +1105,7 @@ if (!avatarToSave && avatarColor) {
                                                     { headers: { Authorization: `Bearer ${token}` } }
                                                 );
 
-                                                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                                                const storedUser = getStoredUser();
                                                 const updatedUser = { ...storedUser, timezone: val || null };
                                                 setUserInLocalStorage(updatedUser);
 

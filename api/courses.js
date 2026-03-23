@@ -27,6 +27,16 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
+  const requestedCourseId = Number(req.query?.id);
+  const maybeReturnById = (courses) => {
+    if (!Number.isFinite(requestedCourseId) || requestedCourseId <= 0) return null;
+    const match = (Array.isArray(courses) ? courses : []).find((course) => Number(course.id) === requestedCourseId);
+    if (!match) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    return res.status(200).json(match);
+  };
+
   // Default courses list (fallback if database is unavailable)
   // Only show "1 TO 1"
   const defaultCourses = [
@@ -40,6 +50,8 @@ module.exports = async (req, res) => {
     const cacheKey = 'courses_list';
     const cached = getCached(cacheKey, 3600000); // 1 hour
     if (cached) {
+      const byId = maybeReturnById(cached);
+      if (byId) return byId;
       return res.status(200).json(cached);
     }
 
@@ -150,6 +162,8 @@ module.exports = async (req, res) => {
             // Cache the result
             setCached(cacheKey, finalCourses);
             
+            const byId = maybeReturnById(finalCourses);
+            if (byId) return byId;
             console.log(`Courses API: Returning ${finalCourses.length} filtered courses from database after sync`);
             return res.status(200).json(finalCourses);
           }
@@ -180,6 +194,8 @@ module.exports = async (req, res) => {
           if (!hasOneToOne) {
             // Use default course if missing
             setCached(cacheKey, defaultCourses);
+            const byId = maybeReturnById(defaultCourses);
+            if (byId) return byId;
             console.log(`Courses API: Returning default course (1 TO 1)`);
             return res.status(200).json(defaultCourses);
           }
@@ -187,6 +203,8 @@ module.exports = async (req, res) => {
           // Cache the result
           setCached(cacheKey, courses);
           
+          const byId = maybeReturnById(courses);
+          if (byId) return byId;
           console.log(`Courses API: Returning ${courses.length} filtered courses from database`);
           return res.status(200).json(courses);
         }
@@ -209,6 +227,15 @@ module.exports = async (req, res) => {
       }
     } else {
       console.log('Courses API: Database connection failed or unavailable, using default courses');
+    }
+
+    // Return one course by id when requested.
+    if (Number.isFinite(requestedCourseId) && requestedCourseId > 0) {
+      const match = defaultCourses.find((course) => Number(course.id) === requestedCourseId);
+      if (!match) {
+        return res.status(404).json({ success: false, message: 'Course not found' });
+      }
+      return res.status(200).json(match);
     }
 
     // Return default courses if database unavailable or empty

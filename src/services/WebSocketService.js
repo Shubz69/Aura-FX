@@ -24,9 +24,10 @@ class WebSocketService {
 
         const isLocal = typeof window !== 'undefined' &&
             /^localhost|127\.0\.0\.1$/.test(window.location?.hostname || '');
+        const wsHost = process.env.REACT_APP_WS_HOST || 'https://aura-fx-production.up.railway.app';
         const wsBase = process.env.REACT_APP_INBOX_WS_URL ||
             process.env.REACT_APP_WS_URL ||
-            (isLocal ? (window.location?.origin || process.env.REACT_APP_API_URL || '') : null);
+            (isLocal ? (window.location?.origin || process.env.REACT_APP_API_URL || '') : wsHost);
         const wsEndpoint = (typeof endpointOrConfig === 'string' && endpointOrConfig)
             ? endpointOrConfig
             : wsBase ? `${wsBase.replace(/\/$/, '')}/ws` : null;

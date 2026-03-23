@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/PublicProfile.css';
@@ -26,12 +26,7 @@ const PublicProfile = () => {
     
     const isAdminUser = isAdmin(currentUser) || isSuperAdmin(currentUser);
 
-    const resolveApiBaseUrl = () => {
-        if (typeof window !== 'undefined' && window.location?.origin) {
-            return window.location.origin;
-        }
-        return process.env.REACT_APP_API_URL || '';
-    };
+    const fetchInFlightRef = useRef(false);
 
     useEffect(() => {
         if (!userId || String(userId).toLowerCase() === 'system') {
@@ -40,9 +35,11 @@ const PublicProfile = () => {
             return;
         }
         const fetchProfile = async () => {
+            if (fetchInFlightRef.current) return;
+            fetchInFlightRef.current = true;
             try {
                 setLoading(true);
-                const baseUrl = resolveApiBaseUrl();
+                const baseUrl = Api.getBaseUrl() || '';
                 const response = await fetch(`${baseUrl}/api/users/public-profile/${userId}`);
                 
                 if (response.ok) {
@@ -56,13 +53,18 @@ const PublicProfile = () => {
                 console.error("Error fetching profile:", err);
                 setError("Failed to load profile. Please try again later.");
                 setLoading(false);
+            } finally {
+                fetchInFlightRef.current = false;
             }
         };
 
         fetchProfile();
         
-        // Refresh profile data every 3 seconds for real-time XP updates
-        const refreshInterval = setInterval(fetchProfile, 3000);
+        // Keep profile updated without flooding network/CPU.
+        const refreshInterval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+            fetchProfile();
+        }, 15000);
         
         return () => clearInterval(refreshInterval);
     }, [userId]);
@@ -148,9 +150,9 @@ const PublicProfile = () => {
                     
                     {/* Avatar: show profile pic or coloured circle */}
                     <div className="profile-avatar-overlay">
-                        {resolveAvatarUrl(profile.avatar, resolveApiBaseUrl()) ? (
+                        {resolveAvatarUrl(profile.avatar, Api.getBaseUrl() || '') ? (
                             <img
-                                src={resolveAvatarUrl(profile.avatar, resolveApiBaseUrl())}
+                                src={resolveAvatarUrl(profile.avatar, Api.getBaseUrl() || '')}
                                 alt=""
                                 className="profile-avatar-large"
                                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}

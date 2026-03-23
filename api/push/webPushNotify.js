@@ -7,6 +7,8 @@ const webpush = require('web-push');
 const { executeQuery } = require('../db');
 
 let vapidConfigured = false;
+const PUSH_SEND_TIMEOUT_MS = 5000;
+const PUSH_BATCH_SIZE = 10;
 
 function ensureVapid() {
   if (vapidConfigured) return true;
@@ -84,9 +86,11 @@ async function sendWebPushForNotification(opts) {
 
   if (!Array.isArray(rows) || rows.length === 0) return;
 
-  await Promise.all(
-    rows.map((row) => sendOneSubscription(row, payload))
-  );
+  // Keep latency bounded under high subscription counts.
+  for (let i = 0; i < rows.length; i += PUSH_BATCH_SIZE) {
+    const batch = rows.slice(i, i + PUSH_BATCH_SIZE);
+    await Promise.allSettled(batch.map((row) => sendOneSubscription(row, payload)));
+  }
 }
 
 async function sendOneSubscription(row, payload) {
@@ -95,7 +99,10 @@ async function sendOneSubscription(row, payload) {
     keys: { p256dh: row.p256dh, auth: row.auth }
   };
   try {
-    await webpush.sendNotification(sub, payload, { TTL: 86400 });
+    await withTimeout(
+      webpush.sendNotification(sub, payload, { TTL: 86400 }),
+      PUSH_SEND_TIMEOUT_MS
+    );
   } catch (err) {
     const status = err.statusCode;
     if (status === 404 || status === 410) {
@@ -106,6 +113,15 @@ async function sendOneSubscription(row, payload) {
       console.warn('[webPush] send failed:', status || err.message);
     }
   }
+}
+
+function withTimeout(promise, timeoutMs) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Push send timeout')), timeoutMs);
+    })
+  ]);
 }
 
 module.exports = { sendWebPushForNotification };

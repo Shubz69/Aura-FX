@@ -471,9 +471,7 @@ module.exports = async (req, res) => {
             console.warn('Error releasing database connection:', e.message);
           }
         }
-        // Return empty array instead of 500 error to prevent frontend errors
-        // This allows the app to continue working even if DB has issues
-        return res.status(200).json([]);
+        return res.status(500).json({ success: false, message: 'Failed to fetch messages' });
       }
     }
 
@@ -489,7 +487,7 @@ module.exports = async (req, res) => {
 
       if (!db) {
         console.warn('Database unavailable for POST message');
-        return res.status(200).json({ success: false, message: 'Database unavailable' });
+        return res.status(503).json({ success: false, message: 'Database unavailable' });
       }
 
       try {
@@ -506,7 +504,7 @@ module.exports = async (req, res) => {
           } catch (e) {
             console.warn('Error releasing connection:', e.message);
           }
-          return res.status(200).json({ 
+          return res.status(500).json({ 
             success: false, 
             message: 'Failed to initialize messages table. Please contact support.',
             error: 'Table initialization failed'
@@ -949,8 +947,7 @@ module.exports = async (req, res) => {
           }
         }
         
-        // Return error but with 200 status to prevent frontend crashes
-        return res.status(200).json({ 
+        return res.status(500).json({ 
           success: false, 
           message: errorMessage,
           error: errorDetails,
@@ -986,7 +983,7 @@ module.exports = async (req, res) => {
 
       if (!db) {
         console.warn('Database unavailable for DELETE message');
-        return res.status(200).json({ success: false, message: 'Database unavailable' });
+        return res.status(503).json({ success: false, message: 'Database unavailable' });
       }
 
       try {
@@ -1068,7 +1065,7 @@ module.exports = async (req, res) => {
             // Ignore errors when releasing connection
           }
         }
-        return res.status(200).json({ 
+        return res.status(500).json({ 
           success: false, 
           message: 'Failed to delete message',
           error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
@@ -1086,8 +1083,7 @@ module.exports = async (req, res) => {
       method: req.method,
       query: req.query
     });
-    // Return 200 with error to prevent frontend crashes
-    return res.status(200).json({ 
+    return res.status(500).json({ 
       success: false, 
       message: 'An error occurred',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined

@@ -9,6 +9,7 @@ import {
     getLevelFromXP,
     getXPForNextLevel
 } from '../utils/xpSystem';
+import { getStoredUser } from '../utils/storage';
 import { 
     FaTimes, FaCog, FaUserPlus, FaUser, FaCrown, FaCheckCircle, FaFire, 
     FaGem, FaStar, FaTrophy, FaChartLine, FaClock, FaShieldAlt, FaRobot,
@@ -94,7 +95,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     const [xpAnimated, setXpAnimated] = useState(0);
     const [mounted, setMounted] = useState(false);
 
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const storedUser = getStoredUser();
     const isOwnProfile = userId === storedUser.id || userId === currentUserId;
     const token = localStorage.getItem('token');
     const isSystemUser = userId && String(userId).toLowerCase() === 'system';
@@ -103,7 +104,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         if (!userId || isSystemUser) return;
         try {
             setLoading(true);
-            const response = await fetch(`${Api.getBaseUrl() || window.location.origin}/api/users/public-profile/${userId}`);
+            const response = await fetch(`${Api.getBaseUrl() || ''}/api/users/public-profile/${userId}`);
             if (response.ok) {
                 const data = await response.json();
                 setProfile(data);
@@ -126,7 +127,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         } catch (e) { setSettings(defaultSettings); }
         if (!token) return;
         try {
-            const response = await fetch(`${Api.getBaseUrl() || window.location.origin}/api/users/settings`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${Api.getBaseUrl() || ''}/api/users/settings`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 const data = await response.json();
                 if (data.settings) { setSettings(prev => ({ ...prev, ...data.settings })); try { localStorage.setItem('user_settings', JSON.stringify(data.settings)); } catch (e) {} }
@@ -143,7 +144,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
     }
     
     try {
-        const response = await fetch(`${Api.getBaseUrl() || window.location.origin}/api/friends/status/${userId}`, { 
+        const response = await fetch(`${Api.getBaseUrl() || ''}/api/friends/status/${userId}`, { 
             headers: { 'Authorization': `Bearer ${token}` } 
         });
         
@@ -276,7 +277,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
                 return;
         }
         
-        const response = await fetch(`${Api.getBaseUrl() || window.location.origin}${endpoint}`, {
+        const response = await fetch(`${Api.getBaseUrl() || ''}${endpoint}`, {
             method, 
             headers: { 
                 'Content-Type': 'application/json', 
@@ -325,7 +326,7 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
         if (!token) { toast.success('Settings saved locally'); return; }
         setSettingsLoading(true);
         try {
-            const response = await fetch(`${Api.getBaseUrl() || window.location.origin}/api/users/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(updates) });
+            const response = await fetch(`${Api.getBaseUrl() || ''}/api/users/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(updates) });
             if (response.ok) { const data = await response.json(); if (data.success) toast.success('Settings saved'); } else { toast.success('Settings saved locally'); }
         } catch (err) { toast.success('Settings saved locally'); }
         finally { setSettingsLoading(false); }

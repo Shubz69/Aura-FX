@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
+import { getStoredUser } from '../utils/storage';
 import '../styles/Journal.css';
 import {
   FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave,
@@ -468,7 +469,7 @@ export default function Journal() {
   /* ── Streak / score ──────────────────────────────────── */
   const streak = authUser?.login_streak
     ?? (typeof localStorage !== 'undefined'
-      ? JSON.parse(localStorage.getItem('user') || '{}').login_streak
+      ? getStoredUser().login_streak
       : 0)
     ?? 0;
 
