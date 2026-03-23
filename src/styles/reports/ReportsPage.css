@@ -106,7 +106,7 @@
   min-width: 0;
 }
 
-/* ── Hub sub-navigation (Monthly report | MT5 metrics | DNA) ─────── */
+/* ── Hub sub-navigation (Monthly report | DNA | Manual metrics) ─── */
 .rp-subnav {
   display: flex;
   flex-wrap: wrap;
@@ -701,3 +701,18 @@
 .rp-plan-action { font-size: 0.84rem; color: rgba(255,255,255,0.65); margin: 0; line-height: 1.5; }
 
 .rp-disclaimer { font-size: 0.76rem; color: rgba(255,255,255,0.3); border-top: 1px solid var(--rp-border); padding-top: 14px; line-height: 1.5; margin: 0; }
+
+/* Manual metrics CTA (Monthly report → link to Manual metrics upload) */
+.rp-manual-metrics-cta {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.15);
+  background: rgba(234, 169, 96, 0.05);
+}
+.rp-manual-metrics-cta p {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: rgba(200, 198, 190, 0.9);
+  line-height: 1.5;
+}

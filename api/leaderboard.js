@@ -14,7 +14,21 @@ const { generateRequestId, createLogger } = require('./utils/logger');
 const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('./utils/rate-limiter');
 const { safeLimit, safeTimeframe } = require('./utils/validators');
 const { purgeDemoUsers } = require('./utils/purge-demo-users');
-const { getLevelFromXP } = require('./utils/xp-system');
+const { getLevelFromXP, MAX_LEVEL } = require('./utils/xp-system');
+
+/** Latest activity for leaderboard presence (ISO or null). */
+function toIso(d) {
+  if (d == null) return null;
+  const t = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(t.getTime())) return null;
+  return t.toISOString();
+}
+
+function maxIso(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  return new Date(a) >= new Date(b) ? a : b;
+}
 
 // ============================================================================
 // Centralized Timeframe Boundary Calculator (Single Source of Truth)
@@ -178,6 +192,7 @@ async function queryLeaderboard(timeframe, limit, logger, includeDemo = false) {
         u.avatar, u.role,
         COALESCE(u.is_demo, FALSE) as is_demo,
         COALESCE(u.xp, 0) as period_xp,
+        u.last_seen as last_seen,
         (SELECT MAX(e.created_at) FROM xp_events e WHERE e.user_id = u.id) as last_xp_time
       FROM users u
       WHERE COALESCE(u.xp, 0) > 0 ${demoFilter}
@@ -194,11 +209,12 @@ async function queryLeaderboard(timeframe, limit, logger, includeDemo = false) {
         u.avatar, u.role,
         COALESCE(u.is_demo, FALSE) as is_demo,
         COALESCE(SUM(e.amount), 0) as period_xp,
-        MAX(e.created_at) as last_xp_time
+        MAX(e.created_at) as last_xp_time,
+        u.last_seen as last_seen
       FROM users u
       INNER JOIN xp_events e ON u.id = e.user_id AND e.created_at >= ?
       WHERE 1=1 ${demoFilter}
-      GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo
+      GROUP BY u.id, u.username, u.name, u.email, u.xp, u.level, u.avatar, u.role, u.is_demo, u.last_seen
       HAVING period_xp > 0
       ORDER BY period_xp DESC, last_xp_time ASC
       LIMIT ${limit}
@@ -279,7 +295,7 @@ module.exports = async (req, res) => {
     
     // Check cache
     const cacheTTL = timeframe === 'all-time' ? DEFAULT_TTLS.LEADERBOARD_ALLTIME : DEFAULT_TTLS.LEADERBOARD;
-    const cacheKey = `leaderboard_v12_${timeframe}_${limit}_${prizeEligibleOnly}`;
+    const cacheKey = `leaderboard_v13_${timeframe}_${limit}_${prizeEligibleOnly}`;
     const coalesceKey = `lb_query_${timeframe}_${limit}`;
     
     const cached = getCached(cacheKey, cacheTTL);
@@ -318,19 +334,29 @@ module.exports = async (req, res) => {
     const boundaries = getTimeframeBoundaries(timeframe);
 
     // Format response - NEVER expose is_demo to public UI
-    const formattedLeaderboard = rawLeaderboard.map((user, index) => ({
-      rank: index + 1,
-      id: user.id,
-      userId: user.id,
-      username: user.username || user.name || user.email?.split('@')[0] || 'Trader',
-      xp: parseFloat(user.period_xp) || 0,
-      totalXP: parseFloat(user.total_xp) || 0,
-      level: parseInt(user.level) || getLevelFromXP(parseFloat(user.total_xp) || 0),
-      avatar: user.avatar ?? null,
-      role: user.role || 'free',
-      // NOTE: is_demo is intentionally NOT included in public response
-      strikes: 0
-    }));
+    // Level always derived from canonical users.xp (MAX_LEVEL 100); ignore stale DB level column.
+    const formattedLeaderboard = rawLeaderboard.map((user, index) => {
+      const totalXp = parseFloat(user.total_xp) || 0;
+      const lastXpAt = toIso(user.last_xp_time);
+      const lastSeenAt = toIso(user.last_seen);
+      const lastActivityAt = maxIso(lastSeenAt, lastXpAt);
+      return {
+        rank: index + 1,
+        id: user.id,
+        userId: user.id,
+        username: user.username || user.name || user.email?.split('@')[0] || 'Trader',
+        xp: parseFloat(user.period_xp) || 0,
+        totalXP: totalXp,
+        level: Math.min(MAX_LEVEL, getLevelFromXP(totalXp)),
+        avatar: user.avatar ?? null,
+        role: user.role || 'free',
+        lastSeenAt,
+        lastXpAt,
+        lastActivityAt,
+        // NOTE: is_demo is intentionally NOT included in public response
+        strikes: 0
+      };
+    });
 
     // Cache result
     const cacheData = {

@@ -14,6 +14,7 @@ const { executeQuery } = require('../db');
 const { setCached, clearCache, invalidatePattern } = require('../cache');
 const { purgeDemoUsers } = require('../utils/purge-demo-users');
 const { syncUserXpFromLedger } = require('../utils/sync-user-xp');
+const { getLevelFromXP } = require('../utils/xp-system');
 
 // Helper to get array from query result
 function getRows(result) {
@@ -108,21 +109,17 @@ module.exports = async (req, res) => {
       results.errors.push(`Sync check: ${e.message}`);
     }
 
-    // 3. Levels already updated by syncUserXpFromLedger; optional second pass for users with xp=0 edge cases
+    // 3. Align users.level with canonical getLevelFromXP(users.xp) — max level 100 (same as xp-system.js)
     try {
-      const levelResult = await executeQuery(`
-        UPDATE users u
-        SET level = CASE
-          WHEN COALESCE(u.xp, 0) <= 0 THEN 1
-          WHEN u.xp < 500 THEN FLOOR(SQRT(u.xp / 50)) + 1
-          WHEN u.xp < 5000 THEN 10 + FLOOR(SQRT((u.xp - 500) / 100)) + 1
-          WHEN u.xp < 20000 THEN 50 + FLOOR(SQRT((u.xp - 5000) / 200)) + 1
-          WHEN u.xp < 100000 THEN 100 + FLOOR(SQRT((u.xp - 20000) / 500)) + 1
-          WHEN u.xp < 500000 THEN 200 + FLOOR(SQRT((u.xp - 100000) / 1000)) + 1
-          ELSE LEAST(1000, 500 + FLOOR(SQRT((u.xp - 500000) / 2000)) + 1)
-        END
-      `);
-      results.updatedLevels = levelResult?.affectedRows || 0;
+      const usersResult = await executeQuery('SELECT id, xp FROM users');
+      const users = getRows(usersResult);
+      let updated = 0;
+      for (const u of users) {
+        const lv = getLevelFromXP(parseFloat(u.xp) || 0);
+        await executeQuery('UPDATE users SET level = ? WHERE id = ?', [lv, u.id]);
+        updated += 1;
+      }
+      results.updatedLevels = updated;
     } catch (e) {
       results.errors.push(`Update levels: ${e.message}`);
     }

@@ -13,6 +13,7 @@ const { getOrFetch } = require('./cache');
 const { applyScheduledDowngrade } = require('./utils/apply-scheduled-downgrade');
 const { ensureTimezoneColumn } = require('./utils/ensure-timezone-column');
 const { jsonNumber, jsonSafeDeep } = require('./utils/jsonSafe');
+const { getLevelFromXP, MAX_LEVEL } = require('./utils/xp-system');
 
 const ENTITLEMENTS_TTL = 60000; // 60s - low latency, fresh enough for tier changes
 
@@ -91,7 +92,10 @@ const user = {
         avatar: userRow.avatar ?? null,
         banner: userRow.banner ?? null,
         role: entitlements.role,
-        level: jsonNumber(userRow.level ?? 1, 1),
+        level: jsonNumber(
+          Math.min(MAX_LEVEL, getLevelFromXP(parseFloat(userRow.xp) || 0)),
+          1
+        ),
         xp: jsonNumber(userRow.xp, 0),
         timezone: userRow.timezone ?? null
       };

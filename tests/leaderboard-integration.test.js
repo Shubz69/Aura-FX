@@ -10,6 +10,7 @@
  */
 
 const assert = require('assert');
+const { getLevelFromXP, MAX_LEVEL } = require('../api/utils/xp-system');
 
 // ============================================================================
 // Test Utilities
@@ -75,21 +76,6 @@ function safeLimit(value) {
   if (isNaN(parsed) || parsed < 1) return 10;
   if (parsed > 100) return 100;
   return parsed;
-}
-
-/**
- * Calculate level from XP - mirrors leaderboard.js logic
- */
-function getLevelFromXP(xp) {
-  if (xp <= 0) return 1;
-  if (xp >= 1000000) return 1000;
-  
-  if (xp < 500) return Math.floor(Math.sqrt(xp / 50)) + 1;
-  if (xp < 5000) return 10 + Math.floor(Math.sqrt((xp - 500) / 100)) + 1;
-  if (xp < 20000) return 50 + Math.floor(Math.sqrt((xp - 5000) / 200)) + 1;
-  if (xp < 100000) return 100 + Math.floor(Math.sqrt((xp - 20000) / 500)) + 1;
-  if (xp < 500000) return 200 + Math.floor(Math.sqrt((xp - 100000) / 1000)) + 1;
-  return Math.min(1000, 500 + Math.floor(Math.sqrt((xp - 500000) / 2000)) + 1);
 }
 
 // ============================================================================
@@ -470,7 +456,7 @@ test('Level calculation is monotonic (never decreases with XP)', () => {
   });
   
   assert.strictEqual(getLevelFromXP(0), 1, 'Level 1 at 0 XP');
-  assert.strictEqual(getLevelFromXP(1000000), 1000, 'Max level at 1M XP');
+  assert.strictEqual(getLevelFromXP(50_000_000), MAX_LEVEL, 'Very high XP hits level cap 100');
   
   console.log('  Level progression is monotonic');
 });

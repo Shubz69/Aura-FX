@@ -18,6 +18,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
 import './styles/AuraPageTitle.css';
 
+function Mt5MetricsLegacyRedirect() {
+    const location = useLocation();
+    return <Navigate to={`/reports/manual-metrics/dashboard${location.search}`} replace />;
+}
 
 /* Lazy-load pages so each route loads only when visited (faster initial load) */
 const Home = lazy(() => import('./pages/Home'));
@@ -84,7 +88,9 @@ const TraderDeckTradeJournal = lazy(() => import('./pages/trader-deck/TraderDeck
 const AiChartCheckTab = lazy(() => import('./pages/aura-analysis/AiChartCheckTab'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
 const ReportsDnaPage = lazy(() => import('./pages/reports/ReportsDnaPage'));
-const Mt5CsvDashboardPage = lazy(() => import('./pages/reports/Mt5CsvDashboardPage'));
+const ManualMetricsEntryPage = lazy(() => import('./pages/reports/ManualMetricsEntryPage'));
+const ManualMetricsProcessingPage = lazy(() => import('./pages/reports/ManualMetricsProcessingPage'));
+const ManualMetricsDashboardPage = lazy(() => import('./pages/reports/ManualMetricsDashboardPage'));
 const Affiliation = lazy(() => import('./pages/Affiliation'));
 
 /** Prefetch route chunks after initial load so navigation feels instant site-wide */
@@ -306,7 +312,10 @@ function AppRoutes() {
                         </Route>
                         <Route path="/reports" element={<AuthenticatedGuard><ReportsPage /></AuthenticatedGuard>} />
                         <Route path="/reports/dna" element={<AuthenticatedGuard><ReportsDnaPage /></AuthenticatedGuard>} />
-                        <Route path="/reports/mt5-metrics" element={<AuthenticatedGuard><Mt5CsvDashboardPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/mt5-metrics" element={<Mt5MetricsLegacyRedirect />} />
+                        <Route path="/reports/manual-metrics/dashboard" element={<AuthenticatedGuard><ManualMetricsDashboardPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/manual-metrics/processing" element={<AuthenticatedGuard><ManualMetricsProcessingPage /></AuthenticatedGuard>} />
+                        <Route path="/reports/manual-metrics" element={<AuthenticatedGuard><ManualMetricsEntryPage /></AuthenticatedGuard>} />
                         <Route path="/trader-deck" element={<AuthenticatedGuard><TraderDeck /></AuthenticatedGuard>} />
                         <Route path="/journal" element={<AuthenticatedGuard><Journal /></AuthenticatedGuard>} />
                         <Route path="/admin/messages" element={<AdminGuard><AdminMessages /></AdminGuard>} />

@@ -5,11 +5,12 @@
  * Elite  → automated dashboard + report list
  * Admin  → same as elite
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ReportsHubSubNav from '../../components/reports/ReportsHubSubNav';
 import { useAuth } from '../../context/AuthContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
+import { useReportsEligibility } from './useReportsEligibility';
 import '../../styles/reports/ReportsPage.css';
 
 const BASE_URL = process.env.REACT_APP_API_URL || '';
@@ -18,33 +19,6 @@ const MONTH_NAMES = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
 ];
-
-function useReportsData(token) {
-  const [eligibility, setEligibility] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const load = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${BASE_URL}/api/reports/eligibility`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Failed to load');
-      setEligibility(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => { load(); }, [load]);
-  return { eligibility, loading, error, reload: load };
-}
 
 /* ── Where to find this page (not an Aura Analysis tab) ─────────────── */
 function ReportsNavHint() {
@@ -80,7 +54,7 @@ function FreeLockedView() {
             <li>Full platform data analysis</li>
             <li>Trade performance breakdown</li>
             <li>Discipline & journal review</li>
-            <li>MT5 sections via CSV upload</li>
+            <li>MT5 sections via Manual metrics (CSV)</li>
             <li>Downloadable PDF</li>
           </ul>
         </div>
@@ -128,175 +102,6 @@ function EligibilityBar({ eligibility }) {
           <div className="rp-progress-bar" style={{ width: `${pct}%` }} />
         </div>
       )}
-    </div>
-  );
-}
-
-/* ── CSV Upload (Premium only) ──────────────────────────────────────── */
-function CsvUploadSection({ token, year, month, csvStatus, onUploaded }) {
-  const metricsHref = `/reports/mt5-metrics?year=${year}&month=${month}`;
-  const [csv, setCsv] = useState('');
-  const [fileName, setFileName] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const [uploadResult, setUploadResult] = useState(null);
-  const [error, setError] = useState('');
-  const fileRef = useRef();
-
-  const handleFile = (file) => {
-    if (!file) return;
-    if (!file.name.endsWith('.csv') && file.type !== 'text/csv') {
-      setError('Please upload a .csv file exported from MT5.');
-      return;
-    }
-    if (file.size > 5_000_000) { setError('File too large (max 5MB).'); return; }
-    setError('');
-    setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (e) => setCsv(e.target?.result || '');
-    reader.onerror = () => setError('Could not read this file. Try another export or re-save the CSV.');
-    reader.readAsText(file);
-  };
-
-  const handleSubmit = async () => {
-    if (!csv) return;
-    setUploading(true);
-    setError('');
-    try {
-      const res = await fetch(`${BASE_URL}/api/reports/csv-upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ csv, year, month }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || `Upload failed (${res.status})`);
-      }
-      setUploadResult(data.summary);
-      onUploaded?.();
-    } catch (err) {
-      setError(err.message || 'Upload failed.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemove = async () => {
-    setError('');
-    setRemoving(true);
-    try {
-      const res = await fetch(`${BASE_URL}/api/reports/csv-upload`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ year, month }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || `Could not remove CSV (${res.status})`);
-      }
-      setCsv('');
-      setFileName('');
-      setUploadResult(null);
-      onUploaded?.();
-    } catch (err) {
-      setError(err.message || 'Could not remove CSV.');
-    } finally {
-      setRemoving(false);
-    }
-  };
-
-  if (csvStatus) {
-    return (
-      <div className="rp-csv-done" aria-live="polite">
-        <span className="rp-csv-done-icon">✓</span>
-        <div className="rp-csv-done-body">
-          <p className="rp-csv-done-title">MT5 CSV uploaded — {csvStatus.trade_count} trades</p>
-          <p className="rp-csv-done-hint">Your MT5 data will be included in the report.</p>
-        </div>
-        <div className="rp-csv-done-actions">
-          <Link to={metricsHref} className="rp-btn rp-btn--primary rp-btn--sm">
-            View MT5 metrics dashboard
-          </Link>
-          <button
-            className="rp-btn rp-btn--ghost"
-            onClick={handleRemove}
-            disabled={removing}
-            type="button"
-            aria-busy={removing}
-            aria-label="Remove uploaded MT5 CSV for this month"
-          >
-            {removing ? 'Removing…' : 'Remove'}
-          </button>
-        </div>
-        {error && <p className="rp-field-error" role="alert">{error}</p>}
-      </div>
-    );
-  }
-
-  return (
-    <div className="rp-csv-section">
-      <h4 className="rp-csv-title">MT5 Performance Data <span className="rp-badge rp-badge--optional">Optional</span></h4>
-      <p className="rp-csv-hint">
-        Upload your MT5 trade history CSV to include MT5 performance sections in your report.
-        Export from MT5: History → All History → Save as Report (CSV). Comma or semicolon exports are supported.
-      </p>
-
-      {!csv ? (
-        <div
-          className="rp-csv-drop"
-          onClick={() => fileRef.current?.click()}
-          onDrop={e => { e.preventDefault(); handleFile(e.dataTransfer.files?.[0]); }}
-          onDragOver={e => e.preventDefault()}
-          role="button"
-          tabIndex={0}
-          aria-label="Upload MT5 trade history CSV file"
-          aria-busy={uploading}
-          onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
-        >
-          <span className="rp-csv-drop-icon">📁</span>
-          <span>Drop your MT5 CSV here or <u>browse</u></span>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            onChange={e => handleFile(e.target.files?.[0])}
-            style={{ display: 'none' }}
-            aria-hidden
-          />
-        </div>
-      ) : (
-        <div className="rp-csv-ready">
-          <span className="rp-csv-file-name">📄 {fileName}</span>
-          {uploadResult ? (
-            <div className="rp-csv-parsed">
-              <span>✓ {uploadResult.tradeCount} trades · Win rate {uploadResult.winRate}% · P&L {uploadResult.totalPnl}</span>
-              <Link to={metricsHref} className="rp-btn rp-btn--primary rp-btn--sm">
-                View MT5 metrics dashboard
-              </Link>
-            </div>
-          ) : (
-            <button
-              className="rp-btn rp-btn--primary rp-btn--sm"
-              onClick={handleSubmit}
-              disabled={uploading}
-              type="button"
-              aria-busy={uploading}
-              aria-label={uploading ? 'Uploading and parsing CSV' : 'Upload and parse MT5 CSV'}
-            >
-              {uploading ? 'Uploading…' : 'Upload & Parse'}
-            </button>
-          )}
-          <button
-            className="rp-btn rp-btn--ghost"
-            onClick={() => { setCsv(''); setFileName(''); setUploadResult(null); setError(''); }}
-            type="button"
-            aria-label="Clear selected file"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-      {error && <p className="rp-field-error" role="alert">{error}</p>}
     </div>
   );
 }
@@ -570,7 +375,7 @@ function ReportHistoryList({ token, reports, onView }) {
 /* ── Main component ─────────────────────────────────────────────────── */
 function ReportsPageInner() {
   const { token } = useAuth();
-  const { eligibility, loading, error, reload } = useReportsData(token);
+  const { eligibility, loading, error, reload } = useReportsEligibility(token);
   const [viewingReport, setViewingReport] = useState(null);
   const [viewLoading, setViewLoading] = useState(false);
 
@@ -615,7 +420,7 @@ function ReportsPageInner() {
     </div>
   );
 
-  const { currentPeriod, currentMonthReport, csvStatus, reports, isEligible } = eligibility;
+  const { currentPeriod, currentMonthReport, reports, isEligible } = eligibility;
   const { year, month } = currentPeriod;
 
   if (viewingReport) {
@@ -638,8 +443,8 @@ function ReportsPageInner() {
           </Link>
           <p className="rp-subtitle">
             {role === 'premium'
-              ? 'Your monthly performance report — platform data plus optional MT5 sections when you upload your broker CSV below.'
-              : 'Your fully automated monthly performance report — AI-generated from your platform data (Elite: no CSV upload on this page).'}
+              ? 'Your monthly performance report — platform data plus optional MT5 sections when you upload your broker CSV under Manual metrics.'
+              : 'Your fully automated monthly performance report — AI-generated from your platform data (Elite: live MT5 via Aura Analysis).'}
           </p>
         </div>
         <span className={`rp-role-badge rp-role-badge--${role}`}>
@@ -663,15 +468,20 @@ function ReportsPageInner() {
             )}
           </div>
 
-          {/* Premium CSV upload */}
+          {/* Premium — MT5 CSV lives under Manual metrics (separate from Aura Analysis) */}
           {role === 'premium' && (
-            <CsvUploadSection
-              token={token}
-              year={year}
-              month={month}
-              csvStatus={csvStatus}
-              onUploaded={reload}
-            />
+            <div className="rp-manual-metrics-cta">
+              <p>
+                Add MT5 performance to your PDF: upload your broker CSV under <strong>Manual metrics</strong> for{' '}
+                {MONTH_NAMES[month - 1]} {year}. Your snapshot dashboard opens there too — separate from Elite Aura Analysis.
+              </p>
+              <Link
+                to={`/reports/manual-metrics?year=${year}&month=${month}`}
+                className="rp-btn rp-btn--secondary"
+              >
+                Manual metrics — upload CSV
+              </Link>
+            </div>
           )}
 
           {/* Elite/Admin automation notice */}

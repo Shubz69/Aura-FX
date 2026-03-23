@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '../styles/Leaderboard.css';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
@@ -102,25 +102,42 @@ const LeaderboardAvatar = ({ user, size = 42, podium = false }) => {
     );
 };
 
-// ─── Online / activity status generator ──────────────────────────────────────
-// Makes users feel alive with realistic "last seen" times
+// ─── Real activity from API (last_seen + last XP) ────────────────────────────
+const ONLINE_MS = 5 * 60 * 1000;
+const AWAY_MAX_MS = 24 * 60 * 60 * 1000;
 
-function getActivityStatus(userId, timeframe) {
-    const h = hashCode(String(userId || 0));
-    const statuses = [
-        { dot: 'online',  label: 'Online now',      weight: 15 },
-        { dot: 'online',  label: 'Active 2m ago',   weight: 12 },
-        { dot: 'online',  label: 'Active 8m ago',   weight: 10 },
-        { dot: 'away',    label: 'Active 23m ago',  weight: 12 },
-        { dot: 'away',    label: 'Active 1h ago',   weight: 15 },
-        { dot: 'away',    label: 'Active 3h ago',   weight: 10 },
-        { dot: 'offline', label: 'Active today',    weight: 13 },
-        { dot: 'offline', label: 'Active yesterday',weight: 8  },
-        { dot: 'offline', label: 'Active 3d ago',   weight: 5  },
-    ];
-    // Top 3 are more likely to be online
-    const idx = h % statuses.length;
-    return statuses[idx];
+function formatRelativeActivity(iso, nowMs) {
+    if (!iso) return 'No recent activity';
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return 'No recent activity';
+    const diff = nowMs - t;
+    if (diff < 45 * 1000) return 'Active just now';
+    const min = Math.floor(diff / 60000);
+    if (min < 60) return `Active ${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `Active ${hr}h ago`;
+    const days = Math.floor(hr / 24);
+    if (days === 1) return 'Active yesterday';
+    if (days < 14) return `Active ${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 8) return `Active ${weeks}w ago`;
+    return 'Active long ago';
+}
+
+/** Presence for leaderboard row (dot + label). `nowMs` should tick so labels stay fresh. */
+function getPresenceFromUser(user, nowMs = Date.now()) {
+    const seen = user?.lastSeenAt ? new Date(user.lastSeenAt).getTime() : 0;
+    if (seen && nowMs - seen < ONLINE_MS) {
+        return { dot: 'online', label: 'Online now' };
+    }
+    const actIso = user?.lastActivityAt || user?.lastSeenAt || user?.lastXpAt;
+    const label = formatRelativeActivity(actIso, nowMs);
+    const ref = actIso ? new Date(actIso).getTime() : 0;
+    if (!ref) return { dot: 'offline', label: 'No recent activity' };
+    const diff = nowMs - ref;
+    let dot = 'offline';
+    if (diff < AWAY_MAX_MS) dot = 'away';
+    return { dot, label };
 }
 
 // ─── Streak indicator ─────────────────────────────────────────────────────────
@@ -193,7 +210,21 @@ const Leaderboard = () => {
     const [error, setError] = useState(null);
     const [leaderboardData, setLeaderboardData] = useState([]);
     const [selectedTimeframe, setSelectedTimeframe] = useState('all-time');
-    const [onlineCount, setOnlineCount] = useState(0);
+    const [nowTick, setNowTick] = useState(() => Date.now());
+
+    const onlineCount = useMemo(() => {
+        const t = nowTick;
+        return leaderboardData.filter((u) => {
+            if (!u?.lastSeenAt) return false;
+            const seen = new Date(u.lastSeenAt).getTime();
+            return !Number.isNaN(seen) && t - seen < ONLINE_MS;
+        }).length;
+    }, [leaderboardData, nowTick]);
+
+    useEffect(() => {
+        const id = setInterval(() => setNowTick(Date.now()), 30000);
+        return () => clearInterval(id);
+    }, []);
 
     const fetchLeaderboard = useCallback(async () => {
         setLoading(true);
@@ -205,11 +236,6 @@ const Leaderboard = () => {
                     ? response.data
                     : (response.data.leaderboard || []);
                 setLeaderboardData(data);
-                const online = data.filter(u => {
-                    const s = getActivityStatus(u.id, selectedTimeframe);
-                    return s.dot === 'online';
-                }).length;
-                setOnlineCount(online);
             }
         } catch (err) {
             console.error('Error fetching leaderboard:', err);
@@ -280,10 +306,11 @@ const Leaderboard = () => {
     };
 
     const getLevelBadge = (level) => {
-        if (level >= 100) return { class: 'badge-legend', text: '👑 GOD' };
-        if (level >= 90) return { class: 'badge-elite', text: '⚡ IMMORTAL' };
-        if (level >= 80) return { class: 'badge-pro', text: '🔥 MYTHICAL' };
-        if (level >= 70) return { class: 'badge-member', text: '🏆 LEGEND' };
+        const lv = Math.min(100, Math.max(1, parseInt(level, 10) || 1));
+        if (lv >= 100) return { class: 'badge-legend', text: '👑 GOD' };
+        if (lv >= 90) return { class: 'badge-elite', text: '⚡ IMMORTAL' };
+        if (lv >= 80) return { class: 'badge-pro', text: '🔥 MYTHICAL' };
+        if (lv >= 70) return { class: 'badge-member', text: '🏆 LEGEND' };
         return { class: 'badge-rookie', text: '📈 RISING' };
     };
 
@@ -339,7 +366,7 @@ const Leaderboard = () => {
                 </div>
             );
 
-            const activity = getActivityStatus(user.id, selectedTimeframe);
+            const activity = getPresenceFromUser(user, nowTick);
             const streak = getStreakDays(user.id);
             const flag = getFlag(user.id);
             const displayName = cleanUsername(user.username);
@@ -362,7 +389,7 @@ const Leaderboard = () => {
                         </div>
                         <div className="podium-xp">{formatXp(user)}</div>
                         <div className="podium-xp-label">{getXpLabel()}</div>
-                        <div className="podium-level">Level {user.level || 1}</div>
+                        <div className="podium-level">Level {Math.min(100, user.level || 1)}</div>
                         <div className="podium-activity">{activity.label}</div>
                     </div>
                 </div>
@@ -422,7 +449,7 @@ const Leaderboard = () => {
                         </div>
                     ) : (
                         data.map((user, index) => {
-                            const activity = getActivityStatus(user.id, selectedTimeframe);
+                            const activity = getPresenceFromUser(user, nowTick);
                             const streak   = getStreakDays(user.id);
                             const flag     = getFlag(user.id);
                             const displayName = cleanUsername(user.username);
@@ -467,7 +494,7 @@ const Leaderboard = () => {
                                         <div className={`level-badge ${getLevelBadge(user.level).class}`}>
                                             {getLevelBadge(user.level).text}
                                         </div>
-                                        <div className="level-number">Lv. {user.level || 1}</div>
+                                        <div className="level-number">Lv. {Math.min(100, user.level || 1)}</div>
                                     </div>
 
                                     {/* XP + Sparkline */}
