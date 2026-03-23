@@ -7,6 +7,7 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
+const { hasMtBridgeCredentials, syncAccount } = require('./terminalSyncBridge');
 
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
@@ -133,6 +134,11 @@ async function fetchForPlatform(platformId, creds) {
   switch (platformId) {
     case 'mt5':
     case 'mt4':
+      if (hasMtBridgeCredentials(creds)) {
+        const result = await syncAccount(creds);
+        if (!result.ok) return { ok: false, error: result.error };
+        return { ok: true, data: result.accountInfo };
+      }
       return fetchMetaApiAccount(creds);
     case 'binance':
       return fetchBinanceAccount(creds);

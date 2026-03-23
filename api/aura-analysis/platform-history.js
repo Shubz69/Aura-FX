@@ -7,6 +7,7 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
+const { hasMtBridgeCredentials, getPositions } = require('./terminalSyncBridge');
 
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
@@ -187,6 +188,24 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
   switch (platformId) {
     case 'mt5':
     case 'mt4':
+      if (hasMtBridgeCredentials(creds)) {
+        const result = await getPositions(creds);
+        if (!result.ok) return { ok: false, error: result.error };
+        // Bridge exposes open positions; map into the expected trade-like shape.
+        const trades = result.trades.map((p, idx) => normaliseTrade({
+          id: p.ticket || p.identifier || `pos_${idx}`,
+          symbol: p.symbol,
+          type: Number(p.type) === 0 ? 0 : 1,
+          profit: p.profit,
+          volume: p.volume || p.lots,
+          entryPrice: p.price_open || p.priceOpen || p.price,
+          closePrice: p.price_current || p.priceCurrent || p.closePrice || 0,
+          openTime: p.time || p.time_msc || p.openTime,
+          commission: p.commission || 0,
+          swap: p.swap || 0,
+        }, 'MT5'));
+        return { ok: true, trades };
+      }
       return fetchMetaApiHistory(creds, days);
     case 'binance':
       return fetchBinanceHistory(creds, days);

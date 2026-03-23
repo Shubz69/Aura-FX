@@ -10,6 +10,7 @@ const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
+const { hasMtBridgeCredentials, syncAccount } = require('./terminalSyncBridge');
 
 // ── Encryption helpers ─────────────────────────────────────────────────────
 function getEncKey() {
@@ -195,8 +196,14 @@ async function validateCredentials(platformId, credentials) {
   switch (platformId) {
     case 'mt5':
     case 'mt4': {
+      // Prefer TerminalSyncc bridge credentials when supplied.
+      if (hasMtBridgeCredentials(credentials)) {
+        return syncAccount(credentials);
+      }
       const { accountId, token } = credentials;
-      if (!accountId || !token) return { ok: false, error: 'accountId and token required for MetaTrader' };
+      if (!accountId || !token) {
+        return { ok: false, error: 'For MT5/MT4 provide login/password/server or MetaAPI accountId/token' };
+      }
       return validateMetaApi(accountId, token);
     }
     case 'binance': {

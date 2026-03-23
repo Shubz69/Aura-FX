@@ -33,7 +33,7 @@ function ConnectModal({ platform, onClose, onSubmit, connecting, error }) {
         {(platform.id === 'mt5' || platform.id === 'mt4') && (
           <div className="chub-modal-info">
             <i className="fas fa-info-circle" />
-            <span>Uses <strong>MetaAPI</strong>. Get your Account ID + API Token from <a href="https://app.metaapi.cloud" target="_blank" rel="noopener noreferrer">app.metaapi.cloud</a></span>
+            <span>Uses the secure <strong>MT bridge</strong>. Enter your broker <strong>login / password / server</strong> to sync your account.</span>
           </div>
         )}
 

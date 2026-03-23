@@ -5,8 +5,8 @@ import Api from '../services/Api';
 const AuraConnectionContext = createContext(null);
 
 export const PLATFORMS = [
-  { id: 'mt5',       name: 'MetaTrader 5', category: 'MT',       fields: [{ key: 'accountId', label: 'MetaAPI Account ID', placeholder: 'e.g. abc123...' }, { key: 'token', label: 'MetaAPI API Token', placeholder: 'Your MetaAPI token', secret: true }] },
-  { id: 'mt4',       name: 'MetaTrader 4', category: 'MT',       fields: [{ key: 'accountId', label: 'MetaAPI Account ID', placeholder: 'e.g. abc123...' }, { key: 'token', label: 'MetaAPI API Token', placeholder: 'Your MetaAPI token', secret: true }] },
+  { id: 'mt5',       name: 'MetaTrader 5', category: 'MT',       fields: [{ key: 'login', label: 'Account Login', placeholder: 'e.g. 12345678' }, { key: 'password', label: 'Password', placeholder: 'Your MT5 password', secret: true }, { key: 'server', label: 'Broker Server', placeholder: 'e.g. ICMarketsSC-Demo' }] },
+  { id: 'mt4',       name: 'MetaTrader 4', category: 'MT',       fields: [{ key: 'login', label: 'Account Login', placeholder: 'e.g. 12345678' }, { key: 'password', label: 'Password', placeholder: 'Your MT4 password', secret: true }, { key: 'server', label: 'Broker Server', placeholder: 'e.g. ICMarketsSC-Demo' }] },
   { id: 'ctrader',   name: 'cTrader',      category: 'Platform', fields: [{ key: 'accountId', label: 'cTrader Account ID', placeholder: 'Your account ID' }, { key: 'accessToken', label: 'Access Token', placeholder: 'OAuth access token', secret: true }] },
   { id: 'dxtrade',   name: 'DXtrade',      category: 'Platform', fields: [{ key: 'server', label: 'Server URL', placeholder: 'https://your-broker.dxtrade.com' }, { key: 'login', label: 'Login', placeholder: 'Account login' }, { key: 'password', label: 'Password', placeholder: 'Account password', secret: true }] },
   { id: 'tradovate', name: 'Tradovate',    category: 'Futures',  fields: [{ key: 'username', label: 'Username', placeholder: 'Tradovate username' }, { key: 'password', label: 'Password', placeholder: 'Tradovate password', secret: true }] },
