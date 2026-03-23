@@ -11,6 +11,7 @@ const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
 const { hasMtBridgeCredentials, syncAccount } = require('./terminalSyncBridge');
+const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 
 // ── Encryption helpers ─────────────────────────────────────────────────────
 function getEncKey() {
@@ -246,22 +247,7 @@ async function ensureTable() {
 
 // ── Handler ────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  const origin = req.headers.origin || '';
-  const allowedOrigins = new Set([
-    'https://www.auraterminal.ai',
-    'https://auraterminal.ai',
-    'http://localhost:3000'
-  ]);
-  if (allowedOrigins.has(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin');
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://www.auraterminal.ai');
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Cache-Control', 'no-store');
+  setAuraCorsHeaders(req, res, 'GET, POST, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const decoded = verifyToken(req.headers.authorization);
@@ -272,6 +258,7 @@ module.exports = async (req, res) => {
     await ensureTable();
   } catch (e) {
     console.error('Table ensure failed:', e.message);
+    return res.status(500).json({ success: false, error: 'CONNECTIONS_TABLE_INIT_FAILED' });
   }
 
   // ── GET — list connections ─────────────────────────────────────────────
@@ -286,9 +273,7 @@ module.exports = async (req, res) => {
       connections: rows.map((r) => ({
         platformId: r.platform_id,
         label: r.account_label,
-        accountInfo: r.account_info
-          ? (typeof r.account_info === 'string' ? JSON.parse(r.account_info) : r.account_info)
-          : null,
+        accountInfo: safeJsonParse(r.account_info, null),
         connectedAt: r.connected_at,
         lastSync: r.last_sync,
         status: r.status,
@@ -318,6 +303,7 @@ module.exports = async (req, res) => {
     const accountInfoJson = JSON.stringify(validation.accountInfo || {});
     const label =
       credentials.accountId ||
+      credentials.login ||
       (credentials.apiKey ? credentials.apiKey.slice(0, 8) + '...' : null) ||
       platformId;
 

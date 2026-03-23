@@ -8,6 +8,7 @@ const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
 const { hasMtBridgeCredentials, syncAccount } = require('./terminalSyncBridge');
+const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
@@ -151,10 +152,7 @@ async function fetchForPlatform(platformId, creds) {
 
 // ── Handler ────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Cache-Control', 'no-store');
+  setAuraCorsHeaders(req, res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
@@ -182,11 +180,11 @@ module.exports = async (req, res) => {
 
   if (!result.ok) {
     // Return cached account info as fallback
-    const cached = rows[0].account_info;
+    const cached = safeJsonParse(rows[0].account_info, null);
     if (cached) {
       return res.status(200).json({
         success: true,
-        account: typeof cached === 'string' ? JSON.parse(cached) : cached,
+        account: cached,
         stale: true,
       });
     }

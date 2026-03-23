@@ -8,6 +8,7 @@ const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
 const https = require('https');
 const { hasMtBridgeCredentials, getPositions } = require('./terminalSyncBridge');
+const { setAuraCorsHeaders } = require('./cors');
 
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
@@ -71,6 +72,18 @@ function detectSession(timeVal) {
   if (h >= 12 && h < 17) return 'New York';
   if (h >= 17 && h < 21) return 'NY/London Close';
   return 'Asian';
+}
+
+function normalizeTimeValue(value) {
+  if (value == null || value === '') return null;
+  const asNumber = Number(value);
+  if (Number.isFinite(asNumber)) {
+    const ms = asNumber < 1e12 ? asNumber * 1000 : asNumber;
+    const dt = new Date(ms);
+    if (!Number.isNaN(dt.getTime())) return dt.toISOString();
+  }
+  const dt = new Date(value);
+  return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
 }
 
 // ── MetaAPI history ────────────────────────────────────────────────────────
@@ -200,7 +213,8 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
           volume: p.volume || p.lots,
           entryPrice: p.price_open || p.priceOpen || p.price,
           closePrice: p.price_current || p.priceCurrent || p.closePrice || 0,
-          openTime: p.time || p.time_msc || p.openTime,
+          openTime: normalizeTimeValue(p.time || p.time_msc || p.openTime),
+          closeTime: normalizeTimeValue(p.time_update || p.timeUpdate || p.closeTime),
           commission: p.commission || 0,
           swap: p.swap || 0,
         }, 'MT5'));
@@ -218,10 +232,7 @@ async function fetchHistoryForPlatform(platformId, creds, days) {
 
 // ── Handler ────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Cache-Control', 'no-store');
+  setAuraCorsHeaders(req, res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' });
 

@@ -37,9 +37,10 @@ export function AuraConnectionProvider({ children }) {
     const accountInfo = r.data.accountInfo || {};
     setConnections((prev) => {
       const next = prev.filter((c) => c.platformId !== platformId);
+      const mtLabel = credentials.login ? String(credentials.login) : null;
       next.push({
         platformId,
-        label: credentials.accountId || credentials.apiKey?.slice(0, 8) + '...' || platformId,
+        label: credentials.accountId || mtLabel || (credentials.apiKey ? `${credentials.apiKey.slice(0, 8)}...` : null) || platformId,
         accountInfo,
         connectedAt: new Date().toISOString(),
         lastSync: new Date().toISOString(),
