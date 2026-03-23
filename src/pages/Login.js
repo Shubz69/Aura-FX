@@ -56,6 +56,9 @@ const Login = () => {
         }
         
         // Redirect if already authenticated
+        if (isLoading) {
+            return;
+        }
         if (isAuthenticated && !redirectedAuthedRef.current) {
             redirectedAuthedRef.current = true;
             const storedRedirect = loadPostAuthRedirect();
@@ -66,7 +69,7 @@ const Login = () => {
                 navigate('/community', { replace: true });
             }
         }
-    }, [isAuthenticated, navigate, queryParams]);
+    }, [isAuthenticated, isLoading, navigate, queryParams]);
     
     // Prevent form from submitting and refreshing page
     useEffect(() => {
