@@ -46,6 +46,33 @@ function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+/** Preserve API risk radar rows (time, impact, actuals); strings kept for seed/legacy. */
+function normalizeRiskRadarItem(x) {
+  if (x == null) return '';
+  if (typeof x === 'string') return x;
+  if (typeof x !== 'object') return '';
+  const rawImpact = x.impact ?? x.severity ?? '';
+  const impact =
+    typeof rawImpact === 'number'
+      ? rawImpact >= 3
+        ? 'high'
+        : rawImpact >= 2
+          ? 'medium'
+          : rawImpact >= 1
+            ? 'low'
+            : ''
+      : String(rawImpact || '').toLowerCase();
+  return {
+    title: x.title || x.event || x.text || x.name || '—',
+    time: x.time ?? x.date ?? x.datetime ?? null,
+    impact: impact || null,
+    forecast: x.forecast ?? x.estimate ?? x.fcst ?? null,
+    previous: x.previous ?? x.prior ?? null,
+    actual: x.actual ?? x.value ?? null,
+    currency: x.currency || x.category || null,
+  };
+}
+
 function mapBackendToDashboard(apiData) {
   if (!apiData || typeof apiData !== 'object') return null;
   const r = apiData.marketRegime;
@@ -88,7 +115,7 @@ function mapBackendToDashboard(apiData) {
       ? t.map((x) => (typeof x === 'string' ? x : x.title || x.text || ''))
       : SEED_MARKET_INTELLIGENCE.traderFocus,
     riskRadar: Array.isArray(rr)
-      ? rr.map((x) => (typeof x === 'string' ? x : x.title || x.text || ''))
+      ? rr.map(normalizeRiskRadarItem).filter((x) => x !== '')
       : SEED_MARKET_INTELLIGENCE.riskRadar,
     updatedAt: apiData.updatedAt || null,
     aiSessionBrief: typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : '',

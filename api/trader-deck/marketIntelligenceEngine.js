@@ -343,10 +343,23 @@ const RR_HORIZON_DAYS = 10;
 const RR_MAX_CALENDAR = 7;
 const RR_MAX_TOTAL = 8;
 
+/** Align with api/trader-deck/economic-calendar.js — FMP/TE date strings vary. */
+function parseDateToTimestamp(raw) {
+  if (raw == null || raw === '') return NaN;
+  const rawStr = String(raw).trim();
+  if (!rawStr) return NaN;
+  let parsed = Date.parse(rawStr);
+  if (!Number.isNaN(parsed)) return parsed;
+  const tzFixed = rawStr.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+  parsed = Date.parse(tzFixed);
+  if (!Number.isNaN(parsed)) return parsed;
+  const spaceFixed = rawStr.replace(' ', 'T');
+  parsed = Date.parse(spaceFixed.endsWith('Z') ? spaceFixed : `${spaceFixed}Z`);
+  return Number.isNaN(parsed) ? NaN : parsed;
+}
+
 function parseEventTimeMs(raw) {
-  if (!raw) return NaN;
-  const t = Date.parse(String(raw));
-  return Number.isNaN(t) ? NaN : t;
+  return parseDateToTimestamp(raw);
 }
 
 function dayKeyFromMs(ms) {

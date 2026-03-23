@@ -786,9 +786,11 @@ const Api = {
             params: refresh ? { refresh: '1' } : {},
         });
     },
+    /** skipCache: economic calendar actuals must not sit behind the 18s client GET cache. */
     getTraderDeckEconomicCalendar: (days = 7, refresh = false) =>
         dedupeGet(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
             params: { days, ...(refresh ? { refresh: '1' } : {}) },
+            skipCache: true,
         }),
     getTraderDeckNews: (refresh = false) =>
         dedupeGet(`${API_BASE_URL}/api/trader-deck/news`, {

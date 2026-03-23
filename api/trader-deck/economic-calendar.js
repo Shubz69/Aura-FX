@@ -34,6 +34,9 @@ function normCountry(raw) {
     'united kingdom': 'GBP', 'japan': 'JPY', 'canada': 'CAD',
     'australia': 'AUD', 'new zealand': 'NZD', 'switzerland': 'CHF',
     'china': 'CNH', 'germany': 'EUR',
+    // Forex Factory / short codes (ISO-3166 → reporting currency)
+    us: 'USD', eu: 'EUR', gb: 'GBP', uk: 'GBP', jp: 'JPY', ca: 'CAD',
+    au: 'AUD', nz: 'NZD', ch: 'CHF', cn: 'CNH',
   };
   const lower = raw.toLowerCase();
   return map[lower] || raw.toUpperCase().slice(0, 3);
@@ -117,7 +120,7 @@ async function fromForexFactory(days = 7) {
             date: dateStr,
             time: timeStr,
             timestamp: ts, // UTC ms — used by frontend for precision scheduling
-            currency: ev.country,
+            currency: normCountry(ev.country) || String(ev.country || '').toUpperCase().slice(0, 3),
             impact: normImpact(ev.impact),
             event: ev.title,
             actual: ev.actual || null,

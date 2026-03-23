@@ -2,13 +2,14 @@
  * Trader Deck — Economic Calendar
  * Economic events (7-day view).
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Api from '../../services/Api';
 import '../../styles/trader-deck/EconomicCalendarView.css';
 
 const IMPACT_LABELS = { high: 'HIGH', medium: 'MED', low: 'LOW' };
 const CURRENCIES = ['ALL', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
 const SOON_WINDOW_MS = 5 * 60 * 1000;
+const REFRESH_INTERVAL_MS = 75 * 1000;
 
 function hasActualValue(v) {
   if (v == null) return false;
@@ -74,17 +75,35 @@ export default function EconomicCalendarView() {
   const [days, setDays] = useState(7);
   const [clock, setClock] = useState(Date.now());
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    Api.getTraderDeckEconomicCalendar(days)
+  const fetchCalendar = useCallback((silent = false, refresh = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
+    Api.getTraderDeckEconomicCalendar(days, refresh)
       .then((r) => {
         setEvents(Array.isArray(r.data?.events) ? r.data.events : []);
         setUpdatedAt(r.data?.updatedAt || null);
       })
-      .catch(() => setError('Could not load calendar. Check back soon.'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!silent) setError('Could not load calendar. Check back soon.');
+      })
+      .finally(() => {
+        if (!silent) setLoading(false);
+      });
   }, [days]);
+
+  useEffect(() => {
+    fetchCalendar(false, false);
+  }, [fetchCalendar]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      fetchCalendar(true, true);
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [fetchCalendar]);
 
   useEffect(() => {
     const id = setInterval(() => setClock(Date.now()), 1000);
