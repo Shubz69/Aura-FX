@@ -14,6 +14,7 @@ const { generateRequestId, createLogger } = require('./utils/logger');
 const { checkRateLimit, coalesceRequest, RATE_LIMIT_CONFIGS } = require('./utils/rate-limiter');
 const { safeLimit, safeTimeframe } = require('./utils/validators');
 const { purgeDemoUsers } = require('./utils/purge-demo-users');
+const { getLevelFromXP } = require('./utils/xp-system');
 
 // ============================================================================
 // Centralized Timeframe Boundary Calculator (Single Source of Truth)
@@ -91,18 +92,6 @@ function getRows(result) {
   return [];
 }
 
-function getLevelFromXP(xp) {
-  if (xp <= 0) return 1;
-  if (xp >= 1000000) return 1000;
-  
-  if (xp < 500) return Math.floor(Math.sqrt(xp / 50)) + 1;
-  if (xp < 5000) return 10 + Math.floor(Math.sqrt((xp - 500) / 100)) + 1;
-  if (xp < 20000) return 50 + Math.floor(Math.sqrt((xp - 5000) / 200)) + 1;
-  if (xp < 100000) return 100 + Math.floor(Math.sqrt((xp - 20000) / 500)) + 1;
-  if (xp < 500000) return 200 + Math.floor(Math.sqrt((xp - 100000) / 1000)) + 1;
-  return Math.min(1000, 500 + Math.floor(Math.sqrt((xp - 500000) / 2000)) + 1);
-}
-
 // ============================================================================
 // Database Schema Setup (Idempotent) + demo user purge
 // ============================================================================
@@ -118,7 +107,7 @@ async function ensureSchema() {
       CREATE TABLE IF NOT EXISTS xp_events (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        amount DECIMAL(10, 2) NOT NULL,
+        amount DECIMAL(14, 4) NOT NULL,
         source VARCHAR(50) NOT NULL,
         meta JSON,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

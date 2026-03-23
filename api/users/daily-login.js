@@ -1,5 +1,6 @@
 const { executeQuery } = require('../db');
 const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
+const { calculateLoginXP, getLevelFromXP } = require('../utils/xp-system');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 
@@ -18,16 +19,6 @@ const withTimeout = (promise, timeoutMs = 2000) => {
   ]);
 };
 
-/**
- * Calculate XP reward based on login streak
- * Base: 25 XP, scales with streak length
- */
-const calculateLoginXP = (streak) => {
-  const baseXP = 12;
-  const bonusMultiplier = Math.min(Math.floor(streak / 7), 20);
-  const bonusXP = bonusMultiplier * 2;
-  return baseXP + bonusXP;
-};
 
 async function logDailyLoginXpEvent(executeQuery, userId, xpReward, desc) {
   try {
@@ -35,7 +26,7 @@ async function logDailyLoginXpEvent(executeQuery, userId, xpReward, desc) {
       CREATE TABLE IF NOT EXISTS xp_events (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        amount DECIMAL(12, 2) NOT NULL,
+        amount DECIMAL(14, 4) NOT NULL,
         source VARCHAR(50) NOT NULL,
         meta JSON,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -51,38 +42,6 @@ async function logDailyLoginXpEvent(executeQuery, userId, xpReward, desc) {
     console.warn('daily-login xp_events:', e.message);
   }
 }
-
-/**
- * Calculate level from XP (same as XP system)
- */
-const getLevelFromXP = (xp) => {
-  if (xp <= 0) return 1;
-  if (xp >= 1000000) return 1000;
-
-  if (xp < 500) {
-    return Math.floor(Math.sqrt(xp / 50)) + 1;
-  } else if (xp < 5000) {
-    const baseLevel = 10;
-    const remainingXP = xp - 500;
-    return baseLevel + Math.floor(Math.sqrt(remainingXP / 100)) + 1;
-  } else if (xp < 20000) {
-    const baseLevel = 50;
-    const remainingXP = xp - 5000;
-    return baseLevel + Math.floor(Math.sqrt(remainingXP / 200)) + 1;
-  } else if (xp < 100000) {
-    const baseLevel = 100;
-    const remainingXP = xp - 20000;
-    return baseLevel + Math.floor(Math.sqrt(remainingXP / 500)) + 1;
-  } else if (xp < 500000) {
-    const baseLevel = 200;
-    const remainingXP = xp - 100000;
-    return baseLevel + Math.floor(Math.sqrt(remainingXP / 1000)) + 1;
-  } else {
-    const baseLevel = 500;
-    const remainingXP = xp - 500000;
-    return Math.min(1000, baseLevel + Math.floor(Math.sqrt(remainingXP / 2000)) + 1);
-  }
-};
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

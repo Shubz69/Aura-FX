@@ -3173,8 +3173,11 @@ if (window.requestAnimationFrame) {
             }
             
             // Initialize XP and level if not present
-            const currentXP = storedUserData.xp || 0;
-            const calculatedLevel = getLevelFromXP(currentXP);
+            const currentXP = Number(storedUserData.xp ?? 0);
+            const storedLevel = Number(storedUserData.level ?? NaN);
+            const calculatedLevel = Number.isFinite(storedLevel) && storedLevel > 0
+                ? storedLevel
+                : getLevelFromXP(currentXP);
             
             // Create enhanced user object with guaranteed username and XP
             const enhancedUser = {
@@ -3186,7 +3189,7 @@ if (window.requestAnimationFrame) {
             };
             
             // Save back to localStorage if we added new fields
-            if (!storedUserData.xp || !storedUserData.level) {
+            if (storedUserData.xp == null || storedUserData.level == null) {
                 localStorage.setItem('user', JSON.stringify(enhancedUser));
             }
             

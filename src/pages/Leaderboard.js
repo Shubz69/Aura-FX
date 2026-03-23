@@ -280,11 +280,11 @@ const Leaderboard = () => {
     };
 
     const getLevelBadge = (level) => {
-        if (level >= 20) return { class: 'badge-legend', text: '🔥 LEGEND' };
-        if (level >= 15) return { class: 'badge-elite', text: '⚡ ELITE' };
-        if (level >= 10) return { class: 'badge-pro', text: '🚀 PRO' };
-        if (level >= 5)  return { class: 'badge-member', text: '🌟 MEMBER' };
-        return { class: 'badge-rookie', text: '🔰 ROOKIE' };
+        if (level >= 100) return { class: 'badge-legend', text: '👑 GOD' };
+        if (level >= 90) return { class: 'badge-elite', text: '⚡ IMMORTAL' };
+        if (level >= 80) return { class: 'badge-pro', text: '🔥 MYTHICAL' };
+        if (level >= 70) return { class: 'badge-member', text: '🏆 LEGEND' };
+        return { class: 'badge-rookie', text: '📈 RISING' };
     };
 
     const getXpLabel = () => {
@@ -560,14 +560,14 @@ const Leaderboard = () => {
                         <h3>🎯 How XP Works</h3>
                         <div className="xp-rules">
                             {[
-                                ['💬', '+10 XP per message in community'],
-                                ['📎', '+5 XP for file attachments'],
-                                ['🔥', '+25 XP for daily login streak'],
-                                ['📚', '+50 XP per course completion'],
-                                ['📝', '+15 XP per journal entry'],
-                                ['🎁', '+100 XP for helping other users'],
-                                ['✅', '+XP for good behavior (moderation rewards)'],
-                                ['⚠️', '-200 XP for rule violations', true],
+                                ['💬', '+0.001 XP per quality message (cooldown applies)'],
+                                ['📎', '+0.002 XP for useful attachment context'],
+                                ['🔥', '+0.005 XP base daily login (scaled by streak)'],
+                                ['📚', '+0.02 XP per course completion'],
+                                ['📝', '+0.0025 XP journal actions (anti-abuse gated)'],
+                                ['🎁', '+0.005 XP for verified help to other users'],
+                                ['✅', 'XP now follows strict premium difficulty rules'],
+                                ['⚠️', '1.25-3.5 XP penalties for rule violations', true],
                                 ['🚫', '5 strikes = 1 month ban', true],
                             ].map(([icon, text, neg]) => (
                                 <div key={text} className={`xp-rule${neg ? ' negative' : ''}`}>
@@ -579,10 +579,10 @@ const Leaderboard = () => {
                         <div className="xp-system-info">
                             <h4>📊 XP System Details</h4>
                             <ul>
-                                <li><strong>Level Cap:</strong> 1000 (AURA TERMINAL Legend)</li>
-                                <li><strong>Scaling:</strong> Early levels are easier; higher levels require more XP</li>
-                                <li><strong>Anti-Spam:</strong> Cooldowns prevent abuse (5s between messages, 24h login)</li>
-                                <li><strong>Rank Titles:</strong> Unique trading rank titles every 10 levels</li>
+                                <li><strong>Level Cap:</strong> 100 (AURA TERMINAL God)</li>
+                                <li><strong>Scaling:</strong> Premium hard curve with decimal XP progression</li>
+                                <li><strong>Anti-Spam:</strong> Cooldowns and moderation-gated XP events</li>
+                                <li><strong>Rank Titles:</strong> Unique premium rank title for every level</li>
                                 <li><strong>Tiers:</strong> Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → God</li>
                             </ul>
                         </div>

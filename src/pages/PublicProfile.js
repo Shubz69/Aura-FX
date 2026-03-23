@@ -111,14 +111,12 @@ const PublicProfile = () => {
     // Get achievements based on level
     const getAchievements = (level) => {
         const list = [];
-        if (level >= 5) list.push({ name: "Getting Started", icon: "🔰" });
-        if (level >= 10) list.push({ name: "Active Communicator", icon: "🎯" });
-        if (level >= 25) list.push({ name: "Level 25 Club", icon: "🔥" });
-        if (level >= 50) list.push({ name: "Top Contributor", icon: "🏆" });
-        if (level >= 75) list.push({ name: "Veteran Status", icon: "👑" });
-        if (level >= 100) list.push({ name: "Infinity Legend", icon: "⭐" });
-        if (level >= 200) list.push({ name: "Advanced Trader", icon: "💎" });
-        if (level >= 500) list.push({ name: "Trading Master", icon: "🌟" });
+        if (level >= 10) list.push({ name: "Getting Started", icon: "🔰" });
+        if (level >= 20) list.push({ name: "Active Communicator", icon: "🎯" });
+        if (level >= 40) list.push({ name: "Professional Tier", icon: "🔥" });
+        if (level >= 60) list.push({ name: "Elite Tier", icon: "🏆" });
+        if (level >= 80) list.push({ name: "Legend Tier", icon: "👑" });
+        if (level >= 100) list.push({ name: "AURA God", icon: "💎" });
         return list;
     };
 

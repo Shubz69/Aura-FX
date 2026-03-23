@@ -1,6 +1,7 @@
 const { getDbConnection } = require('../db');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
 const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
+const { getLevelFromXP, XP_RULES, round2 } = require('../utils/xp-system');
 
 /** mysql2 may return DECIMAL/BIGINT; parseFloat(BigInt) throws in JS. */
 function num(v, fallback = 0) {
@@ -45,7 +46,7 @@ module.exports = async (req, res) => {
             } catch (e) {
                 console.log('XP/Level columns do not exist, adding them...');
                 try {
-                    await db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(10, 2) DEFAULT 0');
+                    await db.execute('ALTER TABLE users ADD COLUMN xp DECIMAL(14, 4) DEFAULT 0');
                     console.log('✅ Added xp column to users table');
                 } catch (e2) {
                     console.warn('Could not add xp column:', e2.message);
@@ -64,7 +65,7 @@ module.exports = async (req, res) => {
                     CREATE TABLE IF NOT EXISTS xp_logs (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         user_id INT NOT NULL,
-                        xp_amount DECIMAL(10, 2) NOT NULL,
+                        xp_amount DECIMAL(14, 4) NOT NULL,
                         action_type VARCHAR(50) NOT NULL,
                         description TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -88,25 +89,16 @@ module.exports = async (req, res) => {
             const previousXP = num(userRows[0].xp, 0);
             const previousLevel = parseInt(userRows[0].level, 10) || 1;
             let rawGain = num(xp, 0) - previousXP;
-            const PLAYER_XP_MULT = Number(process.env.XP_PLAYER_GAIN_MULT || 0.55);
+            const PLAYER_XP_MULT = XP_RULES.MESSAGE_MULTIPLIER;
             let adjustedXP = num(xp, 0);
             let adjustedLevel = jsonNumber(level, 1);
             if (rawGain > 0 && PLAYER_XP_MULT > 0 && PLAYER_XP_MULT < 1) {
-                const scaledGain = Math.round(rawGain * PLAYER_XP_MULT * 100) / 100;
+                const scaledGain = round2(rawGain * PLAYER_XP_MULT);
                 adjustedXP = Math.max(0, previousXP + scaledGain);
-                const getLevelFromXP = (x) => {
-                    if (x <= 0) return 1;
-                    if (x >= 1000000) return 1000;
-                    if (x < 500) return Math.floor(Math.sqrt(x / 50)) + 1;
-                    if (x < 5000) return 10 + Math.floor(Math.sqrt((x - 500) / 100)) + 1;
-                    if (x < 20000) return 50 + Math.floor(Math.sqrt((x - 5000) / 200)) + 1;
-                    if (x < 100000) return 100 + Math.floor(Math.sqrt((x - 20000) / 500)) + 1;
-                    if (x < 500000) return 200 + Math.floor(Math.sqrt((x - 100000) / 1000)) + 1;
-                    return Math.min(1000, 500 + Math.floor(Math.sqrt((x - 500000) / 2000)) + 1);
-                };
                 adjustedLevel = getLevelFromXP(adjustedXP);
                 rawGain = scaledGain;
             }
+            adjustedXP = round2(adjustedXP);
 
             // Update user XP and level
             const [updateResult] = await db.execute(
@@ -114,8 +106,8 @@ module.exports = async (req, res) => {
                 [adjustedXP, adjustedLevel, userId]
             );
             
-            // Log XP transaction if there was a gain
-            if (rawGain > 0) {
+            // Log XP transaction for any change so ledger remains canonical.
+            if (rawGain !== 0) {
                 const logActionType = actionType || 'system_update';
                 const logDescription = description || `XP updated from ${previousXP} to ${adjustedXP}`;
                 
@@ -123,7 +115,7 @@ module.exports = async (req, res) => {
                 try {
                     await db.execute(
                         'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
-                        [userId, rawGain, logActionType, logDescription]
+                        [userId, round2(rawGain), logActionType, logDescription]
                     );
                 } catch (logError) {
                     console.warn('Failed to log XP to xp_logs:', logError.message);
@@ -135,7 +127,7 @@ module.exports = async (req, res) => {
                         CREATE TABLE IF NOT EXISTS xp_events (
                             id INT AUTO_INCREMENT PRIMARY KEY,
                             user_id INT NOT NULL,
-                            amount DECIMAL(10, 2) NOT NULL,
+                            amount DECIMAL(14, 4) NOT NULL,
                             source VARCHAR(50) NOT NULL,
                             meta JSON,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -145,7 +137,7 @@ module.exports = async (req, res) => {
                     `);
                     await db.execute(
                         'INSERT INTO xp_events (user_id, amount, source, meta) VALUES (?, ?, ?, ?)',
-                        [userId, rawGain, logActionType, JSON.stringify({ description: logDescription })]
+                        [userId, round2(rawGain), logActionType, JSON.stringify({ description: logDescription })]
                     );
                 } catch (evtError) {
                     console.warn('Failed to log XP to xp_events:', evtError.message);

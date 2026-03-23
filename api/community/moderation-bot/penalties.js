@@ -3,17 +3,7 @@
  * Uses xp_events (negative amounts) and keeps users.xp / users.level in sync.
  */
 
-function getLevelFromXP(xp) {
-  const n = Number(xp) || 0;
-  if (n <= 0) return 1;
-  if (n >= 1000000) return 1000;
-  if (n < 500) return Math.floor(Math.sqrt(n / 50)) + 1;
-  if (n < 5000) return 10 + Math.floor(Math.sqrt((n - 500) / 100)) + 1;
-  if (n < 20000) return 50 + Math.floor(Math.sqrt((n - 5000) / 200)) + 1;
-  if (n < 100000) return 100 + Math.floor(Math.sqrt((n - 20000) / 500)) + 1;
-  if (n < 500000) return 200 + Math.floor(Math.sqrt((n - 100000) / 1000)) + 1;
-  return Math.min(1000, 500 + Math.floor(Math.sqrt((n - 500000) / 2000)) + 1);
-}
+const { getLevelFromXP, round2 } = require('../../utils/xp-system');
 
 async function ensureStrikesTable(db) {
   if (!db || !process.env.MYSQL_DATABASE) return;
@@ -25,7 +15,7 @@ async function ensureStrikesTable(db) {
       rule_id VARCHAR(80) NOT NULL,
       reason VARCHAR(512) DEFAULT NULL,
       message_preview VARCHAR(240) DEFAULT NULL,
-      xp_penalty DECIMAL(10, 2) DEFAULT 0,
+      xp_penalty DECIMAL(14, 4) DEFAULT 0,
       strike_units INT NOT NULL DEFAULT 1,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_user_created (user_id, created_at),
@@ -40,7 +30,7 @@ async function ensureXpEventsColumns(db) {
       CREATE TABLE IF NOT EXISTS xp_events (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        amount DECIMAL(10, 2) NOT NULL,
+        amount DECIMAL(14, 4) NOT NULL,
         source VARCHAR(64) NOT NULL,
         meta JSON,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -85,7 +75,7 @@ async function applyModerationPenalties(db, userId, channelId, violations, conte
     if (xp > 0) {
       const [uRows] = await db.execute('SELECT COALESCE(xp, 0) AS xp FROM users WHERE id = ?', [userId]);
       const currentXp = parseFloat(uRows?.[0]?.xp ?? 0);
-      const newXp = Math.max(0, currentXp - xp);
+      const newXp = round2(Math.max(0, currentXp - xp));
       const newLevel = getLevelFromXP(newXp);
 
       await db.execute('UPDATE users SET xp = ?, level = ? WHERE id = ?', [newXp, newLevel, userId]);

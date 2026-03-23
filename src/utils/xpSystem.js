@@ -1,309 +1,140 @@
 /**
- * AURA TERMINAL XP System
- * Premium gamified XP and leveling system with trading-focused ranks
+ * AURA TERMINAL XP System (Premium v2)
+ * - 100 levels max
+ * - Decimal XP economy
+ * - Much harder progression curve
+ * - Tier ladder preserved: Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → God
  */
 
-// XP Rewards — decimal-based, hard to earn. Quality over quantity.
+export const MAX_LEVEL = 100;
+
+const FOUR_DP = 10000;
+const round2 = (n) => Math.round((Number(n) || 0) * FOUR_DP) / FOUR_DP;
+
+// ~100x harder compared with legacy values; decimals retained.
 export const XP_REWARDS = {
-    MESSAGE: 0.05,          // Small reward per message (cooldown enforced)
-    FILE_ATTACHMENT: 0.10,  // Bonus for attaching a file/image
-    EMOJI_BONUS: 0.01,      // Tiny bonus per emoji (capped)
-    DAILY_LOGIN: 0.50,      // Base daily login XP, scales with streak
-    COURSE_COMPLETION: 2.0, // Completing a course module
-    HELPING_USER: 0.50,     // Recognising/helping another user (30-min cooldown)
-    JOURNAL_ENTRY: 0.25,    // Completing a journal task (once per day)
-    RULE_VIOLATION: -5.0    // Penalty for breaking platform rules
+    MESSAGE: 0.001,
+    FILE_ATTACHMENT: 0.002,
+    EMOJI_BONUS: 0.0002,
+    DAILY_LOGIN: 0.005,
+    COURSE_COMPLETION: 0.02,
+    HELPING_USER: 0.005,
+    JOURNAL_ENTRY: 0.0025,
+    RULE_VIOLATION: -1.25
 };
 
-/**
- * Calculate XP reward based on login streak
- * Base: 0.5 XP, scales with streak length
- * +0.05 XP bonus per 7 days (capped at 2.0 bonus XP = 40 weeks)
- */
-export const calculateLoginXP = (streak) => {
-    const baseXP = 0.5;
-    // Bonus XP increases with streak: +0.05 per 7 days (capped at 2.0 bonus XP = 40 weeks)
-    const bonusMultiplier = Math.min(Math.floor(streak / 7), 40);
-    const bonusXP = bonusMultiplier * 0.05;
-    return Math.round((baseXP + bonusXP) * 100) / 100;
-};
-
-// Cooldowns (in milliseconds) - Anti-spam protection
 export const XP_COOLDOWNS = {
-    MESSAGE: 60000,       // 1 minute between XP-eligible messages
-    DAILY_LOGIN: 86400000, // 24 hours
-    JOURNAL_ENTRY: 86400000, // 24 hours — once per day
-    HELPING_USER: 1800000   // 30 minutes
+    MESSAGE: 120000,          // 2 min
+    DAILY_LOGIN: 86400000,    // 24h
+    JOURNAL_ENTRY: 86400000,  // 24h
+    HELPING_USER: 3600000     // 1h
 };
 
-// Trading Rank Titles (Every 10 levels from 1-1000)
-export const TRADING_RANKS = {
-    // Beginner Tier (1-90)
-    10: 'Market Observer',
-    20: 'Chart Reader',
-    30: 'Price Action Student',
-    40: 'Risk Apprentice',
-    50: 'Session Trader',
-    60: 'Breakout Hunter',
-    70: 'Trend Rider',
-    80: 'Liquidity Scout',
-    90: 'Structure Analyst',
-    
-    // Intermediate Tier (100-190)
-    100: 'Junior Trader',
-    110: 'Technical Specialist',
-    120: 'Market Strategist',
-    130: 'Volume Analyst',
-    140: 'Pattern Master',
-    150: 'Risk Manager',
-    160: 'Session Dominator',
-    170: 'Momentum Trader',
-    180: 'Precision Sniper',
-    190: 'Consistency Builder',
-    
-    // Advanced Tier (200-290)
-    200: 'Advanced Trader',
-    210: 'Market Engineer',
-    220: 'Institutional Reader',
-    230: 'Liquidity Technician',
-    240: 'Algorithmic Thinker',
-    250: 'Smart Money Trader',
-    260: 'Macro Analyst',
-    270: 'Scalping Specialist',
-    280: 'Swing Commander',
-    290: 'Strategy Architect',
-    
-    // Professional Tier (300-390)
-    300: 'Pro Trader',
-    310: 'Market Controller',
-    320: 'Execution Specialist',
-    330: 'Risk Architect',
-    340: 'Trading Mentor',
-    350: 'Market Professor',
-    360: 'Hedge Strategist',
-    370: 'Alpha Generator',
-    380: 'Capital Protector',
-    390: 'Performance Coach',
-    
-    // Elite Tier (400-490)
-    400: 'Elite Trader',
-    410: 'Institutional Operative',
-    420: 'Liquidity Commander',
-    430: 'Fund Manager',
-    440: 'Prop Firm Trader',
-    450: 'Portfolio Architect',
-    460: 'Market Dominator',
-    470: 'Capital General',
-    480: 'Alpha Lord',
-    490: 'Risk Emperor',
-    
-    // Master Tier (500-590)
-    500: 'Trading Master',
-    510: 'Market Grandmaster',
-    520: 'Capital Controller',
-    530: 'Liquidity King',
-    540: 'Hedge Fund Mind',
-    550: 'Strategy Overlord',
-    560: 'Institutional Elite',
-    570: 'Execution God',
-    580: 'Risk Titan',
-    590: 'Market Titan',
-    
-    // Legend Tier (600-690)
-    600: 'Trading Legend',
-    610: 'Market Phantom',
-    620: 'Liquidity Beast',
-    630: 'Alpha Hunter',
-    640: 'Capital Predator',
-    650: 'Market Warlord',
-    660: 'Institutional Beast',
-    670: 'Strategy Demon',
-    680: 'Risk Assassin',
-    690: 'Chart God',
-    
-    // Mythical Tier (700-790)
-    700: 'Mythical Trader',
-    710: 'Market Deity',
-    720: 'Liquidity God',
-    730: 'Alpha Reaper',
-    740: 'Capital Emperor',
-    750: 'Market Destroyer',
-    760: 'Institutional Lord',
-    770: 'Strategy King',
-    780: 'Risk Immortal',
-    790: 'Chart Immortal',
-    
-    // Immortal Tier (800-890)
-    800: 'Immortal Trader',
-    810: 'Market Immortal',
-    820: 'Liquidity Immortal',
-    830: 'Alpha Immortal',
-    840: 'Capital Immortal',
-    850: 'Strategy Immortal',
-    860: 'Risk Immortal',
-    870: 'Chart Immortal',
-    880: 'Institutional Immortal',
-    890: 'Trading Immortal',
-    
-    // God Tier (900-1000)
-    900: 'Trading God',
-    910: 'Market God',
-    920: 'Liquidity God',
-    930: 'Alpha God',
-    940: 'Capital God',
-    950: 'Strategy God',
-    960: 'Risk God',
-    970: 'Chart God',
-    980: 'Institutional God',
-    990: 'Supreme Trader',
-    1000: 'AURA TERMINAL Legend'
-};
+const TIER_NAMES = [
+    'Beginner Tier',
+    'Intermediate Tier',
+    'Advanced Tier',
+    'Professional Tier',
+    'Elite Tier',
+    'Master Tier',
+    'Legend Tier',
+    'Mythical Tier',
+    'Immortal Tier',
+    'God Tier'
+];
 
-/**
- * Get rank title for a given level
- */
-export const getRankTitle = (level) => {
-    if (level >= 1000) return TRADING_RANKS[1000];
-    if (level >= 990) return TRADING_RANKS[990];
-    if (level >= 980) return TRADING_RANKS[980];
-    if (level >= 970) return TRADING_RANKS[970];
-    if (level >= 960) return TRADING_RANKS[960];
-    if (level >= 950) return TRADING_RANKS[950];
-    if (level >= 940) return TRADING_RANKS[940];
-    if (level >= 930) return TRADING_RANKS[930];
-    if (level >= 920) return TRADING_RANKS[920];
-    if (level >= 910) return TRADING_RANKS[910];
-    if (level >= 900) return TRADING_RANKS[900];
-    
-    // Find the highest rank milestone the user has reached
-    const milestones = Object.keys(TRADING_RANKS).map(Number).sort((a, b) => b - a);
-    for (const milestone of milestones) {
-        if (level >= milestone) {
-            return TRADING_RANKS[milestone];
+const TIER_COLORS = [
+    '#7d8597',
+    '#8f8bff',
+    '#3ea0ff',
+    '#2ed8a7',
+    '#eaa960',
+    '#f8c37d',
+    '#f59e0b',
+    '#d97706',
+    '#f5d98b',
+    '#ffd700'
+];
+
+const TIER_RANK_NAMES = [
+    ['Market Initiate', 'Session Observer', 'Chart Apprentice', 'Bias Student', 'Structure Novice', 'Range Reader', 'Risk Learner', 'Execution Rookie', 'Momentum Trainee', 'Pattern Seeker'],
+    ['Trend Practitioner', 'Liquidity Reader', 'Zone Apprentice', 'Reaction Analyst', 'Discipline Builder', 'Consistency Seeker', 'Setup Tracker', 'Candle Technician', 'Price Cartographer', 'Signal Operator'],
+    ['Session Specialist', 'Structure Specialist', 'Flow Analyst', 'Liquidity Specialist', 'Refinement Analyst', 'Confirmation Specialist', 'Risk Technician', 'Execution Technician', 'Momentum Specialist', 'Precision Trader'],
+    ['Model Professional', 'System Professional', 'Process Professional', 'Edge Professional', 'Macro Professional', 'Confluence Professional', 'Execution Professional', 'Risk Professional', 'Performance Professional', 'Capital Professional'],
+    ['Institutional Scout', 'Institutional Analyst', 'Institutional Operator', 'Institutional Tactician', 'Institutional Strategist', 'Institutional Executor', 'Institutional Specialist', 'Institutional Architect', 'Institutional Commander', 'Institutional Elite'],
+    ['Master of Structure', 'Master of Flow', 'Master of Timing', 'Master of Confirmation', 'Master of Risk', 'Master of Execution', 'Master of Confluence', 'Master of Process', 'Master of Discipline', 'Trading Master'],
+    ['Legendary Reader', 'Legendary Operator', 'Legendary Strategist', 'Legendary Executor', 'Legendary Risk Manager', 'Legendary Tactician', 'Legendary Architect', 'Legendary Commander', 'Legendary Specialist', 'Trading Legend'],
+    ['Mythic Analyst', 'Mythic Strategist', 'Mythic Executor', 'Mythic Risk Architect', 'Mythic Commander', 'Mythic Operator', 'Mythic Specialist', 'Mythic Mastermind', 'Mythic Sovereign', 'Mythical Trader'],
+    ['Immortal Analyst', 'Immortal Strategist', 'Immortal Executor', 'Immortal Risk Lord', 'Immortal Commander', 'Immortal Architect', 'Immortal Specialist', 'Immortal Sovereign', 'Immortal Grandmaster', 'Immortal Trader'],
+    ['God of Structure', 'God of Timing', 'God of Confirmation', 'God of Execution', 'God of Risk', 'God of Process', 'God of Discipline', 'God of Edge', 'Supreme Trader', 'AURA TERMINAL God']
+];
+
+export const TRADING_RANKS = (() => {
+    const out = {};
+    let level = 1;
+    for (let tier = 0; tier < TIER_RANK_NAMES.length; tier += 1) {
+        for (let i = 0; i < TIER_RANK_NAMES[tier].length; i += 1) {
+            out[level] = TIER_RANK_NAMES[tier][i];
+            level += 1;
         }
     }
-    
-    return 'Trading Novice'; // Default for levels below 10
+    return out;
+})();
+
+const xpRequiredForLevel = (level) => {
+    if (level <= 1) return 0;
+    const l = level - 1;
+    // Very hard progression with decimals support.
+    return round2((l ** 2.6) * 125);
 };
 
-/**
- * Get tier name for a level
- */
+export const calculateLoginXP = (streak) => {
+    const baseXP = XP_REWARDS.DAILY_LOGIN;
+    const bonusMultiplier = Math.min(Math.floor((Number(streak) || 0) / 14), 30);
+    const bonusXP = bonusMultiplier * 0.001;
+    return round2(baseXP + bonusXP);
+};
+
+export const getRankTitle = (level) => {
+    const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(level, 10) || 1));
+    return TRADING_RANKS[lv] || 'Market Initiate';
+};
+
 export const getTierName = (level) => {
-    if (level >= 900) return 'God Tier';
-    if (level >= 800) return 'Immortal Tier';
-    if (level >= 700) return 'Mythical Tier';
-    if (level >= 600) return 'Legend Tier';
-    if (level >= 500) return 'Master Tier';
-    if (level >= 400) return 'Elite Tier';
-    if (level >= 300) return 'Professional Tier';
-    if (level >= 200) return 'Advanced Tier';
-    if (level >= 100) return 'Intermediate Tier';
-    return 'Beginner Tier';
+    const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(level, 10) || 1));
+    const tierIdx = Math.floor((lv - 1) / 10);
+    return TIER_NAMES[tierIdx] || TIER_NAMES[0];
 };
 
-/**
- * Get tier color for styling
- */
 export const getTierColor = (level) => {
-    if (level >= 900) return '#FFD700'; // Gold
-    if (level >= 800) return '#C0C0C0'; // Silver
-    if (level >= 700) return '#FF69B4'; // Hot Pink
-    if (level >= 600) return '#FF4500'; // Orange Red
-    if (level >= 500) return '#9370DB'; // Medium Purple
-    if (level >= 400) return '#00CED1'; // Dark Turquoise
-    if (level >= 300) return '#32CD32'; // Lime Green
-    if (level >= 200) return '#1E90FF'; // Dodger Blue
-    if (level >= 100) return '#FFA500'; // Orange
-    return '#808080'; // Gray
+    const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(level, 10) || 1));
+    const tierIdx = Math.floor((lv - 1) / 10);
+    return TIER_COLORS[tierIdx] || TIER_COLORS[0];
 };
 
-/**
- * Calculate level from XP
- * Scaling: Early levels easy, higher levels harder
- * Formula: Level = floor(sqrt(XP / scaling_factor)) + 1
- * 
- * Scaling factors:
- * - Levels 1-10: 50 XP per level (easy start)
- * - Levels 11-50: 100 XP per level
- * - Levels 51-100: 200 XP per level
- * - Levels 101-200: 500 XP per level
- * - Levels 201-500: 1000 XP per level
- * - Levels 501-1000: 2000 XP per level
- */
 export const getLevelFromXP = (xp) => {
-    if (xp <= 0) return 1;
-    if (xp >= 1000000) return 1000; // Cap at 1000
-    
-    // Progressive scaling
-    if (xp < 500) {
-        // Levels 1-10: Easy start
-        return Math.floor(Math.sqrt(xp / 50)) + 1;
-    } else if (xp < 5000) {
-        // Levels 11-50
-        const baseLevel = 10;
-        const remainingXP = xp - 500;
-        return baseLevel + Math.floor(Math.sqrt(remainingXP / 100)) + 1;
-    } else if (xp < 20000) {
-        // Levels 51-100
-        const baseLevel = 50;
-        const remainingXP = xp - 5000;
-        return baseLevel + Math.floor(Math.sqrt(remainingXP / 200)) + 1;
-    } else if (xp < 100000) {
-        // Levels 101-200
-        const baseLevel = 100;
-        const remainingXP = xp - 20000;
-        return baseLevel + Math.floor(Math.sqrt(remainingXP / 500)) + 1;
-    } else if (xp < 500000) {
-        // Levels 201-500
-        const baseLevel = 200;
-        const remainingXP = xp - 100000;
-        return baseLevel + Math.floor(Math.sqrt(remainingXP / 1000)) + 1;
-    } else {
-        // Levels 501-1000
-        const baseLevel = 500;
-        const remainingXP = xp - 500000;
-        return Math.min(1000, baseLevel + Math.floor(Math.sqrt(remainingXP / 2000)) + 1);
+    const n = Math.max(0, Number(xp) || 0);
+    if (n <= 0) return 1;
+    if (n >= xpRequiredForLevel(MAX_LEVEL)) return MAX_LEVEL;
+    for (let level = MAX_LEVEL; level >= 1; level -= 1) {
+        if (n >= xpRequiredForLevel(level)) return level;
     }
+    return 1;
 };
 
-/**
- * Get XP required for next level
- */
 export const getXPForNextLevel = (currentLevel) => {
-    if (currentLevel >= 1000) return Infinity; // Max level
-    
-    // Reverse the formula based on level range
-    if (currentLevel < 10) {
-        return Math.pow(currentLevel, 2) * 50;
-    } else if (currentLevel < 50) {
-        const baseXP = 500;
-        const levelDiff = currentLevel - 10;
-        return baseXP + Math.pow(levelDiff, 2) * 100;
-    } else if (currentLevel < 100) {
-        const baseXP = 5000;
-        const levelDiff = currentLevel - 50;
-        return baseXP + Math.pow(levelDiff, 2) * 200;
-    } else if (currentLevel < 200) {
-        const baseXP = 20000;
-        const levelDiff = currentLevel - 100;
-        return baseXP + Math.pow(levelDiff, 2) * 500;
-    } else if (currentLevel < 500) {
-        const baseXP = 100000;
-        const levelDiff = currentLevel - 200;
-        return baseXP + Math.pow(levelDiff, 2) * 1000;
-    } else {
-        const baseXP = 500000;
-        const levelDiff = currentLevel - 500;
-        return baseXP + Math.pow(levelDiff, 2) * 2000;
-    }
+    const lv = Math.max(1, parseInt(currentLevel, 10) || 1);
+    if (lv >= MAX_LEVEL) return Infinity;
+    return xpRequiredForLevel(lv + 1);
 };
 
 /**
  * Get XP progress for current level
  */
 export const getXPProgress = (currentXP, currentLevel) => {
-    if (currentLevel >= 1000) {
+    const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(currentLevel, 10) || 1));
+    const xp = Math.max(0, Number(currentXP) || 0);
+    if (lv >= MAX_LEVEL) {
         return {
             current: 0,
             needed: 0,
@@ -312,11 +143,11 @@ export const getXPProgress = (currentXP, currentLevel) => {
     }
     
     // Calculate XP thresholds for current and next level
-    const xpForCurrentLevel = currentLevel > 1 ? getXPForNextLevel(currentLevel - 1) : 0;
-    const xpForNextLevel = getXPForNextLevel(currentLevel);
+    const xpForCurrentLevel = lv > 1 ? xpRequiredForLevel(lv) : 0;
+    const xpForNextLevel = getXPForNextLevel(lv);
     
     // XP in current level (how much XP the user has earned in this level)
-    const xpInCurrentLevel = Math.max(0, currentXP - xpForCurrentLevel);
+    const xpInCurrentLevel = Math.max(0, xp - xpForCurrentLevel);
     
     // XP needed to reach next level from current level threshold
     const xpNeededForNext = xpForNextLevel - xpForCurrentLevel;
@@ -327,8 +158,8 @@ export const getXPProgress = (currentXP, currentLevel) => {
         : 100;
     
     return {
-        current: Math.max(0, xpInCurrentLevel),
-        needed: Math.max(1, xpNeededForNext),
+        current: round2(Math.max(0, xpInCurrentLevel)),
+        needed: round2(Math.max(0.01, xpNeededForNext)),
         percentage: percentage
     };
 };
@@ -360,20 +191,21 @@ export const calculateMessageXP = (messageContent, hasFile) => {
         totalXP += emojiMatches.length * XP_REWARDS.EMOJI_BONUS;
     }
     
-    return Math.round(totalXP * 100) / 100; // Round to 2 decimals
+    return round2(totalXP);
 };
 
 /**
  * Get next rank milestone
  */
 export const getNextRankMilestone = (currentLevel) => {
+    const lv = Math.max(1, Math.min(MAX_LEVEL, parseInt(currentLevel, 10) || 1));
     const milestones = Object.keys(TRADING_RANKS).map(Number).sort((a, b) => a - b);
     for (const milestone of milestones) {
-        if (currentLevel < milestone) {
+        if (lv < milestone) {
             return {
                 level: milestone,
                 title: TRADING_RANKS[milestone],
-                xpNeeded: getXPForNextLevel(currentLevel)
+                xpNeeded: getXPForNextLevel(lv)
             };
         }
     }

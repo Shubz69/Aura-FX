@@ -7,6 +7,7 @@ function affectedRows(r) {
   const row = Array.isArray(r) ? r[0] : r;
   return row?.affectedRows ?? 0;
 }
+const { getLevelFromXP, round2 } = require('./xp-system');
 
 async function syncUserXpFromLedger(executeQuery) {
   const out = { xpRowsUpdated: 0, levelsUpdated: 0, errors: [] };
@@ -28,19 +29,17 @@ async function syncUserXpFromLedger(executeQuery) {
   }
 
   try {
-    const lev = await executeQuery(`
-      UPDATE users u
-      SET u.level = CASE
-        WHEN COALESCE(u.xp, 0) <= 0 THEN 1
-        WHEN u.xp < 500 THEN FLOOR(SQRT(u.xp / 50)) + 1
-        WHEN u.xp < 5000 THEN 10 + FLOOR(SQRT((u.xp - 500) / 100)) + 1
-        WHEN u.xp < 20000 THEN 50 + FLOOR(SQRT((u.xp - 5000) / 200)) + 1
-        WHEN u.xp < 100000 THEN 100 + FLOOR(SQRT((u.xp - 20000) / 500)) + 1
-        WHEN u.xp < 500000 THEN 200 + FLOOR(SQRT((u.xp - 100000) / 1000)) + 1
-        ELSE LEAST(1000, 500 + FLOOR(SQRT((u.xp - 500000) / 2000)) + 1)
-      END
-    `);
-    out.levelsUpdated = affectedRows(lev);
+    const [rows] = await executeQuery('SELECT id, COALESCE(xp, 0) AS xp, COALESCE(level, 1) AS level FROM users');
+    let changed = 0;
+    for (const row of rows || []) {
+      const nextXp = round2(row.xp);
+      const nextLevel = getLevelFromXP(nextXp);
+      if (Number(row.level) !== Number(nextLevel) || Number(row.xp) !== Number(nextXp)) {
+        await executeQuery('UPDATE users SET xp = ?, level = ? WHERE id = ?', [nextXp, nextLevel, row.id]);
+        changed += 1;
+      }
+    }
+    out.levelsUpdated = changed;
   } catch (e) {
     out.errors.push(`levels: ${e.message}`);
   }

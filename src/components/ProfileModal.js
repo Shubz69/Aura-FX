@@ -65,14 +65,14 @@ const AvatarWithFallback = ({ size = 120, tierColor, isOnline, avatar, userId })
 };
 
 const ALL_ACHIEVEMENTS = [
-    { id: 'first_steps', name: 'First Steps', icon: '🔰', description: 'Reach Level 5', unlockLevel: 5 },
-    { id: 'communicator', name: 'Communicator', icon: '💬', description: 'Reach Level 10', unlockLevel: 10 },
-    { id: 'dedicated', name: 'Dedicated', icon: '📈', description: 'Reach Level 15', unlockLevel: 15 },
-    { id: 'rising_star', name: 'Rising Star', icon: '⭐', description: 'Reach Level 20', unlockLevel: 20 },
-    { id: 'level_25', name: 'Level 25', icon: '🔥', description: 'Reach Level 25', unlockLevel: 25 },
-    { id: 'half_century', name: 'Half Century', icon: '🎯', description: 'Reach Level 50', unlockLevel: 50 },
-    { id: 'veteran', name: 'Veteran', icon: '👑', description: 'Reach Level 75', unlockLevel: 75 },
-    { id: 'legend', name: 'Legend', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
+    { id: 'first_steps', name: 'First Steps', icon: '🔰', description: 'Reach Level 10', unlockLevel: 10 },
+    { id: 'communicator', name: 'Communicator', icon: '💬', description: 'Reach Level 20', unlockLevel: 20 },
+    { id: 'dedicated', name: 'Dedicated', icon: '📈', description: 'Reach Level 30', unlockLevel: 30 },
+    { id: 'rising_star', name: 'Rising Star', icon: '⭐', description: 'Reach Level 40', unlockLevel: 40 },
+    { id: 'level_50', name: 'Level 50', icon: '🔥', description: 'Reach Level 50', unlockLevel: 50 },
+    { id: 'tier_elite', name: 'Elite Tier', icon: '🎯', description: 'Reach Level 60', unlockLevel: 60 },
+    { id: 'tier_legend', name: 'Legend Tier', icon: '👑', description: 'Reach Level 80', unlockLevel: 80 },
+    { id: 'god_tier', name: 'God Tier', icon: '💎', description: 'Reach Level 100', unlockLevel: 100 },
     { id: 'streak_7', name: 'Week Warrior', icon: '🗓️', description: '7 day streak', unlockStreak: 7 },
     { id: 'streak_30', name: 'Monthly Master', icon: '📅', description: '30 day streak', unlockStreak: 30 },
     { id: 'ai_user', name: 'AI Explorer', icon: '🤖', description: 'Use AI 10 times', unlockAiChats: 10 },
@@ -387,10 +387,10 @@ const ProfileModal = ({ isOpen, onClose, userId, userData, onViewProfile, curren
 
     const getBannerGradient = (level) => {
         if (level >= 100) return 'linear-gradient(135deg, #1a0a00 0%, #2d1500 40%, #1a0010 100%)';
-        if (level >= 75) return 'linear-gradient(135deg, #000d1a 0%, #001428 40%, #0a0020 100%)';
-        if (level >= 50) return 'linear-gradient(135deg, #0d0020 0%, #140030 40%, #0a0020 100%)';
-        if (level >= 25) return 'linear-gradient(135deg, #001a15 0%, #002820 40%, #001a15 100%)';
-        if (level >= 10) return 'linear-gradient(135deg, #0a0018 0%, #120025 40%, #0a0018 100%)';
+        if (level >= 80) return 'linear-gradient(135deg, #000d1a 0%, #001428 40%, #0a0020 100%)';
+        if (level >= 60) return 'linear-gradient(135deg, #0d0020 0%, #140030 40%, #0a0020 100%)';
+        if (level >= 40) return 'linear-gradient(135deg, #001a15 0%, #002820 40%, #001a15 100%)';
+        if (level >= 20) return 'linear-gradient(135deg, #0a0018 0%, #120025 40%, #0a0018 100%)';
         return 'linear-gradient(135deg, #0a0a18 0%, #0f0f20 100%)';
     };
 

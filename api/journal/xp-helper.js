@@ -4,28 +4,17 @@
  */
 
 const { executeQuery } = require('../db');
+const { getLevelFromXP, XP_RULES, round2 } = require('../utils/xp-system');
 
-const J = 0.55;
+const J = XP_RULES.JOURNAL_MULTIPLIER;
 const XP = {
-  ADD_TASK: Math.round(5 * J),
-  SAVE_NOTE: Math.round(5 * J),
-  COMPLETE_WITH_PROOF: Math.round(25 * J),
-  DAY_PCT_MAX: Math.round(10 * J),
-  WEEK_PCT_MAX: Math.round(30 * J),
-  MONTH_PCT_MAX: Math.round(50 * J),
+  ADD_TASK: round2(0.2 * J),
+  SAVE_NOTE: round2(0.2 * J),
+  COMPLETE_WITH_PROOF: round2(1.0 * J),
+  DAY_PCT_MAX: round2(0.4 * J),
+  WEEK_PCT_MAX: round2(1.2 * J),
+  MONTH_PCT_MAX: round2(2.0 * J),
 };
-
-function getLevelFromXP(xp) {
-  const n = Number(xp) || 0;
-  if (n <= 0) return 1;
-  if (n >= 1000000) return 1000;
-  if (n < 500) return Math.floor(Math.sqrt(n / 50)) + 1;
-  if (n < 5000) return 10 + Math.floor(Math.sqrt((n - 500) / 100)) + 1;
-  if (n < 20000) return 50 + Math.floor(Math.sqrt((n - 5000) / 200)) + 1;
-  if (n < 100000) return 100 + Math.floor(Math.sqrt((n - 20000) / 500)) + 1;
-  if (n < 500000) return 200 + Math.floor(Math.sqrt((n - 100000) / 1000)) + 1;
-  return Math.min(1000, 500 + Math.floor(Math.sqrt((n - 500000) / 2000)) + 1);
-}
 
 async function ensureXpAwardsTable() {
   await executeQuery(`
@@ -35,7 +24,7 @@ async function ensureXpAwardsTable() {
       award_type VARCHAR(50) NOT NULL,
       entity_id VARCHAR(100) DEFAULT NULL,
       period_date DATE DEFAULT NULL,
-      xp_amount INT NOT NULL,
+      xp_amount DECIMAL(14, 4) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_user_type (userId, award_type),
       INDEX idx_lookup (userId, award_type, entity_id, period_date)
@@ -67,7 +56,7 @@ async function awardJournalXP(userId, amount, awardType, entityId, periodDate) {
   const [userRows] = await executeQuery('SELECT xp, level FROM users WHERE id = ?', [userId]);
   if (userRows.length === 0) return { awarded: false };
   const currentXp = parseFloat(userRows[0].xp || 0);
-  const newXp = currentXp + amount;
+  const newXp = round2(currentXp + amount);
   const newLevel = getLevelFromXP(newXp);
 
   await executeQuery('UPDATE users SET xp = ?, level = ? WHERE id = ?', [newXp, newLevel, userId]);
