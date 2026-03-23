@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Api from '../services/Api';
 import { jwtDecode } from 'jwt-decode';
 import { consumePostAuthRedirect } from '../utils/postAuthRedirect';
+import { armPostLoginTransition } from '../utils/postLoginTransition';
 import { setUserInLocalStorage, sanitizeUserForLocalStorage } from '../utils/userLocalStorage';
 
 /** Session handoff: login writes /api/me JSON here so EntitlementsProvider can render /community without a second loading gate. */
@@ -41,6 +42,9 @@ export const AuthProvider = ({ children }) => {
     }
 
     const nextPath = redirectInfo.next.startsWith('/') ? redirectInfo.next : `/${redirectInfo.next}`;
+    if (nextPath.startsWith('/community')) {
+      armPostLoginTransition();
+    }
     navigate(nextPath, { replace: true });
     return redirectInfo;
   }, [navigate]);
@@ -541,6 +545,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (canAccessCommunity) {
+          armPostLoginTransition();
           navigate('/community');
         } else {
           navigate('/choose-plan');

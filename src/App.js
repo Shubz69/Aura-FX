@@ -12,6 +12,7 @@ import AuraDashboardGuard from './pages/aura-analysis/AuraDashboardGuard';
 import GDPRModal from './components/GDPRModal';
 import Footer from './components/Footer';
 import CommunityRouteBoundary from './components/CommunityRouteBoundary';
+import { consumePostLoginTransition } from './utils/postLoginTransition';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
@@ -139,6 +140,7 @@ function AppRoutes() {
     const isHomePage = location.pathname === '/';
 
     const [showGDPR, setShowGDPR] = useState(false);
+    const [postLoginTransitionActive, setPostLoginTransitionActive] = useState(false);
 
     usePrefetchRoutes();
 
@@ -157,6 +159,17 @@ function AppRoutes() {
             }
         }
     }, [isHomePage]);
+
+    useEffect(() => {
+        if (!location.pathname.startsWith('/community')) {
+            setPostLoginTransitionActive(false);
+            return;
+        }
+        if (!consumePostLoginTransition()) return;
+        setPostLoginTransitionActive(true);
+        const timer = setTimeout(() => setPostLoginTransitionActive(false), 520);
+        return () => clearTimeout(timer);
+    }, [location.pathname]);
     const handleAgreeGDPR = () => {
         localStorage.setItem("gdprAccepted", "true");
         setShowGDPR(false);
@@ -168,7 +181,7 @@ function AppRoutes() {
     }
 
     return (
-        <div className="app-container">
+        <div className={`app-container${postLoginTransitionActive ? ' post-login-transition' : ''}`}>
             {showGDPR && <GDPRModal onAgree={handleAgreeGDPR} />}
 
             <Navbar />

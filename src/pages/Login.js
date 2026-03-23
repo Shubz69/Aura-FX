@@ -6,6 +6,7 @@ import { RiTerminalBoxFill } from 'react-icons/ri';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 import { savePostAuthRedirect, loadPostAuthRedirect } from '../utils/postAuthRedirect';
+import { armPostLoginTransition } from '../utils/postLoginTransition';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -58,8 +59,12 @@ const Login = () => {
             const storedRedirect = loadPostAuthRedirect();
             const targetPath = storedRedirect?.next;
             if (targetPath) {
+                if (targetPath.startsWith('/community')) {
+                    armPostLoginTransition();
+                }
                 navigate(targetPath, { replace: true });
             } else {
+                armPostLoginTransition();
                 navigate('/community');
             }
         }
@@ -241,6 +246,7 @@ const Login = () => {
                 );
                 
                 // Navigate to community
+                armPostLoginTransition();
                 navigate('/community');
             } else {
                 throw new Error("Invalid response from server");

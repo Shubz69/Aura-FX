@@ -571,6 +571,29 @@ footer {
     animation: pulse 2s ease-in-out infinite;
 }
 
+@keyframes postLoginCommunityFade {
+    from {
+        opacity: 0.75;
+        transform: translateY(8px);
+        filter: blur(0.6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+.app-container.post-login-transition {
+    animation: postLoginCommunityFade 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-container.post-login-transition {
+        animation: none;
+    }
+}
+
 /* Global Responsive Fixes */
 * {
     -webkit-tap-highlight-color: transparent;
