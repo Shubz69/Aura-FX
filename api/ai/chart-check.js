@@ -9,8 +9,10 @@
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
 
+const { getOpenAIModelForVision } = require('./openai-config');
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = 'gpt-4o';
+const OPENAI_MODEL = getOpenAIModelForVision();
 
 // ── Checklist rubric (mirrors src/lib/aura-analysis/validator/checklistTabsData.js) ──────
 const CHECKLIST_RUBRIC = {

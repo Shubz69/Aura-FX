@@ -12,9 +12,10 @@
 
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
+const { getOpenAIModelForReports } = require('../ai/openai-config');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = 'gpt-4o';
+const OPENAI_MODEL = getOpenAIModelForReports();
 const MIN_DATA_DAYS = 30;
 
 function resolveRole(user) {

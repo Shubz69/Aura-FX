@@ -11,6 +11,11 @@
 
 const { getDbConnection } = require('../db');
 const MarketDataAdapter = require('./data-layer/adapters/market-data-adapter');
+const { detectInstruments } = require('./quote-snapshot');
+const { extractInstrument, detectIntent } = require('./tool-router');
+const { toCanonical } = require('./utils/symbol-registry');
+const { validateAndSanitize, generatePricingInstructions } = require('./price-validator');
+const { getOpenAIModelForChat } = require('./openai-config');
 
 const marketDataAdapter = new MarketDataAdapter();
 
@@ -19,13 +24,13 @@ const marketDataAdapter = new MarketDataAdapter();
 // ============================================================================
 
 const CONFIG = {
-  ADAPTER_TIMEOUT: 3000,      // 3s timeout per adapter
+  ADAPTER_TIMEOUT: 6000,      // 6s — allow provider chain (Twelve Data → Finnhub → …) to respond
   OPENAI_TIMEOUT: 45000,      // 45s for OpenAI streaming
   MAX_HISTORY: 6,             // Keep last 6 messages for context
   CACHE_TTL: 30000,           // 30s cache for market data
   MAX_TOKENS: 2500,           // Allow thorough, well-structured responses
-  MODEL: 'gpt-4o',            // Smarter model for trading insights
-  TEMPERATURE: 0.7
+  MODEL: getOpenAIModelForChat(), // Override with OPENAI_MODEL or OPENAI_CHAT_MODEL (default gpt-4o)
+  TEMPERATURE: 0.55           // Slightly lower for factual adherence when live quotes are injected
 };
 
 // Simple in-memory cache
@@ -135,33 +140,99 @@ async function getMarketNews() {
   }
 }
 
+/** Align with quote-snapshot + tool-router so streaming chat gets the same symbol coverage as non-streaming Aura AI. */
+function collectSymbolsForFetch(message, conversationHistory = []) {
+  const text = typeof message === 'string' ? message : '';
+  const hist = Array.isArray(conversationHistory) ? conversationHistory : [];
+  const symbols = new Set();
+
+  for (const sym of detectInstruments(text)) {
+    const c = toCanonical(sym);
+    if (c) symbols.add(c);
+  }
+
+  for (const msg of hist.slice(-6)) {
+    if (msg.role !== 'user') continue;
+    const part = typeof msg.content === 'string' ? msg.content : '';
+    for (const sym of detectInstruments(part)) {
+      const c = toCanonical(sym);
+      if (c) symbols.add(c);
+    }
+  }
+
+  const extracted = extractInstrument(text, hist);
+  if (extracted) symbols.add(toCanonical(extracted));
+
+  const extraIdx = /\b(US500|US30|DJI|DIA|SPY|QQQ|VIX|IWM|DXY)\b/gi;
+  let m;
+  while ((m = extraIdx.exec(text)) !== null) {
+    const c = toCanonical(m[1]);
+    if (c) symbols.add(c);
+  }
+
+  return Array.from(symbols).filter(Boolean).slice(0, 6);
+}
+
+function formatPriceForContext(symbol, price) {
+  if (price == null || !Number.isFinite(Number(price))) return String(price);
+  const n = Number(price);
+  const s = (symbol || '').toUpperCase();
+  if (s.length === 6 && s.endsWith('JPY')) return n.toFixed(3);
+  if (s.length === 6 && /^[A-Z]{6}$/.test(s)) return n.toFixed(5);
+  if (s.includes('XAU') || s.includes('XAG')) return n.toFixed(2);
+  if (s.includes('BTC') || s.includes('ETH')) return n >= 1000 ? n.toFixed(2) : n.toFixed(4);
+  return n.toFixed(2);
+}
+
+/** Shape expected by price-validator / generatePricingInstructions */
+function buildQuoteContextFromMarketRows(rows) {
+  const instruments = {};
+  for (const m of rows || []) {
+    if (!m || m.unavailable || m.price == null || m.price <= 0) continue;
+    const sym = m.symbol;
+    instruments[sym] = {
+      available: true,
+      last: m.price,
+      open: m.price,
+      high: m.high ?? m.price,
+      low: m.low ?? m.price,
+      previousClose: m.previousClose,
+      bid: m.price,
+      ask: m.price,
+      change: m.change,
+      changePercent: m.changePercent != null ? String(m.changePercent) : undefined,
+      displayName: sym,
+    };
+  }
+  return {
+    available: Object.keys(instruments).length > 0,
+    instruments,
+    timestamp: new Date().toISOString(),
+  };
+}
+
 // Fetch all relevant data in parallel
-async function fetchAllData(message, requestId) {
+async function fetchAllData(message, conversationHistory, requestId) {
   const startTime = Date.now();
   const results = { market: null, news: null, sources: [], errors: [] };
   const text = typeof message === 'string' ? message : '';
+  const hist = Array.isArray(conversationHistory) ? conversationHistory : [];
 
-  // Detect symbols in message
-  const symbolPatterns = [
-    /\b(BTCUSD|ETHUSD|BTC|ETH|XAU|GOLD|EUR\/USD|EURUSD|GBP\/USD|GBPUSD)\b/gi,
-    /\b(SPY|QQQ|AAPL|MSFT|NVDA|TSLA|AMZN|GOOGL|META)\b/gi,
-    /\b(US500|SPX|NAS100|NDX|US30|DJI)\b/gi
-  ];
+  const symbolsToFetch = collectSymbolsForFetch(message, hist);
 
-  const symbols = new Set();
-  for (const pattern of symbolPatterns) {
-    const matches = text.match(pattern) || [];
-    matches.forEach(m => symbols.add(m.toUpperCase()));
-  }
-  
+  const intents = detectIntent(text, hist);
+  const wantNews =
+    intents.newsQuery ||
+    intents.fundamentals ||
+    intents.marketAnalysis ||
+    /news|headlines|what.*happening|update|latest|nfp|cpi|gdp|pmi|fed|ecb|boe|rate\s*decision/i.test(text);
+
   const fetches = [];
-  
-  // Fetch market data for detected symbols (canonical symbols; adapter handles provider mapping)
-  const symbolsToFetch = Array.from(symbols).slice(0, 3);
+
   for (const sym of symbolsToFetch) {
     fetches.push(
       getMarketData(sym)
-        .then(data => {
+        .then((data) => {
           if (data) {
             results.market = results.market || [];
             results.market.push(data);
@@ -171,13 +242,11 @@ async function fetchAllData(message, requestId) {
         .catch(() => results.errors.push(`Market data for ${sym} unavailable`))
     );
   }
-  
-  // Fetch news if message seems news-related
-  const newsKeywords = /news|headlines|market|today|what.*happening|update|latest/i;
-  if (newsKeywords.test(text)) {
+
+  if (wantNews) {
     fetches.push(
       getMarketNews()
-        .then(data => {
+        .then((data) => {
           if (data.items.length > 0) {
             results.news = data.items;
             results.sources.push({ type: 'news', cached: data.fromCache });
@@ -187,20 +256,20 @@ async function fetchAllData(message, requestId) {
         .catch(() => results.errors.push('News temporarily unavailable'))
     );
   }
-  
-  // Wait for all with timeout
+
   await Promise.race([
     Promise.allSettled(fetches),
-    new Promise(resolve => setTimeout(resolve, CONFIG.ADAPTER_TIMEOUT + 500))
+    new Promise((resolve) => setTimeout(resolve, CONFIG.ADAPTER_TIMEOUT + 800)),
   ]);
-  
+
   results.fetchTime = Date.now() - startTime;
-  log(requestId, 'info', 'Data fetch complete', { 
+  log(requestId, 'info', 'Data fetch complete', {
     fetchTime: results.fetchTime,
+    symbolsRequested: symbolsToFetch,
     sources: results.sources.length,
-    errors: results.errors.length
+    errors: results.errors.length,
   });
-  
+
   return results;
 }
 
@@ -208,15 +277,17 @@ async function fetchAllData(message, requestId) {
 // System Prompt (Concise for Speed)
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant. You help traders with analysis, position sizing, risk management, and market insights.
+const SYSTEM_PROMPT = `You are AURA AI, a professional trading assistant powered by OpenAI. You help traders with analysis, position sizing, risk management, and market insights.
 
 **Expertise**: Forex, crypto, stocks, commodities, indices. You understand technical analysis (support/resistance, market structure, chart patterns), fundamental drivers, and risk/reward calculations.
 
 **Position sizing & risk**: When asked about position size, use the formula: (Account × Risk%) / (Entry - Stop Loss in price units). For forex use pips (0.0001 for most pairs, 0.01 for JPY). Always show the calculation step-by-step. Recommend 1-2% risk per trade.
 
-**Response style**: Be direct and actionable. Use **bold** for key levels and numbers. Structure with clear steps or sections when explaining concepts. Include specific figures only when provided in the context above. Every price, level, or number in your response MUST come from the Live Market Data or context provided—never invent or estimate values. If data is unavailable, say so clearly and do not fabricate numbers.
+**Truthfulness**: For any current price, bid/ask, or % change, use ONLY values from the verified live data block in the user message. If the user asks for a price and that instrument is not in the live data block, say you do not have a live quote for it and suggest they check their platform—do not guess. For general trading education (patterns, risk concepts) you may explain without live numbers.
 
-**Format**: Use compact bullet points and numbered steps. Avoid large gaps between sections. Be thorough but concise.`;
+**Response style**: Be direct and actionable. Use **bold** for key levels and numbers. Structure with clear steps or sections when explaining concepts.
+
+**Format**: Use compact bullet points and numbered steps. Be thorough but concise.`;
 
 // ============================================================================
 // Token Decoding
@@ -369,6 +440,12 @@ async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Message or at least one valid image required' });
   }
 
+  const openaiApiKey = process.env.OPENAI_API_KEY && String(process.env.OPENAI_API_KEY).trim();
+  if (!openaiApiKey) {
+    log(requestId, 'error', 'OPENAI_API_KEY missing or empty');
+    return res.status(503).json({ success: false, message: 'AI service not configured' });
+  }
+
   log(requestId, 'info', 'Request started', { userId, messageLength: message?.length, imageCount: images.length });
   
   // Set up SSE headers
@@ -382,7 +459,7 @@ async function handler(req, res) {
   
   try {
     // Fetch data in parallel while preparing OpenAI call
-    const dataPromise = fetchAllData(message, requestId);
+    const dataPromise = fetchAllData(message, conversationHistory, requestId);
     
     // Trim conversation history (OpenAI expects string content for history)
     const trimmedHistory = conversationHistory.slice(-CONFIG.MAX_HISTORY).map(msg => ({
@@ -405,13 +482,14 @@ async function handler(req, res) {
     // Build context (only verified prices; never fabricate)
     let context = '';
     if (fetchedData.market?.length > 0) {
-      context += '\n**Live Market Data (verified):**\n';
+      context += '\n**Live Market Data (verified — use these exact values only):**\n';
       for (const m of fetchedData.market) {
         if (m.unavailable || m.price == null || m.price <= 0) {
           context += `- ${m.symbol}: Live market data temporarily unavailable.\n`;
         } else {
-          const ch = m.change != null ? (m.change >= 0 ? '+' : '') + (m.changePercent ?? '') + '%' : 'N/A';
-          context += `- ${m.symbol}: ${m.price.toFixed(2)} (${ch})\n`;
+          const pct =
+            m.changePercent != null ? `${m.changePercent}% vs prev close` : 'N/A';
+          context += `- ${m.symbol}: last ${formatPriceForContext(m.symbol, m.price)} | ${pct} | source: ${m.source || 'market adapter'}\n`;
         }
       }
     }
@@ -425,14 +503,18 @@ async function handler(req, res) {
       context += `\n*Note: Some data sources temporarily unavailable*\n`;
     }
     
-    // Build messages for OpenAI
+    const quoteContext = buildQuoteContextFromMarketRows(fetchedData.market || []);
+    const pricingRules = generatePricingInstructions(quoteContext);
+    const systemContent = `${SYSTEM_PROMPT}\n\n${pricingRules}`;
+
+    // Build messages for OpenAI (official Chat Completions API; key stays server-side only)
     const openaiMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemContent },
       ...trimmedHistory,
-      { 
-        role: 'user', 
-        content: context ? `${message}\n\n---\nContext:${context}` : message
-      }
+      {
+        role: 'user',
+        content: context ? `${message}\n\n---\nVerified context:${context}` : message,
+      },
     ];
     
     // Handle images (multimodal content: text + image_url parts)
@@ -448,14 +530,6 @@ async function handler(req, res) {
       ];
     }
     
-    // OpenAI streaming request
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    if (!OPENAI_API_KEY) {
-      res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service not configured' })}\n\n`);
-      res.end();
-      return;
-    }
-    
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), CONFIG.OPENAI_TIMEOUT);
     
@@ -463,7 +537,7 @@ async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${openaiApiKey}`
       },
       body: JSON.stringify({
         model: images.length > 0 ? 'gpt-4o' : CONFIG.MODEL,
@@ -489,6 +563,9 @@ async function handler(req, res) {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service is busy. Please try again in a moment.' })}\n\n`);
       } else if (openaiResponse.status === 400 && /image|content|invalid/i.test(errorText)) {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'Image could not be processed. Try a smaller or different image.' })}\n\n`);
+      } else if (openaiResponse.status === 401 || openaiResponse.status === 403) {
+        log(requestId, 'error', 'OpenAI auth failed — check OPENAI_API_KEY');
+        res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service authentication failed' })}\n\n`);
       } else {
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI service temporarily unavailable' })}\n\n`);
       }
@@ -532,13 +609,25 @@ async function handler(req, res) {
       }
     }
     
-    // Send completion event
+    const validation = validateAndSanitize(fullContent, quoteContext, {
+      strict: false,
+      rewrite: true,
+      addDisclaimer: true,
+    });
+    const finalContent = validation.sanitizedResponse || fullContent;
+    if (validation.modified) {
+      log(requestId, 'warn', 'Price validator adjusted assistant reply', {
+        invalidPrices: validation.validation?.invalidPrices?.length ?? 0,
+      });
+    }
+
+    // Send completion event (client uses `content` as the saved message — may differ from streamed tokens if validator rewrote)
     const totalTime = Date.now() - startTime;
-    log(requestId, 'info', 'Request complete', { totalTime, ttfb, contentLength: fullContent.length });
+    log(requestId, 'info', 'Request complete', { totalTime, ttfb, contentLength: finalContent.length });
     
     res.write(`data: ${JSON.stringify({ 
       type: 'done', 
-      content: fullContent,
+      content: finalContent,
       timing: { total: totalTime, ttfb, dataFetch: fetchedData.fetchTime },
       sources: fetchedData.sources
     })}\n\n`);

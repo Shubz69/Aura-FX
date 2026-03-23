@@ -11,6 +11,7 @@
 
 const { getDbConnection } = require('../db');
 const { getCached, setCached, getCacheStats } = require('../cache');
+const { getOpenAIModelForChat, getOpenAIModelForReports } = require('./openai-config');
 
 // Try to load data service if available
 let dataService = null;
@@ -88,7 +89,11 @@ module.exports = async (req, res) => {
       
       healthStatus.services.openai = {
         status: 'healthy',
-        latency: Date.now() - openaiStartTime
+        latency: Date.now() - openaiStartTime,
+        models: {
+          chat: getOpenAIModelForChat(),
+          reports: getOpenAIModelForReports()
+        }
       };
     }
   } catch (openaiError) {
