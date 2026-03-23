@@ -140,8 +140,11 @@ function AppRoutes() {
     const isHomePage = location.pathname === '/';
 
     const [showGDPR, setShowGDPR] = useState(false);
-    const [postLoginTransitionActive, setPostLoginTransitionActive] = useState(false);
-    const [postLoginLoadingActive, setPostLoginLoadingActive] = useState(false);
+    const [postLoginGateArmed, setPostLoginGateArmed] = useState(() => (
+        location.pathname.startsWith('/community') && consumePostLoginTransition()
+    ));
+    const [postLoginTransitionActive, setPostLoginTransitionActive] = useState(() => postLoginGateArmed);
+    const [postLoginLoadingActive, setPostLoginLoadingActive] = useState(() => postLoginGateArmed);
 
     usePrefetchRoutes();
 
@@ -163,11 +166,13 @@ function AppRoutes() {
 
     useEffect(() => {
         if (!location.pathname.startsWith('/community')) {
+            setPostLoginGateArmed(false);
             setPostLoginTransitionActive(false);
             setPostLoginLoadingActive(false);
             return;
         }
-        if (!consumePostLoginTransition()) return;
+        if (!postLoginGateArmed && !consumePostLoginTransition()) return;
+        setPostLoginGateArmed(false);
         setPostLoginLoadingActive(true);
         setPostLoginTransitionActive(true);
         const fadeTimer = setTimeout(() => setPostLoginTransitionActive(false), 950);
@@ -176,7 +181,7 @@ function AppRoutes() {
             clearTimeout(fadeTimer);
             clearTimeout(gateTimer);
         };
-    }, [location.pathname, location.search]);
+    }, [location.pathname, postLoginGateArmed]);
     const handleAgreeGDPR = () => {
         localStorage.setItem("gdprAccepted", "true");
         setShowGDPR(false);

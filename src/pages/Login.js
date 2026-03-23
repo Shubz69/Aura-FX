@@ -23,6 +23,7 @@ const Login = () => {
     const { login: loginWithAuth, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const errorRef = useRef('');
+    const redirectedAuthedRef = useRef(false);
     const location = useLocation();
     const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const nextParam = queryParams.get('next');
@@ -55,17 +56,14 @@ const Login = () => {
         }
         
         // Redirect if already authenticated
-        if (isAuthenticated) {
+        if (isAuthenticated && !redirectedAuthedRef.current) {
+            redirectedAuthedRef.current = true;
             const storedRedirect = loadPostAuthRedirect();
             const targetPath = storedRedirect?.next;
             if (targetPath) {
-                if (targetPath.startsWith('/community')) {
-                    armPostLoginTransition();
-                }
                 navigate(targetPath, { replace: true });
             } else {
-                armPostLoginTransition();
-                navigate('/community');
+                navigate('/community', { replace: true });
             }
         }
     }, [isAuthenticated, navigate, queryParams]);
