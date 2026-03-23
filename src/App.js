@@ -15,6 +15,7 @@ import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Courses.css';
+import './styles/AuraPageTitle.css';
 
 
 /* Lazy-load pages so each route loads only when visited (faster initial load) */

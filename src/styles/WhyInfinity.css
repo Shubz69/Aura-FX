@@ -220,34 +220,13 @@ html, body {
     text-transform: uppercase;
 }
 
-/* Main title — two-line gold gradient */
-.why-main-title {
-    font-size: 3.6rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin: 0 0 1.6rem;
-    display: block;
-    line-height: 1.05;
-    animation: brandFadeIn 1.2s ease-out 0.18s both;
-    text-shadow: 0 2px 22px rgba(0,0,0,0.78);
+/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
+.why-header .why-main-title.aura-page-title {
+    margin: 0 auto 1.6rem;
 }
 
-.why-main-title .title-white {
-    display: block;
-    color: #fff;
-}
-
-.why-main-title .title-gold {
-    display: block;
-    background: linear-gradient(112deg,
-        var(--eaa-pale) 0%,
-        var(--eaa-bright) 30%,
-        var(--eaa-core) 60%,
-        var(--eaa-warm) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.why-header .aura-page-title-line {
+    margin-bottom: 0.85rem;
 }
 
 @keyframes brandFadeIn {
@@ -1064,14 +1043,12 @@ html, body {
         padding: 128px 4rem 3.5rem;
     }
 
-    .why-main-title { font-size: 4.2rem; }
     .why-section-heading { font-size: 2.2rem; }
 }
 
 /* Desktop */
 @media (max-width: 1280px) {
     .content-wrapper { padding: 96px 2.6rem 3rem; }
-    .why-main-title { font-size: 3.0rem; }
     .why-section-heading { font-size: 1.75rem; }
     .why-additional-features,
     .why-not-for-you-box { padding: 3.5rem 2.5rem; }
@@ -1116,11 +1093,6 @@ html, body {
 @media (max-width: 767px) {
     .content-wrapper { padding: 68px 1.5rem 2.5rem; }
 
-    .why-main-title {
-        font-size: 2.3rem;
-        letter-spacing: 0.05em;
-    }
-
     .why-main-content {
         grid-template-columns: 1fr;
         gap: 2.5rem;
@@ -1154,11 +1126,6 @@ html, body {
 @media (max-width: 480px) {
     .content-wrapper { padding: 58px 1.1rem 2.25rem; }
 
-    .why-main-title {
-        font-size: 1.85rem;
-        letter-spacing: 0.04em;
-    }
-
     .why-section-heading { font-size: 1.50rem; }
 
     .why-platform-feature,
@@ -1172,7 +1139,6 @@ html, body {
 
 /* iPhone SE / Very Small */
 @media (max-width: 375px) {
-    .why-main-title { font-size: 1.55rem; }
     .why-section-heading { font-size: 1.34rem; }
     .why-subtitle { font-size: 1.34rem; }
 
@@ -1189,7 +1155,6 @@ html, body {
 /* Extra small */
 @media (max-width: 320px) {
     .content-wrapper { padding: 50px 0.85rem 2rem; }
-    .why-main-title { font-size: 1.3rem; }
     .why-platform-feature { padding: 1.1rem 0.9rem; }
     .vs-card { padding: 1.25rem 0.9rem; }
 }
@@ -1212,7 +1177,6 @@ html, body {
 @media (max-width: 896px) and (orientation: landscape) {
     .content-wrapper { padding-top: 52px; padding-bottom: 2rem; }
     .why-header { margin-bottom: 2.5rem; }
-    .why-main-title { font-size: clamp(1.5rem, 4vw, 2rem); }
     .why-main-content {
         grid-template-columns: 1fr 1fr;
         gap: 2rem;

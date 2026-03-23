@@ -169,9 +169,9 @@ const Explore = () => {
 
         {/* ── Header ── */}
         <header className="explore-header">
-          <h1 className="explore-main-title">Explore</h1>
-          <div className="explore-header-line">
-            <span className="explore-header-dot" />
+          <h1 className="explore-main-title aura-page-title">Explore</h1>
+          <div className="explore-header-line aura-page-title-line" aria-hidden>
+            <span className="aura-page-title-dot" />
           </div>
         </header>
 

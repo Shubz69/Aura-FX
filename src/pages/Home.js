@@ -64,47 +64,50 @@ const StatItem = ({ number, label, fill = '75%' }) => {
 };
 
 /* ══════════════════════════════════════════════════════════
-   SLIDE DATA
-   Replace backgroundImage URLs with your real image URLs.
-   Each slide has: backgroundImage, tag, title, subtitle,
-   statBadge (optional), chartColor (for the mini sparkline)
+   iPad slideshow — on-brand SVG panels in /public/images/ipad-slides/
 ══════════════════════════════════════════════════════════ */
+const IPAD_SLIDE_BASE = `${process.env.PUBLIC_URL || ''}/images/ipad-slides`;
+
 const SLIDES = [
     {
-        tag:             '📈 Live Markets',
-        title:           'Real-Time Market Intelligence',
-        subtitle:        'Institutional-grade data, streamed directly to your dashboard',
-        statBadge:       '+2.4% Today',
-        chartColor:      '#0FD98A',
-        backgroundImage: null, // replace with: 'url("/images/slide1.jpg")'
-        bgGradient:      'linear-gradient(135deg, #071530 0%, #0D2248 45%, #112B5C 100%)',
+        image:      `${IPAD_SLIDE_BASE}/journal.svg`,
+        tag:        '📓 Trading Journal',
+        title:      'Your Daily Trading Discipline',
+        subtitle:   'Streaks, checklists, and session notes—built to keep execution consistent.',
+        statBadge:  'Streaks & tasks',
+        chartColor: '#0FD98A',
     },
     {
-        tag:             '🎯 AI Signals',
-        title:           'AI-Powered Trading Signals',
-        subtitle:        'High-probability setups identified before the crowd',
-        statBadge:       '78% Win Rate',
-        chartColor:      '#EAA960',
-        backgroundImage: null,
-        bgGradient:      'linear-gradient(135deg, #1A0800 0%, #301200 45%, #4A1E00 100%)',
+        image:      `${IPAD_SLIDE_BASE}/market-intelligence.svg`,
+        tag:        '📊 Market Intelligence',
+        title:      'Briefs, Bias & Macro Context',
+        subtitle:   'Session-ready views of structure, drivers, and what matters before London & New York.',
+        statBadge:  'Live context',
+        chartColor: '#63B3ED',
     },
     {
-        tag:             '📊 Analytics',
-        title:           'Professional Analytics Suite',
-        subtitle:        'Institutional tools built for serious traders',
-        statBadge:       '50+ Indicators',
-        chartColor:      '#63B3ED',
-        backgroundImage: null,
-        bgGradient:      'linear-gradient(135deg, #030B1A 0%, #071624 45%, #0B2238 100%)',
+        image:      `${IPAD_SLIDE_BASE}/aura-ai.svg`,
+        tag:        '🤖 Aura AI',
+        title:      'Premium Trading Copilot',
+        subtitle:   'Ask for analysis, risk framing, and ideas—grounded in live data when available.',
+        statBadge:  'Aura AI',
+        chartColor: '#EAA960',
     },
     {
-        tag:             '🏆 Community',
-        title:           'Elite Trading Community',
-        subtitle:        'Join 1,200+ traders sharing insights and strategies',
-        statBadge:       '1,200+ Members',
-        chartColor:      '#B794F4',
-        backgroundImage: null,
-        bgGradient:      'linear-gradient(135deg, #0E0518 0%, #1A0A2E 45%, #240F42 100%)',
+        image:      `${IPAD_SLIDE_BASE}/community.svg`,
+        tag:        '🏆 Community',
+        title:      'Elite Trading Community',
+        subtitle:   'Structured channels, real moderators, and traders who take the craft seriously.',
+        statBadge:  '1,200+ Members',
+        chartColor: '#B794F4',
+    },
+    {
+        image:      `${IPAD_SLIDE_BASE}/education.svg`,
+        tag:        '🎓 Education',
+        title:      'Courses & Mentorship',
+        subtitle:   'Progressive curriculum plus optional 1-to-1 mentorship for committed traders.',
+        statBadge:  'C & S',
+        chartColor: '#0FD98A',
     },
 ];
 
@@ -324,11 +327,17 @@ const FloatingIPad = () => {
                             <div
                                 key={i}
                                 className={`ipad-slide${i === activeSlide ? ' active' : ''}`}
-                                style={{
-                                    background: slide.backgroundImage
-                                        ? slide.backgroundImage
-                                        : slide.bgGradient,
-                                }}
+                                style={
+                                    slide.image
+                                        ? {
+                                              backgroundColor: '#070d18',
+                                              backgroundImage: `url("${slide.image}")`,
+                                              backgroundSize: 'cover',
+                                              backgroundPosition: 'center center',
+                                              backgroundRepeat: 'no-repeat',
+                                          }
+                                        : { background: slide.bgGradient || '#070d18' }
+                                }
                             >
                                 {/* Stat badge top-left */}
                                 {slide.statBadge && (

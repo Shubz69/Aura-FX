@@ -204,34 +204,9 @@ html, body {
     text-transform: uppercase;
 }
 
-/* Main title — gold gradient, same as brand-name line 2 */
-.explore-main-title {
-    font-size: 3.6rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin: 0 0 1.6rem;
-    display: block;
-    line-height: 1.05;
-    animation: brandFadeIn 1.2s ease-out 0.18s both;
-    text-shadow: 0 2px 22px rgba(0,0,0,0.78);
-}
-
-.explore-main-title .title-line-white {
-    display: block;
-    color: #fff;
-}
-
-.explore-main-title .title-line-gold {
-    display: block;
-    background: linear-gradient(112deg,
-        var(--eaa-pale) 0%,
-        var(--eaa-bright) 30%,
-        var(--eaa-core) 60%,
-        var(--eaa-warm) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
+.explore-header .explore-main-title.aura-page-title {
+    margin: 0 auto 1.6rem;
 }
 
 @keyframes brandFadeIn {
@@ -1162,14 +1137,12 @@ html, body {
         padding: 128px 4rem 3.5rem;
     }
 
-    .explore-main-title { font-size: 4.2rem; }
     .explore-section-title { font-size: 2.2rem; }
 }
 
 /* Desktop */
 @media (max-width: 1280px) {
     .explore-content-wrapper { padding: 96px 2.6rem 3rem; }
-    .explore-main-title { font-size: 3.0rem; }
     .explore-section-title { font-size: 1.75rem; }
 }
 
@@ -1204,11 +1177,6 @@ html, body {
 @media (max-width: 767px) {
     .explore-content-wrapper {
         padding: 68px 1.5rem 2.5rem;
-    }
-
-    .explore-main-title {
-        font-size: 2.3rem;
-        letter-spacing: 0.05em;
     }
 
     .explore-main-content {
@@ -1258,11 +1226,6 @@ html, body {
         padding: 58px 1.1rem 2.25rem;
     }
 
-    .explore-main-title {
-        font-size: 1.85rem;
-        letter-spacing: 0.04em;
-    }
-
     .explore-section-title { font-size: 1.50rem; }
 
     .explore-page-card { padding: 1.75rem 1.25rem; }
@@ -1280,7 +1243,6 @@ html, body {
 
 /* iPhone SE / Very Small */
 @media (max-width: 375px) {
-    .explore-main-title { font-size: 1.55rem; }
     .explore-section-title { font-size: 1.34rem; }
     .explore-feature-icon { width: 42px; height: 42px; font-size: 0.9rem; }
     .explore-feature-title { font-size: 0.84rem; }
@@ -1304,7 +1266,6 @@ html, body {
 @media (max-width: 896px) and (orientation: landscape) {
     .explore-content-wrapper { padding-top: 52px; padding-bottom: 2rem; }
     .explore-header { margin-bottom: 2.5rem; }
-    .explore-main-title { font-size: clamp(1.5rem, 4vw, 2rem); }
     .explore-main-content { grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem; }
     .explore-text-section::before { display: block; }
     .explore-courses-grid { grid-template-columns: repeat(2, 1fr); }

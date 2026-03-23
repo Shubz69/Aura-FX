@@ -125,7 +125,10 @@ const WhyInfinity = () => {
             <div className="content-wrapper">
                 {/* Header Section */}
                 <header className="why-header">
-                    <h1 className="why-main-title">Why Aura Terminal</h1>
+                    <h1 className="why-main-title aura-page-title">Why Aura Terminal</h1>
+                    <div className="aura-page-title-line" aria-hidden>
+                        <span className="aura-page-title-dot" />
+                    </div>
                     <MarketTicker 
                         compact={true}
                         showTabs={false}

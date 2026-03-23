@@ -98,7 +98,7 @@ const ContactUs = () => {
                         <span>{fromMfa ? 'Support Center' : 'Get In Touch'}</span>
                         <span className="contact-eyebrow__dot" />
                     </div>
-                    <h1 className="contact-title">
+                    <h1 className="contact-title aura-page-title">
                         {fromMfa ? 'MFA\u00A0Support' : 'Contact\u00A0Us'}
                     </h1>
                     <p className="contact-subtitle">
@@ -107,9 +107,9 @@ const ContactUs = () => {
                             : 'Questions, proposals, or just want to say hello — we\u2019re always here.'}
                     </p>
 
-                    {/* Decorative line */}
-                    <div className="contact-header__rule">
-                        <span /><span /><span />
+                    {/* Decorative line — same gold treatment as C&S */}
+                    <div className="contact-header__rule aura-page-title-line" aria-hidden>
+                        <span className="aura-page-title-dot" />
                     </div>
                 </div>
 

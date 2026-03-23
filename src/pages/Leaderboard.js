@@ -503,7 +503,10 @@ const Leaderboard = () => {
             <div className="leaderboard-container" ref={containerRef}>
                 <CosmicBackground />
                 <div className="leaderboard-header">
-                    <h1 className="leaderboard-main-title">Leaderboard</h1>
+                    <h1 className="leaderboard-main-title aura-page-title">Leaderboard</h1>
+                    <div className="aura-page-title-line" aria-hidden>
+                        <span className="aura-page-title-dot" />
+                    </div>
                 </div>
                 <div className="error-message">
                     <h2>⚠️ Error Loading Leaderboard</h2>
@@ -523,7 +526,10 @@ const Leaderboard = () => {
 
             {/* Header */}
             <div className="leaderboard-header">
-                <h1 className="leaderboard-main-title">Leaderboard</h1>
+                <h1 className="leaderboard-main-title aura-page-title">Leaderboard</h1>
+                <div className="aura-page-title-line" aria-hidden>
+                    <span className="aura-page-title-dot" />
+                </div>
                 <p className="leaderboard-subtitle">Compete with the best traders in the cyber realm</p>
 
                 <div className="timeframe-selector">
