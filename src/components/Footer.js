@@ -46,7 +46,7 @@ const Footer = React.memo(function Footer() {
             
             {/* Trustpilot */}
             <a 
-              href="https://www.trustpilot.com/review/auraxfx.com" 
+              href="https://www.trustpilot.com/review/auraterminal.ai"
               className="footer-social-link" 
               aria-label="Trustpilot"
               target="_blank"

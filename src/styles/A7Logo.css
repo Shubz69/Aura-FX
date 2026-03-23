@@ -12,8 +12,6 @@
     height: 100%;
     /* Exact gold family used by Home "GET STARTED" button */
     background: linear-gradient(132deg, #FDE8C4 0%, #F8C37D 28%, #EAA960 58%, #D48D44 100%);
-    -webkit-mask-image: url('/logos/a7-logo.png');
-    mask-image: url('/logos/a7-logo.png');
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     -webkit-mask-position: center;

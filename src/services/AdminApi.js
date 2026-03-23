@@ -5,7 +5,13 @@ const getApiBaseUrl = () => {
     if (process.env.REACT_APP_API_URL) {
         return process.env.REACT_APP_API_URL;
     }
+    if (process.env.NODE_ENV === 'development') {
+        return '';
+    }
     if (typeof window !== 'undefined') {
+        if (/(?:^|\.)auraxfx\.com$/i.test(window.location.hostname || '') || /(?:^|\.)auraterminal\.ai$/i.test(window.location.hostname || '')) {
+            return 'https://auraterminal.ai';
+        }
         return window.location.origin;
     }
     return ''; // Use relative URLs

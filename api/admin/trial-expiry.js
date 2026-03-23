@@ -34,7 +34,7 @@ const sendExpiryEmail = async (email, username) => {
           <p>Hi ${username || 'Trader'},</p>
           <p>Your AURA TERMINAL subscription has expired. Your account has been downgraded to the <strong>Free</strong> plan.</p>
           <p>You will retain access to free features. To restore full access, renew your subscription at any time.</p>
-          <a href="${process.env.FRONTEND_URL || 'https://auraxfx.com'}/subscription"
+          <a href="${process.env.FRONTEND_URL || 'https://auraterminal.ai'}/subscription"
              style="display:inline-block;margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">
             Renew Subscription
           </a>

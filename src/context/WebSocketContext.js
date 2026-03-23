@@ -38,7 +38,6 @@ function resolveWsBaseUrl() {
     if (
       hostname &&
       (hostname.includes('vercel.app') ||
-        hostname.includes('aurafx.com') ||
         hostname.includes('auraterminal.ai'))
     ) {
       return wsHost;

@@ -97,5 +97,5 @@
     "cross-env": "^10.1.0",
     "sharp": "^0.34.5"
   },
-  "proxy": "https://auraxfx.com"
+  "proxy": "https://auraterminal.ai"
 }

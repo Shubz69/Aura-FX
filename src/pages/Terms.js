@@ -131,7 +131,7 @@ const Terms = () => {
                         </p>
                         <p>
                             <strong>Email:</strong> support@auraterminal.ai<br />
-                            <strong>Website:</strong> www.aurafx.com
+                            <strong>Website:</strong> www.auraterminal.ai
                         </p>
                     </section>
                 </div>

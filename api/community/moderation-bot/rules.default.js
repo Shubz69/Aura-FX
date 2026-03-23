@@ -17,8 +17,8 @@ module.exports = {
    * Add your marketing site, app links, etc.
    */
   allowedLinkHosts: [
-    'aurafx.com',
-    'www.aurafx.com',
+    'auraterminal.ai',
+    'www.auraterminal.ai',
     'aura-terminal.com',
     'localhost',
     '127.0.0.1',

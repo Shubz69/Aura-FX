@@ -9,6 +9,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import Api from '../services/Api';
 
 const SubscriptionContext = createContext(null);
 
@@ -40,7 +41,7 @@ export const SubscriptionProvider = ({ children }) => {
     setError(null);
     
     try {
-      const response = await fetch('/api/subscription/status', {
+      const response = await fetch(`${Api.getBaseUrl() || ''}/api/subscription/status`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

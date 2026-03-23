@@ -369,7 +369,7 @@ const AdminPanel = () => {
                     plan,
                     ...(plan !== 'free' ? { durationDays: durationDays ?? 90 } : {}),
                 };
-                const res = await fetch('/api/admin/change-subscription', {
+                const res = await fetch(`${Api.getBaseUrl() || ''}/api/admin/change-subscription`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${token}`,

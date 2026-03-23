@@ -2707,7 +2707,8 @@ if (window.requestAnimationFrame) {
                 accessLevel: (channelData.accessLevel || 'open').toLowerCase(),
                 permissionType: (channelData.permissionType || 'read-write').toLowerCase()
             };
-            const response = await fetch(`${window.location.origin}/api/community/channels`, {
+            const apiBaseUrl = Api.getBaseUrl() || window.location.origin;
+            const response = await fetch(`${apiBaseUrl}/api/community/channels`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2766,7 +2767,7 @@ if (window.requestAnimationFrame) {
             const currentOrder = [...categoryOrderState];
             const updatedOrder = currentOrder.filter(cat => cat !== categoryName);
             
-            const response = await fetch('/api/community/channels', {
+            const response = await fetch(`${Api.getBaseUrl() || ''}/api/community/channels`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ categoryOrder: updatedOrder })
@@ -2804,7 +2805,7 @@ if (window.requestAnimationFrame) {
             const channelsToUpdate = channelList.filter(c => (c.category || 'general') === oldName);
             
             for (const channel of channelsToUpdate) {
-                await fetch('/api/community/channels', {
+                await fetch(`${Api.getBaseUrl() || ''}/api/community/channels`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2821,7 +2822,7 @@ if (window.requestAnimationFrame) {
                 currentOrder[index] = newName;
             }
             
-            const response = await fetch('/api/community/channels', {
+            const response = await fetch(`${Api.getBaseUrl() || ''}/api/community/channels`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ categoryOrder: currentOrder })
@@ -2874,7 +2875,8 @@ if (window.requestAnimationFrame) {
     // Fetch all users for @mention autocomplete
     const fetchAllUsers = useCallback(async () => {
         try {
-            const response = await axios.get(`${window.location.origin}/api/community/users`, {
+            const apiBaseUrl = Api.getBaseUrl() || window.location.origin;
+            const response = await axios.get(`${apiBaseUrl}/api/community/users`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -2973,7 +2975,7 @@ if (window.requestAnimationFrame) {
                 try {
                     const token = localStorage.getItem('token');
                     const response = await axios.post(
-                        `${window.location.origin}/api/stripe/subscription-success`,
+                        `${Api.getBaseUrl() || window.location.origin}/api/stripe/subscription-success`,
                         { userId, session_id: sessionId || `stripe-${Date.now()}` },
                         {
                             headers: {
@@ -4080,7 +4082,7 @@ setMessages(prev => {
                 try {
                     let usersForMentions = allUsers;
                     if (usersForMentions.length === 0) {
-                        const usersResponse = await axios.get(`${window.location.origin}/api/community/users`);
+                        const usersResponse = await axios.get(`${Api.getBaseUrl() || window.location.origin}/api/community/users`);
                         usersForMentions = Array.isArray(usersResponse.data) ? usersResponse.data : [];
                         setAllUsers(usersForMentions);
                     }
@@ -5775,7 +5777,7 @@ if (!isAuthenticated && !hasToken) {
                                             
                                             if (response.ok) {
                                                 // Refresh channel list to show updated category
-                                                const refreshResponse = await fetch('/api/community/channels', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                                                const refreshResponse = await fetch(`${Api.getBaseUrl() || ''}/api/community/channels`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                                                 if (refreshResponse.ok) {
                                                     const data = await refreshResponse.json();
                                                     const list = Array.isArray(data) ? data : (data?.channels || []);
@@ -5927,7 +5929,7 @@ if (!isAuthenticated && !hasToken) {
                                                                         });
                                                                         
                                                                         if (response.ok) {
-                                                                            const refreshResponse = await fetch('/api/community/channels');
+                                                                            const refreshResponse = await fetch(`${Api.getBaseUrl() || ''}/api/community/channels`);
                                                                             if (refreshResponse.ok) {
                                                                                 const data = await refreshResponse.json();
                                                                                 const list = Array.isArray(data) ? data : (data?.channels || []);
@@ -6057,7 +6059,7 @@ if (!isAuthenticated && !hasToken) {
                                                                     });
                                                                     
                                                                     if (response.ok) {
-                                                                        const refreshResponse = await fetch('/api/community/channels');
+                                                                        const refreshResponse = await fetch(`${Api.getBaseUrl() || ''}/api/community/channels`);
                                                                         if (refreshResponse.ok) {
                                                                             const data = await refreshResponse.json();
                                                                             const list = Array.isArray(data) ? data : (data?.channels || []);
@@ -6193,7 +6195,7 @@ if (!isAuthenticated && !hasToken) {
                                                                 });
                                                                 
                                                                 if (response.ok) {
-                                                                    const refreshResponse = await fetch('/api/community/channels', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                                                                    const refreshResponse = await fetch(`${Api.getBaseUrl() || ''}/api/community/channels`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
                                                                     if (refreshResponse.ok) {
                                                                         const data = await refreshResponse.json();
                                                                         const list = Array.isArray(data) ? data : (data?.channels || []);
