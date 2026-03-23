@@ -172,30 +172,6 @@
   line-height: 1.5;
 }
 
-/* Not inside Aura Analysis — own route + profile menu */
-.rp-nav-hint {
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.55;
-  margin: 0 0 18px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(234, 169, 96, 0.06);
-  border: 1px solid rgba(234, 169, 96, 0.12);
-  max-width: 100%;
-}
-.rp-nav-hint strong {
-  color: rgba(248, 195, 125, 0.95);
-}
-.rp-nav-hint-link {
-  color: var(--rp-accent);
-  font-weight: 600;
-  text-decoration: none;
-}
-.rp-nav-hint-link:hover {
-  text-decoration: underline;
-}
-
 .rp-dna-enter {
   text-decoration: none;
   display: inline-flex;

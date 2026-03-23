@@ -13,6 +13,7 @@
  * @property {number} stop
  * @property {number} takeProfit
  * @property {'buy' | 'sell'} direction
+ * @property {number} [usdJpy] - USD/JPY rate; required for JPY crosses (EURJPY, GBPJPY) for USD pip value
  */
 
 /**
@@ -30,6 +31,7 @@
  * @property {number} potentialLoss
  * @property {number} rMultiple
  * @property {string[]} warnings
+ * @property {number} [effectiveRiskUsd] - actual $ at risk after lot rounding (forex etc.)
  */
 
 export const CALCULATOR_TYPES = Object.freeze({});

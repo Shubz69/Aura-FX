@@ -8,6 +8,7 @@ import { calculateIndexCfd } from './indexCalculator';
 import { calculateStockShare } from './stockCalculator';
 import { calculateFutureContract } from './futuresCalculator';
 import { calculateCryptoUnits } from './cryptoCalculator';
+import { getForexPipValueUsdPerLot } from './forexPipValueUsd';
 
 export {
   getClosedTradeResult,
@@ -87,7 +88,7 @@ export function calculateRisk(symbol, input) {
  * Derive stop loss price so that risk (balance × risk %) is preserved for a given position size.
  * When user enters position size manually, call this to get the SL that keeps risk constant.
  * @param {string} symbol
- * @param {{ accountBalance: number, riskPercent: number, entry: number, direction: 'buy'|'sell', positionSize: number }} input
+ * @param {{ accountBalance: number, riskPercent: number, entry: number, direction: 'buy'|'sell', positionSize: number, usdJpy?: number }} input
  * @returns {number|null} Stop loss price, or null if invalid (e.g. positionSize <= 0 or entry <= 0).
  */
 export function deriveStopLossFromRiskAndPositionSize(symbol, input) {
@@ -102,9 +103,9 @@ export function deriveStopLossFromRiskAndPositionSize(symbol, input) {
   switch (mode) {
     case 'forex': {
       const pipSize = spec.pipSize ?? 0.0001;
-      let pipValuePerLot = (spec.contractSize ?? 100_000) * pipSize;
-      if (spec.quoteCurrency === 'JPY') pipValuePerLot = pipValuePerLot / entry;
-      if (pipValuePerLot <= 0) return null;
+      const pipInfo = getForexPipValueUsdPerLot(spec, entry, { usdJpy: input.usdJpy });
+      const pipValuePerLot = pipInfo.usdPerPipPerLot;
+      if (pipValuePerLot == null || !Number.isFinite(pipValuePerLot) || pipValuePerLot <= 0) return null;
       const stopPips = riskAmount / (positionSize * pipValuePerLot);
       stopDistancePrice = stopPips * pipSize;
       break;

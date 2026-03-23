@@ -5,6 +5,7 @@ import Api from '../../services/Api';
 import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
 import { getAllInstruments, getInstrumentsByCategory, getInstrumentOrFallback, getPriceExamples } from '../../lib/aura-analysis/instruments';
 import { calculateRisk, deriveStopLossFromRiskAndPositionSize } from '../../lib/aura-analysis/calculators/calculateRisk';
+import { forexPairNeedsUsdJpy } from '../../lib/aura-analysis/calculators/forexPipValueUsd';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import { VALIDATOR_CHECKLIST_PENDING_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import '../../styles/aura-analysis/TradeCalculator.css';
@@ -40,6 +41,7 @@ export default function TradeCalculator() {
     takeProfit: 0,
     session: '',
     notes: '',
+    usdJpy: '',
   });
   const [pairDropdownOpen, setPairDropdownOpen] = useState(false);
   const [sessionDropdownOpen, setSessionDropdownOpen] = useState(false);
@@ -71,6 +73,14 @@ export default function TradeCalculator() {
   }, []);
 
   const hasManualPositionSize = Boolean(String(form.positionSize).trim() && Number(form.positionSize) > 0);
+
+  const needsUsdJpy = useMemo(() => forexPairNeedsUsdJpy(form.pair), [form.pair]);
+
+  const usdJpyForCalc = useMemo(() => {
+    if (!needsUsdJpy) return undefined;
+    const n = Number(form.usdJpy);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  }, [needsUsdJpy, form.usdJpy]);
 
   // When position size is empty, remember current SL as the user's choice (so we can restore it when they clear manual size).
   useEffect(() => {
@@ -104,6 +114,7 @@ export default function TradeCalculator() {
       entry,
       direction: form.direction,
       positionSize: manual,
+      usdJpy: usdJpyForCalc,
     });
     if (derived == null) return;
     const rounded = Math.round(derived * 100000) / 100000;
@@ -111,7 +122,16 @@ export default function TradeCalculator() {
     if (Math.abs(current - rounded) > 1e-9) {
       setForm((f) => ({ ...f, stopLoss: String(rounded) }));
     }
-  }, [hasManualPositionSize, form.positionSize, form.entryPrice, form.accountBalance, form.riskPercent, form.direction, form.pair]);
+  }, [
+    hasManualPositionSize,
+    form.positionSize,
+    form.entryPrice,
+    form.accountBalance,
+    form.riskPercent,
+    form.direction,
+    form.pair,
+    usdJpyForCalc,
+  ]);
 
   const calcInput = useMemo(
     () => ({
@@ -121,6 +141,7 @@ export default function TradeCalculator() {
       stop: Number(form.stopLoss) || 0,
       takeProfit: Number(form.takeProfit) || 0,
       direction: form.direction,
+      usdJpy: usdJpyForCalc,
     }),
     [
       form.accountBalance,
@@ -129,6 +150,7 @@ export default function TradeCalculator() {
       form.stopLoss,
       form.takeProfit,
       form.direction,
+      usdJpyForCalc,
     ]
   );
 
@@ -163,6 +185,14 @@ export default function TradeCalculator() {
     if (bal <= 0 || pct <= 0) return 0;
     return (bal * pct) / 100;
   }, [form.accountBalance, form.riskPercent]);
+
+  const riskRoundingNote = useMemo(() => {
+    if (!hasEntrySlTp || positionSizeUsed <= 0 || result.potentialLoss <= 0) return null;
+    const target = riskAmountFromBalance;
+    const diff = Math.abs(potentialLossDisplay - target);
+    if (diff < 0.02) return null;
+    return { target, actual: potentialLossDisplay, diff };
+  }, [hasEntrySlTp, positionSizeUsed, result.potentialLoss, riskAmountFromBalance, potentialLossDisplay]);
 
   const riskPctNum = Number(form.riskPercent) || 0;
   const showHighRiskWarning = riskPctNum > RISK_WARNING_PCT;
@@ -234,12 +264,17 @@ export default function TradeCalculator() {
       tradeGrade,
       notes: (form.notes || '').trim() || null,
       session: form.session || null,
-      assetClass:
-        result.positionUnitLabel === 'lots'
-          ? 'forex'
-          : result.positionUnitLabel === 'contracts'
-            ? 'indices'
-            : 'crypto',
+      assetClass: (() => {
+        const inst = getInstrumentOrFallback(form.pair);
+        const m = inst.calculationMode;
+        if (m === 'forex') return 'forex';
+        if (m === 'commodity') return 'commodity';
+        if (m === 'index_cfd') return 'indices';
+        if (m === 'stock_share') return 'stock';
+        if (m === 'future_contract') return 'future';
+        if (m === 'crypto_units' || m === 'crypto_lot') return 'crypto';
+        return inst.assetClass || 'forex';
+      })(),
     };
     if (selectedAccountId != null && Number.isFinite(Number(selectedAccountId))) {
       payload.validatorAccountId = Number(selectedAccountId);
@@ -461,6 +496,24 @@ export default function TradeCalculator() {
             </div>
           </div>
 
+          {needsUsdJpy && (
+            <div className="trade-calc-field">
+              <label>USD/JPY (for USD risk &amp; P/L)</label>
+              <input
+                type="number"
+                min="1"
+                step="0.01"
+                className="trade-calc-input"
+                value={form.usdJpy}
+                placeholder="e.g. 150"
+                onChange={(e) => setForm((f) => ({ ...f, usdJpy: e.target.value }))}
+              />
+              <span className="trade-calc-helper">
+                JPY crosses (e.g. EUR/JPY): yen per US dollar. Required to convert pip value to USD for position size and dollar P/L.
+              </span>
+            </div>
+          )}
+
           <div className="trade-calc-field trade-calc-session-wrap" ref={sessionDropdownRef}>
             <label>Session (optional)</label>
             <div className="trade-calc-session-dropdown">
@@ -541,6 +594,15 @@ export default function TradeCalculator() {
                 </p>
                 <p><strong>Potential profit:</strong> ${potentialProfitDisplay.toFixed(2)}</p>
                 <p><strong>Potential loss:</strong> ${potentialLossDisplay.toFixed(2)}</p>
+                {riskRoundingNote && (
+                  <p className="trade-calc-warning" role="note">
+                    Dollar risk at this size (after lot step rounding): ${riskRoundingNote.actual.toFixed(2)} — target
+                    was ${riskRoundingNote.target.toFixed(2)}.
+                  </p>
+                )}
+                <p className="trade-calc-helper trade-calc-calc-disclaimer">
+                  Calculations assume a <strong>USD-denominated</strong> account (balance and risk in USD).
+                </p>
                 {result.warnings && result.warnings.length > 0 && (
                   <div className="trade-calc-warnings">
                     {result.warnings.map((w, i) => (

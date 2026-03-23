@@ -1,4 +1,5 @@
 import { getInstrumentOrFallback } from '../instruments';
+import { getForexPipValueUsdPerLot } from './forexPipValueUsd';
 
 export function getClosedTradeResult(entry, exit, direction) {
   if (exit === entry) return 'breakeven';
@@ -11,7 +12,15 @@ export function calcRMultiple(riskAmount, pnl) {
   return pnl / riskAmount;
 }
 
-export function calcClosedTradePnL(symbol, entry, exit, positionSize, direction) {
+/**
+ * @param {string} symbol
+ * @param {number} entry
+ * @param {number} exit
+ * @param {number} positionSize
+ * @param {'buy'|'sell'} direction
+ * @param {{ usdJpy?: number }} [options]
+ */
+export function calcClosedTradePnL(symbol, entry, exit, positionSize, direction, options = {}) {
   if (positionSize <= 0) return 0;
   const spec = getInstrumentOrFallback(symbol);
   const priceDiff = direction === 'buy' ? exit - entry : entry - exit;
@@ -21,12 +30,9 @@ export function calcClosedTradePnL(symbol, entry, exit, positionSize, direction)
     case 'forex': {
       const pipSize = spec.pipSize ?? 0.0001;
       const pips = priceDiff / pipSize;
-      let pipValuePerLot;
-      if (spec.quoteCurrency === 'JPY') {
-        pipValuePerLot = (spec.contractSize ?? 100_000) * pipSize / entry;
-      } else {
-        pipValuePerLot = (spec.contractSize ?? 100_000) * pipSize;
-      }
+      const pipInfo = getForexPipValueUsdPerLot(spec, entry, { usdJpy: options.usdJpy });
+      const pipValuePerLot = pipInfo.usdPerPipPerLot;
+      if (pipValuePerLot == null || !Number.isFinite(pipValuePerLot)) return 0;
       return pips * pipValuePerLot * positionSize;
     }
     case 'commodity': {
@@ -55,8 +61,8 @@ export function calcClosedTradePnL(symbol, entry, exit, positionSize, direction)
   }
 }
 
-export function calcClosedTradePnLAndR(entry, exit, positionSize, riskAmount, direction, symbol) {
-  const pnl = calcClosedTradePnL(symbol, entry, exit, positionSize, direction);
+export function calcClosedTradePnLAndR(entry, exit, positionSize, riskAmount, direction, symbol, options = {}) {
+  const pnl = calcClosedTradePnL(symbol, entry, exit, positionSize, direction, options);
   const rMultiple = calcRMultiple(riskAmount, pnl);
   const result = getClosedTradeResult(entry, exit, direction);
   return { pnl, rMultiple, result };

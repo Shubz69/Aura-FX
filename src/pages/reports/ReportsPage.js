@@ -20,22 +20,10 @@ const MONTH_NAMES = [
   'July','August','September','October','November','December',
 ];
 
-/* ── Where to find this page (not an Aura Analysis tab) ─────────────── */
-function ReportsNavHint() {
-  return (
-    <p className="rp-nav-hint">
-      <strong>Where is this?</strong> Performance &amp; DNA is a <strong>dedicated page</strong> — it is <strong>not</strong> a tab inside Aura Analysis.
-      Open it from your profile menu: <strong>Performance &amp; DNA</strong>, or go to{' '}
-      <Link to="/reports" className="rp-nav-hint-link">/reports</Link>.
-    </p>
-  );
-}
-
 /* ── Locked view for free users ────────────────────────────────────── */
 function FreeLockedView() {
   return (
     <div className="rp-locked">
-      <ReportsNavHint />
       <div className="rp-locked-icon">📊</div>
       <p className="rp-eyebrow rp-eyebrow--center">Premium feature</p>
       <h2 className="rp-locked-title">Performance &amp; DNA</h2>
@@ -433,7 +421,6 @@ function ReportsPageInner() {
 
   return (
     <div className="rp-page journal-glass-panel journal-glass-panel--pad">
-      <ReportsNavHint />
       <div className="rp-header">
         <div className="rp-header-stack">
           <p className="rp-eyebrow">Performance intelligence</p>

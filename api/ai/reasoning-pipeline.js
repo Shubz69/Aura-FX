@@ -15,6 +15,7 @@
 const dataService = require('./data-layer/data-service');
 const { getCached, setCached } = require('../cache');
 const knowledgeCore = require('./trading-knowledge-core');
+const { getForexPipValueUsdPerLot } = require('../utils/forexPipValueUsd');
 
 // ============================================================================
 // INTENT DETECTION (Enhanced)
@@ -432,7 +433,8 @@ function calculatePositionSize(params) {
     entryPrice,
     stopLoss,
     instrument,
-    accountCurrency = 'USD'
+    accountCurrency: _accountCurrency = 'USD',
+    usdJpy
   } = params;
   
   if (!accountSize || !entryPrice || !stopLoss) {
@@ -447,13 +449,24 @@ function calculatePositionSize(params) {
   let positionSize, lotSize, pipValue;
   
   if (specs.type === 'forex') {
-    // Forex calculation
-    pipValue = specs.pipSize * specs.standardLot; // Value of 1 pip for 1 standard lot
-    if (instrument.endsWith('USD')) {
-      pipValue = 10; // $10 per pip for USD quote pairs
+    const normSym = String(instrument || '').replace(/[^A-Za-z]/g, '').toUpperCase();
+    const pipRes = getForexPipValueUsdPerLot(
+      {
+        symbol: normSym,
+        contractSize: specs.standardLot,
+        pipSize: specs.pipSize,
+        quoteCurrency: 'USD'
+      },
+      entryPrice,
+      { usdJpy }
+    );
+    if (pipRes.usdPerPipPerLot == null || !Number.isFinite(pipRes.usdPerPipPerLot) || pipRes.usdPerPipPerLot <= 0) {
+      const msg = pipRes.missingUsdJpy
+        ? 'Forex JPY cross (e.g. EURJPY): pass usdJpy (USD/JPY rate) for USD pip value and position size.'
+        : 'Could not compute pip value in USD for this pair (check instrument symbol and entry price).';
+      return { error: msg, instrument, instrumentType: specs.type };
     }
-    
-    const unitsToRisk = riskAmount / (stopDistance * 100000); // Rough approximation
+    pipValue = pipRes.usdPerPipPerLot;
     lotSize = riskAmount / (stopPips * pipValue);
     positionSize = Math.floor(lotSize * specs.standardLot);
     

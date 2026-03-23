@@ -1,4 +1,5 @@
 import { roundToStep } from './utils';
+import { getForexPipValueUsdPerLot } from './forexPipValueUsd';
 
 /**
  * @param {import('./types').CalculatorInput} input
@@ -18,14 +19,38 @@ export function calculateForex(input, spec) {
   const stopPips = stopDistancePrice / pipSize;
   const takeProfitPips = takeProfitDistancePrice / pipSize;
 
-  let pipValuePerLot;
-  if (spec.quoteCurrency === 'USD') {
-    pipValuePerLot = (spec.contractSize ?? 100_000) * pipSize;
-  } else if (spec.quoteCurrency === 'JPY') {
-    pipValuePerLot = (spec.contractSize ?? 100_000) * pipSize;
-    pipValuePerLot = pipValuePerLot / input.entry;
-  } else {
-    pipValuePerLot = (spec.contractSize ?? 100_000) * pipSize;
+  const pipInfo = getForexPipValueUsdPerLot(spec, input.entry, { usdJpy: input.usdJpy });
+  if (pipInfo.missingUsdJpy) {
+    warnings.push(
+      'Enter USD/JPY (yen per US dollar) to convert pip value to USD for this JPY cross pair.'
+    );
+  }
+  if (pipInfo.invalidEntry) {
+    warnings.push('Enter a valid entry price to compute pip value in USD.');
+  }
+  if (pipInfo.missingConversion) {
+    warnings.push(
+      'This pair needs an extra FX rate to express pip value in USD; calculator cannot size it yet.'
+    );
+  }
+
+  const pipValuePerLot = pipInfo.usdPerPipPerLot;
+  if (pipValuePerLot == null || !Number.isFinite(pipValuePerLot) || pipValuePerLot <= 0) {
+    return {
+      riskAmount,
+      stopDistancePrice,
+      takeProfitDistancePrice,
+      stopDistanceAlt: Math.round(stopPips * 100) / 100,
+      takeProfitDistanceAlt: Math.round(takeProfitPips * 100) / 100,
+      altUnitLabel: 'pips',
+      riskReward,
+      positionSize: 0,
+      positionUnitLabel: 'lots',
+      potentialProfit: 0,
+      potentialLoss: 0,
+      rMultiple: riskReward,
+      warnings,
+    };
   }
 
   const positionSizeLots = riskAmount / (stopPips * pipValuePerLot);
