@@ -77,9 +77,8 @@ const Footer = React.memo(function Footer() {
         <div className="footer-column">
           <h4 className="footer-column-heading">Resources</h4>
           <ul className="footer-links">
-            <li><Link to="/docs">Docs</Link></li>
-            <li><Link to="/blog">Blog</Link></li>
-            <li><Link to="/support">Support</Link></li>
+            <li><Link to="/choose-plan">Plans</Link></li>
+            <li><Link to="/affiliation">Affiliation</Link></li>
             <li><Link to="/privacy">Privacy Policy</Link></li>
             <li><Link to="/terms">Terms of Service</Link></li>
           </ul>
