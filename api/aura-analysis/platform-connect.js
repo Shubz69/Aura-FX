@@ -14,6 +14,80 @@ const { hasMtBridgeCredentials, syncAccount } = require('./terminalSyncBridge');
 const { setAuraCorsHeaders, safeJsonParse } = require('./cors');
 
 // ── Encryption helpers ─────────────────────────────────────────────────────
+function safeString(value) {
+  if (value == null) return '';
+  return String(value).trim();
+}
+
+function normalizePlatformId(platformId) {
+  return safeString(platformId).toLowerCase();
+}
+
+function normalizeMtCredentials(credentials = {}) {
+  return {
+    login: safeString(
+      credentials.login ??
+      credentials.accountLogin ??
+      credentials.username ??
+      credentials.user
+    ),
+    password: safeString(
+      credentials.password ??
+      credentials.pass ??
+      credentials.passwd
+    ),
+    server: safeString(
+      credentials.server ??
+      credentials.brokerServer ??
+      credentials.broker
+    ),
+    accountId: safeString(credentials.accountId),
+    token: safeString(credentials.token),
+  };
+}
+
+function sanitizeConnectRequest(payload) {
+  const body = payload || {};
+  const platformId = normalizePlatformId(body.platformId || body.platform || body.platform_id);
+  const rawCredentials =
+    (body.credentials && typeof body.credentials === 'object' && body.credentials) ||
+    (body.credential && typeof body.credential === 'object' && body.credential) ||
+    {};
+  const credentials = platformId === 'mt5' || platformId === 'mt4'
+    ? normalizeMtCredentials(rawCredentials)
+    : rawCredentials;
+
+  return { platformId, credentials };
+}
+
+function parseRequestBody(rawBody) {
+  if (!rawBody) return {};
+  if (typeof rawBody === 'object') return rawBody;
+  if (typeof rawBody === 'string') return safeJsonParse(rawBody, {});
+  return {};
+}
+
+function getMissingMtFields(credentials) {
+  const missing = [];
+  if (!safeString(credentials?.login)) missing.push('credentials.login');
+  if (!safeString(credentials?.password)) missing.push('credentials.password');
+  if (!safeString(credentials?.server)) missing.push('credentials.server');
+  return missing;
+}
+
+function toConnectDebugSummary(platformId, credentials) {
+  return {
+    platformId,
+    hasCredentialsObject: !!credentials && typeof credentials === 'object',
+    credentialKeys: credentials && typeof credentials === 'object' ? Object.keys(credentials).slice(0, 12) : [],
+    hasLogin: !!safeString(credentials?.login),
+    hasPassword: !!safeString(credentials?.password),
+    hasServer: !!safeString(credentials?.server),
+    hasMetaAccountId: !!safeString(credentials?.accountId),
+    hasMetaToken: !!safeString(credentials?.token),
+  };
+}
+
 function getEncKey() {
   const raw = process.env.PLATFORM_ENCRYPTION_KEY || process.env.JWT_SECRET || 'aura-fx-enc-key-pad-to-32chars!!';
   return crypto.createHash('sha256').update(raw).digest(); // always 32 bytes
@@ -283,9 +357,25 @@ module.exports = async (req, res) => {
 
   // ── POST — connect platform ────────────────────────────────────────────
   if (req.method === 'POST') {
-    const { platformId, credentials } = req.body || {};
+    const parsedBody = parseRequestBody(req.body);
+    const { platformId, credentials } = sanitizeConnectRequest(parsedBody);
     if (!platformId || !credentials || typeof credentials !== 'object') {
+      console.warn('Aura connect rejected invalid payload', toConnectDebugSummary(platformId, credentials));
       return res.status(400).json({ success: false, error: 'platformId and credentials required' });
+    }
+    if ((platformId === 'mt5' || platformId === 'mt4') && !hasMtBridgeCredentials(credentials)) {
+      const missing = getMissingMtFields(credentials);
+      // Keep support for MetaAPI fallback, but return explicit field-level feedback for MT bridge payloads.
+      if (!safeString(credentials.accountId) || !safeString(credentials.token)) {
+        console.warn('Aura connect rejected MT payload', { ...toConnectDebugSummary(platformId, credentials), missing });
+        return res.status(400).json({
+          success: false,
+          error: 'MT5/MT4 credentials are incomplete',
+          missing,
+          accepted: ['credentials.login', 'credentials.password', 'credentials.server'],
+          fallbackAccepted: ['credentials.accountId', 'credentials.token'],
+        });
+      }
     }
 
     let validation;
@@ -296,6 +386,7 @@ module.exports = async (req, res) => {
     }
 
     if (!validation.ok) {
+      console.warn('Aura connect validation failed', { ...toConnectDebugSummary(platformId, credentials), reason: validation.error });
       return res.status(400).json({ success: false, error: validation.error });
     }
 
