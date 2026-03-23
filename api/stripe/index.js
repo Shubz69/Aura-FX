@@ -20,6 +20,45 @@ function getStripeClient() {
   return new Stripe(secretKey);
 }
 
+/**
+ * Referral text from Stripe Checkout (Payment Link custom fields) or session metadata.
+ * Matches a field whose key/label contains "referral", else first filled text custom field.
+ */
+function extractReferralFromCheckoutSession(session) {
+  const meta =
+    session?.metadata &&
+    (session.metadata.referral_code || session.metadata.referral || session.metadata.ref);
+  if (meta && String(meta).trim()) {
+    return String(meta).trim();
+  }
+
+  const fields = session?.custom_fields;
+  if (!Array.isArray(fields)) return '';
+
+  const textVal = (f) => {
+    if (f?.type !== 'text' || f?.text?.value == null) return '';
+    const v = String(f.text.value).trim();
+    return v;
+  };
+
+  for (const f of fields) {
+    const v = textVal(f);
+    if (!v) continue;
+    const key = String(f.key || '').toLowerCase();
+    const labelCustom = String(f.label?.custom || '').toLowerCase();
+    if (key.includes('referral') || labelCustom.includes('referral')) {
+      return v;
+    }
+  }
+
+  for (const f of fields) {
+    const v = textVal(f);
+    if (v) return v;
+  }
+
+  return '';
+}
+
 const getDbConnection = async () => {
   if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
     return null;
@@ -209,6 +248,27 @@ module.exports = async (req, res) => {
         );
         const hasUsedFreeTrial = userRows[0]?.has_used_free_trial || false;
 
+        let stripeReferralText = '';
+        if (sessionId) {
+          try {
+            const stripe = getStripeClient();
+            if (stripe) {
+              const sess = await stripe.checkout.sessions.retrieve(String(sessionId));
+              stripeReferralText = extractReferralFromCheckoutSession(sess);
+            }
+          } catch (e) {
+            console.warn('subscription-success: could not load Stripe session for referral:', e.message);
+          }
+        }
+        if (stripeReferralText) {
+          try {
+            const { applyReferralCodeToUserIfUnset } = require('../referral/referralService');
+            await applyReferralCodeToUserIfUnset(Number(userId), stripeReferralText);
+          } catch (refErr) {
+            console.warn('subscription-success referral:', refErr.message);
+          }
+        }
+
         // Calculate expiry date based on plan type and free trial usage
         const expiryDate = new Date();
         let subscriptionDays = 30; // Default 1 month
@@ -338,6 +398,16 @@ module.exports = async (req, res) => {
               if (userRows && userRows.length > 0) {
                 const userId = userRows[0].id;
                 const hasUsedFreeTrial = userRows[0].has_used_free_trial || false;
+
+                const refFromStripe = extractReferralFromCheckoutSession(session);
+                if (refFromStripe) {
+                  try {
+                    const { applyReferralCodeToUserIfUnset } = require('../referral/referralService');
+                    await applyReferralCodeToUserIfUnset(Number(userId), refFromStripe);
+                  } catch (refApplyErr) {
+                    console.warn('Payment Link referral field:', refApplyErr.message);
+                  }
+                }
                 
                 let planType = 'aura';
                 const successUrl = session?.success_url || '';

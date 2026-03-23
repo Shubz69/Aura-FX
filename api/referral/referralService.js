@@ -8,6 +8,14 @@ const { executeQuery, addColumnIfNotExists, indexExists } = require('../db');
 
 let schemaReady = false;
 
+/** Must match Affiliation.js tier thresholds (sign-up counts). */
+const SIGNUP_MILESTONES = [
+  { n: 5, label: 'Bronze', reward: '1 week free Premium' },
+  { n: 10, label: 'Silver', reward: '1 month free Premium' },
+  { n: 25, label: 'Gold', reward: '3 months Elite access' },
+  { n: 100, label: 'Elite', reward: 'Lifetime Elite access' },
+];
+
 async function ensureReferralSchema() {
   if (schemaReady) return;
   try {
@@ -15,6 +23,9 @@ async function ensureReferralSchema() {
   } catch (_) {}
   try {
     await addColumnIfNotExists('users', 'referred_by', 'INT NULL DEFAULT NULL');
+  } catch (_) {}
+  try {
+    await addColumnIfNotExists('users', 'referral_milestone_emailed_up_to', 'INT NULL DEFAULT 0');
   } catch (_) {}
   try {
     await executeQuery(`
@@ -111,6 +122,33 @@ async function resolveReferrerIdFromInput(refRaw, newUserId) {
 }
 
 /**
+ * If the user has no referrer yet, set referred_by from a code entered at checkout
+ * (e.g. Stripe Payment Link custom field). First-touch wins; does not overwrite.
+ */
+async function applyReferralCodeToUserIfUnset(refereeUserId, refRaw) {
+  await ensureReferralSchema();
+  const uid = Number(refereeUserId);
+  const raw = (refRaw || '').toString().trim();
+  if (!uid || !raw) return false;
+
+  const referrerId = await resolveReferrerIdFromInput(raw, uid);
+  if (!referrerId) return false;
+
+  const [urows] = await executeQuery(
+    'SELECT referred_by FROM users WHERE id = ? LIMIT 1',
+    [uid],
+  );
+  const existing = urows[0]?.referred_by != null ? Number(urows[0].referred_by) : null;
+  if (existing) return false;
+
+  const [res] = await executeQuery(
+    'UPDATE users SET referred_by = ? WHERE id = ? AND (referred_by IS NULL OR referred_by = 0)',
+    [referrerId, uid],
+  );
+  return !!(res && res.affectedRows > 0);
+}
+
+/**
  * Record one conversion for the referee's referrer (idempotent per referee + event).
  */
 async function recordReferralConversion(refereeUserId, eventType) {
@@ -127,15 +165,80 @@ async function recordReferralConversion(refereeUserId, eventType) {
   if (!referrerId || referrerId === uid) return false;
 
   try {
-    await executeQuery(
+    const [res] = await executeQuery(
       `INSERT IGNORE INTO referral_conversion (referrer_user_id, referee_user_id, event_type)
        VALUES (?, ?, ?)`,
       [referrerId, uid, eventType],
     );
-    return true;
+    const inserted = !!(res && res.affectedRows > 0);
+    if (inserted) {
+      try {
+        const { sendReferralConversionEmail } = require('../utils/email');
+        const [ru] = await executeQuery(
+          'SELECT email, username, name FROM users WHERE id = ? LIMIT 1',
+          [referrerId],
+        );
+        const row = ru[0];
+        if (row?.email) {
+          await sendReferralConversionEmail({
+            to: row.email,
+            name: row.name || row.username || '',
+            eventType,
+          });
+        }
+      } catch (mailErr) {
+        console.warn('Referral conversion notify:', mailErr.message);
+      }
+    }
+    return inserted;
   } catch (e) {
     console.warn('recordReferralConversion:', e.message);
     return false;
+  }
+}
+
+/**
+ * After a new user signs up with referred_by set, email referrer for any newly crossed tier(s).
+ */
+async function maybeNotifyReferralSignupMilestones(referrerUserId) {
+  await ensureReferralSchema();
+  const rid = Number(referrerUserId);
+  if (!rid) return;
+
+  const [countRows] = await executeQuery(
+    'SELECT COUNT(*) AS c FROM users WHERE referred_by = ?',
+    [rid],
+  );
+  const count = Number(countRows[0]?.c ?? 0);
+
+  const [urows] = await executeQuery(
+    'SELECT email, username, name, COALESCE(referral_milestone_emailed_up_to, 0) AS last_m FROM users WHERE id = ? LIMIT 1',
+    [rid],
+  );
+  const u = urows[0];
+  if (!u?.email) return;
+
+  const lastM = Number(u.last_m) || 0;
+  const newlyCrossed = SIGNUP_MILESTONES.filter((m) => count >= m.n && m.n > lastM);
+  if (newlyCrossed.length === 0) return;
+
+  const best = newlyCrossed[newlyCrossed.length - 1];
+  try {
+    const { sendReferralMilestoneEmail } = require('../utils/email');
+    const displayName = u.name || u.username || '';
+    await sendReferralMilestoneEmail({
+      to: u.email,
+      name: displayName,
+      signupCount: count,
+      tierLabel: best.label,
+      tierReward: best.reward,
+    });
+    await executeQuery(
+      'UPDATE users SET referral_milestone_emailed_up_to = ? WHERE id = ?',
+      [best.n, rid],
+    );
+  } catch (e) {
+    console.warn('maybeNotifyReferralSignupMilestones:', e.message);
   }
 }
 
@@ -143,5 +246,8 @@ module.exports = {
   ensureReferralSchema,
   ensureUserReferralCode,
   resolveReferrerIdFromInput,
+  applyReferralCodeToUserIfUnset,
   recordReferralConversion,
+  maybeNotifyReferralSignupMilestones,
+  SIGNUP_MILESTONES,
 };

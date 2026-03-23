@@ -6,6 +6,7 @@ const { sendSignupNotification } = require('../utils/email');
 const {
   resolveReferrerIdFromInput,
   ensureUserReferralCode,
+  maybeNotifyReferralSignupMilestones,
 } = require('../referral/referralService');
 
 // Get database connection
@@ -217,6 +218,9 @@ module.exports = async (req, res) => {
             await db.execute('UPDATE users SET referred_by = ? WHERE id = ?', [referredBy, userId]);
           }
         }
+        Promise.resolve(maybeNotifyReferralSignupMilestones(referredBy)).catch((e) =>
+          console.warn('Referral milestone notify:', e.message),
+        );
       }
 
       try {

@@ -43,6 +43,6 @@ IMPORTANT: To get a Gmail App Password:
 
 OPTIONAL EMAIL VARIABLES:
 ==========================
-CONTACT_INBOX=platform@aurafx.com
+CONTACT_INBOX=support@auraterminal.ai
 CONTACT_FROM=no-reply@aurafx.com
 

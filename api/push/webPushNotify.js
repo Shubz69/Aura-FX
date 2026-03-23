@@ -14,7 +14,7 @@ function ensureVapid() {
   const priv = process.env.VAPID_PRIVATE_KEY;
   if (!pub || !priv) return false;
   webpush.setVapidDetails(
-    `mailto:${process.env.EMAIL_USER || 'support@auraterminal.com'}`,
+    `mailto:${process.env.EMAIL_USER || 'support@auraterminal.ai'}`,
     pub,
     priv
   );

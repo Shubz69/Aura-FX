@@ -10,8 +10,8 @@ import { useEntitlements } from '../context/EntitlementsContext';
 import CosmicBackground from '../components/CosmicBackground';
 import Api from '../services/Api';
 
-const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
-const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
+const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/eVq8wO1MM0PGebBd1TdIA0m';
+const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/eVq5kCbnm1TKgjJaTLdIA0l';
 
 const PLAN_ALIAS_MAP = {
   free: 'free',

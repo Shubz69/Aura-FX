@@ -1,9 +1,9 @@
 /**
- * Shared email helpers. Contact and signup notifications go to Support@auraxfx.com.
+ * Shared email helpers. Contact and signup notifications go to support@auraterminal.ai.
  */
 const nodemailer = require('nodemailer');
 
-const SUPPORT_EMAIL = 'Support@auraxfx.com';
+const SUPPORT_EMAIL = 'support@auraterminal.ai';
 
 const createTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -34,7 +34,7 @@ const sendSignupNotification = async ({ email, name, username, userCount }) => {
     console.warn('Signup notification skipped – email not configured.');
     return { sent: false };
   }
-  const from = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@aurafx.com';
+  const from = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@auraterminal.ai';
   const nth = userCount === 1 ? '1st' : userCount === 2 ? '2nd' : userCount === 3 ? '3rd' : `${userCount}th`;
   try {
     await transporter.sendMail({
@@ -67,7 +67,7 @@ const sendWeeklySignupReport = async ({ signups }) => {
     console.warn('Weekly signup report skipped – email not configured.');
     return { sent: false };
   }
-  const from = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@aurafx.com';
+  const from = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@auraterminal.ai';
   
   const formatDate = (date) => {
     if (!date) return 'N/A';
@@ -140,9 +140,84 @@ const sendWeeklySignupReport = async ({ signups }) => {
   }
 };
 
+/**
+ * Referral tier milestone (sign-up count) — sent to the referrer.
+ */
+const sendReferralMilestoneEmail = async ({
+  to,
+  name,
+  signupCount,
+  tierLabel,
+  tierReward,
+}) => {
+  const transporter = createTransporter();
+  if (!transporter || !to) {
+    console.warn('Referral milestone email skipped – email not configured or missing address.');
+    return { sent: false };
+  }
+  const from = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@auraterminal.ai';
+  const greet = name ? name.split(' ')[0] : 'there';
+  try {
+    await transporter.sendMail({
+      from,
+      to,
+      subject: `[AURA TERMINAL] Referral milestone unlocked — ${tierLabel} (${signupCount} sign-ups)`,
+      html: `
+        <p>Hi ${greet},</p>
+        <p><strong>Congratulations!</strong> You have reached <strong>${signupCount} referred sign-ups</strong> on AURA TERMINAL.</p>
+        <p><strong>Tier:</strong> ${tierLabel}<br/>
+        <strong>Reward:</strong> ${tierReward}</p>
+        <p>Eligible perks are typically applied within 48 hours. If anything looks off, reply with your referral code.</p>
+        <p style="font-size:12px;color:#666;">Keep sharing — your Affiliation page shows live progress.</p>
+      `,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error('Referral milestone email failed:', error.message);
+    return { sent: false, reason: error.message };
+  }
+};
+
+/**
+ * First-time subscription or course conversion from a referred user.
+ */
+const sendReferralConversionEmail = async ({ to, name, eventType }) => {
+  const transporter = createTransporter();
+  if (!transporter || !to) {
+    return { sent: false };
+  }
+  const from = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@auraterminal.ai';
+  const greet = name ? name.split(' ')[0] : 'there';
+  const isSub = eventType === 'subscription';
+  const title = isSub
+    ? 'Someone you referred activated a subscription'
+    : 'Someone you referred completed a course purchase';
+  const body = isSub
+    ? 'A trader you referred has subscribed. Thank you for growing the community — your Affiliation dashboard will reflect this under Subscriptions.'
+    : 'A trader you referred has completed a course payment. Your Affiliation dashboard will reflect this under Courses.';
+  try {
+    await transporter.sendMail({
+      from,
+      to,
+      subject: `[AURA TERMINAL] ${title}`,
+      html: `
+        <p>Hi ${greet},</p>
+        <p>${body}</p>
+        <p style="font-size:12px;color:#666;">This is a one-time notification for this conversion type per person referred.</p>
+      `,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error('Referral conversion email failed:', error.message);
+    return { sent: false, reason: error.message };
+  }
+};
+
 module.exports = {
   SUPPORT_EMAIL,
   createTransporter,
   sendSignupNotification,
-  sendWeeklySignupReport
+  sendWeeklySignupReport,
+  sendReferralMilestoneEmail,
+  sendReferralConversionEmail,
 };

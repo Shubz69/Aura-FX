@@ -105,7 +105,7 @@ const Privacy = () => {
                             <li><strong>Data Portability:</strong> Request transfer of your information to another service</li>
                             <li><strong>Withdraw Consent:</strong> Withdraw consent where we rely on consent to process your information</li>
                         </ul>
-                        <p>To exercise these rights, please contact us at platform@aurafx.com</p>
+                        <p>To exercise these rights, please contact us at support@auraterminal.ai</p>
                     </section>
 
                     <section>
@@ -147,7 +147,7 @@ const Privacy = () => {
                             If you have any questions about this Privacy Policy, please contact us at:
                         </p>
                         <p>
-                            <strong>Email:</strong> platform@aurafx.com<br />
+                            <strong>Email:</strong> support@auraterminal.ai<br />
                             <strong>Website:</strong> www.aurafx.com
                         </p>
                     </section>

@@ -9,8 +9,8 @@ import '../styles/Subscription.css';
 
 // Use same origin for API calls to avoid CORS issues
 const API_BASE_URL = process.env.REACT_APP_API_URL || '';
-const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
-const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
+const STRIPE_PAYMENT_LINK_AURA = process.env.REACT_APP_STRIPE_PAYMENT_LINK_AURA || 'https://buy.stripe.com/eVq8wO1MM0PGebBd1TdIA0m';
+const STRIPE_PAYMENT_LINK_A7FX = process.env.REACT_APP_STRIPE_PAYMENT_LINK_A7FX || 'https://buy.stripe.com/eVq5kCbnm1TKgjJaTLdIA0l';
 
 // Plan configurations
 const PLANS = {
@@ -470,7 +470,7 @@ const Subscription = () => {
             console.error('Error sending contact message:', error);
             setContactStatus({ 
                 type: 'error', 
-                message: 'There was a problem sending your message. Please try again later or email us directly at support@aurafx.com' 
+                message: 'There was a problem sending your message. Please try again later or email us directly at support@auraterminal.ai' 
             });
         } finally {
             setContactSubmitting(false);
@@ -796,7 +796,7 @@ const Subscription = () => {
                             {showContactForm ? 'Hide Contact Form' : 'Contact Support'}
                         </button>
                         <a 
-                            href="mailto:support@aurafx.com"
+                            href="mailto:support@auraterminal.ai"
                             className="support-button"
                             style={{ textDecoration: 'none', display: 'inline-block', textAlign: 'center' }}
                         >

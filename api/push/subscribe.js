@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
   // Configure web-push (VAPID keys required in env)
   if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
     webpush.setVapidDetails(
-      `mailto:${process.env.EMAIL_USER || 'support@auraterminal.com'}`,
+      `mailto:${process.env.EMAIL_USER || 'support@auraterminal.ai'}`,
       process.env.VAPID_PUBLIC_KEY,
       process.env.VAPID_PRIVATE_KEY
     );

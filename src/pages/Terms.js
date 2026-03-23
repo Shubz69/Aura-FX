@@ -130,7 +130,7 @@ const Terms = () => {
                             If you have any questions about these Terms and Conditions, please contact us at:
                         </p>
                         <p>
-                            <strong>Email:</strong> platform@aurafx.com<br />
+                            <strong>Email:</strong> support@auraterminal.ai<br />
                             <strong>Website:</strong> www.aurafx.com
                         </p>
                     </section>

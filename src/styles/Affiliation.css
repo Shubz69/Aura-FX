@@ -1,6 +1,7 @@
 /* Affiliation — journal navy / gold glass, modern layout */
 
 .aff-page {
+  position: relative;
   --aff-bg: #010008;
   --aff-card: rgba(3, 2, 10, 0.72);
   --aff-card-h: rgba(8, 6, 20, 0.88);
@@ -22,9 +23,140 @@
   min-height: 100vh;
   background: var(--aff-bg);
   color: var(--aff-text);
-  position: relative;
   overflow-x: hidden;
   font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* Toast — live referral activity */
+.aff-toast {
+  position: fixed;
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(20, 18, 40, 0.97) 0%, rgba(12, 10, 28, 0.98) 100%);
+  border: 1px solid rgba(234, 169, 96, 0.45);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 32px rgba(234, 169, 96, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: aff-toast-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes aff-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.aff-toast__icon {
+  color: var(--aff-gold-bright);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.aff-toast__text {
+  flex: 1;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.aff-toast__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.aff-toast__close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* Momentum strip */
+.aff-impact-strip {
+  padding: 18px 22px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(234, 169, 96, 0.08) 0%, rgba(12, 10, 28, 0.85) 100%);
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  box-shadow: var(--aff-shadow);
+}
+
+.aff-impact-strip__main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.aff-impact-strip__label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--aff-gold-bright);
+}
+
+.aff-impact-strip__bar {
+  flex: 1;
+  min-width: 120px;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.aff-impact-strip__fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, rgba(234, 169, 96, 0.5), var(--aff-gold-bright));
+  transition: width 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.aff-impact-strip__pct {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--aff-text);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.aff-impact-strip__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--aff-muted);
+}
+
+.aff-impact-strip__sync {
+  margin: 10px 0 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--aff-dim);
 }
 
 .aff-content {
@@ -226,6 +358,21 @@
   font-size: 0.68rem;
   color: var(--aff-dim);
   line-height: 1.35;
+}
+
+.aff-stat--impact {
+  border-color: rgba(248, 195, 125, 0.42);
+  background: linear-gradient(155deg, rgba(234, 169, 96, 0.12) 0%, rgba(12, 10, 28, 0.92) 55%);
+  box-shadow:
+    var(--aff-shadow),
+    0 0 48px rgba(234, 169, 96, 0.1);
+}
+
+.aff-stat--impact .aff-stat__value {
+  background: linear-gradient(125deg, #fff 20%, var(--aff-gold-bright) 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Link box */

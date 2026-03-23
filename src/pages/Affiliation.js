@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useId } from 'react';
+import React, { useEffect, useState, useCallback, useId, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -31,11 +31,19 @@ const TIERS = [
 const FAQ_ITEMS = [
   {
     q: 'When does a referral count?',
-    a: 'Sign-ups count when someone registers with your link or enters your code (e.g. AURA-XXXXXXXX or legacy AT-000123). Course and subscription columns count once per referred user when they complete a tracked payment while logged in.',
+    a: 'Sign-ups count when someone registers with your link or enters your code (e.g. AURA-XXXXXXXX or legacy AT-000123). Subscriptions count when a referred person pays (including your code in the Stripe Payment Link “Referral” field if they did not sign up via link). Courses count once per referred person when they complete a tracked course payment while logged in. Numbers update from the server — this page refreshes when you come back to the tab and every 45 seconds.',
   },
   {
     q: 'How long until rewards apply?',
     a: 'Eligible rewards are typically applied within 48 hours after a milestone is verified. If something looks wrong, contact support with your referral code.',
+  },
+  {
+    q: 'Will I get emails when something happens?',
+    a: 'If email is configured on the server, you receive an email when you cross a sign-up tier (Bronze, Silver, Gold, Elite) and when a referred person completes their first tracked subscription or course purchase — once per person per type.',
+  },
+  {
+    q: 'What is Total impact?',
+    a: 'It is the sum of your sign-ups, subscription conversions, and course conversions. It is a simple “volume” number; tier rewards are still based on referred sign-ups (the milestone ladder). Momentum is a small score that weights subscriptions and courses a bit higher for encouragement.',
   },
   {
     q: 'Can I share anywhere?',
@@ -94,22 +102,29 @@ export default function Affiliation() {
     referrals: 0,
     coursePurchases: 0,
     subscriptionPurchases: 0,
+    totalImpact: 0,
+    impactScore: 0,
     active: 0,
     earned: 0,
   });
+  const [statsAt, setStatsAt] = useState(null);
   const [referralCode, setReferralCode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [toast, setToast] = useState(null);
+  const prevMetricsRef = useRef(null);
 
   const referralLink =
     referralCode && typeof window !== 'undefined'
       ? `${window.location.origin}/register?ref=${encodeURIComponent(referralCode)}`
       : null;
 
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (opts = {}) => {
+    const silent = opts.silent === true;
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const res = await Api.getReferralStats();
       const d = res?.data;
@@ -121,14 +136,17 @@ export default function Affiliation() {
           referrals: signups,
           coursePurchases: Number(d.coursePurchases) || 0,
           subscriptionPurchases: Number(d.subscriptionPurchases) || 0,
+          totalImpact: Number(d.totalImpact) || 0,
+          impactScore: Number(d.impactScore) || 0,
           active: Number(d.active) || 0,
           earned: Number(d.earned) || 0,
         });
+        setStatsAt(d.statsAt || null);
       }
     } catch (_) {
       /* keep defaults */
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [user]);
 
@@ -139,6 +157,55 @@ export default function Affiliation() {
     }
     fetchStats();
   }, [user, navigate, fetchStats]);
+
+  /** Keep counts fresh: tab focus + periodic poll (stats are server truth). */
+  useEffect(() => {
+    if (!user) return undefined;
+    const refresh = () => fetchStats({ silent: true });
+    const onVis = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    const interval = window.setInterval(refresh, 45000);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      window.clearInterval(interval);
+    };
+  }, [user, fetchStats]);
+
+  const inviteMessage = useMemo(() => {
+    if (!referralLink) return '';
+    const codeLine = referralCode ? `\n\nCode (signup or Stripe checkout): ${referralCode}` : '';
+    return `I've been using AURA TERMINAL for trading education and serious tools. Join with my link — it helps me out:\n${referralLink}${codeLine}`;
+  }, [referralLink, referralCode]);
+
+  useEffect(() => {
+    if (!toast?.msg) return undefined;
+    const t = window.setTimeout(() => setToast(null), 6500);
+    return () => window.clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    if (loading) return;
+    const cur = {
+      signups: stats.signups,
+      subscriptionPurchases: stats.subscriptionPurchases,
+      coursePurchases: stats.coursePurchases,
+    };
+    const prev = prevMetricsRef.current;
+    if (!prev) {
+      prevMetricsRef.current = cur;
+      return;
+    }
+    if (cur.signups > prev.signups) {
+      setToast({ msg: 'New sign-up from your referral — nice one.', kind: 'win' });
+    } else if (cur.subscriptionPurchases > prev.subscriptionPurchases) {
+      setToast({ msg: 'A referral activated a subscription.', kind: 'win' });
+    } else if (cur.coursePurchases > prev.coursePurchases) {
+      setToast({ msg: 'A referral completed a course purchase.', kind: 'win' });
+    }
+    prevMetricsRef.current = cur;
+  }, [loading, stats.signups, stats.subscriptionPurchases, stats.coursePurchases]);
 
   const copyText = async (text, which) => {
     if (!text) return;
@@ -155,9 +222,12 @@ export default function Affiliation() {
     if (which === 'link') {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } else {
+    } else if (which === 'code') {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2500);
+    } else if (which === 'invite') {
+      setInviteCopied(true);
+      setTimeout(() => setInviteCopied(false), 2500);
     }
   };
 
@@ -201,7 +271,13 @@ export default function Affiliation() {
   const referralsToNext = nextTier ? Math.max(0, nextTier.referrals - tierBasis) : 0;
 
   const statCards = [
-    { label: 'Sign-ups', value: loading ? '—' : tierBasis, hint: 'Registered with your code' },
+    {
+      label: 'Total impact',
+      value: loading ? '—' : stats.totalImpact,
+      hint: 'Sign-ups + subs + courses (combined activity)',
+      highlight: true,
+    },
+    { label: 'Sign-ups', value: loading ? '—' : tierBasis, hint: 'Registered with your code · drives tiers' },
     {
       label: 'Subscriptions',
       value: loading ? '—' : stats.subscriptionPurchases,
@@ -215,9 +291,24 @@ export default function Affiliation() {
     { label: 'Active plans', value: loading ? '—' : stats.active ?? 0, hint: 'Referred users · active or trialing' },
   ];
 
+  const syncedLabel = statsAt
+    ? `Updated ${new Date(statsAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`
+    : null;
+
   return (
     <AuraTerminalThemeShell>
     <div className="aff-page">
+      {toast?.msg && (
+        <div className="aff-toast" role="status">
+          <span className="aff-toast__icon" aria-hidden>
+            ✦
+          </span>
+          <span className="aff-toast__text">{toast.msg}</span>
+          <button type="button" className="aff-toast__close" onClick={() => setToast(null)} aria-label="Dismiss">
+            ×
+          </button>
+        </div>
+      )}
       <div className="aff-content journal-glass-panel journal-glass-panel--pad">
         <header className="aff-hero">
           <div className="aff-hero__eyebrow">Referral programme</div>
@@ -230,8 +321,26 @@ export default function Affiliation() {
             <span className="aff-chip">No fees to join</span>
             <span className="aff-chip">Tracked automatically</span>
             <span className="aff-chip">Milestone rewards</span>
+            <span className="aff-chip">Email tier alerts</span>
           </div>
         </header>
+
+        {!loading && (
+          <div className="aff-impact-strip" aria-label="Referral momentum">
+            <div className="aff-impact-strip__main">
+              <span className="aff-impact-strip__label">Momentum</span>
+              <div className="aff-impact-strip__bar" role="progressbar" aria-valuenow={stats.impactScore} aria-valuemin={0} aria-valuemax={100}>
+                <div className="aff-impact-strip__fill" style={{ width: `${Math.min(100, stats.impactScore)}%` }} />
+              </div>
+              <span className="aff-impact-strip__pct">{Math.min(100, stats.impactScore)}%</span>
+            </div>
+            <p className="aff-impact-strip__hint">
+              Based on sign-ups, subscriptions, and course sales from people you referred. Tier unlocks still use{' '}
+              <strong>sign-up</strong> count.
+            </p>
+            {syncedLabel && <p className="aff-impact-strip__sync">{syncedLabel}</p>}
+          </div>
+        )}
 
         <section className="aff-steps" aria-label="How referrals work in three steps">
           <div className="aff-steps__item">
@@ -255,7 +364,9 @@ export default function Affiliation() {
               <FaGift />
             </div>
             <h3 className="aff-steps__title">You unlock tiers</h3>
-            <p className="aff-steps__text">Hit referral counts to earn extended Premium and Elite access — see milestones below.</p>
+            <p className="aff-steps__text">
+              Hit sign-up milestones for rewards; subscriptions and courses boost your momentum and can trigger email alerts.
+            </p>
           </div>
         </section>
 
@@ -263,7 +374,7 @@ export default function Affiliation() {
           <div className="aff-dashboard__main">
             <div className="aff-stats">
               {statCards.map((s) => (
-                <div key={s.label} className="aff-stat">
+                <div key={s.label} className={`aff-stat ${s.highlight ? 'aff-stat--impact' : ''}`}>
                   <div className="aff-stat__value">{s.value}</div>
                   <div className="aff-stat__label">{s.label}</div>
                   <div className="aff-stat__hint">{s.hint}</div>
@@ -274,7 +385,7 @@ export default function Affiliation() {
             <div className="aff-link-box">
               <div className="aff-link-box__head">
                 <span className="aff-link-box__label">Your referral link</span>
-                <button type="button" className="aff-refresh" onClick={fetchStats} disabled={loading} title="Refresh stats">
+                <button type="button" className="aff-refresh" onClick={() => fetchStats()} disabled={loading} title="Refresh stats">
                   <FaSyncAlt className={loading ? 'aff-refresh--spin' : ''} />
                   Refresh
                 </button>
@@ -314,6 +425,22 @@ export default function Affiliation() {
                   ) : (
                     <>
                       <FaCopy /> Copy code
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className={`aff-btn-secondary aff-btn-invite ${inviteCopied ? 'copied' : ''}`}
+                  onClick={() => copyText(inviteMessage, 'invite')}
+                  disabled={!inviteMessage}
+                >
+                  {inviteCopied ? (
+                    <>
+                      <FaCheck /> Message copied
+                    </>
+                  ) : (
+                    <>
+                      <FaCopy /> Copy invite message
                     </>
                   )}
                 </button>
@@ -370,7 +497,8 @@ export default function Affiliation() {
               </div>
               <ul className="aff-tips__list">
                 <li>Lead with what you actually use — journal, validator, or desk — not generic hype.</li>
-                <li>Drop your link under a short personal note; cold spam hurts trust and compliance.</li>
+                <li>Use <strong>Copy invite message</strong> for DMs; it includes your link and code in one paste.</li>
+                <li>If they subscribe via your Stripe Payment Link, remind them to paste your code in the Referral field if they did not sign up with your link first.</li>
                 <li>Pin the link in your profile during high-engagement weeks to compound clicks.</li>
               </ul>
             </aside>

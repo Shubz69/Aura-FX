@@ -4673,8 +4673,8 @@ useEffect(() => {
 
         const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = storedUser?.email;
-        const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/7sY00i9fefKA1oP0f7dIA0j';
-        const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/8x28wOcrq2XO3wX5zrdIA0k';
+        const STRIPE_PAYMENT_LINK_AURA = 'https://buy.stripe.com/eVq8wO1MM0PGebBd1TdIA0m';
+        const STRIPE_PAYMENT_LINK_A7FX = 'https://buy.stripe.com/eVq5kCbnm1TKgjJaTLdIA0l';
         const selectedPaymentLink = planType === 'a7fx' ? STRIPE_PAYMENT_LINK_A7FX : STRIPE_PAYMENT_LINK_AURA;
         const paymentLink = userEmail
             ? `${selectedPaymentLink}${selectedPaymentLink.includes('?') ? '&' : '?'}prefilled_email=${encodeURIComponent(userEmail)}&plan=${planType}`

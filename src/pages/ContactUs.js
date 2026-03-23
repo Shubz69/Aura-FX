@@ -231,7 +231,7 @@ const ContactUs = () => {
 
                             <div className="direct-email-option">
                                 <span className="direct-email-option__line" />
-                                <p>Or reach us at <a href="mailto:support@auraterminal.com">support@auraterminal.com</a></p>
+                                <p>Or reach us at <a href="mailto:support@auraterminal.ai">support@auraterminal.ai</a></p>
                                 <span className="direct-email-option__line" />
                             </div>
                         </form>
@@ -246,8 +246,8 @@ const ContactUs = () => {
                                 {
                                     icon: <FaEnvelope />,
                                     label: 'Email',
-                                    value: 'support@auraterminal.com',
-                                    href: 'mailto:support@auraterminal.com',
+                                    value: 'support@auraterminal.ai',
+                                    href: 'mailto:support@auraterminal.ai',
                                     tag: 'Primary'
                                 },
                                 {

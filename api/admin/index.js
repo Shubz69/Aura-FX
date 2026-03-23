@@ -31,8 +31,8 @@ const createTransporter = () => {
 };
 
 const transporter = createTransporter();
-const CONTACT_INBOX = process.env.CONTACT_INBOX || 'Support@auraxfx.com';
-const CONTACT_FROM = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@aurafx.com';
+const CONTACT_INBOX = process.env.CONTACT_INBOX || 'support@auraterminal.ai';
+const CONTACT_FROM = process.env.CONTACT_FROM || process.env.EMAIL_USER || 'no-reply@auraterminal.ai';
 
 const sendContactEmail = async ({ name, email, subject, message }) => {
   if (!transporter) {

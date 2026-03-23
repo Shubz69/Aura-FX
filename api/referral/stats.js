@@ -62,6 +62,12 @@ module.exports = async (req, res) => {
     );
     const subscriptionPurchases = Number(getRows(subR)[0]?.c ?? 0);
 
+    const totalImpact = signups + coursePurchases + subscriptionPurchases;
+    const impactScore = Math.min(
+      100,
+      signups * 2 + subscriptionPurchases * 4 + coursePurchases * 4,
+    );
+
     let active = signups;
     try {
       const [activeR] = await executeQuery(
@@ -83,6 +89,9 @@ module.exports = async (req, res) => {
       referrals: signups,
       coursePurchases,
       subscriptionPurchases,
+      totalImpact,
+      impactScore,
+      statsAt: new Date().toISOString(),
       active,
       earned: 0,
     });
@@ -96,6 +105,9 @@ module.exports = async (req, res) => {
       referrals: 0,
       coursePurchases: 0,
       subscriptionPurchases: 0,
+      totalImpact: 0,
+      impactScore: 0,
+      statsAt: new Date().toISOString(),
       active: 0,
       earned: 0,
     });
