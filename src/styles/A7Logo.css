@@ -8,18 +8,28 @@
 
 .a7-logo-image {
     display: block;
-    object-fit: contain;
-    filter: brightness(0) invert(1); /* Makes the logo white */
+    width: 100%;
+    height: 100%;
+    /* Exact gold family used by Home "GET STARTED" button */
+    background: linear-gradient(132deg, #FDE8C4 0%, #F8C37D 28%, #EAA960 58%, #D48D44 100%);
+    -webkit-mask-image: url('/logos/a7-logo.png');
+    mask-image: url('/logos/a7-logo.png');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
 }
 
 /* For navbar — larger mark; gold tint (brand #EAA960 family) */
 .navbar-logo-wrapper .a7-logo-image {
-    width: 64px;
-    height: 64px;
+    width: 70px;
+    height: 70px;
     align-self: center;
     margin-bottom: 0;
-    filter: invert(70%) sepia(58%) saturate(748%) hue-rotate(354deg) brightness(102%) contrast(92%)
-        drop-shadow(0 0 10px rgba(234, 169, 96, 0.38));
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 10px rgba(234, 169, 96, 0.38));
 }
 
 /* For home page - much larger size */
@@ -31,15 +41,16 @@
 /* Adjust proportions for different sizes */
 @media (max-width: 1150px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 58px;
-        height: 58px;
+        width: 62px;
+        height: 62px;
     }
 }
 
 @media (max-width: 768px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
+        transform: translateY(-1px);
     }
     
     .home-logo-section .a7-logo-image {
@@ -50,14 +61,14 @@
 
 @media (max-width: 480px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 48px;
-        height: 48px;
+        width: 50px;
+        height: 50px;
     }
 }
 
 @media (max-width: 374px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 44px;
-        height: 44px;
+        width: 46px;
+        height: 46px;
     }
 }

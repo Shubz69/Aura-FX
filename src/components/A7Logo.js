@@ -4,11 +4,7 @@ import '../styles/A7Logo.css';
 const A7Logo = () => {
     return (
         <div className="a7-logo-container">
-            <img 
-                src="/logos/a7-logo.png" 
-                alt="A7 Logo" 
-                className="a7-logo-image"
-            />
+            <span className="a7-logo-image" role="img" aria-label="A7 Logo" />
         </div>
     );
 };
