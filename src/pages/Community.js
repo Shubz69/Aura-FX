@@ -775,6 +775,26 @@ const [journalLoading, setJournalLoading] = useState(false);
         }
     }, [channelBadges, userId]);
 
+    /** Opt-in Web Push for channel activity (server throttles; see Profile + docs/PUSH_AND_PWA.md) */
+    const [channelPushEnabled, setChannelPushEnabled] = useState(false);
+    const [channelPushBusy, setChannelPushBusy] = useState(false);
+    useEffect(() => {
+        if (!selectedChannel?.id || !userId) {
+            setChannelPushEnabled(false);
+            return undefined;
+        }
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await Api.getChannelPushPreference(selectedChannel.id);
+                if (!cancelled) setChannelPushEnabled(Boolean(res.data?.enabled));
+            } catch {
+                if (!cancelled) setChannelPushEnabled(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [selectedChannel?.id, userId]);
+
     useEffect(() => {
         hydrateMutedChannels(userId);
     }, [userId]);
@@ -6577,9 +6597,44 @@ if (!isAuthenticated && !hasToken) {
                                     <FaBars />
                                 </button>
                             )}
-                            <h2>
+                            <h2 style={{ flex: 1, minWidth: 0 }}>
                                 {selectedChannel.displayName || selectedChannel.name}
                             </h2>
+                            <div className="chat-header-actions">
+                                <button
+                                    type="button"
+                                    className={`channel-push-toggle${channelPushEnabled ? ' channel-push-toggle--on' : ''}`}
+                                    title={
+                                        channelPushEnabled
+                                            ? 'Stop push alerts for new messages in this channel'
+                                            : 'Get push when people chat here (throttled, ~1 per 10 min per channel)'
+                                    }
+                                    aria-pressed={channelPushEnabled}
+                                    disabled={channelPushBusy || !userId}
+                                    onClick={async (e) => {
+                                        e.stopPropagation();
+                                        if (!selectedChannel?.id || !userId) return;
+                                        setChannelPushBusy(true);
+                                        try {
+                                            const next = !channelPushEnabled;
+                                            await Api.setChannelPushPreference(selectedChannel.id, next);
+                                            setChannelPushEnabled(next);
+                                            toast.success(
+                                                next
+                                                    ? 'Channel push on — occasional alerts when people message (max ~1/10 min).'
+                                                    : 'Channel push off for this channel.'
+                                            );
+                                        } catch {
+                                            toast.error('Could not update channel notifications');
+                                        } finally {
+                                            setChannelPushBusy(false);
+                                        }
+                                    }}
+                                >
+                                    <FaBell aria-hidden />
+                                    <span className="channel-push-toggle__label">{channelPushEnabled ? 'Push on' : 'Push off'}</span>
+                                </button>
+                            </div>
                         </div>
                         
                       {/* Messages */}

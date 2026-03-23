@@ -1,4 +1,4 @@
-const { getDbConnection } = require('../../db');
+const { getDbConnection, executeQuery } = require('../../db');
 const { jsonSafeDeep } = require('../../utils/jsonSafe');
 const { getEntitlements, getChannelPermissions, canAccessChannel, isSuperAdminEmail } = require('../../utils/entitlements');
 const { triggerNewMessage } = require('../../utils/pusher');
@@ -16,6 +16,75 @@ const SCHEMA_CHECK_TTL_MS = 10 * 60 * 1000;
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../../utils/suppress-warnings');
+
+/** Opt-in channel message push (throttled per user+channel in DB) */
+let channelPushPrefsTableReady = false;
+async function ensureChannelPushPrefsTable() {
+  if (channelPushPrefsTableReady) return;
+  try {
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS channel_push_prefs (
+        user_id INT NOT NULL,
+        channel_id VARCHAR(191) NOT NULL,
+        enabled TINYINT(1) NOT NULL DEFAULT 1,
+        last_push_at DATETIME NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, channel_id),
+        INDEX idx_channel_throttle (channel_id, last_push_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    channelPushPrefsTableReady = true;
+  } catch (e) {
+    console.warn('[channel_push_prefs] ensure table:', e.message);
+  }
+}
+
+async function notifyChannelActivityOptIn(db, params) {
+  const {
+    createNotification: cn,
+    channelIdStr,
+    channelIdForDb,
+    channelName,
+    senderId,
+    senderUsername,
+    bodySnippet,
+    messageId,
+    notifMeta,
+    excludeUserIds
+  } = params;
+  if (!cn || !channelIdStr || !senderId) return;
+  await ensureChannelPushPrefsTable();
+  const activityTitle = 'New activity';
+  const activityBody = `${senderUsername} in #${channelName}: ${bodySnippet}`;
+  try {
+    const [rows] = await db.execute(
+      `SELECT user_id FROM channel_push_prefs
+       WHERE channel_id = ? AND enabled = 1 AND user_id != ?
+       AND (last_push_at IS NULL OR last_push_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE))`,
+      [channelIdStr, senderId]
+    );
+    for (const row of rows || []) {
+      const uid = row.user_id;
+      if (excludeUserIds && excludeUserIds.has(uid)) continue;
+      cn({
+        userId: uid,
+        type: 'CHANNEL_ACTIVITY',
+        title: activityTitle,
+        body: activityBody,
+        channelId: channelIdForDb,
+        messageId,
+        fromUserId: senderId,
+        meta: notifMeta
+      }).catch((err) => console.warn('Channel activity notification create failed:', err.message));
+      await db.execute(
+        'UPDATE channel_push_prefs SET last_push_at = NOW() WHERE user_id = ? AND channel_id = ?',
+        [uid, channelIdStr]
+      );
+    }
+  } catch (e) {
+    console.warn('Channel activity notify:', e.message);
+  }
+}
 
 function decodeToken(authHeader) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
@@ -840,6 +909,24 @@ module.exports = async (req, res) => {
             }
           } catch (mentionErr) {
             console.warn('Mention notification create failed:', mentionErr.message);
+          }
+
+          // Opt-in channel activity (throttled; excludes @mention recipients for this message)
+          try {
+            await notifyChannelActivityOptIn(db, {
+              createNotification,
+              channelIdStr: String(channelIdValue),
+              channelIdForDb,
+              channelName,
+              senderId,
+              senderUsername,
+              bodySnippet,
+              messageId: newMessage.id,
+              notifMeta,
+              excludeUserIds: userIdsToNotify
+            });
+          } catch (chActErr) {
+            console.warn('Channel activity notification:', chActErr.message);
           }
         }
         

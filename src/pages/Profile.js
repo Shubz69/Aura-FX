@@ -1168,17 +1168,18 @@ if (!avatarToSave && avatarColor) {
                             </div>
 
                             {pushSupported && (
-                                <div style={{
+                                <div id="push-notifications" style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                     background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-                                    borderRadius: 10, padding: '12px 16px', marginBottom: 16
+                                    borderRadius: 10, padding: '12px 16px', marginBottom: 16,
+                                    scrollMarginTop: '72px'
                                 }}>
                                     <div>
                                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0' }}>Push Notifications</div>
                                         <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 2 }}>
                                             {pushPermission === 'denied' ? 'Blocked — enable in browser settings' :
-                                             pushSubscribed ? 'Active — device alerts for mentions, messages, and announcements. Disable to keep alerts only in the bell menu.' :
-                                             'Get alerts for mentions, announcements, and new messages'}
+                                             pushSubscribed ? 'Active — device alerts for DMs, @mentions, and (if you turn it on per channel) occasional channel activity. Disable to keep alerts only in the bell menu.' :
+                                             'Enable for DMs and @mentions. In Community, use “Push on” on a channel for occasional alerts when people chat (throttled). iPhone: add to Home Screen (iOS 16.4+) and allow notifications.'}
                                         </div>
                                         {pushError ? (
                                             <div style={{ fontSize: '0.72rem', color: '#f87171', marginTop: 6 }} role="alert">{pushError}</div>

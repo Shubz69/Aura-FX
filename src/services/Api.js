@@ -958,6 +958,23 @@ const Api = {
             headers: { Authorization: `Bearer ${token}` }
         });
     },
+
+    /** Opt-in push for channel activity (server throttles ~1 per 10 min per channel) */
+    getChannelPushPreference: (channelId) => {
+        const token = localStorage.getItem('token');
+        return axios.get(`${API_BASE_URL}/api/community/channel-push-preference`, {
+            params: { channelId: String(channelId) },
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    },
+    setChannelPushPreference: (channelId, enabled) => {
+        const token = localStorage.getItem('token');
+        return axios.post(
+            `${API_BASE_URL}/api/community/channel-push-preference`,
+            { channelId: String(channelId), enabled: Boolean(enabled) },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+    },
     
     // Subscription
     checkSubscription: async (userId) => {

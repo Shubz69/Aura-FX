@@ -71,6 +71,17 @@ html {
 /* Ensures document can scroll on touch devices; no global overflow: hidden on html/body */
 /* DO NOT add touch-action: none or overflow: hidden to body/html globally */
 
+/* Installed PWA (Safari Add to Home Screen / Chrome install) — respect notch + home indicator */
+html.pwa-standalone body {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+html.pwa-standalone .app-container {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
+}
+
 html, body {
   height: auto;
   min-height: 100%;

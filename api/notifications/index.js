@@ -8,6 +8,7 @@
  * 
  * Notification Types:
  * - MENTION: User was mentioned in a message
+ * - CHANNEL_ACTIVITY: Opt-in throttled push for new messages in a channel
  * - REPLY: User received a reply to their message
  * - FRIEND_REQUEST: Received a friend request
  * - FRIEND_ACCEPTED: Friend request was accepted
@@ -78,7 +79,7 @@ async function ensureSchema() {
       CREATE TABLE IF NOT EXISTS notifications (
         id VARCHAR(36) PRIMARY KEY,
         user_id INT NOT NULL,
-        type ENUM('MENTION', 'REPLY', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'FRIEND_DECLINED', 'SYSTEM', 'DAILY_JOURNAL') NOT NULL,
+        type ENUM('MENTION', 'REPLY', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'FRIEND_DECLINED', 'SYSTEM', 'DAILY_JOURNAL', 'CHANNEL_ACTIVITY') NOT NULL,
         title VARCHAR(255) NOT NULL,
         body TEXT,
         channel_id INT NULL,
@@ -134,7 +135,7 @@ async function ensureSchema() {
       await addColumnIfNotExists('notifications', 'meta', 'JSON NULL');
       await executeQuery(`
         ALTER TABLE notifications MODIFY COLUMN type ENUM(
-          'MENTION', 'REPLY', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'FRIEND_DECLINED', 'SYSTEM', 'DAILY_JOURNAL'
+          'MENTION', 'REPLY', 'FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'FRIEND_DECLINED', 'SYSTEM', 'DAILY_JOURNAL', 'CHANNEL_ACTIVITY'
         ) NOT NULL
       `);
       await addIndexIfNotExists('notifications', 'idx_notif_user_type_local', ['user_id', 'type', 'local_date']);

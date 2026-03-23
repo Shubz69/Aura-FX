@@ -408,6 +408,50 @@ body.community-page-active {
 
 .chat-header h2::before { content: '#'; color: var(--text-muted); font-weight: 600; font-size: 1.1rem; }
 
+.chat-header-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+}
+
+.channel-push-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+    min-height: 36px;
+    -webkit-tap-highlight-color: transparent;
+}
+.channel-push-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.channel-push-toggle--on {
+    border-color: rgba(139, 92, 246, 0.45);
+    color: #c4b5fd;
+    background: rgba(139, 92, 246, 0.12);
+}
+.channel-push-toggle__label {
+    white-space: nowrap;
+}
+@media (max-width: 480px) {
+    .channel-push-toggle__label {
+        max-width: 72px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
 /*
    ROOT CAUSE FIX #3 — Messages area must flex-shrink:
    ---------------------------------------------------

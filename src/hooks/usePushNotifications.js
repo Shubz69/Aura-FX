@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import Api from '../services/Api';
 
-const API_BASE = typeof window !== 'undefined' ? window.location.origin : '';
 const SW_URL = '/service-worker.js';
+
+/** Same host as other API calls (e.g. www.auraterminal.ai) — avoids silent push subscribe failures from apex vs www. */
+function getPushApiBase() {
+  try {
+    const b = typeof Api.getBaseUrl === 'function' ? Api.getBaseUrl() : '';
+    if (typeof b === 'string' && b.length > 0) return b;
+  } catch (_) { /* ignore */ }
+  return typeof window !== 'undefined' ? window.location.origin : '';
+}
 
 /**
  * usePushNotifications
@@ -58,7 +67,8 @@ export function usePushNotifications() {
       });
 
       const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE}/api/push/subscribe`, { subscription }, {
+      const base = getPushApiBase();
+      await axios.post(`${base}/api/push/subscribe`, { subscription }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -86,7 +96,8 @@ export function usePushNotifications() {
       if (sub) {
         const token = localStorage.getItem('token');
         try {
-          await axios.delete(`${API_BASE}/api/push/subscribe`, {
+          const base = getPushApiBase();
+          await axios.delete(`${base}/api/push/subscribe`, {
             data: { endpoint: sub.endpoint },
             headers: { Authorization: `Bearer ${token}` }
           });

@@ -40,7 +40,7 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'aura-notification',
     data: { url: data.url || '/', type: data.type || 'general' },
     vibrate: [100, 50, 100],
-    requireInteraction: data.type === 'mention',
+    requireInteraction: data.type === 'mention' || data.type === 'channel_activity',
     actions: data.actions || []
   };
 

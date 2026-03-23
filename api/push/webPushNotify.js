@@ -38,6 +38,7 @@ function resolveOpenUrl(type, meta, channelId) {
   if (type === 'SYSTEM') return '/';
   // Thread DMs use REPLY with channel_id 0 — not community channels
   if (type === 'REPLY' && (channelId === 0 || channelId == null)) return '/messages';
+  if (type === 'CHANNEL_ACTIVITY') return '/community';
   if (type === 'MENTION' || type === 'REPLY') return '/community';
   if (String(type || '').startsWith('FRIEND')) return '/messages';
   return '/messages';
@@ -45,6 +46,7 @@ function resolveOpenUrl(type, meta, channelId) {
 
 function pushPayloadType(type) {
   if (type === 'MENTION' || type === 'REPLY') return 'mention';
+  if (type === 'CHANNEL_ACTIVITY') return 'channel_activity';
   return 'general';
 }
 

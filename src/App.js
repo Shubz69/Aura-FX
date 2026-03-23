@@ -144,6 +144,28 @@ function AppRoutes() {
 
     usePrefetchRoutes();
 
+    /** Installed PWA / iOS “Add to Home Screen” — safe-area padding via html.pwa-standalone (see index.css) */
+    useEffect(() => {
+        const apply = () => {
+            const standaloneMq =
+                typeof window !== 'undefined' && window.matchMedia
+                    ? window.matchMedia('(display-mode: standalone)').matches
+                    : false;
+            const iosStandalone =
+                typeof window !== 'undefined' &&
+                typeof window.navigator !== 'undefined' &&
+                window.navigator.standalone === true;
+            document.documentElement.classList.toggle('pwa-standalone', Boolean(standaloneMq || iosStandalone));
+        };
+        apply();
+        const mq = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(display-mode: standalone)') : null;
+        if (mq?.addEventListener) {
+            mq.addEventListener('change', apply);
+            return () => mq.removeEventListener('change', apply);
+        }
+        return undefined;
+    }, []);
+
     useEffect(() => {
         const accepted = localStorage.getItem("gdprAccepted");
         if (!accepted) {

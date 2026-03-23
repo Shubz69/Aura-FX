@@ -23,6 +23,7 @@ import {
   FaChartLine,
   FaLink,
   FaFileAlt,
+  FaBell,
 } from "react-icons/fa";
 import { isSuperAdmin, isAdmin, isPremium } from "../utils/roles";
 import A7Logo from "./A7Logo";
@@ -81,6 +82,7 @@ const Navbar = () => {
               </Link>
             </li>
             <li><Link to="/leaderboard" onClick={closeMobileMenu} className={isActive('/leaderboard') ? 'active' : ''}>Leaderboard</Link></li>
+            <li><Link to="/profile#push-notifications" onClick={closeMobileMenu}>Push notifications</Link></li>
             <li><Link to="/contact" onClick={closeMobileMenu} className={isActive('/contact') ? 'active' : ''}>Contact Us</Link></li>
           </ul>
           <p className="mobile-menu-account-hint">
@@ -192,6 +194,9 @@ const Navbar = () => {
                           <FaFileAlt className="dropdown-icon" /> Performance & DNA
                         </Link>
                       )}
+                      <Link to="/profile#push-notifications" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <FaBell className="dropdown-icon" /> Push notifications
+                      </Link>
                       <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                         <FaUserCircle className="dropdown-icon" /> Profile
                       </Link>
