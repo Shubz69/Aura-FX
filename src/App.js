@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
@@ -159,7 +159,7 @@ function AppRoutes() {
         }
     }, [isHomePage]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!location.pathname.startsWith('/community')) {
             setPostLoginGateArmed(false);
             setPostLoginTransitionActive(false);
