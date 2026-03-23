@@ -41,8 +41,8 @@
     height: 900px;
     background: radial-gradient(
         ellipse at center,
-        rgba(234, 169, 96, 0.12) 0%,
-        rgba(248, 195, 125, 0.08) 35%,
+        rgba(139, 92, 246, 0.12) 0%,
+        rgba(99, 179, 237, 0.08) 35%,
         rgba(255, 255, 255, 0.02) 60%,
         transparent 100%
     );
@@ -73,7 +73,7 @@
     overflow: hidden !important;
     background: radial-gradient(
         circle at center,
-        rgba(234, 169, 96, 0.03) 0%,
+        rgba(139, 92, 246, 0.03) 0%,
         transparent 70%
     ) !important;
     z-index: 1 !important;
@@ -81,7 +81,7 @@
 
 .binary-digit {
     position: absolute;
-    color: rgba(234, 169, 96, 0.2);
+    color: rgba(139, 92, 246, 0.2);
     font-family: 'Space Grotesk', sans-serif;
     font-size: 12px;
     font-weight: 300; /* ← was 400, home.css uses 300 for light body text */
@@ -89,7 +89,7 @@
     user-select: none;
     pointer-events: none;
     letter-spacing: 2px;
-    text-shadow: 0 0 8px rgba(234, 169, 96, 0.3);
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
 }
 
 @keyframes binary-fall {
@@ -144,8 +144,8 @@
     margin: 0;
     line-height: 1.1;
     text-shadow: 
-        0 0 60px rgba(234, 169, 96, 0.5),
-        0 0 120px rgba(248, 195, 125, 0.3);
+        0 0 60px rgba(139, 92, 246, 0.5),
+        0 0 120px rgba(99, 179, 237, 0.3);
     animation: brandPulse 2.5s ease-in-out infinite alternate;
     font-family: 'Space Grotesk', sans-serif;
 }
@@ -153,15 +153,15 @@
 @keyframes brandPulse {
     0% {
         text-shadow: 
-            0 0 60px rgba(234, 169, 96, 0.5),
-            0 0 120px rgba(248, 195, 125, 0.3);
+            0 0 60px rgba(139, 92, 246, 0.5),
+            0 0 120px rgba(99, 179, 237, 0.3);
         opacity: 0.95;
         transform: scale(1);
     }
     100% {
         text-shadow: 
-            0 0 80px rgba(234, 169, 96, 0.8),
-            0 0 160px rgba(248, 195, 125, 0.5);
+            0 0 80px rgba(139, 92, 246, 0.8),
+            0 0 160px rgba(99, 179, 237, 0.5);
         opacity: 1;
         transform: scale(1.02);
     }
@@ -177,9 +177,7 @@
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     line-height: 1.2;
-    display: inline-block;
-    transform: translateX(0.125em);
-    background: linear-gradient(270deg, #ffffff 0%, #fcd9a8 30%, #e8c992 55%, #fcd9a8 75%, #ffffff 100%);
+    background: linear-gradient(270deg, #ffffff 0%, #c4b5fd 30%, #93c5fd 55%, #c4b5fd 75%, #ffffff 100%);
     background-size: 300% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -236,20 +234,20 @@
 }
 
 .loading-percentage {
-    color: var(--accent-solid, #eaa960);
+    color: var(--accent-solid, #8B5CF6);
     font-weight: 600; /* ← was missing explicit weight, home.css uses 600 for accents */
     animation: percentageGlow 1.5s ease-in-out infinite;
-    text-shadow: 0 0 10px rgba(234, 169, 96, 0.5);
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
 @keyframes percentageGlow {
     0%, 100% {
         opacity: 1;
-        text-shadow: 0 0 10px rgba(234, 169, 96, 0.5);
+        text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
     }
     50% {
         opacity: 0.8;
-        text-shadow: 0 0 20px rgba(234, 169, 96, 0.8);
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
     }
 }
 
@@ -257,24 +255,24 @@
 .loading-bar {
     width: 360px;
     height: 4px;
-    background: rgba(234, 169, 96, 0.1);
+    background: rgba(139, 92, 246, 0.1);
     border-radius: 4px;
     overflow: hidden;
     margin: 0;
     position: relative;
-    box-shadow: 0 0 20px rgba(234, 169, 96, 0.2);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
 }
 
 .loading-bar-fill {
     height: 100%;
     width: 70%;
     background: linear-gradient(90deg, 
-        rgba(234, 169, 96, 0.8) 0%,
-        rgba(248, 195, 125, 0.9) 50%,
-        rgba(234, 169, 96, 0.8) 100%);
+        rgba(139, 92, 246, 0.8) 0%,
+        rgba(99, 179, 237, 0.9) 50%,
+        rgba(139, 92, 246, 0.8) 100%);
     border-radius: 4px;
     animation: loadingProgress 2s ease-in-out infinite;
-    box-shadow: 0 0 20px rgba(234, 169, 96, 0.8);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
     position: relative;
     overflow: hidden;
 }
@@ -301,15 +299,15 @@
 @keyframes loadingProgress {
     0% {
         width: 30%;
-        box-shadow: 0 0 20px rgba(234, 169, 96, 0.8);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
     }
     50% {
         width: 80%;
-        box-shadow: 0 0 30px rgba(234, 169, 96, 1);
+        box-shadow: 0 0 30px rgba(139, 92, 246, 1);
     }
     100% {
         width: 30%;
-        box-shadow: 0 0 20px rgba(234, 169, 96, 0.8);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
     }
 }
 
@@ -331,7 +329,7 @@
     border-radius: 50%;
     animation: ringPulse 4s ease-in-out infinite;
     background: radial-gradient(circle at 30% 30%, 
-        rgba(234, 169, 96, 0.1),
+        rgba(139, 92, 246, 0.1),
         transparent 70%);
 }
 
@@ -339,24 +337,24 @@
     width: 250px;
     height: 250px;
     animation-delay: 0s;
-    border-image: linear-gradient(45deg, rgba(234, 169, 96, 0.3), rgba(248, 195, 125, 0.3)) 1;
-    box-shadow: 0 0 30px rgba(234, 169, 96, 0.2);
+    border-image: linear-gradient(45deg, rgba(139, 92, 246, 0.3), rgba(99, 179, 237, 0.3)) 1;
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
 }
 
 .ring-2 {
     width: 350px;
     height: 350px;
     animation-delay: 1s;
-    border-image: linear-gradient(135deg, rgba(234, 169, 96, 0.2), rgba(248, 195, 125, 0.2)) 1;
-    box-shadow: 0 0 40px rgba(248, 195, 125, 0.2);
+    border-image: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 179, 237, 0.2)) 1;
+    box-shadow: 0 0 40px rgba(99, 179, 237, 0.2);
 }
 
 .ring-3 {
     width: 450px;
     height: 450px;
     animation-delay: 2s;
-    border-image: linear-gradient(225deg, rgba(234, 169, 96, 0.15), rgba(248, 195, 125, 0.15)) 1;
-    box-shadow: 0 0 50px rgba(234, 169, 96, 0.15);
+    border-image: linear-gradient(225deg, rgba(139, 92, 246, 0.15), rgba(99, 179, 237, 0.15)) 1;
+    box-shadow: 0 0 50px rgba(139, 92, 246, 0.15);
 }
 
 @keyframes ringPulse {
@@ -383,10 +381,10 @@
 .loading-dot {
     width: 8px;
     height: 8px;
-    background: linear-gradient(135deg, var(--accent-solid, #eaa960), var(--accent-blue-solid, #3B82F6));
+    background: linear-gradient(135deg, var(--accent-solid, #8B5CF6), var(--accent-blue-solid, #3B82F6));
     border-radius: 50%;
     animation: dotPulse 1.4s ease-in-out infinite;
-    box-shadow: 0 0 10px rgba(234, 169, 96, 0.6);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
 }
 
 .loading-dot:nth-child(1) { animation-delay: 0s; }
@@ -397,12 +395,12 @@
     0%, 100% { 
         opacity: 0.4; 
         transform: scale(0.8); 
-        box-shadow: 0 0 5px rgba(234, 169, 96, 0.3);
+        box-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
     }
     50% { 
         opacity: 1; 
         transform: scale(1.3); 
-        box-shadow: 0 0 15px rgba(234, 169, 96, 0.9);
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.9);
     }
 }
 
@@ -455,7 +453,6 @@
     .loading-title {
         font-size: 1.5rem;
         letter-spacing: 0.12em;
-        transform: translateX(0.06em);
     }
     
     .loading-subtitle {
@@ -497,7 +494,7 @@
     position: absolute;
     width: 2px;
     height: 2px;
-    background: rgba(234, 169, 96, 0.3);
+    background: rgba(139, 92, 246, 0.3);
     border-radius: 50%;
     animation: particleFloat 15s linear infinite;
 }

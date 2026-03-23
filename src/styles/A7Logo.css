@@ -6,31 +6,6 @@
     position: relative;
 }
 
-/* Navbar only: same PNG shape, metallic gold (bright TL → bronze BR). Mask URL set inline (public/). */
-.a7-logo-container--navbar .a7-logo-gradient {
-    display: block;
-    flex-shrink: 0;
-    align-self: flex-end;
-    margin-bottom: 3px;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(
-        135deg,
-        #f0c36d 0%,
-        #e8c658 28%,
-        #c9952e 52%,
-        #a67c00 78%,
-        #9f6e29 100%
-    );
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-position: center;
-    mask-position: center;
-    filter: drop-shadow(0 1px 2px rgba(62, 38, 8, 0.35));
-}
-
 .a7-logo-image {
     display: block;
     object-fit: contain;
@@ -39,8 +14,8 @@
 
 /* For navbar - larger size to match AURA TERMINAL text */
 .navbar-logo-wrapper .a7-logo-image {
-    width: 60px;
-    height: 60px;
+    width: 42px;
+    height: 42px;
     align-self: flex-end; /* Align to bottom to match text baseline */
     margin-bottom: 3px; /* Fine-tune alignment with text */
 }
@@ -51,18 +26,13 @@
     height: 180px;
 }
 
-/* Adjust proportions for different sizes (767: avoid overlap with Navbar 768–1150px rules) */
-@media (max-width: 767px) {
-    .a7-logo-container--navbar .a7-logo-gradient {
-        width: 50px;
-        height: 50px;
-    }
-
+/* Adjust proportions for different sizes */
+@media (max-width: 768px) {
     .navbar-logo-wrapper .a7-logo-image {
-        width: 50px;
-        height: 50px;
+        width: 36px;
+        height: 36px;
     }
-
+    
     .home-logo-section .a7-logo-image {
         width: 140px;
         height: 140px;

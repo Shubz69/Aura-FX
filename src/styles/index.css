@@ -1,10 +1,8 @@
 /* ========== VARIABLES (From Landing Page) ========== */
 html {
-    background: #0a0a0a no-repeat center center fixed !important;
+    background: url('/assets/my-bg.jpg') no-repeat center center fixed !important;
     background-size: cover !important;
     min-height: 100%;
-    /* Native <select> menus follow OS theme; dark hints consistent dropdowns in Chromium/WebKit */
-    color-scheme: dark;
 }
 
 :root {
@@ -43,14 +41,14 @@ html {
     --aa-panel-soft:    rgba(255,255,255,0.048);
     --aa-border:        rgba(255,255,255,0.07);
     --aa-border-h:      rgba(255,255,255,0.18);
-    --aa-border-accent: rgba(234,169,96,0.32);
+    --aa-border-accent: rgba(139,92,246,0.35);
     --aa-text:          #ffffff;
     --aa-text-muted:    rgba(255,255,255,0.6);
-    --aa-accent:        rgba(234,169,96,0.92);
-    --aa-accent-soft:   rgba(234,169,96,0.14);
-    --aa-accent-blue:   rgba(248,195,125,0.55);
-    --aa-success:       #f8c37d;
-    --aa-loss:          #9a8f84;
+    --aa-accent:        rgba(139,92,246,0.85);
+    --aa-accent-soft:   rgba(139,92,246,0.15);
+    --aa-accent-blue:   rgba(99,179,237,0.75);
+    --aa-success:       #10b981;
+    --aa-loss:          #ef4444;
     --aa-radius:        12px;
     --aa-radius-lg:     18px;
 }
@@ -63,7 +61,7 @@ html {
     min-height: 24px;
     border-radius: 50%;
     background: transparent;
-    border: 2px solid rgba(234, 169, 96, 0.45);
+    border: 2px solid rgba(139, 92, 246, 0.6);
     flex-shrink: 0;
     display: block;
     box-sizing: border-box;
@@ -80,17 +78,6 @@ html, body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-}
-
-/* Native <select> option lists: dark surface where UA honors it (Firefox; partial Chromium) */
-select {
-  color-scheme: dark;
-}
-
-select option,
-select optgroup {
-  background-color: #0a0812;
-  color: rgba(255, 255, 255, 0.92);
 }
 
 /* iOS Safari: -webkit-fill-available for correct viewport */
@@ -319,7 +306,17 @@ button {
   margin-top: 3rem;
 }
 
-/* Navbar glass / colors: src/styles/Navbar.css (do not set solid background here — it kills backdrop-filter) */
+/* Custom Navbar overrides */
+.navbar {
+  background-color: var(--primary-color) !important;
+}
+.navbar-brand, .nav-link {
+  color: #fff !important;
+  font-weight: 500;
+}
+.nav-link.active {
+  border-bottom: 2px solid var(--secondary-color);
+}
 
 /* Footer styling */
 footer {
@@ -397,29 +394,20 @@ html.community-page-active .page-wrapper {
   contain-intrinsic-size: auto 800px;
 }
 
-/* Community: keep a light scrim over the shell (Discord-style panels) */
-.community-container {
-  padding-bottom: 0;
-  min-height: calc(100vh - 160px);
-  background: rgba(10, 10, 10, 0.85) !important;
-  border-radius: 0;
-  backdrop-filter: blur(2px);
-}
-
-/* Canvas CosmicBackground sits fixed z-index:0 — opaque shells hid the earth/stars image */
+/* Specific page adjustments with semi-transparent backgrounds */
+.community-container,
 .home-container,
 .courses-container,
 .explore-container,
 .why-container,
 .contact-container,
-.my-courses-container,
 .profile-container,
 .leaderboard-container {
   padding-bottom: 0;
   min-height: calc(100vh - 160px);
-  background: transparent !important;
+  background: rgba(10, 10, 10, 0.85) !important;
   border-radius: 0;
-  backdrop-filter: none !important;
+  backdrop-filter: blur(2px);
 }
 
 * {
@@ -751,6 +739,7 @@ img, video, canvas {
 /* All devices: containers with semi-transparent background */
 .page-wrapper:has(.contact-container),
 .page-wrapper:has(.why-container),
+.page-wrapper:has(.explore-container),
 .page-wrapper:has(.profile-container),
 .page-wrapper:has(.home-container),
 .page-wrapper:has(.courses-container),
@@ -773,7 +762,7 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    background: transparent !important;
+    background: rgba(10, 10, 10, 0.85) !important;
 }
 
 /* iPhone: Home */
@@ -805,7 +794,7 @@ img, video, canvas {
         left: 0 !important;
         right: 0 !important;
         box-sizing: border-box !important;
-        background: transparent !important;
+        background: rgba(10, 10, 10, 0.85) !important;
     }
     .page-wrapper:has(.login-container),
     .page-wrapper:has(.register-container) {
@@ -848,7 +837,7 @@ img, video, canvas {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    background: transparent !important;
+    background: rgba(10, 10, 10, 0.85) !important;
 }
 
 /* Login & Register: inner container is the scroll area */
@@ -889,7 +878,7 @@ img, video, canvas {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        background: transparent !important;
+        background: rgba(10, 10, 10, 0.85) !important;
     }
     .page-wrapper .login-container,
     .page-wrapper .register-container {
@@ -987,17 +976,9 @@ html, body {
   .explore-container,
   .profile-container,
   .courses-container,
-  .my-courses-container,
-  .leaderboard-container {
-    height: auto !important;
-    max-height: none !important;
-    overflow-y: visible !important;
-    padding-top: 0 !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-  }
   .login-container,
-  .register-container {
+  .register-container,
+  .leaderboard-container {
     height: auto !important;
     max-height: none !important;
     overflow-y: visible !important;
@@ -1030,8 +1011,8 @@ html, body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
-    margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+    height: calc(100dvh - 62px) !important;
+    margin-top: 62px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
@@ -1048,19 +1029,9 @@ html, body {
   .explore-container,
   .profile-container,
   .courses-container,
-  .my-courses-container,
-  .leaderboard-container {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-    padding-top: 0 !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-  }
   .login-container,
-  .register-container {
+  .register-container,
+  .leaderboard-container {
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -1098,8 +1069,8 @@ html, body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    height: calc(100dvh - 58px - env(safe-area-inset-top, 0px)) !important;
-    margin-top: calc(58px + env(safe-area-inset-top, 0px)) !important;
+    height: calc(100dvh - 58px) !important;
+    margin-top: 58px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
@@ -1116,19 +1087,9 @@ html, body {
   .explore-container,
   .profile-container,
   .courses-container,
-  .my-courses-container,
-  .leaderboard-container {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-    padding-top: 0 !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-  }
   .login-container,
-  .register-container {
+  .register-container,
+  .leaderboard-container {
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -1150,42 +1111,16 @@ html, body {
   }
 }
 
-/* ── Small mobile navbar height adjustment (must include notch / status bar) ── */
+/* ── Small mobile navbar height adjustment ── */
 @media (max-width: 480px) {
   .page-wrapper {
-    height: calc(100dvh - 56px - env(safe-area-inset-top, 0px)) !important;
-    margin-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    height: calc(100dvh - 56px) !important;
+    margin-top: 56px !important;
   }
 }
 @media (max-width: 374px) {
   .page-wrapper {
-    height: calc(100dvh - 54px - env(safe-area-inset-top, 0px)) !important;
-    margin-top: calc(54px + env(safe-area-inset-top, 0px)) !important;
-  }
-}
-
-/* Home-screen PWA: navbar gains extra top inset (see Navbar.css); push main content to match */
-@media (display-mode: standalone) and (min-width: 768px) and (max-width: 1366px) {
-  .page-wrapper {
-    margin-top: calc(64px + env(safe-area-inset-top, 0px) + 10px) !important;
-    height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - 10px) !important;
-  }
-}
-@media (display-mode: standalone) and (max-width: 767px) {
-  .page-wrapper {
-    margin-top: calc(58px + env(safe-area-inset-top, 0px) + 10px) !important;
-    height: calc(100dvh - 58px - env(safe-area-inset-top, 0px) - 10px) !important;
-  }
-}
-@media (display-mode: standalone) and (max-width: 480px) {
-  .page-wrapper {
-    margin-top: calc(56px + env(safe-area-inset-top, 0px) + 10px) !important;
-    height: calc(100dvh - 56px - env(safe-area-inset-top, 0px) - 10px) !important;
-  }
-}
-@media (display-mode: standalone) and (max-width: 374px) {
-  .page-wrapper {
-    margin-top: calc(54px + env(safe-area-inset-top, 0px) + 10px) !important;
-    height: calc(100dvh - 54px - env(safe-area-inset-top, 0px) - 10px) !important;
+    height: calc(100dvh - 54px) !important;
+    margin-top: 54px !important;
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
@@ -14,12 +14,7 @@ import Footer from './components/Footer';
 import CommunityRouteBoundary from './components/CommunityRouteBoundary';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import './styles/index.css';
 import './styles/Courses.css';
-import './styles/AppCosmicBackground.css';
-import './styles/GlassSystem.css';
-import { shouldUseAppCosmicBackground } from './utils/appCosmicBackground';
-import { usePwaInstallAlerts } from './hooks/usePwaInstallAlerts';
 
 
 /* Lazy-load pages so each route loads only when visited (faster initial load) */
@@ -141,15 +136,10 @@ function AppRoutes() {
     const showChatbot = !user;
     const location = useLocation();
     const isHomePage = location.pathname === '/';
-    const appCosmicBg = useMemo(
-        () => shouldUseAppCosmicBackground(location.pathname),
-        [location.pathname],
-    );
 
     const [showGDPR, setShowGDPR] = useState(false);
 
     usePrefetchRoutes();
-    usePwaInstallAlerts();
 
     useEffect(() => {
         const accepted = localStorage.getItem("gdprAccepted");
@@ -177,13 +167,13 @@ function AppRoutes() {
     }
 
     return (
-        <div className={`app-container${isHomePage ? ' app-container--home' : ''}`}>
+        <div className="app-container">
             {showGDPR && <GDPRModal onAgree={handleAgreeGDPR} />}
 
             <Navbar />
             
             {/* Main content area - page-wrapper now only contains the route content */}
-            <main className={`page-wrapper${appCosmicBg ? ' app-cosmic-bg' : ''}`}>
+            <main className="page-wrapper">
                 <Suspense fallback={<PageLoadFallback />}>
                     <Routes>
                         <Route path="/" element={<Home />} />

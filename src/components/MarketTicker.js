@@ -11,9 +11,8 @@
  * - Responsive design with proper height/padding
  */
 
-import React, { useState, useCallback, memo, useEffect } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { useLivePrices } from '../hooks/useLivePrices';
-import { getAllMarketsSessionBannerLines } from '../utils/marketSessions';
 import '../styles/MarketTicker.css';
 import ReactDOM from 'react-dom';
 
@@ -38,33 +37,24 @@ const TickerItem = memo(({
   flash,
   loading,
   stale,
-  delayed,
-  marketClosed,
+  delayed
 }) => {
   const flashClass = flash === 'up' ? 'flash-green' : flash === 'down' ? 'flash-red' : '';
   const hasPrice = price && parseFloat(price) > 0;
   const sign = isUp ? '+' : '';
-  const closed = !!marketClosed;
 
   return (
-    <div
-      className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''} ${delayed ? 'delayed' : ''} ${closed ? 'ticker-market-closed' : ''}`}
-    >
+    <div className={`ticker-item ${flashClass} ${stale ? 'stale' : ''} ${loading ? 'loading' : ''} ${delayed ? 'delayed' : ''}`}>
       <span className="ticker-symbol">{displayName || symbol}</span>
 
       {hasPrice ? (
         <>
-          <span
-            className={`ticker-price ${closed ? 'ticker-price-closed' : isUp ? 'price-up' : 'price-down'}`}
-          >
+          <span className={`ticker-price ${isUp ? 'price-up' : 'price-down'}`}>
             {price}
           </span>
-          {!closed && (
-            <span className={`ticker-change ${isUp ? 'ticker-up' : 'ticker-down'}`}>
-              {sign}{changePercent}%
-            </span>
-          )}
-          {closed && <span className="ticker-change ticker-change-closed" aria-hidden="true" />}
+          <span className={`ticker-change ${isUp ? 'ticker-up' : 'ticker-down'}`}>
+            {sign}{changePercent}%
+          </span>
         </>
       ) : (
         <>
@@ -110,15 +100,6 @@ const MarketItem = memo(({
 
 // View All Markets Modal — AURA TERMINAL premium redesign
 const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
-  const [sessionLines, setSessionLines] = useState(() => getAllMarketsSessionBannerLines());
-
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    setSessionLines(getAllMarketsSessionBannerLines());
-    const t = setInterval(() => setSessionLines(getAllMarketsSessionBannerLines()), 60_000);
-    return () => clearInterval(t);
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   return ReactDOM.createPortal(
@@ -140,16 +121,6 @@ const ViewAllModal = memo(({ isOpen, onClose, groupedPrices, stale }) => {
               ×
             </button>
           </div>
-        </div>
-
-        {/* ── Session schedule (US / FX / crypto) ── */}
-        <div className="market-modal-session-banner" role="status">
-          {sessionLines.map((line) => (
-            <p key={line.key} className="market-modal-session-line">
-              <span className="market-modal-session-label">{line.label}</span>
-              {line.text}
-            </p>
-          ))}
         </div>
 
         {/* ── Scrollable content ── */}

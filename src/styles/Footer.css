@@ -29,8 +29,6 @@
   --text-dim:      rgba(180, 178, 215, 0.50);
 
   --up:            #10D98A;
-  --status-down:   #f87171;
-  --status-down-glow: rgba(248, 113, 113, 0.55);
 
   --font:          'Space Grotesk', sans-serif;
   --transition:    0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -494,67 +492,40 @@
   color: var(--eaa-core);
 }
 
-/* ── Status pill — green = operational, red = maintenance / down / health fail ── */
+/* ── Status pill — matches notification badge palette ── */
 .footer-status {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 0.76rem;
+  color: rgba(200, 198, 230, 0.35);
   letter-spacing: 0.3px;
   font-family: var(--font);
   padding: 0.35rem 0.85rem;
   border-radius: 20px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.footer-status--ok {
-  color: rgba(200, 198, 230, 0.35);
   background: linear-gradient(
     135deg,
     rgba(16, 217, 138, 0.05) 0%,
     rgba(16, 217, 138, 0.02) 100%
   );
   border: 1px solid rgba(16, 217, 138, 0.14);
-}
-
-.footer-status--issue {
-  color: rgba(248, 200, 200, 0.75);
-  background: linear-gradient(
-    135deg,
-    rgba(220, 38, 38, 0.10) 0%,
-    rgba(220, 38, 38, 0.04) 100%
-  );
-  border: 1px solid rgba(248, 113, 113, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .footer-status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.footer-status--ok .footer-status-dot {
   background: var(--up);
   box-shadow: 0 0 6px rgba(16, 217, 138, 0.70);
   animation: footer-pulse 2.4s ease-in-out infinite;
-}
-
-.footer-status--issue .footer-status-dot {
-  background: var(--status-down);
-  box-shadow: 0 0 6px var(--status-down-glow);
-  animation: footer-pulse-issue 2.4s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 @keyframes footer-pulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(16, 217, 138, 0.70); }
   50%       { opacity: 0.55; box-shadow: 0 0 14px rgba(16, 217, 138, 0.35); }
-}
-
-@keyframes footer-pulse-issue {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--status-down-glow); }
-  50%       { opacity: 0.55; box-shadow: 0 0 14px rgba(248, 113, 113, 0.25); }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -763,8 +734,7 @@
 
 /* ── Reduced motion accessibility ── */
 @media (prefers-reduced-motion: reduce) {
-  .footer-status--ok .footer-status-dot,
-  .footer-status--issue .footer-status-dot { animation: none; opacity: 1; }
+  .footer-status-dot { animation: none; opacity: 1; }
   .footer::after      { animation: none; }
   .footer-social-link,
   .footer-links li a  { transition: none; }

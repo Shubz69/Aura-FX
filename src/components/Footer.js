@@ -1,67 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/Footer.css";
 
-/** Build-time / env: REACT_APP_MAINTENANCE_MODE=true | REACT_APP_SYSTEM_STATUS=operational|maintenance|down */
-function getForcedSystemState() {
-  if (process.env.REACT_APP_MAINTENANCE_MODE === "true") {
-    return { mode: "maintenance", label: "Maintenance in progress" };
-  }
-  const raw = (process.env.REACT_APP_SYSTEM_STATUS || "operational")
-    .toLowerCase()
-    .trim();
-  if (raw === "maintenance" || raw === "maint") {
-    return { mode: "maintenance", label: "Maintenance in progress" };
-  }
-  if (raw === "down" || raw === "offline" || raw === "outage" || raw === "unavailable") {
-    return { mode: "down", label: "Service disruption" };
-  }
-  return null;
-}
-
 const Footer = React.memo(function Footer() {
-  const forced = useMemo(() => getForcedSystemState(), []);
-  const healthCheckOn = process.env.REACT_APP_FOOTER_HEALTH_CHECK === "true";
-  const healthUrl = useMemo(() => {
-    const custom = process.env.REACT_APP_FOOTER_HEALTH_URL;
-    if (custom) return custom;
-    const base = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
-    return base ? `${base}/api/health` : "/api/health";
-  }, []);
-
-  const [healthOk, setHealthOk] = useState(true);
-
-  useEffect(() => {
-    if (forced || !healthCheckOn) return undefined;
-    const ctrl = new AbortController();
-    const tid = window.setTimeout(() => ctrl.abort(), 5000);
-    const url =
-      healthUrl.startsWith("http") || healthUrl.startsWith("/")
-        ? healthUrl
-        : `/${healthUrl}`;
-
-    fetch(url, { method: "GET", signal: ctrl.signal, credentials: "omit" })
-      .then((res) => setHealthOk(res.ok))
-      .catch(() => setHealthOk(false))
-      .finally(() => window.clearTimeout(tid));
-
-    return () => {
-      window.clearTimeout(tid);
-      ctrl.abort();
-    };
-  }, [forced, healthCheckOn, healthUrl]);
-
-  const operational =
-    !forced && (!healthCheckOn || healthOk);
-  const statusLabel = forced
-    ? forced.label
-    : healthCheckOn && !healthOk
-      ? "Service temporarily unavailable"
-      : "All systems operational";
-  const statusClass = operational
-    ? "footer-status footer-status--ok"
-    : "footer-status footer-status--issue";
-
   return (
     <footer className="footer">
       <div className="footer-glow-top" />
@@ -138,7 +79,7 @@ const Footer = React.memo(function Footer() {
           <ul className="footer-links">
             <li><Link to="/docs">Docs</Link></li>
             <li><Link to="/blog">Blog</Link></li>
-            <li><Link to="/contact">Contact us</Link></li>
+            <li><Link to="/support">Support</Link></li>
             <li><Link to="/privacy">Privacy Policy</Link></li>
             <li><Link to="/terms">Terms of Service</Link></li>
           </ul>
@@ -150,14 +91,9 @@ const Footer = React.memo(function Footer() {
         <div className="footer-divider" />
         <div className="footer-bottom">
           <span className="footer-copy">© 2025 AURA TERMINAL. All rights reserved.</span>
-          <span
-            className={statusClass}
-            title={statusLabel}
-            role="status"
-            aria-live="polite"
-          >
-            <span className="footer-status-dot" aria-hidden />
-            {statusLabel}
+          <span className="footer-status">
+            <span className="footer-status-dot" />
+            All systems operational
           </span>
         </div>
       </div>
