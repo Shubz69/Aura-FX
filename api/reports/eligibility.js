@@ -4,6 +4,9 @@
  */
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
+const { getReportDataSpanDays } = require('./dataSpan');
+const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
+const { effectiveReportsRole } = require('./resolveReportsRole');
 
 const MIN_DATA_DAYS = 30;
 
@@ -13,23 +16,6 @@ function jsonNumber(v, fallback = 0) {
   if (typeof v === 'bigint') return Number(v);
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
-}
-
-async function loadUserRow(userId) {
-  try {
-    const [rows] = await executeQuery(
-      'SELECT id, role, subscription_plan, subscription_status, created_at FROM users WHERE id = ?',
-      [userId]
-    );
-    return rows?.[0] || null;
-  } catch (e) {
-    const badCol = e.code === 'ER_BAD_FIELD_ERROR' || Number(e.errno) === 1054;
-    if (!badCol) throw e;
-    const [rows] = await executeQuery('SELECT id, role, created_at FROM users WHERE id = ?', [userId]);
-    const u = rows?.[0];
-    if (!u) return null;
-    return { ...u, subscription_plan: null, subscription_status: null };
-  }
 }
 
 function serializeReportRow(r) {
@@ -78,15 +64,6 @@ async function ensureSchema() {
   `).catch(() => {});
 }
 
-function resolveRole(user) {
-  const role = (user.role || '').toLowerCase();
-  const plan = (user.subscription_plan || '').toLowerCase();
-  if (['admin', 'super_admin'].includes(role)) return 'admin';
-  if (['elite', 'a7fx'].includes(role) || ['elite', 'a7fx'].includes(plan)) return 'elite';
-  if (['premium', 'aura'].includes(role) || ['premium', 'aura'].includes(plan)) return 'premium';
-  return 'free';
-}
-
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -104,20 +81,17 @@ module.exports = async (req, res) => {
   try {
     await ensureSchema();
 
-    const user = await loadUserRow(userId);
+    const user = await applyScheduledDowngrade(userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    const role = resolveRole(user);
+    const role = effectiveReportsRole(user);
 
-    // Count days of journal trade data
-    const [tradeDays] = await executeQuery(
-      `SELECT DATEDIFF(NOW(), MIN(date)) AS data_days, COUNT(*) AS trade_count
-       FROM journal_trades WHERE userId = ?`,
+    // Trade count (UI) + data span: earliest activity across trades, daily journal, AI chart checks
+    const [tradeRows] = await executeQuery(
+      'SELECT COUNT(*) AS trade_count FROM journal_trades WHERE userId = ?',
       [userId]
-    ).catch(() => [[{ data_days: 0, trade_count: 0 }]]);
-
-    const row0 = tradeDays?.[0] || {};
-    const dataDays = Math.max(0, jsonNumber(row0.data_days, 0));
-    const tradeCount = jsonNumber(row0.trade_count, 0);
+    ).catch(() => [[{ trade_count: 0 }]]);
+    const tradeCount = jsonNumber(tradeRows?.[0]?.trade_count, 0);
+    const dataDays = await getReportDataSpanDays(userId, executeQuery);
     const isEligible = dataDays >= MIN_DATA_DAYS;
 
     // Also check chart check history

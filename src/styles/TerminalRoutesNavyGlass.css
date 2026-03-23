@@ -34,14 +34,6 @@
   --msg-gold-glow: rgba(70, 100, 190, 0.16);
 }
 
-.journal-page .aff-page {
-  --aff-border-gold: rgba(160, 185, 240, 0.28);
-  --aff-gold: #c8d6ff;
-  --aff-gold-bright: #e4eaff;
-  --aff-gold-dim: rgba(160, 185, 240, 0.14);
-  --aff-gold-glow: 0 0 24px rgba(70, 100, 190, 0.18);
-}
-
 .journal-page .admin-panel-container {
   --ap-border-gold: rgba(160, 185, 240, 0.26);
   --ap-gold: #c8d6ff;
@@ -448,64 +440,7 @@
   box-shadow: 0 10px 32px rgba(50, 70, 140, 0.38) !important;
 }
 
-/* ═══════════ Affiliation ═══════════ */
-.journal-page .aff-hero__eyebrow {
-  color: rgba(200, 210, 255, 0.92) !important;
-}
-
-.journal-page .aff-hero__title {
-  background: linear-gradient(125deg, #fff 25%, #d2dcff 55%, #a8b8e8 100%) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  filter: drop-shadow(0 0 20px rgba(70, 100, 190, 0.12)) !important;
-}
-
-.journal-page .aff-chip {
-  background: rgba(160, 185, 240, 0.1) !important;
-  border-color: rgba(160, 185, 240, 0.28) !important;
-}
-
-.journal-page .aff-steps__icon {
-  border-color: rgba(160, 185, 240, 0.35) !important;
-  box-shadow: 0 0 20px rgba(70, 100, 190, 0.12) !important;
-}
-
-.journal-page .aff-steps__connector {
-  background: linear-gradient(180deg, rgba(160, 185, 240, 0.35), rgba(160, 185, 240, 0.08)) !important;
-}
-
-.journal-page .aff-stat {
-  border-color: rgba(160, 185, 240, 0.2) !important;
-}
-
-.journal-page .aff-link-box {
-  border-color: rgba(160, 185, 240, 0.28) !important;
-  box-shadow: 0 0 0 1px rgba(160, 185, 240, 0.06) inset !important;
-}
-
-.journal-page .aff-copy-btn {
-  border-color: rgba(160, 185, 240, 0.35) !important;
-  background: rgba(160, 185, 240, 0.1) !important;
-}
-
-.journal-page .aff-tips {
-  border-color: rgba(160, 185, 240, 0.26) !important;
-}
-
-.journal-page .aff-tips__head {
-  color: rgba(200, 210, 255, 0.92) !important;
-}
-
-.journal-page .aff-progress-panel,
-.journal-page .aff-tier-bar-section {
-  border-color: rgba(160, 185, 240, 0.26) !important;
-  box-shadow: var(--aff-shadow), 0 0 0 1px rgba(160, 185, 240, 0.06) inset !important;
-}
-
-.journal-page .aff-dial-svg {
-  filter: drop-shadow(0 0 20px rgba(70, 100, 190, 0.2)) !important;
-}
+/* Affiliation: styled in Affiliation.css (gold / journal-aligned — no navy overrides). */
 
 /* ═══════════ Admin panel ═══════════ */
 .journal-page .admin-panel-container::after {

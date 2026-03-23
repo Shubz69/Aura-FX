@@ -215,8 +215,14 @@ module.exports = async (req, res) => {
         status = 'canceled';
       }
     }
-    // Check premium/elite role fallback
-    else if (['premium', 'elite', 'a7fx'].includes(userRole)) {
+    // Stale role in DB must not grant paid access without live billing (Stripe webhooks + expiry align DB)
+    else if (
+      ['premium', 'elite', 'a7fx'].includes(userRole) &&
+      !user.payment_failed &&
+      expiryDate &&
+      expiryDate > now &&
+      (status === 'active' || status === 'trialing')
+    ) {
       isActive = true;
       status = 'active';
       planId = planId || (userRole === 'elite' || userRole === 'a7fx' ? 'a7fx' : 'aura');

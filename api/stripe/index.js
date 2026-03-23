@@ -153,6 +153,34 @@ const sendSubscriptionCancellationEmail = async (userEmail, userName) => {
   }
 };
 
+/**
+ * Resolve app user id from Stripe invoice/subscription payloads.
+ * Invoices may omit customer_email; subscription.deleted only has customer id — retrieve Customer from Stripe when needed.
+ */
+async function resolveUserIdForStripeBilling(db, stripe, { customerId, customerEmail }) {
+  const tryEmail = async (email) => {
+    if (!email || typeof email !== 'string') return null;
+    const em = email.trim().toLowerCase();
+    if (!em) return null;
+    const [rows] = await db.execute('SELECT id FROM users WHERE LOWER(TRIM(email)) = ?', [em]);
+    return rows?.[0]?.id ?? null;
+  };
+
+  const direct = await tryEmail(customerEmail);
+  if (direct) return direct;
+
+  if (customerId && stripe) {
+    try {
+      const cust = await stripe.customers.retrieve(String(customerId));
+      if (!cust || cust.deleted) return null;
+      return await tryEmail(cust.email);
+    } catch (e) {
+      console.warn('[stripe webhook] customer retrieve failed:', e.message);
+    }
+  }
+  return null;
+}
+
 module.exports = async (req, res) => {
   // Handle CORS
   const origin = req.headers.origin || '*';
@@ -461,11 +489,13 @@ module.exports = async (req, res) => {
           }
         }
       } else if (event.type === 'invoice.payment_failed' || event.type === 'customer.subscription.deleted') {
-        const customerId = event.data.object.customer;
-        const subscriptionId = event.data.object.subscription || event.data.object.id;
-        
-        console.log('Payment failed for customer:', customerId, 'subscription:', subscriptionId);
-        
+        const obj = event.data?.object || {};
+        const customerId = typeof obj.customer === 'string' ? obj.customer : obj.customer?.id || null;
+        const subscriptionId = obj.subscription || obj.id;
+        const customerEmail = obj.customer_email || obj.customer_details?.email || null;
+
+        console.log('Billing issue / cancel:', event.type, 'customer:', customerId, 'subscription:', subscriptionId);
+
         const db = await getDbConnection();
         if (!db) {
           console.error('Database connection failed for webhook');
@@ -473,16 +503,14 @@ module.exports = async (req, res) => {
         }
 
         try {
-          let userId = null;
-          
-          if (event.data.object.customer_email) {
-            const [userRows] = await db.execute(
-              'SELECT id FROM users WHERE email = ?',
-              [event.data.object.customer_email]
-            );
-            if (userRows.length > 0) {
-              userId = userRows[0].id;
-            }
+          const stripe = getStripeClient();
+          const userId = await resolveUserIdForStripeBilling(db, stripe, {
+            customerId,
+            customerEmail,
+          });
+
+          if (!userId) {
+            console.warn('[stripe webhook] No user matched for downgrade:', { customerId, customerEmail, type: event.type });
           }
 
           if (userId) {
@@ -519,25 +547,21 @@ module.exports = async (req, res) => {
           if (db && !db.ended) await db.end();
         }
       } else if (event.type === 'invoice.payment_succeeded') {
-        const customerId = event.data.object.customer;
-        
+        const inv = event.data?.object || {};
+        const customerId = typeof inv.customer === 'string' ? inv.customer : inv.customer?.id || null;
+        const customerEmail = inv.customer_email || inv.customer_details?.email || null;
+
         const db = await getDbConnection();
         if (!db) {
           return res.status(500).json({ success: false, message: 'Database connection error' });
         }
 
         try {
-          let userId = null;
-          
-          if (event.data.object.customer_email) {
-            const [userRows] = await db.execute(
-              'SELECT id FROM users WHERE email = ?',
-              [event.data.object.customer_email]
-            );
-            if (userRows.length > 0) {
-              userId = userRows[0].id;
-            }
-          }
+          const stripe = getStripeClient();
+          const userId = await resolveUserIdForStripeBilling(db, stripe, {
+            customerId,
+            customerEmail,
+          });
 
           if (userId) {
             // Get user's current subscription plan to maintain correct role

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import TraderDnaIntroSequence from '../../components/trader-dna/TraderDnaIntroSequence';
@@ -10,18 +10,21 @@ import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/trader-dna/TraderDna.css';
 
 function ReportsDnaPageInner() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dna, setDna] = useState(null);
   const [error, setError] = useState('');
   const [introOpen, setIntroOpen] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [afterIntroNotReady, setAfterIntroNotReady] = useState(false);
+  const [eliteGate, setEliteGate] = useState(false);
   const introCompleteRef = useRef(false);
   const couldGenerateRef = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setEliteGate(false);
     try {
       const res = await Api.getTraderDna();
       const body = res?.data;
@@ -47,6 +50,12 @@ function ReportsDnaPageInner() {
           : status === 503
             ? 'Service temporarily unavailable. Try again in a moment.'
             : e.message || 'Failed to load Trader DNA');
+      if (code === 'ELITE_REQUIRED') {
+        setEliteGate(true);
+        msg =
+          serverMsg ||
+          'Trader DNA is part of A7FX Elite. Upgrade to Elite to unlock this synthesis — Premium does not include it.';
+      }
       if (!serverMsg && status === 500) {
         msg = 'Server error while loading Trader DNA. If this keeps happening, contact support.';
       }
@@ -140,7 +149,12 @@ function ReportsDnaPageInner() {
         </p>
 
         <div className="tdna-cta-row">
-          <button type="button" className="tdna-btn tdna-btn--primary" onClick={openIntro} disabled={loading}>
+          <button
+            type="button"
+            className="tdna-btn tdna-btn--primary"
+            onClick={openIntro}
+            disabled={loading || eliteGate}
+          >
             Enter DNA synthesis chamber
           </button>
           {hasReport && (
@@ -163,9 +177,16 @@ function ReportsDnaPageInner() {
       {error && (
         <div className="tdna-err" role="alert">
           <p>{error}</p>
-          <button type="button" className="tdna-btn tdna-btn--ghost tdna-err-retry" onClick={() => load()}>
-            Try again
-          </button>
+          <div className="tdna-err-actions">
+            {eliteGate && (
+              <button type="button" className="tdna-btn tdna-btn--primary" onClick={() => navigate('/choose-plan')}>
+                Upgrade to Elite
+              </button>
+            )}
+            <button type="button" className="tdna-btn tdna-btn--ghost tdna-err-retry" onClick={() => load()}>
+              Try again
+            </button>
+          </div>
         </div>
       )}
 

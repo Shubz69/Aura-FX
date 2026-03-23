@@ -62,7 +62,7 @@ function ProgressDial({ pct, gradId }) {
   const offset = circ - (clamped / 100) * circ;
   return (
     <svg viewBox="0 0 120 120" className="aff-dial-svg" aria-label={`${Math.round(clamped)} percent to next reward`}>
-      <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
+      <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="9" />
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#f8c37d" />
@@ -86,7 +86,7 @@ function ProgressDial({ pct, gradId }) {
       <text x="60" y="55" textAnchor="middle" fill="#fff" fontSize="20" fontWeight="800" fontFamily="inherit">
         {Math.round(clamped)}%
       </text>
-      <text x="60" y="71" textAnchor="middle" fill="rgba(200,196,232,0.45)" fontSize="9" fontFamily="inherit">
+      <text x="60" y="71" textAnchor="middle" fill="rgba(255,255,255,0.78)" fontSize="9" fontFamily="inherit">
         Next tier
       </text>
     </svg>
@@ -309,7 +309,7 @@ export default function Affiliation() {
           </button>
         </div>
       )}
-      <div className="aff-content journal-glass-panel journal-glass-panel--pad">
+      <div className="aff-content journal-glass-panel journal-glass-panel--pad journal-glass-panel--rim">
         <header className="aff-hero">
           <div className="aff-hero__eyebrow">Referral programme</div>
           <h1 className="aff-hero__title">Refer &amp; earn</h1>

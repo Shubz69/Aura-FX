@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    const { userId, plan } = body || {};
+    const { userId, plan, durationDays: durationRaw } = body || {};
 
     if (!userId || !plan) {
       return res.status(400).json({
@@ -58,12 +58,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    const validPlans = ['free', 'premium', 'a7fx', 'elite'];
+    const validPlans = ['free', 'premium', 'aura', 'a7fx', 'elite'];
 
     if (!validPlans.includes(plan)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid plan. Use free, premium, a7fx, elite"
+        message: "Invalid plan. Use free, premium, aura, a7fx, elite"
       });
     }
 
@@ -165,20 +165,29 @@ module.exports = async (req, res) => {
     const userEmail = userCheck[0].email;
     const oldPlan = userCheck[0].subscription_plan || "free";
 
-    /* ---------------- PLAN LOGIC ---------------- */
+    /* ---------------- PLAN + DURATION ---------------- */
 
     let newRole = "free";
+    if (plan === "premium" || plan === "aura") newRole = "premium";
+    if (plan === "a7fx" || plan === "elite") newRole = "a7fx";
 
-    if (plan === "premium") newRole = "premium";
-    if (plan === "a7fx") newRole = "a7fx";
-    if (plan === "elite") newRole = "a7fx";
+    let durationDays = 90;
+    if (plan !== "free") {
+      const parsed = parseInt(durationRaw, 10);
+      if (Number.isFinite(parsed) && parsed >= 1) {
+        durationDays = Math.min(3650, parsed);
+      }
+    }
 
     let expiryDate = null;
-
     if (plan !== "free") {
       expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 90);
+      expiryDate.setDate(expiryDate.getDate() + durationDays);
     }
+
+    const subscriptionStatus = plan === "free" ? "inactive" : "active";
+    /* Clear payment_failed when admin sets access (same as successful Stripe path). */
+    const paymentFailed = 0;
 
     /* ---------------- UPDATE USER ---------------- */
 
@@ -187,13 +196,15 @@ module.exports = async (req, res) => {
        SET subscription_plan = ?,
            role = ?,
            subscription_status = ?,
-           subscription_expiry = ?
+           subscription_expiry = ?,
+           payment_failed = ?
        WHERE id = ?`,
       [
         plan,
         newRole,
-        plan === "free" ? "inactive" : "active",
+        subscriptionStatus,
         expiryDate,
+        paymentFailed,
         userId
       ]
     );
@@ -202,17 +213,25 @@ module.exports = async (req, res) => {
       userId,
       userEmail,
       oldPlan,
-      newPlan: plan
+      newPlan: plan,
+      durationDays: plan === "free" ? null : durationDays,
+      expiry: expiryDate ? expiryDate.toISOString() : null
     });
 
     return res.status(200).json({
       success: true,
-      message: `Subscription changed to ${plan}`,
+      message:
+        plan === "free"
+          ? `Subscription set to free`
+          : `Subscription set to ${plan} for ${durationDays} day(s)`,
       user: {
         id: userId,
         email: userEmail,
         oldPlan,
-        newPlan: plan
+        newPlan: plan,
+        role: newRole,
+        durationDays: plan === "free" ? null : durationDays,
+        subscription_expiry: expiryDate ? expiryDate.toISOString() : null
       }
     });
 

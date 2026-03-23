@@ -13,6 +13,9 @@
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
 const { getOpenAIModelForReports } = require('../ai/openai-config');
+const { getReportDataSpanDays } = require('./dataSpan');
+const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
+const { effectiveReportsRole } = require('./resolveReportsRole');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = getOpenAIModelForReports();
@@ -261,14 +264,9 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Load user
-    const [users] = await executeQuery(
-      'SELECT id, role, subscription_plan, name, username, created_at FROM users WHERE id = ?',
-      [userId]
-    );
-    if (!users?.length) return res.status(404).json({ success: false, message: 'User not found' });
-    const user = users[0];
-    const role = resolveRole(user);
+    const user = await applyScheduledDowngrade(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    const role = effectiveReportsRole(user);
 
     // Free users blocked
     if (role === 'free') {
@@ -279,12 +277,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Check 30-day minimum
-    const [tradeDayRows] = await executeQuery(
-      `SELECT DATEDIFF(NOW(), MIN(date)) AS data_days FROM journal_trades WHERE userId = ?`,
-      [userId]
-    ).catch(() => [[{ data_days: 0 }]]);
-    const dataDays = tradeDayRows?.[0]?.data_days || 0;
+    // Check 30-day minimum (same window as /api/reports/eligibility)
+    const dataDays = await getReportDataSpanDays(userId, executeQuery);
     if (dataDays < MIN_DATA_DAYS) {
       return res.status(403).json({
         success: false,

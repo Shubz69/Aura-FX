@@ -5,6 +5,8 @@
  */
 const { verifyToken } = require('./utils/auth');
 const { executeQuery } = require('./db');
+const { applyScheduledDowngrade } = require('./utils/apply-scheduled-downgrade');
+const { canAccessTraderDna } = require('./reports/resolveReportsRole');
 const {
   CYCLE_DAYS,
   ANALYSIS_DAYS,
@@ -103,6 +105,24 @@ function formatRemaining(nextEligible) {
   return { days, hours, totalMs: ms, label, nextAvailableOn: new Date(nextEligible).toISOString() };
 }
 
+async function assertTraderDnaEntitlement(userId, res) {
+  const user = await applyScheduledDowngrade(userId);
+  if (!user) {
+    res.status(404).json({ success: false, message: 'User not found' });
+    return null;
+  }
+  if (!canAccessTraderDna(user)) {
+    res.status(403).json({
+      success: false,
+      code: 'ELITE_REQUIRED',
+      message:
+        'Trader DNA is included with A7FX Elite only. Upgrade to Elite to unlock your behavioural and execution synthesis — Premium does not include this feature.',
+    });
+    return null;
+  }
+  return user;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -123,6 +143,8 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'GET') {
+    const entitled = await assertTraderDnaEntitlement(userId, res);
+    if (!entitled) return;
     try {
       const dataHealth = { tradesOk: true, journalOk: true, errors: [] };
 
@@ -292,6 +314,8 @@ module.exports = async (req, res) => {
     if (!confirm) {
       return res.status(400).json({ success: false, message: 'Set confirm: true to generate DNA' });
     }
+    const entitled = await assertTraderDnaEntitlement(userId, res);
+    if (!entitled) return;
     try {
       let trades = [];
       let journal = [];

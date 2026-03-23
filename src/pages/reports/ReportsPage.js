@@ -102,7 +102,7 @@ function EligibilityBar({ eligibility }) {
         {!isEligible && (
           <p className="rp-eligibility-hint">
             You need <strong>{minDataDays} days</strong> of data before your first report can be generated.
-            You currently have <strong>{dataDays} days</strong>.
+            You currently have <strong>{dataDays} days</strong> (from your first logged trade, daily journal entry, or AI chart check until today).
           </p>
         )}
       </div>

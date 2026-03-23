@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../utils/useWebSocket';
@@ -7,6 +7,112 @@ import AuraTerminalThemeShell from '../components/AuraTerminalThemeShell';
 import Api from '../services/Api';
 import { FaSearch, FaUserShield } from 'react-icons/fa';
 import '../styles/AdminPanel.css';
+
+const PLAN_OPTIONS = [
+  { value: 'free', label: 'Free', needsDuration: false },
+  { value: 'aura', label: 'Premium · Aura', needsDuration: true },
+  { value: 'premium', label: 'Premium', needsDuration: true },
+  { value: 'a7fx', label: 'A7FX Elite', needsDuration: true },
+  { value: 'elite', label: 'Elite', needsDuration: true },
+];
+
+function normalizePlanForSelect(raw) {
+  const p = (raw || 'free').toLowerCase();
+  if (PLAN_OPTIONS.some((o) => o.value === p)) return p;
+  if (p === 'user') return 'free';
+  return 'aura';
+}
+
+/** Modal: set subscription plan + duration (paid plans). */
+function SubscriptionAccessModal({ open, title, userEmail, initialPlan, onClose, onConfirm, submitting }) {
+  const [plan, setPlan] = useState('aura');
+  const [days, setDays] = useState('90');
+
+  useEffect(() => {
+    if (!open) return;
+    setPlan(normalizePlanForSelect(initialPlan));
+    setDays('90');
+  }, [open, initialPlan]);
+
+  if (!open) return null;
+
+  const needsDuration = plan !== 'free';
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const d = parseInt(days, 10);
+    if (needsDuration && (!Number.isFinite(d) || d < 1)) {
+      alert('Enter a valid number of days (1–3650).');
+      return;
+    }
+    if (needsDuration && d > 3650) {
+      alert('Maximum duration is 3650 days.');
+      return;
+    }
+    onConfirm(plan, needsDuration ? d : null);
+  };
+
+  return (
+    <div className="ap-modal-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="ap-modal ap-modal--access"
+        role="dialog"
+        aria-labelledby="ap-access-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="ap-access-title" className="ap-modal__title">
+          {title}
+        </h2>
+        <p className="ap-modal__email">{userEmail}</p>
+        <form onSubmit={handleSubmit} className="ap-modal__form">
+          <label className="ap-modal__label" htmlFor="ap-access-plan">
+            Plan
+          </label>
+          <select
+            id="ap-access-plan"
+            className="ap-modal__select"
+            value={plan}
+            onChange={(e) => setPlan(e.target.value)}
+          >
+            {PLAN_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+
+          <label className="ap-modal__label" htmlFor="ap-access-days">
+            Duration (days)
+          </label>
+          <input
+            id="ap-access-days"
+            type="number"
+            min={1}
+            max={3650}
+            className="ap-modal__input"
+            disabled={!needsDuration}
+            value={days}
+            onChange={(e) => setDays(e.target.value)}
+            placeholder="90"
+          />
+          <p className="ap-modal__hint">
+            {needsDuration
+              ? 'Access expires at the end of this many days from right now. Paid plans stay active until that date.'
+              : 'Free plan clears paid expiry and deactivates subscription billing state for this user.'}
+          </p>
+
+          <div className="ap-modal__actions">
+            <button type="button" className="ap-modal__btn ap-modal__btn--ghost" onClick={onClose} disabled={submitting}>
+              Cancel
+            </button>
+            <button type="submit" className="ap-modal__btn ap-modal__btn--primary" disabled={submitting}>
+              {submitting ? 'Saving…' : 'Apply'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const AdminPanel = () => {
     const { user, isAuthenticated } = useAuth();
@@ -20,6 +126,14 @@ const AdminPanel = () => {
     const [channelsLoading, setChannelsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('users'); // 'users' or 'channels'
     const [searchTerm, setSearchTerm] = useState(''); // Search filter for users
+    const [accessModal, setAccessModal] = useState({
+        open: false,
+        userId: null,
+        userEmail: null,
+        initialPlan: 'free',
+        title: 'Set access',
+    });
+    const [accessSubmitting, setAccessSubmitting] = useState(false);
 
     // Handle real-time online status updates from WebSocket
     const handleOnlineStatusUpdate = (data) => {
@@ -217,47 +331,75 @@ const AdminPanel = () => {
         setDeleteModal({ isOpen: true, userId, userEmail });
     };
 
-    const handleGrantCommunityAccess = async (userId, userEmail) => {
-        if (!window.confirm(`Grant community access to ${userEmail}? This will activate their subscription status (after you've verified their payment confirmation).`)) {
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem('token');
-            
-            // Grant access by activating subscription status (this sets both subscription_status AND role)
-            const subscriptionResponse = await fetch(`/api/stripe/subscription-success`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    userId: userId,
-                    session_id: `admin-granted-${Date.now()}`
-                })
-            });
-
-            if (!subscriptionResponse.ok) {
-                const errorData = await subscriptionResponse.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Failed to grant subscription access');
-            }
-
-            const result = await subscriptionResponse.json();
-            
-            if (result.success) {
-                // Refresh the user list
-                fetchUsers();
-                setError(null);
-                alert(`✅ Community access granted to ${userEmail}!\n\nSubscription activated with 90-day expiry. User can now access the community.`);
-            } else {
-                throw new Error(result.message || 'Failed to grant access');
-            }
-        } catch (err) {
-            console.error('Error granting community access:', err);
-            setError(err.message || 'Failed to grant community access. Please try again.');
-        }
+    const openGrantAccessModal = (userItem) => {
+        setAccessModal({
+            open: true,
+            userId: userItem.id,
+            userEmail: userItem.email,
+            initialPlan: userItem.subscription_plan || 'free',
+            title: 'Grant access',
+        });
     };
+
+    const openChangePlanModal = (userItem) => {
+        setAccessModal({
+            open: true,
+            userId: userItem.id,
+            userEmail: userItem.email,
+            initialPlan: userItem.subscription_plan || 'free',
+            title: 'Change plan',
+        });
+    };
+
+    const closeAccessModal = () => {
+        if (accessSubmitting) return;
+        setAccessModal((m) => ({ ...m, open: false }));
+    };
+
+    const submitAccessModal = useCallback(
+        async (plan, durationDays) => {
+            const { userId, userEmail } = accessModal;
+            if (!userId) return;
+            setAccessSubmitting(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem('token');
+                const body = {
+                    userId,
+                    plan,
+                    ...(plan !== 'free' ? { durationDays: durationDays ?? 90 } : {}),
+                };
+                const res = await fetch('/api/admin/change-subscription', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to update subscription');
+                }
+                const exp = data.user?.subscription_expiry
+                    ? new Date(data.user.subscription_expiry).toLocaleString()
+                    : null;
+                const msg =
+                    plan === 'free'
+                        ? `Set ${userEmail} to Free.`
+                        : `Set ${userEmail} to ${plan.toUpperCase()} for ${data.user?.durationDays ?? durationDays} days.${exp ? `\nExpires: ${exp}` : ''}`;
+                alert(`✅ ${msg}`);
+                setAccessModal((m) => ({ ...m, open: false }));
+                fetchUsers();
+            } catch (err) {
+                console.error('Subscription update:', err);
+                setError(err.message || 'Failed to update subscription.');
+            } finally {
+                setAccessSubmitting(false);
+            }
+        },
+        [accessModal.userId, accessModal.userEmail]
+    );
 
     const handleRevokeCommunityAccess = async (userId, userEmail) => {
         if (!window.confirm(`Revoke community access from ${userEmail}? This will deactivate their subscription and remove their premium access.`)) {
@@ -442,6 +584,8 @@ const AdminPanel = () => {
     // Check admin status more flexibly
     const userRole = user?.role?.toLowerCase() || '';
     const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
+    const isSuperAdmin =
+        userRole === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com';
     
     if (!isAuthenticated || !isAdmin) {
         return null; // Don't render anything while redirecting
@@ -597,7 +741,7 @@ const AdminPanel = () => {
                     >
                       Grant Access
                     </button>
-                    {(user?.role === 'super_admin' || user?.email?.toLowerCase() === 'shubzfx@gmail.com') && 
+                    {isSuperAdmin &&
                      userItem.role !== 'admin' && userItem.role !== 'super_admin' && (
                       <button 
                         className="action-btn grant-admin-btn"
@@ -621,40 +765,7 @@ const AdminPanel = () => {
                     <button
                       className="action-btn plan-btn"
                       type="button"
-                      onClick={() => {
-    const newPlan = window.prompt(
-      `Change subscription for ${userItem.email}\n\nCurrent: ${userItem.subscription_plan || 'free'}\n\nEnter new plan (free/premium/a7fx/elite):`,
-      userItem.subscription_plan || 'free'
-    );
-    if (newPlan && ['free', 'premium', 'a7fx', 'elite'].includes(newPlan)) {
-      if (window.confirm(`Change ${userItem.email} to ${newPlan} plan?`)) {
-        // Call API here
-        fetch('/api/admin/change-subscription', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: userItem.id,
-            plan: newPlan
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            alert(`✅ Changed to ${newPlan}`);
-            fetchUsers(); // Refresh list
-          } else {
-            alert('❌ Failed: ' + data.message);
-          }
-        })
-        .catch(err => alert('Error: ' + err.message));
-      }
-    } else {
-      alert('Invalid plan. Use: free, premium, a7fx, elite');
-    }
-                      }}
+                      onClick={() => openChangePlanModal(userItem)}
                     >
                       Change plan
                     </button>
@@ -719,6 +830,16 @@ const AdminPanel = () => {
         </>
       )}
     </div>
+
+    <SubscriptionAccessModal
+      open={accessModal.open}
+      title={accessModal.title}
+      userEmail={accessModal.userEmail}
+      initialPlan={accessModal.initialPlan}
+      onClose={closeAccessModal}
+      onConfirm={submitAccessModal}
+      submitting={accessSubmitting}
+    />
 
     <ConfirmationModal
       isOpen={deleteModal.isOpen}

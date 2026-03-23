@@ -4,15 +4,8 @@
  */
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
-
-function resolveRole(user) {
-  const role = (user.role || '').toLowerCase();
-  const plan = (user.subscription_plan || '').toLowerCase();
-  if (['admin', 'super_admin'].includes(role)) return 'admin';
-  if (['elite', 'a7fx'].includes(role) || ['elite', 'a7fx'].includes(plan)) return 'elite';
-  if (['premium', 'aura'].includes(role) || ['premium', 'aura'].includes(plan)) return 'premium';
-  return 'free';
-}
+const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
+const { effectiveReportsRole } = require('./resolveReportsRole');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -28,11 +21,9 @@ module.exports = async (req, res) => {
   const userId = decoded.id;
 
   try {
-    const [users] = await executeQuery(
-      'SELECT id, role, subscription_plan FROM users WHERE id = ?', [userId]
-    );
-    if (!users?.length) return res.status(404).json({ success: false, message: 'User not found' });
-    const role = resolveRole(users[0]);
+    const user = await applyScheduledDowngrade(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    const role = effectiveReportsRole(user);
 
     if (role === 'free') {
       return res.status(403).json({ success: false, code: 'FREE_PLAN', message: 'Reports are a Premium/Elite feature.' });
