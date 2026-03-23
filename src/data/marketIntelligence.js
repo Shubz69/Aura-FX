@@ -1,6 +1,6 @@
 /**
  * Market Intelligence data for Trader Desk.
- * Fetches from backend /api/trader-deck/market-intelligence (live Finnhub, FMP, FRED).
+ * Fetches from backend /api/trader-deck/market-intelligence.
  * Maps API response to dashboard shape; falls back to seed if request fails.
  */
 
@@ -93,7 +93,6 @@ function mapBackendToDashboard(apiData) {
     updatedAt: apiData.updatedAt || null,
     aiSessionBrief: typeof apiData.aiSessionBrief === 'string' ? apiData.aiSessionBrief : '',
     aiTradingPriorities: Array.isArray(apiData.aiTradingPriorities) ? apiData.aiTradingPriorities : [],
-    dataSources: Array.isArray(apiData.dataSources) ? apiData.dataSources : [],
   };
 }
 

@@ -39,6 +39,24 @@ function normCountry(raw) {
   return map[lower] || raw.toUpperCase().slice(0, 3);
 }
 
+function parseDateToTimestamp(rawDate) {
+  if (!rawDate) return null;
+  const raw = String(rawDate).trim();
+  if (!raw) return null;
+  let parsed = Date.parse(raw);
+  if (!Number.isNaN(parsed)) return parsed;
+
+  // Handle timezone offsets without colon (e.g. -0400)
+  const tzFixed = raw.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+  parsed = Date.parse(tzFixed);
+  if (!Number.isNaN(parsed)) return parsed;
+
+  // Handle "YYYY-MM-DD HH:mm:ss" by forcing UTC parse
+  const spaceFixed = raw.replace(' ', 'T');
+  parsed = Date.parse(spaceFixed.endsWith('Z') ? spaceFixed : `${spaceFixed}Z`);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 // --- Provider 1: Forex Factory JSON CDN (official FF data feed, no API key needed) ---
 async function fromForexFactory(days = 7) {
   try {
@@ -70,7 +88,9 @@ async function fromForexFactory(days = 7) {
 
         for (const ev of raw) {
           // ev.date is ISO with ET offset e.g. "2025-03-18T10:00:00-0400"
-          const evDate = new Date(ev.date);
+          const ts = parseDateToTimestamp(ev.date);
+          if (!ts) continue;
+          const evDate = new Date(ts);
           if (!ev.title || !ev.country) continue;
           if ((ev.impact || '').toLowerCase() === 'non-economic') continue;
 
@@ -96,7 +116,7 @@ async function fromForexFactory(days = 7) {
           allEvents.push({
             date: dateStr,
             time: timeStr,
-            timestamp: evDate.getTime(), // UTC ms — used by frontend for precision scheduling
+            timestamp: ts, // UTC ms — used by frontend for precision scheduling
             currency: ev.country,
             impact: normImpact(ev.impact),
             event: ev.title,
@@ -133,6 +153,7 @@ async function fromFMP(days = 7) {
     return raw.slice(0, 80).map((e) => ({
       date: (e.date || '').slice(0, 10),
       time: e.date ? new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
+      timestamp: parseDateToTimestamp(e.date),
       currency: normCountry(e.country || e.currency || ''),
       impact: normImpact(e.importance || e.impact),
       event: e.name || e.event || 'Economic Event',
@@ -162,6 +183,7 @@ async function fromTradingEconomics(days = 7) {
     return raw.slice(0, 80).map((e) => ({
       date: (e.Date || '').slice(0, 10),
       time: e.Date ? new Date(e.Date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
+      timestamp: parseDateToTimestamp(e.Date),
       currency: normCountry(e.Country || e.Currency || ''),
       impact: normImpact(e.Importance),
       event: e.Event || e.Category || 'Economic Event',

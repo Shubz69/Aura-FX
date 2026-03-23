@@ -348,6 +348,20 @@
   min-width: 60px;
 }
 
+.td-ff-countdown {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(248,195,125,0.45);
+  background: rgba(248,195,125,0.12);
+  color: rgba(248,195,125,0.95);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
 .td-ff-ccy-pill {
   display: inline-block;
   padding: 2px 7px;

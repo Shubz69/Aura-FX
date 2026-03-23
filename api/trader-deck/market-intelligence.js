@@ -97,7 +97,6 @@ module.exports = async (req, res) => {
     const payload = {
       ...rest,
       ...(enriched || {}),
-      dataSources: ['FRED', 'Finnhub', 'FMP', 'Twelve Data', 'Alpha Vantage', 'Alternative.me', ...(enriched ? ['OpenAI'] : [])],
     };
     setCache(payload);
     res.setHeader('Cache-Control', 'private, max-age=30');

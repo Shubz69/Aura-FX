@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, Link } from 'react-router-dom';
+import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuraAnalysisProvider, useAuraAnalysis, DATE_RANGE_OPTIONS } from '../../context/AuraAnalysisContext';
 import AuraTerminalThemeShell from '../../components/AuraTerminalThemeShell';
 import '../../styles/aura-analysis/AuraDashboard.css';
@@ -98,6 +98,8 @@ function AuraFilterBar() {
 
 function AuraDashboardInner() {
   const [time, setTime] = useState(new Date());
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 60000);
@@ -106,6 +108,7 @@ function AuraDashboardInner() {
 
   const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   const dateStr = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const activeTabPath = location.pathname.replace(`${base}/`, '') || 'overview';
 
   return (
     <div className="aura-dashboard journal-glass-panel journal-glass-panel--pad">
@@ -131,6 +134,18 @@ function AuraDashboardInner() {
               </NavLink>
             ))}
           </nav>
+
+          <div className="aura-dashboard-tab-select-wrap" aria-label="Dashboard section selector">
+            <select
+              className="aura-dashboard-tab-select"
+              value={activeTabPath}
+              onChange={(e) => navigate(`${base}/${e.target.value}`)}
+            >
+              {TABS.map(({ path, label }) => (
+                <option key={path} value={path}>{label}</option>
+              ))}
+            </select>
+          </div>
 
           <div className="aura-db-right" title={`${dateStr} · local time`}>
             <div className="aura-db-clock" aria-label={`Local time ${timeStr}, ${dateStr}`}>

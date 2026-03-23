@@ -55,13 +55,6 @@ const SpeakerIcon = ({ muted }) => (
     {muted && <><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></>}
   </svg>
 );
-const ChevronIcon = ({ up }) => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ transform: up ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-    <polyline points="6 9 12 15 18 9"/>
-  </svg>
-);
-
 /* ── Quick actions ───────────────────────────────────────── */
 const CHIPS = [
   { glyph: '📈', label: 'Gold drivers',    prompt: 'What are the main drivers for gold (XAUUSD) today? Include key levels and market sentiment.' },
@@ -127,7 +120,7 @@ const WelcomeScreen = ({ onChipClick, disabled }) => (
 );
 
 /* ── Single message — defined OUTSIDE component ──────────── */
-const ChatMessage = ({ msg, copiedId, speakId, spRate, showSrc, onCopy, onSpeak, onSpeedChange, onToggleSrc }) => {
+const ChatMessage = ({ msg, copiedId, speakId, spRate, onCopy, onSpeak, onSpeedChange }) => {
   const isUser = msg.role === 'user';
   return (
     <div className={`pai-msg ${isUser ? 'user' : 'assistant'}${msg.isError ? ' error' : ''}`}>
@@ -180,27 +173,6 @@ const ChatMessage = ({ msg, copiedId, speakId, spRate, showSrc, onCopy, onSpeak,
           </div>
         )}
 
-        {/* Sources */}
-        {!isUser && msg.sources?.length > 0 && (
-          <div className="pai-sources">
-            <button className="pai-sources-btn" onClick={onToggleSrc}>
-              <span>📊 Sources ({msg.sources.length})</span>
-              <ChevronIcon up={showSrc} />
-            </button>
-            {showSrc && (
-              <div className="pai-sources-list">
-                {msg.sources.map((s, i) => (
-                  <div key={i} className="pai-source-item">
-                    {s.type === 'market' && `📈 ${s.symbol} market data`}
-                    {s.type === 'news' && '📰 Market news'}
-                    {s.cached && <span className="pai-cached">cached</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
       </div>
     </div>
   );
@@ -218,10 +190,8 @@ const PremiumAI = () => {
   const [isLoading,      setIsLoading]      = useState(false);
   const [isStreaming,    setIsStreaming]     = useState(false);
   const [streamContent,  setStreamContent]  = useState('');
-  const [sources,        setSources]        = useState([]);
   const [selImages,      setSelImages]      = useState([]);
   const [previews,       setPreviews]       = useState([]);
-  const [showSrc,        setShowSrc]        = useState(false);
   const [isRec,          setIsRec]          = useState(false);
   const [spRate,         setSpRate]         = useState(1.0);
   const [speakId,        setSpeakId]        = useState(null);
@@ -407,7 +377,7 @@ const PremiumAI = () => {
     setInput('');
     setSelImages([]);
     setPreviews(p => { p.forEach(u => URL.revokeObjectURL(u)); return []; });
-    setIsLoading(true); setSources([]);
+    setIsLoading(true);
     await new Promise(r => setTimeout(r, 50));
 
     try {
@@ -434,7 +404,6 @@ const PremiumAI = () => {
 
       // Declared outside the loop so inner callbacks close over a stable reference
       let fullContent = '';
-      let streamSources = [];
 
       let reading = true;
       while (reading) {
@@ -451,15 +420,12 @@ const PremiumAI = () => {
             fullContent += d.content;
             setStreamContent(fullContent);
           } else if (d.type === 'sources') {
-            streamSources = d.sources || [];
-            setSources(streamSources);
+            // Intentionally ignored — do not surface data feeds to users in the UI
           } else if (d.type === 'done') {
             const finalContent = d.content || fullContent;
-            const finalSources = streamSources;
             setMessages(p => [...p, {
               id: Date.now(), role: 'assistant',
               content: finalContent,
-              sources: finalSources,
               timing: d.timing,
               timestamp: new Date().toISOString(),
             }]);
@@ -490,7 +456,7 @@ const PremiumAI = () => {
       setMessages(p => [...p, {
         id: Date.now(), role: 'assistant',
         content: streamContent + '\n\n[Response stopped]',
-        sources, timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
       }]);
       setStreamContent('');
     }
@@ -500,7 +466,7 @@ const PremiumAI = () => {
   const clearAll = () => {
     if (!window.confirm('Clear all messages?')) return;
     localStorage.removeItem('aura_ai_conversation_v2');
-    setMessages([]); setSources([]);
+    setMessages([]);
   };
 
   /* chip click handler */
@@ -547,11 +513,9 @@ const PremiumAI = () => {
               copiedId={copiedId}
               speakId={speakId}
               spRate={spRate}
-              showSrc={showSrc}
               onCopy={copy}
               onSpeak={speak}
               onSpeedChange={setSpRate}
-              onToggleSrc={() => setShowSrc(s => !s)}
             />
           ))}
 

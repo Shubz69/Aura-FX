@@ -292,7 +292,7 @@ export default function MarketIntelligenceDashboard({ embedded }) {
 
   const renderDriversEdit = () => (
     <div className="td-mi-edit td-mi-edit--drivers">
-      <p className="td-mi-source">Live data from FRED, Finnhub &amp; FMP. Edit to override.</p>
+      <p className="td-mi-source">Live market data. Edit to override.</p>
       <ul className="td-mi-list td-mi-list--drivers">
         {(editDraft.keyDrivers || []).map((d, i) => (
           <li key={i} className="td-mi-list-item td-mi-list-item--edit">
@@ -358,7 +358,7 @@ export default function MarketIntelligenceDashboard({ embedded }) {
 
   const renderSignalsEdit = () => (
     <div className="td-mi-edit td-mi-edit--signals">
-      <p className="td-mi-source">Live data from FRED, Finnhub &amp; FMP. Edit to override.</p>
+      <p className="td-mi-source">Live market data. Edit to override.</p>
       <ul className="td-mi-list td-mi-list--signals">
         {(editDraft.crossAssetSignals || []).map((s, i) => (
           <li key={i} className="td-mi-list-item td-mi-list-item--edit">
@@ -444,7 +444,6 @@ export default function MarketIntelligenceDashboard({ embedded }) {
         <DashboardPanel title="Key Market Drivers" className="td-mi-panel--drivers">
           {editMode && editDraft ? renderDriversEdit() : (
             <>
-              <p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p>
               <DriverList drivers={keyDrivers} />
             </>
           )}
@@ -452,7 +451,6 @@ export default function MarketIntelligenceDashboard({ embedded }) {
         <DashboardPanel title="Cross-Asset Signals" className="td-mi-panel--signals">
           {editMode && editDraft ? renderSignalsEdit() : (
             <>
-              <p className="td-mi-source td-mi-source--readonly">Source: FRED, Finnhub &amp; FMP</p>
               <SignalList signals={crossAssetSignals} />
             </>
           )}
@@ -467,12 +465,12 @@ export default function MarketIntelligenceDashboard({ embedded }) {
         <DashboardPanel title="Risk Radar" wide className="td-mi-panel--radar">
           {editMode && editDraft ? (
             <>
-              <p className="td-mi-source">Upcoming news. List refreshes from FMP at midnight.</p>
+              <p className="td-mi-source">Upcoming news. List refreshes at midnight.</p>
               {renderListEdit(editDraft.riskRadar, 'riskRadar', 'News event')}
             </>
           ) : (
             <>
-              <p className="td-mi-source td-mi-source--readonly">Upcoming news (FMP). Refreshes at midnight.</p>
+              <p className="td-mi-source td-mi-source--readonly">Upcoming news. Refreshes at midnight.</p>
               <RiskRadarList items={riskRadar} />
             </>
           )}

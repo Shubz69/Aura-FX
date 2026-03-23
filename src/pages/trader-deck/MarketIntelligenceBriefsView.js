@@ -15,6 +15,22 @@ function googleViewerEmbedUrl(fileUrl) {
   return `https://docs.google.com/viewer?url=${encodeURIComponent(u)}&embedded=true`;
 }
 
+function officeViewerEmbedUrl(fileUrl) {
+  const u = (fileUrl || '').trim();
+  if (!u || !/^https?:\/\//i.test(u)) return null;
+  return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(u)}`;
+}
+
+function isPowerPointMime(mime) {
+  const m = (mime || '').toLowerCase();
+  return m.includes('application/vnd.ms-powerpoint') ||
+    m.includes('application/vnd.openxmlformats-officedocument.presentationml.presentation');
+}
+
+function isPdfMime(mime) {
+  return (mime || '').toLowerCase().includes('application/pdf');
+}
+
 export default function MarketIntelligenceBriefsView({ selectedDate, period, canEdit }) {
   const type = period === 'weekly' ? 'intel-weekly' : 'intel-daily';
   const [briefs, setBriefs] = useState([]);
@@ -23,6 +39,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const [addSuccess, setAddSuccess] = useState(null);
   const [previewId, setPreviewId] = useState(null);
   const [previewEmbedUrl, setPreviewEmbedUrl] = useState(null);
+  const [previewBriefMeta, setPreviewBriefMeta] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
@@ -33,6 +50,7 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   const closePreview = useCallback(() => {
     setPreviewId(null);
     setPreviewEmbedUrl(null);
+    setPreviewBriefMeta(null);
   }, []);
 
   useEffect(() => {
@@ -74,11 +92,26 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
   }, [previewId]);
 
   const iframeSrc = previewEmbedUrl || storedPreviewSrc;
+  const previewMime = (previewBriefMeta?.mimeType || '').toLowerCase();
+  const previewIsPpt = isPowerPointMime(previewMime);
+  const previewIsPdf = isPdfMime(previewMime);
+  const previewHasExternalUrl = /^https?:\/\//i.test((previewBriefMeta?.fileUrl || '').trim());
+  const previewCanIframe = Boolean(previewEmbedUrl || (!previewIsPpt && (previewIsPdf || storedPreviewSrc)));
+  const previewDirectUrl = previewHasExternalUrl
+    ? (previewBriefMeta?.fileUrl || '').trim()
+    : (previewId ? Api.getTraderDeckBriefPreviewUrl(previewId) : null);
 
   const handlePreview = (brief) => {
+    setPreviewBriefMeta({
+      id: brief?.id || null,
+      title: brief?.title || 'Brief',
+      mimeType: brief?.mimeType || '',
+      fileUrl: brief?.fileUrl || '',
+    });
     const ext = (brief.fileUrl || '').trim();
     if (ext) {
-      const embed = googleViewerEmbedUrl(ext);
+      const officeEmbed = officeViewerEmbedUrl(ext);
+      const embed = officeEmbed || googleViewerEmbedUrl(ext);
       if (embed) {
         setPreviewId(null);
         setPreviewEmbedUrl(embed);
@@ -273,19 +306,45 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
             onClick={(e) => e.stopPropagation()}
           >
             <div className="td-intel-preview-chrome">
-              <p className="td-intel-preview-hint">Preview — scroll to read. Download is not provided here.</p>
+              <p className="td-intel-preview-hint">
+                {previewCanIframe
+                  ? 'Preview ready.'
+                  : 'This file type cannot be rendered in-browser here. Use Open/Download, or upload PDF for inline preview.'}
+              </p>
               <button type="button" className="td-intel-preview-close" onClick={closePreview} aria-label="Close preview">
                 <FaTimes />
               </button>
             </div>
             <div className="td-intel-preview-frame-wrap">
-              <iframe
-                title="Brief preview"
-                src={iframeSrc}
-                className="td-intel-preview-iframe"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                referrerPolicy="no-referrer"
-              />
+              {previewCanIframe ? (
+                <iframe
+                  title="Brief preview"
+                  src={iframeSrc}
+                  className="td-intel-preview-iframe"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="td-intel-preview-fallback">
+                  <h3 className="td-intel-preview-fallback-title">{previewBriefMeta?.title || 'Brief'}</h3>
+                  <p className="td-intel-preview-fallback-text">
+                    PPT/PPTX previews are not reliably supported inside Chrome iframe mode.
+                    For in-app preview, upload a PDF copy of the brief.
+                  </p>
+                  <div className="td-intel-preview-fallback-actions">
+                    {previewDirectUrl && (
+                      <>
+                        <a href={previewDirectUrl} target="_blank" rel="noreferrer" className="td-mi-btn td-mi-btn-edit">
+                          Open file
+                        </a>
+                        <a href={previewDirectUrl} download className="td-mi-btn td-mi-btn-small">
+                          Download
+                        </a>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

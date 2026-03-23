@@ -1,6 +1,6 @@
 /**
  * Trader Deck — Economic Calendar
- * Forex Factory-sourced economic events (7-day view).
+ * Economic events (7-day view).
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import Api from '../../services/Api';
@@ -8,6 +8,37 @@ import '../../styles/trader-deck/EconomicCalendarView.css';
 
 const IMPACT_LABELS = { high: 'HIGH', medium: 'MED', low: 'LOW' };
 const CURRENCIES = ['ALL', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
+const SOON_WINDOW_MS = 5 * 60 * 1000;
+
+function hasActualValue(v) {
+  if (v == null) return false;
+  return String(v).trim() !== '';
+}
+
+function parseEventTimestamp(ev) {
+  const raw = ev && (ev.timestamp ?? ev.ts ?? ev.datetime);
+  if (raw == null) return null;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n > 0) return n;
+  const parsed = Date.parse(String(raw));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function countdownMs(ev, nowMs) {
+  if (hasActualValue(ev.actual)) return null;
+  const ts = parseEventTimestamp(ev);
+  if (!ts) return null;
+  const diff = ts - nowMs;
+  if (diff <= 0 || diff > SOON_WINDOW_MS) return null;
+  return diff;
+}
+
+function formatCountdown(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const mm = String(Math.floor(total / 60)).padStart(2, '0');
+  const ss = String(total % 60).padStart(2, '0');
+  return `${mm}:${ss}`;
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -37,11 +68,11 @@ export default function EconomicCalendarView() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [source, setSource] = useState('');
   const [updatedAt, setUpdatedAt] = useState(null);
   const [impactFilter, setImpactFilter] = useState('all');
   const [currencyFilter, setCurrencyFilter] = useState('ALL');
   const [days, setDays] = useState(7);
+  const [clock, setClock] = useState(Date.now());
 
   useEffect(() => {
     setLoading(true);
@@ -49,12 +80,16 @@ export default function EconomicCalendarView() {
     Api.getTraderDeckEconomicCalendar(days)
       .then((r) => {
         setEvents(Array.isArray(r.data?.events) ? r.data.events : []);
-        setSource(r.data?.source || '');
         setUpdatedAt(r.data?.updatedAt || null);
       })
       .catch(() => setError('Could not load calendar. Check back soon.'))
       .finally(() => setLoading(false));
   }, [days]);
+
+  useEffect(() => {
+    const id = setInterval(() => setClock(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const filtered = useMemo(() => {
     return events.filter((e) => {
@@ -83,7 +118,7 @@ export default function EconomicCalendarView() {
         <div className="ec-header-left">
           <h2 className="ec-title">Economic Calendar</h2>
           <p className="ec-sub">
-            {source && source !== 'fallback' ? `Live data · Source: ${source}` : 'Showing upcoming economic events'}
+            Showing upcoming economic events
             {updatedAt && (
               <span className="ec-updated"> · Updated {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             )}
@@ -157,12 +192,17 @@ export default function EconomicCalendarView() {
             <span className="ec-day-count">{grouped[dateKey].length} events</span>
           </div>
           <div className="ec-event-list">
-            {grouped[dateKey].map((ev, i) => (
+            {grouped[dateKey].map((ev, i) => {
+              const cdm = countdownMs(ev, clock);
+              return (
               <div
                 key={i}
                 className={`ec-event ec-event--${ev.impact}`}
               >
-                <div className="ec-event-time">{ev.time || 'All Day'}</div>
+                <div className="ec-event-time">
+                  {ev.time || 'All Day'}
+                  {cdm != null && <span className="ec-countdown">{formatCountdown(cdm)}</span>}
+                </div>
                 <div className={`ec-event-impact ec-event-impact--${ev.impact}`}>
                   <span className="ec-impact-dot" />
                   <span className="ec-impact-label">{IMPACT_LABELS[ev.impact] || ev.impact?.toUpperCase()}</span>
@@ -170,7 +210,7 @@ export default function EconomicCalendarView() {
                 <div className="ec-event-currency">{ev.currency}</div>
                 <div className="ec-event-name">{ev.event}</div>
                 <div className="ec-event-data">
-                  {ev.actual != null && (
+                  {hasActualValue(ev.actual) && (
                     <span className="ec-data-val ec-data-actual" title="Actual">A: {ev.actual}</span>
                   )}
                   {ev.forecast != null && (
@@ -179,19 +219,17 @@ export default function EconomicCalendarView() {
                   {ev.previous != null && (
                     <span className="ec-data-val ec-data-previous" title="Previous">P: {ev.previous}</span>
                   )}
+                  {!hasActualValue(ev.actual) && cdm != null && (
+                    <span className="ec-data-val ec-data-live">Releasing...</span>
+                  )}
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         </section>
       ))}
 
-      <p className="ec-source-note">
-        {source === 'ForexFactory' && 'Data sourced from Forex Factory · '}
-        {source === 'FMP' && 'Data sourced from Financial Modeling Prep · '}
-        {source === 'TradingEconomics' && 'Data sourced from Trading Economics · '}
-        Times shown in your local timezone
-      </p>
+      <p className="ec-source-note">Times shown in your local timezone</p>
     </div>
   );
 }

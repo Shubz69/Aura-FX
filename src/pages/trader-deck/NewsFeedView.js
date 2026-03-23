@@ -184,9 +184,6 @@ export default function NewsFeedView() {
                       {(article.category || 'market').toUpperCase()}
                     </span>
                     <span className="nf-headline-time">{timeAgo(article.publishedAt)}</span>
-                    {article.source && (
-                      <span className="nf-headline-src">{article.source}</span>
-                    )}
                   </div>
                   <p className="nf-headline-text">{line}</p>
                   {article.summary && (

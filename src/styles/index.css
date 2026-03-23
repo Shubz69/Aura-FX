@@ -573,9 +573,9 @@ footer {
 
 @keyframes postLoginCommunityFade {
     from {
-        opacity: 0.75;
-        transform: translateY(8px);
-        filter: blur(0.6px);
+        opacity: 0.62;
+        transform: translateY(18px) scale(0.992);
+        filter: blur(1.2px);
     }
     to {
         opacity: 1;
@@ -585,11 +585,41 @@ footer {
 }
 
 .app-container.post-login-transition {
-    animation: postLoginCommunityFade 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: postLoginCommunityFade 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-container.post-login-transition::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    background: radial-gradient(circle at 50% 18%, rgba(248, 195, 125, 0.16) 0%, rgba(7, 9, 18, 0.62) 40%, rgba(0, 0, 0, 0) 82%);
+    animation: postLoginOverlayReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.page-wrapper.post-login-transition-surface {
+    animation: postLoginCommunityFade 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes postLoginOverlayReveal {
+    0% {
+        opacity: 0.95;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .app-container.post-login-transition {
+        animation: none;
+    }
+    .app-container.post-login-transition::after {
+        animation: none;
+        opacity: 0;
+    }
+    .page-wrapper.post-login-transition-surface {
         animation: none;
     }
 }

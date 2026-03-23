@@ -118,8 +118,6 @@ const NewsHeadlines = () => {
                 <div className="news-headlines__item-content">
                   <span className="news-headlines__item-title">{a.title}</span>
                   <div className="news-headlines__item-meta">
-                    <span className="news-headlines__source">{a.source}</span>
-                    <span className="news-headlines__dot">·</span>
                     <span className="news-headlines__time">{timeAgo(a.publishedAt)}</span>
                     <FaExternalLinkAlt className="news-headlines__ext-icon" />
                   </div>

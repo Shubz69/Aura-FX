@@ -44,7 +44,6 @@ function normalizeForUI(data) {
     updatedAt: data.updatedAt,
     aiSessionBrief: data.aiSessionBrief || '',
     aiTradingPriorities: Array.isArray(data.aiTradingPriorities) ? data.aiTradingPriorities : [],
-    dataSources: Array.isArray(data.dataSources) ? data.dataSources : [],
   };
 }
 
@@ -52,6 +51,14 @@ const impactOptions = ['high', 'medium', 'low'];
 const directionOptions = ['up', 'down', 'neutral'];
 
 const LIVE_REFRESH_MS = 75 * 1000;
+
+function hasDetailedRiskRadarRows(items) {
+  if (!Array.isArray(items) || items.length === 0) return false;
+  return items.some((row) => {
+    if (!row || typeof row !== 'object') return false;
+    return Boolean(row.time || row.date || row.datetime || row.currency || row.impact || row.forecast || row.previous);
+  });
+}
 
 export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   const type = period === 'weekly' ? 'outlook-weekly' : 'outlook-daily';
@@ -61,7 +68,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
   const [saveSuccess, setSaveSuccess] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editDraft, setEditDraft] = useState(null);
-  /** 'saved' = admin JSON in DB; 'live' = pulled from APIs + OpenAI */
+  /** 'saved' = admin JSON in DB; 'live' = pulled from live feeds */
   const dataSourceRef = useRef('loading');
 
   useEffect(() => {
@@ -77,7 +84,21 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
         const payload = res.data?.payload;
         if (payload && typeof payload === 'object') {
           dataSourceRef.current = 'saved';
-          setData(normalizeForUI(payload));
+          const normalizedSaved = normalizeForUI(payload);
+          setData(normalizedSaved);
+          if (!hasDetailedRiskRadarRows(normalizedSaved?.riskRadar)) {
+            getMarketIntelligence({ refresh: true })
+              .then((rawLive) => {
+                if (cancelled) return;
+                const normalizedLive = normalizeForUI(rawLive);
+                if (!normalizedLive?.riskRadar || normalizedLive.riskRadar.length === 0) return;
+                setData((prev) => {
+                  if (!prev) return normalizedLive;
+                  return { ...prev, riskRadar: normalizedLive.riskRadar };
+                });
+              })
+              .catch(() => {});
+          }
           return;
         }
         dataSourceRef.current = 'live';
@@ -185,7 +206,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
     riskRadar,
     aiSessionBrief,
     aiTradingPriorities,
-    dataSources,
   } = showing;
 
   const renderRegime = () => {
@@ -359,7 +379,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
           </header>
           {!editMode && (aiSessionBrief || (aiTradingPriorities && aiTradingPriorities.length > 0)) && (
             <section className="td-deck-ai-desk-brief td-deck-mo-ai-brief" aria-label="Live desk intelligence">
-              <p className="td-deck-mo-eyebrow">Live desk intelligence (OpenAI + market data APIs)</p>
+              <p className="td-deck-mo-eyebrow">Live desk intelligence</p>
               {aiSessionBrief ? <p className="td-deck-ai-brief-body">{aiSessionBrief}</p> : null}
               {Array.isArray(aiTradingPriorities) && aiTradingPriorities.length > 0 ? (
                 <ol className="td-deck-ai-priorities">
@@ -367,11 +387,6 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
                     <li key={idx}>{line}</li>
                   ))}
                 </ol>
-              ) : null}
-              {Array.isArray(dataSources) && dataSources.length > 0 ? (
-                <p className="td-deck-ai-sources" aria-label="Data sources">
-                  Sources: {dataSources.join(' · ')}
-                </p>
               ) : null}
             </section>
           )}
@@ -398,7 +413,7 @@ export default function MarketOutlookView({ selectedDate, period, canEdit }) {
               </DashboardPanel>
             </div>
           </div>
-          {/* Forex Factory live economic calendar — daily view only */}
+          {/* Live economic calendar — daily view only */}
           {period !== 'weekly' && (
             <div className="td-outlook-ff-section td-deck-mo-ff">
               <ForexFactoryNews date={selectedDate} onlyToday={true} />

@@ -452,6 +452,7 @@ function normalizeCalendarEventToRadar(e) {
   const country = (e.country || full.country || 'US').toString();
   const forecast = full.estimate ?? full.forecast ?? full.eps ?? null;
   const previous = full.previous ?? full.prior ?? null;
+  const actual = full.actual ?? full.value ?? null;
   const sc = calendarRowScore(e);
   return {
     title: name,
@@ -462,6 +463,7 @@ function normalizeCalendarEventToRadar(e) {
     currency: currencyLabelFromCountry(country),
     forecast,
     previous,
+    actual,
     _ms: parseEventTimeMs(dateStr),
     _score: sc,
   };

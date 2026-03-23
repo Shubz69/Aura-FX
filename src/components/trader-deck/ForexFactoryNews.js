@@ -8,22 +8,53 @@ const IMPACT_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
 const IMPACT_COLOR = { high: '#7a6e62', medium: '#c9a05c', low: '#f8c37d' };
 
 const POLL_NORMAL_MS = 2 * 60 * 1000;   // 2 min baseline
-const POLL_FAST_MS   = 20 * 1000;        // 20 s when an event is within ±5 min
+const POLL_FAST_MS   = 20 * 1000;       // 20 s when an event is within ±5 min
 const SOON_WINDOW_MS = 5 * 60 * 1000;   // ±5 min = "near" window
-const TICK_MS        = 15 * 1000;        // evaluation tick
+const TICK_MS        = 1000;            // 1s tick for countdown display
 
 function loadPref(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
 }
 
+function hasActualValue(v) {
+  if (v == null) return false;
+  return String(v).trim() !== '';
+}
+
+function parseEventTimestamp(ev) {
+  const raw = ev && (ev.timestamp ?? ev.ts ?? ev.datetime);
+  if (raw == null) return null;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n > 0) return n;
+  const parsed = Date.parse(String(raw));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function getEventStatus(ev) {
-  if (ev.actual) return 'released';
-  if (!ev.timestamp) return 'upcoming';
-  const diff = ev.timestamp - Date.now();
+  if (hasActualValue(ev.actual)) return 'released';
+  const ts = parseEventTimestamp(ev);
+  if (!ts) return 'upcoming';
+  const diff = ts - Date.now();
   if (diff < 0)                  return 'overdue';   // past, no actual yet
   if (diff < 2 * 60 * 1000)     return 'imminent';  // within 2 min
   return 'upcoming';
+}
+
+function getCountdownMs(ev, nowMs = Date.now()) {
+  if (hasActualValue(ev.actual)) return null;
+  const ts = parseEventTimestamp(ev);
+  if (!ts) return null;
+  const diff = ts - nowMs;
+  if (diff <= 0 || diff > SOON_WINDOW_MS) return null;
+  return diff;
+}
+
+function formatCountdown(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const mm = String(Math.floor(total / 60)).padStart(2, '0');
+  const ss = String(total % 60).padStart(2, '0');
+  return `${mm}:${ss}`;
 }
 
 export default function ForexFactoryNews({ date, onlyToday = true }) {
@@ -64,8 +95,9 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
     precTimersRef.current = [];
     const now = Date.now();
     evts.forEach(ev => {
-      if (!ev.timestamp || ev.actual) return;             // skip released
-      const msUntil = ev.timestamp - now;
+      const ts = parseEventTimestamp(ev);
+      if (!ts || hasActualValue(ev.actual)) return;       // skip released / invalid
+      const msUntil = ts - now;
       if (msUntil <= 0 || msUntil > 12 * 60 * 60 * 1000) return; // only next 12h
       [0, 30000, 90000].forEach(offset => {
         const delay = msUntil + offset;
@@ -93,8 +125,9 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
 
       const now = Date.now();
       const isNear = eventsRef.current.some(ev => {
-        if (!ev.timestamp || ev.actual) return false;
-        return Math.abs(ev.timestamp - now) < SOON_WINDOW_MS;
+        const ts = parseEventTimestamp(ev);
+        if (!ts || hasActualValue(ev.actual)) return false;
+        return Math.abs(ts - now) < SOON_WINDOW_MS;
       });
       const pollMs = isNear ? POLL_FAST_MS : POLL_NORMAL_MS;
 
@@ -130,7 +163,11 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
     .filter(e => !onlyToday || e.date === todayStr)
     .filter(e => filterCurrencies.includes(e.currency))
     .filter(e => filterImpact.includes(e.impact))
-    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    .sort((a, b) => {
+      const ta = parseEventTimestamp(a) || 0;
+      const tb = parseEventTimestamp(b) || 0;
+      return ta - tb;
+    });
 
   const highCount = filtered.filter(e => e.impact === 'high').length;
 
@@ -240,6 +277,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
             <tbody>
               {filtered.map((ev, i) => {
                 const status = getEventStatus(ev);
+                const countdownMs = getCountdownMs(ev);
                 return (
                   <tr
                     key={i}
@@ -247,6 +285,9 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
                   >
                     <td className="td-ff-td td-ff-time">
                       {ev.time || '—'}
+                      {countdownMs != null && (
+                        <span className="td-ff-countdown">{formatCountdown(countdownMs)}</span>
+                      )}
                       {status === 'imminent' && (
                         <span className="td-ff-soon-badge">SOON</span>
                       )}
@@ -270,8 +311,10 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
                     <td className="td-ff-td td-ff-event-cell">{ev.event}</td>
                     <td className="td-ff-td td-ff-num td-ff-prev">{ev.previous ?? '—'}</td>
                     <td className="td-ff-td td-ff-num td-ff-forecast">{ev.forecast ?? '—'}</td>
-                    <td className={`td-ff-td td-ff-num td-ff-actual${ev.actual ? ' td-ff-actual--live' : ''}`}>
-                      {status === 'imminent' ? <span className="td-ff-releasing">releasing…</span> : (ev.actual ?? '—')}
+                    <td className={`td-ff-td td-ff-num td-ff-actual${hasActualValue(ev.actual) ? ' td-ff-actual--live' : ''}`}>
+                      {status === 'imminent' || status === 'overdue'
+                        ? <span className="td-ff-releasing">releasing…</span>
+                        : (hasActualValue(ev.actual) ? ev.actual : '—')}
                     </td>
                   </tr>
                 );

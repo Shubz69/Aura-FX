@@ -141,6 +141,7 @@ function AppRoutes() {
 
     const [showGDPR, setShowGDPR] = useState(false);
     const [postLoginTransitionActive, setPostLoginTransitionActive] = useState(false);
+    const [postLoginLoadingActive, setPostLoginLoadingActive] = useState(false);
 
     usePrefetchRoutes();
 
@@ -163,13 +164,19 @@ function AppRoutes() {
     useEffect(() => {
         if (!location.pathname.startsWith('/community')) {
             setPostLoginTransitionActive(false);
+            setPostLoginLoadingActive(false);
             return;
         }
         if (!consumePostLoginTransition()) return;
+        setPostLoginLoadingActive(true);
         setPostLoginTransitionActive(true);
-        const timer = setTimeout(() => setPostLoginTransitionActive(false), 520);
-        return () => clearTimeout(timer);
-    }, [location.pathname]);
+        const fadeTimer = setTimeout(() => setPostLoginTransitionActive(false), 950);
+        const gateTimer = setTimeout(() => setPostLoginLoadingActive(false), 1550);
+        return () => {
+            clearTimeout(fadeTimer);
+            clearTimeout(gateTimer);
+        };
+    }, [location.pathname, location.search]);
     const handleAgreeGDPR = () => {
         localStorage.setItem("gdprAccepted", "true");
         setShowGDPR(false);
@@ -180,6 +187,11 @@ function AppRoutes() {
         return <LoadingSpinner />;
     }
 
+    // Guaranteed login → community handoff screen on successful sign-in
+    if (postLoginLoadingActive) {
+        return <LoadingSpinner />;
+    }
+
     return (
         <div className={`app-container${postLoginTransitionActive ? ' post-login-transition' : ''}`}>
             {showGDPR && <GDPRModal onAgree={handleAgreeGDPR} />}
@@ -187,7 +199,7 @@ function AppRoutes() {
             <Navbar />
             
             {/* Main content area - page-wrapper now only contains the route content */}
-            <main className="page-wrapper">
+            <main className={`page-wrapper${postLoginTransitionActive ? ' post-login-transition-surface' : ''}`}>
                 <Suspense fallback={<PageLoadFallback />}>
                     <Routes>
                         <Route path="/" element={<Home />} />

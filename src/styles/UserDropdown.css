@@ -462,9 +462,24 @@
   }
 }
 
-@media (min-width: 769px) and (max-width: 1150px) {
+/* iPad/tablet: allow touch scroll inside dropdown (without visible scrollbar) */
+@media (min-width: 768px) and (max-width: 1366px) {
   .user-dropdown {
-    width: min(280px, calc(100vw - 32px));
-    max-width: 280px;
+    width: min(300px, calc(100vw - 24px));
+    max-width: min(300px, calc(100vw - 24px));
+    max-height: calc(100dvh - 90px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .user-dropdown::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 }

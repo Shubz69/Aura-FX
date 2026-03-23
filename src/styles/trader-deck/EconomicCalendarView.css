@@ -188,6 +188,18 @@
   white-space: nowrap;
 }
 
+.ec-countdown {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  border: 1px solid rgba(248,195,125,0.45);
+  background: rgba(248,195,125,0.12);
+  color: #f8c37d;
+  font-size: 0.62rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .ec-event-impact {
   display: flex;
   align-items: center;
@@ -241,6 +253,7 @@
 .ec-data-actual { background: rgba(34,197,94,0.12); color: #86efac; }
 .ec-data-forecast { background: rgba(234,169,96,0.12); color: #fcd9a8; }
 .ec-data-previous { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45); }
+.ec-data-live { background: rgba(245,158,11,0.16); color: #f8c37d; }
 
 .ec-source-note {
   font-size: 0.65rem;

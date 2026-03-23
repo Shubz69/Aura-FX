@@ -8,12 +8,18 @@ const IMPACT_META = {
 
 function parseItem(item) {
   if (typeof item === 'string') return { title: item, impact: null, forecast: null, previous: null, time: null, currency: null };
+  const rawImpact = item.impact ?? item.severity ?? item.importance ?? '';
+  const impact =
+    typeof rawImpact === 'number'
+      ? (rawImpact >= 3 ? 'high' : rawImpact >= 2 ? 'medium' : rawImpact >= 1 ? 'low' : null)
+      : String(rawImpact || '').toLowerCase() || null;
   return {
-    title:    item.title || item.text || item.name || '—',
-    impact:   (item.impact || item.severity || '').toLowerCase() || null,
-    forecast: item.forecast ?? item.estimate ?? null,
+    title:    item.title || item.event || item.text || item.name || '—',
+    impact,
+    forecast: item.forecast ?? item.estimate ?? item.fcst ?? null,
     previous: item.previous ?? item.prior ?? null,
-    time:     item.time || item.date || null,
+    actual: item.actual ?? item.value ?? null,
+    time:     item.time || item.datetime || item.date || null,
     currency: item.currency || item.category || null,
   };
 }
@@ -40,7 +46,7 @@ export default function RiskRadarList({ items = [] }) {
   }
 
   const parsed = items.map(parseItem);
-  const hasExtras = parsed.some((r) => r.forecast !== null || r.previous !== null || r.impact);
+  const hasExtras = parsed.some((r) => r.forecast !== null || r.previous !== null || r.actual !== null || r.impact);
 
   return (
     <div className="rr-table-wrap">
@@ -51,6 +57,7 @@ export default function RiskRadarList({ items = [] }) {
             <th className="rr-th rr-th--cur">Cur.</th>
             <th className="rr-th rr-th--impact">Impact</th>
             <th className="rr-th rr-th--event">Event</th>
+            {hasExtras && <th className="rr-th rr-th--num">Actual</th>}
             {hasExtras && <th className="rr-th rr-th--num">Forecast</th>}
             {hasExtras && <th className="rr-th rr-th--num">Previous</th>}
           </tr>
@@ -68,6 +75,7 @@ export default function RiskRadarList({ items = [] }) {
                     : <span className="rr-impact rr-impact--none">—</span>}
                 </td>
                 <td className="rr-td rr-td--event">{row.title}</td>
+                {hasExtras && <td className="rr-td rr-td--num rr-actual">{formatVal(row.actual)}</td>}
                 {hasExtras && <td className="rr-td rr-td--num rr-forecast">{formatVal(row.forecast)}</td>}
                 {hasExtras && <td className="rr-td rr-td--num rr-previous">{formatVal(row.previous)}</td>}
               </tr>
