@@ -41,21 +41,70 @@ function splitRow(line, delimiter) {
   return line.split(delimiter).map((c) => c.trim().replace(/^"|"$/g, ''));
 }
 
+/** Strip UTF-8 BOM so the first column is not corrupted. */
+function stripBom(s) {
+  if (!s || typeof s !== 'string') return s;
+  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+}
+
+/**
+ * MT5 "Save as Report" CSVs often have a multi-line preamble; the real header contains Symbol, Time, Profit/Commission.
+ */
+function findHeaderRowIndex(lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const lower = lines[i].toLowerCase();
+    if (
+      lower.includes('symbol') &&
+      lower.includes('time') &&
+      (lower.includes('profit') || lower.includes('commission'))
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/** Duplicate column names (e.g. Time/Price twice in positions report) become time, time_2, price, price_2 */
+function normalizeHeaderNames(rawNames) {
+  const counts = {};
+  return rawNames.map((raw) => {
+    let base = String(raw || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_')
+      .replace(/^_+|_+$/g, '');
+    if (!base) base = 'col';
+    counts[base] = (counts[base] || 0) + 1;
+    const n = counts[base];
+    return n === 1 ? base : `${base}_${n}`;
+  });
+}
+
 /**
  * Parse an MT5 trade history CSV.
  * MT5 exports typically have columns like:
  * Time,Deal,Symbol,Type,Direction,Volume,Price,Order,Commission,Swap,Profit,Balance,Comment
  * (comma-separated) or the same with semicolons in EU locales.
+ * Report History files may include a title block; the header row is auto-detected.
  */
 function parseMT5CSV(csvText) {
-  const lines = csvText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const raw = stripBom(String(csvText));
+  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lines.length < 2) throw new Error('CSV has no data rows');
 
-  const delimiter = detectDelimiter(lines[0]);
-  const header = splitRow(lines[0], delimiter).map((h) => h.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+  const headerIdx = findHeaderRowIndex(lines);
+  if (headerIdx < 0) {
+    throw new Error(
+      'Could not find a valid MT5 header row (expected columns like Time, Symbol, Profit). Export from MT5 as Report / CSV or remove extra rows above the table.'
+    );
+  }
+
+  const headerLine = lines[headerIdx];
+  const delimiter = detectDelimiter(headerLine);
+  const rawHeaderCells = splitRow(headerLine, delimiter).map((h) => h.trim());
+  const header = normalizeHeaderNames(rawHeaderCells);
   const trades = [];
 
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = headerIdx + 1; i < lines.length; i++) {
     const cols = splitRow(lines[i], delimiter);
     if (cols.length < 2) continue;
     const row = {};
@@ -171,7 +220,8 @@ module.exports = async (req, res) => {
     if (
       err.message.includes('No valid') ||
       err.message.includes('no data') ||
-      err.message.includes('CSV has no data')
+      err.message.includes('CSV has no data') ||
+      err.message.includes('Could not find a valid MT5 header')
     ) {
       return res.status(400).json({ success: false, message: err.message });
     }

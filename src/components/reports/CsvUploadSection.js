@@ -119,6 +119,7 @@ export default function CsvUploadSection({
       <h4 className="rp-csv-title">MT5 trade history CSV</h4>
       <p className="rp-csv-hint">
         Export from MT5: History → All History → Save as Report (CSV). Comma or semicolon exports are supported.
+        Report files that include a title block above the table (e.g. ReportHistory-*.csv) are supported — use CSV, not Excel.
       </p>
 
       {!csv ? (
