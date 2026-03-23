@@ -212,9 +212,6 @@ const ensureSettingsTable = async (db) => {
 
 const PROTECTED_CHANNEL_IDS = new Set(['welcome', 'announcements', 'levels', 'admin']);
 
-/** Run heavy DDL / INFORMATION_SCHEMA probes once per warm serverless instance (saves seconds per request). */
-let communityChannelsSchemaMigrated = false;
-
 /** Default category order — `forums` replaces legacy `trading` */
 const DEFAULT_CATEGORY_ORDER = ['announcements', 'staff', 'courses', 'forums', 'general', 'support', 'premium', 'a7fx'];
 
@@ -405,87 +402,89 @@ module.exports = async (req, res) => {
         try {
           // Create channels table if it doesn't exist
           await ensureChannelsTable(db);
-          if (!communityChannelsSchemaMigrated) {
-            await ensureChannelSchema(db);
-
-            // Add access_level column if it doesn't exist
-            try {
-              await db.execute(`
+          await ensureChannelSchema(db);
+          
+          // Add access_level column if it doesn't exist
+          try {
+            await db.execute(`
               SELECT COLUMN_NAME 
               FROM INFORMATION_SCHEMA.COLUMNS 
               WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'access_level'
             `, [process.env.MYSQL_DATABASE]).then(([columns]) => {
-                if (columns.length === 0) {
-                  return db.execute('ALTER TABLE channels ADD COLUMN access_level VARCHAR(50) DEFAULT \'open\'');
-                }
-              });
-            } catch (alterError) {
-              // Column might already exist, ignore
-              console.log('Note: access_level column check:', alterError.message);
-            }
+              if (columns.length === 0) {
+                return db.execute('ALTER TABLE channels ADD COLUMN access_level VARCHAR(50) DEFAULT \'open\'');
+              }
+            });
+          } catch (alterError) {
+            // Column might already exist, ignore
+            console.log('Note: access_level column check:', alterError.message);
+          }
 
-            // Check if channels table has the category column, if not add it
-            try {
-              const [columns] = await db.execute(`
+          // Check if channels table has the category column, if not add it
+          try {
+            // MySQL doesn't support IF NOT EXISTS for ALTER TABLE, so we check first
+            const [columns] = await db.execute(`
               SELECT COLUMN_NAME 
               FROM INFORMATION_SCHEMA.COLUMNS 
               WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'category'
             `, [process.env.MYSQL_DATABASE]);
-
-              if (columns.length === 0) {
-                await db.execute('ALTER TABLE channels ADD COLUMN category VARCHAR(100) DEFAULT NULL');
-                console.log('Added category column to channels table');
-              }
-            } catch (alterError) {
-              console.log('Note: category column check:', alterError.message);
+            
+            if (columns.length === 0) {
+              await db.execute('ALTER TABLE channels ADD COLUMN category VARCHAR(100) DEFAULT NULL');
+              console.log('Added category column to channels table');
             }
+          } catch (alterError) {
+            // Column might already exist or other error, log and continue
+            console.log('Note: category column check:', alterError.message);
+          }
 
-            try {
-              const [descColumns] = await db.execute(`
+          // Check if description column exists, add it if it doesn't
+          try {
+            const [descColumns] = await db.execute(`
               SELECT COLUMN_NAME 
               FROM INFORMATION_SCHEMA.COLUMNS 
               WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'description'
             `, [process.env.MYSQL_DATABASE]);
-
-              if (descColumns.length === 0) {
-                await db.execute('ALTER TABLE channels ADD COLUMN description TEXT DEFAULT NULL');
-                console.log('Added description column to channels table');
-              }
-            } catch (alterError) {
-              console.log('Note: description column check:', alterError.message);
+            
+            if (descColumns.length === 0) {
+              await db.execute('ALTER TABLE channels ADD COLUMN description TEXT DEFAULT NULL');
+              console.log('Added description column to channels table');
             }
+          } catch (alterError) {
+            // Column might already exist or other error, log and continue
+            console.log('Note: description column check:', alterError.message);
+          }
 
-            try {
-              const [isSystemColumns] = await db.execute(`
+          // Check if is_system_channel column exists, add it with default if it doesn't
+          try {
+            const [isSystemColumns] = await db.execute(`
               SELECT COLUMN_NAME 
               FROM INFORMATION_SCHEMA.COLUMNS 
               WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'is_system_channel'
             `, [process.env.MYSQL_DATABASE]);
-
-              if (isSystemColumns.length === 0) {
-                await db.execute('ALTER TABLE channels ADD COLUMN is_system_channel BOOLEAN DEFAULT FALSE');
-                console.log('Added is_system_channel column to channels table');
-              }
-            } catch (alterError) {
-              console.log('Note: is_system_channel column check:', alterError.message);
+            
+            if (isSystemColumns.length === 0) {
+              await db.execute('ALTER TABLE channels ADD COLUMN is_system_channel BOOLEAN DEFAULT FALSE');
+              console.log('Added is_system_channel column to channels table');
             }
+          } catch (alterError) {
+            console.log('Note: is_system_channel column check:', alterError.message);
+          }
 
-            try {
-              const [permissionColumns] = await db.execute(`
+          // Check if permission_type column exists, add it with default if it doesn't
+          try {
+            const [permissionColumns] = await db.execute(`
               SELECT COLUMN_NAME 
               FROM INFORMATION_SCHEMA.COLUMNS 
               WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'channels' AND COLUMN_NAME = 'permission_type'
             `, [process.env.MYSQL_DATABASE]);
-
-              if (permissionColumns.length === 0) {
-                await db.execute('ALTER TABLE channels ADD COLUMN permission_type VARCHAR(50) DEFAULT \'read-write\'');
-                console.log('Added permission_type column to channels table');
-              }
-            } catch (alterError) {
-              console.log('Note: permission_type column check:', alterError.message);
+            
+            if (permissionColumns.length === 0) {
+              await db.execute('ALTER TABLE channels ADD COLUMN permission_type VARCHAR(50) DEFAULT \'read-write\'');
+              console.log('Added permission_type column to channels table');
             }
-
-            communityChannelsSchemaMigrated = true;
+          } catch (alterError) {
+            console.log('Note: permission_type column check:', alterError.message);
           }
 
           // Fetch channels from database, handle NULL categories safely
@@ -597,7 +596,7 @@ module.exports = async (req, res) => {
             let entitlements = { role: 'USER', tier: 'FREE', effectiveTier: 'FREE', allowedChannelSlugs: [] };
             try {
               const userId = decoded.id != null ? String(decoded.id) : null;
-              const userRow = userId ? await applyScheduledDowngrade(userId, db) : null;
+              const userRow = userId ? await applyScheduledDowngrade(userId) : null;
               if (userRow) {
                 entitlements = getEntitlements(userRow);
                 entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, allChannels);

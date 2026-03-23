@@ -13,15 +13,6 @@
  */
 
 const axios = require('axios');
-const {
-  yahooSymbolFor,
-  COINGECKO_IDS,
-  CRYPTO_DECIMALS,
-  CRYPTO_SYMBOL_SET,
-  STOOQ_FX_PARAM,
-  FOREX_SYMBOL_SET,
-} = require('./instrument-universe');
-const { enrichSnapshotPrices } = require('./market-session');
 
 // Persistent price cache (survives between requests)
 // Key: symbol, Value: { ...priceData, timestamp }
@@ -41,20 +32,34 @@ const healthStats = {
   avgLatency: 0
 };
 
+// Provider mapping for Yahoo Finance
+const YAHOO_SYMBOLS = {
+  // NDX = Nasdaq-100 (^NDX). ^IXIC is the NASDAQ Composite — different index.
+  'SPX': '^GSPC', 'NDX': '^NDX', 'DJI': '^DJI', 'FTSE': '^FTSE',
+  'DAX': '^GDAXI', 'NIKKEI': '^N225', 'VIX': '^VIX', 'DXY': 'DX-Y.NYB',
+  'US10Y': '^TNX', 'WTI': 'CL=F', 'BRENT': 'BZ=F',
+  'BTCUSD': 'BTC-USD', 'ETHUSD': 'ETH-USD', 'SOLUSD': 'SOL-USD',
+  'XRPUSD': 'XRP-USD', 'BNBUSD': 'BNB-USD', 'ADAUSD': 'ADA-USD',
+  'DOGEUSD': 'DOGE-USD',   'EURUSD': 'EURUSD=X', 'GBPUSD': 'GBPUSD=X',
+  'USDJPY': 'JPY=X', 'USDCHF': 'CHF=X', 'AUDUSD': 'AUDUSD=X',
+  'USDCAD': 'CAD=X', 'NZDUSD': 'NZDUSD=X',
+  // Last resort for metals: COMEX futures (can diverge from spot). Prefer Stooq/Finnhub/Twelve Data.
+  'XAUUSD': 'GC=F', 'XAGUSD': 'SI=F'
+};
+
+// CoinGecko ID mapping (free, no API key, real-time crypto)
+const COINGECKO_IDS = {
+  'BTCUSD': 'bitcoin', 'ETHUSD': 'ethereum', 'SOLUSD': 'solana', 'XRPUSD': 'ripple',
+  'BNBUSD': 'binancecoin', 'ADAUSD': 'cardano', 'DOGEUSD': 'dogecoin'
+};
+
 // Finnhub symbol mapping - OANDA for forex/metals (spot), Binance for crypto (real-time)
 // Prioritized for TradingView-like accuracy
 const FINNHUB_SYMBOLS = {
   'BTCUSD': 'BINANCE:BTCUSDT', 'ETHUSD': 'BINANCE:ETHUSDT',
   'SOLUSD': 'BINANCE:SOLUSDT', 'XRPUSD': 'BINANCE:XRPUSDT',
   'BNBUSD': 'BINANCE:BNBUSDT', 'ADAUSD': 'BINANCE:ADAUSDT',
-  'DOGEUSD': 'BINANCE:DOGEUSDT', 'AVAXUSD': 'BINANCE:AVAXUSDT',
-  'DOTUSD': 'BINANCE:DOTUSDT', 'MATICUSD': 'BINANCE:MATICUSDT',
-  'LINKUSD': 'BINANCE:LINKUSDT', 'UNIUSD': 'BINANCE:UNIUSDT',
-  'ATOMUSD': 'BINANCE:ATOMUSDT', 'LTCUSD': 'BINANCE:LTCUSDT',
-  'BCHUSD': 'BINANCE:BCHUSDT', 'APTUSD': 'BINANCE:APTUSDT',
-  'ARBUSD': 'BINANCE:ARBUSDT', 'OPUSD': 'BINANCE:OPUSDT',
-  'NEARUSD': 'BINANCE:NEARUSDT', 'INJUSD': 'BINANCE:INJUSDT',
-  'EURUSD': 'OANDA:EUR_USD',
+  'DOGEUSD': 'BINANCE:DOGEUSDT', 'EURUSD': 'OANDA:EUR_USD',
   'GBPUSD': 'OANDA:GBP_USD', 'USDJPY': 'OANDA:USD_JPY',
   'USDCHF': 'OANDA:USD_CHF', 'AUDUSD': 'OANDA:AUD_USD',
   'USDCAD': 'OANDA:USD_CAD', 'NZDUSD': 'OANDA:NZD_USD',
@@ -65,12 +70,7 @@ const FINNHUB_SYMBOLS = {
 const TWELVE_DATA_SYMBOLS = {
   'BTCUSD': 'BTC/USD', 'ETHUSD': 'ETH/USD', 'SOLUSD': 'SOL/USD',
   'XRPUSD': 'XRP/USD', 'BNBUSD': 'BNB/USD', 'ADAUSD': 'ADA/USD',
-  'DOGEUSD': 'DOGE/USD', 'AVAXUSD': 'AVAX/USD', 'DOTUSD': 'DOT/USD',
-  'MATICUSD': 'MATIC/USD', 'LINKUSD': 'LINK/USD', 'UNIUSD': 'UNI/USD',
-  'ATOMUSD': 'ATOM/USD', 'LTCUSD': 'LTC/USD', 'BCHUSD': 'BCH/USD',
-  'APTUSD': 'APT/USD', 'ARBUSD': 'ARB/USD', 'OPUSD': 'OP/USD',
-  'NEARUSD': 'NEAR/USD', 'INJUSD': 'INJ/USD',
-  'EURUSD': 'EUR/USD', 'GBPUSD': 'GBP/USD',
+  'DOGEUSD': 'DOGE/USD', 'EURUSD': 'EUR/USD', 'GBPUSD': 'GBP/USD',
   'USDJPY': 'USD/JPY', 'USDCHF': 'USD/CHF', 'AUDUSD': 'AUD/USD',
   'USDCAD': 'USD/CAD', 'NZDUSD': 'NZD/USD',
   'XAUUSD': 'XAU/USD', 'XAGUSD': 'XAG/USD',
@@ -78,16 +78,28 @@ const TWELVE_DATA_SYMBOLS = {
   'GOOGL': 'GOOGL', 'META': 'META', 'TSLA': 'TSLA'
 };
 
+// Crypto symbols (CoinGecko supported)
+const CRYPTO_SYMBOLS = new Set(['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD']);
+
 // Spot instruments: prefer Finnhub (OANDA spot) / Twelve Data over Yahoo (futures/delayed)
 const SPOT_SYMBOLS = new Set([
-  ...FOREX_SYMBOL_SET,
-  'XAUUSD', 'XAGUSD',
-  ...CRYPTO_SYMBOL_SET,
+  'XAUUSD', 'XAGUSD', 'BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD', 'BNBUSD', 'ADAUSD', 'DOGEUSD',
+  'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'
 ]);
 
-/** Stooq spot FX + XAU/XAG */
-const STOOQ_PARAM_BY_SYMBOL = STOOQ_FX_PARAM;
-const STOOQ_FOREX_METALS = new Set(Object.keys(STOOQ_FX_PARAM));
+/** Stooq spot FX + XAU/XAG (daily OHLC CSV; close tracks retail spot better than Yahoo GC=F/SI=F alone). */
+const STOOQ_PARAM_BY_SYMBOL = {
+  EURUSD: 'eurusd',
+  GBPUSD: 'gbpusd',
+  USDJPY: 'usdjpy',
+  USDCHF: 'usdchf',
+  AUDUSD: 'audusd',
+  USDCAD: 'usdcad',
+  NZDUSD: 'nzdusd',
+  XAUUSD: 'xauusd',
+  XAGUSD: 'xagusd',
+};
+const STOOQ_FOREX_METALS = new Set(Object.keys(STOOQ_PARAM_BY_SYMBOL));
 
 function buildStooqPriceRow(symbol, close) {
   if (!close || !Number.isFinite(close) || close <= 0) return null;
@@ -170,10 +182,7 @@ const FALLBACK_PRICES = {
 };
 
 function getDecimals(symbol) {
-  if (DECIMALS[symbol] != null) return DECIMALS[symbol];
-  if (CRYPTO_DECIMALS[symbol] != null) return CRYPTO_DECIMALS[symbol];
-  if (FOREX_SYMBOL_SET.has(symbol)) return symbol.includes('JPY') ? 2 : 4;
-  return 2;
+  return DECIMALS[symbol] || 2;
 }
 
 function formatPrice(price, symbol) {
@@ -186,7 +195,7 @@ function formatPrice(price, symbol) {
  * Fetch from Yahoo Finance (primary provider)
  */
 async function fetchYahooPrice(symbol) {
-  const yahooSymbol = yahooSymbolFor(symbol);
+  const yahooSymbol = YAHOO_SYMBOLS[symbol] || symbol;
   
   try {
     const controller = new AbortController();
@@ -216,7 +225,6 @@ async function fetchYahooPrice(symbol) {
       const change = price - previousClose;
       const changePercent = previousClose ? ((change / previousClose) * 100) : 0;
       
-      const marketState = meta.marketState || null;
       return {
         symbol,
         price: formatPrice(price, symbol),
@@ -231,8 +239,7 @@ async function fetchYahooPrice(symbol) {
         open: meta.regularMarketOpen,
         timestamp: Date.now(),
         source: 'yahoo',
-        delayed: false,
-        marketState,
+        delayed: false
       };
     }
     return null;
@@ -295,7 +302,7 @@ const COINGECKO_CACHE_TTL = 5000; // 5s
 
 async function fetchCoinGeckoBatch() {
   if (Date.now() - coingeckoCacheTime < COINGECKO_CACHE_TTL) return coingeckoCache;
-  const ids = Object.keys(COINGECKO_IDS).filter(s => CRYPTO_SYMBOL_SET.has(s)).map(s => COINGECKO_IDS[s]).join(',');
+  const ids = Object.keys(COINGECKO_IDS).filter(s => CRYPTO_SYMBOLS.has(s)).map(s => COINGECKO_IDS[s]).join(',');
   if (!ids) return {};
   try {
     const controller = new AbortController();
@@ -482,11 +489,8 @@ async function fetchPolygonPrice(symbol) {
 
 // CoinMarketCap symbol mapping (strip USD suffix)
 const CMC_SYMBOLS = {
-  BTCUSD: 'BTC', ETHUSD: 'ETH', SOLUSD: 'SOL', XRPUSD: 'XRP',
-  BNBUSD: 'BNB', ADAUSD: 'ADA', DOGEUSD: 'DOGE', AVAXUSD: 'AVAX',
-  DOTUSD: 'DOT', MATICUSD: 'MATIC', LINKUSD: 'LINK', UNIUSD: 'UNI',
-  ATOMUSD: 'ATOM', LTCUSD: 'LTC', BCHUSD: 'BCH', APTUSD: 'APT',
-  ARBUSD: 'ARB', OPUSD: 'OP', NEARUSD: 'NEAR', INJUSD: 'INJ',
+  'BTCUSD': 'BTC', 'ETHUSD': 'ETH', 'SOLUSD': 'SOL', 'XRPUSD': 'XRP',
+  'BNBUSD': 'BNB', 'ADAUSD': 'ADA', 'DOGEUSD': 'DOGE'
 };
 
 let cmcCache = {};
@@ -618,7 +622,7 @@ async function fetchPrice(symbol, options = {}) {
   const isSpot = SPOT_SYMBOLS.has(symbol);
   let result = null;
 
-  if (CRYPTO_SYMBOL_SET.has(symbol)) {
+  if (CRYPTO_SYMBOLS.has(symbol)) {
     // Crypto: CoinGecko (free) -> CoinMarketCap -> Finnhub -> Twelve Data -> Yahoo
     result = await fetchCoinGeckoPrice(symbol);
     if (!result) result = await fetchCoinMarketCapPrice(symbol);
@@ -658,16 +662,16 @@ async function fetchPrice(symbol, options = {}) {
  */
 async function fetchPricesForSymbols(symbols) {
   if (!symbols || symbols.length === 0) return { prices: {}, timestamp: Date.now() };
-  const REQUEST_TIMEOUT_MS = 5500;
-  const CONCURRENCY = 14;
+  const REQUEST_TIMEOUT_MS = 5000;
 
   const stooqSymbols = symbols.filter((s) => STOOQ_FOREX_METALS.has(s));
   const stooqBySymbol = stooqSymbols.length > 0 ? await fetchStooqBatchMap(stooqSymbols) : {};
 
-  const cryptoSymbols = symbols.filter((s) => CRYPTO_SYMBOL_SET.has(s));
+  // Pre-fetch crypto from CoinGecko (free, no key, real-time)
+  const cryptoSymbols = symbols.filter(s => CRYPTO_SYMBOLS.has(s));
   if (cryptoSymbols.length > 0) {
     const cgPrices = await fetchCoinGeckoBatch();
-    cryptoSymbols.forEach((sym) => {
+    cryptoSymbols.forEach(sym => {
       const p = cgPrices[sym];
       if (p && p > 0) {
         priceCache.set(sym, {
@@ -681,37 +685,36 @@ async function fetchPricesForSymbols(symbols) {
           isUp: true,
           timestamp: Date.now(),
           source: 'coingecko',
-          delayed: false,
+          delayed: false
         });
       }
     });
   }
 
-  const prices = {};
-  let cursor = 0;
-
-  async function worker() {
-    while (cursor < symbols.length) {
-      const index = cursor;
-      cursor += 1;
-      const symbol = symbols[index];
-      const priceData = await Promise.race([
+  const results = await Promise.allSettled(
+    symbols.map(symbol =>
+      Promise.race([
         fetchPrice(symbol, { stooqBySymbol }),
-        new Promise((resolve) => setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT_MS)),
-      ]);
-      if (priceData && priceData.price && priceData.price !== '0.00' && parseFloat(priceData.price) > 0) {
-        prices[symbol] = priceData;
-      } else {
+        new Promise(resolve => setTimeout(() => resolve(getFallbackPrice(symbol)), REQUEST_TIMEOUT_MS + 1000))
+      ])
+    )
+  );
+  const prices = {};
+  results.forEach((result, index) => {
+    const symbol = symbols[index];
+    if (result.status === 'fulfilled' && result.value) {
+      const priceData = result.value;
+      if (!priceData.price || priceData.price === '0.00' || parseFloat(priceData.price) === 0) {
         const fallback = getFallbackPrice(symbol);
         if (fallback) prices[symbol] = fallback;
+      } else {
+        prices[symbol] = priceData;
       }
+    } else {
+      const fallback = getFallbackPrice(symbol);
+      if (fallback) prices[symbol] = fallback;
     }
-  }
-
-  const pool = Math.min(CONCURRENCY, Math.max(1, symbols.length));
-  await Promise.all(Array.from({ length: pool }, () => worker()));
-
-  enrichSnapshotPrices(prices);
+  });
   return { prices, timestamp: Date.now() };
 }
 

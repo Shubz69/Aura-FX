@@ -8,7 +8,7 @@
  * - Prices stable for the full minute, then update together
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE_URL = window.location.origin;
 const SNAPSHOT_POLL_MS = 20000; // 20 seconds - fresher updates for accuracy
@@ -23,17 +23,6 @@ let snapshotInterval = null;
 let fetchInFlight = false;
 let isConnected = false;
 let lastFetchTime = 0;
-let lastSnapshotIssueLogMs = 0;
-const SNAPSHOT_ISSUE_LOG_MS = 120000;
-
-function logSnapshotIssueOnce(statusOrTag, detail) {
-  const now = Date.now();
-  if (now - lastSnapshotIssueLogMs < SNAPSHOT_ISSUE_LOG_MS) return;
-  lastSnapshotIssueLogMs = now;
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('[markets/snapshot]', statusOrTag, detail || '');
-  }
-}
 let watchlistConfig = null;
 let activeSymbols = new Set();
 
@@ -117,13 +106,9 @@ async function fetchSnapshot() {
 
     clearTimeout(timeoutId);
 
-    let data = {};
-    try {
-      const text = await response.text();
-      if (text) data = JSON.parse(text);
-    } catch (_) {
-      data = {};
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
 
     if (data.success && data.prices && typeof data.snapshotTimestamp === 'number') {
       healthStats.avgLatency = (healthStats.avgLatency * healthStats.totalUpdates + (Date.now() - startTime)) / (healthStats.totalUpdates + 1);
@@ -156,18 +141,11 @@ async function fetchSnapshot() {
       lastFetchTime = Date.now();
       isConnected = true;
       notifyListeners();
-    } else {
-      healthStats.errors++;
-      if (!response.ok) {
-        logSnapshotIssueOnce(response.status, data?.message);
-      } else if (data.success === false || data.unavailable) {
-        logSnapshotIssueOnce('unavailable', data?.message);
-      }
     }
   } catch (error) {
+    console.error('Snapshot fetch error:', error.message);
     healthStats.errors++;
-    logSnapshotIssueOnce('network', error?.message);
-    // Keep existing data; next poll will retry
+    // Keep existing data; next 60s poll will retry
   } finally {
     fetchInFlight = false;
   }
@@ -253,18 +231,6 @@ export function useLivePrices(options = {}) {
   const [stale, setStale] = useState(false);
   
   const symbolsRef = useRef([]);
-
-  const displayNameBySymbol = useMemo(() => {
-    const m = {};
-    if (watchlist?.groups) {
-      Object.values(watchlist.groups).forEach((g) => {
-        (g.symbols || []).forEach((s) => {
-          m[s.symbol] = s.displayName || s.symbol;
-        });
-      });
-    }
-    return m;
-  }, [watchlist]);
 
   // Update prices when global data changes
   const handleUpdate = useCallback((newPrices) => {
@@ -394,18 +360,17 @@ export function useLivePrices(options = {}) {
     Object.entries(watchlist.groups).forEach(([key, group]) => {
       grouped[key] = {
         ...group,
-        prices: group.symbols.map((s) => {
+        prices: group.symbols.map(s => {
           const priceData = prices[s.symbol];
-          const marketClosed = !!priceData?.marketClosed;
-
+          
           if (priceData && priceData.price && parseFloat(priceData.price) > 0) {
             return {
               ...s,
-              ...priceData,
-              marketClosed,
+              ...priceData
             };
           }
-
+          
+          // No valid price - loading state
           return {
             ...s,
             price: null,
@@ -413,10 +378,9 @@ export function useLivePrices(options = {}) {
             changePercent: null,
             isUp: true,
             loading: true,
-            delayed: priceData?.delayed || false,
-            marketClosed,
+            delayed: priceData?.delayed || false
           };
-        }),
+        })
       };
     });
     return grouped;

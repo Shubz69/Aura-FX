@@ -1,5 +1,5 @@
 /**
- * Session copy for "All Markets" modal (forex weekend rule aligned with api/market/market-session.js).
+ * Session copy for "All Markets" modal (forex weekend rule, client-side).
  */
 
 import { DateTime } from 'luxon';
