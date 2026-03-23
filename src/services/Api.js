@@ -15,7 +15,7 @@ const getApiBaseUrl = () => {
         // Production domain currently serves marketing redirects on /api/*.
         // Route API traffic to the live app API host unless explicitly overridden.
         if (/(?:^|\.)auraxfx\.com$/i.test(window.location.hostname || '') || /(?:^|\.)auraterminal\.ai$/i.test(window.location.hostname || '')) {
-            return 'https://auraterminal.ai';
+            return 'https://www.auraterminal.ai';
         }
         return window.location.origin;
     }

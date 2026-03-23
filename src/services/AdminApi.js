@@ -10,7 +10,7 @@ const getApiBaseUrl = () => {
     }
     if (typeof window !== 'undefined') {
         if (/(?:^|\.)auraxfx\.com$/i.test(window.location.hostname || '') || /(?:^|\.)auraterminal\.ai$/i.test(window.location.hostname || '')) {
-            return 'https://auraterminal.ai';
+            return 'https://www.auraterminal.ai';
         }
         return window.location.origin;
     }

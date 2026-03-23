@@ -239,9 +239,21 @@ async function ensureTable() {
 
 // ── Handler ────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin || '';
+  const allowedOrigins = new Set([
+    'https://www.auraterminal.ai',
+    'https://auraterminal.ai',
+    'http://localhost:3000'
+  ]);
+  if (allowedOrigins.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://www.auraterminal.ai');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'OPTIONS') return res.status(200).end();
 

@@ -35,7 +35,7 @@
       "source": "/api/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Origin", "value": "https://auraterminal.ai" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://www.auraterminal.ai" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
         { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
@@ -96,6 +96,10 @@
     },
     {
       "source": "/api/auth/login",
+      "destination": "/api/auth/login.js"
+    },
+    {
+      "source": "/api/auth/login/",
       "destination": "/api/auth/login.js"
     },
     {
@@ -280,6 +284,10 @@
     },
     {
       "source": "/api/aura-analysis/platform-connect",
+      "destination": "/api/aura-analysis/platform-connect.js"
+    },
+    {
+      "source": "/api/aura-analysis/platform-connect/",
       "destination": "/api/aura-analysis/platform-connect.js"
     },
     {
