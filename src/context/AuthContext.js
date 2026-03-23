@@ -330,7 +330,8 @@ export const AuthProvider = ({ children }) => {
   // Login function - supports both email/password login and token-based login from MFA
   const login = async (emailOrToken, passwordOrRole, userData = null) => {
     try {
-      // Never set global `loading` during failed login — App would unmount Login and lose error state.
+      // Full-app loading spinner during login (transition), matching 3c1f0e3. finally{} always clears `loading`.
+      setLoading(true);
       setError(null);
 
       // Check which login method is being used
@@ -341,9 +342,7 @@ export const AuthProvider = ({ children }) => {
         persistTokens(token, localStorage.getItem('refreshToken'));
         localStorage.setItem('mfaVerified', 'true');
         setMfaVerified(true);
-        const nextUser = persistUser({ ...userData, role });
-        setLoading(false);
-        return nextUser;
+        return persistUser({ ...userData, role });
       } else {
         // This is an email/password login
         const email = emailOrToken;
@@ -384,7 +383,6 @@ export const AuthProvider = ({ children }) => {
           });
           
           // Return early to prevent further processing
-          setLoading(false);
           return data;
         }
         
@@ -518,7 +516,6 @@ export const AuthProvider = ({ children }) => {
         // ============= DETERMINISTIC ROUTING =============
         // canAccessCommunity === true → /community (plan selected or admin)
         // canAccessCommunity === false → /choose-plan (select Free/Premium/Elite)
-        setLoading(false);
         const redirectInfo = applyPostAuthRedirect();
         if (redirectInfo) {
           return data;
@@ -571,6 +568,8 @@ export const AuthProvider = ({ children }) => {
         }
       }
       throw wrappedError;
+    } finally {
+      setLoading(false);
     }
   };
 
