@@ -45,6 +45,10 @@ Thumbs.db
 # MySQL database dumps
 MySQL DB/
 
+# Local MT5 report exports (large / may contain account data)
+ReportHistory*.csv
+ReportHistory*.xlsx
+
 # Other
 server.js.backup
 _temp_aura_analysis/
