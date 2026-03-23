@@ -1,6 +1,6 @@
 /**
- * Manual metrics — Premium: CSV upload for MT5 snapshot (separate from Aura Analysis).
- * Elite/Admin: Premium-only upsell (CSV snapshot vs live Aura).
+ * Manual metrics — CSV upload for MT5 snapshot (Premium, Elite, Admin).
+ * Elite users may also use Aura Analysis for live MT5; this flow is optional manual CSV.
  */
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
@@ -93,13 +93,13 @@ function ManualMetricsEntryInner() {
   }, [eligibility, searchParams, setSearchParams]);
 
   const role = eligibility?.role;
-  const premiumFlow = role === 'premium';
+  const manualMetricsCsvEnabled = ['premium', 'elite', 'admin'].includes(role);
 
   const { csvStatus, loadingCsv } = useCsvPeriodSnapshot(
     token,
     year,
     month,
-    premiumFlow && !loading && !!eligibility
+    manualMetricsCsvEnabled && !loading && !!eligibility
   );
 
   const yearOptions = useMemo(() => {
@@ -137,30 +137,6 @@ function ManualMetricsEntryInner() {
     return <Navigate to="/reports" replace />;
   }
 
-  if (['elite', 'admin'].includes(role)) {
-    return (
-      <div className="rp-page journal-glass-panel journal-glass-panel--pad mm-entry">
-        <ReportsHubSubNav role={role} year={eligibility.currentPeriod.year} month={eligibility.currentPeriod.month} />
-        <div className="mm-upsell-card">
-          <p className="mm-upsell-kicker">Manual metrics</p>
-          <h1 className="mm-upsell-title">CSV snapshot is a Premium Performance feature</h1>
-          <p className="mm-upsell-body">
-            Upload your MT5 broker export to build a monthly snapshot dashboard under Performance &amp; DNA. Your Elite plan
-            includes <strong>Aura Analysis</strong> for live MT5 connection, execution analytics, and the full dashboard —
-            a separate product from this manual CSV flow.
-          </p>
-          <div className="mm-upsell-actions">
-            <Link to="/subscription" className="rp-btn rp-btn--secondary">View Premium</Link>
-            <Link to="/aura-analysis/ai" className="rp-btn rp-btn--primary">Open Aura Analysis</Link>
-          </div>
-          <p className="mm-upsell-note">
-            <Link to="/reports">← Back to Monthly report</Link>
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="rp-page journal-glass-panel journal-glass-panel--pad mm-entry">
       <div className="rp-header mm-entry-head">
@@ -168,13 +144,13 @@ function ManualMetricsEntryInner() {
           <p className="rp-eyebrow">Performance &amp; DNA</p>
           <h2 className="rp-title">Manual metrics</h2>
           <p className="rp-subtitle">
-            Upload your MT5 trade history CSV for the month you select. After upload, we review the file and open your
-            snapshot dashboard — separate from Aura Analysis (Elite live MT5).
+            Upload your MT5 trade history CSV for the month you select. After upload, your snapshot opens on the manual
+            metrics dashboard. Elite plans also include Aura Analysis for live MT5 — separate from this CSV flow.
           </p>
         </div>
       </div>
 
-      <ReportsHubSubNav role="premium" year={year} month={month} />
+      <ReportsHubSubNav role={role} year={year} month={month} />
 
       <div className="mm-period-row">
         <label className="mm-period-label" htmlFor="mm-year">Period</label>

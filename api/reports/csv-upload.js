@@ -1,8 +1,8 @@
 /**
  * POST /api/reports/csv-upload
- * Parses MT5 CSV export for premium users and stores it for report generation.
+ * Parses MT5 CSV export and stores it for report generation / manual metrics dashboard.
  * Body: { csv: string (raw CSV text), year: number, month: number }
- * Only premium users can call this. Elite/Admin don't need it.
+ * Premium, Elite, and Admin may upload (Elite also has Aura Analysis for live MT5 — separate).
  */
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
@@ -123,9 +123,6 @@ module.exports = async (req, res) => {
 
     if (role === 'free') {
       return res.status(403).json({ success: false, code: 'FREE_PLAN', message: 'CSV upload requires a Premium plan.' });
-    }
-    if (['elite', 'admin'].includes(role)) {
-      return res.status(400).json({ success: false, message: 'Elite/Admin accounts use automated data — CSV upload is not required.' });
     }
 
     const { year, month } = req.body || {};

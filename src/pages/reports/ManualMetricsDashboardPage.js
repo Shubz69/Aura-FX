@@ -1,5 +1,5 @@
 /**
- * Manual metrics dashboard — Premium CSV snapshot (Aura-style density, no Aura provider).
+ * Manual metrics dashboard — CSV snapshot (Aura-style density, no Aura provider).
  */
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -213,22 +213,13 @@ function ManualMetricsDashboardInner() {
         <ReportsHubSubNav role={role} year={navYear} month={navMonth} />
         <div className="m5dash-error">
           <p>{error}</p>
-          {forbiddenCode === 'USE_AURA_ANALYSIS' && (
-            <p style={{ marginTop: 12, color: 'rgba(200,198,190,0.85)' }}>
-              Elite includes live MT5 in Aura Analysis — separate from this Premium CSV snapshot.{' '}
-              <Link to="/aura-analysis/ai">Aura Analysis</Link>
-              {' · '}
-              <Link to="/subscription">Plans</Link>
-            </p>
-          )}
-          {forbiddenCode !== 'USE_AURA_ANALYSIS' && (
-            <p style={{ marginTop: 12 }}>
-              <Link to="/subscription">View Premium</Link>
-            </p>
-          )}
-          <Link to="/reports/manual-metrics" className="rp-btn rp-btn--secondary" style={{ marginTop: 16, display: 'inline-block' }}>
-            Manual metrics
-          </Link>
+          <p style={{ marginTop: 12, color: 'rgba(200,198,190,0.85)' }}>
+            <Link to="/reports/manual-metrics">Manual metrics</Link>
+            {' · '}
+            <Link to="/subscription">Plans</Link>
+            {' · '}
+            <Link to="/aura-analysis/ai">Aura Analysis</Link>
+          </p>
         </div>
       </div>
     );
@@ -275,7 +266,7 @@ function ManualMetricsDashboardInner() {
       <Link to="/reports" className="m5dash-back">← Performance &amp; DNA</Link>
 
       <header className="m5dash-head">
-        <p className="m5dash-kicker">Manual metrics · CSV snapshot · Premium</p>
+        <p className="m5dash-kicker">Manual metrics · CSV snapshot</p>
         <h1 className="m5dash-title">Dashboard — {periodLabel}</h1>
         <p className="m5dash-sub">
           Built from your uploaded broker export. Aura Analysis (Elite) is a separate live MT5 product — use the main menu

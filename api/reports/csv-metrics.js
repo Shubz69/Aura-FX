@@ -1,7 +1,7 @@
 /**
  * GET /api/reports/csv-metrics
- * Premium only — returns parsed MT5 CSV snapshot from report_csv_uploads for charting / MT5 metrics dashboard.
- * Elite/Admin should use Aura Analysis (live MT5), not CSV snapshots.
+ * Returns parsed MT5 CSV snapshot from report_csv_uploads for charting / manual metrics dashboard.
+ * Allowed for Premium, Elite, and Admin (same data store as csv-upload).
  */
 const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
@@ -158,17 +158,10 @@ module.exports = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     const role = effectiveReportsRole(user);
 
-    if (['elite', 'admin'].includes(role)) {
+    if (role === 'free') {
       return res.status(403).json({
         success: false,
-        code: 'USE_AURA_ANALYSIS',
-        message: 'Elite accounts use Aura Analysis for live MT5 metrics. Open Aura Analysis from the menu.',
-      });
-    }
-    if (role !== 'premium') {
-      return res.status(403).json({
-        success: false,
-        message: 'MT5 CSV metrics require an active Premium subscription.',
+        message: 'MT5 CSV metrics require an active subscription.',
       });
     }
 

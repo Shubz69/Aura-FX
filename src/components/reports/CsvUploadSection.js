@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const BASE_URL = process.env.REACT_APP_API_URL || '';
 
 /**
- * MT5 CSV upload for manual metrics / reports. On success, navigates to processing step.
+ * MT5 CSV upload for manual metrics. On success, navigates to the manual metrics dashboard.
  */
 export default function CsvUploadSection({
   token,
@@ -55,7 +55,7 @@ export default function CsvUploadSection({
         throw new Error(data.message || `Upload failed (${res.status})`);
       }
       onUploaded?.();
-      navigate(`/reports/manual-metrics/processing?year=${year}&month=${month}`);
+      navigate(dashboardHref);
     } catch (err) {
       setError(err.message || 'Upload failed.');
     } finally {
@@ -96,7 +96,7 @@ export default function CsvUploadSection({
         </div>
         <div className="rp-csv-done-actions">
           <Link to={dashboardHref} className="rp-btn rp-btn--primary rp-btn--sm">
-            Open manual metrics dashboard
+            Open dashboard
           </Link>
           <button
             className="rp-btn rp-btn--ghost"
@@ -156,9 +156,9 @@ export default function CsvUploadSection({
             disabled={uploading}
             type="button"
             aria-busy={uploading}
-            aria-label={uploading ? 'Uploading and parsing CSV' : 'Upload and parse MT5 CSV'}
+            aria-label={uploading ? 'Saving and opening metrics' : 'Show metrics from MT5 CSV'}
           >
-            {uploading ? 'Uploading…' : 'Upload & continue'}
+            {uploading ? 'Opening…' : 'Show metrics'}
           </button>
           <button
             className="rp-btn rp-btn--ghost"
