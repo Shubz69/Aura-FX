@@ -737,7 +737,7 @@ const AdminPanel = () => {
                     </button>
                     <button 
                       className="action-btn grant-access-btn"
-                      onClick={() => handleGrantCommunityAccess(userItem.id, userItem.email)}
+                      onClick={() => openGrantAccessModal(userItem)}
                     >
                       Grant Access
                     </button>
