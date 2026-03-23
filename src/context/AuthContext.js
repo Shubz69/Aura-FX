@@ -186,7 +186,7 @@ export const AuthProvider = ({ children }) => {
             // Run verification in background - don't block app loading
             setTimeout(async () => {
               try {
-                const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
+                const API_BASE_URL = Api.getBaseUrl() || window.location.origin;
                 const verifyResponse = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
                   method: 'GET',
                   headers: {
@@ -504,9 +504,9 @@ export const AuthProvider = ({ children }) => {
           (data.email || '').toLowerCase() === 'shubzfx@gmail.com';
         let canAccessCommunity = isAdminUser; // admins always have access as fallback
         const meController = new AbortController();
-        const meTimeout = setTimeout(() => meController.abort(), 3000);
+        const meTimeout = setTimeout(() => meController.abort(), 1200);
         try {
-          const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
+          const API_BASE_URL = Api.getBaseUrl() || window.location.origin;
           const meResponse = await fetch(`${API_BASE_URL}/api/me`, {
             method: 'GET',
             headers: {

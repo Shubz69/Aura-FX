@@ -170,8 +170,8 @@ function AppRoutes() {
         setPostLoginGateArmed(false);
         setPostLoginLoadingActive(true);
         setPostLoginTransitionActive(true);
-        const fadeTimer = setTimeout(() => setPostLoginTransitionActive(false), 950);
-        const gateTimer = setTimeout(() => setPostLoginLoadingActive(false), 1550);
+        const fadeTimer = setTimeout(() => setPostLoginTransitionActive(false), 2200);
+        const gateTimer = setTimeout(() => setPostLoginLoadingActive(false), 3000);
         return () => {
             clearTimeout(fadeTimer);
             clearTimeout(gateTimer);
