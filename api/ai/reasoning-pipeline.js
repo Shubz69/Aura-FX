@@ -433,7 +433,6 @@ function calculatePositionSize(params) {
     entryPrice,
     stopLoss,
     instrument,
-    accountCurrency: _accountCurrency = 'USD',
     usdJpy
   } = params;
   
