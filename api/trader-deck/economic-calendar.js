@@ -1,3 +1,4 @@
+require('../utils/suppress-warnings');
 /**
  * GET /api/trader-deck/economic-calendar
  * Returns economic calendar events for the next 7 days.

@@ -98,7 +98,9 @@ module.exports = async (req, res) => {
     newsCache = { data: articles, ts: Date.now() };
     return res.status(200).json({ success: true, articles, cached: false });
   } catch (e) {
-    console.warn('News fetch failed, using static fallback:', e.message);
+    if (process.env.VERBOSE_NEWS === '1') {
+      console.warn('[news] upstream failed, static headlines used:', e.message);
+    }
     const fallback = getStaticHeadlines();
     return res.status(200).json({ success: true, articles: fallback, cached: false, fallback: true });
   }

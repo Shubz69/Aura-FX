@@ -114,10 +114,29 @@ export default function TraderCVTab() {
     return sorted[0]?.label ?? '—';
   }, [breakdown]);
 
-  const rawUsername = (user?.username && String(user.username).trim()) || '';
-  const rawName = (user?.name && String(user.name).trim()) || '';
-  /** Passport headline: real name first, then username, then fallback (not @handle as the only line). */
-  const passportPrimaryName = rawName || rawUsername || 'Trader';
+  /** Prefer auth context; fall back to persisted `user` in localStorage (same source as Profile). */
+  const storedProfile = useMemo(() => {
+    try {
+      return JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('user') || '{}' : '{}');
+    } catch {
+      return {};
+    }
+  }, [user]);
+
+  const rawUsername =
+    (user?.username && String(user.username).trim()) ||
+    (storedProfile.username && String(storedProfile.username).trim()) ||
+    '';
+  const rawName =
+    (user?.name && String(user.name).trim()) ||
+    (storedProfile.name && String(storedProfile.name).trim()) ||
+    '';
+  const emailLocal =
+    (user?.email && String(user.email).split('@')[0]) ||
+    (storedProfile.email && String(storedProfile.email).split('@')[0]) ||
+    '';
+  /** Passport headline: real name first, then username, then email local-part, then fallback. */
+  const passportPrimaryName = rawName || rawUsername || emailLocal || 'Trader';
   const passportAltName =
     rawUsername && rawName && rawName.toLowerCase() !== rawUsername.toLowerCase()
       ? `@${rawUsername}`
@@ -125,19 +144,19 @@ export default function TraderCVTab() {
 
   const passportAvatarSource = useMemo(() => {
     const fromUser = user?.avatar && String(user.avatar).trim();
-    if (typeof window === 'undefined') return fromUser || null;
+    const fromStored = storedProfile.avatar && String(storedProfile.avatar).trim();
+    if (typeof window === 'undefined') return fromUser || fromStored || null;
     try {
       if (user?.id != null) {
         const dedicated = localStorage.getItem(`user_avatar_${user.id}`);
         if (dedicated && dedicated.trim()) return dedicated.trim();
       }
-      const stored = JSON.parse(localStorage.getItem('user') || '{}');
-      if (stored.avatar && String(stored.avatar).trim()) return String(stored.avatar).trim();
+      if (fromStored) return fromStored;
     } catch (_) {
       /* ignore */
     }
-    return fromUser || null;
-  }, [user?.id, user?.avatar]);
+    return fromUser || fromStored || null;
+  }, [user?.id, user?.avatar, storedProfile]);
 
   const passportAvatarUrl = resolveAvatarUrlForUi(passportAvatarSource || '');
   const showPassportPhoto = Boolean(passportAvatarUrl);

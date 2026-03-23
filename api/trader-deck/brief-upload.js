@@ -1,12 +1,31 @@
 /**
  * Trader Deck brief upload (admin only).
- * POST body: { date, period, title, fileBase64, fileName, mimeType }
- * File stored in trader_deck_briefs.file_data (LONGBLOB). No size limit for admins.
- * Note: Vercel/serverless may enforce request body limits (e.g. 4.5MB–50MB); increase in project settings if needed.
+ *
+ * Single POST: { date, period, title, fileBase64, fileName, mimeType } — keep payload under ~4.5MB (Vercel body limit).
+ *
+ * Chunked (large files):
+ *   1) { action: 'chunk', token, chunkIndex, totalChunks, chunkBase64 }
+ *   2) { action: 'finalize', token, date, period, title, fileName, mimeType, totalChunks }
  */
 
 const { executeQuery, addColumnIfNotExists } = require('../db');
 const { verifyToken } = require('../utils/auth');
+
+async function ensureChunkBufferTable() {
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS trader_deck_brief_chunks (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      token VARCHAR(64) NOT NULL,
+      chunk_index INT NOT NULL,
+      user_id INT NOT NULL,
+      chunk_data LONGBLOB NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_token_idx (token, chunk_index),
+      KEY idx_token (token),
+      KEY idx_created (created_at)
+    )
+  `);
+}
 
 async function ensureBriefsTable() {
   await executeQuery(`
@@ -59,12 +78,104 @@ module.exports = async (req, res) => {
 
   try {
     await ensureBriefsTable();
+    await ensureChunkBufferTable();
   } catch (err) {
     console.error('Trader deck brief-upload ensureTable:', err.message);
     return res.status(500).json({ success: false, message: 'Database error' });
   }
 
   const body = parseBody(req);
+  const userId = Number(admin.decoded.id);
+
+  /* ── Chunked upload (bypasses per-request body size limit) ── */
+  if (body.action === 'chunk') {
+    const token = (body.token || '').toString().trim().slice(0, 64);
+    const chunkIndex = Number(body.chunkIndex);
+    const totalChunks = Number(body.totalChunks);
+    const chunkBase64 = body.chunkBase64;
+    if (!token || !Number.isFinite(chunkIndex) || chunkIndex < 0) {
+      return res.status(400).json({ success: false, message: 'Invalid chunk request' });
+    }
+    if (!Number.isFinite(totalChunks) || totalChunks < 1 || totalChunks > 500) {
+      return res.status(400).json({ success: false, message: 'Invalid totalChunks' });
+    }
+    if (!chunkBase64 || typeof chunkBase64 !== 'string') {
+      return res.status(400).json({ success: false, message: 'Missing chunk data' });
+    }
+    const base64 = chunkBase64.replace(/^data:[^;]+;base64,/, '');
+    let buf;
+    try {
+      buf = Buffer.from(base64, 'base64');
+    } catch (e) {
+      return res.status(400).json({ success: false, message: 'Invalid base64 chunk' });
+    }
+    if (buf.length === 0) {
+      return res.status(400).json({ success: false, message: 'Empty chunk' });
+    }
+    try {
+      await executeQuery(
+        `INSERT INTO trader_deck_brief_chunks (token, chunk_index, user_id, chunk_data) VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE chunk_data = VALUES(chunk_data), user_id = VALUES(user_id)`,
+        [token, chunkIndex, userId, buf]
+      );
+      await executeQuery(`DELETE FROM trader_deck_brief_chunks WHERE created_at < DATE_SUB(NOW(), INTERVAL 6 HOUR)`).catch(() => {});
+      return res.status(200).json({ success: true, chunkIndex, totalChunks });
+    } catch (err) {
+      console.error('Trader deck brief-upload chunk:', err.message);
+      return res.status(500).json({ success: false, message: 'Failed to store chunk' });
+    }
+  }
+
+  if (body.action === 'finalize') {
+    const token = (body.token || '').toString().trim().slice(0, 64);
+    const totalChunks = Number(body.totalChunks);
+    const date = (body.date || '').trim().slice(0, 10);
+    const period = (body.period || 'daily').toLowerCase() === 'weekly' ? 'weekly' : 'daily';
+    const title = (body.title || 'Brief').toString().trim().slice(0, 255) || 'Brief';
+    const fileName = (body.fileName || '').toString().trim().slice(0, 255);
+    const mimeType = (body.mimeType || 'application/octet-stream').toString().trim().slice(0, 128);
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Missing token' });
+    }
+    if (!Number.isFinite(totalChunks) || totalChunks < 1) {
+      return res.status(400).json({ success: false, message: 'Invalid totalChunks' });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ success: false, message: 'Valid date (YYYY-MM-DD) required' });
+    }
+    try {
+      const [rows] = await executeQuery(
+        `SELECT chunk_index, chunk_data, user_id FROM trader_deck_brief_chunks WHERE token = ? ORDER BY chunk_index ASC`,
+        [token]
+      );
+      if (!rows || rows.length !== totalChunks) {
+        return res.status(400).json({
+          success: false,
+          message: `Expected ${totalChunks} chunk(s), found ${rows?.length || 0}. Retry the upload.`,
+        });
+      }
+      for (let i = 0; i < rows.length; i++) {
+        if (Number(rows[i].chunk_index) !== i) {
+          return res.status(400).json({ success: false, message: 'Chunk sequence error — retry upload.' });
+        }
+        if (Number(rows[i].user_id) !== userId) {
+          return res.status(403).json({ success: false, message: 'Chunk ownership mismatch' });
+        }
+      }
+      const fileBuffer = Buffer.concat(rows.map((r) => r.chunk_data));
+      const [result] = await executeQuery(
+        `INSERT INTO trader_deck_briefs (date, period, title, file_url, mime_type, file_data) VALUES (?, ?, ?, ?, ?, ?)`,
+        [date, period, title, null, mimeType || null, fileBuffer]
+      );
+      await executeQuery(`DELETE FROM trader_deck_brief_chunks WHERE token = ?`, [token]);
+      const id = result.insertId;
+      return res.status(200).json({ success: true, id, date, period, title });
+    } catch (err) {
+      console.error('Trader deck brief-upload finalize:', err.message);
+      return res.status(500).json({ success: false, message: 'Failed to finalize upload' });
+    }
+  }
+
   const date = (body.date || '').trim().slice(0, 10);
   const period = (body.period || 'daily').toLowerCase() === 'weekly' ? 'weekly' : 'daily';
   const title = (body.title || 'Brief').toString().trim().slice(0, 255) || 'Brief';

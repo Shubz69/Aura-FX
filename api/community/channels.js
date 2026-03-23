@@ -565,7 +565,8 @@ module.exports = async (req, res) => {
             let entitlements = { role: 'USER', tier: 'FREE', effectiveTier: 'FREE', allowedChannelSlugs: [] };
             try {
               const userId = decoded.id != null ? String(decoded.id) : null;
-              const userRow = userId ? await applyScheduledDowngrade(userId) : null;
+              // Pass same DB connection — pool is often size 1 on Vercel; nested executeQuery() deadlocks → 504
+              const userRow = userId ? await applyScheduledDowngrade(userId, db) : null;
               if (userRow) {
                 entitlements = getEntitlements(userRow);
                 entitlements.allowedChannelSlugs = getAllowedChannelSlugs(entitlements, allChannels);

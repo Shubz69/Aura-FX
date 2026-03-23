@@ -6,7 +6,8 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Api from '../../services/Api';
 import { FaEye, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
-const MAX_UPLOAD_BYTES = 18 * 1024 * 1024; // client guard; serverless may still cap body size
+/** Client cap (DB LONGBLOB); large files use chunked uploads to avoid HTTP 413 on Vercel. */
+const MAX_UPLOAD_BYTES = 48 * 1024 * 1024;
 
 function googleViewerEmbedUrl(fileUrl) {
   const u = (fileUrl || '').trim();
@@ -113,12 +114,12 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
       .finally(() => setUploading(false));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      setError(`File is too large (max ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB on this deployment). Use “Add link” or a smaller PDF.`);
+      setError(`File is too large (max ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB). Use “Add link” or a smaller PDF.`);
       return;
     }
     const title = uploadTitle.trim() || file.name.replace(/\.[^/.]+$/, '') || 'Brief';
@@ -126,32 +127,23 @@ export default function MarketIntelligenceBriefsView({ selectedDate, period, can
     setUploading(true);
     setError(null);
     setAddSuccess(null);
-    const reader = new FileReader();
-    reader.onerror = () => {
-      setError('Could not read the file. Try another file or use a link.');
+    try {
+      await Api.uploadTraderDeckBriefFile(file, { date: dateStr, period, title });
+      setUploadTitle('');
+      setAddSuccess(`Saved for ${dateStr}. Use the calendar to pick that day anytime.`);
+      setTimeout(() => setAddSuccess(null), 4000);
+      const res = await Api.getTraderDeckContent(type, dateStr);
+      setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []);
+    } catch (err) {
+      const st = err.response?.status;
+      setError(
+        st === 413
+          ? 'Request was too large for the server. Try again — large files upload in chunks automatically; if this persists, use “Add link” instead.'
+          : err.response?.data?.message || err.message || 'Upload failed'
+      );
+    } finally {
       setUploading(false);
-    };
-    reader.onload = () => {
-      const base64 = typeof reader.result === 'string' ? reader.result.replace(/^data:[^;]+;base64,/, '') : '';
-      Api.uploadTraderDeckBrief({
-        date: dateStr,
-        period,
-        title,
-        fileBase64: base64,
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-      })
-        .then(() => {
-          setUploadTitle('');
-          setAddSuccess(`Saved for ${dateStr}. Use the calendar to pick that day anytime.`);
-          setTimeout(() => setAddSuccess(null), 4000);
-          return Api.getTraderDeckContent(type, dateStr);
-        })
-        .then((res) => setBriefs(Array.isArray(res.data?.briefs) ? res.data.briefs : []))
-        .catch((err) => setError(err.response?.data?.message || err.message || 'Upload failed'))
-        .finally(() => setUploading(false));
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleDelete = (id) => {

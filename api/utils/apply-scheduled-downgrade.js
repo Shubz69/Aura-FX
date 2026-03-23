@@ -23,6 +23,41 @@ async function runUserSql(dbConn, query, params = []) {
 
 async function ensureDowngradeColumns(dbConn = null) {
   if (downgradeColumnsReady) return;
+  const schema = process.env.MYSQL_DATABASE;
+  if (schema && dbConn && typeof dbConn.execute === 'function') {
+    try {
+      const [colRows] = await runUserSql(
+        dbConn,
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users'
+         AND COLUMN_NAME IN ('cancel_at_period_end','downgrade_to_plan')`,
+        [schema]
+      );
+      const have = new Set((colRows || []).map((r) => r.COLUMN_NAME));
+      if (have.has('cancel_at_period_end') && have.has('downgrade_to_plan')) {
+        downgradeColumnsReady = true;
+        return;
+      }
+      if (!have.has('cancel_at_period_end')) {
+        try {
+          await runUserSql(dbConn, 'ALTER TABLE users ADD COLUMN cancel_at_period_end BOOLEAN DEFAULT FALSE');
+        } catch (alterErr) {
+          if (!isDuplicateColumnError(alterErr)) throw alterErr;
+        }
+      }
+      if (!have.has('downgrade_to_plan')) {
+        try {
+          await runUserSql(dbConn, 'ALTER TABLE users ADD COLUMN downgrade_to_plan VARCHAR(50) DEFAULT NULL');
+        } catch (alterErr) {
+          if (!isDuplicateColumnError(alterErr)) throw alterErr;
+        }
+      }
+      downgradeColumnsReady = true;
+      return;
+    } catch (schemaErr) {
+      /* fall through to legacy probe */
+    }
+  }
   try {
     await runUserSql(dbConn, 'SELECT cancel_at_period_end, downgrade_to_plan FROM users LIMIT 1');
     downgradeColumnsReady = true;

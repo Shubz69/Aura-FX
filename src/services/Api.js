@@ -15,6 +15,22 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+/** Raw file size above this uses chunked POSTs so each request stays under Vercel ~4.5MB body limit. */
+const BRIEF_SINGLE_UPLOAD_MAX_RAW = 2 * 1024 * 1024;
+const BRIEF_CHUNK_RAW = 2 * 1024 * 1024;
+
+function readBlobAsBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+            const s = typeof r.result === 'string' ? r.result.replace(/^data:[^;]+;base64,/, '') : '';
+            resolve(s);
+        };
+        r.onerror = () => reject(new Error('File read failed'));
+        r.readAsDataURL(blob);
+    });
+}
+
 // List of endpoints that should be accessible without authentication
 const PUBLIC_ENDPOINTS = [
     '/api/courses',
@@ -790,6 +806,73 @@ const Api = {
             maxContentLength: 50 * 1024 * 1024,
             timeout: 120000,
         });
+    },
+    /**
+     * Upload a brief file; uses chunked API when file is large (avoids HTTP 413 on Vercel).
+     */
+    uploadTraderDeckBriefFile: async (file, { date, period, title }) => {
+        const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+        const axiosOpts = {
+            headers,
+            maxBodyLength: 50 * 1024 * 1024,
+            maxContentLength: 50 * 1024 * 1024,
+            timeout: 120000,
+        };
+        const safeTitle = (title || '').trim() || file.name.replace(/\.[^/.]+$/, '') || 'Brief';
+        const meta = { date, period, title: safeTitle };
+
+        if (!file || file.size <= BRIEF_SINGLE_UPLOAD_MAX_RAW) {
+            const fileBase64 = await readBlobAsBase64(file);
+            return axios.post(
+                `${API_BASE_URL}/api/trader-deck/brief-upload`,
+                {
+                    ...meta,
+                    fileBase64,
+                    fileName: file.name,
+                    mimeType: file.type || 'application/octet-stream',
+                },
+                axiosOpts
+            );
+        }
+
+        const uploadToken =
+            typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : `u-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+        const totalChunks = Math.ceil(file.size / BRIEF_CHUNK_RAW);
+        for (let i = 0; i < totalChunks; i++) {
+            const slice = file.slice(i * BRIEF_CHUNK_RAW, (i + 1) * BRIEF_CHUNK_RAW);
+            const chunkBase64 = await readBlobAsBase64(slice);
+            await axios.post(
+                `${API_BASE_URL}/api/trader-deck/brief-upload`,
+                {
+                    action: 'chunk',
+                    token: uploadToken,
+                    chunkIndex: i,
+                    totalChunks,
+                    chunkBase64,
+                },
+                axiosOpts
+            );
+        }
+        return axios.post(
+            `${API_BASE_URL}/api/trader-deck/brief-upload`,
+            {
+                action: 'finalize',
+                token: uploadToken,
+                totalChunks,
+                date: meta.date,
+                period: meta.period,
+                title: meta.title,
+                fileName: file.name,
+                mimeType: file.type || 'application/octet-stream',
+            },
+            axiosOpts
+        );
     },
     deleteTraderDeckBrief: (id) => {
         const token = localStorage.getItem('token');

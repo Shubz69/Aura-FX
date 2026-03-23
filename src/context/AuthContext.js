@@ -111,9 +111,28 @@ export const AuthProvider = ({ children }) => {
     const merged = { ...existing, ...safeUser };
     if (merged.level === undefined && existing.level != null) merged.level = existing.level;
     if (merged.xp === undefined && existing.xp != null) merged.xp = existing.xp;
+    // Token-only refresh (id + email + role) must not wipe profile fields already in localStorage
+    const preserveKeys = ['username', 'name', 'avatar', 'phone', 'address', 'timezone'];
+    for (const k of preserveKeys) {
+      const incoming = safeUser[k];
+      const empty =
+        incoming === undefined ||
+        incoming === null ||
+        (typeof incoming === 'string' && incoming.trim() === '');
+      if (empty && existing[k] != null && String(existing[k]).trim() !== '') {
+        merged[k] = existing[k];
+      }
+    }
     setUserInLocalStorage(merged);
-    setUser(fullUser);
-    return fullUser;
+    const uiUser = {
+      ...resolveUserInfo(merged),
+      level: merged.level,
+      xp: merged.xp,
+      login_streak: merged.login_streak,
+      bio: merged.bio,
+    };
+    setUser(uiUser);
+    return resolveUserInfo(merged);
   }, []);
 
   // Check if user has a verified session in localStorage

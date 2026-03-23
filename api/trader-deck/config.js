@@ -15,8 +15,8 @@ function getConfig() {
 
   if (!configValidated) {
     const missing = REQUIRED_KEYS.filter((k) => !(process.env[k] || '').trim());
-    if (missing.length > 0) {
-      console.warn('[trader-deck] Missing env keys (dashboard may use fallbacks):', missing.join(', '));
+    if (missing.length > 0 && process.env.TRADER_DECK_LOG_MISSING_KEYS === '1') {
+      console.warn('[trader-deck] Missing env keys (set in Vercel → Settings → Env):', missing.join(', '));
     }
     configValidated = true;
   }
