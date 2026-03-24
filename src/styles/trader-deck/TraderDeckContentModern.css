@@ -170,13 +170,27 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-/* World clocks — match period row glass / silver border */
-.journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clock {
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(160, 185, 240, 0.22);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+/* World clocks — top rail analog faces (rim glow + label) */
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-world-clocks-rail {
+  border-bottom: 1px solid rgba(160, 185, 240, 0.12);
+  margin-bottom: 4px;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-analog-clock__face-wrap {
+  filter: drop-shadow(0 0 12px rgba(100, 130, 220, 0.15)) drop-shadow(0 4px 16px rgba(0, 0, 0, 0.45));
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-analog-clock__rim-outer {
+  stroke: rgba(175, 200, 255, 0.42) !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-analog-clock__dial {
+  fill: rgba(6, 10, 24, 0.96) !important;
+  stroke: rgba(160, 185, 240, 0.28) !important;
+}
+
+.journal-page .td-deck-with-tabs.td-layout-page .td-deck-analog-clock__city {
+  color: rgba(255, 255, 255, 0.58) !important;
 }
 
 /* Main tab rail minimum touch target */

@@ -147,6 +147,7 @@ export default function TraderDeck() {
 
       <div className="td-deck-layout">
         <div className="td-deck-tab-zone" aria-label="Trader Desk navigation">
+          <TraderDeckWorldClocks />
           <header className="td-deck-header td-deck-header--tab-zone">
             <nav className="td-deck-header-nav td-deck-header-left td-deck-main-tab-rail" aria-label="Trader Desk sections">
               <button
@@ -201,7 +202,6 @@ export default function TraderDeck() {
                 Weekly
               </button>
             </nav>
-            <TraderDeckWorldClocks />
           </div>
         </div>
 
