@@ -4,7 +4,8 @@ require('../utils/suppress-warnings');
  * Returns economic calendar events for the next 7 days.
  * Priority chain:
  *   1. Forex Factory JSON (faireconomy CDN — schedule/titles; **no actuals in JSON**)
- *   2. Merge actuals from FMP + Trading Economics (matched by time ±6m, currency, title)
+ *   2. Merge actuals from FMP + Trading Economics (matched by time ±MATCH_WINDOW, currency, title)
+ *      Set FMP_API_KEY (and optionally TRADING_ECONOMICS_API_KEY) in production for reliable actuals.
  *   3. If still missing (post-release): Forex Factory **HTML** scrape per calendar day
  *   4. Else FMP-only / TE-only / static fallback
  * Cached ~45s server-side (bump CACHE_KEY when changing merge logic).
@@ -18,7 +19,7 @@ const CACHE_KEY = 'trader-deck:economic-calendar:v7';
 const CACHE_TTL_MS = 45 * 1000; // 45 s — fresher calendar for release times
 const SCRAPE_DAY_CACHE_MS = 35 * 1000; // per-day HTML scrape (actuals) — short TTL
 /** FF + FMP rows must align; naive API datetimes were parsed as UTC and missed by 4–5h — keep a generous window */
-const MATCH_WINDOW_MS = 20 * 60 * 1000;
+const MATCH_WINDOW_MS = 25 * 60 * 1000;
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 

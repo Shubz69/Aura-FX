@@ -53,7 +53,35 @@ export const SEED_MARKET_INTELLIGENCE = {
   ],
   marketChangesToday: ['USD strength increased after macro repricing', 'Gold reacted to real-yield and risk tone', 'Equities lost momentum into later sessions', 'Crypto stayed defensive versus risk benchmarks'],
   traderFocus: ['Avoid adding risk before high-impact events', 'Watch bond yields for equity/gold inflections', 'Expect volatility into session opens', 'Reduce risk when events cluster', 'Use confirmation-based entries'],
-  riskRadar: ['Upcoming CPI Report', 'Fed Speakers Today', 'Geopolitical Tensions'],
+  riskRadar: [
+    {
+      title: 'US CPI y/y',
+      time: '08:30',
+      currency: 'USD',
+      impact: 'high',
+      forecast: '3.2%',
+      previous: '3.1%',
+      actual: null,
+    },
+    {
+      title: 'Fed speakers (panel)',
+      time: '14:00',
+      currency: 'USD',
+      impact: 'medium',
+      forecast: null,
+      previous: null,
+      actual: null,
+    },
+    {
+      title: 'ECB deposit rate',
+      time: '12:45',
+      currency: 'EUR',
+      impact: 'high',
+      forecast: '4.50%',
+      previous: '4.50%',
+      actual: null,
+    },
+  ],
   riskEngine: {
     score: 58,
     level: 'Moderate',
@@ -67,10 +95,20 @@ function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
-/** Preserve API risk radar rows (time, impact, actuals); strings kept for seed/legacy. */
+/** Preserve API risk radar rows (time, impact, actuals); legacy strings become minimal objects. */
 function normalizeRiskRadarItem(x) {
   if (x == null) return '';
-  if (typeof x === 'string') return x;
+  if (typeof x === 'string') {
+    return {
+      title: x,
+      impact: 'medium',
+      currency: 'GLB',
+      time: null,
+      forecast: null,
+      previous: null,
+      actual: null,
+    };
+  }
   if (typeof x !== 'object') return '';
   const rawImpact = x.impact ?? x.severity ?? '';
   const impact =
@@ -81,12 +119,12 @@ function normalizeRiskRadarItem(x) {
           ? 'medium'
           : rawImpact >= 1
             ? 'low'
-            : ''
-      : String(rawImpact || '').toLowerCase();
+            : 'medium'
+      : String(rawImpact || '').toLowerCase() || 'medium';
   return {
     title: x.title || x.event || x.text || x.name || '—',
     time: x.time ?? x.date ?? x.datetime ?? null,
-    impact: impact || null,
+    impact: impact || 'medium',
     forecast: x.forecast ?? x.estimate ?? x.fcst ?? null,
     previous: x.previous ?? x.prior ?? null,
     actual: x.actual ?? x.value ?? null,

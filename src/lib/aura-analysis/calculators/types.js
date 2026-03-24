@@ -13,7 +13,9 @@
  * @property {number} stop
  * @property {number} takeProfit
  * @property {'buy' | 'sell'} direction
- * @property {number} [usdJpy] - USD/JPY rate; required for JPY crosses (EURJPY, GBPJPY) for USD pip value
+ * @property {string} [accountCurrency] - ISO code; balance and risk amount interpreted in this currency (default USD)
+ * @property {Record<string, number>} [fxRates] - hub pairs from snapshot, e.g. EURUSD, GBPUSD, USDJPY (USD per unit of base where applicable)
+ * @property {number} [usdJpy] - USD/JPY rate; required for JPY crosses (EURJPY, GBPJPY) for USD pip value when not in snapshot
  */
 
 /**

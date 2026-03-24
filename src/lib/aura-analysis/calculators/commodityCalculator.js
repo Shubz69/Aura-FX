@@ -1,4 +1,5 @@
 import { roundToStep } from './utils';
+import { getRiskAmountUsd, convertUsdPnLToAccount } from './accountCurrency';
 
 /**
  * @param {import('./types').CalculatorInput} input
@@ -7,7 +8,11 @@ import { roundToStep } from './utils';
  */
 export function calculateCommodity(input, spec) {
   const warnings = [];
-  const riskAmount = (input.accountBalance * input.riskPercent) / 100;
+  const { riskUsd, riskAccount } = getRiskAmountUsd(input);
+  const riskAmount = riskAccount;
+  if (riskUsd == null) {
+    warnings.push('Load FX rates (live snapshot) or use USD account currency to size this trade.');
+  }
   const stopDistancePrice = Math.abs(input.entry - input.stop);
   const takeProfitDistancePrice = Math.abs(input.takeProfit - input.entry);
   if (stopDistancePrice === 0) {
@@ -16,7 +21,7 @@ export function calculateCommodity(input, spec) {
   const riskReward = takeProfitDistancePrice / stopDistancePrice;
   const contractSize = spec.contractSize ?? 100;
   const dollarRiskPerLot = stopDistancePrice * contractSize;
-  const lots = riskAmount / dollarRiskPerLot;
+  const lots = (riskUsd != null ? riskUsd : 0) / dollarRiskPerLot;
   const lotStep = spec.lotStep ?? 0.01;
   let positionSize = Math.max(0, roundToStep(lots, lotStep));
 
@@ -32,8 +37,9 @@ export function calculateCommodity(input, spec) {
     warnings.push(`Position size ${positionSize} exceeds maximum ${spec.maxLot} lots.`);
   }
 
-  const potentialLoss = positionSize * dollarRiskPerLot;
-  const potentialProfit = positionSize * takeProfitDistancePrice * contractSize;
+  const potentialLossUsd = positionSize * dollarRiskPerLot;
+  const potentialProfitUsd = positionSize * takeProfitDistancePrice * contractSize;
+  const { potentialProfit, potentialLoss } = convertUsdPnLToAccount(potentialProfitUsd, potentialLossUsd, input);
   const rMultiple = riskReward;
   const pointSize = spec.pointSize ?? 1;
   const stopPoints = stopDistancePrice / pointSize;

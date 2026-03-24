@@ -4,16 +4,18 @@ import { FaPlus } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Api from '../../../services/Api';
 import { useTradeValidatorAccount } from '../../../context/TradeValidatorAccountContext';
+import { formatMoneyAccount } from '../../../lib/aura-analysis/formatAccountCurrency';
 import '../../../styles/aura-analysis/AuraTabSection.css';
 import '../../../styles/aura-analysis/Overview.css';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-function formatPnL(n) {
-  if (n == null || Number.isNaN(n)) return '$0';
+function formatPnL(n, currency = 'USD') {
+  if (n == null || Number.isNaN(Number(n))) return formatMoneyAccount(0, currency);
   const v = Number(n);
-  if (v >= 0) return `+$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  return `-$${Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const s = formatMoneyAccount(v, currency);
+  if (v > 0) return `+${s}`;
+  return s;
 }
 
 function computeKpis(trades = [], pnlData = {}) {
@@ -102,6 +104,11 @@ export default function Overview() {
   };
 
   const kpis = useMemo(() => computeKpis(trades, pnlData), [trades, pnlData]);
+
+  const overviewCurrency = useMemo(() => {
+    const a = accounts.find((x) => Number(x.id) === Number(selectedAccountId));
+    return a?.accountCurrency || 'USD';
+  }, [accounts, selectedAccountId]);
 
   const yearMonth = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
   const monthTrades = useMemo(
@@ -195,8 +202,12 @@ export default function Overview() {
               type="button"
               className={`aura-overview-account-pill ${Number(selectedAccountId) === Number(a.id) ? 'active' : ''}`}
               onClick={() => setSelectedAccountId(a.id)}
+              title={a.accountCurrency ? `Denomination: ${a.accountCurrency}` : undefined}
             >
               {a.name || `Account ${a.id}`}
+              {a.accountCurrency ? (
+                <span className="aura-overview-account-ccy"> {a.accountCurrency}</span>
+              ) : null}
             </button>
           ))}
         </div>
@@ -223,7 +234,7 @@ export default function Overview() {
         <div className="aura-overview-kpi-card">
           <span className="aura-overview-kpi-label">Total PnL</span>
           <span className={`aura-overview-kpi-value ${kpis.totalPnL >= 0 ? 'aura-overview-kpi-value--green' : 'aura-overview-kpi-value--red'}`}>
-            {formatPnL(kpis.totalPnL)}
+            {formatPnL(kpis.totalPnL, overviewCurrency)}
           </span>
         </div>
         <div className="aura-overview-kpi-card">
@@ -253,7 +264,7 @@ export default function Overview() {
           </div>
           <div className="aura-overview-monthly-summary">
             <span className={`aura-overview-monthly-pnl ${monthPnL >= 0 ? 'aura-overview-kpi-value--green' : 'aura-overview-kpi-value--red'}`}>
-              {formatPnL(monthPnL)}
+              {formatPnL(monthPnL, overviewCurrency)}
             </span>
             <span className="aura-overview-monthly-meta">
               {monthTrades.length} trades {monthWins > 0 || monthLosses > 0 ? ` · ${monthWins}W ${monthLosses}L` : ''}
@@ -284,13 +295,13 @@ export default function Overview() {
                 key={cell.day}
                 className={`aura-overview-cal-day ${cell.pnl != null ? (cell.pnl >= 0 ? 'aura-overview-cal-day--win' : 'aura-overview-cal-day--loss') : ''} ${isCurrentMonth && cell.day === todayDate ? 'aura-overview-cal-day--today' : ''} ${isSelected(cell) ? 'aura-overview-cal-day--selected' : ''}`}
                 onClick={() => handleDayClick(cell)}
-                aria-label={`Day ${cell.day}${cell.pnl != null ? `, PnL ${formatPnL(cell.pnl)}` : ''}`}
+                aria-label={`Day ${cell.day}${cell.pnl != null ? `, PnL ${formatPnL(cell.pnl, overviewCurrency)}` : ''}`}
                 aria-pressed={isSelected(cell)}
               >
                 <span className="aura-overview-cal-num">{cell.day}</span>
                 {cell.pnl != null && (
                   <span className={`aura-overview-cal-pnl ${cell.pnl >= 0 ? 'positive' : 'negative'}`}>
-                    {formatPnL(cell.pnl)}
+                    {formatPnL(cell.pnl, overviewCurrency)}
                   </span>
                 )}
               </button>
@@ -313,7 +324,7 @@ export default function Overview() {
                   <li key={t.id || idx} className="aura-overview-selected-day-item">
                     <span className="aura-overview-selected-day-pair">{t.pair || '—'}</span>
                     <span className={`aura-overview-selected-day-pnl ${(Number(t.pnl) || 0) >= 0 ? 'positive' : 'negative'}`}>
-                      {formatPnL(t.pnl)}
+                      {formatPnL(t.pnl, overviewCurrency)}
                     </span>
                   </li>
                 ))}

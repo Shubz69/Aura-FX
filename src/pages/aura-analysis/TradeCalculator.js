@@ -3,15 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Api from '../../services/Api';
 import { useTradeValidatorAccount } from '../../context/TradeValidatorAccountContext';
-import { getAllInstruments, getInstrumentsByCategory, getInstrumentOrFallback, getPriceExamples } from '../../lib/aura-analysis/instruments';
+import useLivePrices from '../../hooks/useLivePrices';
+import {
+  getInstrumentsByCategory,
+  getInstrumentForWatchlistSymbol,
+  getPriceExamples,
+} from '../../lib/aura-analysis/instruments';
 import { calculateRisk, deriveStopLossFromRiskAndPositionSize } from '../../lib/aura-analysis/calculators/calculateRisk';
 import { forexPairNeedsUsdJpy } from '../../lib/aura-analysis/calculators/forexPipValueUsd';
+import { buildFxRatesFromPriceMap } from '../../lib/aura-analysis/calculators/accountCurrency';
+import { formatMoneyAccount, ACCOUNT_CURRENCY_OPTIONS } from '../../lib/aura-analysis/formatAccountCurrency';
 import { getScoreLabel } from '../../lib/aura-analysis/validator/scoreCalculator';
 import { VALIDATOR_CHECKLIST_PENDING_KEY } from '../../lib/aura-analysis/validator/validatorChecklistStorage';
 import '../../styles/aura-analysis/TradeCalculator.css';
 
-const INSTRUMENTS_LIST = getAllInstruments();
-const INSTRUMENTS_BY_CATEGORY = getInstrumentsByCategory();
+const FALLBACK_INSTRUMENTS_BY_CATEGORY = getInstrumentsByCategory();
 
 const SESSIONS = [
   { value: '', label: 'Select session' },
@@ -25,7 +31,10 @@ const RISK_WARNING_PCT = 5;
 
 export default function TradeCalculator() {
   const navigate = useNavigate();
-  const { selectedAccountId } = useTradeValidatorAccount();
+  const { accounts, selectedAccountId, patchAccountCurrency } = useTradeValidatorAccount();
+  const { prices } = useLivePrices({ beginnerMode: false });
+  const [watchlistPayload, setWatchlistPayload] = useState(null);
+  const [pairSearch, setPairSearch] = useState('');
   const [pendingChecklist, setPendingChecklist] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -60,6 +69,58 @@ export default function TradeCalculator() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const base = Api.getBaseUrl() || '';
+    fetch(`${base}/api/market/watchlist`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.success && data.watchlist) setWatchlistPayload(data.watchlist);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const instrumentGroups = useMemo(() => {
+    if (!watchlistPayload?.groups) return FALLBACK_INSTRUMENTS_BY_CATEGORY;
+    const keys = Object.keys(watchlistPayload.groups).sort(
+      (a, b) => (watchlistPayload.groups[a].order || 0) - (watchlistPayload.groups[b].order || 0)
+    );
+    return keys.map((key) => {
+      const g = watchlistPayload.groups[key];
+      return {
+        label: g.name || key,
+        categoryKey: key,
+        instruments: (g.symbols || []).map((row) => ({
+          symbol: row.symbol,
+          displayName: row.displayName || row.symbol,
+        })),
+      };
+    });
+  }, [watchlistPayload]);
+
+  const filteredInstrumentGroups = useMemo(() => {
+    const q = pairSearch.trim().toLowerCase();
+    if (!q) return instrumentGroups;
+    return instrumentGroups
+      .map((g) => ({
+        ...g,
+        instruments: g.instruments.filter(
+          (i) =>
+            i.symbol.toLowerCase().includes(q) || (i.displayName && i.displayName.toLowerCase().includes(q))
+        ),
+      }))
+      .filter((g) => g.instruments.length > 0);
+  }, [instrumentGroups, pairSearch]);
+
+  const selectedAccount = useMemo(
+    () => accounts.find((a) => Number(a.id) === Number(selectedAccountId)),
+    [accounts, selectedAccountId]
+  );
+  const accountCurrency = selectedAccount?.accountCurrency || 'USD';
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (pairDropdownRef.current && !pairDropdownRef.current.contains(e.target)) {
         setPairDropdownOpen(false);
@@ -78,9 +139,22 @@ export default function TradeCalculator() {
 
   const usdJpyForCalc = useMemo(() => {
     if (!needsUsdJpy) return undefined;
-    const n = Number(form.usdJpy);
-    return Number.isFinite(n) && n > 0 ? n : undefined;
-  }, [needsUsdJpy, form.usdJpy]);
+    const manual = Number(form.usdJpy);
+    if (Number.isFinite(manual) && manual > 0) return manual;
+    const row = prices?.USDJPY;
+    const fromSnap = row ? parseFloat(row.rawPrice ?? row.price ?? '') : NaN;
+    if (Number.isFinite(fromSnap) && fromSnap > 0) return fromSnap;
+    return undefined;
+  }, [needsUsdJpy, form.usdJpy, prices]);
+
+  const fxRates = useMemo(() => {
+    const fromSnap = buildFxRatesFromPriceMap(prices || {});
+    const jpy = usdJpyForCalc;
+    if (usdJpyForCalc != null && Number.isFinite(jpy) && jpy > 0) {
+      return { ...fromSnap, USDJPY: jpy };
+    }
+    return fromSnap;
+  }, [prices, usdJpyForCalc]);
 
   // When position size is empty, remember current SL as the user's choice (so we can restore it when they clear manual size).
   useEffect(() => {
@@ -131,6 +205,8 @@ export default function TradeCalculator() {
     form.direction,
     form.pair,
     usdJpyForCalc,
+    accountCurrency,
+    fxRates,
   ]);
 
   const calcInput = useMemo(
@@ -142,6 +218,8 @@ export default function TradeCalculator() {
       takeProfit: Number(form.takeProfit) || 0,
       direction: form.direction,
       usdJpy: usdJpyForCalc,
+      accountCurrency,
+      fxRates,
     }),
     [
       form.accountBalance,
@@ -151,6 +229,8 @@ export default function TradeCalculator() {
       form.takeProfit,
       form.direction,
       usdJpyForCalc,
+      accountCurrency,
+      fxRates,
     ]
   );
 
@@ -190,9 +270,17 @@ export default function TradeCalculator() {
     if (!hasEntrySlTp || positionSizeUsed <= 0 || result.potentialLoss <= 0) return null;
     const target = riskAmountFromBalance;
     const diff = Math.abs(potentialLossDisplay - target);
-    if (diff < 0.02) return null;
+    const tol = accountCurrency === 'JPY' ? 1 : 0.5;
+    if (diff < tol) return null;
     return { target, actual: potentialLossDisplay, diff };
-  }, [hasEntrySlTp, positionSizeUsed, result.potentialLoss, riskAmountFromBalance, potentialLossDisplay]);
+  }, [
+    hasEntrySlTp,
+    positionSizeUsed,
+    result.potentialLoss,
+    riskAmountFromBalance,
+    potentialLossDisplay,
+    accountCurrency,
+  ]);
 
   const riskPctNum = Number(form.riskPercent) || 0;
   const showHighRiskWarning = riskPctNum > RISK_WARNING_PCT;
@@ -265,7 +353,7 @@ export default function TradeCalculator() {
       notes: (form.notes || '').trim() || null,
       session: form.session || null,
       assetClass: (() => {
-        const inst = getInstrumentOrFallback(form.pair);
+        const inst = getInstrumentForWatchlistSymbol(form.pair);
         const m = inst.calculationMode;
         if (m === 'forex') return 'forex';
         if (m === 'commodity') return 'commodity';
@@ -342,45 +430,46 @@ export default function TradeCalculator() {
                   aria-haspopup="listbox"
                   aria-label="Select pair or asset"
                 >
-                  <span>{form.pair}</span>
+                  <span className="trade-calc-pair-trigger-main">{form.pair}</span>
+                  <span className="trade-calc-pair-trigger-sub">{form.pairLabel}</span>
                   <span className="trade-calc-pair-arrow" aria-hidden>{pairDropdownOpen ? '▲' : '▼'}</span>
                 </button>
                 {pairDropdownOpen && (
-                  <div
-                    className="trade-calc-pair-list"
-                    role="listbox"
-                    aria-label="Pair and asset list"
-                  >
-                    {INSTRUMENTS_BY_CATEGORY.map(({ label, instruments }) => (
-                      <div key={label} className="trade-calc-pair-category">
-                        <div className="trade-calc-pair-category-label">{label}</div>
-                        {instruments.map((inst) => (
-                          <button
-                            key={inst.symbol}
-                            type="button"
-                            role="option"
-                            aria-selected={form.pair === inst.symbol}
-                            className={`trade-calc-pair-option ${form.pair === inst.symbol ? 'selected' : ''}`}
-                            onClick={() => handlePairSelect(inst)}
-                          >
-                            <span className="trade-calc-pair-option-symbol">{inst.symbol}</span>
-                            <span className="trade-calc-pair-option-name">{inst.displayName}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ))}
+                  <div className="trade-calc-pair-popover">
+                    <input
+                      type="search"
+                      className="trade-calc-input trade-calc-pair-search"
+                      placeholder="Type to filter…"
+                      value={pairSearch}
+                      onChange={(e) => setPairSearch(e.target.value)}
+                      aria-label="Filter instruments"
+                      autoComplete="off"
+                    />
+                    <div className="trade-calc-pair-list" role="listbox" aria-label="Pair and asset list">
+                      {filteredInstrumentGroups.map(({ label, instruments }) => (
+                        <div key={label} className="trade-calc-pair-category">
+                          <div className="trade-calc-pair-category-label">{label}</div>
+                          {instruments.map((inst) => (
+                            <button
+                              key={inst.symbol}
+                              type="button"
+                              role="option"
+                              aria-selected={form.pair === inst.symbol}
+                              className={`trade-calc-pair-option ${form.pair === inst.symbol ? 'selected' : ''}`}
+                              onClick={() => handlePairSelect(inst)}
+                            >
+                              <span className="trade-calc-pair-option-symbol">{inst.symbol}</span>
+                              <span className="trade-calc-pair-option-name">{inst.displayName}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
-              <input
-                type="text"
-                className="trade-calc-input"
-                value={form.pairLabel}
-                readOnly
-                aria-label="Pair display"
-              />
             </div>
-            <span className="trade-calc-helper">Examples and units update by pair.</span>
+            <span className="trade-calc-helper">Same universe as Market Watch. Examples and units update by pair.</span>
           </div>
 
           <div className="trade-calc-field">
@@ -413,6 +502,26 @@ export default function TradeCalculator() {
               value={form.accountBalance}
               onChange={(e) => setForm((f) => ({ ...f, accountBalance: e.target.value }))}
             />
+          </div>
+
+          <div className="trade-calc-field">
+            <label>Account currency (denomination)</label>
+            <select
+              className="trade-calc-input"
+              value={accountCurrency}
+              onChange={handleAccountCurrencyChange}
+              disabled={!selectedAccountId}
+              aria-label="Account currency"
+            >
+              {ACCOUNT_CURRENCY_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <span className="trade-calc-helper">
+              Stored per Trade Validator account. Risk and P/L use live FX from the market snapshot when available.
+            </span>
           </div>
 
           <div className="trade-calc-field">
@@ -568,7 +677,8 @@ export default function TradeCalculator() {
           <div className="trade-calc-calc-body">
             {riskAmountFromBalance > 0 && (
               <p className="trade-calc-calc-results trade-calc-calc-partial">
-                <strong>Risk amount (from balance × risk %):</strong> ${riskAmountFromBalance.toFixed(2)}
+                <strong>Risk amount (from balance × risk %):</strong>{' '}
+                {formatMoneyAccount(riskAmountFromBalance, accountCurrency)}
               </p>
             )}
             {!hasEntrySlTp ? (
@@ -577,7 +687,9 @@ export default function TradeCalculator() {
               </p>
             ) : (
               <div className="trade-calc-calc-results">
-                <p><strong>Risk amount:</strong> ${result.riskAmount.toFixed(2)}</p>
+                <p>
+                  <strong>Risk amount:</strong> {formatMoneyAccount(result.riskAmount, accountCurrency)}
+                </p>
                 <p>
                   <strong>Position size:</strong>{' '}
                   {result.positionUnitLabel === 'lots' || result.positionUnitLabel === 'units'
@@ -592,16 +704,22 @@ export default function TradeCalculator() {
                   {' — '}
                   <strong>R:R</strong> 1:{result.riskReward.toFixed(2)}
                 </p>
-                <p><strong>Potential profit:</strong> ${potentialProfitDisplay.toFixed(2)}</p>
-                <p><strong>Potential loss:</strong> ${potentialLossDisplay.toFixed(2)}</p>
+                <p>
+                  <strong>Potential profit:</strong> {formatMoneyAccount(potentialProfitDisplay, accountCurrency)}
+                </p>
+                <p>
+                  <strong>Potential loss:</strong> {formatMoneyAccount(potentialLossDisplay, accountCurrency)}
+                </p>
                 {riskRoundingNote && (
                   <p className="trade-calc-warning" role="note">
-                    Dollar risk at this size (after lot step rounding): ${riskRoundingNote.actual.toFixed(2)} — target
-                    was ${riskRoundingNote.target.toFixed(2)}.
+                    Risk at this size (after lot step rounding):{' '}
+                    {formatMoneyAccount(riskRoundingNote.actual, accountCurrency)} — target was{' '}
+                    {formatMoneyAccount(riskRoundingNote.target, accountCurrency)}.
                   </p>
                 )}
                 <p className="trade-calc-helper trade-calc-calc-disclaimer">
-                  Calculations assume a <strong>USD-denominated</strong> account (balance and risk in USD).
+                  Balance and risk % are in <strong>{accountCurrency}</strong>. Sizing uses USD risk from FX rates
+                  (live snapshot). For crosses, ensure related majors (e.g. GBPUSD for EUR/GBP) are loaded.
                 </p>
                 {result.warnings && result.warnings.length > 0 && (
                   <div className="trade-calc-warnings">

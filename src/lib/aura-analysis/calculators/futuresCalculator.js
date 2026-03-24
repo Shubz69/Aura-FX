@@ -1,3 +1,5 @@
+import { getRiskAmountUsd, convertUsdPnLToAccount } from './accountCurrency';
+
 /**
  * @param {import('./types').CalculatorInput} input
  * @param {import('../instruments').InstrumentSpec} spec
@@ -5,7 +7,9 @@
  */
 export function calculateFutureContract(input, spec) {
   const warnings = [];
-  const riskAmount = (input.accountBalance * input.riskPercent) / 100;
+  const { riskUsd, riskAccount } = getRiskAmountUsd(input);
+  const riskAmount = riskAccount;
+  if (riskUsd == null) warnings.push('Load FX rates or use USD account currency to size this trade.');
   const stopDistancePrice = Math.abs(input.entry - input.stop);
   const takeProfitDistancePrice = Math.abs(input.takeProfit - input.entry);
   if (stopDistancePrice === 0) {
@@ -16,13 +20,14 @@ export function calculateFutureContract(input, spec) {
   const tickValue = spec.tickValuePerLot ?? 10;
   const stopTicks = stopDistancePrice / tickSize;
   const riskPerContract = stopTicks * tickValue;
-  let contracts = riskAmount / riskPerContract;
+  let contracts = (riskUsd != null ? riskUsd : 0) / riskPerContract;
   if (spec.wholeContractsOnly) contracts = Math.floor(contracts);
   const positionSize = Math.max(0, contracts);
 
   const tpTicks = takeProfitDistancePrice / tickSize;
-  const potentialLoss = positionSize * riskPerContract;
-  const potentialProfit = positionSize * tpTicks * tickValue;
+  const potentialLossUsd = positionSize * riskPerContract;
+  const potentialProfitUsd = positionSize * tpTicks * tickValue;
+  const { potentialProfit, potentialLoss } = convertUsdPnLToAccount(potentialProfitUsd, potentialLossUsd, input);
   const rMultiple = riskReward;
 
   if (spec.wholeContractsOnly && positionSize > 0 && potentialLoss < riskAmount * 0.5) {

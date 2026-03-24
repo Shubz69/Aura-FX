@@ -275,9 +275,7 @@
 }
 
 .trade-calc-pair-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  display: block;
 }
 
 .trade-calc-pair-dropdown {
@@ -287,11 +285,52 @@
 .trade-calc-pair-trigger {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 10px;
   width: 100%;
   min-height: 46px;
   cursor: pointer;
   text-align: left;
+}
+
+.trade-calc-pair-trigger-main {
+  font-weight: 600;
+  color: var(--tc-gold-bright);
+}
+
+.trade-calc-pair-trigger-sub {
+  flex: 1;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trade-calc-pair-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: rgba(6, 5, 16, 0.98);
+  border: 1px solid var(--tc-border-gold);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  overflow: hidden;
+}
+
+.trade-calc-pair-search {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--tc-border);
+  padding: 12px 14px;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .trade-calc-pair-arrow {
@@ -301,18 +340,13 @@
 }
 
 .trade-calc-pair-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 6px;
-  max-height: 320px;
+  position: relative;
+  max-height: 280px;
   overflow-y: auto;
-  background: rgba(6, 5, 16, 0.98);
-  border: 1px solid var(--tc-border-gold);
-  border-radius: 12px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  z-index: 50;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .trade-calc-pair-category {

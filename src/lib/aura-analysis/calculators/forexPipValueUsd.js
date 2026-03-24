@@ -1,12 +1,12 @@
 /**
  * USD-denominated account: pip value per 1 standard lot in USD.
- * @typedef {'quote_usd'|'usd_base'|'jpy_cross'|'unknown_cross'} ForexPipUsdMode
+ * @typedef {'quote_usd'|'usd_base'|'jpy_cross'|'fx_cross'|'unknown_cross'} ForexPipUsdMode
  */
 
 /**
  * @param {import('../instruments').InstrumentSpec} spec
  * @param {number} entry - FX rate (price)
- * @param {{ usdJpy?: number }} [options] - USD/JPY rate; required for JPY crosses (EURJPY, GBPJPY)
+ * @param {{ usdJpy?: number, fxRates?: Record<string, number> }} [options] - USD/JPY for JPY crosses; fxRates for quote→USD (e.g. GBPUSD)
  * @returns {{
  *   usdPerPipPerLot: number | null,
  *   mode: ForexPipUsdMode,
@@ -28,6 +28,7 @@ export function getForexPipValueUsdPerLot(spec, entry, options = {}) {
   const base = sym.slice(0, 3);
   const quote = sym.slice(3, 6);
   const usdJpy = Number(options.usdJpy);
+  const fxRates = options.fxRates || {};
 
   if (quote === 'USD') {
     return { usdPerPipPerLot: pipInQuote, mode: 'quote_usd' };
@@ -47,11 +48,32 @@ export function getForexPipValueUsdPerLot(spec, entry, options = {}) {
     return { usdPerPipPerLot: pipInQuote / usdJpy, mode: 'jpy_cross' };
   }
 
+  const quoteToUsd = quoteUsdPerUnit(quote, fxRates);
+  if (quoteToUsd != null && quoteToUsd > 0) {
+    return { usdPerPipPerLot: pipInQuote * quoteToUsd, mode: 'fx_cross' };
+  }
+
   return {
     usdPerPipPerLot: null,
     mode: 'unknown_cross',
     missingConversion: true,
   };
+}
+
+/**
+ * USD value of one unit of quote currency (e.g. GBPUSD = USD per GBP).
+ * @param {string} quoteCcy
+ * @param {Record<string, number>} fxRates
+ * @returns {number|null}
+ */
+function quoteUsdPerUnit(quoteCcy, fxRates) {
+  const q = String(quoteCcy || '').toUpperCase();
+  if (q === 'USD') return 1;
+  const direct = fxRates[`${q}USD`];
+  if (typeof direct === 'number' && direct > 0) return direct;
+  const inv = fxRates[`USD${q}`];
+  if (typeof inv === 'number' && inv > 0) return 1 / inv;
+  return null;
 }
 
 /** Fallback when symbol is not 6 letters (custom / fallback specs). */

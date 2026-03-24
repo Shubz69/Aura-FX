@@ -3,6 +3,8 @@
  * Each instrument has metadata and a calculationMode so the engine uses the correct formula.
  */
 
+import { resolveCalculatorSymbol } from './watchlistSymbolAliases';
+
 /**
  * @typedef {'forex'|'commodity'|'index'|'stock'|'future'|'crypto'} AssetClass
  * @typedef {'forex'|'commodity'|'index_cfd'|'stock_share'|'future_contract'|'crypto_lot'|'crypto_units'} CalculationMode
@@ -485,6 +487,11 @@ export function getInstrumentOrFallback(symbol) {
     minReasonablePrice: 0.5,
     maxReasonablePrice: 3,
   });
+}
+
+/** Market Watch symbol → calculator spec (aliases WTI→USOIL, SPX→SPX500, …). */
+export function getInstrumentForWatchlistSymbol(symbol) {
+  return getInstrumentOrFallback(resolveCalculatorSymbol(symbol));
 }
 
 export function getAllInstruments() {

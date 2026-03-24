@@ -272,6 +272,11 @@
 }
 
 .td-ff-th--num  { text-align: right; }
+.td-ff-th--countdown {
+  text-align: right;
+  min-width: 76px;
+  color: rgba(255,255,255,0.38);
+}
 .td-ff-th--actual { text-align: right; color: rgba(255,255,255,0.45); }
 
 .td-ff-row {
@@ -348,9 +353,14 @@
   min-width: 60px;
 }
 
+.td-ff-countdown-cell {
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .td-ff-countdown {
   display: inline-block;
-  margin-left: 8px;
   padding: 1px 6px;
   border-radius: 6px;
   border: 1px solid rgba(248,195,125,0.45);
@@ -360,6 +370,14 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
+}
+
+.td-ff-countdown--na {
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.22);
+  font-weight: 500;
+  padding: 0;
 }
 
 .td-ff-ccy-pill {

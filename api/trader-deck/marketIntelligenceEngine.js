@@ -695,7 +695,7 @@ function buildRiskRadarHeadlineWatch(finnhub, fmp, calendarTitlesLower) {
     used.add(th.title);
     out.push({
       title: th.title,
-      time: undefined,
+      time: '—',
       severity: 'medium',
       impact: 'medium',
       currency: 'NEWS',

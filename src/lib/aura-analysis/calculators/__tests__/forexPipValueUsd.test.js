@@ -1,5 +1,5 @@
 import { getForexPipValueUsdPerLot, forexPairNeedsUsdJpy } from '../forexPipValueUsd';
-import { getInstrument } from '../../instruments';
+import { getInstrument, getInstrumentOrFallback } from '../../instruments';
 import { calculateRisk } from '../calculateRisk';
 
 describe('getForexPipValueUsdPerLot', () => {
@@ -22,6 +22,16 @@ describe('getForexPipValueUsdPerLot', () => {
     const r = getForexPipValueUsdPerLot(spec, 1.35, {});
     expect(r.mode).toBe('usd_base');
     expect(r.usdPerPipPerLot).toBeCloseTo(10 / 1.35, 6);
+  });
+
+  test('EURGBP cross: pip in GBP × GBPUSD → USD (fx_cross)', () => {
+    const spec = getInstrument('EURGBP') ?? getInstrumentOrFallback('EURGBP');
+    const entry = 0.85;
+    const fxRates = { GBPUSD: 1.27 };
+    const r = getForexPipValueUsdPerLot(spec, entry, { fxRates });
+    expect(r.mode).toBe('fx_cross');
+    const pipInGbp = 100_000 * 0.0001;
+    expect(r.usdPerPipPerLot).toBeCloseTo(pipInGbp * 1.27, 6);
   });
 
   test('EURJPY requires USDJPY; wrong to use cross rate', () => {

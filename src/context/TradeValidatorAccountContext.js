@@ -68,6 +68,13 @@ export function TradeValidatorAccountProvider({ children }) {
     return accs[accs.length - 1] ?? null;
   }, []);
 
+  const patchAccountCurrency = useCallback(async (accountId, accountCurrency) => {
+    const res = await Api.patchValidatorAccount(accountId, { id: accountId, accountCurrency });
+    const accs = res.data?.accounts ?? [];
+    setAccounts(accs);
+    return accs;
+  }, []);
+
   const value = useMemo(
     () => ({
       accounts,
@@ -77,8 +84,9 @@ export function TradeValidatorAccountProvider({ children }) {
       error,
       refreshAccounts,
       addAccount,
+      patchAccountCurrency,
     }),
-    [accounts, selectedAccountId, setSelectedAccountId, loading, error, refreshAccounts, addAccount]
+    [accounts, selectedAccountId, setSelectedAccountId, loading, error, refreshAccounts, addAccount, patchAccountCurrency]
   );
 
   return (
@@ -97,6 +105,7 @@ export function useTradeValidatorAccount() {
       error: null,
       refreshAccounts: async () => {},
       addAccount: async () => null,
+      patchAccountCurrency: async () => [],
     };
   }
   return ctx;

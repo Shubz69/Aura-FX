@@ -2293,6 +2293,13 @@
   color: #fff;
 }
 
+.aura-overview-account-ccy {
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
 .aura-overview-account-add {
   display: inline-flex;
   align-items: center;

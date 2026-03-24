@@ -252,6 +252,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
             <thead>
               <tr>
                 <th className="td-ff-th td-ff-th--time">Time</th>
+                <th className="td-ff-th td-ff-th--countdown">Countdown</th>
                 <th className="td-ff-th td-ff-th--ccy">Ccy</th>
                 <th className="td-ff-th td-ff-th--impact"></th>
                 <th className="td-ff-th td-ff-th--event">Event</th>
@@ -298,7 +299,13 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
                     <td className="td-ff-td td-ff-num td-ff-prev">{ev.previous ?? '—'}</td>
                     <td className="td-ff-td td-ff-num td-ff-forecast">{ev.forecast ?? '—'}</td>
                     <td className={`td-ff-td td-ff-num td-ff-actual${hasActualValue(ev.actual) ? ' td-ff-actual--live' : ''}`}>
-                      {hasActualValue(ev.actual) ? ev.actual : '--'}
+                      {hasActualValue(ev.actual) ? (
+                        ev.actual
+                      ) : status === 'overdue' ? (
+                        <span className="td-ff-releasing">Pending</span>
+                      ) : (
+                        '--'
+                      )}
                     </td>
                   </tr>
                 );

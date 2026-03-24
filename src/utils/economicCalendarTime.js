@@ -45,7 +45,8 @@ export function formatCalendarHeadingDate(dateStr, timeZone) {
 
 export function parseEventTimestamp(ev) {
   const raw = ev && (ev.timestamp ?? ev.ts ?? ev.datetime);
-  if (raw == null) return null;
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return raw;
   const n = Number(raw);
   if (Number.isFinite(n) && n > 0) return n;
   const parsed = Date.parse(String(raw));

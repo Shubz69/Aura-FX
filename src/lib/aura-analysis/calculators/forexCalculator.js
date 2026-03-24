@@ -1,5 +1,6 @@
 import { roundToStep } from './utils';
 import { getForexPipValueUsdPerLot } from './forexPipValueUsd';
+import { getRiskAmountUsd, usdToAccountCurrency } from './accountCurrency';
 
 /**
  * @param {import('./types').CalculatorInput} input
@@ -8,7 +9,14 @@ import { getForexPipValueUsdPerLot } from './forexPipValueUsd';
  */
 export function calculateForex(input, spec) {
   const warnings = [];
-  const riskAmount = (input.accountBalance * input.riskPercent) / 100;
+  const { riskUsd, riskAccount, missingRate } = getRiskAmountUsd(input);
+  if (missingRate || riskUsd == null || !Number.isFinite(riskUsd)) {
+    warnings.push(
+      'Set account currency rates: wait for live prices to load or pick USD until EUR/GBP/… pairs are available.'
+    );
+  }
+
+  const riskAmount = riskAccount;
   const stopDistancePrice = Math.abs(input.entry - input.stop);
   const takeProfitDistancePrice = Math.abs(input.takeProfit - input.entry);
   if (stopDistancePrice === 0) {
@@ -19,10 +27,13 @@ export function calculateForex(input, spec) {
   const stopPips = stopDistancePrice / pipSize;
   const takeProfitPips = takeProfitDistancePrice / pipSize;
 
-  const pipInfo = getForexPipValueUsdPerLot(spec, input.entry, { usdJpy: input.usdJpy });
+  const pipInfo = getForexPipValueUsdPerLot(spec, input.entry, {
+    usdJpy: input.usdJpy,
+    fxRates: input.fxRates || {},
+  });
   if (pipInfo.missingUsdJpy) {
     warnings.push(
-      'Enter USD/JPY (yen per US dollar) to convert pip value to USD for this JPY cross pair.'
+      'Enter USD/JPY (yen per US dollar) or load live prices to convert pip value to USD for this JPY cross pair.'
     );
   }
   if (pipInfo.invalidEntry) {
@@ -30,12 +41,15 @@ export function calculateForex(input, spec) {
   }
   if (pipInfo.missingConversion) {
     warnings.push(
-      'This pair needs an extra FX rate to express pip value in USD; calculator cannot size it yet.'
+      'This pair needs FX rates (e.g. GBPUSD for EUR/GBP) — load live prices or enter majors in snapshot.'
     );
   }
 
   const pipValuePerLot = pipInfo.usdPerPipPerLot;
-  if (pipValuePerLot == null || !Number.isFinite(pipValuePerLot) || pipValuePerLot <= 0) {
+  const acc = String(input.accountCurrency || 'USD').toUpperCase();
+  const rates = input.fxRates || {};
+
+  if (pipValuePerLot == null || !Number.isFinite(pipValuePerLot) || pipValuePerLot <= 0 || riskUsd == null) {
     return {
       riskAmount,
       stopDistancePrice,
@@ -53,7 +67,7 @@ export function calculateForex(input, spec) {
     };
   }
 
-  const positionSizeLots = riskAmount / (stopPips * pipValuePerLot);
+  const positionSizeLots = riskUsd / (stopPips * pipValuePerLot);
   const lotStep = spec.lotStep ?? 0.01;
   let positionSize = Math.max(0, roundToStep(positionSizeLots, lotStep));
 
@@ -69,9 +83,18 @@ export function calculateForex(input, spec) {
     warnings.push(`Position size ${positionSize} exceeds maximum ${spec.maxLot} lots.`);
   }
 
-  const potentialLoss = positionSize * pipValuePerLot * stopPips;
-  const potentialProfit = positionSize * pipValuePerLot * takeProfitPips;
+  const potentialLossUsd = positionSize * pipValuePerLot * stopPips;
+  const potentialProfitUsd = positionSize * pipValuePerLot * takeProfitPips;
   const rMultiple = riskReward;
+
+  const potentialLoss =
+    acc === 'USD'
+      ? potentialLossUsd
+      : usdToAccountCurrency(potentialLossUsd, acc, rates) ?? potentialLossUsd;
+  const potentialProfit =
+    acc === 'USD'
+      ? potentialProfitUsd
+      : usdToAccountCurrency(potentialProfitUsd, acc, rates) ?? potentialProfitUsd;
 
   return {
     riskAmount,

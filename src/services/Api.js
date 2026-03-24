@@ -729,6 +729,12 @@ const Api = {
             { headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
         );
     },
+    patchValidatorAccount: (id, body) => {
+        const token = localStorage.getItem('token');
+        return axios.patch(`${API_BASE_URL}/api/aura-analysis/validator-accounts`, body, {
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        });
+    },
     verifyTradeOutcome: (tradeId, image, mimeType = 'image/png') => {
         const token = localStorage.getItem('token');
         return axios.post(

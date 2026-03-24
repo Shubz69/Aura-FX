@@ -1,4 +1,5 @@
 import { roundToStep } from './utils';
+import { getRiskAmountUsd, convertUsdPnLToAccount } from './accountCurrency';
 
 /**
  * @param {import('./types').CalculatorInput} input
@@ -7,7 +8,9 @@ import { roundToStep } from './utils';
  */
 export function calculateIndexCfd(input, spec) {
   const warnings = [];
-  const riskAmount = (input.accountBalance * input.riskPercent) / 100;
+  const { riskUsd, riskAccount } = getRiskAmountUsd(input);
+  const riskAmount = riskAccount;
+  if (riskUsd == null) warnings.push('Load FX rates or use USD account currency to size this trade.');
   const stopDistancePrice = Math.abs(input.entry - input.stop);
   const takeProfitDistancePrice = Math.abs(input.takeProfit - input.entry);
   if (stopDistancePrice === 0) {
@@ -18,7 +21,7 @@ export function calculateIndexCfd(input, spec) {
   const valuePerPoint = spec.valuePerPointPerLot ?? 1;
   const stopPoints = stopDistancePrice / pointSize;
   const riskPerLot = stopPoints * valuePerPoint;
-  const lots = riskAmount / riskPerLot;
+  const lots = (riskUsd != null ? riskUsd : 0) / riskPerLot;
   const lotStep = spec.lotStep ?? 0.01;
   let positionSize = Math.max(0, roundToStep(lots, lotStep));
 
@@ -35,8 +38,9 @@ export function calculateIndexCfd(input, spec) {
   }
 
   const takeProfitPoints = takeProfitDistancePrice / pointSize;
-  const potentialLoss = positionSize * riskPerLot;
-  const potentialProfit = positionSize * takeProfitPoints * valuePerPoint;
+  const potentialLossUsd = positionSize * riskPerLot;
+  const potentialProfitUsd = positionSize * takeProfitPoints * valuePerPoint;
+  const { potentialProfit, potentialLoss } = convertUsdPnLToAccount(potentialProfitUsd, potentialLossUsd, input);
   const rMultiple = riskReward;
 
   return {

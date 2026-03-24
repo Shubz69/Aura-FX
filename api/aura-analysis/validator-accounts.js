@@ -17,6 +17,8 @@ function parseBody(req) {
   }
 }
 
+const ALLOWED_ACCOUNT_CURRENCIES = new Set(['USD', 'EUR', 'GBP', 'AUD', 'NZD', 'CAD', 'CHF', 'JPY']);
+
 async function ensureTables() {
   await executeQuery(`
     CREATE TABLE IF NOT EXISTS trade_validator_accounts (
@@ -28,6 +30,8 @@ async function ensureTables() {
       INDEX idx_tv_acc_user (user_id)
     )
   `).catch(() => {});
+
+  await addColumnIfNotExists('trade_validator_accounts', 'account_currency', "VARCHAR(3) NOT NULL DEFAULT 'USD'");
 
   const tradesTable = 'aura_analysis_trades';
   await addColumnIfNotExists(tradesTable, 'validator_account_id', 'INT NULL');
@@ -44,20 +48,20 @@ async function ensureTables() {
 
 async function ensureDefaultAccount(userId) {
   const [rows] = await executeQuery(
-    'SELECT id, name FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
+    'SELECT id, name, account_currency FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
     [userId]
   );
   if (rows?.length) {
     const [full] = await executeQuery(
-      'SELECT id, name, sort_order, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
+      'SELECT id, name, sort_order, account_currency, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
       [userId]
     );
     return full || rows;
   }
 
   await executeQuery(
-    'INSERT INTO trade_validator_accounts (user_id, name, sort_order) VALUES (?, ?, 0)',
-    [userId, 'Primary']
+    'INSERT INTO trade_validator_accounts (user_id, name, sort_order, account_currency) VALUES (?, ?, 0, ?)',
+    [userId, 'Primary', 'USD']
   );
   const [created] = await executeQuery(
     'SELECT id FROM trade_validator_accounts WHERE user_id = ? ORDER BY id ASC LIMIT 1',
@@ -71,7 +75,7 @@ async function ensureDefaultAccount(userId) {
     ).catch(() => {});
   }
   const [full] = await executeQuery(
-    'SELECT id, name, sort_order, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
+    'SELECT id, name, sort_order, account_currency, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
     [userId]
   );
   return full || [];
@@ -79,7 +83,7 @@ async function ensureDefaultAccount(userId) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -99,7 +103,14 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     try {
       const accounts = await ensureDefaultAccount(userId);
-      return res.status(200).json({ success: true, accounts });
+      const mapped = (accounts || []).map((a) => ({
+        id: a.id,
+        name: a.name,
+        sort_order: a.sort_order,
+        accountCurrency: (a.account_currency || 'USD').toString().toUpperCase(),
+        created_at: a.created_at,
+      }));
+      return res.status(200).json({ success: true, accounts: mapped });
     } catch (e) {
       console.error('[validator-accounts] GET', e);
       return res.status(500).json({ success: false, message: 'Failed to load accounts' });
@@ -119,20 +130,68 @@ module.exports = async (req, res) => {
       );
       const sortOrder = maxRow?.[0]?.n ?? 0;
       await executeQuery(
-        'INSERT INTO trade_validator_accounts (user_id, name, sort_order) VALUES (?, ?, ?)',
-        [userId, name, sortOrder]
+        'INSERT INTO trade_validator_accounts (user_id, name, sort_order, account_currency) VALUES (?, ?, ?, ?)',
+        [userId, name, sortOrder, 'USD']
       );
       const [list] = await executeQuery(
-        'SELECT id, name, sort_order, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
+        'SELECT id, name, sort_order, account_currency, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
         [userId]
       );
-      return res.status(201).json({ success: true, accounts: list });
+      const mapped = (list || []).map((a) => ({
+        id: a.id,
+        name: a.name,
+        sort_order: a.sort_order,
+        accountCurrency: (a.account_currency || 'USD').toString().toUpperCase(),
+        created_at: a.created_at,
+      }));
+      return res.status(201).json({ success: true, accounts: mapped });
     } catch (e) {
       if (e.code === 'ER_DUP_ENTRY') {
         return res.status(409).json({ success: false, message: 'An account with this name already exists' });
       }
       console.error('[validator-accounts] POST', e);
       return res.status(500).json({ success: false, message: 'Failed to create account' });
+    }
+  }
+
+  if (req.method === 'PATCH') {
+    const body = parseBody(req);
+    const accountId = Number(body.id ?? body.accountId);
+    const rawCcy = (body.accountCurrency || body.account_currency || '').toString().trim().toUpperCase();
+    if (!accountId || !Number.isFinite(accountId)) {
+      return res.status(400).json({ success: false, message: 'id is required' });
+    }
+    if (!rawCcy || !ALLOWED_ACCOUNT_CURRENCIES.has(rawCcy)) {
+      return res.status(400).json({ success: false, message: 'Invalid accountCurrency' });
+    }
+    try {
+      const [own] = await executeQuery('SELECT id FROM trade_validator_accounts WHERE id = ? AND user_id = ?', [
+        accountId,
+        userId,
+      ]);
+      if (!own?.length) {
+        return res.status(404).json({ success: false, message: 'Account not found' });
+      }
+      await executeQuery('UPDATE trade_validator_accounts SET account_currency = ? WHERE id = ? AND user_id = ?', [
+        rawCcy,
+        accountId,
+        userId,
+      ]);
+      const [list] = await executeQuery(
+        'SELECT id, name, sort_order, account_currency, created_at FROM trade_validator_accounts WHERE user_id = ? ORDER BY sort_order ASC, id ASC',
+        [userId]
+      );
+      const mapped = (list || []).map((a) => ({
+        id: a.id,
+        name: a.name,
+        sort_order: a.sort_order,
+        accountCurrency: (a.account_currency || 'USD').toString().toUpperCase(),
+        created_at: a.created_at,
+      }));
+      return res.status(200).json({ success: true, accounts: mapped });
+    } catch (e) {
+      console.error('[validator-accounts] PATCH', e);
+      return res.status(500).json({ success: false, message: 'Failed to update account' });
     }
   }
 
