@@ -1,7 +1,6 @@
-const mysql = require('mysql2/promise');
-
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
 const nodemailer = require('nodemailer');
 const { verifyToken } = require('../utils/auth');
 const { jsonNumber, jsonSafeDeep } = require('../utils/jsonSafe');
@@ -65,38 +64,6 @@ const sendContactEmail = async ({ name, email, subject, message }) => {
   }
 };
 
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    console.error('Missing MySQL environment variables for admin');
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000,
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    await connection.ping();
-    return connection;
-  } catch (error) {
-    console.error('Database connection error in admin:', error.message);
-    return null;
-  }
-};
-
 module.exports = async (req, res) => {
   // Handle CORS - allow both www and non-www origins
   const origin = req.headers.origin || '*';
@@ -141,7 +108,6 @@ module.exports = async (req, res) => {
 
   // Handle /api/subscription/check (uses shared pool to avoid connection exhaustion)
   if ((pathname.includes('/subscription/check') || pathname.endsWith('/subscription/check')) && (req.method === 'GET' || req.method === 'POST')) {
-    const { getDbConnection: getPoolConnection } = require('../db');
     const releaseDb = (conn) => { if (conn && typeof conn.release === 'function') { try { conn.release(); } catch (_) {} } };
     let db = null;
     try {
@@ -152,7 +118,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, message: 'User ID is required' });
       }
 
-      db = await getPoolConnection();
+      db = await getDbConnection();
       if (!db) {
         return res.status(500).json({ success: false, message: 'Database connection error' });
       }
@@ -330,7 +296,7 @@ module.exports = async (req, res) => {
           [fiveMinutesAgo]
         );
         const [allUsers] = await db.execute('SELECT COUNT(*) as total FROM users');
-        await db.end();
+        db.release();
 
         const onlineUsers = rows.map(row => ({
           id: row.id,
@@ -348,7 +314,7 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error fetching user status:', dbError.message);
-        if (db && !db.ended) await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(500).json({
           success: false,
           message: 'Failed to fetch user status'
@@ -415,7 +381,7 @@ module.exports = async (req, res) => {
           const [rows] = await db.execute(
             'SELECT * FROM contact_messages ORDER BY created_at DESC'
           );
-          await db.end();
+          db.release();
 
           const messages = rows.map(row => ({
             id: row.id,
@@ -433,7 +399,7 @@ module.exports = async (req, res) => {
           return res.status(200).json(messages);
         } catch (dbError) {
           console.error('Database error fetching contact messages:', dbError.message);
-          if (db && !db.ended) await db.end();
+          if (db) { try { db.release(); } catch (_) {} }
           return res.status(500).json({ success: false, message: 'Failed to fetch contact messages' });
         }
       } catch (error) {
@@ -458,10 +424,10 @@ module.exports = async (req, res) => {
             'UPDATE contact_messages SET dealt_with = ? WHERE id = ?',
             [dealtWith ? 1 : 0, parseInt(messageId)]
           );
-          await db.end();
+          db.release();
           return res.status(200).json({ success: true, dealtWith });
         } catch (dbError) {
-          if (db && !db.ended) await db.end();
+          if (db) { try { db.release(); } catch (_) {} }
           return res.status(500).json({ success: false, message: dbError.message });
         }
       } catch (error) {
@@ -491,7 +457,7 @@ module.exports = async (req, res) => {
               'INSERT INTO contact_messages (name, email, subject, message, user_id, user_role) VALUES (?, ?, ?, ?, ?, ?)',
               [name, email, subject || '', message, user_id || null, user_role || null]
             );
-            await db.end();
+            db.release();
           } else {
             console.warn('Contact POST received but database not configured – message will not be persisted.');
           }
@@ -508,7 +474,7 @@ module.exports = async (req, res) => {
           });
         } catch (dbError) {
           console.error('Database error submitting contact message:', dbError.message);
-          if (db && !db.ended) await db.end();
+          if (db) { try { db.release(); } catch (_) {} }
 
           emailResult = await sendContactEmail({ name, email, subject, message });
 
@@ -561,7 +527,7 @@ module.exports = async (req, res) => {
             'DELETE FROM contact_messages WHERE id = ?',
             [messageId]
           );
-          await db.end();
+          db.release();
 
           if (result.affectedRows > 0) {
             return res.status(200).json({
@@ -576,7 +542,7 @@ module.exports = async (req, res) => {
           }
         } catch (dbError) {
           console.error('Database error deleting contact message:', dbError.message);
-          if (db && !db.ended) await db.end();
+          if (db) { try { db.release(); } catch (_) {} }
           return res.status(500).json({
             success: false,
             message: 'Failed to delete contact message'
@@ -615,7 +581,7 @@ module.exports = async (req, res) => {
         }
       }
       if (authRole !== 'ADMIN' && authRole !== 'SUPER_ADMIN') {
-        if (db && typeof db.end === 'function') await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(403).json({ success: false, message: 'Admin access required' });
       }
 
@@ -632,7 +598,7 @@ module.exports = async (req, res) => {
             hasName = true;
           } catch (e2) {
             console.error('Admin users: missing base columns (id, email, username/name, role):', e?.message || e2?.message);
-            if (db && typeof db.end === 'function') await db.end();
+            if (db) { try { db.release(); } catch (_) {} }
             return res.status(500).json({ success: false, message: 'Database schema error: users table missing required columns' });
           }
         }
@@ -776,11 +742,11 @@ module.exports = async (req, res) => {
           return formatted;
         });
 
-        await db.end();
+        db.release();
         return res.status(200).json(jsonSafeDeep(formattedUsers));
       } catch (dbError) {
         console.error('Database error fetching users:', dbError);
-        if (db && !db.ended) await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(500).json({ 
           success: false, 
           message: 'Failed to fetch users',
@@ -841,7 +807,7 @@ module.exports = async (req, res) => {
               if ((role === 'admin' || role === 'super_admin') && 
                   requesterEmail !== 'shubzfx@gmail.com' && 
                   requesterRole !== 'super_admin') {
-                await db.end();
+                db.release();
                 return res.status(403).json({ 
                   success: false, 
                   message: 'Only Super Admin can assign admin roles' 
@@ -857,18 +823,18 @@ module.exports = async (req, res) => {
         // Check if target user is super admin
         const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
         if (userRows.length === 0) {
-          await db.end();
+          db.release();
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const userEmail = (userRows[0].email || '').toString().trim().toLowerCase();
         const SUPER_ADMIN_EMAIL = 'shubzfx@gmail.com';
         if (userEmail === SUPER_ADMIN_EMAIL && role !== 'super_admin') {
-          await db.end();
+          db.release();
           return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
         }
         if (role === 'super_admin' && userEmail !== SUPER_ADMIN_EMAIL) {
-          await db.end();
+          db.release();
           return res.status(403).json({ success: false, message: 'Super Admin is restricted to one user only' });
         }
 
@@ -890,22 +856,14 @@ module.exports = async (req, res) => {
           );
         }
 
-        if (db && typeof db.release === 'function') {
-          db.release();
-        } else if (db && typeof db.end === 'function') {
-          await db.end();
-        }
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(200).json({ 
           success: true, 
           message: 'User role and capabilities updated successfully' 
         });
       } catch (dbError) {
         console.error('Database error updating user role:', dbError);
-        if (db && typeof db.release === 'function') {
-          db.release();
-        } else if (db && typeof db.end === 'function' && !db.ended) {
-          await db.end();
-        }
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(500).json({ success: false, message: 'Failed to update user role' });
       }
     } catch (error) {
@@ -938,7 +896,7 @@ module.exports = async (req, res) => {
         // Check if user exists
         const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
         if (userRows.length === 0) {
-          await db.end();
+          db.release();
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
@@ -946,7 +904,7 @@ module.exports = async (req, res) => {
         
         // Prevent deletion of super admin
         if (userEmail === 'shubzfx@gmail.com') {
-          await db.end();
+          db.release();
           return res.status(403).json({ success: false, message: 'Cannot delete Super Admin account' });
         }
 
@@ -974,14 +932,14 @@ module.exports = async (req, res) => {
             // Don't fail the deletion if WebSocket notification fails
         }
 
-        await db.end();
+        db.release();
         return res.status(200).json({ 
           success: true, 
           message: 'User deleted successfully' 
         });
       } catch (dbError) {
         console.error('Database error deleting user:', dbError);
-        if (db && !db.ended) await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(500).json({ success: false, message: 'Failed to delete user' });
       }
     } catch (error) {
@@ -1017,7 +975,7 @@ module.exports = async (req, res) => {
           ['inactive', 'free', userId]
         );
 
-        await db.end();
+        db.release();
 
         return res.status(200).json({
           success: true,
@@ -1025,7 +983,7 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error revoking access:', dbError);
-        if (db && !db.ended) await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(500).json({
           success: false,
           message: 'Failed to revoke access'
@@ -1059,7 +1017,7 @@ module.exports = async (req, res) => {
       // Extract userId from path
       const userIdMatch = pathname.match(/\/users\/(\d+)\/subscription/);
       if (!userIdMatch) {
-        await db.end();
+        db.release();
         return res.status(400).json({ success: false, message: 'Invalid user ID' });
       }
       const userId = userIdMatch[1];
@@ -1069,34 +1027,34 @@ module.exports = async (req, res) => {
       // Validate subscription status
       const validStatuses = ['active', 'inactive', 'cancelled', 'expired'];
       if (subscription_status && !validStatuses.includes(subscription_status)) {
-        await db.end();
+        db.release();
         return res.status(400).json({ success: false, message: 'Invalid subscription status' });
       }
 
       // Validate subscription plan
       const validPlans = ['aura', 'a7fx', 'elite', null];
       if (subscription_plan !== undefined && !validPlans.includes(subscription_plan)) {
-        await db.end();
+        db.release();
         return res.status(400).json({ success: false, message: 'Invalid subscription plan' });
       }
 
       // Validate role if provided
       const validRoles = ['free', 'premium', 'a7fx', 'elite', 'admin', 'super_admin'];
       if (role && !validRoles.includes(role)) {
-        await db.end();
+        db.release();
         return res.status(400).json({ success: false, message: 'Invalid role' });
       }
 
       // Check if user exists
       const [userRows] = await db.execute('SELECT email FROM users WHERE id = ?', [userId]);
       if (userRows.length === 0) {
-        await db.end();
+        db.release();
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
       const userEmail = userRows[0].email;
       if (userEmail === 'shubzfx@gmail.com' && role && role !== 'super_admin') {
-        await db.end();
+        db.release();
         return res.status(403).json({ success: false, message: 'Cannot change Super Admin role' });
       }
 
@@ -1140,7 +1098,7 @@ module.exports = async (req, res) => {
       }
 
       if (updates.length === 0) {
-        await db.end();
+        db.release();
         return res.status(400).json({ success: false, message: 'No fields to update' });
       }
 
@@ -1154,7 +1112,7 @@ module.exports = async (req, res) => {
         [userId]
       );
 
-      await db.end();
+      db.release();
       return res.status(200).json({
         success: true,
         message: 'Subscription updated successfully',
@@ -1189,19 +1147,19 @@ module.exports = async (req, res) => {
           }
         } catch (e) { /* ignore */ }
         if (!requesterId) {
-          await db.end();
+          db.release();
           return res.status(401).json({ success: false, message: 'Invalid token' });
         }
 
         const [roleRows] = await db.execute('SELECT role FROM users WHERE id = ?', [requesterId]);
         if (roleRows.length === 0) {
-          await db.end();
+          db.release();
           return res.status(401).json({ success: false, message: 'User not found' });
         }
         const role = (roleRows[0].role || '').toString().toLowerCase().trim();
         const allowedRoles = ['admin', 'super_admin', 'a7fx', 'elite'];
         if (!allowedRoles.includes(role)) {
-          await db.end();
+          db.release();
           return res.status(403).json({ success: false, message: 'Admin only' });
         }
 
@@ -1213,7 +1171,7 @@ module.exports = async (req, res) => {
         try {
           await db.execute('SELECT 1 FROM journal_tasks LIMIT 1');
         } catch (e) {
-          await db.end();
+          db.release();
           return res.status(200).json({
             summary: { usersWithJournal: 0, tasksLast7: 0, tasksLast30: 0, completedWithProofLast7: 0, completedWithProofLast30: 0, totalJournalXpAwarded: 0 },
             users: []
@@ -1228,7 +1186,7 @@ module.exports = async (req, res) => {
           );
           const u = userRows && userRows[0];
           if (!u) {
-            await db.end();
+            db.release();
             return res.status(404).json({ success: false, message: 'User not found' });
           }
           const [taskRows] = await db.execute(
@@ -1248,7 +1206,7 @@ module.exports = async (req, res) => {
             `SELECT id, date, title FROM journal_tasks WHERE userId = ? AND proof_image IS NOT NULL AND proof_image != '' ORDER BY date DESC, id`,
             [userId]
           );
-          await db.end();
+          db.release();
           return res.status(200).json({
             user: {
               id: u.id,
@@ -1335,7 +1293,7 @@ module.exports = async (req, res) => {
 
         const userIds = [...new Set([...Object.keys(taskByUser).map(Number), ...Object.keys(xpByUser).map(Number)])];
         if (userIds.length === 0) {
-          await db.end();
+          db.release();
           return res.status(200).json({ summary, users: [] });
         }
 
@@ -1361,11 +1319,11 @@ module.exports = async (req, res) => {
           };
         });
 
-        await db.end();
+        db.release();
         return res.status(200).json({ summary, users });
       } catch (dbErr) {
         console.error('Database error in journal-stats:', dbErr);
-        if (db && !db.ended) await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(500).json({ success: false, message: 'Failed to load journal stats' });
       }
     } catch (err) {
@@ -1392,25 +1350,25 @@ module.exports = async (req, res) => {
       if (!db) return res.status(500).json({ success: false, message: 'Database connection error' });
       try {
         const [roleRows] = await db.execute('SELECT role FROM users WHERE id = ?', [requesterId]);
-        if (roleRows.length === 0) { await db.end(); return res.status(401).json({ success: false, message: 'User not found' }); }
+        if (roleRows.length === 0) { db.release(); return res.status(401).json({ success: false, message: 'User not found' }); }
         const role = (roleRows[0].role || '').toString().toLowerCase().trim();
         if (!['admin', 'super_admin', 'a7fx', 'elite'].includes(role)) {
-          await db.end();
+          db.release();
           return res.status(403).json({ success: false, message: 'Admin only' });
         }
         const taskId = req.query?.taskId ? String(req.query.taskId).trim() : null;
         if (!taskId) {
-          await db.end();
+          db.release();
           return res.status(400).json({ success: false, message: 'taskId required' });
         }
         const [rows] = await db.execute('SELECT proof_image, userId FROM journal_tasks WHERE id = ?', [taskId]);
-        await db.end();
+        db.release();
         if (!rows || rows.length === 0) return res.status(404).json({ success: false, message: 'Task not found' });
         const proof = rows[0].proof_image;
         if (!proof) return res.status(404).json({ success: false, message: 'No proof image for this task' });
         return res.status(200).json({ success: true, proofImage: proof, userId: rows[0].userId });
       } catch (e) {
-        if (db && !db.ended) await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         throw e;
       }
     } catch (err) {
@@ -1476,7 +1434,7 @@ module.exports = async (req, res) => {
 
         const [userRows] = await db.execute('SELECT xp, level FROM users WHERE id = ?', [userId]);
         if (userRows.length === 0) {
-          await db.end();
+          db.release();
           return res.status(404).json({ success: false, message: 'User not found' });
         }
 
@@ -1487,7 +1445,7 @@ module.exports = async (req, res) => {
         if (xpAmount <= -999999) {
           await db.execute('DELETE FROM xp_events WHERE user_id = ?', [userId]);
           await db.execute('UPDATE users SET xp = 0, level = 1 WHERE id = ?', [userId]);
-          await db.end();
+          db.release();
           try {
             invalidatePattern('leaderboard_v*');
           } catch (_) {}
@@ -1542,7 +1500,7 @@ module.exports = async (req, res) => {
           } catch (_) {}
         }
 
-        await db.end();
+        db.release();
         try {
           invalidatePattern('leaderboard_v*');
         } catch (_) {}
@@ -1558,7 +1516,7 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error giving XP:', dbError);
-        if (db && !db.ended) await db.end();
+        if (db) { try { db.release(); } catch (_) {} }
         return res.status(500).json({ success: false, message: 'Failed to give XP points' });
       }
     } catch (error) {

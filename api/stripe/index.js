@@ -1,10 +1,10 @@
-const mysql = require('mysql2/promise');
 const nodemailer = require('nodemailer');
 const Stripe = require('stripe');
 
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 const { invalidateEntitlementsCache } = require('../cache');
+const { getDbConnection } = require('../db');
 
 // Validate Stripe secret key (backend only – never expose sk_ in frontend)
 function getStripeClient() {
@@ -58,36 +58,6 @@ function extractReferralFromCheckoutSession(session) {
 
   return '';
 }
-
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    await connection.ping();
-    return connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return null;
-  }
-};
 
 // Email transporter for sending subscription cancellation emails
 const createEmailTransporter = () => {
@@ -365,7 +335,7 @@ module.exports = async (req, res) => {
           [userId]
         );
 
-        await db.end();
+        db.release();
 
         if (updatedUser && updatedUser.length > 0) {
           return res.status(200).json({
@@ -384,7 +354,7 @@ module.exports = async (req, res) => {
         }
       } catch (dbError) {
         console.error('Database error updating subscription:', dbError);
-        if (db && !db.ended) await db.end();
+        if (db && !db.ended) db.release();
         return res.status(500).json({
           success: false,
           message: 'Failed to update subscription status'
@@ -481,10 +451,10 @@ module.exports = async (req, res) => {
                   console.warn('Webhook referral attribution:', refErr.message);
                 }
               }
-              await db.end();
+              db.release();
             } catch (dbErr) {
               console.error('Webhook checkout.session.completed error:', dbErr);
-              if (db && !db.ended) await db.end();
+              if (db && !db.ended) db.release();
             }
           }
         }
@@ -541,10 +511,10 @@ module.exports = async (req, res) => {
             }
           }
           
-          await db.end();
+          db.release();
         } catch (dbError) {
           console.error('Database error in webhook:', dbError);
-          if (db && !db.ended) await db.end();
+          if (db && !db.ended) db.release();
         }
       } else if (event.type === 'invoice.payment_succeeded') {
         const inv = event.data?.object || {};
@@ -584,10 +554,10 @@ module.exports = async (req, res) => {
             invalidateEntitlementsCache(userId);
           }
 
-          await db.end();
+          db.release();
         } catch (dbError) {
           console.error('Database error in webhook:', dbError);
-          if (db && !db.ended) await db.end();
+          if (db && !db.ended) db.release();
         }
       }
 

@@ -13,7 +13,9 @@ const MiniJournalModal = React.memo(({
     calendarMonth, 
     setCalendarMonth, 
     onTaskToggle,
-    loading 
+    loading,
+    journalToday,
+    restrictJournalDates = false,
 }) => {
     // State
     const [closing, setClosing] = useState(false);
@@ -87,8 +89,7 @@ const MiniJournalModal = React.memo(({
         completionPct: tasks.length ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0
     }), [tasks, notes]);
     
-    // Today's date - memoized
-    const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+    const todayStr = journalToday || new Date().toISOString().slice(0, 10);
     
     // Handlers
     const handleClose = useCallback(() => {
@@ -103,16 +104,18 @@ const MiniJournalModal = React.memo(({
     }, [closing, onClose]);
     
     const handlePrevMonth = useCallback(() => {
+        if (restrictJournalDates) return;
         const [y, m] = calendarMonth.split('-').map(Number);
         const newMonth = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
         setCalendarMonth(newMonth);
-    }, [calendarMonth, setCalendarMonth]);
+    }, [calendarMonth, setCalendarMonth, restrictJournalDates]);
     
     const handleNextMonth = useCallback(() => {
+        if (restrictJournalDates) return;
         const [y, m] = calendarMonth.split('-').map(Number);
         const newMonth = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
         setCalendarMonth(newMonth);
-    }, [calendarMonth, setCalendarMonth]);
+    }, [calendarMonth, setCalendarMonth, restrictJournalDates]);
     
     const handleGoToJournal = useCallback(() => {
         handleClose();
@@ -120,8 +123,9 @@ const MiniJournalModal = React.memo(({
     }, [handleClose, navigate]);
     
     const handleDateSelect = useCallback((date) => {
+        if (restrictJournalDates && date !== todayStr) return;
         setSelectedDate(date);
-    }, [setSelectedDate]);
+    }, [setSelectedDate, restrictJournalDates, todayStr]);
     
     const handleTaskToggleOptimistic = useCallback(async (task) => {
         if (isToggling) return;
@@ -207,6 +211,7 @@ const MiniJournalModal = React.memo(({
                             <button 
                                 className="mini-calendar-nav-btn"
                                 onClick={handlePrevMonth}
+                                disabled={restrictJournalDates}
                                 type="button"
                             >
                                 ‹
@@ -220,6 +225,7 @@ const MiniJournalModal = React.memo(({
                             <button 
                                 className="mini-calendar-nav-btn"
                                 onClick={handleNextMonth}
+                                disabled={restrictJournalDates}
                                 type="button"
                             >
                                 ›
@@ -238,13 +244,15 @@ const MiniJournalModal = React.memo(({
                                     return <div key={`empty-${idx}`} className="mini-calendar-day empty" />;
                                 }
                                 const isSelected = date === selectedDate;
-                                const isToday = date === today;
+                                const isToday = date === todayStr;
                                 const hasTasks = taskDates.has(date);
+                                const isLocked = restrictJournalDates && date !== todayStr;
                                 
                                 return (
                                     <button
                                         key={date}
-                                        className={`mini-calendar-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${hasTasks ? 'has-tasks' : ''}`}
+                                        disabled={isLocked}
+                                        className={`mini-calendar-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${hasTasks ? 'has-tasks' : ''} ${isLocked ? 'locked' : ''}`}
                                         onClick={() => handleDateSelect(date)}
                                         type="button"
                                     >
@@ -335,6 +343,8 @@ const MiniJournalModal = React.memo(({
     if (prevProps.selectedDate !== nextProps.selectedDate) return false;
     if (prevProps.calendarMonth !== nextProps.calendarMonth) return false;
     if (prevProps.loading !== nextProps.loading) return false;
+    if (prevProps.journalToday !== nextProps.journalToday) return false;
+    if (prevProps.restrictJournalDates !== nextProps.restrictJournalDates) return false;
     
     // Deep compare tasks
     const prevTasks = prevProps.tasks || [];

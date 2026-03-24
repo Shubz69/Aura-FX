@@ -3,6 +3,8 @@ import { toast } from 'react-toastify';
 import Api from '../services/Api';
 import { useAuth } from '../context/AuthContext';
 import { getStoredUser } from '../utils/storage';
+import { isAdmin } from '../utils/roles';
+import { getJournalTodayForUser } from '../utils/journalDate';
 import '../styles/Journal.css';
 import {
   FaPlus, FaTrash, FaCheck, FaCircle, FaEdit, FaSave,
@@ -137,10 +139,11 @@ function PhotoLightbox({ photos, startIndex = 0, onClose }) {
    ══════════════════════════════════════════════════════════════ */
 export default function Journal() {
   const { user: authUser } = useAuth();
-  const today = new Date().toISOString().slice(0, 10);
+  const userAdmin = useMemo(() => isAdmin(authUser), [authUser]);
 
-  const [selectedDate, setSelectedDate]   = useState(today);
-  const [calendarMonth, setCalendarMonth] = useState(today.slice(0, 7));
+  const [journalToday, setJournalToday] = useState(() => getJournalTodayForUser(null));
+  const [selectedDate, setSelectedDate]   = useState(() => getJournalTodayForUser(null));
+  const [calendarMonth, setCalendarMonth] = useState(() => getJournalTodayForUser(null).slice(0, 7));
   const [monthTasks, setMonthTasks]       = useState([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState(null);
@@ -171,6 +174,30 @@ export default function Journal() {
   const [editingNoteText, setEditingNoteText] = useState('');
 
   useEffect(() => { setCompletionBannerDismissed(false); }, [selectedDate]);
+
+  useEffect(() => {
+    setJournalToday(getJournalTodayForUser(authUser));
+  }, [authUser]);
+
+  useEffect(() => {
+    const tick = () => setJournalToday(getJournalTodayForUser(authUser));
+    const id = setInterval(tick, 60000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!userAdmin) {
+      setSelectedDate(journalToday);
+      setCalendarMonth(journalToday.slice(0, 7));
+    }
+  }, [userAdmin, journalToday]);
 
   const monthStart  = getMonthStart(calendarMonth + '-01');
   const monthEnd    = getMonthEnd(calendarMonth + '-01');
@@ -276,13 +303,13 @@ export default function Journal() {
     const [y, m] = calendarMonth.split('-').map(Number);
     const nm = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
     setCalendarMonth(nm);
-    if (selectedDate.slice(0, 7) !== nm) setSelectedDate(nm + '-01');
+    if (userAdmin && selectedDate.slice(0, 7) !== nm) setSelectedDate(`${nm}-01`);
   };
   const handleNextMonth = () => {
     const [y, m] = calendarMonth.split('-').map(Number);
     const nm = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
     setCalendarMonth(nm);
-    if (selectedDate.slice(0, 7) !== nm) setSelectedDate(nm + '-01');
+    if (userAdmin && selectedDate.slice(0, 7) !== nm) setSelectedDate(`${nm}-01`);
   };
 
   /* ── Task CRUD ───────────────────────────────────────── */
@@ -307,14 +334,18 @@ export default function Journal() {
   };
 
   const handleToggle = async (task) => {
+    const prevCompleted = task.completed;
+    const nextCompleted = !prevCompleted;
+    setMonthTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: nextCompleted } : t)));
     try {
-      const res = await Api.updateJournalTask(task.id, { completed: !task.completed });
+      const res = await Api.updateJournalTask(task.id, { completed: nextCompleted });
       const updated = res.data?.task;
       if (updated) {
         setMonthTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
         if (res.data?.xpAwarded) toast.success(`+${res.data.xpAwarded} XP for completing with proof!`, { icon: '⭐' });
       }
     } catch (err) {
+      setMonthTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: prevCompleted } : t)));
       setError(err.response?.data?.message || 'Failed to update task.');
     }
   };
@@ -477,7 +508,7 @@ export default function Journal() {
     ? Math.min(100, Math.round((dayPct + weekPct + monthPct) / 3))
     : (dayPct ?? 0);
 
-  const label = isSameDay(selectedDate, today)
+  const label = isSameDay(selectedDate, journalToday)
     ? 'Today'
     : (() => { const d = new Date(selectedDate + 'T12:00:00'); return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; })();
 
@@ -628,11 +659,11 @@ export default function Journal() {
           {/* Calendar */}
           <div className="journal-calendar">
             <div className="journal-calendar-nav">
-              <button type="button" className="journal-calendar-btn" onClick={handlePrevMonth} aria-label="Previous month">‹</button>
+              <button type="button" className="journal-calendar-btn" onClick={handlePrevMonth} disabled={!userAdmin} aria-label="Previous month">‹</button>
               <span className="journal-calendar-month">
                 {MONTH_NAMES[parseInt(calendarMonth.split('-')[1], 10) - 1]}&nbsp;{calendarMonth.split('-')[0]}
               </span>
-              <button type="button" className="journal-calendar-btn" onClick={handleNextMonth} aria-label="Next month">›</button>
+              <button type="button" className="journal-calendar-btn" onClick={handleNextMonth} disabled={!userAdmin} aria-label="Next month">›</button>
             </div>
             <div className="journal-calendar-weekdays">
               {DAY_NAMES.map((d) => <span key={d} className="journal-calendar-wd">{d}</span>)}
@@ -644,11 +675,13 @@ export default function Journal() {
                 const doneCount  = completedCountByDate[dateStr] || 0;
                 const totalCount = taskCountByDate[dateStr]      || 0;
                 const isSelected = isSameDay(dateStr, selectedDate);
-                const isToday    = isSameDay(dateStr, today);
+                const isToday    = isSameDay(dateStr, journalToday);
+                const isLockedDay = !userAdmin && !isSameDay(dateStr, journalToday);
                 return (
                   <button key={dateStr} type="button"
-                    className={`journal-calendar-day${isSelected ? ' journal-calendar-day--selected' : ''}${isToday ? ' journal-calendar-day--today' : ''}`}
-                    onClick={() => setSelectedDate(dateStr)}
+                    disabled={isLockedDay}
+                    className={`journal-calendar-day${isSelected ? ' journal-calendar-day--selected' : ''}${isToday ? ' journal-calendar-day--today' : ''}${isLockedDay ? ' journal-calendar-day--locked' : ''}`}
+                    onClick={() => { if (!isLockedDay) setSelectedDate(dateStr); }}
                   >
                     <span className="journal-calendar-day-num">{parseInt(dateStr.slice(-2), 10)}</span>
                     {hasTasks && (
@@ -708,7 +741,7 @@ export default function Journal() {
           {/* Progress cards */}
           <div className="journal-progress-cards">
             {[
-              { label: isSameDay(selectedDate, today) ? 'Today' : 'Selected day', pct: dayPct },
+              { label: isSameDay(selectedDate, journalToday) ? 'Today' : 'Selected day', pct: dayPct },
               { label: 'This week',  pct: weekPct  },
               { label: 'This month', pct: monthPct },
             ].map(({ label: lbl, pct }) => (

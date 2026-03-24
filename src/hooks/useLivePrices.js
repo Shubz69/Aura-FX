@@ -7,8 +7,19 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Api from '../services/Api';
 
-const API_BASE_URL = window.location.origin;
+/** Matches Api.js routing: REACT_APP_API_URL, or www.auraterminal.ai when hostname is apex/marketing. */
+function getMarketApiBaseUrl() {
+  const base = Api.getBaseUrl();
+  if (typeof base === 'string' && base.length > 0) {
+    return base.replace(/\/$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return '';
+}
 /** Keep in sync with api/markets/snapshot.js Cache-Control max-age / s-maxage */
 const SNAPSHOT_POLL_MS = 30000;
 
@@ -121,7 +132,7 @@ async function fetchSnapshot() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
-    const url = `${API_BASE_URL}/api/markets/snapshot`;
+    const url = `${getMarketApiBaseUrl()}/api/markets/snapshot`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -204,7 +215,7 @@ async function fetchWatchlist() {
   if (watchlistConfig) return watchlistConfig;
   
   try {
-    const response = await fetch(`${API_BASE_URL}/api/market/watchlist`);
+    const response = await fetch(`${getMarketApiBaseUrl()}/api/market/watchlist`);
     const data = await response.json();
     if (data.success && data.watchlist) {
       watchlistConfig = data.watchlist;

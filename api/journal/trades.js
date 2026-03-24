@@ -189,10 +189,21 @@ module.exports = async (req, res) => {
   }
 
   if ((req.method === 'PUT' || req.method === 'DELETE') && tradeId) {
-    const [existing] = await executeQuery('SELECT id FROM journal_trades WHERE id = ? AND userId = ?', [tradeId, userId]);
+    const [existing] = await executeQuery('SELECT id, date FROM journal_trades WHERE id = ? AND userId = ?', [
+      tradeId,
+      userId,
+    ]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Trade not found' });
     }
+    const existingDate = existing[0].date
+      ? existing[0].date instanceof Date
+        ? existing[0].date.toISOString().slice(0, 10)
+        : String(existing[0].date).slice(0, 10)
+      : null;
+
+    const jctx = await getJournalContext(userId);
+    if (!assertJournalWritableDate(res, jctx, existingDate)) return;
 
     if (req.method === 'DELETE') {
       await executeQuery('DELETE FROM journal_trades WHERE id = ? AND userId = ?', [tradeId, userId]);
@@ -203,6 +214,15 @@ module.exports = async (req, res) => {
     const date = body.date != null ? String(body.date).trim().slice(0, 10) : null;
     const pair = body.pair != null ? String(body.pair).trim() : null;
     const rResult = body.rResult;
+
+    if (body.date !== undefined) {
+      const nextD = normalizeYyyyMmDd(body.date);
+      if (jctx.bypassJournalDateLock) {
+        /* admin may change date */
+      } else if (nextD && existingDate && nextD !== existingDate) {
+        return res.status(403).json({ success: false, message: 'Cannot change trade date.' });
+      }
+    }
 
     if (date != null && !date) {
       return res.status(400).json({ success: false, message: 'date is required' });

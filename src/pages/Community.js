@@ -4,7 +4,8 @@ import { useWebSocket } from '../utils/useWebSocket';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Api from '../services/Api';
 import CosmicBackground from '../components/CosmicBackground';
-import { SUPER_ADMIN_EMAIL } from '../utils/roles';
+import { SUPER_ADMIN_EMAIL, isAdmin } from '../utils/roles';
+import { getJournalTodayForUser } from '../utils/journalDate';
 import axios from 'axios';
 import {
     triggerNotification,
@@ -689,8 +690,8 @@ const [showJournalModal, setShowJournalModal] = useState(false);
 const [journalModalClosing, setJournalModalClosing] = useState(false);
 const [journalTasks, setJournalTasks] = useState([]);
 const [journalNotes, setJournalNotes] = useState([]);
-const [journalSelectedDate, setJournalSelectedDate] = useState(new Date().toISOString().slice(0, 10));
-const [journalCalendarMonth, setJournalCalendarMonth] = useState(new Date().toISOString().slice(0, 7));
+const [journalSelectedDate, setJournalSelectedDate] = useState(() => getJournalTodayForUser(null));
+const [journalCalendarMonth, setJournalCalendarMonth] = useState(() => getJournalTodayForUser(null).slice(0, 7));
 const [journalLoading, setJournalLoading] = useState(false);
 
     const [draggedCategory, setDraggedCategory] = useState(null);
@@ -737,6 +738,28 @@ const [journalLoading, setJournalLoading] = useState(false);
     const { id: channelIdParam } = useParams();
     const location = useLocation();
     const { user: authUser, persistUser } = useAuth(); // Get user from AuthContext
+    const restrictMiniJournalDates = useMemo(() => !isAdmin(authUser), [authUser]);
+    const [journalQuickToday, setJournalQuickToday] = useState(() => getJournalTodayForUser(null));
+    useEffect(() => {
+        setJournalQuickToday(getJournalTodayForUser(authUser));
+    }, [authUser]);
+    useEffect(() => {
+        const tick = () => setJournalQuickToday(getJournalTodayForUser(authUser));
+        const id = setInterval(tick, 60000);
+        const onVis = () => {
+            if (document.visibilityState === 'visible') tick();
+        };
+        document.addEventListener('visibilitychange', onVis);
+        return () => {
+            clearInterval(id);
+            document.removeEventListener('visibilitychange', onVis);
+        };
+    }, [authUser]);
+    useEffect(() => {
+        if (!restrictMiniJournalDates || !showJournalModal) return;
+        setJournalSelectedDate(journalQuickToday);
+        setJournalCalendarMonth(journalQuickToday.slice(0, 7));
+    }, [showJournalModal, restrictMiniJournalDates, journalQuickToday]);
     const { entitlements, loading: entitlementsLoading, refresh: refreshEntitlements } = useEntitlements();
     const { hasCommunityAccess: hasCommunityAccessFromSubscription, refreshSubscription } = useSubscription();
     
@@ -8862,6 +8885,8 @@ if (!isAuthenticated && !hasToken) {
     setCalendarMonth={setJournalCalendarMonth}
     onTaskToggle={handleMiniTaskToggle}
     loading={journalLoading}
+    journalToday={journalQuickToday}
+    restrictJournalDates={restrictMiniJournalDates}
 />
 
             {/* Image Modal */}

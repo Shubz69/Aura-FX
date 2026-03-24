@@ -1808,6 +1808,11 @@ body.sidebar-open-mobile {
 
 .journal-modal-body .mini-calendar-day.empty,
 .journal-modal-body .journal-calendar-day--empty { pointer-events: none; opacity: 0; }
+.journal-modal-body .mini-calendar-day.locked {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 .journal-modal-body .journal-calendar-day--past { color: rgba(255,255,255,0.2); }
 
 .journal-modal-body .mini-calendar-day.today,

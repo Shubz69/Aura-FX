@@ -270,21 +270,20 @@ module.exports = async (req, res) => {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-      const db = await getDbConnection();
-      if (!db) {
-        return res.status(500).json({
-          success: false,
-          message: 'Database not configured. Please contact support.'
-        });
-      }
-
+      let dbReset = null;
       try {
-        const [result] = await db.execute(
+        dbReset = await getDbConnection();
+        if (!dbReset) {
+          return res.status(500).json({
+            success: false,
+            message: 'Database not configured. Please contact support.'
+          });
+        }
+
+        const [result] = await dbReset.execute(
           'UPDATE users SET password = ? WHERE email = ?',
           [hashedPassword, tokenData.email.toLowerCase()]
         );
-
-        db.release();
 
         if (result.affectedRows > 0) {
           console.log(`Password reset for ${tokenData.email} - updated in MySQL database`);
@@ -292,12 +291,11 @@ module.exports = async (req, res) => {
             success: true,
             message: 'Password reset successfully'
           });
-        } else {
-          return res.status(404).json({
-            success: false,
-            message: 'User not found'
-          });
         }
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
       } catch (dbError) {
         console.error('MySQL update error:', dbError.message);
         console.error('Database error details:', {
@@ -305,13 +303,18 @@ module.exports = async (req, res) => {
           code: dbError.code,
           errno: dbError.errno
         });
-        if (db && !db.ended) {
-          db.release();
-        }
         return res.status(500).json({
           success: false,
           message: `Failed to reset password: ${dbError.message || 'Database error'}`
         });
+      } finally {
+        if (dbReset) {
+          try {
+            dbReset.release();
+          } catch (e) {
+            console.warn('Error releasing DB connection (reset):', e.message);
+          }
+        }
       }
     }
 

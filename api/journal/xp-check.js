@@ -6,6 +6,7 @@
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const { XP, awardOnce } = require('./xp-helper');
+const { getJournalContext } = require('../utils/journalWriteGuard');
 
 function getWeekStart(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -43,6 +44,9 @@ module.exports = async (req, res) => {
     return res.status(400).json({ success: false, message: 'date query required' });
   }
   const dateStr = String(date).trim().slice(0, 10);
+  const jctx = await getJournalContext(userId);
+  const mayAward = jctx.bypassJournalDateLock || dateStr === jctx.todayYyyyMmDd;
+
   const weekStart = getWeekStart(dateStr);
   const monthStart = getMonthStart(dateStr);
 
@@ -81,21 +85,21 @@ module.exports = async (req, res) => {
 
   const awarded = [];
 
-  if (dayTotal >= 5) {
+  if (mayAward && dayTotal >= 5) {
     const amount = Math.floor((XP.DAY_PCT_MAX * dayPct) / 100);
     if (amount > 0) {
       const result = await awardOnce(userId, 'journal_day_pct', amount, null, dateStr);
       if (result.awarded) awarded.push({ type: 'day', period: dateStr, xp: amount });
     }
   }
-  if (weekTotal >= 5) {
+  if (mayAward && weekTotal >= 5) {
     const amount = Math.floor((XP.WEEK_PCT_MAX * weekPct) / 100);
     if (amount > 0) {
       const result = await awardOnce(userId, 'journal_week_pct', amount, null, weekStart);
       if (result.awarded) awarded.push({ type: 'week', period: weekStart, xp: amount });
     }
   }
-  if (monthTotal >= 5) {
+  if (mayAward && monthTotal >= 5) {
     const amount = Math.floor((XP.MONTH_PCT_MAX * monthPct) / 100);
     if (amount > 0) {
       const result = await awardOnce(userId, 'journal_month_pct', amount, null, monthStart);

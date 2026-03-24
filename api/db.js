@@ -1,3 +1,11 @@
+/**
+ * Shared MySQL pool for all serverless routes.
+ *
+ * Scaling: On Vercel, connectionLimit is 1 per warm instance; total DB sessions ≈ concurrent warm
+ * functions. For many simultaneous users, use a managed pooler (e.g. PlanetScale, AWS RDS Proxy,
+ * DigitalOcean pooled mode, or ProxySQL) and set MYSQL_HOST / MYSQL_PORT to the pooler endpoint.
+ * Tune MYSQL_QUEUE_LIMIT only for burst queuing on a single instance — it does not add server connections.
+ */
 const mysql = require('mysql2/promise');
 // Suppress url.parse() deprecation warnings from dependencies
 require('./utils/suppress-warnings');

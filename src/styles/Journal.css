@@ -749,6 +749,12 @@
 
 .journal-calendar-btn:active { transform: scale(0.93); }
 
+.journal-calendar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .journal-calendar-month {
   font-size: clamp(0.64rem, 1.8vw, 0.76rem);
   font-weight: 500;
@@ -845,6 +851,19 @@
   pointer-events: none;
   opacity: 0;
   animation: none;
+}
+
+.journal-calendar-day--locked {
+  opacity: 0.32;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.journal-calendar-day--locked:hover {
+  transform: none;
+  border-color: inherit;
+  box-shadow: none;
 }
 
 /* Today */
