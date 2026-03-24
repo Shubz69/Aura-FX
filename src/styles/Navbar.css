@@ -428,41 +428,6 @@ body.loading-active .navbar {
   left: 0.95rem;
 }
 
-/* Aura AI special link */
-.nav-links li a.nav-aura-ai {
-  color: var(--eaa-core);
-  font-weight: 600;
-  border: 1px solid rgba(234, 169, 96, 0.28);
-  background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.06) 0%,
-    rgba(234, 169, 96, 0.02) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 12px rgba(234, 169, 96, 0.05);
-  letter-spacing: 0.14em;
-}
-
-.nav-links li a.nav-aura-ai:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(234, 169, 96, 0.12) 0%,
-    rgba(234, 169, 96, 0.06) 100%
-  );
-  border-color: rgba(234, 169, 96, 0.55);
-  color: var(--eaa-bright);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    0 0 18px rgba(234, 169, 96, 0.14),
-    0 1px 10px rgba(0, 0, 0, 0.24);
-}
-
-.mobile-aura-ai-link {
-  color: var(--eaa-core) !important;
-  font-weight: 600 !important;
-}
-
 /* ══════════════════════════════════════════════════════════
    NAV BUTTONS
 ══════════════════════════════════════════════════════════ */

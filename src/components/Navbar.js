@@ -16,7 +16,6 @@ import {
   FaSlidersH,
   FaUsers,
   FaPhone,
-  FaRobot,
   FaBook,
   FaThLarge,
   FaCheckSquare,
@@ -79,7 +78,7 @@ const Navbar = () => {
               <Link
                 to={auraAiHref}
                 onClick={closeMobileMenu}
-                className={`mobile-aura-ai-link${isActive('/premium-ai') || isActive('/subscription') ? ' active' : ''}`}
+                className={isActive('/premium-ai') || isActive('/subscription') ? 'active' : ''}
               >
                 Aura AI
               </Link>
@@ -135,9 +134,9 @@ const Navbar = () => {
               <li>
                 <Link
                   to={auraAiHref}
-                  className={`nav-aura-ai${isActive("/premium-ai") || isActive("/subscription") ? " active" : ""}`}
+                  className={isActive("/premium-ai") || isActive("/subscription") ? "active" : ""}
                 >
-                  🤖 Aura AI
+                  Aura AI
                 </Link>
               </li>
               <li><Link to="/courses" className={isActive("/courses") ? "active" : ""}>C &amp; S</Link></li>
