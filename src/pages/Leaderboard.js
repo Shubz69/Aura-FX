@@ -587,14 +587,14 @@ const Leaderboard = () => {
                         <h3>🎯 How XP Works</h3>
                         <div className="xp-rules">
                             {[
-                                ['💬', '+0.001 XP per quality message (cooldown applies)'],
-                                ['📎', '+0.002 XP for useful attachment context'],
-                                ['🔥', '+0.005 XP base daily login (scaled by streak)'],
-                                ['📚', '+0.02 XP per course completion'],
-                                ['📝', '+0.0025 XP journal actions (anti-abuse gated)'],
-                                ['🎁', '+0.005 XP for verified help to other users'],
-                                ['✅', 'XP now follows strict premium difficulty rules'],
-                                ['⚠️', '1.25-3.5 XP penalties for rule violations', true],
+                                ['💬', '~0.12 XP per message, capped per message (cooldown applies)'],
+                                ['📎', 'Extra XP for attachments (still low vs journals)'],
+                                ['🔥', '+3.5 XP daily login; +1000 XP every 7-day streak; +5000 XP every 30-day streak'],
+                                ['📚', 'Up to 5 XP for course completion'],
+                                ['📝', 'Up to 5 XP for journal tasks (anti-abuse gated)'],
+                                ['🎁', 'Up to 5 XP for verified help to other users'],
+                                ['✅', 'Level 100 at 1,000,000 total XP (competitive curve)'],
+                                ['⚠️', 'Up to 50 XP penalties for rule violations', true],
                                 ['🚫', '5 strikes = 1 month ban', true],
                             ].map(([icon, text, neg]) => (
                                 <div key={text} className={`xp-rule${neg ? ' negative' : ''}`}>
@@ -607,7 +607,7 @@ const Leaderboard = () => {
                             <h4>📊 XP System Details</h4>
                             <ul>
                                 <li><strong>Level Cap:</strong> 100 (AURA TERMINAL God)</li>
-                                <li><strong>Scaling:</strong> Premium hard curve with decimal XP progression</li>
+                                <li><strong>Scaling:</strong> 1M XP to max level; chat stays low; streak milestones reward consistency</li>
                                 <li><strong>Anti-Spam:</strong> Cooldowns and moderation-gated XP events</li>
                                 <li><strong>Rank Titles:</strong> Unique premium rank title for every level</li>
                                 <li><strong>Tiers:</strong> Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → GOD</li>

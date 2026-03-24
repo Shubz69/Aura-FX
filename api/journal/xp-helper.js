@@ -6,14 +6,15 @@
 const { executeQuery } = require('../db');
 const { getLevelFromXP, XP_RULES, round2 } = require('../utils/xp-system');
 
+/** Per-action journal awards (each ≤ 5 XP at J=1; override via XP_JOURNAL_MULT). */
 const J = XP_RULES.JOURNAL_MULTIPLIER;
 const XP = {
-  ADD_TASK: round2(0.2 * J),
-  SAVE_NOTE: round2(0.2 * J),
-  COMPLETE_WITH_PROOF: round2(1.0 * J),
-  DAY_PCT_MAX: round2(0.4 * J),
-  WEEK_PCT_MAX: round2(1.2 * J),
-  MONTH_PCT_MAX: round2(2.0 * J),
+  ADD_TASK: round2(2 * J),
+  SAVE_NOTE: round2(2 * J),
+  COMPLETE_WITH_PROOF: round2(5 * J),
+  DAY_PCT_MAX: round2(4 * J),
+  WEEK_PCT_MAX: round2(5 * J),
+  MONTH_PCT_MAX: round2(5 * J),
 };
 
 async function ensureXpAwardsTable() {

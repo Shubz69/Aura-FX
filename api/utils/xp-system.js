@@ -1,11 +1,17 @@
 const MAX_LEVEL = 100;
+
+/** Cumulative XP required to be at level 100 (must match src/utils/xpSystem.js). */
+const TOTAL_XP_FOR_LEVEL_100 = 1_000_000;
+const LEVEL_CURVE_GAMMA = 2.0;
+
 const round2 = (n) => Math.round((Number(n) || 0) * 10000) / 10000;
 
 const XP_RULES = {
-  DAILY_LOGIN_BASE: 0.005,
-  DAILY_LOGIN_WEEKLY_BONUS: 0.001,
-  MESSAGE_MULTIPLIER: Number(process.env.XP_PLAYER_GAIN_MULT || 0.01),
-  JOURNAL_MULTIPLIER: Number(process.env.XP_JOURNAL_MULT || 0.01),
+  DAILY_LOGIN_BASE: 3.5,
+  /** Legacy small multiplier; prefer leaving at 1. Streak bonuses use dedicated milestones in daily-login. */
+  DAILY_LOGIN_WEEKLY_BONUS: 0,
+  MESSAGE_MULTIPLIER: Number(process.env.XP_PLAYER_GAIN_MULT ?? 1),
+  JOURNAL_MULTIPLIER: Number(process.env.XP_JOURNAL_MULT ?? 1),
 };
 
 const TIER_NAMES = [
@@ -49,7 +55,7 @@ const TRADING_RANKS = (() => {
 function xpRequiredForLevel(level) {
   if (level <= 1) return 0;
   const l = level - 1;
-  return round2((l ** 2.6) * 125);
+  return round2(TOTAL_XP_FOR_LEVEL_100 * (l / 99) ** LEVEL_CURVE_GAMMA);
 }
 
 function getLevelFromXP(xp) {
@@ -79,14 +85,14 @@ function getTierName(level) {
   return TIER_NAMES[tierIdx] || TIER_NAMES[0];
 }
 
-function calculateLoginXP(streak) {
-  const bonusMultiplier = Math.min(Math.floor((Number(streak) || 0) / 14), 30);
-  const bonusXP = bonusMultiplier * XP_RULES.DAILY_LOGIN_WEEKLY_BONUS;
-  return round2(XP_RULES.DAILY_LOGIN_BASE + bonusXP);
+function calculateLoginXP(_streak) {
+  return round2(XP_RULES.DAILY_LOGIN_BASE + XP_RULES.DAILY_LOGIN_WEEKLY_BONUS);
 }
 
 module.exports = {
   MAX_LEVEL,
+  TOTAL_XP_FOR_LEVEL_100,
+  LEVEL_CURVE_GAMMA,
   XP_RULES,
   TRADING_RANKS,
   round2,
@@ -97,4 +103,3 @@ module.exports = {
   getTierName,
   calculateLoginXP,
 };
-

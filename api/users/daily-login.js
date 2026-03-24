@@ -1,6 +1,6 @@
 const { executeQuery } = require('../db');
 const { postLevelUpToLevelsChannel } = require('../utils/post-level-up-to-levels-channel');
-const { calculateLoginXP, getLevelFromXP } = require('../utils/xp-system');
+const { calculateLoginXP, getLevelFromXP, round2 } = require('../utils/xp-system');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
 
@@ -20,27 +20,44 @@ const withTimeout = (promise, timeoutMs = 2000) => {
 };
 
 
-async function logDailyLoginXpEvent(executeQuery, userId, xpReward, desc) {
+async function ensureXpEventsTable(executeQuery) {
+  await executeQuery(`
+    CREATE TABLE IF NOT EXISTS xp_events (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      amount DECIMAL(14, 4) NOT NULL,
+      source VARCHAR(50) NOT NULL,
+      meta JSON,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_user_id (user_id),
+      INDEX idx_created_at (created_at)
+    )
+  `);
+}
+
+async function logXpEvent(executeQuery, userId, amount, source, desc) {
   try {
-    await executeQuery(`
-      CREATE TABLE IF NOT EXISTS xp_events (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        amount DECIMAL(14, 4) NOT NULL,
-        source VARCHAR(50) NOT NULL,
-        meta JSON,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user_id (user_id),
-        INDEX idx_created_at (created_at)
-      )
-    `);
+    await ensureXpEventsTable(executeQuery);
     await executeQuery(
       'INSERT INTO xp_events (user_id, amount, source, meta) VALUES (?, ?, ?, ?)',
-      [userId, xpReward, 'daily_login', JSON.stringify({ description: desc || 'daily_login' })]
+      [userId, amount, source, JSON.stringify({ description: desc || source })]
     );
   } catch (e) {
     console.warn('daily-login xp_events:', e.message);
   }
+}
+
+async function logDailyLoginXpEvent(executeQuery, userId, xpReward, desc) {
+  return logXpEvent(executeQuery, userId, xpReward, 'daily_login', desc);
+}
+
+/** +1000 XP every 7 consecutive login days; +5000 every 30 (both can apply on e.g. day 210). */
+function streakMilestoneBonus(streak) {
+  const s = parseInt(streak, 10) || 0;
+  if (s <= 0) return { total: 0, weekly: 0, monthly: 0 };
+  const weekly = s % 7 === 0 ? 1000 : 0;
+  const monthly = s % 30 === 0 ? 5000 : 0;
+  return { total: weekly + monthly, weekly, monthly };
 }
 
 module.exports = async (req, res) => {
@@ -115,7 +132,7 @@ module.exports = async (req, res) => {
       if (daysSinceNum !== null && daysSinceNum > 1) {
         const newStreak = 1;
         const xpReward = calculateLoginXP(newStreak);
-        const newXP = (parseFloat(user.xp) || 0) + xpReward;
+        const newXP = round2((parseFloat(user.xp) || 0) + xpReward);
         const newLevel = getLevelFromXP(newXP);
 
         const [updateResult] = await withTimeout(
@@ -181,8 +198,10 @@ module.exports = async (req, res) => {
 
       const newStreak = daysSinceNum === 1 ? currentStreak + 1 : 1;
       const xpReward = calculateLoginXP(newStreak);
+      const milestone = streakMilestoneBonus(newStreak);
+      const milestoneXP = round2(milestone.total);
       const currentXP = parseFloat(user.xp) || 0;
-      const newXP = currentXP + xpReward;
+      const newXP = round2(currentXP + xpReward + milestoneXP);
       const newLevel = getLevelFromXP(newXP);
       const leveledUp = newLevel > (parseInt(user.level, 10) || 1);
 
@@ -226,6 +245,21 @@ module.exports = async (req, res) => {
       ).catch(err => console.warn('XP log failed (non-blocking):', err.message));
       logDailyLoginXpEvent(executeQuery, userId, xpReward, `streak_${newStreak}`);
 
+      if (milestone.weekly > 0) {
+        executeQuery(
+          'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
+          [userId, milestone.weekly, 'streak_milestone_7', `7-day streak milestone (${newStreak} days)`]
+        ).catch(err => console.warn('XP log failed (non-blocking):', err.message));
+        logXpEvent(executeQuery, userId, milestone.weekly, 'streak_milestone_7', `7-day milestone at ${newStreak}d`);
+      }
+      if (milestone.monthly > 0) {
+        executeQuery(
+          'INSERT INTO xp_logs (user_id, xp_amount, action_type, description) VALUES (?, ?, ?, ?)',
+          [userId, milestone.monthly, 'streak_milestone_30', `30-day streak milestone (${newStreak} days)`]
+        ).catch(err => console.warn('XP log failed (non-blocking):', err.message));
+        logXpEvent(executeQuery, userId, milestone.monthly, 'streak_milestone_30', `30-day milestone at ${newStreak}d`);
+      }
+
       if (leveledUp) {
         console.log(`User ${userId} leveled up to ${newLevel} from daily login`);
         postLevelUpToLevelsChannel({
@@ -235,14 +269,24 @@ module.exports = async (req, res) => {
         }).catch(() => {});
       }
 
+      const totalAwarded = round2(xpReward + milestoneXP);
+      const streakBonuses = [];
+      if (milestone.weekly > 0) streakBonuses.push({ type: 'week', amount: milestone.weekly });
+      if (milestone.monthly > 0) streakBonuses.push({ type: 'month', amount: milestone.monthly });
+
       return res.status(200).json({
         success: true,
         streak: newStreak,
-        xpAwarded: xpReward,
+        xpAwarded: totalAwarded,
+        dailyLoginXp: xpReward,
+        streakBonuses: streakBonuses.length ? streakBonuses : undefined,
         newXP,
         newLevel,
         leveledUp,
-        message: `Login streak: ${newStreak} days! +${xpReward} XP`
+        message:
+          milestoneXP > 0
+            ? `Login streak: ${newStreak} days! +${totalAwarded} XP (daily + consistency bonuses)`
+            : `Login streak: ${newStreak} days! +${xpReward} XP`
       });
     } catch (dbError) {
       console.error('Database error in daily login:', dbError);

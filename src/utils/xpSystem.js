@@ -1,26 +1,34 @@
 /**
  * AURA TERMINAL XP System (Premium v2)
  * - 100 levels max
- * - Decimal XP economy
- * - Much harder progression curve
+ * - Total XP to reach level 100: 1,000,000 (power curve)
  * - Tier ladder preserved: Beginner → Intermediate → Advanced → Professional → Elite → Master → Legend → Mythical → Immortal → GOD
  */
 
 export const MAX_LEVEL = 100;
 
+/** Cumulative XP required to be at level 100 (must match api/utils/xp-system.js). */
+export const TOTAL_XP_FOR_LEVEL_100 = 1_000_000;
+
+/** Shape of the level curve; 2.0 = quadratic scaling from level 1→100. */
+export const LEVEL_CURVE_GAMMA = 2.0;
+
 const FOUR_DP = 10000;
 const round2 = (n) => Math.round((Number(n) || 0) * FOUR_DP) / FOUR_DP;
 
-// ~100x harder compared with legacy values; decimals retained.
+/** Max XP from a single chat message (anti-spam). */
+export const MESSAGE_XP_CAP = 0.45;
+
+// Routine non-chat awards capped at 5 XP; chat kept low (see calculateMessageXP).
 export const XP_REWARDS = {
-    MESSAGE: 0.001,
-    FILE_ATTACHMENT: 0.002,
-    EMOJI_BONUS: 0.0002,
-    DAILY_LOGIN: 0.005,
-    COURSE_COMPLETION: 0.02,
-    HELPING_USER: 0.005,
-    JOURNAL_ENTRY: 0.0025,
-    RULE_VIOLATION: -1.25
+    MESSAGE: 0.12,
+    FILE_ATTACHMENT: 0.12,
+    EMOJI_BONUS: 0.02,
+    DAILY_LOGIN: 3.5,
+    COURSE_COMPLETION: 5,
+    HELPING_USER: 4,
+    JOURNAL_ENTRY: 4,
+    RULE_VIOLATION: -50
 };
 
 export const XP_COOLDOWNS = {
@@ -81,18 +89,15 @@ export const TRADING_RANKS = (() => {
     return out;
 })();
 
-const xpRequiredForLevel = (level) => {
+export const xpRequiredForLevel = (level) => {
     if (level <= 1) return 0;
     const l = level - 1;
-    // Very hard progression with decimals support.
-    return round2((l ** 2.6) * 125);
+    return round2(TOTAL_XP_FOR_LEVEL_100 * (l / 99) ** LEVEL_CURVE_GAMMA);
 };
 
-export const calculateLoginXP = (streak) => {
-    const baseXP = XP_REWARDS.DAILY_LOGIN;
-    const bonusMultiplier = Math.min(Math.floor((Number(streak) || 0) / 14), 30);
-    const bonusXP = bonusMultiplier * 0.001;
-    return round2(baseXP + bonusXP);
+/** Daily login XP only (streak milestones are awarded server-side in daily-login). */
+export const calculateLoginXP = (_streak) => {
+    return round2(XP_REWARDS.DAILY_LOGIN);
 };
 
 export const getRankTitle = (level) => {
@@ -179,19 +184,19 @@ export const isOnCooldown = (actionType, lastActionTime) => {
  */
 export const calculateMessageXP = (messageContent, hasFile) => {
     let totalXP = XP_REWARDS.MESSAGE;
-    
+
     if (hasFile) {
         totalXP += XP_REWARDS.FILE_ATTACHMENT;
     }
-    
-    // Emoji bonus
+
     const emojiRegex = /[\p{Emoji}]/gu;
     const emojiMatches = messageContent.match(emojiRegex);
     if (emojiMatches) {
-        totalXP += emojiMatches.length * XP_REWARDS.EMOJI_BONUS;
+        const emojiCount = Math.min(emojiMatches.length, 5);
+        totalXP += emojiCount * XP_REWARDS.EMOJI_BONUS;
     }
-    
-    return round2(totalXP);
+
+    return round2(Math.min(MESSAGE_XP_CAP, totalXP));
 };
 
 /**

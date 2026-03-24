@@ -10,7 +10,7 @@
  */
 
 const assert = require('assert');
-const { getLevelFromXP, MAX_LEVEL } = require('../api/utils/xp-system');
+const { getLevelFromXP, MAX_LEVEL, xpRequiredForLevel, TOTAL_XP_FOR_LEVEL_100 } = require('../api/utils/xp-system');
 
 // ============================================================================
 // Test Utilities
@@ -456,7 +456,8 @@ test('Level calculation is monotonic (never decreases with XP)', () => {
   });
   
   assert.strictEqual(getLevelFromXP(0), 1, 'Level 1 at 0 XP');
-  assert.strictEqual(getLevelFromXP(50_000_000), MAX_LEVEL, 'Very high XP hits level cap 100');
+  assert.strictEqual(xpRequiredForLevel(100), TOTAL_XP_FOR_LEVEL_100, 'Level 100 threshold is 1M total XP');
+  assert.strictEqual(getLevelFromXP(TOTAL_XP_FOR_LEVEL_100), MAX_LEVEL, '1M XP reaches level cap 100');
   
   console.log('  Level progression is monotonic');
 });

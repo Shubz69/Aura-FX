@@ -92,7 +92,8 @@ module.exports = async (req, res) => {
             const PLAYER_XP_MULT = XP_RULES.MESSAGE_MULTIPLIER;
             let adjustedXP = num(xp, 0);
             let adjustedLevel = jsonNumber(level, 1);
-            if (rawGain > 0 && PLAYER_XP_MULT > 0 && PLAYER_XP_MULT < 1) {
+            const scaleMessageOnly = (actionType || '') === 'message';
+            if (rawGain > 0 && scaleMessageOnly && PLAYER_XP_MULT > 0 && PLAYER_XP_MULT < 1) {
                 const scaledGain = round2(rawGain * PLAYER_XP_MULT);
                 adjustedXP = Math.max(0, previousXP + scaledGain);
                 adjustedLevel = getLevelFromXP(adjustedXP);
