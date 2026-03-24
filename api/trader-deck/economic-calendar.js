@@ -60,6 +60,30 @@ function parseDateToTimestamp(rawDate) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function normalizeValue(v) {
+  if (v == null) return null;
+  const s = String(v).trim();
+  return s === '' ? null : s;
+}
+
+function normalizeEventShape(input, fallbackSource = 'fallback') {
+  const ts = parseDateToTimestamp(input.timestamp ?? input.ts ?? input.datetime ?? input.date);
+  const date = input.date ? String(input.date).slice(0, 10) : (ts ? new Date(ts).toISOString().slice(0, 10) : null);
+  return {
+    date,
+    time: input.time || 'All Day',
+    timestamp: ts,
+    currency: normCountry(input.currency || ''),
+    impact: normImpact(input.impact),
+    event: input.event || 'Economic Event',
+    // preserve numeric zero; empty string becomes null
+    actual: normalizeValue(input.actual),
+    forecast: normalizeValue(input.forecast),
+    previous: normalizeValue(input.previous),
+    source: input.source || fallbackSource,
+  };
+}
+
 // --- Provider 1: Forex Factory JSON CDN (official FF data feed, no API key needed) ---
 async function fromForexFactory(days = 7) {
   try {
@@ -116,18 +140,18 @@ async function fromForexFactory(days = 7) {
             timeStr = `${h12}:${min} ${ampm}`;
           }
 
-          allEvents.push({
+          allEvents.push(normalizeEventShape({
             date: dateStr,
             time: timeStr,
             timestamp: ts, // UTC ms — used by frontend for precision scheduling
             currency: normCountry(ev.country) || String(ev.country || '').toUpperCase().slice(0, 3),
             impact: normImpact(ev.impact),
             event: ev.title,
-            actual: ev.actual || null,
-            forecast: ev.forecast || null,
-            previous: ev.previous || null,
+            actual: ev.actual,
+            forecast: ev.forecast,
+            previous: ev.previous,
             source: 'ForexFactory',
-          });
+          }, 'ForexFactory'));
         }
       } catch (_) {
         // Try next feed
@@ -153,18 +177,18 @@ async function fromFMP(days = 7) {
     if (!res.ok) return null;
     const raw = await res.json();
     if (!Array.isArray(raw) || raw.length === 0) return null;
-    return raw.slice(0, 80).map((e) => ({
+    return raw.slice(0, 80).map((e) => normalizeEventShape({
       date: (e.date || '').slice(0, 10),
       time: e.date ? new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
       timestamp: parseDateToTimestamp(e.date),
       currency: normCountry(e.country || e.currency || ''),
       impact: normImpact(e.importance || e.impact),
       event: e.name || e.event || 'Economic Event',
-      actual: e.actual != null ? String(e.actual) : null,
-      forecast: e.forecast != null ? String(e.forecast) : null,
-      previous: e.previous != null ? String(e.previous) : null,
+      actual: e.actual,
+      forecast: e.forecast,
+      previous: e.previous,
       source: 'FMP',
-    }));
+    }, 'FMP'));
   } catch (e) {
     console.warn('[trader-deck/economic-calendar] FMP error:', e.message);
     return null;
@@ -183,18 +207,18 @@ async function fromTradingEconomics(days = 7) {
     if (!res.ok) return null;
     const raw = await res.json();
     if (!Array.isArray(raw)) return null;
-    return raw.slice(0, 80).map((e) => ({
+    return raw.slice(0, 80).map((e) => normalizeEventShape({
       date: (e.Date || '').slice(0, 10),
       time: e.Date ? new Date(e.Date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
       timestamp: parseDateToTimestamp(e.Date),
       currency: normCountry(e.Country || e.Currency || ''),
       impact: normImpact(e.Importance),
       event: e.Event || e.Category || 'Economic Event',
-      actual: e.Actual != null ? String(e.Actual) : null,
-      forecast: e.Forecast != null ? String(e.Forecast) : null,
-      previous: e.Previous != null ? String(e.Previous) : null,
+      actual: e.Actual,
+      forecast: e.Forecast,
+      previous: e.Previous,
       source: 'TradingEconomics',
-    }));
+    }, 'TradingEconomics'));
   } catch (e) {
     console.warn('[trader-deck/economic-calendar] TE error:', e.message);
     return null;
@@ -210,7 +234,7 @@ function staticFallback() {
     { date: today, time: '10:00 AM', currency: 'USD', impact: 'medium', event: 'ISM Manufacturing PMI', actual: null, forecast: null, previous: null, source: 'fallback' },
     { date: today, time: 'All Day', currency: 'EUR', impact: 'high', event: 'ECB Interest Rate Decision', actual: null, forecast: null, previous: null, source: 'fallback' },
     { date: today, time: '7:00 AM', currency: 'GBP', impact: 'medium', event: 'UK GDP m/m', actual: null, forecast: null, previous: null, source: 'fallback' },
-  ];
+  ].map((ev) => normalizeEventShape(ev, 'fallback'));
 }
 
 module.exports = async (req, res) => {
@@ -247,15 +271,24 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Sort by date + time
+  // Sort by UTC timestamp when available for stable ordering across providers.
   events.sort((a, b) => {
+    const ta = Number(a.timestamp) || 0;
+    const tb = Number(b.timestamp) || 0;
+    if (ta && tb) return ta - tb;
     const da = (a.date || '') + (a.time || '');
     const db = (b.date || '') + (b.time || '');
     return da.localeCompare(db);
   });
 
-  const payload = { events, source, days, updatedAt: new Date().toISOString() };
+  const fetchedAt = new Date().toISOString();
+  const payload = { events, source, days, updatedAt: fetchedAt, fetchedAt, sourceUpdatedAt: fetchedAt };
   setCached(CACHE_KEY, payload, CACHE_TTL_MS);
 
   return res.status(200).json({ success: true, ...payload, cached: false });
+};
+
+module.exports._test = {
+  parseDateToTimestamp,
+  normalizeEventShape,
 };

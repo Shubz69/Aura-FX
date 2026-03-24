@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Api from '../../services/Api';
+import { useAuth } from '../../context/AuthContext';
+import {
+  hasActualValue,
+  parseEventTimestamp,
+  resolveUserTimeZone,
+  formatEventTimeLocal,
+  getEventDateKeyLocal,
+} from '../../utils/economicCalendarTime';
 
 const ALL_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
 const ALL_IMPACTS    = ['high', 'medium', 'low'];
@@ -15,20 +23,6 @@ const TICK_MS        = 1000;            // 1s tick for countdown display
 function loadPref(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
-}
-
-function hasActualValue(v) {
-  if (v == null) return false;
-  return String(v).trim() !== '';
-}
-
-function parseEventTimestamp(ev) {
-  const raw = ev && (ev.timestamp ?? ev.ts ?? ev.datetime);
-  if (raw == null) return null;
-  const n = Number(raw);
-  if (Number.isFinite(n) && n > 0) return n;
-  const parsed = Date.parse(String(raw));
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function getEventStatus(ev) {
@@ -58,6 +52,8 @@ function formatCountdown(ms) {
 }
 
 export default function ForexFactoryNews({ date, onlyToday = true }) {
+  const { user } = useAuth();
+  const userTimeZone = resolveUserTimeZone(user);
   const [events, setEvents]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -71,7 +67,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   const sinceLastFetch = useRef(0);   // ms since last baseline fetch
   const fetchInFlightRef = useRef(false);
 
-  const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: userTimeZone });
 
   // Core fetch — refresh=true bypasses server cache for precision fetches
   const fetchEvents = useCallback(async (refresh = false) => {
@@ -137,7 +133,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
 
       if (sinceLastFetch.current >= pollMs) {
         sinceLastFetch.current = 0;
-        fetchEvents(false).then(fresh => { if (fresh) schedulePrecision(fresh); });
+        fetchEvents(isNear).then(fresh => { if (fresh) schedulePrecision(fresh); });
       }
     }, TICK_MS);
 
@@ -164,7 +160,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   };
 
   const filtered = events
-    .filter(e => !onlyToday || e.date === todayStr)
+    .filter(e => !onlyToday || getEventDateKeyLocal(e, userTimeZone) === todayStr)
     .filter(e => filterCurrencies.includes(e.currency))
     .filter(e => filterImpact.includes(e.impact))
     .sort((a, b) => {
@@ -288,7 +284,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
                     className={`td-ff-row td-ff-row--${ev.impact} td-ff-row--${status}`}
                   >
                     <td className="td-ff-td td-ff-time">
-                      {ev.time || '—'}
+                      {formatEventTimeLocal(ev, userTimeZone)}
                       {countdownMs != null && (
                         <span className="td-ff-countdown">{formatCountdown(countdownMs)}</span>
                       )}
@@ -316,9 +312,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
                     <td className="td-ff-td td-ff-num td-ff-prev">{ev.previous ?? '—'}</td>
                     <td className="td-ff-td td-ff-num td-ff-forecast">{ev.forecast ?? '—'}</td>
                     <td className={`td-ff-td td-ff-num td-ff-actual${hasActualValue(ev.actual) ? ' td-ff-actual--live' : ''}`}>
-                      {status === 'imminent' || status === 'overdue'
-                        ? <span className="td-ff-releasing">releasing…</span>
-                        : (hasActualValue(ev.actual) ? ev.actual : '—')}
+                      {hasActualValue(ev.actual) ? ev.actual : '--'}
                     </td>
                   </tr>
                 );

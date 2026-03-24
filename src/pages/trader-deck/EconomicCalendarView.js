@@ -4,26 +4,20 @@
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Api from '../../services/Api';
+import { useAuth } from '../../context/AuthContext';
+import {
+  hasActualValue,
+  parseEventTimestamp,
+  resolveUserTimeZone,
+  formatEventTimeLocal,
+  getEventDateKeyLocal,
+} from '../../utils/economicCalendarTime';
 import '../../styles/trader-deck/EconomicCalendarView.css';
 
 const IMPACT_LABELS = { high: 'HIGH', medium: 'MED', low: 'LOW' };
 const CURRENCIES = ['ALL', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'CNH'];
 const SOON_WINDOW_MS = 5 * 60 * 1000;
 const REFRESH_INTERVAL_MS = 75 * 1000;
-
-function hasActualValue(v) {
-  if (v == null) return false;
-  return String(v).trim() !== '';
-}
-
-function parseEventTimestamp(ev) {
-  const raw = ev && (ev.timestamp ?? ev.ts ?? ev.datetime);
-  if (raw == null) return null;
-  const n = Number(raw);
-  if (Number.isFinite(n) && n > 0) return n;
-  const parsed = Date.parse(String(raw));
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 function countdownMs(ev, nowMs) {
   if (hasActualValue(ev.actual)) return null;
@@ -66,6 +60,8 @@ function getDayLabel(dateStr) {
 }
 
 export default function EconomicCalendarView() {
+  const { user } = useAuth();
+  const userTimeZone = useMemo(() => resolveUserTimeZone(user), [user]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -83,7 +79,7 @@ export default function EconomicCalendarView() {
     Api.getTraderDeckEconomicCalendar(days, refresh)
       .then((r) => {
         setEvents(Array.isArray(r.data?.events) ? r.data.events : []);
-        setUpdatedAt(r.data?.updatedAt || null);
+        setUpdatedAt(r.data?.fetchedAt || r.data?.updatedAt || null);
       })
       .catch(() => {
         if (!silent) setError('Could not load calendar. Check back soon.');
@@ -100,10 +96,16 @@ export default function EconomicCalendarView() {
   useEffect(() => {
     const id = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
-      fetchCalendar(true, true);
+      const nowMs = Date.now();
+      const nearRelease = events.some((ev) => {
+        if (hasActualValue(ev.actual)) return false;
+        const ts = parseEventTimestamp(ev);
+        return ts && Math.abs(ts - nowMs) <= SOON_WINDOW_MS;
+      });
+      fetchCalendar(true, nearRelease);
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [fetchCalendar]);
+  }, [fetchCalendar, events]);
 
   useEffect(() => {
     const id = setInterval(() => setClock(Date.now()), 1000);
@@ -121,12 +123,12 @@ export default function EconomicCalendarView() {
   const grouped = useMemo(() => {
     const out = {};
     filtered.forEach((e) => {
-      const key = e.date || '';
+      const key = getEventDateKeyLocal(e, userTimeZone) || '';
       if (!out[key]) out[key] = [];
       out[key].push(e);
     });
     return out;
-  }, [filtered]);
+  }, [filtered, userTimeZone]);
 
   const sortedDates = Object.keys(grouped).sort();
   const highCount = events.filter((e) => e.impact === 'high').length;
@@ -213,13 +215,14 @@ export default function EconomicCalendarView() {
           <div className="ec-event-list">
             {grouped[dateKey].map((ev, i) => {
               const cdm = countdownMs(ev, clock);
+              const eventTimeLabel = formatEventTimeLocal(ev, userTimeZone);
               return (
               <div
                 key={i}
                 className={`ec-event ec-event--${ev.impact}`}
               >
                 <div className="ec-event-time">
-                  {ev.time || 'All Day'}
+                  {eventTimeLabel}
                   {cdm != null && <span className="ec-countdown">{formatCountdown(cdm)}</span>}
                 </div>
                 <div className={`ec-event-impact ec-event-impact--${ev.impact}`}>
@@ -238,8 +241,8 @@ export default function EconomicCalendarView() {
                   {ev.previous != null && (
                     <span className="ec-data-val ec-data-previous" title="Previous">P: {ev.previous}</span>
                   )}
-                  {!hasActualValue(ev.actual) && cdm != null && (
-                    <span className="ec-data-val ec-data-live">Releasing...</span>
+                  {!hasActualValue(ev.actual) && (
+                    <span className="ec-data-val ec-data-live">--</span>
                   )}
                 </div>
               </div>
@@ -248,7 +251,7 @@ export default function EconomicCalendarView() {
         </section>
       ))}
 
-      <p className="ec-source-note">Times shown in your local timezone</p>
+      <p className="ec-source-note">Times shown in your local timezone ({userTimeZone})</p>
     </div>
   );
 }
