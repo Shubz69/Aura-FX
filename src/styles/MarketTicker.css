@@ -973,6 +973,10 @@
 
 .market-item.delayed { opacity: 0.60; }
 
+.market-item.quote-unavailable .market-item-value {
+  letter-spacing: 0.02em;
+}
+
 .market-item.flash-green {
   animation: marketFlashGreen 0.50s ease;
 }
