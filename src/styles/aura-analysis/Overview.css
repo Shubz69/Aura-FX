@@ -2318,3 +2318,146 @@
   color: #9a8f84;
   margin: -8px 0 16px;
 }
+
+@media (max-width: 768px) {
+  /* Adjust the calendar grid for better mobile display */
+  .aura-overview-calendar-grid {
+    gap: 4px;
+  }
+.aura-overview-cal-day {
+    min-height: 60px;
+    padding: 6px 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Style the day number */
+  .aura-overview-cal-num {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  /* Fix the PNL text that's overflowing */
+  .aura-overview-cal-pnl {
+    font-size: 0.6rem;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar in IE/Edge */
+    padding: 0 2px;
+    text-align: center;
+    width: 100%;
+    display: block;
+  }
+
+  /* Hide scrollbar in Chrome/Safari */
+  .aura-overview-cal-pnl::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Alternative approach: wrap text on smaller screens */
+  @media (max-width: 480px) {
+    .aura-overview-cal-pnl {
+      font-size: 0.55rem;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.2;
+      overflow: visible;
+    }
+
+    .aura-overview-cal-day {
+      min-height: 70px;
+      padding: 4px 2px;
+    }
+
+    .aura-overview-cal-num {
+      font-size: 0.75rem;
+    }
+  }
+}
+@media (max-width: 380px) {
+  .aura-overview-calendar-grid {
+    gap: 3px;
+  }
+
+  .aura-overview-cal-day {
+    min-height: 65px;
+    padding: 3px 2px;
+  }
+
+  .aura-overview-cal-num {
+    font-size: 0.7rem;
+  }
+
+  .aura-overview-cal-pnl {
+    font-size: 0.5rem;
+    white-space: normal;
+    line-height: 1.1;
+  }
+
+  /* Option: Show only the day number on very small screens, hide PNL */
+  /* Uncomment if needed:
+  .aura-overview-cal-pnl {
+    display: none;
+  }
+  .aura-overview-cal-day {
+    min-height: 45px;
+  }
+  */
+}
+
+/* Improve the monthly container padding */
+@media (max-width: 768px) {
+  .aura-overview-monthly {
+    padding: 16px 12px;
+  }
+
+  .aura-overview-monthly-header {
+    margin-bottom: 16px;
+  }
+
+  .aura-overview-monthly-pnl {
+    font-size: 1.2rem;
+  }
+
+  .aura-overview-monthly-meta {
+    font-size: 0.75rem;
+  }
+
+  .aura-overview-month-nav-label {
+    min-width: 100px;
+    font-size: 0.85rem;
+  }
+
+  .aura-overview-month-nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  /* Ensure DOW headers don't overflow */
+  .aura-overview-cal-dow {
+    font-size: 0.6rem;
+    padding: 6px 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .aura-overview-calendar-grid {
+    gap: 4px;
+  }
+
+  .aura-overview-cal-day {
+    min-height: 55px;
+  }
+
+  .aura-overview-cal-pnl {
+    font-size: 0.55rem;
+  }
+}
