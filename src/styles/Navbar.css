@@ -13,20 +13,20 @@
   --border:        rgba(255, 255, 255, 0.10);
   --border-h:      rgba(255, 255, 255, 0.20);
 
-  /* EAA960 color family - warm orange-gold */
-  --eaa-core:      #EAA960;
-  --eaa-bright:    #F8C37D;
-  --eaa-warm:      #D48D44;
-  --eaa-deep:      #B06E32;
-  --eaa-soft:      #EABB80;
-  --eaa-dim:       rgba(234, 169, 96, 0.45);
-  --eaa-glow:      rgba(234, 169, 96, 0.28);
-  --eaa-soft-glow: rgba(234, 169, 96, 0.10);
-  --eaa-ultra:     rgba(234, 169, 96, 0.055);
-  --eaa-light:     #FFD8A9;
-  --eaa-gradient-start: #EAA960;
-  --eaa-gradient-mid:   #F0B56C;
-  --eaa-gradient-end:   #D48D44;
+  /* Journal gold family (#D4AF37) */
+  --eaa-core:      #D4AF37;
+  --eaa-bright:    #E8C658;
+  --eaa-warm:      #9A7B22;
+  --eaa-deep:      #7E631A;
+  --eaa-soft:      #EBD9A0;
+  --eaa-dim:       rgba(212, 175, 55, 0.45);
+  --eaa-glow:      rgba(212, 175, 55, 0.28);
+  --eaa-soft-glow: rgba(212, 175, 55, 0.10);
+  --eaa-ultra:     rgba(212, 175, 55, 0.055);
+  --eaa-light:     #F8F0D2;
+  --eaa-gradient-start: #9A7B22;
+  --eaa-gradient-mid:   #D4AF37;
+  --eaa-gradient-end:   #E8C658;
 
   --text:          #FFFFFF;
   --text-muted:    rgba(200, 198, 230, 0.70);
@@ -46,19 +46,20 @@
   /* ── PREMIUM GLASS SYSTEM ── */
   --glass-bg:          rgba(6, 5, 18, 0.55);
   --glass-border-top:  rgba(255, 255, 255, 0.09);
-  --glass-border-bot:  rgba(234, 169, 96, 0.12);
-  --glass-tint:        rgba(234, 169, 96, 0.03);
+  --glass-border-bot:  rgba(212, 175, 55, 0.12);
+  --glass-tint:        rgba(212, 175, 55, 0.03);
   --glass-blur:        saturate(1.8) blur(32px);
 
-  --nav-border:    rgba(234, 169, 96, 0.12);
-  --surface-hover: rgba(234, 169, 96, 0.055);
-  --surface-active:rgba(234, 169, 96, 0.09);
+  --nav-border:    rgba(212, 175, 55, 0.12);
+  --surface-hover: rgba(212, 175, 55, 0.055);
+  --surface-active:rgba(212, 175, 55, 0.09);
 
   /* CTA */
-  --cta-from:   #D48D44;
-  --cta-to:     #EAA960;
-  --cta-glow:   rgba(234, 169, 96, 0.38);
-  --cta-glow-h: rgba(234, 169, 96, 0.60);
+  --cta-from:   #9A7B22;
+  --cta-to:     #D4AF37;
+  --cta-glow:   rgba(212, 175, 55, 0.38);
+  --cta-glow-h: rgba(212, 175, 55, 0.60);
+  --line-gold:  linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55) 22%, rgba(160, 185, 240, 0.45) 48%, rgba(255, 255, 255, 0.75) 72%, rgba(212, 175, 55, 0.22) 92%, transparent);
 }
 
 body.loading-active .navbar {
@@ -178,6 +179,12 @@ body.loading-active .navbar {
   12%  { opacity: 1; }
   88%  { opacity: 1; }
   100% { left: 120%; opacity: 0; }
+}
+
+@keyframes navWordStreak {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translateX(160%); opacity: 0; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -339,6 +346,7 @@ body.loading-active .navbar {
   gap: 6px;
   position: relative;
   white-space: nowrap;
+  overflow: hidden;
 }
 
 /* Glass pill hover */
@@ -363,15 +371,40 @@ body.loading-active .navbar {
   position: absolute;
   bottom: 4px; left: 50%;
   width: 0; height: 1.5px;
-  background: linear-gradient(90deg, var(--eaa-warm), var(--eaa-bright), var(--eaa-warm));
+  background: var(--line-gold);
   border-radius: 2px;
   box-shadow: 0 0 8px var(--eaa-glow);
   transition: width var(--transition), left var(--transition);
 }
 
+.nav-links li a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -46%;
+  width: 44%;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent,
+    rgba(255, 255, 255, 0.58),
+    rgba(220, 232, 255, 0.34),
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  opacity: 0.12;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.28));
+}
+
 .nav-links li a:hover::after {
   width: calc(100% - 1.9rem);
   left: 0.95rem;
+}
+
+.nav-links li a:hover::before,
+.nav-links li a.active::before {
+  animation: navWordStreak 0.82s ease-out;
 }
 
 /* Active state */
