@@ -34,6 +34,12 @@ function run() {
   assert(zeroActual.actual === '0', 'actual=0 should be preserved as "0"');
   assert(emptyActual.actual == null, 'empty actual should normalize to null');
 
+  // header-driven timezone resolution (IP authoritative)
+  const tzFromHeader = _test.resolveViewerTimeZone({ headers: { 'x-vercel-ip-timezone': 'Europe/London' } });
+  assert(tzFromHeader === 'Europe/London', `expected Europe/London, got ${tzFromHeader}`);
+  const tzBad = _test.resolveViewerTimeZone({ headers: { 'x-vercel-ip-timezone': 'Not/AZone' } });
+  assert(tzBad === 'UTC', `invalid timezone should fallback UTC, got ${tzBad}`);
+
   // timezone conversion should differ for different regions on same UTC timestamp
   const ts = Date.UTC(2026, 2, 24, 14, 0, 0); // 2026-03-24 14:00:00Z
   const ny = new Date(ts).toLocaleTimeString('en-US', {

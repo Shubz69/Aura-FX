@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Api from '../../services/Api';
-import { useAuth } from '../../context/AuthContext';
 import {
   hasActualValue,
   parseEventTimestamp,
-  resolveUserTimeZone,
   formatEventTimeLocal,
   getEventDateKeyLocal,
 } from '../../utils/economicCalendarTime';
@@ -52,8 +50,7 @@ function formatCountdown(ms) {
 }
 
 export default function ForexFactoryNews({ date, onlyToday = true }) {
-  const { user } = useAuth();
-  const userTimeZone = resolveUserTimeZone(user);
+  const [viewerTimeZone, setViewerTimeZone] = useState('UTC');
   const [events, setEvents]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -67,7 +64,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   const sinceLastFetch = useRef(0);   // ms since last baseline fetch
   const fetchInFlightRef = useRef(false);
 
-  const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: userTimeZone });
+  const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: viewerTimeZone });
 
   // Core fetch — refresh=true bypasses server cache for precision fetches
   const fetchEvents = useCallback(async (refresh = false) => {
@@ -77,6 +74,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       const res  = await Api.getTraderDeckEconomicCalendar(1, refresh);
       const list = res.data?.events || [];
       setEvents(list);
+      setViewerTimeZone(res.data?.viewerTimeZone || 'UTC');
       eventsRef.current = list;
       setLastUpdated(new Date());
       return list;
@@ -160,7 +158,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   };
 
   const filtered = events
-    .filter(e => !onlyToday || getEventDateKeyLocal(e, userTimeZone) === todayStr)
+    .filter(e => !onlyToday || getEventDateKeyLocal(e, viewerTimeZone) === todayStr)
     .filter(e => filterCurrencies.includes(e.currency))
     .filter(e => filterImpact.includes(e.impact))
     .sort((a, b) => {
@@ -284,7 +282,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
                     className={`td-ff-row td-ff-row--${ev.impact} td-ff-row--${status}`}
                   >
                     <td className="td-ff-td td-ff-time">
-                      {formatEventTimeLocal(ev, userTimeZone)}
+                      {formatEventTimeLocal(ev, viewerTimeZone)}
                       {countdownMs != null && (
                         <span className="td-ff-countdown">{formatCountdown(countdownMs)}</span>
                       )}
