@@ -179,7 +179,7 @@
 .footer-logo-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 /* A7 mark — same 32×32 footprint as former hexagon badge */
@@ -191,13 +191,13 @@
 }
 
 .footer-logo-wrap .footer-a7-mark .a7-logo-container {
-  width: 32px;
-  height: 32px;
+  width: 96px;
+  height: 96px;
 }
 
 .footer-logo-wrap .footer-a7-mark .a7-logo-image {
-  width: 32px !important;
-  height: 32px !important;
+  width: 96px !important;
+  height: 96px !important;
   transform: none !important;
   margin-bottom: 0 !important;
   align-self: center !important;
@@ -725,7 +725,7 @@
 
 /* ── High-DPI optimizations ── */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .footer-logo-dot,
+  .footer-a7-mark .a7-logo-image,
   .footer-status-dot { transform: translateZ(0); }
 }
 
