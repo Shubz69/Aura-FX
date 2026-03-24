@@ -83,6 +83,17 @@ function run() {
   assert(/^\d{4}-\d{2}-\d{2}$/.test(nyDate), 'NY date key must be YYYY-MM-DD');
   assert(/^\d{4}-\d{2}-\d{2}$/.test(tkDate), 'Tokyo date key must be YYYY-MM-DD');
 
+  // Naive ISO must be Eastern wall time for FMP-style rows (not UTC) — matches explicit -04:00 in EDT
+  const naiveEt = _test.parseDateToTimestamp('2026-03-24T08:30:00', { defaultTimeZone: 'America/New_York' });
+  const explicitEdt = _test.parseDateToTimestamp('2026-03-24T08:30:00-04:00');
+  assert(
+    naiveEt === explicitEdt,
+    `naive ET 8:30 should match explicit offset, got ${naiveEt} vs ${explicitEdt}`
+  );
+
+  const naiveUtc = _test.parseDateToTimestamp('2026-03-24T12:30:00', { defaultTimeZone: 'UTC' });
+  assert(naiveUtc === Date.UTC(2026, 2, 24, 12, 30, 0), 'naive UTC should be 12:30Z');
+
   const tsMatch = Date.UTC(2026, 2, 24, 14, 0, 0);
   const merged = _test.mergeSupplementActuals(
     [

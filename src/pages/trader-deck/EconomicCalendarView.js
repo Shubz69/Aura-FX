@@ -158,7 +158,7 @@ export default function EconomicCalendarView() {
     return out;
   }, [filtered, displayTimeZone]);
 
-  const sortedDates = Object.keys(grouped).sort();
+  const sortedDates = Object.keys(grouped).filter(Boolean).sort();
   const highCount = events.filter((e) => e.impact === 'high').length;
 
   return (
@@ -265,10 +265,10 @@ export default function EconomicCalendarView() {
                   {hasActualValue(ev.actual) && (
                     <span className="ec-data-val ec-data-actual" title="Actual">A: {ev.actual}</span>
                   )}
-                  {ev.forecast != null && (
+                  {hasActualValue(ev.forecast) && (
                     <span className="ec-data-val ec-data-forecast" title="Forecast">F: {ev.forecast}</span>
                   )}
-                  {ev.previous != null && (
+                  {hasActualValue(ev.previous) && (
                     <span className="ec-data-val ec-data-previous" title="Previous">P: {ev.previous}</span>
                   )}
                   {!hasActualValue(ev.actual) && (

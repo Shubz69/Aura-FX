@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../utils/roles';
 import TraderDeckCalendar from '../components/trader-deck/TraderDeckCalendar';
 import TraderDeckCalendarBar from '../components/trader-deck/TraderDeckCalendarBar';
+import TraderDeckWorldClocks from '../components/trader-deck/TraderDeckWorldClocks';
 import MarketOutlookView from './trader-deck/MarketOutlookView';
 import MarketIntelligenceBriefsView from './trader-deck/MarketIntelligenceBriefsView';
 import NewsHeadlines from '../components/NewsHeadlines';
@@ -200,6 +201,7 @@ export default function TraderDeck() {
                 Weekly
               </button>
             </nav>
+            <TraderDeckWorldClocks />
           </div>
         </div>
 

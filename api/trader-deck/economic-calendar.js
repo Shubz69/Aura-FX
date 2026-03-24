@@ -14,10 +14,11 @@ const cheerio = require('cheerio');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v6';
+const CACHE_KEY = 'trader-deck:economic-calendar:v7';
 const CACHE_TTL_MS = 45 * 1000; // 45 s — fresher calendar for release times
 const SCRAPE_DAY_CACHE_MS = 35 * 1000; // per-day HTML scrape (actuals) — short TTL
-const MATCH_WINDOW_MS = 6 * 60 * 1000; // align FF schedule row to FMP/TE by time
+/** FF + FMP rows must align; naive API datetimes were parsed as UTC and missed by 4–5h — keep a generous window */
+const MATCH_WINDOW_MS = 20 * 60 * 1000;
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
 
@@ -94,6 +95,17 @@ function zonedDateTimeToUtcTimestamp(parts, timeZone) {
   return ts;
 }
 
+/**
+ * ISO strings with Z or ±offset are interpreted by Date.parse (correct).
+ * Naive datetimes (no zone) are wall-clock in `defaultTimeZone` — Node treats naive ISO as UTC,
+ * which breaks FMP-style "8:30" rows vs Forex Factory ET timestamps.
+ */
+function hasExplicitTimezoneOffset(raw) {
+  const s = String(raw).trim();
+  if (/Z$/i.test(s)) return true;
+  return /[+-]\d{2}:?\d{2}$/.test(s);
+}
+
 function parseDateToTimestamp(rawDate, options = {}) {
   const defaultTimeZone = options.defaultTimeZone || 'UTC';
   if (rawDate == null || rawDate === '') return null;
@@ -101,20 +113,55 @@ function parseDateToTimestamp(rawDate, options = {}) {
   if (typeof rawDate === 'number' && Number.isFinite(rawDate)) return rawDate;
   const raw = String(rawDate).trim();
   if (!raw) return null;
-  let parsed = Date.parse(raw);
-  if (!Number.isNaN(parsed)) return parsed;
 
-  // Handle timezone offsets without colon (e.g. -0400)
-  const tzFixed = raw.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
-  parsed = Date.parse(tzFixed);
-  if (!Number.isNaN(parsed)) return parsed;
+  if (hasExplicitTimezoneOffset(raw)) {
+    let parsed = Date.parse(raw);
+    if (!Number.isNaN(parsed)) return parsed;
+    const tzFixed = raw.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+    parsed = Date.parse(tzFixed);
+    if (!Number.isNaN(parsed)) return parsed;
+    return null;
+  }
 
-  // Handle naive provider datetime strings in the expected provider timezone.
   const naive = parseNaiveDateTimeParts(raw.replace('T', ' '));
   if (naive) {
     return zonedDateTimeToUtcTimestamp(naive, defaultTimeZone);
   }
+
+  let parsed = Date.parse(raw);
+  if (!Number.isNaN(parsed)) return parsed;
   return null;
+}
+
+/** When timestamp is missing, derive from calendar date + AM/PM label in America/New_York (Forex Factory convention). */
+function ensureEventTimestamp(ev) {
+  const n = Number(ev && ev.timestamp);
+  if (ev && Number.isFinite(n) && n > 0) return ev;
+  const dateStr = ev && ev.date ? String(ev.date).slice(0, 10) : '';
+  const timeLabel = ev && ev.time != null ? String(ev.time) : '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return ev;
+  if (!timeLabel || /^all day$/i.test(timeLabel)) return ev;
+  const parts = etDateAndTimeToParts(dateStr, timeLabel);
+  if (!parts) return ev;
+  const ts = zonedDateTimeToUtcTimestamp(parts, 'America/New_York');
+  return { ...ev, timestamp: ts };
+}
+
+function etDateAndTimeToParts(dateStr, timeLabel) {
+  const base = parseNaiveDateTimeParts(`${dateStr} 00:00:00`);
+  if (!base) return null;
+  const mins = parseAmPmTimeToMinutes(timeLabel);
+  if (mins == null) return null;
+  const hour = Math.floor(mins / 60);
+  const minute = mins % 60;
+  return {
+    year: base.year,
+    month: base.month,
+    day: base.day,
+    hour,
+    minute,
+    second: 0,
+  };
 }
 
 function normalizeValue(v) {
@@ -160,7 +207,10 @@ function compareEvents(a, b) {
   const tb = Number(b.timestamp);
   const hasTa = Number.isFinite(ta) && ta > 0;
   const hasTb = Number.isFinite(tb) && tb > 0;
-  if (hasTa && hasTb) return ta - tb;
+  if (hasTa && hasTb) {
+    if (ta !== tb) return ta - tb;
+    return String(a.event || '').localeCompare(String(b.event || ''));
+  }
   if (hasTa) return -1;
   if (hasTb) return 1;
 
@@ -582,7 +632,7 @@ async function fetchTradingEconomicsSupplement(days = 7) {
       .map((e) => normalizeEventShape({
         date: (e.Date || '').slice(0, 10),
         time: e.Date ? new Date(e.Date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'All Day',
-        timestamp: parseDateToTimestamp(e.Date, { defaultTimeZone: 'America/New_York' }),
+        timestamp: parseDateToTimestamp(e.Date, { defaultTimeZone: 'UTC' }),
         currency: normCountry(e.Country || e.Currency || ''),
         impact: normImpact(e.Importance),
         event: e.Event || e.Category || 'Economic Event',
@@ -590,7 +640,7 @@ async function fetchTradingEconomicsSupplement(days = 7) {
         forecast: e.Forecast,
         previous: e.Previous,
         source: 'TradingEconomics',
-        sourceTimeZone: 'America/New_York',
+        sourceTimeZone: 'UTC',
       }, 'TradingEconomics'))
       .sort(compareEvents);
   } catch (e) {
@@ -608,13 +658,18 @@ async function fromTradingEconomics(days = 7) {
 // --- Static fallback ---
 function staticFallback() {
   const today = new Date().toISOString().slice(0, 10);
+  const withEtTime = (time, rest) => {
+    const parts = etDateAndTimeToParts(today, time);
+    const ts = parts ? zonedDateTimeToUtcTimestamp(parts, 'America/New_York') : null;
+    return normalizeEventShape({ date: today, time, timestamp: ts, ...rest }, 'fallback');
+  };
   return [
-    { date: today, time: '8:30 AM', currency: 'USD', impact: 'high', event: 'Non-Farm Payrolls', actual: null, forecast: null, previous: null, source: 'fallback' },
-    { date: today, time: '8:30 AM', currency: 'USD', impact: 'high', event: 'CPI m/m', actual: null, forecast: null, previous: null, source: 'fallback' },
-    { date: today, time: '10:00 AM', currency: 'USD', impact: 'medium', event: 'ISM Manufacturing PMI', actual: null, forecast: null, previous: null, source: 'fallback' },
-    { date: today, time: 'All Day', currency: 'EUR', impact: 'high', event: 'ECB Interest Rate Decision', actual: null, forecast: null, previous: null, source: 'fallback' },
-    { date: today, time: '7:00 AM', currency: 'GBP', impact: 'medium', event: 'UK GDP m/m', actual: null, forecast: null, previous: null, source: 'fallback' },
-  ].map((ev) => normalizeEventShape(ev, 'fallback'));
+    withEtTime('8:30 AM', { currency: 'USD', impact: 'high', event: 'Non-Farm Payrolls', actual: null, forecast: null, previous: null, source: 'fallback' }),
+    withEtTime('8:30 AM', { currency: 'USD', impact: 'high', event: 'CPI m/m', actual: null, forecast: null, previous: null, source: 'fallback' }),
+    withEtTime('10:00 AM', { currency: 'USD', impact: 'medium', event: 'ISM Manufacturing PMI', actual: null, forecast: null, previous: null, source: 'fallback' }),
+    normalizeEventShape({ date: today, time: 'All Day', currency: 'EUR', impact: 'high', event: 'ECB Interest Rate Decision', actual: null, forecast: null, previous: null, source: 'fallback' }, 'fallback'),
+    withEtTime('7:00 AM', { currency: 'GBP', impact: 'medium', event: 'UK GDP m/m', actual: null, forecast: null, previous: null, source: 'fallback' }),
+  ];
 }
 
 module.exports = async (req, res) => {
@@ -632,7 +687,7 @@ module.exports = async (req, res) => {
   // ?refresh=1 bypasses cache — used by frontend for precision fetches at event release time
   const forceRefresh = req.query.refresh === '1';
   const cached = forceRefresh ? null : getCached(cacheKey, CACHE_TTL_MS);
-  if (cached) return res.status(200).json({ success: true, ...cached, cached: true });
+  if (cached) return res.status(200).json({ success: true, ...cached, viewerTimeZone, cached: true });
 
   const days = Math.min(14, Math.max(1, parseInt(req.query.days, 10) || 7));
 
@@ -658,6 +713,7 @@ module.exports = async (req, res) => {
     }
   }
 
+  events = events.map(ensureEventTimestamp);
   // Sort by UTC timestamp when available for stable ordering across providers.
   events.sort(compareEvents);
 
@@ -678,9 +734,11 @@ module.exports = async (req, res) => {
 
 module.exports._test = {
   parseDateToTimestamp,
+  hasExplicitTimezoneOffset,
   normalizeEventShape,
   resolveViewerTimeZone,
   isValidIanaTimeZone,
   mergeSupplementActuals,
   titleSimilarity,
+  ensureEventTimestamp,
 };
