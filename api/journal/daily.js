@@ -6,6 +6,7 @@
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const { XP, awardOnce } = require('./xp-helper');
+const { getJournalContext, assertJournalWritableDate } = require('../utils/journalWriteGuard');
 
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -80,6 +81,9 @@ module.exports = async (req, res) => {
     if (!date) {
       return res.status(400).json({ success: false, message: 'date is required' });
     }
+    const jctx = await getJournalContext(userId);
+    if (!assertJournalWritableDate(res, jctx, date)) return;
+
     const notes = body.notes != null ? String(body.notes).slice(0, 8192) : null;
     const mood = body.mood != null ? String(body.mood).trim().slice(0, 20) : null;
 

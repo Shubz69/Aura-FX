@@ -31,8 +31,9 @@ function FreeLockedView() {
         Enter Your DNA
       </Link>
       <p className="rp-locked-sub">
-        Get a professionally generated monthly performance report — covering your trades,
-        discipline, checklist quality, AI chart check history, and a personalised improvement plan.
+        Monthly reports are deliberately blunt: failure modes, what regressed vs last month, and measurable checks.
+        Trader DNA (Elite) is your 90-day identity mirror; the monthly report is your fix list. Not medical advice —
+        feedback targets trading behaviour only.
       </p>
       <div className="rp-locked-cards">
         <div className="rp-locked-card rp-locked-card--premium">
@@ -147,7 +148,7 @@ function GenerateSection({ token, year, month, existingReport, onGenerated, role
 
 /* ── Report viewer ──────────────────────────────────────────────────── */
 function ReportViewer({ report, onClose }) {
-  const c = report.content || {};
+  const c = report?.content && typeof report.content === 'object' ? report.content : report || {};
 
   const handlePrint = () => {
     const win = window.open('', '_blank');
@@ -166,6 +167,14 @@ function ReportViewer({ report, onClose }) {
     </head><body>
       <h1>${c.coverTitle || 'Monthly Trading Report'}</h1>
       <p>Trader: ${c.traderName || ''} &nbsp;|&nbsp; Period: ${c.period || ''} &nbsp;|&nbsp; Generated: ${c.generatedDate || ''}</p>
+
+      ${c.brutalHonesty ? `<div class="section"><h2>Blunt read</h2><p>${c.brutalHonesty}</p></div>` : ''}
+      ${(c.failureModeInventory || []).length ? `<div class="section"><h2>Failure modes</h2><ul>${(c.failureModeInventory || []).map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
+      ${c.changeVsPriorMonth ? `<div class="section"><h2>Change vs prior month</h2>
+        <p><strong>Better:</strong> ${(c.changeVsPriorMonth.better || []).join('; ')}</p>
+        <p><strong>Worse:</strong> ${(c.changeVsPriorMonth.worse || []).join('; ')}</p>
+        <p><strong>Unchanged:</strong> ${(c.changeVsPriorMonth.unchanged || []).join('; ')}</p></div>` : ''}
+      ${c.dnaHandoff ? `<div class="section"><h2>DNA vs this report</h2><p>${c.dnaHandoff}</p></div>` : ''}
 
       <div class="section"><h2>Executive Summary</h2>
         <p>${c.executiveSummary?.overallAssessment || ''}</p>
@@ -195,7 +204,7 @@ function ReportViewer({ report, onClose }) {
       </div>` : ''}
 
       <div class="section"><h2>Improvement Plan</h2>
-        <ul>${(c.improvementPlan || []).map(p => `<li><span class="priority-${p.priority}">[${p.priority}]</span> <strong>${p.area}</strong>: ${p.action}</li>`).join('')}</ul>
+        <ul>${(c.improvementPlan || []).map(p => `<li><span class="priority-${p.priority}">[${p.priority}]</span> <strong>${p.area}</strong>: ${p.action}${p.measurableCheck ? ` <em>Check: ${p.measurableCheck}</em>` : ''}</li>`).join('')}</ul>
       </div>
 
       <div class="disclaimer">${c.disclaimer || ''}</div>
@@ -220,6 +229,68 @@ function ReportViewer({ report, onClose }) {
       </div>
 
       <div className="rp-viewer-body">
+        {c.brutalHonesty && (
+          <div className="rp-section rp-brutal-box">
+            <p className="rp-brutal-label">Blunt read</p>
+            <p className="rp-brutal-text">{c.brutalHonesty}</p>
+          </div>
+        )}
+
+        {c.failureModeInventory?.length > 0 && (
+          <div className="rp-section">
+            <h4 className="rp-section-title">Failure modes (audit every item)</h4>
+            <ul className="rp-list rp-failure-list">
+              {c.failureModeInventory.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {c.changeVsPriorMonth && (
+          <div className="rp-section">
+            <h4 className="rp-section-title">Change vs prior month</h4>
+            <div className="rp-delta-grid">
+              <div className="rp-delta-col">
+                <h5>Better</h5>
+                <ul className="rp-list">
+                  {(c.changeVsPriorMonth.better || []).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rp-delta-col">
+                <h5>Worse</h5>
+                <ul className="rp-list">
+                  {(c.changeVsPriorMonth.worse || []).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rp-delta-col">
+                <h5>Still broken</h5>
+                <ul className="rp-list">
+                  {(c.changeVsPriorMonth.unchanged || []).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {c.dnaHandoff && (
+          <div className="rp-section rp-dna-handoff">
+            <p className="rp-dna-handoff-title">Trader DNA vs monthly report</p>
+            <p>{c.dnaHandoff}</p>
+            <p style={{ marginTop: 10 }}>
+              <Link to="/reports/dna" className="rp-btn rp-btn--secondary rp-btn--sm">
+                Open Trader DNA (90-day identity)
+              </Link>
+            </p>
+          </div>
+        )}
+
         {/* Executive Summary */}
         {c.executiveSummary && (
           <div className="rp-section">
@@ -268,6 +339,12 @@ function ReportViewer({ report, onClose }) {
           <div className="rp-section">
             <h4 className="rp-section-title">Discipline Review</h4>
             <p className="rp-section-text">{c.disciplineReview.headline}</p>
+            {c.disciplineReview.strengths?.length > 0 && (
+              <>
+                <p className="rp-sub-label">Strengths</p>
+                <ul className="rp-list">{c.disciplineReview.strengths.map((p, i) => <li key={i}>{p}</li>)}</ul>
+              </>
+            )}
             {c.disciplineReview.patterns?.length > 0 && (
               <><p className="rp-sub-label">Patterns</p>
               <ul className="rp-list">{c.disciplineReview.patterns.map((p, i) => <li key={i}>{p}</li>)}</ul></>
@@ -313,6 +390,11 @@ function ReportViewer({ report, onClose }) {
                     <span className={`rp-plan-priority rp-plan-priority--${p.priority}`}>{p.priority}</span>
                   </div>
                   <p className="rp-plan-action">{p.action}</p>
+                  {p.measurableCheck && (
+                    <p className="rp-plan-measurable">
+                      <strong>Measurable check:</strong> {p.measurableCheck}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -430,8 +512,8 @@ function ReportsPageInner() {
           </Link>
           <p className="rp-subtitle">
             {role === 'premium'
-              ? 'Your monthly performance report — platform data plus optional MT5 sections when you upload your broker CSV under Manual metrics.'
-              : 'Your fully automated monthly performance report — AI-generated from your platform data (Elite: live MT5 via Aura Analysis).'}
+              ? 'Monthly blunt coaching: journal + Trade Validator (when logged) + optional MT5 CSV. Explicit failure modes, change vs last month, and measurable checks. Trader DNA (/reports/dna) is your 90-day identity mirror — this is your fix list.'
+              : 'Elite: same harsh standard with Trade Validator trades in the month plus platform data. DNA shows who you are every ~90 days; this report shows what to change next.'}
           </p>
         </div>
         <span className={`rp-role-badge rp-role-badge--${role}`}>

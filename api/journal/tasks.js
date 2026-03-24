@@ -8,6 +8,7 @@ const { verifyToken } = require('../utils/auth');
 const { getTier, normalizeRole } = require('../utils/entitlements');
 const crypto = require('crypto');
 const { XP, awardOnce } = require('./xp-helper');
+const { getJournalContext, assertJournalWritableDate, normalizeYyyyMmDd } = require('../utils/journalWriteGuard');
 
 /** Mandatory tasks per tier: key, title, description. A7FX + ADMIN + SUPER_ADMIN → ELITE set. */
 const MANDATORY_TASKS = {
@@ -411,6 +412,9 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, message: 'date and title are required' });
     }
 
+    const jctx = await getJournalContext(userId);
+    if (!assertJournalWritableDate(res, jctx, date)) return;
+
     const id = crypto.randomUUID();
     const sortOrder = body.sortOrder != null ? Number(body.sortOrder) : 0;
 
@@ -430,11 +434,22 @@ module.exports = async (req, res) => {
   }
 
   if ((req.method === 'PUT' || req.method === 'DELETE') && taskId) {
-    const [existing] = await executeQuery('SELECT id, is_mandatory FROM journal_tasks WHERE id = ? AND userId = ?', [taskId, userId]);
+    const [existing] = await executeQuery(
+      'SELECT id, is_mandatory, date FROM journal_tasks WHERE id = ? AND userId = ?',
+      [taskId, userId]
+    );
     if (!existing || existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Task not found' });
     }
     const isMandatory = Boolean(existing[0].is_mandatory);
+    const rowDate = existing[0].date
+      ? existing[0].date instanceof Date
+        ? existing[0].date.toISOString().slice(0, 10)
+        : String(existing[0].date).slice(0, 10)
+      : null;
+
+    const jctx = await getJournalContext(userId);
+    if (!assertJournalWritableDate(res, jctx, rowDate)) return;
 
     if (req.method === 'DELETE') {
       if (isMandatory) {
@@ -457,8 +472,15 @@ module.exports = async (req, res) => {
       params.push(body.title ? String(body.title).trim().slice(0, 255) : '');
     }
     if (body.date !== undefined) {
-      updates.push('date = ?');
-      params.push(String(body.date).trim().slice(0, 10));
+      const nextD = normalizeYyyyMmDd(body.date);
+      if (jctx.bypassJournalDateLock) {
+        if (nextD && /^\d{4}-\d{2}-\d{2}$/.test(nextD)) {
+          updates.push('date = ?');
+          params.push(nextD);
+        }
+      } else if (nextD && rowDate && nextD !== rowDate) {
+        return res.status(403).json({ success: false, message: 'Cannot change task date.' });
+      }
     }
     if (body.sortOrder !== undefined) {
       updates.push('sortOrder = ?');

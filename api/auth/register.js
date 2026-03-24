@@ -1,7 +1,7 @@
-const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt'); // bcrypt is in package.json
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
 const { sendSignupNotification } = require('../utils/email');
 const {
   resolveReferrerIdFromInput,
@@ -9,51 +9,8 @@ const {
   maybeNotifyReferralSignupMilestones,
 } = require('../referral/referralService');
 
-// Get database connection
-const getDbConnection = async () => {
-  // Check if required environment variables are set
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    console.error('Missing MySQL environment variables:', {
-      hasHost: !!process.env.MYSQL_HOST,
-      hasUser: !!process.env.MYSQL_USER,
-      hasPassword: !!process.env.MYSQL_PASSWORD,
-      hasDatabase: !!process.env.MYSQL_DATABASE
-    });
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000,
-    };
-
-    // SSL configuration
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    console.log('Attempting database connection:', {
-      host: connectionConfig.host,
-      user: connectionConfig.user,
-      database: connectionConfig.database,
-      port: connectionConfig.port,
-      ssl: connectionConfig.ssl
-    });
-
-    const connection = await mysql.createConnection(connectionConfig);
-    
-    // Test the connection
-    await connection.ping();
-    
-    // Create users table if it doesn't exist
-    await connection.execute(`
+async function ensureUsersTable(conn) {
+  await conn.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
@@ -66,31 +23,7 @@ const getDbConnection = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
-    
-    console.log('Database connection successful');
-    return connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      errno: error.errno,
-      sqlState: error.sqlState,
-      syscall: error.syscall,
-      address: error.address,
-      port: error.port,
-      stack: error.stack
-    });
-    console.error('Connection config used:', {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT || 3306,
-      ssl: process.env.MYSQL_SSL
-    });
-    return null;
-  }
-};
+}
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -147,32 +80,32 @@ module.exports = async (req, res) => {
     const emailLower = email.toLowerCase();
     const usernameLower = username.toLowerCase();
 
-    // Connect to database
-    const db = await getDbConnection();
-    if (!db) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Database connection error. Please try again later.' 
-      });
-    }
-
+    let db = null;
     try {
+      db = await getDbConnection();
+      if (!db) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database connection error. Please try again later.'
+        });
+      }
+
+      await ensureUsersTable(db);
+
       // Check if email or username already exists
       const [emailCheck] = await db.execute('SELECT id FROM users WHERE email = ?', [emailLower]);
       if (emailCheck && emailCheck.length > 0) {
-        await db.end();
-        return res.status(409).json({ 
-          success: false, 
-          message: 'An account with this email already exists. Please sign in instead.' 
+        return res.status(409).json({
+          success: false,
+          message: 'An account with this email already exists. Please sign in instead.'
         });
       }
 
       const [usernameCheck] = await db.execute('SELECT id FROM users WHERE username = ?', [usernameLower]);
       if (usernameCheck && usernameCheck.length > 0) {
-        await db.end();
-        return res.status(409).json({ 
-          success: false, 
-          message: 'Username already taken. Please choose a different username.' 
+        return res.status(409).json({
+          success: false,
+          message: 'Username already taken. Please choose a different username.'
         });
       }
 
@@ -323,8 +256,6 @@ module.exports = async (req, res) => {
       
       console.log('Generated token (length):', token.length, 'parts:', token.split('.').length);
 
-      await db.end();
-
       return res.status(200).json({
         success: true,
         id: userId,
@@ -339,19 +270,26 @@ module.exports = async (req, res) => {
       });
     } catch (dbError) {
       console.error('Database error during registration:', dbError);
-      await db.end();
-      
+
       if (dbError.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ 
-          success: false, 
-          message: 'Email or username already exists. Please sign in instead.' 
+        return res.status(409).json({
+          success: false,
+          message: 'Email or username already exists. Please sign in instead.'
         });
       }
-      
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Database error. Please try again later.' 
+
+      return res.status(500).json({
+        success: false,
+        message: 'Database error. Please try again later.'
       });
+    } finally {
+      if (db) {
+        try {
+          db.release();
+        } catch (e) {
+          console.warn('Error releasing DB connection:', e.message);
+        }
+      }
     }
   } catch (error) {
     console.error('Error during registration:', error);

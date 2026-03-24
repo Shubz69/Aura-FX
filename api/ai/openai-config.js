@@ -6,6 +6,7 @@
  *   OPENAI_MODEL          — Optional default for all features (e.g. gpt-4o)
  *   OPENAI_CHAT_MODEL     — Optional: Aura AI chat / streaming only
  *   OPENAI_REPORTS_MODEL  — Optional: monthly report generation only
+ *   OPENAI_DNA_MODEL      — Optional: Trader DNA narrative layer (defaults to reports model)
  *
  * Billing: API usage is billed from https://platform.openai.com — separate from ChatGPT Plus.
  * Verify paid access: Usage tab shows requests; 402/429 insufficient_quota means add credits or raise limits.
@@ -30,6 +31,13 @@ function getOpenAIModelForReports() {
   );
 }
 
+function getOpenAIModelForDna() {
+  return trimModel(
+    process.env.OPENAI_DNA_MODEL || process.env.OPENAI_REPORTS_MODEL || process.env.OPENAI_MODEL,
+    'gpt-4o'
+  );
+}
+
 /** Vision / chart analysis — same tier as chat unless OPENAI_MODEL overrides via chat (caller can pass). */
 function getOpenAIModelForVision() {
   return trimModel(process.env.OPENAI_VISION_MODEL || process.env.OPENAI_CHAT_MODEL || process.env.OPENAI_MODEL, 'gpt-4o');
@@ -38,5 +46,6 @@ function getOpenAIModelForVision() {
 module.exports = {
   getOpenAIModelForChat,
   getOpenAIModelForReports,
+  getOpenAIModelForDna,
   getOpenAIModelForVision,
 };

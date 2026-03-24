@@ -1,40 +1,9 @@
-const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
 const { normalizeRole, isSuperAdminEmail } = require('../utils/entitlements');
 const { signToken } = require('../utils/auth');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
-
-// Get database connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    await connection.ping();
-    return connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return null;
-  }
-};
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -103,7 +72,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Connect to database
     let db = null;
     try {
       db = await getDbConnection();
@@ -115,16 +83,7 @@ module.exports = async (req, res) => {
           message: 'Something went wrong. Please try again.'
         });
       }
-    } catch (connError) {
-      console.error('Database connection error:', connError);
-      return res.status(500).json({
-        success: false,
-        error: 'SERVER_ERROR',
-        message: 'Something went wrong. Please try again.'
-      });
-    }
 
-    try {
       // Find user by email
       const [users] = await db.execute(
         'SELECT * FROM users WHERE email = ?',
@@ -132,13 +91,6 @@ module.exports = async (req, res) => {
       );
 
       if (!users || users.length === 0) {
-        if (db && !db.ended) {
-          try {
-            await db.end();
-          } catch (e) {
-            console.warn('Error closing DB connection:', e.message);
-          }
-        }
         return res.status(404).json({
           success: false,
           error: 'NO_ACCOUNT',
@@ -151,13 +103,6 @@ module.exports = async (req, res) => {
       // Verify password
       const passwordMatch = await bcrypt.compare(password, user.password);
       if (!passwordMatch) {
-        if (db && !db.ended) {
-          try {
-            await db.end();
-          } catch (e) {
-            console.warn('Error closing DB connection:', e.message);
-          }
-        }
         return res.status(401).json({
           success: false,
           error: 'INVALID_PASSWORD',
@@ -185,7 +130,6 @@ module.exports = async (req, res) => {
           console.warn('Login timezone update:', e.message);
         }
       } else if (!user.timezone || String(user.timezone || '').trim() === '') {
-        // Default to UTC so user still receives daily journal at 08:00 UTC until they set a timezone
         try {
           await db.execute(
             'UPDATE users SET timezone = ? WHERE id = ?',
@@ -200,7 +144,6 @@ module.exports = async (req, res) => {
       let subscriptionStatus = 'inactive';
       let subscriptionExpiry = null;
       try {
-        // Try to get subscription columns
         const [subscriptionData] = await db.execute(
           'SELECT subscription_status, subscription_expiry FROM users WHERE id = ?',
           [user.id]
@@ -208,12 +151,10 @@ module.exports = async (req, res) => {
         if (subscriptionData && subscriptionData.length > 0) {
           subscriptionStatus = subscriptionData[0].subscription_status || 'inactive';
           subscriptionExpiry = subscriptionData[0].subscription_expiry;
-          
-          // Check if subscription is still valid
+
           if (subscriptionStatus === 'active' && subscriptionExpiry) {
             const expiryDate = new Date(subscriptionExpiry);
             if (expiryDate < new Date()) {
-              // Subscription expired
               subscriptionStatus = 'expired';
               await db.execute(
                 'UPDATE users SET subscription_status = ? WHERE id = ?',
@@ -223,11 +164,9 @@ module.exports = async (req, res) => {
           }
         }
       } catch (err) {
-        // Columns don't exist yet, they'll be created when subscription is activated
         console.log('Subscription columns not found, will be created on first subscription');
       }
 
-      // Generate JWT token - cryptographically signed when JWT_SECRET is set
       const apiRole = isSuperAdminEmail(user) ? 'SUPER_ADMIN' : normalizeRole(user.role);
       const token = signToken({
         id: user.id,
@@ -235,8 +174,6 @@ module.exports = async (req, res) => {
         username: user.username || user.email.split('@')[0],
         role: apiRole
       }, '24h');
-
-      await db.end();
 
       const updatedTimezone = tz || (user.timezone && String(user.timezone).trim()) || 'UTC';
       return res.status(200).json({
@@ -257,18 +194,19 @@ module.exports = async (req, res) => {
       });
     } catch (dbError) {
       console.error('Database error during login:', dbError);
-      if (db && !db.ended) {
-        try {
-          await db.end();
-        } catch (e) {
-          console.warn('Error closing DB connection after error:', e.message);
-        }
-      }
       return res.status(500).json({
         success: false,
         error: 'SERVER_ERROR',
         message: 'Something went wrong. Please try again.'
       });
+    } finally {
+      if (db) {
+        try {
+          db.release();
+        } catch (e) {
+          console.warn('Error releasing DB connection:', e.message);
+        }
+      }
     }
   } catch (error) {
     console.error('Error during login:', error);
@@ -279,4 +217,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-

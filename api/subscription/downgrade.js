@@ -11,6 +11,14 @@ const { ensureDowngradeColumns } = require('../utils/apply-scheduled-downgrade')
 
 const PLAN_ORDER = { free: 0, aura: 1, a7fx: 2 };
 
+/** DB may store elite/premium; normalize for ordering */
+function normalizePlanId(plan) {
+  const p = (plan || '').toString().trim().toLowerCase();
+  if (p === 'elite') return 'a7fx';
+  if (p === 'premium') return 'aura';
+  return p;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -50,7 +58,7 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const currentPlan = (user.subscription_plan || '').toString().toLowerCase();
+    const currentPlan = normalizePlanId(user.subscription_plan);
     if (!currentPlan || currentPlan === 'free') {
       return res.status(400).json({ success: false, message: 'No active paid subscription to downgrade.' });
     }

@@ -1,6 +1,7 @@
 /**
  * Trader DNA — deterministic behavioural / execution / performance / psychology
- * synthesis from aura_analysis_trades + journal_daily. No external AI calls.
+ * synthesis from aura_analysis_trades + journal_daily.
+ * Optional OpenAI narrative layer is applied in api/trader-dna.js (dnaOpenAi.js).
  */
 
 const CYCLE_DAYS = 90;
@@ -193,6 +194,91 @@ function winRate(trades) {
   if (!decided.length) return 0;
   const wins = decided.filter((t) => t.result === 'win').length;
   return wins / decided.length;
+}
+
+/**
+ * Extra behavioural signals for UI + OpenAI layer (loss streaks, time-of-day, etc.)
+ */
+function computeExtendedSignals(w, decided) {
+  let maxLossStreak = 0;
+  let curL = 0;
+  let maxWinStreak = 0;
+  let curW = 0;
+  for (const t of decided) {
+    if (t.result === 'loss') {
+      curL += 1;
+      curW = 0;
+      maxLossStreak = Math.max(maxLossStreak, curL);
+    } else if (t.result === 'win') {
+      curW += 1;
+      curL = 0;
+      maxWinStreak = Math.max(maxWinStreak, curW);
+    } else {
+      curL = 0;
+      curW = 0;
+    }
+  }
+
+  const be = w.filter((t) => t.result === 'breakeven').length;
+  const breakevenRatePct = w.length ? Math.round((1000 * be) / w.length) / 10 : 0;
+
+  const hourCounts = {};
+  for (const t of w) {
+    const d = new Date(t.createdAt);
+    if (Number.isNaN(d.getTime())) continue;
+    const h = d.getUTCHours();
+    hourCounts[h] = (hourCounts[h] || 0) + 1;
+  }
+  const topTradingHoursUTC = Object.entries(hourCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([h, n]) => ({ hourUTC: Number(h), trades: n }));
+
+  let consecLossDollar = 0;
+  let maxConsecLossDollar = 0;
+  for (const t of decided) {
+    if (t.result === 'loss') {
+      consecLossDollar += Math.abs(Number(t.pnl) || 0);
+      maxConsecLossDollar = Math.max(maxConsecLossDollar, consecLossDollar);
+    } else {
+      consecLossDollar = 0;
+    }
+  }
+
+  let tradesStartingWithin24hAfterLoss = 0;
+  for (let i = 1; i < w.length; i += 1) {
+    if (w[i - 1].result === 'loss') {
+      const h = hoursBetween(w[i - 1].createdAt, w[i].createdAt);
+      if (h >= 0 && h <= 24) tradesStartingWithin24hAfterLoss += 1;
+    }
+  }
+
+  let maxDdLength = 0;
+  let curDdLen = 0;
+  let running = 0;
+  let peak = 0;
+  for (const t of decided) {
+    const p = Number(t.pnl) || 0;
+    running += p;
+    peak = Math.max(peak, running);
+    const dd = peak - running;
+    if (dd > 0) {
+      curDdLen += 1;
+      maxDdLength = Math.max(maxDdLength, curDdLen);
+    } else {
+      curDdLen = 0;
+    }
+  }
+
+  return {
+    maxLossStreak,
+    maxWinStreak,
+    breakevenRatePct,
+    topTradingHoursUTC,
+    maxConsecutiveLossDollarStreak: Math.round(maxConsecLossDollar * 100) / 100,
+    tradesStartingWithin24hAfterLoss,
+    underwaterTradeStreakMax: maxDdLength,
+  };
 }
 
 /**
@@ -418,7 +504,7 @@ function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate) {
     revengeRate,
   });
 
-  const weaknesses = buildWeaknesses({
+  let weaknesses = buildWeaknesses({
     impulsiveRate,
     revengeRate,
     overtradingIndex,
@@ -428,6 +514,20 @@ function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate) {
     worstSession,
     worstPair,
   });
+
+  const extendedSignals = computeExtendedSignals(w, decided);
+  if (extendedSignals.maxLossStreak >= 4) {
+    weaknesses = [
+      `Longest losing streak: ${extendedSignals.maxLossStreak} consecutive losses — risk compounding and psychology are bleeding together.`,
+      ...weaknesses,
+    ].slice(0, 8);
+  }
+  if (extendedSignals.tradesStartingWithin24hAfterLoss >= 5) {
+    weaknesses = [
+      `${extendedSignals.tradesStartingWithin24hAfterLoss} trades opened within 24h of a loss — sequence risk / inability to stand aside.`,
+      ...weaknesses,
+    ].slice(0, 8);
+  }
 
   const patterns = buildPatterns({
     impulsiveRate,
@@ -594,6 +694,7 @@ function buildDnaPayload(trades, journalRows, previousPayload, windowEndDate) {
         pattern: riskEscalation,
       },
     },
+    extendedSignals,
   };
 }
 
@@ -847,6 +948,12 @@ function buildEvolution(prev, curr) {
   if (dOverall >= 4 && dPsych >= 0) trajectory = 'maturing';
   if (dOverall <= -4 || dPsych <= -6) trajectory = 'regressing';
   if (Math.abs(dOverall) < 3) trajectory = 'stable';
+  const currArchName =
+    typeof curr.archetype === 'string'
+      ? curr.archetype
+      : curr.archetype && curr.archetype.name
+        ? curr.archetype.name
+        : '';
   return {
     hasPrevious: true,
     summary: `Overall DNA moved ${dOverall >= 0 ? '+' : ''}${dOverall} vs previous cycle. Discipline ${dDisc >= 0 ? 'firmed' : 'slipped'} (${dDisc >= 0 ? '+' : ''}${dDisc}). Execution ${dExec >= 0 ? 'improved' : 'softened'} (${dExec >= 0 ? '+' : ''}${dExec}).`,
@@ -859,7 +966,7 @@ function buildEvolution(prev, curr) {
     },
     trajectory,
     previousArchetype: prev.archetype || null,
-    archetypeChanged: (prev.archetype || '') !== (curr.archetype || ''),
+    archetypeChanged: (prev.archetype || '') !== currArchName,
   };
 }
 

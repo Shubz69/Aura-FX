@@ -692,3 +692,61 @@
   color: rgba(200, 198, 190, 0.9);
   line-height: 1.5;
 }
+
+/* Harsh-honesty / DNA handoff (monthly report v2) */
+.rp-brutal-box {
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  background: rgba(239, 68, 68, 0.06);
+  margin-bottom: 8px;
+}
+.rp-brutal-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fca5a5;
+  margin: 0 0 8px;
+}
+.rp-brutal-text { margin: 0; font-size: 0.92rem; line-height: 1.55; color: rgba(255, 255, 255, 0.88); }
+
+.rp-dna-handoff {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  background: rgba(234, 169, 96, 0.07);
+  margin-bottom: 8px;
+}
+.rp-dna-handoff-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rp-accent);
+  margin: 0 0 8px;
+}
+.rp-dna-handoff p { margin: 0; font-size: 0.86rem; line-height: 1.55; color: rgba(255, 255, 255, 0.75); }
+
+.rp-failure-list li { margin-bottom: 8px; color: rgba(255, 230, 220, 0.82); }
+.rp-delta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.rp-delta-col h5 {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rp-muted);
+}
+.rp-plan-measurable {
+  font-size: 0.78rem;
+  color: rgba(180, 200, 255, 0.75);
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.rp-plan-measurable strong { color: rgba(200, 210, 255, 0.95); }

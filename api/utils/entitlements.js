@@ -169,9 +169,8 @@ function freeChannelNameKey(name) {
  */
 function getAllowedChannelSlugs(entitlements, channels) {
   if (!entitlements || !Array.isArray(channels)) return [];
-  const { role, effectiveTier, onboardingAccepted, needsOnboardingReaccept } = entitlements;
+  const { role, onboardingAccepted, needsOnboardingReaccept } = entitlements;
   const toId = (c) => (c.id != null ? String(c.id) : (c.name != null ? String(c.name) : ''));
-  const ALWAYS_VISIBLE = new Set(['welcome', 'announcements', 'levels']);
 
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return channels.map(toId).filter(Boolean);
@@ -183,54 +182,20 @@ function getAllowedChannelSlugs(entitlements, channels) {
       return id === 'welcome' || id === 'announcements' || id === 'levels';
     }).map(toId).filter(Boolean);
   }
-  const tier = effectiveTier != null ? effectiveTier : entitlements.tier;
-  let allowed = [];
-  if (tier === 'FREE') {
-    allowed = channels
-      .filter((c) => {
-        const id = toId(c).toLowerCase();
-        if (ALWAYS_VISIBLE.has(id)) return true;
-        const nameKey = freeChannelNameKey(c.name);
-        const nameLower = (c.name || '').toString().toLowerCase();
-        return nameKey && (FREE_CHANNEL_ALLOWLIST.has(nameKey) || FREE_CHANNEL_ALLOWLIST.has(nameLower));
-      })
-      .map(toId)
-      .filter(Boolean);
-  } else if (tier === 'PREMIUM') {
-    allowed = channels
-      .filter((c) => {
-        const id = toId(c).toLowerCase();
-        if (ALWAYS_VISIBLE.has(id)) return true;
-        const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
-        const category = (c.category || '').toString().toLowerCase();
-        return level === 'premium' || category === 'premium';
-      })
-      .map(toId)
-      .filter(Boolean);
-  } else if (tier === 'A7FX') {
-    allowed = channels
-      .filter((c) => {
-        const id = toId(c).toLowerCase();
-        if (ALWAYS_VISIBLE.has(id)) return true;
-        const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
-        const category = (c.category || '').toString().toLowerCase();
-        return level === 'a7fx' || category === 'a7fx';
-      })
-      .map(toId)
-      .filter(Boolean);
-  } else {
-    const allowedLevels = tier === 'ELITE' ? ACCESS_LEVELS_ELITE : ACCESS_LEVELS_PREMIUM;
-    allowed = channels
-      .filter((c) => {
-        const id = toId(c).toLowerCase();
-        if (ALWAYS_VISIBLE.has(id)) return true;
-        const level = (c.access_level || c.accessLevel || 'open').toString().toLowerCase();
-        return allowedLevels.has(level);
-      })
-      .map(toId)
-      .filter(Boolean);
-  }
-  return allowed;
+  // Single source of truth: must match getChannelPermissions (fixes PREMIUM missing general/open, etc.)
+  return channels
+    .filter((c) => {
+      const perm = getChannelPermissions(entitlements, {
+        id: c.id,
+        name: c.name,
+        access_level: c.access_level ?? c.accessLevel,
+        permission_type: c.permission_type ?? c.permissionType,
+        category: c.category,
+      });
+      return perm.canSee;
+    })
+    .map(toId)
+    .filter(Boolean);
 }
 
 /**

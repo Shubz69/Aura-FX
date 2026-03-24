@@ -100,7 +100,8 @@ export const SubscriptionPageGuard = ({ children }) => {
   if (entitlements && entitlements.canAccessCommunity === false) {
     return <Navigate to="/choose-plan" replace />;
   }
-  const paidTier = entitlements?.tier === 'PREMIUM' || entitlements?.tier === 'ELITE';
+  const tier = entitlements?.tier;
+  const paidTier = tier === 'PREMIUM' || tier === 'ELITE' || tier === 'A7FX';
   if (paidTier && !isManageMode) return <Navigate to="/community" replace />;
   return children;
 };

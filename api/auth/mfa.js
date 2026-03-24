@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
-const mysql = require('mysql2/promise');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
 
 // Function to create email transporter
 const createEmailTransporter = () => {
@@ -30,33 +30,8 @@ const generateMFACode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Get MySQL connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    console.error('Missing MySQL environment variables for mfa');
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000,
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    
-    // Create mfa_codes table if it doesn't exist
-    await connection.execute(`
+async function ensureMfaTable(conn) {
+  await conn.execute(`
       CREATE TABLE IF NOT EXISTS mfa_codes (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
@@ -69,13 +44,7 @@ const getDbConnection = async () => {
         INDEX idx_expires (expires_at)
       )
     `);
-    
-    return connection;
-  } catch (error) {
-    console.error('Database connection error in mfa:', error.message);
-    return null;
-  }
-};
+}
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -112,26 +81,38 @@ module.exports = async (req, res) => {
       const mfaCode = generateMFACode();
       const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes expiration
 
-      // Store code in database
-      const db = await getDbConnection();
-      if (db) {
-        try {
-          // Delete any existing codes for this user
-          if (userId) {
-            await db.execute('DELETE FROM mfa_codes WHERE user_id = ?', [userId]);
-          } else if (emailLower) {
-            await db.execute('DELETE FROM mfa_codes WHERE email = ?', [emailLower]);
+      let db = null;
+      try {
+        db = await getDbConnection();
+        if (!db) {
+          return res.status(500).json({
+            success: false,
+            message: 'Database connection error. Please try again later.'
+          });
+        }
+        await ensureMfaTable(db);
+        if (userId) {
+          await db.execute('DELETE FROM mfa_codes WHERE user_id = ?', [userId]);
+        } else if (emailLower) {
+          await db.execute('DELETE FROM mfa_codes WHERE email = ?', [emailLower]);
+        }
+        await db.execute(
+          'INSERT INTO mfa_codes (user_id, email, code, expires_at) VALUES (?, ?, ?, ?)',
+          [userId || null, emailLower, mfaCode, expiresAt]
+        );
+      } catch (dbError) {
+        console.error('Database error storing MFA code:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to store MFA code. Please try again.'
+        });
+      } finally {
+        if (db) {
+          try {
+            db.release();
+          } catch (e) {
+            console.warn('MFA send release:', e.message);
           }
-          
-          // Insert new code
-          await db.execute(
-            'INSERT INTO mfa_codes (user_id, email, code, expires_at) VALUES (?, ?, ?, ?)',
-            [userId || null, emailLower, mfaCode, expiresAt]
-          );
-          await db.end();
-        } catch (dbError) {
-          console.error('Database error storing MFA code:', dbError);
-          if (db && !db.ended) await db.end();
         }
       }
 
@@ -181,16 +162,17 @@ module.exports = async (req, res) => {
 
       const emailLower = email ? email.toLowerCase() : null;
 
-      // Retrieve code from database
-      const db = await getDbConnection();
-      if (!db) {
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Database connection error. Please try again later.' 
-        });
-      }
-
+      let db = null;
       try {
+        db = await getDbConnection();
+        if (!db) {
+          return res.status(500).json({
+            success: false,
+            message: 'Database connection error. Please try again later.'
+          });
+        }
+        await ensureMfaTable(db);
+
         let query, params;
         if (userId) {
           query = 'SELECT * FROM mfa_codes WHERE user_id = ? AND code = ? ORDER BY created_at DESC LIMIT 1';
@@ -203,26 +185,22 @@ module.exports = async (req, res) => {
         const [rows] = await db.execute(query, params);
 
         if (!rows || rows.length === 0) {
-          await db.end();
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Invalid MFA code' 
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid MFA code'
           });
         }
 
         const mfaRecord = rows[0];
 
-        // Check if code has expired
         if (Date.now() > mfaRecord.expires_at) {
           await db.execute('DELETE FROM mfa_codes WHERE id = ?', [mfaRecord.id]);
-          await db.end();
-          return res.status(400).json({ 
-            success: false, 
-            message: 'MFA code has expired. Please request a new one.' 
+          return res.status(400).json({
+            success: false,
+            message: 'MFA code has expired. Please request a new one.'
           });
         }
 
-        // Code is valid - get user info
         let userInfo;
         if (userId) {
           const [userRows] = await db.execute('SELECT * FROM users WHERE id = ?', [userId]);
@@ -236,32 +214,29 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Delete used code
         await db.execute('DELETE FROM mfa_codes WHERE id = ?', [mfaRecord.id]);
-        await db.end();
 
         if (!userInfo) {
-          return res.status(404).json({ 
-            success: false, 
-            message: 'User not found' 
+          return res.status(404).json({
+            success: false,
+            message: 'User not found'
           });
         }
 
-        // Generate JWT token (3-part format: header.payload.signature)
         const toBase64Url = (str) => {
           return Buffer.from(str).toString('base64')
             .replace(/\+/g, '-')
             .replace(/\//g, '_')
             .replace(/=/g, '');
         };
-        
+
         const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
         const payload = toBase64Url(JSON.stringify({
           id: userInfo.id,
           email: userInfo.email,
           username: userInfo.username,
           role: userInfo.role || 'USER',
-          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
+          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
         }));
         const signature = toBase64Url('signature-' + Date.now());
         const token = `${header}.${payload}.${signature}`;
@@ -280,11 +255,18 @@ module.exports = async (req, res) => {
         });
       } catch (dbError) {
         console.error('Database error verifying MFA code:', dbError);
-        if (db && !db.ended) await db.end();
-        return res.status(500).json({ 
-          success: false, 
-          message: 'Database error. Please try again later.' 
+        return res.status(500).json({
+          success: false,
+          message: 'Database error. Please try again later.'
         });
+      } finally {
+        if (db) {
+          try {
+            db.release();
+          } catch (e) {
+            console.warn('MFA verify release:', e.message);
+          }
+        }
       }
     }
 

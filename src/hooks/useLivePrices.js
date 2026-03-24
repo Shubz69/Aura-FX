@@ -1,17 +1,16 @@
 /**
- * useLivePrices - Shared hook for market prices (snapshot every 60s)
+ * useLivePrices - Shared hook for market prices
  *
- * - Single server-side source: GET /api/markets/snapshot (60s cache, same for all users)
- * - Poll snapshot once every 60,000ms only; no per-second or per-render fetches
- * - Modal and all site-wide displays reuse the same cached snapshot
- * - No refetch on re-render, focus, or tab change; one global interval only
- * - Prices stable for the full minute, then update together
+ * - GET /api/markets/snapshot (edge/browser cache ~30s, same payload for all users)
+ * - Poll interval matches Cache-Control max-age/s-maxage to avoid useless origin hits
+ * - Pauses polling while tab is hidden (Page Visibility)
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE_URL = window.location.origin;
-const SNAPSHOT_POLL_MS = 20000; // 20 seconds - fresher updates for accuracy
+/** Keep in sync with api/markets/snapshot.js Cache-Control max-age / s-maxage */
+const SNAPSHOT_POLL_MS = 30000;
 
 // ============================================================================
 // Singleton: one snapshot poll for the whole app
@@ -25,6 +24,33 @@ let isConnected = false;
 let lastFetchTime = 0;
 let watchlistConfig = null;
 let activeSymbols = new Set();
+let visibilityListenerAttached = false;
+let pollingSuspendedHidden = false;
+
+function isDocumentHidden() {
+  return typeof document !== 'undefined' && document.visibilityState === 'hidden';
+}
+
+function attachSnapshotVisibilityHandler() {
+  if (visibilityListenerAttached || typeof document === 'undefined') return;
+  visibilityListenerAttached = true;
+  document.addEventListener('visibilitychange', () => {
+    if (isDocumentHidden()) {
+      pollingSuspendedHidden = true;
+      if (snapshotInterval) {
+        clearInterval(snapshotInterval);
+        snapshotInterval = null;
+      }
+      return;
+    }
+    pollingSuspendedHidden = false;
+    if (globalListeners.size === 0) return;
+    fetchSnapshot();
+    if (!snapshotInterval) {
+      snapshotInterval = setInterval(fetchSnapshot, SNAPSHOT_POLL_MS);
+    }
+  });
+}
 
 // Health monitoring
 const healthStats = {
@@ -85,23 +111,22 @@ function notifyListeners() {
   });
 }
 
-// Fetch snapshot once (single source of truth, 60s server cache)
-// Cache-bust query param so browser doesn't serve stale response on refresh
+// Fetch snapshot — allow HTTP caching (CDN + browser) per api/markets/snapshot Cache-Control
 async function fetchSnapshot() {
   if (fetchInFlight) return;
+  if (isDocumentHidden()) return;
   fetchInFlight = true;
   const startTime = Date.now();
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
-    const url = `${API_BASE_URL}/api/markets/snapshot?_=${Date.now()}`;
+    const url = `${API_BASE_URL}/api/markets/snapshot`;
 
     const response = await fetch(url, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
       signal: controller.signal,
-      cache: 'no-store'
+      cache: 'default'
     });
 
     clearTimeout(timeoutId);
@@ -151,10 +176,18 @@ async function fetchSnapshot() {
   }
 }
 
-// Start global snapshot polling (once every 60s only); always fetch immediately on start
+// Start global snapshot polling; immediate fetch unless tab is hidden
 function startSnapshotPolling() {
-  fetchSnapshot(); // immediate fetch on mount/refresh and when modal opens
+  attachSnapshotVisibilityHandler();
+  if (!isDocumentHidden()) {
+    fetchSnapshot();
+  }
   if (snapshotInterval) return;
+  if (isDocumentHidden()) {
+    pollingSuspendedHidden = true;
+    return;
+  }
+  pollingSuspendedHidden = false;
   snapshotInterval = setInterval(fetchSnapshot, SNAPSHOT_POLL_MS);
 }
 
@@ -248,20 +281,23 @@ export function useLivePrices(options = {}) {
     setLoading(false);
   }, []);
 
-  // Stale = no successful snapshot in last 90s (allow one missed poll)
+  // Stale = no successful snapshot in last 90s (allow one missed poll); pause checks when tab hidden
   useEffect(() => {
-    const staleCheck = setInterval(() => {
+    const tick = () => {
+      if (isDocumentHidden()) return;
       const now = Date.now();
       const isStale = lastFetchTime > 0 && now - lastFetchTime > 90000;
       setStale(isStale);
-    }, SNAPSHOT_POLL_MS);
+    };
+    const staleCheck = setInterval(tick, SNAPSHOT_POLL_MS);
     return () => clearInterval(staleCheck);
   }, []);
 
-  // Refresh when user returns to tab (keeps data live without waiting for next 60s poll)
+  // Optional refresh on window focus if data is older than one poll period
   useEffect(() => {
     const onFocus = () => {
-      if (lastFetchTime > 0 && Date.now() - lastFetchTime > 20000) fetchSnapshot(); // throttle: only if last fetch > 20s ago
+      if (isDocumentHidden()) return;
+      if (lastFetchTime > 0 && Date.now() - lastFetchTime > SNAPSHOT_POLL_MS) fetchSnapshot();
     };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);

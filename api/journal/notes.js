@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const { XP, awardOnce } = require('./xp-helper');
+const { getJournalContext, assertJournalWritableDate } = require('../utils/journalWriteGuard');
 
 function getPathname(req) {
   if (!req.url) return '';
@@ -109,6 +110,9 @@ module.exports = async (req, res) => {
     if (!content) {
       return res.status(400).json({ success: false, message: 'content required' });
     }
+    const jctx = await getJournalContext(userId);
+    if (!assertJournalWritableDate(res, jctx, date)) return;
+
     const id = crypto.randomUUID();
     await executeQuery(
       'INSERT INTO journal_notes (id, userId, date, content, sortOrder) VALUES (?, ?, ?, ?, 0)',
@@ -139,6 +143,21 @@ module.exports = async (req, res) => {
     if (!id) {
       return res.status(400).json({ success: false, message: 'Note id required' });
     }
+    const [noteRows] = await executeQuery(
+      'SELECT date FROM journal_notes WHERE id = ? AND userId = ?',
+      [id, userId]
+    );
+    if (!noteRows || noteRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Note not found' });
+    }
+    const noteDate = noteRows[0].date
+      ? noteRows[0].date instanceof Date
+        ? noteRows[0].date.toISOString().slice(0, 10)
+        : String(noteRows[0].date).slice(0, 10)
+      : null;
+    const jctx = await getJournalContext(userId);
+    if (!assertJournalWritableDate(res, jctx, noteDate)) return;
+
     const [result] = await executeQuery(
       'DELETE FROM journal_notes WHERE id = ? AND userId = ?',
       [id, userId]

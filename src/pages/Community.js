@@ -38,6 +38,7 @@ import {
     has as isChannelMuted
 } from '../utils/mutedChannelsStore';
 import { popTraderPassportShare, setTraderPassportShare } from '../utils/traderPassportShare';
+import { subscribeVisibleInterval } from '../utils/subscribeVisibleInterval';
 // All API calls use real endpoints only - no mock mode
 
 /** Isolated from Community — only this control re-renders when mute toggles (not the whole page). */
@@ -635,17 +636,15 @@ const latestUserFailCountRef = useRef(0);
         window.addEventListener('xpUpdated', handleXPUpdate);
         
         // Poll user profile lightly: XP/level also update via window "xpUpdated" above.
-        // 5s polling stacked requests when the API was slow → hundreds of concurrent fetches → ERR_INSUFFICIENT_RESOURCES.
-        let xpCheckInterval;
+        // Timers pause when tab is hidden to cut CPU/network (see subscribeVisibleInterval).
+        let stopXpInterval;
         if (userId) {
             fetchLatestUserData(userId);
-
-            xpCheckInterval = setInterval(() => {
+            stopXpInterval = subscribeVisibleInterval(() => {
                 fetchLatestUserData(userId);
-            }, 60000);
+            }, 60000, { runLeadingWhenVisible: true });
         } else {
-            // Fallback to localStorage check if userId not available yet
-            xpCheckInterval = setInterval(() => {
+            stopXpInterval = subscribeVisibleInterval(() => {
                 const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
                 if (storedUserData.xp !== undefined && storedUserData.level !== undefined) {
                     const currentXP = parseFloat(storedUserData.xp || 0);
@@ -664,12 +663,12 @@ const latestUserFailCountRef = useRef(0);
                                 level: currentLevel
                             };
                         }
-                        return prev; // Return same reference if no change
+                        return prev;
                     });
                     
                     setUserLevel(prevLevel => {
-                        const currentLevel = parseInt(storedUserData.level || 1);
-                        return prevLevel !== currentLevel ? currentLevel : prevLevel;
+                        const lv = parseInt(storedUserData.level || 1);
+                        return prevLevel !== lv ? lv : prevLevel;
                     });
                 }
             }, 2000);
@@ -677,9 +676,7 @@ const latestUserFailCountRef = useRef(0);
         
         return () => {
             window.removeEventListener('xpUpdated', handleXPUpdate);
-            if (xpCheckInterval) {
-                clearInterval(xpCheckInterval);
-            }
+            stopXpInterval();
         };
     }, [userId, fetchLatestUserData]); // Include userId and fetchLatestUserData in dependencies
     const [collapsedCategories, setCollapsedCategories] = useState(() => {
@@ -1033,10 +1030,10 @@ const [journalLoading, setJournalLoading] = useState(false);
         // Initial category/channel order is loaded by getChannelsBootstrap — avoid 3× parallel
         // serverless invocations (504/timeouts) on every Community mount.
 
-        const intervalId = setInterval(() => {
+        const stopCategoryVis = subscribeVisibleInterval(() => {
             fetchCategoryOrder();
             fetchChannelOrder();
-        }, 30000);
+        }, 30000, { runLeadingWhenVisible: true });
 
         const handleFocus = () => {
             fetchCategoryOrder();
@@ -1045,7 +1042,7 @@ const [journalLoading, setJournalLoading] = useState(false);
         window.addEventListener('focus', handleFocus);
 
         return () => {
-            clearInterval(intervalId);
+            stopCategoryVis();
             window.removeEventListener('focus', handleFocus);
         };
     }, [apiBase, isAuthenticated]);
@@ -1295,14 +1292,24 @@ const refreshChannelList = useCallback(async ({ selectChannelId } = {}) => {
     const isAdminOrSuperForChannels = userRoleForChannels === 'admin' || userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
     const isSuperAdminForChannels = userRoleForChannels === 'super_admin' || userEmailForChannels === SUPER_ADMIN_EMAIL.toLowerCase();
 
-    // Get current user's subscription tier
+    // Get current user's subscription tier (align with getCurrentUserRole / server entitlements)
     const currentUserRole = (() => {
         if (isAdminOrSuperForChannels) return 'admin';
-        if (storedUser?.subscription_status === 'active') {
-            if (storedUser?.subscription_plan === 'a7fx' || storedUser?.subscription_plan === 'elite') return 'a7fx';
-            if (storedUser?.subscription_plan === 'aura' || storedUser?.subscription_plan === 'premium') return 'premium';
+        const subSt = (storedUserForChannels.subscription_status || '').toString().toLowerCase();
+        const plan = (storedUserForChannels.subscription_plan || '').toString().toLowerCase();
+        const r = (storedUserForChannels.role || '').toString().toLowerCase() || 'free';
+        if (subSt === 'active') {
+            if (plan === 'free' || plan === '') {
+                if (r === 'a7fx' || r === 'elite') return 'a7fx';
+                if (r === 'premium') return 'premium';
+                return 'free';
+            }
+            if (plan === 'a7fx' || plan === 'elite') return 'a7fx';
+            if (plan === 'aura' || plan === 'premium') return 'premium';
+            if (r === 'a7fx' || r === 'elite' || r === 'premium') return r;
+            return 'free';
         }
-        return storedUser?.role?.toLowerCase() || 'free';
+        return r || 'free';
     })();
     
     const isFreeUser = currentUserRole === 'free';
@@ -1975,18 +1982,23 @@ const getCurrentUserRole = () => {
     
     // If user has active subscription, ensure role matches plan
     if (subscriptionStatus === 'active') {
-        if (subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite' || subscriptionPlan === 'A7FX') {
+        const plan = (subscriptionPlan || '').toString().toLowerCase();
+        // Free tier (select-free / Stripe free): must not default to premium
+        if (plan === 'free' || plan === '') {
+            if (userRole === 'a7fx' || userRole === 'elite') return 'a7fx';
+            if (userRole === 'premium') return 'premium';
+            return 'free';
+        }
+        if (plan === 'a7fx' || plan === 'elite') {
             return 'a7fx';
         }
-        if (subscriptionPlan === 'aura' || subscriptionPlan === 'premium') {
+        if (plan === 'aura' || plan === 'premium') {
             return 'premium';
         }
-        // If no plan specified but has active subscription, check role
         if (userRole === 'a7fx' || userRole === 'elite' || userRole === 'premium') {
             return userRole;
         }
-        // Default to premium if subscription is active but no plan specified
-        return 'premium';
+        return 'free';
     }
     
     // If subscription is inactive/expired, downgrade to free
@@ -2892,8 +2904,12 @@ if (window.requestAnimationFrame) {
         return false;
     }, []);
 
-    // Fetch all users for @mention autocomplete
+    const fetchAllUsersInFlightRef = useRef(false);
+
+    // Fetch all users for @mention autocomplete (dedupe concurrent calls from interval + focus)
     const fetchAllUsers = useCallback(async () => {
+        if (fetchAllUsersInFlightRef.current) return;
+        fetchAllUsersInFlightRef.current = true;
         try {
             const apiBaseUrl = Api.getBaseUrl() || '';
             const response = await axios.get(`${apiBaseUrl}/api/community/users`, {
@@ -2906,16 +2922,16 @@ if (window.requestAnimationFrame) {
             }
         } catch (error) {
             console.error('Error fetching users for autocomplete:', error);
+        } finally {
+            fetchAllUsersInFlightRef.current = false;
         }
     }, []);
 
-    // Fetch users on mount and periodically
+    // Fetch users on mount and periodically (pauses when tab hidden)
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchAllUsers();
-            const interval = setInterval(fetchAllUsers, 60000); // Refresh every minute
-            return () => clearInterval(interval);
-        }
+        if (!isAuthenticated) return undefined;
+        fetchAllUsers();
+        return subscribeVisibleInterval(fetchAllUsers, 60000, { runLeadingWhenVisible: true });
     }, [isAuthenticated, fetchAllUsers]);
 
     // Check subscription status from database
@@ -3020,13 +3036,9 @@ if (window.requestAnimationFrame) {
             activateSubscription();
         }
         
-        // Check subscription less frequently to improve performance
-        // Initial check already done above if needed, then every 10 seconds
-        const interval = setInterval(() => {
+        return subscribeVisibleInterval(() => {
             checkSubscriptionFromDB();
-        }, 30000); // Check subscription every 30s (not critical for real-time)
-        
-        return () => clearInterval(interval);
+        }, 30000, { runLeadingWhenVisible: true });
     }, [userId, isAuthenticated, checkSubscriptionFromDB]);
 
     // Handle window resize for mobile/tablet detection
@@ -3314,10 +3326,7 @@ if (window.requestAnimationFrame) {
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Refresh channel list less frequently to improve performance
-        // Initial load happens immediately, then refresh every 60 seconds
-        const intervalId = setInterval(() => {
-            // Only refresh if API is working to avoid spam
+        return subscribeVisibleInterval(() => {
             checkApiConnectivity().then((apiWorking) => {
                 if (apiWorking) {
                     refreshChannelList().catch((err) => {
@@ -3325,9 +3334,7 @@ if (window.requestAnimationFrame) {
                     });
                 }
             });
-        }, 60000); // Reduced from 30s to 60s
-
-        return () => clearInterval(intervalId);
+        }, 60000, { runLeadingWhenVisible: true });
     }, [isAuthenticated, refreshChannelList, checkApiConnectivity]);
 
     // Generate smoothed online count variation (gradual changes over time)
@@ -3422,26 +3429,17 @@ if (window.requestAnimationFrame) {
             }
         };
 
-        // Update immediately
         updateConnectionStatus();
-        
-        // Light status checks — 2s was competing with message polling and heavy renders
-        const statusCheckInterval = setInterval(updateConnectionStatus, 5000);
-        
-        return () => clearInterval(statusCheckInterval);
+
+        return subscribeVisibleInterval(updateConnectionStatus, 5000, { runLeadingWhenVisible: true });
     }, [isAuthenticated, isConnected, connectionError, checkApiConnectivity]);
 
     // Update online count with smooth variations periodically (UX polish only)
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Update online count every 30-60 seconds with small variations
-        // This creates natural-looking fluctuations without extreme jumps
-        const statusInterval = setInterval(() => {
-            updateOnlineCount();
-        }, 30000 + Math.random() * 30000); // 30-60 seconds random interval
-
-        return () => clearInterval(statusInterval);
+        // ~45s cadence (was random 30–60s); pauses when tab hidden
+        return subscribeVisibleInterval(updateOnlineCount, 45000, { runLeadingWhenVisible: false });
     }, [isAuthenticated, updateOnlineCount]);
 
     // Sync selectedChannel from URL (handles back/forward, direct links, refresh)
@@ -3616,10 +3614,36 @@ if (window.requestAnimationFrame) {
             }
         };
 
-        pollMessages();
-        const pollTimer = setInterval(pollMessages, pollInterval);
+        let pollTimer = null;
+        const armPoll = () => {
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+            pollTimer = setInterval(pollMessages, pollInterval);
+        };
 
-        return () => clearInterval(pollTimer);
+        pollMessages();
+        armPoll();
+
+        const onPollVis = () => {
+            if (document.visibilityState === 'hidden') {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                }
+            } else {
+                pollMessages();
+                armPoll();
+            }
+        };
+        document.addEventListener('visibilitychange', onPollVis);
+
+        return () => {
+            document.removeEventListener('visibilitychange', onPollVis);
+            if (pollTimer) clearInterval(pollTimer);
+        };
     }, [selectedChannel?.id, isAuthenticated, isConnected, storedUser, userId, updateChannelBadge]);
 
     // Pusher realtime subscription (production - when configured)

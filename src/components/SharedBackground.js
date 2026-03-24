@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { subscribeVisibleInterval } from '../utils/subscribeVisibleInterval';
 
 const SharedBackground = () => {
     const gridRef = useRef(null);
@@ -59,9 +60,7 @@ const SharedBackground = () => {
             }
         }
         
-        const interval = setInterval(draw, 70);
-        
-        return () => clearInterval(interval);
+        return subscribeVisibleInterval(draw, 70);
     }, []);
 
     // Render chart background with more complex pattern

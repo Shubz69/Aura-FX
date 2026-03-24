@@ -143,9 +143,13 @@ function ReportsDnaPageInner() {
         <p className="tdna-landing-kicker">Aura Terminal</p>
         <h1 className="tdna-landing-title">Trader DNA</h1>
         <p className="tdna-landing-sub">
-          A behavioural, execution, and psychological identity synthesis built from your validated trades and journal
-          signal. Eligibility uses roughly your last {dna?.analysisWindowDays || 90} days (~3 months) of data; each sealed
-          report is stored for your account until the next cycle.
+          <strong>Who you are as a trader</strong> — built from your Trade Validator data and journal (roughly{' '}
+          {dna?.analysisWindowDays || 90} days). This is a blunt psychological and behavioural mirror, refreshed on a{' '}
+          ~90-day cycle. <strong>How to get better:</strong> use{' '}
+          <Link to="/reports" style={{ color: '#f8c37d', fontWeight: 700 }}>
+            Monthly reports
+          </Link>{' '}
+          for ranked fixes, failure modes, and measurable checks — not DNA alone.
         </p>
 
         <div className="tdna-cta-row">
@@ -157,6 +161,9 @@ function ReportsDnaPageInner() {
           >
             Enter DNA synthesis chamber
           </button>
+          <Link to="/reports" className="tdna-btn tdna-btn--ghost">
+            Monthly improvement playbook
+          </Link>
           {hasReport && (
             <button type="button" className="tdna-btn tdna-btn--ghost" onClick={load} disabled={loading}>
               Refresh status

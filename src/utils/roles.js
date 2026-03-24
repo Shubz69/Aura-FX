@@ -127,7 +127,7 @@ export const isPremium = (user = null) => {
            role === ROLES.ELITE || 
            role === ROLES.ADMIN || 
            role === ROLES.SUPER_ADMIN ||
-           (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
+           (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite'));
   }
   
   const role = norm(user.role || ROLES.FREE);
@@ -139,7 +139,7 @@ export const isPremium = (user = null) => {
          role === ROLES.ELITE || 
          role === ROLES.ADMIN || 
          role === ROLES.SUPER_ADMIN ||
-         (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx'));
+         (subscriptionStatus === 'active' && (subscriptionPlan === 'aura' || subscriptionPlan === 'a7fx' || subscriptionPlan === 'elite'));
 };
 
 // Get user's capabilities

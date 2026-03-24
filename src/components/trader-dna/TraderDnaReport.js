@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 /** True when GET/POST payload is a real DNA snapshot (not null, empty object, or corrupt row). */
 export function hasRenderableDnaReport(report) {
@@ -67,6 +68,39 @@ export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90
         </div>
       </header>
 
+      <div className="tdna-dev-banner">
+        <p className="tdna-dev-banner-title">Development system</p>
+        <p className="tdna-dev-banner-text">
+          <strong>Trader DNA</strong> is a blunt mirror: who you are as a trader (psychology, habits, risk behaviour) from
+          your real data. <strong>Monthly reports</strong> are where you get ranked fixes, failure modes, and measurable
+          checks for the next 30 days — not here.
+        </p>
+        <Link to="/reports" className="tdna-btn tdna-btn--primary tdna-dev-banner-cta">
+          Open monthly reports (improvement playbook)
+        </Link>
+      </div>
+
+      {report.evolution && (
+        <section className="tdna-evo-banner">
+          <h3 className="tdna-evo-banner-title">90-day evolution</h3>
+          <p className="tdna-evo-banner-summary">{report.evolution.summary}</p>
+          {report.evolution.deltas && (
+            <div className="tdna-evo-banner-deltas">
+              {Object.entries(report.evolution.deltas).map(([k, v]) => (
+                <span key={k} className={v >= 0 ? 'tdna-delta-pos' : 'tdna-delta-neg'}>
+                  {k.replace(/([A-Z])/g, ' $1').trim()}: {v >= 0 ? '+' : ''}
+                  {v}
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="tdna-evo-banner-traj">
+            Trajectory: <strong>{report.evolution.trajectory}</strong>
+            {report.evolution.archetypeChanged ? ' · Archetype shifted vs previous cycle' : ''}
+          </p>
+        </section>
+      )}
+
       <Section title="Dimensional scores">
         <div className="tdna-score-row">
           <ScoreOrb label="Behaviour" value={scores?.behaviour} />
@@ -90,10 +124,32 @@ export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90
         </div>
         {report.improvementPriority && (
           <p className="tdna-priority">
-            <strong>Improvement priority:</strong> {report.improvementPriority}
+            <strong>Top process leak (DNA view):</strong> {report.improvementPriority}{' '}
+            <span className="tdna-priority-hint">
+              — For measurable action steps and failure-mode audits, use your{' '}
+              <Link to="/reports">monthly report</Link>.
+            </span>
           </p>
         )}
       </Section>
+
+      {report.aiPsychologyLayer && (
+        <Section title="Psychological mirror (AI)" className="tdna-sec--psych-ai">
+          <p className="tdna-harsh-lead">{report.aiPsychologyLayer.harshTruthSummary}</p>
+          <h4 className="tdna-sub-sec">Who you are when markets are open</h4>
+          <p>{report.aiPsychologyLayer.traderTypeAsPerson}</p>
+          <h4 className="tdna-sub-sec">Deep read</h4>
+          <p>{report.aiPsychologyLayer.psychologyDeepDive}</p>
+          <h4 className="tdna-sub-sec">Shadow traits</h4>
+          <ul className="tdna-list tdna-list--warn">
+            {(report.aiPsychologyLayer.shadowTraits || []).map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ul>
+          <p className="tdna-coaching-note">{report.aiPsychologyLayer.coachingNote}</p>
+          <p className="tdna-ai-disclaimer">{report.aiPsychologyLayer.disclaimer}</p>
+        </Section>
+      )}
 
       <div className="tdna-two-col">
         <Section title="Strengths">
@@ -229,7 +285,12 @@ export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90
         </div>
       </Section>
 
-      <Section title="Action plan">
+      <Section title="Action plan (directional)">
+        <p className="tdna-action-preface">
+          These are process directions from your DNA window. <strong>Not</strong> a substitute for your monthly report —
+          go to <Link to="/reports">Performance &amp; DNA → Monthly</Link> for harsh failure-mode lists and measurable
+          checks.
+        </p>
         <div className="tdna-action">
           <h4>Top 3 moves</h4>
           <ol className="tdna-ol">
@@ -285,7 +346,7 @@ export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90
         </div>
       </Section>
 
-      <Section title="DNA evolution">
+      <Section title="DNA evolution (detail)">
         <div className="tdna-evo">
           <p className="tdna-evo-summary">{report.evolution?.summary}</p>
           {report.evolution?.deltas && (
@@ -303,6 +364,10 @@ export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90
             {report.evolution?.archetypeChanged && (
               <span className="tdna-evo-shift"> · Archetype shifted vs previous cycle</span>
             )}
+          </p>
+          <p className="tdna-evo-foot">
+            Compare this 90-day arc with your monthly report trend lines — both should point at the same leaks; if they
+            disagree, your logging is incomplete.
           </p>
         </div>
       </Section>
@@ -335,6 +400,12 @@ export default function TraderDnaReport({ report, nextEligibleAt, cycleDays = 90
             <h4>Psychological</h4>
             <pre className="tdna-pre">{JSON.stringify(report.psychologicalMetrics, null, 2)}</pre>
           </div>
+          {report.extendedSignals && (
+            <div>
+              <h4>Extended signals (streaks / timing)</h4>
+              <pre className="tdna-pre">{JSON.stringify(report.extendedSignals, null, 2)}</pre>
+            </div>
+          )}
         </div>
       </Section>
     </div>

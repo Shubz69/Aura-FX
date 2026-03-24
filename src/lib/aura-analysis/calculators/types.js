@@ -31,7 +31,6 @@
  * @property {number} potentialLoss
  * @property {number} rMultiple
  * @property {string[]} warnings
- * @property {number} [effectiveRiskUsd] - actual $ at risk after lot rounding (forex etc.)
  */
 
 export const CALCULATOR_TYPES = Object.freeze({});

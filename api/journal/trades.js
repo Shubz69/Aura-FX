@@ -6,6 +6,7 @@
 const { executeQuery } = require('../db');
 const { verifyToken } = require('../utils/auth');
 const crypto = require('crypto');
+const { getJournalContext, assertJournalWritableDate, normalizeYyyyMmDd } = require('../utils/journalWriteGuard');
 
 function getPathname(req) {
   if (!req.url) return '';
@@ -157,6 +158,9 @@ module.exports = async (req, res) => {
     if (!date || !pair) {
       return res.status(400).json({ success: false, message: 'date and pair are required' });
     }
+    const jctxPost = await getJournalContext(userId);
+    if (!assertJournalWritableDate(res, jctxPost, date)) return;
+
     const rNum = Number(rResult);
     if (Number.isNaN(rNum)) {
       return res.status(400).json({ success: false, message: 'rResult must be a number' });

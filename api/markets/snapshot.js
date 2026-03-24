@@ -30,7 +30,8 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=15');
+  // max-age: browser private cache; s-maxage: Vercel edge — both align with client poll interval
+  res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30, stale-while-revalidate=15');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

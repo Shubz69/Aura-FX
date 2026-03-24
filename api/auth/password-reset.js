@@ -1,9 +1,9 @@
 // Combined password reset endpoint - handles forgot-password, verify code, and reset password
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
-const mysql = require('mysql2/promise');
 // Suppress url.parse() deprecation warnings from dependencies
 require('../utils/suppress-warnings');
+const { getDbConnection } = require('../db');
 
 // Function to create email transporter
 const createEmailTransporter = () => {
@@ -23,51 +23,6 @@ const createEmailTransporter = () => {
     return transporter;
   } catch (error) {
     console.error('Failed to create email transporter:', error);
-    return null;
-  }
-};
-
-// Get MySQL connection
-const getDbConnection = async () => {
-  if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DATABASE) {
-    console.error('Missing MySQL environment variables for password-reset');
-    return null;
-  }
-
-  try {
-    const connectionConfig = {
-      host: process.env.MYSQL_HOST,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : 3306,
-      connectTimeout: 10000,
-    };
-
-    if (process.env.MYSQL_SSL === 'true') {
-      connectionConfig.ssl = { rejectUnauthorized: false };
-    } else {
-      connectionConfig.ssl = false;
-    }
-
-    const connection = await mysql.createConnection(connectionConfig);
-    
-    // Test the connection
-    await connection.ping();
-    
-    console.log('Database connection successful for password-reset');
-    return connection;
-  } catch (error) {
-    console.error('Database connection error in password-reset:', error.message);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      errno: error.errno,
-      sqlState: error.sqlState,
-      syscall: error.syscall,
-      address: error.address,
-      port: error.port
-    });
     return null;
   }
 };
@@ -105,7 +60,6 @@ module.exports = async (req, res) => {
 
       const emailLower = email.toLowerCase();
 
-      // Check if user exists
       let db = null;
       try {
         db = await getDbConnection();
@@ -116,37 +70,19 @@ module.exports = async (req, res) => {
             message: 'Database connection error. Please try again later.'
           });
         }
-      } catch (connError) {
-        console.error('Database connection error in password-reset:', connError);
-        return res.status(500).json({
-          success: false,
-          message: 'Database connection error. Please try again later.'
-        });
-      }
 
-      try {
         const [userRows] = await db.execute('SELECT id, email, username FROM users WHERE email = ?', [emailLower]);
-        
+
         if (!userRows || userRows.length === 0) {
-          if (db && !db.ended) {
-            try {
-              await db.end();
-            } catch (e) {
-              console.warn('Error closing DB connection:', e.message);
-            }
-          }
-          // Don't reveal if email exists or not for security
           return res.status(200).json({
             success: true,
             message: 'If an account with that email exists, a password reset code has been sent.'
           });
         }
 
-        // Generate 6-digit reset code
         const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
+        const expiresAt = Date.now() + (10 * 60 * 1000);
 
-        // Create reset_codes table if it doesn't exist
         await db.execute(`
           CREATE TABLE IF NOT EXISTS reset_codes (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -163,25 +99,12 @@ module.exports = async (req, res) => {
           )
         `);
 
-        // Delete any existing codes for this user
         await db.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
-        
-        // Insert new code
         await db.execute(
           'INSERT INTO reset_codes (user_id, email, code, expires_at) VALUES (?, ?, ?, ?)',
           [userRows[0].id, emailLower, resetCode, expiresAt]
         );
-        
-        // Close DB connection before sending email
-        if (db && !db.ended) {
-          try {
-            await db.end();
-          } catch (e) {
-            console.warn('Error closing DB connection:', e.message);
-          }
-        }
 
-        // Send email with reset code
         const transporter = createEmailTransporter();
         if (!transporter) {
           return res.status(500).json({
@@ -202,7 +125,7 @@ module.exports = async (req, res) => {
                 ${resetCode}
               </div>
               <p>This code will expire in 10 minutes.</p>
-              <p>If you didn't request this code, please ignore this email.</p>
+              <p>If you did not request this code, please ignore this email.</p>
             </div>
           `
         };
@@ -214,21 +137,23 @@ module.exports = async (req, res) => {
           success: true,
           message: 'If an account with that email exists, a password reset code has been sent.'
         });
-      } catch (dbError) {
-        console.error('Database error in forgot-password:', dbError.message);
-        if (db && !db.ended) {
-          try {
-            await db.end();
-          } catch (e) {
-            console.warn('Error closing DB connection after error:', e.message);
-          }
-        }
+      } catch (err) {
+        console.error('Error in forgot-password:', err.message || err);
         return res.status(500).json({
           success: false,
           message: 'Failed to send reset email. Please try again later.',
-          error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+          error: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
+      } finally {
+        if (db) {
+          try {
+            db.release();
+          } catch (e) {
+            console.warn('Error releasing DB connection:', e.message);
+          }
+        }
       }
+
     }
 
     // Handle verify code action
@@ -241,23 +166,23 @@ module.exports = async (req, res) => {
       }
 
       const emailLower = email.toLowerCase();
-      const db = await getDbConnection();
-      
-      if (!db) {
-        return res.status(500).json({
-          success: false,
-          message: 'Database not configured. Please contact support.'
-        });
-      }
-
+      let dbVerify = null;
       try {
-        const [rows] = await db.execute(
+        dbVerify = await getDbConnection();
+
+        if (!dbVerify) {
+          return res.status(500).json({
+            success: false,
+            message: 'Database not configured. Please contact support.'
+          });
+        }
+
+        const [rows] = await dbVerify.execute(
           'SELECT * FROM reset_codes WHERE email = ? AND code = ? ORDER BY created_at DESC LIMIT 1',
           [emailLower, code]
         );
 
         if (rows.length === 0) {
-          await db.end();
           return res.status(400).json({
             success: false,
             message: 'Invalid code'
@@ -267,16 +192,14 @@ module.exports = async (req, res) => {
         const stored = rows[0];
 
         if (Date.now() > stored.expires_at) {
-          await db.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
-          await db.end();
+          await dbVerify.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
           return res.status(400).json({
             success: false,
             message: 'Code has expired'
           });
         }
 
-        await db.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
-        await db.end();
+        await dbVerify.execute('DELETE FROM reset_codes WHERE email = ?', [emailLower]);
 
         const resetToken = Buffer.from(JSON.stringify({
           email: email,
@@ -296,13 +219,18 @@ module.exports = async (req, res) => {
           code: dbError.code,
           errno: dbError.errno
         });
-        if (db && !db.ended) {
-          await db.end();
-        }
         return res.status(500).json({
           success: false,
           message: `Failed to verify code: ${dbError.message || 'Database error'}`
         });
+      } finally {
+        if (dbVerify) {
+          try {
+            dbVerify.release();
+          } catch (e) {
+            console.warn('Error releasing DB connection (verify):', e.message);
+          }
+        }
       }
     }
 
@@ -356,7 +284,7 @@ module.exports = async (req, res) => {
           [hashedPassword, tokenData.email.toLowerCase()]
         );
 
-        await db.end();
+        db.release();
 
         if (result.affectedRows > 0) {
           console.log(`Password reset for ${tokenData.email} - updated in MySQL database`);
@@ -378,7 +306,7 @@ module.exports = async (req, res) => {
           errno: dbError.errno
         });
         if (db && !db.ended) {
-          await db.end();
+          db.release();
         }
         return res.status(500).json({
           success: false,

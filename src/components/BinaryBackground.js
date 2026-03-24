@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { subscribeVisibleInterval } from '../utils/subscribeVisibleInterval';
 
 // EXACT BINARY BACKGROUND FROM CONTACT US PAGE
 // ⚠️ DO NOT MODIFY - PERFECT AS IS ⚠️
@@ -46,9 +47,10 @@ const BinaryBackground = () => {
             }
         }
         
-        // Start immediately
-        draw();
-        const interval = setInterval(draw, 70);
+        if (typeof document === 'undefined' || document.visibilityState !== 'hidden') {
+            draw();
+        }
+        const stopVis = subscribeVisibleInterval(draw, 70);
         
         // Handle window resize
         const handleResize = () => {
@@ -64,7 +66,7 @@ const BinaryBackground = () => {
         window.addEventListener('resize', handleResize);
         
         return () => {
-            clearInterval(interval);
+            stopVis();
             window.removeEventListener('resize', handleResize);
         };
     }, [canvasId]);
