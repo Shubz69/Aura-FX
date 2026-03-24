@@ -4,6 +4,79 @@ const { getDbConnection } = require('../db');
 const { normalizeRole, isSuperAdminEmail } = require('../utils/entitlements');
 const { signToken } = require('../utils/auth');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
+const { ensureUsersSchema } = require('../utils/ensure-users-schema');
+
+const BASE_SELECT_FIELDS = [
+  'id',
+  'email',
+  'username',
+  'name',
+  'avatar',
+  'password',
+  'role'
+];
+
+const OPTIONAL_SELECT_FIELDS = [
+  'subscription_status',
+  'subscription_expiry',
+  'subscription_plan',
+  'payment_failed',
+  'timezone'
+];
+
+let warmSchemaOnce = null;
+
+function warmUsersSchemaOnce() {
+  if (!warmSchemaOnce) {
+    warmSchemaOnce = ensureUsersSchema().catch((error) => {
+      console.warn('Login schema warmup skipped:', error?.message || error);
+      return null;
+    });
+  }
+  return warmSchemaOnce;
+}
+
+function isUnknownColumnError(error) {
+  if (!error) return false;
+  return error.code === 'ER_BAD_FIELD_ERROR' || /unknown column/i.test(String(error.message || ''));
+}
+
+function parseMissingColumn(error) {
+  const message = String(error?.message || '');
+  const match = message.match(/Unknown column '([^']+)'/i);
+  return match ? match[1] : null;
+}
+
+async function fetchUserByEmailCompat(db, emailLower) {
+  const fields = [...BASE_SELECT_FIELDS, ...OPTIONAL_SELECT_FIELDS];
+  let attempts = 0;
+
+  while (attempts < OPTIONAL_SELECT_FIELDS.length + 1) {
+    try {
+      const [rows] = await db.execute(
+        `SELECT ${fields.join(', ')} FROM users WHERE email = ? LIMIT 1`,
+        [emailLower]
+      );
+      return rows && rows[0] ? rows[0] : null;
+    } catch (error) {
+      if (!isUnknownColumnError(error)) throw error;
+      const missing = parseMissingColumn(error);
+      if (missing && fields.includes(missing)) {
+        const idx = fields.indexOf(missing);
+        fields.splice(idx, 1);
+        attempts += 1;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  const [fallbackRows] = await db.execute(
+    `SELECT ${BASE_SELECT_FIELDS.join(', ')} FROM users WHERE email = ? LIMIT 1`,
+    [emailLower]
+  );
+  return fallbackRows && fallbackRows[0] ? fallbackRows[0] : null;
+}
 
 module.exports = async (req, res) => {
   // Handle CORS
@@ -84,21 +157,18 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Find user by email
-      const [users] = await db.execute(
-        'SELECT * FROM users WHERE email = ?',
-        [emailLower]
-      );
+      // Warm schema in background to prevent later cold-start DDL work from delaying auth.
+      warmUsersSchemaOnce();
 
-      if (!users || users.length === 0) {
+      // Find user by email (schema-compatible select that tolerates mixed legacy columns).
+      const user = await fetchUserByEmailCompat(db, emailLower);
+      if (!user) {
         return res.status(404).json({
           success: false,
           error: 'NO_ACCOUNT',
           message: 'No account with this email exists.'
         });
       }
-
-      const user = users[0];
 
       // Verify password
       const passwordMatch = await bcrypt.compare(password, user.password);
@@ -111,16 +181,18 @@ module.exports = async (req, res) => {
       }
 
       // Update last_seen
-      await db.execute(
-        'UPDATE users SET last_seen = NOW() WHERE id = ?',
-        [user.id]
-      );
+      try {
+        await db.execute(
+          'UPDATE users SET last_seen = NOW() WHERE id = ?',
+          [user.id]
+        );
+      } catch (error) {
+        if (!isUnknownColumnError(error)) throw error;
+      }
 
       // Auto-detect/save timezone (IANA) on login for daily journal notifications
-      const { ensureTimezoneColumn } = require('../utils/ensure-timezone-column');
-      await ensureTimezoneColumn();
       const tz = typeof timezone === 'string' ? timezone.trim() : '';
-      if (tz && tz.length <= 64) {
+      if (tz && tz.length <= 64 && Object.prototype.hasOwnProperty.call(user, 'timezone')) {
         try {
           await db.execute(
             'UPDATE users SET timezone = ? WHERE id = ?',
@@ -129,7 +201,7 @@ module.exports = async (req, res) => {
         } catch (e) {
           console.warn('Login timezone update:', e.message);
         }
-      } else if (!user.timezone || String(user.timezone || '').trim() === '') {
+      } else if (Object.prototype.hasOwnProperty.call(user, 'timezone') && (!user.timezone || String(user.timezone || '').trim() === '')) {
         try {
           await db.execute(
             'UPDATE users SET timezone = ? WHERE id = ?',
@@ -140,31 +212,22 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Check subscription status (add columns if they don't exist)
-      let subscriptionStatus = 'inactive';
-      let subscriptionExpiry = null;
-      try {
-        const [subscriptionData] = await db.execute(
-          'SELECT subscription_status, subscription_expiry FROM users WHERE id = ?',
-          [user.id]
-        );
-        if (subscriptionData && subscriptionData.length > 0) {
-          subscriptionStatus = subscriptionData[0].subscription_status || 'inactive';
-          subscriptionExpiry = subscriptionData[0].subscription_expiry;
-
-          if (subscriptionStatus === 'active' && subscriptionExpiry) {
-            const expiryDate = new Date(subscriptionExpiry);
-            if (expiryDate < new Date()) {
-              subscriptionStatus = 'expired';
-              await db.execute(
-                'UPDATE users SET subscription_status = ? WHERE id = ?',
-                ['expired', user.id]
-              );
-            }
+      let subscriptionStatus = user.subscription_status || 'inactive';
+      let subscriptionExpiry = user.subscription_expiry || null;
+      const subscriptionPlan = user.subscription_plan || '';
+      if (subscriptionStatus === 'active' && subscriptionExpiry) {
+        const expiryDate = new Date(subscriptionExpiry);
+        if (expiryDate < new Date()) {
+          subscriptionStatus = 'expired';
+          try {
+            await db.execute(
+              'UPDATE users SET subscription_status = ? WHERE id = ?',
+              ['expired', user.id]
+            );
+          } catch (e) {
+            if (!isUnknownColumnError(e)) throw e;
           }
         }
-      } catch (err) {
-        console.log('Subscription columns not found, will be created on first subscription');
       }
 
       const apiRole = isSuperAdminEmail(user) ? 'SUPER_ADMIN' : normalizeRole(user.role);
@@ -189,8 +252,10 @@ module.exports = async (req, res) => {
         status: 'SUCCESS',
         subscription: {
           status: subscriptionStatus,
-          expiry: subscriptionExpiry
-        }
+          expiry: subscriptionExpiry,
+          plan: subscriptionPlan
+        },
+        subscriptionPlan
       });
     } catch (dbError) {
       console.error('Database error during login:', dbError);

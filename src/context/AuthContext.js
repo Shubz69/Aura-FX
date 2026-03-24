@@ -497,44 +497,50 @@ export const AuthProvider = ({ children }) => {
           }
         }
         
-        // ============= SINGLE SOURCE OF TRUTH: /api/me =============
-        // Use /api/me entitlements for redirect (same as RouteGuards and Community)
+        // ============= FAST ROUTING + NON-BLOCKING /api/me =============
         const userRole = (data.role || '').toLowerCase();
         const isAdminUser = userRole === 'admin' || userRole === 'super_admin' ||
           (data.email || '').toLowerCase() === 'shubzfx@gmail.com';
-        let canAccessCommunity = isAdminUser; // admins always have access as fallback
+        const plan = (data.subscriptionPlan || data.subscription?.plan || '').toString().trim().toLowerCase();
+        const canAccessCommunity = isAdminUser || plan.length > 0;
+        if (canAccessCommunity) {
+          localStorage.setItem('hasActiveSubscription', 'true');
+        } else {
+          localStorage.removeItem('hasActiveSubscription');
+          localStorage.removeItem('accessType');
+        }
+
+        const API_BASE_URL = Api.getBaseUrl() || window.location.origin;
         const meController = new AbortController();
         const meTimeout = setTimeout(() => meController.abort(), 1200);
-        try {
-          const API_BASE_URL = Api.getBaseUrl() || window.location.origin;
-          const meResponse = await fetch(`${API_BASE_URL}/api/me`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${data.token}`,
-              'Content-Type': 'application/json'
-            },
-            cache: 'no-store',
-            signal: meController.signal
-          });
-          clearTimeout(meTimeout);
-          if (meResponse.ok) {
+        fetch(`${API_BASE_URL}/api/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${data.token}`,
+            'Content-Type': 'application/json'
+          },
+          cache: 'no-store',
+          signal: meController.signal
+        })
+          .then(async (meResponse) => {
+            clearTimeout(meTimeout);
+            if (!meResponse.ok) return;
             const meData = await meResponse.json();
-            if (meData.success && meData.entitlements) {
-              writeMeEntitlementsSeed(meData);
-              canAccessCommunity = meData.entitlements.canAccessCommunity === true;
-              if (canAccessCommunity) {
-                localStorage.setItem('hasActiveSubscription', 'true');
-              } else {
-                localStorage.removeItem('hasActiveSubscription');
-                localStorage.removeItem('accessType');
-              }
+            if (!meData?.success || !meData?.entitlements) return;
+            writeMeEntitlementsSeed(meData);
+            if (meData.entitlements.canAccessCommunity === true) {
+              localStorage.setItem('hasActiveSubscription', 'true');
+            } else {
+              localStorage.removeItem('hasActiveSubscription');
+              localStorage.removeItem('accessType');
             }
-          }
-        } catch (meError) {
-          clearTimeout(meTimeout);
-          if (meError.name !== 'AbortError') console.error('Error fetching /api/me on login:', meError);
-          // canAccessCommunity already set from role fallback above
-        }
+          })
+          .catch((meError) => {
+            clearTimeout(meTimeout);
+            if (meError?.name !== 'AbortError') {
+              console.error('Error fetching /api/me on login:', meError);
+            }
+          });
         
         // ============= DETERMINISTIC ROUTING =============
         // canAccessCommunity === true → /community (plan selected or admin)
@@ -570,6 +576,8 @@ export const AuthProvider = ({ children }) => {
         }
       } else if (error.message && error.message.toLowerCase().includes('invalid email or password')) {
         friendlyMessage = 'No account with this email exists or the password is incorrect.';
+      } else if (error.code === 'ECONNABORTED' || (error.message && error.message.toLowerCase().includes('timeout'))) {
+        friendlyMessage = 'Login request timed out. Please try again.';
       } else {
         friendlyMessage = Api.handleApiError(error);
       }

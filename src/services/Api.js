@@ -37,6 +37,7 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+const LOGIN_REQUEST_TIMEOUT_MS = 12000;
 
 /** Raw file size above this uses chunked POSTs so each request stays under Vercel ~4.5MB body limit. */
 const BRIEF_SINGLE_UPLOAD_MAX_RAW = 2 * 1024 * 1024;
@@ -294,8 +295,10 @@ const Api = {
     // Authentication
     login: async (credentials) => {
         // Use real API only - no mock fallback for production
-        // This ensures proper error messages are returned
-        return await axios.post(`${API_BASE_URL}/api/auth/login`, credentials);
+        // This ensures proper error messages are returned and avoids infinite "Authenticating..." waits.
+        return await axios.post(`${API_BASE_URL}/api/auth/login`, credentials, {
+            timeout: LOGIN_REQUEST_TIMEOUT_MS
+        });
     },
     
     register: async (userData) => {
@@ -1207,7 +1210,9 @@ const Api = {
     // Enhanced login with better error handling
     loginWithErrorDetails: async (credentials) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, credentials);
+            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, credentials, {
+                timeout: LOGIN_REQUEST_TIMEOUT_MS
+            });
             return {
                 success: true,
                 token: response.data.token,
@@ -1264,6 +1269,9 @@ const Api = {
             return `Error ${error.response.status}: ${error.response.statusText}`;
         } else if (error.request) {
             // The request was made but no response was received
+            if (error.code === 'ECONNABORTED' || (error.message && error.message.toLowerCase().includes('timeout'))) {
+                return "Login request timed out. Please try again.";
+            }
             return "No response from server. Please try again later.";
         } else {
             // Something happened in setting up the request that triggered an Error
