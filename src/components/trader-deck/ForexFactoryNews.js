@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Api from '../../services/Api';
 import {
   hasActualValue,
@@ -22,6 +22,18 @@ const POLL_FAST_MS   = 20 * 1000;       // 20 s when an event is within ±5 min
 const SOON_WINDOW_MS = 5 * 60 * 1000;   // ±5 min = "near" window
 const TICK_MS        = 1000;            // 1s tick for countdown display
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function todayInTimeZone(ianaTz) {
+  return new Date().toLocaleDateString('en-CA', { timeZone: ianaTz });
+}
+
+function shiftIsoDate(dateStr, deltaDays) {
+  const d = new Date(`${dateStr}T12:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + deltaDays);
+  return d.toISOString().slice(0, 10);
+}
+
 function loadPref(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
@@ -37,8 +49,12 @@ function getEventStatus(ev) {
   return 'upcoming';
 }
 
-export default function ForexFactoryNews({ date, onlyToday = true }) {
+export default function ForexFactoryNews({ date, onlyToday: _onlyToday = true }) {
   const [displayTimeZone] = useState(() => getBrowserTimeZone());
+  const [viewDate, setViewDate] = useState(() => {
+    if (date && ISO_DATE_RE.test(String(date))) return String(date).slice(0, 10);
+    return todayInTimeZone(getBrowserTimeZone());
+  });
   const [events, setEvents]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -51,15 +67,30 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   const precTimersRef  = useRef([]);  // precision setTimeout IDs
   const sinceLastFetch = useRef(0);   // ms since last baseline fetch
   const fetchInFlightRef = useRef(false);
+  const viewDateRef = useRef(viewDate);
+  viewDateRef.current = viewDate;
 
-  const todayStr = date || new Date().toLocaleDateString('en-CA', { timeZone: displayTimeZone });
+  useEffect(() => {
+    if (date && ISO_DATE_RE.test(String(date))) {
+      setViewDate(String(date).slice(0, 10));
+    }
+  }, [date]);
 
-  // Core fetch — refresh=true bypasses server cache for precision fetches
+  const isViewingToday = useMemo(
+    () => viewDate === todayInTimeZone(displayTimeZone),
+    [viewDate, displayTimeZone]
+  );
+
+  // Core fetch — refresh=true bypasses server cache for precision fetches; historical uses ?date=
   const fetchEvents = useCallback(async (refresh = false) => {
     if (fetchInFlightRef.current) return null;
     fetchInFlightRef.current = true;
     try {
-      const res  = await Api.getTraderDeckEconomicCalendar(1, refresh);
+      const todayLocal = todayInTimeZone(displayTimeZone);
+      const isToday = viewDate === todayLocal;
+      const res = isToday
+        ? await Api.getTraderDeckEconomicCalendar(1, refresh)
+        : await Api.getTraderDeckEconomicCalendar({ from: viewDate, to: viewDate, refresh });
       const list = res.data?.events || [];
       setEvents(list);
       eventsRef.current = list;
@@ -71,7 +102,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       fetchInFlightRef.current = false;
       setLoading(false);
     }
-  }, []);
+  }, [viewDate, displayTimeZone]);
 
   // Schedule a cache-bypassing fetch at each upcoming event's exact release time
   // (+0s, +30s, +90s to catch delayed actuals)
@@ -100,16 +131,35 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   }, [fetchEvents]);
 
   useEffect(() => {
-    // Initial load + precision schedule
-    fetchEvents(false).then(evts => { if (evts) schedulePrecision(evts); });
+    let cancelled = false;
+    setLoading(true);
+    fetchEvents(false).then((evts) => {
+      if (cancelled || !evts) return;
+      if (viewDateRef.current === todayInTimeZone(displayTimeZone)) {
+        schedulePrecision(evts);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewDate, fetchEvents, schedulePrecision, displayTimeZone]);
 
-    // Adaptive baseline tick: 2 min normal, 20 s when an event is within ±5 min
+  // Adaptive polling only while browsing today's events in the viewer's timezone
+  useEffect(() => {
+    if (!isViewingToday) {
+      precTimersRef.current.forEach(clearTimeout);
+      precTimersRef.current = [];
+      return undefined;
+    }
+    sinceLastFetch.current = 0;
     const tickId = setInterval(() => {
-      setTick(t => t + 1); // re-render for SOON badges
-      sinceLastFetch.current += TICK_MS;
+      setTick((t) => t + 1);
+      const todayLocal = todayInTimeZone(displayTimeZone);
+      if (viewDateRef.current !== todayLocal) return;
 
+      sinceLastFetch.current += TICK_MS;
       const now = Date.now();
-      const isNear = eventsRef.current.some(ev => {
+      const isNear = eventsRef.current.some((ev) => {
         const ts = parseEventTimestamp(ev);
         if (!ts || hasActualValue(ev.actual)) return false;
         if (Math.abs(ts - now) < SOON_WINDOW_MS) return true;
@@ -119,7 +169,12 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
 
       if (sinceLastFetch.current >= pollMs) {
         sinceLastFetch.current = 0;
-        fetchEvents(isNear).then(fresh => { if (fresh) schedulePrecision(fresh); });
+        if (viewDateRef.current !== todayLocal) return;
+        fetchEvents(isNear).then((fresh) => {
+          if (fresh && viewDateRef.current === todayInTimeZone(displayTimeZone)) {
+            schedulePrecision(fresh);
+          }
+        });
       }
     }, TICK_MS);
 
@@ -127,7 +182,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       clearInterval(tickId);
       precTimersRef.current.forEach(clearTimeout);
     };
-  }, [fetchEvents, schedulePrecision]);
+  }, [isViewingToday, displayTimeZone, fetchEvents, schedulePrecision]);
 
   const toggleCurrency = (c) => {
     const next = filterCurrencies.includes(c)
@@ -146,7 +201,7 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
   };
 
   const filtered = events
-    .filter(e => !onlyToday || getEventDateKeyLocal(e, displayTimeZone) === todayStr)
+    .filter((e) => getEventDateKeyLocal(e, displayTimeZone) === viewDate)
     .filter(e => filterCurrencies.includes(e.currency))
     .filter(e => filterImpact.includes(e.impact))
     .sort((a, b) => {
@@ -163,10 +218,16 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       <div className="td-ff-header">
         <div className="td-ff-title-row">
           <h3 className="td-ff-title">Economic Calendar</h3>
-          <div className="td-ff-live-badge">
-            <span className="td-ff-live-dot" />
-            LIVE
-          </div>
+          {isViewingToday ? (
+            <div className="td-ff-live-badge">
+              <span className="td-ff-live-dot" />
+              LIVE
+            </div>
+          ) : (
+            <div className="td-ff-historical-badge" title="Showing archived calendar for the selected date">
+              Historical
+            </div>
+          )}
           {highCount > 0 && (
             <span className="td-ff-high-badge">
               {highCount} High Impact
@@ -193,6 +254,56 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       {/* Filter panel */}
       {showFilter && (
         <div className="td-ff-filter-panel">
+          <div className="td-ff-filter-section td-ff-filter-section--date">
+            <span className="td-ff-filter-label">Browse date</span>
+            <div className="td-ff-date-row">
+              <button
+                type="button"
+                className="td-ff-date-nav"
+                onClick={() => setViewDate((d) => shiftIsoDate(d, -1))}
+                aria-label="Previous day"
+              >
+                ‹
+              </button>
+              <input
+                type="date"
+                className="td-ff-date-input"
+                value={viewDate}
+                max={shiftIsoDate(todayInTimeZone(displayTimeZone), 14)}
+                min={shiftIsoDate(todayInTimeZone(displayTimeZone), -365)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v && ISO_DATE_RE.test(v)) setViewDate(v);
+                }}
+                aria-label="Calendar date"
+              />
+              <button
+                type="button"
+                className="td-ff-date-nav"
+                onClick={() => setViewDate((d) => shiftIsoDate(d, 1))}
+                aria-label="Next day"
+              >
+                ›
+              </button>
+              <button
+                type="button"
+                className="td-ff-date-today"
+                onClick={() => setViewDate(todayInTimeZone(displayTimeZone))}
+              >
+                Today
+              </button>
+              {!isViewingToday && (
+                <button
+                  type="button"
+                  className="td-ff-date-refresh"
+                  onClick={() => fetchEvents(true)}
+                >
+                  Refresh
+                </button>
+              )}
+            </div>
+            <p className="td-ff-date-hint">Prev / Fcst / Actual from Forex Factory and data partners for this day.</p>
+          </div>
           <div className="td-ff-filter-section">
             <span className="td-ff-filter-label">Currencies</span>
             <div className="td-ff-filter-chips">
@@ -239,12 +350,16 @@ export default function ForexFactoryNews({ date, onlyToday = true }) {
       {loading ? (
         <div className="td-ff-loading">
           <div className="td-ff-spinner" />
-          <span>Fetching live calendar…</span>
+          <span>{isViewingToday ? 'Fetching live calendar…' : 'Loading calendar for selected date…'}</span>
         </div>
       ) : filtered.length === 0 ? (
         <div className="td-ff-empty">
           <span className="td-ff-empty-icon">📭</span>
-          <span>No events match your filter for today.</span>
+          <span>
+            {events.length === 0
+              ? 'No calendar data for this date.'
+              : 'No events match your filters for this date.'}
+          </span>
         </div>
       ) : (
         <div className="td-ff-table-wrap">

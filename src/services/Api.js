@@ -809,8 +809,12 @@ const Api = {
             params: refresh ? { refresh: '1' } : {},
         });
     },
-    /** skipCache: economic calendar actuals must not sit behind the 18s client GET cache. */
-    getTraderDeckEconomicCalendar: (days = 7, refresh = false) => {
+    /**
+     * Economic calendar. skipCache so actuals stay fresh.
+     * @param {number|{ from?: string, to?: string, date?: string, days?: number, refresh?: boolean }} daysOrOpts - forward window days, or { from, to } / { date } for historical browse
+     * @param {boolean} [refresh=false]
+     */
+    getTraderDeckEconomicCalendar: (daysOrOpts = 7, refresh = false) => {
         let tz = 'UTC';
         try {
             tz =
@@ -820,9 +824,26 @@ const Api = {
         } catch (_) {
             /* keep UTC */
         }
-        // tz as query avoids CORS preflight vs custom header; server uses same IANA zone for metadata
+        /** @type {Record<string, string|number>} */
+        const params = { tz };
+        let doRefresh = refresh;
+        if (daysOrOpts != null && typeof daysOrOpts === 'object' && !Array.isArray(daysOrOpts)) {
+            const o = daysOrOpts;
+            if (o.from && o.to) {
+                params.from = String(o.from).slice(0, 10);
+                params.to = String(o.to).slice(0, 10);
+            } else if (o.date) {
+                params.date = String(o.date).slice(0, 10);
+            }
+            if (o.days != null) params.days = o.days;
+            if (o.refresh) doRefresh = true;
+        } else {
+            const d = typeof daysOrOpts === 'number' && Number.isFinite(daysOrOpts) ? daysOrOpts : 7;
+            params.days = d;
+        }
+        if (doRefresh) params.refresh = '1';
         return dedupeGet(`${API_BASE_URL}/api/trader-deck/economic-calendar`, {
-            params: { days, ...(refresh ? { refresh: '1' } : {}), tz },
+            params,
             skipCache: true,
         });
     },

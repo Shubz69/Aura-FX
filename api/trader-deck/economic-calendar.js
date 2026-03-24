@@ -1,7 +1,9 @@
 require('../utils/suppress-warnings');
 /**
  * GET /api/trader-deck/economic-calendar
- * Returns economic calendar events for the next 7 days.
+ * Returns economic calendar events for the next N days (default 7), or a bounded range:
+ *   ?date=YYYY-MM-DD  or  ?from=YYYY-MM-DD&to=YYYY-MM-DD  (max 7 days, max ~1y lookback)
+ * Range mode: FF HTML scrape per day + FMP/TE merge for prev/fcst/actual.
  * Priority chain:
  *   1. Forex Factory JSON (faireconomy CDN — schedule/titles; **no actuals in JSON**)
  *   2. Merge actuals from FMP + Trading Economics (matched by time ±MATCH_WINDOW, currency, title)
@@ -673,6 +675,232 @@ function staticFallback() {
   ];
 }
 
+// --- Explicit date range (historical / single-day browse) ---
+const RANGE_MAX_DAYS = 7;
+const RANGE_MAX_LOOKBACK_MS = 366 * 24 * 60 * 60 * 1000;
+const HISTORICAL_RANGE_CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4h — past actuals are stable
+
+const ISO_DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidIsoDateOnly(s) {
+  if (!s || !ISO_DATE_ONLY_RE.test(s)) return false;
+  const d = new Date(`${s}T12:00:00.000Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+
+function enumerateInclusiveDays(fromStr, toStr) {
+  const out = [];
+  let cur = fromStr;
+  while (cur <= toStr) {
+    out.push(cur);
+    const next = new Date(`${cur}T12:00:00.000Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    cur = next.toISOString().slice(0, 10);
+  }
+  return out;
+}
+
+function calendarEtTodayStr() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+
+/**
+ * @param {Record<string, unknown>} query
+ * @returns {null | { error: string } | { from: string, to: string }}
+ */
+function parseCalendarRangeQuery(query) {
+  const q = query || {};
+  let from =
+    q.from != null && String(q.from).trim() !== '' ? String(q.from).trim().slice(0, 10) : null;
+  let to = q.to != null && String(q.to).trim() !== '' ? String(q.to).trim().slice(0, 10) : null;
+  if (q.date != null && String(q.date).trim() !== '') {
+    const d = String(q.date).trim().slice(0, 10);
+    from = d;
+    to = d;
+  }
+  if (from == null && to == null) return null;
+  if (from == null || to == null) {
+    return { error: 'Use date=YYYY-MM-DD or both from= and to=' };
+  }
+  if (!isValidIsoDateOnly(from) || !isValidIsoDateOnly(to)) {
+    return { error: 'Invalid date (use YYYY-MM-DD)' };
+  }
+  if (from > to) {
+    const t = from;
+    from = to;
+    to = t;
+  }
+  const days = enumerateInclusiveDays(from, to);
+  if (days.length > RANGE_MAX_DAYS) {
+    return { error: `Range max ${RANGE_MAX_DAYS} days` };
+  }
+  const fromMs = new Date(`${from}T00:00:00.000Z`).getTime();
+  if (Date.now() - fromMs > RANGE_MAX_LOOKBACK_MS) {
+    return { error: 'from date too far in the past (max ~1 year)' };
+  }
+  return { from, to };
+}
+
+function normalizeScrapedTimeForEtParts(timeRaw) {
+  const raw = String(timeRaw || '').trim().replace(/\s+/g, ' ');
+  if (!raw || /^all\s*day$/i.test(raw)) return 'All Day';
+  const compact = raw.replace(/\s/g, '');
+  const m = compact.match(/^(\d{1,2}):(\d{2})(am|pm)$/i);
+  if (m) {
+    return `${m[1]}:${m[2]} ${m[3].toUpperCase()}`;
+  }
+  const m2 = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (m2) return `${m2[1]}:${m2[2]} ${m2[3].toUpperCase()}`;
+  return raw;
+}
+
+function scrapeRowsToEvents(dateStr, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return [];
+  const out = [];
+  for (const r of rows) {
+    if (!r || !r.event) continue;
+    const timeNorm = normalizeScrapedTimeForEtParts(r.time);
+    out.push(
+      normalizeEventShape(
+        {
+          date: dateStr,
+          time: timeNorm,
+          currency: r.currency || '',
+          impact: r.impact || 'low',
+          event: r.event,
+          actual: r.actual,
+          forecast: r.forecast,
+          previous: r.previous,
+          source: 'ForexFactoryHTML',
+        },
+        'ForexFactoryHTML',
+      ),
+    );
+  }
+  return out.map(ensureEventTimestamp);
+}
+
+async function fetchFmpCalendarRange(fromStr, toStr) {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = `https://financialmodelingprep.com/stable/economic-calendar?from=${fromStr}&to=${toStr}&apikey=${apiKey}`;
+    const res = await fetchWithTimeout(url, {}, 15000);
+    if (!res.ok) return null;
+    const raw = await res.json();
+    if (!Array.isArray(raw) || raw.length === 0) return null;
+    return raw
+      .map((e) =>
+        normalizeEventShape(
+          {
+            date: (e.date || '').slice(0, 10),
+            time: e.date
+              ? new Date(e.date).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                })
+              : 'All Day',
+            timestamp: parseDateToTimestamp(e.date, { defaultTimeZone: 'America/New_York' }),
+            currency: normCountry(e.country || e.currency || ''),
+            impact: normImpact(e.importance || e.impact),
+            event: e.name || e.event || 'Economic Event',
+            actual: e.actual,
+            forecast: e.forecast,
+            previous: e.previous,
+            source: 'FMP',
+            sourceTimeZone: 'America/New_York',
+          },
+          'FMP',
+        ),
+      )
+      .filter((ev) => ev.date && ev.date >= fromStr && ev.date <= toStr);
+  } catch (e) {
+    console.warn('[trader-deck/economic-calendar] FMP range error:', e.message);
+    return null;
+  }
+}
+
+async function fetchTradingEconomicsCalendarRange(fromStr, toStr) {
+  const apiKey = process.env.TRADING_ECONOMICS_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = `https://api.tradingeconomics.com/calendar/country/all/${fromStr}/${toStr}?c=${encodeURIComponent(apiKey)}&f=json`;
+    const res = await fetchWithTimeout(url, {}, 12000);
+    if (!res.ok) return null;
+    const raw = await res.json();
+    if (!Array.isArray(raw)) return null;
+    return raw
+      .map((e) =>
+        normalizeEventShape(
+          {
+            date: (e.Date || '').slice(0, 10),
+            time: e.Date
+              ? new Date(e.Date).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                })
+              : 'All Day',
+            timestamp: parseDateToTimestamp(e.Date, { defaultTimeZone: 'UTC' }),
+            currency: normCountry(e.Country || e.Currency || ''),
+            impact: normImpact(e.Importance),
+            event: e.Event || e.Category || 'Economic Event',
+            actual: e.Actual,
+            forecast: e.Forecast,
+            previous: e.Previous,
+            source: 'TradingEconomics',
+            sourceTimeZone: 'UTC',
+          },
+          'TradingEconomics',
+        ),
+      )
+      .filter((ev) => ev.date && ev.date >= fromStr && ev.date <= toStr);
+  } catch (e) {
+    console.warn('[trader-deck/economic-calendar] TE range error:', e.message);
+    return null;
+  }
+}
+
+async function fetchHistoricalRange(fromStr, toStr) {
+  const dayList = enumerateInclusiveDays(fromStr, toStr);
+  const allScraped = [];
+  const CHUNK = 3;
+  for (let i = 0; i < dayList.length; i += CHUNK) {
+    const chunk = dayList.slice(i, i + CHUNK);
+    const partial = await Promise.all(
+      chunk.map(async (d) => {
+        const rows = await scrapeForexFactoryHtmlDay(d);
+        return scrapeRowsToEvents(d, rows);
+      }),
+    );
+    partial.forEach((arr) => allScraped.push(...arr));
+  }
+
+  let events = allScraped;
+  const fmp = await fetchFmpCalendarRange(fromStr, toStr);
+  if (fmp && fmp.length) {
+    if (events.length === 0) {
+      events = fmp.map(ensureEventTimestamp);
+    } else {
+      events = mergeSupplementActuals(events, fmp);
+    }
+  }
+  const te = await fetchTradingEconomicsCalendarRange(fromStr, toStr);
+  if (te && te.length) {
+    events = mergeSupplementActuals(events, te);
+  }
+
+  events = events.map(ensureEventTimestamp);
+  events.sort(compareEvents);
+
+  let source = 'ForexFactoryHTML';
+  if (fmp && fmp.length) source = 'ForexFactoryHTML+FMP';
+  if (events.length === 0) source = 'empty';
+
+  return { events, source };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -682,6 +910,39 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
   const viewerTimeZone = resolveViewerTimeZone(req);
+
+  const rangeQ = parseCalendarRangeQuery(req.query || {});
+  if (rangeQ && rangeQ.error) {
+    return res.status(400).json({ success: false, message: rangeQ.error });
+  }
+  if (rangeQ && rangeQ.from) {
+    const { from, to } = rangeQ;
+    const forceRefresh = req.query.refresh === '1';
+    const rangeKey = `trader-deck:economic-calendar:range:v1:${from}:${to}`;
+    const etToday = calendarEtTodayStr();
+    const includesTodayOrFuture = to >= etToday;
+    const rangeTtl = includesTodayOrFuture ? CACHE_TTL_MS : HISTORICAL_RANGE_CACHE_TTL_MS;
+    const rangeCached = forceRefresh ? null : getCached(rangeKey, rangeTtl);
+    if (rangeCached) {
+      return res.status(200).json({ success: true, ...rangeCached, viewerTimeZone, cached: true });
+    }
+    const { events, source } = await fetchHistoricalRange(from, to);
+    const fetchedAt = new Date().toISOString();
+    const rangePayload = {
+      events,
+      source,
+      from,
+      to,
+      days: enumerateInclusiveDays(from, to).length,
+      viewerTimeZone,
+      updatedAt: fetchedAt,
+      fetchedAt,
+      sourceUpdatedAt: fetchedAt,
+    };
+    setCached(rangeKey, rangePayload, rangeTtl);
+    return res.status(200).json({ success: true, ...rangePayload, cached: false });
+  }
+
   // Event list is identical for all viewers; only metadata differs — single cache key
   const cacheKey = CACHE_KEY;
 
@@ -742,4 +1003,7 @@ module.exports._test = {
   mergeSupplementActuals,
   titleSimilarity,
   ensureEventTimestamp,
+  parseCalendarRangeQuery,
+  isValidIsoDateOnly,
+  enumerateInclusiveDays,
 };
