@@ -52,7 +52,11 @@ export default function CsvUploadSection({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        throw new Error(data.message || `Upload failed (${res.status})`);
+        const msg =
+          data.code === 'FUTURE_PERIOD'
+            ? data.message || 'Choose the current or a past month — not a future period.'
+            : data.message || `Upload failed (${res.status})`;
+        throw new Error(msg);
       }
       onUploaded?.();
       navigate(dashboardHref);

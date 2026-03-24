@@ -212,3 +212,93 @@
   color: rgba(200, 198, 190, 0.55);
   margin-top: 8px;
 }
+
+/* Manual metrics dashboard — scope, banners, hierarchy */
+.mm-scope-card {
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 169, 96, 0.22);
+  background: linear-gradient(135deg, rgba(20, 16, 8, 0.55), rgba(8, 6, 14, 0.72));
+}
+
+.mm-scope-lead {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(230, 226, 218, 0.92);
+}
+
+.mm-scope-lead a {
+  color: #eaa960;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mm-scope-lead a:hover {
+  text-decoration: underline;
+}
+
+.mm-scope-cta {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0a0810;
+  background: linear-gradient(135deg, #eaa960, #c98a3c);
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.mm-scope-cta:hover {
+  filter: brightness(1.06);
+}
+
+.mm-dash-banner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.mm-dash-banner--warn {
+  border: 1px solid rgba(234, 169, 96, 0.35);
+  background: rgba(80, 50, 20, 0.35);
+  color: rgba(255, 236, 210, 0.95);
+}
+
+.mm-dash-banner--info {
+  border: 1px solid rgba(120, 160, 220, 0.35);
+  background: rgba(25, 40, 70, 0.4);
+  color: rgba(220, 228, 245, 0.95);
+}
+
+.mm-entry-banner {
+  margin-bottom: 16px;
+}
+
+.mm-kpi-hero {
+  margin-bottom: 8px;
+}
+
+.mm-kpi-tile--hero {
+  border-color: rgba(234, 169, 96, 0.18);
+  background: rgba(12, 10, 22, 0.85);
+}
+
+.mm-kpi-secondary {
+  margin-top: 4px;
+}
+
+.mm-dash-meta {
+  margin: 0 0 14px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: rgba(200, 198, 190, 0.88);
+}
+
+.mm-dash-meta-hint {
+  color: rgba(200, 198, 190, 0.5);
+  font-weight: 400;
+}

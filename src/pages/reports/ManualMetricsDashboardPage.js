@@ -181,7 +181,15 @@ function ManualMetricsDashboardInner() {
 
   const symbolRows = useMemo(() => {
     if (!payload?.hasData || !payload.trades?.length) return [];
-    return aggregateBySymbol(payload.trades).slice(0, 10);
+    return aggregateBySymbol(payload.trades).slice(0, 12);
+  }, [payload]);
+
+  const netPerTrade = useMemo(() => {
+    const n = payload?.summary?.tradeCount;
+    if (!n || n < 1) return null;
+    const t = parseFloat(payload.summary.totalPnl);
+    if (!Number.isFinite(t)) return null;
+    return (t / n).toFixed(2);
   }, [payload]);
 
   const insight = useMemo(() => {
@@ -240,11 +248,19 @@ function ManualMetricsDashboardInner() {
   }
 
   if (!payload?.hasData) {
+    const pl = payload?.period
+      ? `${MONTH_NAMES[payload.period.month - 1]} ${payload.period.year}`
+      : periodLabel || 'this period';
     return (
       <div className="aa-page journal-glass-panel journal-glass-panel--pad">
         <ReportsHubSubNav role={role} year={subNavYear} month={subNavMonth} />
         <div className="m5dash-empty">
-          <h2 className="m5dash-title" style={{ marginBottom: 12 }}>No CSV for {periodLabel || 'this period'}</h2>
+          {payload?.periodIsFuture && (
+            <div className="mm-dash-banner mm-dash-banner--warn" role="status">
+              This calendar period is still in the future. Manual metrics use closed months — pick the month you are reporting.
+            </div>
+          )}
+          <h2 className="m5dash-title" style={{ marginBottom: 12 }}>No CSV for {pl}</h2>
           <p>
             Upload your MT5 trade history under <strong>Manual metrics</strong> for this month.
           </p>
@@ -259,6 +275,8 @@ function ManualMetricsDashboardInner() {
   const s = payload.summary;
   const totalNum = parseFloat(s.totalPnl) || 0;
   const ext = payload.extended || {};
+  const meta = payload.meta || {};
+  const dataSpan = payload.dataSpan;
 
   return (
     <div className="aa-page m5dash journal-glass-panel journal-glass-panel--pad">
@@ -268,29 +286,69 @@ function ManualMetricsDashboardInner() {
       <header className="m5dash-head">
         <p className="m5dash-kicker">Manual metrics · CSV snapshot</p>
         <h1 className="m5dash-title">Dashboard — {periodLabel}</h1>
-        <p className="m5dash-sub">
-          Built from your uploaded broker export. Aura Analysis (Elite) is a separate live MT5 product — use the main menu
-          when you want connected analytics.
-        </p>
       </header>
 
-      <div className="aa-grid-4" style={{ marginBottom: 12 }}>
-        <div className="mm-kpi-tile">
-          <div className="mm-kpi-lbl">Trades</div>
+      <div className="mm-scope-card">
+        <p className="mm-scope-lead">
+          <strong>What this is:</strong> a <em>broker CSV snapshot</em> — headline stats, equity curve, symbols, and weekday mix.
+          It is not a full trading journal. For live MT5, sessions, execution quality, risk labs, and every metric in depth, use{' '}
+          <Link to="/aura-analysis/ai">Aura Analysis</Link> (Elite).
+        </p>
+        <Link to="/aura-analysis/ai" className="mm-scope-cta">Open Aura Analysis</Link>
+      </div>
+
+      {payload.periodIsFuture && (
+        <div className="mm-dash-banner mm-dash-banner--warn" role="status">
+          You are viewing a future calendar month. Numbers only reflect what you uploaded for this period; prefer closed months for reporting.
+        </div>
+      )}
+
+      {meta.truncated && (
+        <div className="mm-dash-banner mm-dash-banner--info" role="status">
+          Metrics reflect the first <strong>{meta.storedTradeCount ?? s.tradeCount}</strong> of <strong>{meta.sourceTradeCount}</strong> trades
+          stored from this export (size limits). For a complete snapshot in Manual Metrics, filter to a shorter range in MT5 and re-export.
+        </div>
+      )}
+
+      <div className="mm-kpi-hero aa-grid-4">
+        <div className="mm-kpi-tile mm-kpi-tile--hero">
+          <div className="mm-kpi-lbl">Trades (in snapshot)</div>
           <div className="mm-kpi-val">{s.tradeCount}</div>
         </div>
-        <div className="mm-kpi-tile">
+        <div className="mm-kpi-tile mm-kpi-tile--hero">
           <div className="mm-kpi-lbl">Win rate</div>
           <div className="mm-kpi-val">{s.winRate}%</div>
         </div>
-        <div className="mm-kpi-tile">
+        <div className="mm-kpi-tile mm-kpi-tile--hero">
           <div className="mm-kpi-lbl">Net P&amp;L</div>
           <div className={`mm-kpi-val ${totalNum < 0 ? 'm5dash--neg' : ''}`}>{s.totalPnl}</div>
         </div>
-        <div className="mm-kpi-tile">
+        <div className="mm-kpi-tile mm-kpi-tile--hero">
           <div className="mm-kpi-lbl">Profit factor</div>
           <div className="mm-kpi-val">{s.profitFactor}</div>
         </div>
+      </div>
+
+      {(dataSpan?.start && dataSpan?.end) && (
+        <p className="mm-dash-meta">
+          <strong>Trade dates in file (parsed):</strong> {dataSpan.start} → {dataSpan.end}
+          <span className="mm-dash-meta-hint"> (best effort from Time column)</span>
+        </p>
+      )}
+
+      <p className="mm-dash-meta">
+        <strong>Outcome split:</strong>{' '}
+        {s.wins ?? 0} wins · {s.losses ?? 0} losses · {s.breakevens ?? 0} breakeven
+        {netPerTrade != null && (
+          <>
+            {' · '}
+            <strong>Net per trade:</strong> {netPerTrade}
+            <span className="mm-dash-meta-hint"> (net P&amp;L ÷ trades in snapshot)</span>
+          </>
+        )}
+      </p>
+
+      <div className="aa-grid-4 mm-kpi-secondary" style={{ marginBottom: 12 }}>
         <div className="mm-kpi-tile">
           <div className="mm-kpi-lbl">Avg win</div>
           <div className="mm-kpi-val aa--green">{ext.avgWin ?? '—'}</div>
@@ -377,7 +435,7 @@ function ManualMetricsDashboardInner() {
             <span className="aa--red">Gross loss: {s.grossLoss}</span>
           </p>
           <p className="mm-aura-note" style={{ marginTop: 16 }}>
-            Snapshot capped at 200 trades in storage (same as monthly report). Re-upload if you change export.
+            All figures above match the same stored trade rows (symbols, curve, and KPIs). Re-upload your CSV after changing the export.
           </p>
         </div>
       </div>

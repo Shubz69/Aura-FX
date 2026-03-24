@@ -92,6 +92,17 @@ function ManualMetricsEntryInner() {
     }
   }, [eligibility, searchParams, setSearchParams]);
 
+  useEffect(() => {
+    const n = new Date();
+    const cy = n.getFullYear();
+    const cm = n.getMonth() + 1;
+    if (year > cy || (year === cy && month > cm)) {
+      setYear(cy);
+      setMonth(cm);
+      setSearchParams({ year: String(cy), month: String(cm) }, { replace: true });
+    }
+  }, [year, month, setSearchParams]);
+
   const role = eligibility?.role;
   const manualMetricsCsvEnabled = ['premium', 'elite', 'admin'].includes(role);
 
@@ -106,6 +117,22 @@ function ManualMetricsEntryInner() {
     const cy = new Date().getFullYear();
     return Array.from({ length: 6 }, (_, i) => cy - i);
   }, []);
+
+  const periodIsFuture = useMemo(() => {
+    const n = new Date();
+    const cy = n.getFullYear();
+    const cm = n.getMonth() + 1;
+    return year > cy || (year === cy && month > cm);
+  }, [year, month]);
+
+  const isMonthDisabled = (m) => {
+    const n = new Date();
+    const cy = n.getFullYear();
+    const cm = n.getMonth() + 1;
+    if (year > cy) return true;
+    if (year === cy && m > cm) return true;
+    return false;
+  };
 
   const onPeriodChange = (nextY, nextM) => {
     setYear(nextY);
@@ -152,6 +179,12 @@ function ManualMetricsEntryInner() {
 
       <ReportsHubSubNav role={role} year={year} month={month} />
 
+      {periodIsFuture && (
+        <div className="mm-dash-banner mm-dash-banner--warn mm-entry-banner" role="status">
+          This period is in the future. Upload is only allowed for the current month or past months. Choose a closed month to continue.
+        </div>
+      )}
+
       <div className="mm-period-row">
         <label className="mm-period-label" htmlFor="mm-year">Period</label>
         <select
@@ -170,9 +203,14 @@ function ManualMetricsEntryInner() {
           onChange={(e) => onPeriodChange(year, Number(e.target.value))}
           aria-label="Month"
         >
-          {MONTH_NAMES.map((name, i) => (
-            <option key={name} value={i + 1}>{name}</option>
-          ))}
+          {MONTH_NAMES.map((name, i) => {
+            const m = i + 1;
+            return (
+              <option key={name} value={m} disabled={isMonthDisabled(m)}>
+                {name}{isMonthDisabled(m) ? ' (future)' : ''}
+              </option>
+            );
+          })}
         </select>
         {loadingCsv && <span className="mm-period-loading">Checking upload…</span>}
       </div>

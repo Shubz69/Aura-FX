@@ -7,6 +7,11 @@ const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { effectiveReportsRole } = require('./resolveReportsRole');
+const {
+  buildSummaryFromTrades,
+  getDataSpanFromTrades,
+  parseTradeTime,
+} = require('./csvTradeSummary');
 
 function jsonNumber(v, fallback = 0) {
   if (v == null) return fallback;
@@ -23,22 +28,6 @@ function buildCumulativePnl(trades) {
     run += p;
     return { profit: p, cumulative: run };
   });
-}
-
-/** Best-effort parse of MT5 time strings for weekday stats */
-function parseTradeTime(t) {
-  const raw = (t && t.time != null ? String(t.time) : '').trim();
-  if (!raw) return null;
-  let d = new Date(raw);
-  if (!Number.isNaN(d.getTime())) return d;
-  const normalized = raw
-    .replace(/\./g, '-')
-    .replace(/(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/, '$1T$2');
-  d = new Date(normalized);
-  if (!Number.isNaN(d.getTime())) return d;
-  const alt = raw.replace(/^(\d{4})-(\d{2})-(\d{2})/, '$1-$2-$3');
-  d = new Date(alt);
-  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function buildDrawdownSeries(cumulativePnl) {
@@ -178,10 +167,12 @@ module.exports = async (req, res) => {
 
     const row = rows?.[0];
     if (!row || !row.upload_json) {
+      const periodIsFutureEmpty = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1);
       return res.status(200).json({
         success: true,
         hasData: false,
         period: { year, month },
+        periodIsFuture: periodIsFutureEmpty,
       });
     }
 
@@ -197,29 +188,34 @@ module.exports = async (req, res) => {
     const extended = computeExtendedStats(trades, cumulativePnl);
     const drawdownSeries = buildDrawdownSeries(cumulativePnl);
 
-    const summary = {
-      tradeCount: jsonNumber(parsed.tradeCount, trades.length),
-      wins: jsonNumber(parsed.wins, 0),
-      losses: jsonNumber(parsed.losses, 0),
-      winRate: jsonNumber(parsed.winRate, 0),
-      totalPnl: parsed.totalPnl != null ? String(parsed.totalPnl) : '0',
-      grossProfit: parsed.grossProfit != null ? String(parsed.grossProfit) : '0',
-      grossLoss: parsed.grossLoss != null ? String(parsed.grossLoss) : '0',
-      profitFactor: parsed.profitFactor != null ? String(parsed.profitFactor) : '0',
-      symbols: Array.isArray(parsed.symbols) ? parsed.symbols : [],
+    const summary = buildSummaryFromTrades(trades);
+    const dataSpan = getDataSpanFromTrades(trades);
+    const meta = {
+      truncated: Boolean(parsed.truncated),
+      sourceTradeCount: jsonNumber(parsed.sourceTradeCount, trades.length),
+      storedTradeCount: jsonNumber(parsed.storedTradeCount, trades.length),
     };
+    if (!parsed.truncated && !parsed.sourceTradeCount) {
+      meta.sourceTradeCount = trades.length;
+      meta.storedTradeCount = trades.length;
+    }
+
+    const periodIsFuture = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1);
 
     return res.status(200).json({
       success: true,
       hasData: true,
       period: { year, month },
+      periodIsFuture,
       uploaded_at: row.uploaded_at,
-      trade_count: jsonNumber(row.trade_count, summary.tradeCount),
+      trade_count: summary.tradeCount,
       summary,
       extended,
       drawdownSeries,
       trades,
       cumulativePnl,
+      dataSpan,
+      meta,
     });
   } catch (err) {
     console.error('[reports/csv-metrics]', err.message);

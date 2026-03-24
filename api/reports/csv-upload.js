@@ -8,6 +8,10 @@ const { verifyToken } = require('../utils/auth');
 const { executeQuery } = require('../db');
 const { applyScheduledDowngrade } = require('../utils/apply-scheduled-downgrade');
 const { effectiveReportsRole } = require('./resolveReportsRole');
+const {
+  buildStoredCsvPayload,
+  isPeriodAfterCurrentMonth,
+} = require('./csvTradeSummary');
 
 /**
  * Prefer semicolon when MT5 exports use EU locale (columns separated by ;).
@@ -128,28 +132,8 @@ function parseMT5CSV(csvText) {
 
   if (!trades.length) throw new Error('No valid trade rows found in CSV');
 
-  // Compute summary
-  const wins = trades.filter(t => t.profit > 0).length;
-  const losses = trades.filter(t => t.profit < 0).length;
-  const totalPnl = trades.reduce((s, t) => s + t.profit, 0);
-  const grossProfit = trades.filter(t => t.profit > 0).reduce((s, t) => s + t.profit, 0);
-  const grossLoss = Math.abs(trades.filter(t => t.profit < 0).reduce((s, t) => s + t.profit, 0));
-  const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : wins > 0 ? '∞' : '0';
-
-  const symbols = [...new Set(trades.map(t => t.symbol).filter(Boolean))];
-
-  return {
-    tradeCount: trades.length,
-    wins,
-    losses,
-    winRate: trades.length ? Math.round((wins / trades.length) * 100) : 0,
-    totalPnl: totalPnl.toFixed(2),
-    grossProfit: grossProfit.toFixed(2),
-    grossLoss: grossLoss.toFixed(2),
-    profitFactor,
-    symbols: symbols.slice(0, 10),
-    trades: trades.slice(0, 200), // cap for storage
-  };
+  /** Full row list; storage + summary are applied in buildStoredCsvPayload (same slice = consistent KPIs). */
+  return { trades };
 }
 
 module.exports = async (req, res) => {
@@ -192,11 +176,22 @@ module.exports = async (req, res) => {
     if (!year || !month || month < 1 || month > 12) {
       return res.status(400).json({ success: false, message: 'year and month (1–12) are required' });
     }
+    const y = Number(year);
+    const m = Number(month);
+    if (isPeriodAfterCurrentMonth(y, m)) {
+      return res.status(400).json({
+        success: false,
+        code: 'FUTURE_PERIOD',
+        message:
+          'Upload is for closed months only. Choose the calendar month you are reporting (not a future month).',
+      });
+    }
     if (csv.length > 5_000_000) {
       return res.status(400).json({ success: false, message: 'CSV too large (max 5MB)' });
     }
 
-    const parsed = parseMT5CSV(csv);
+    const { trades: allTrades } = parseMT5CSV(csv);
+    const parsed = buildStoredCsvPayload(allTrades);
 
     await executeQuery(
       `INSERT INTO report_csv_uploads (user_id, period_year, period_month, filename, trade_count, upload_json)
@@ -213,6 +208,8 @@ module.exports = async (req, res) => {
         totalPnl: parsed.totalPnl,
         profitFactor: parsed.profitFactor,
         symbols: parsed.symbols,
+        truncated: parsed.truncated,
+        sourceTradeCount: parsed.sourceTradeCount,
       },
     });
   } catch (err) {
