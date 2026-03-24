@@ -1,9 +1,22 @@
 import axios from 'axios';
 
+function resolveReactAppApiUrl() {
+    const raw = process.env.REACT_APP_API_URL;
+    if (!raw) return null;
+    try {
+        const host = new URL(raw).hostname || '';
+        if (/(?:^|\.)aura-analysis\.com$/i.test(host)) return null;
+        return raw;
+    } catch {
+        return raw;
+    }
+}
+
 // Use current origin to avoid CORS redirect issues
 const getApiBaseUrl = () => {
-    if (process.env.REACT_APP_API_URL) {
-        return process.env.REACT_APP_API_URL;
+    const fromEnv = resolveReactAppApiUrl();
+    if (fromEnv) {
+        return fromEnv;
     }
     if (process.env.NODE_ENV === 'development') {
         return '';

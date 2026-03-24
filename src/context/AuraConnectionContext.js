@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { isSuperAdmin } from '../utils/roles';
 import Api from '../services/Api';
+import { useAuth } from './AuthContext';
 
 const AuraConnectionContext = createContext(null);
 
@@ -17,6 +18,7 @@ export const PLATFORMS = [
 ];
 
 export function AuraConnectionProvider({ children }) {
+  const { token, loading: authLoading } = useAuth();
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,15 +50,22 @@ export function AuraConnectionProvider({ children }) {
     return err?.message || 'Connection failed';
   }, []);
 
-  // Load connections from backend on mount
+  // Load connections only when authenticated (avoids 401 to platform-connect on public pages like /login)
   useEffect(() => {
+    if (authLoading) return;
+    if (!token) {
+      setConnections([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     Api.getAuraPlatformConnections()
       .then((r) => {
         if (r.data?.success) setConnections(r.data.connections || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [token, authLoading]);
 
   /** Connect a platform — calls backend with real credentials */
   const connectPlatform = useCallback(async (platformId, credentials) => {
