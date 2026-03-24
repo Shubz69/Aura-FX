@@ -20,6 +20,12 @@ const { checkCommunityAccess } = require('../middleware/subscription-guard');
 // Schema migration flag
 let schemaMigrated = false;
 
+function isMissingColumnError(error) {
+  if (!error) return false;
+  if (error.code === 'ER_BAD_FIELD_ERROR') return true;
+  return /unknown column/i.test(String(error.message || ''));
+}
+
 // Ensure required columns exist (idempotent)
 async function ensureSchema() {
   if (schemaMigrated) return;
@@ -107,8 +113,11 @@ module.exports = async (req, res) => {
   logger.info('Request started', { method: req.method, path });
 
   try {
-    // Ensure schema on first request
-    await ensureSchema();
+    // Skip metadata/schema checks for high-frequency presence pings.
+    const shouldEnsureSchema = !(path.includes('/update-presence') && req.method === 'POST');
+    if (shouldEnsureSchema) {
+      await ensureSchema();
+    }
 
     // Handle /api/community/users
     if (path.includes('/users') && req.method === 'GET') {
@@ -266,10 +275,21 @@ async function handleUpdatePresence(req, res, requestId, logger, startTime) {
       });
     }
 
-    await executeQuery(
-      'UPDATE users SET last_seen = NOW() WHERE id = ?',
-      [userId]
-    );
+    try {
+      await executeQuery(
+        'UPDATE users SET last_seen = NOW() WHERE id = ?',
+        [userId]
+      );
+    } catch (error) {
+      if (!isMissingColumnError(error)) throw error;
+      // Schema can be restricted on prod DB users; treat as best-effort presence signal.
+      logger.warn('Presence update skipped: last_seen column unavailable');
+      return res.status(200).json({
+        success: true,
+        message: 'Presence updated',
+        requestId
+      });
+    }
 
     logger.info('Presence updated', { userId, ms: Date.now() - startTime });
 

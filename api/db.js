@@ -39,6 +39,22 @@ function isBenignSchemaDuplicate(error) {
   return false;
 }
 
+/**
+ * Metadata reads (INFORMATION_SCHEMA / SHOW) can be blocked for restricted DB users.
+ * Treat these as non-fatal for runtime schema helper paths.
+ */
+function isMetadataAccessDenied(error) {
+  if (!error) return false;
+  const code = String(error.code || '');
+  const msg = String(error.message || '');
+  const sqlMsg = String(error.sqlMessage || '');
+  const text = `${msg} ${sqlMsg}`.toLowerCase();
+  if (code === 'ER_DBACCESS_DENIED_ERROR' || code === 'ER_ACCESS_DENIED_ERROR') {
+    if (text.includes('information_schema') || text.includes('show ') || text.includes('column')) return true;
+  }
+  return text.includes('information_schema') && text.includes('access denied');
+}
+
 // Connection error codes/messages that warrant pool reset (e.g. Vercel serverless + MySQL)
 const CONNECTION_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'PROTOCOL_CONNECTION_LOST', 'ER_CON_COUNT_ERROR']);
 const CONNECTION_ERROR_MESSAGES = ['Connection lost', 'closed state', 'Connection closed', 'Cannot add new command', 'read ECONNRESET', 'connect ETIMEDOUT', 'Pool is closed', 'Too many connections', 'Queue limit reached'];
@@ -204,7 +220,7 @@ const executeQuery = async (query, params = [], options = {}) => {
     return await run();
   } catch (error) {
     const benignDuplicate = isBenignSchemaDuplicate(error);
-    if (!benignDuplicate) {
+    if (!benignDuplicate && !isMetadataAccessDenied(error)) {
       poolStats.failedQueries++;
       const errorInfo = {
         requestId,
@@ -285,6 +301,7 @@ const columnExists = async (tableName, columnName) => {
     );
     return rows.length > 0;
   } catch (error) {
+    if (isMetadataAccessDenied(error)) return false;
     console.error('Error checking column existence:', error);
     return false;
   }
@@ -302,6 +319,7 @@ const indexExists = async (tableName, indexName) => {
     );
     return rows.length > 0;
   } catch (error) {
+    if (isMetadataAccessDenied(error)) return false;
     console.error('Error checking index existence:', error);
     return false;
   }
@@ -371,5 +389,6 @@ module.exports = {
   addIndexIfNotExists,
   getPoolHealth,
   closePool,
-  isBenignSchemaDuplicate
+  isBenignSchemaDuplicate,
+  isMetadataAccessDenied
 };

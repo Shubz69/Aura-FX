@@ -4,11 +4,9 @@
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Api from '../../services/Api';
-import { useAuth } from '../../context/AuthContext';
 import {
   hasActualValue,
   parseEventTimestamp,
-  resolveUserTimeZone,
   formatEventTimeLocal,
   getEventDateKeyLocal,
 } from '../../utils/economicCalendarTime';
@@ -60,8 +58,7 @@ function getDayLabel(dateStr) {
 }
 
 export default function EconomicCalendarView() {
-  const { user } = useAuth();
-  const userTimeZone = useMemo(() => resolveUserTimeZone(user), [user]);
+  const [viewerTimeZone, setViewerTimeZone] = useState('UTC');
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -79,6 +76,7 @@ export default function EconomicCalendarView() {
     Api.getTraderDeckEconomicCalendar(days, refresh)
       .then((r) => {
         setEvents(Array.isArray(r.data?.events) ? r.data.events : []);
+        setViewerTimeZone(r.data?.viewerTimeZone || 'UTC');
         setUpdatedAt(r.data?.fetchedAt || r.data?.updatedAt || null);
       })
       .catch(() => {
@@ -123,12 +121,12 @@ export default function EconomicCalendarView() {
   const grouped = useMemo(() => {
     const out = {};
     filtered.forEach((e) => {
-      const key = getEventDateKeyLocal(e, userTimeZone) || '';
+      const key = getEventDateKeyLocal(e, viewerTimeZone) || '';
       if (!out[key]) out[key] = [];
       out[key].push(e);
     });
     return out;
-  }, [filtered, userTimeZone]);
+  }, [filtered, viewerTimeZone]);
 
   const sortedDates = Object.keys(grouped).sort();
   const highCount = events.filter((e) => e.impact === 'high').length;
@@ -215,7 +213,7 @@ export default function EconomicCalendarView() {
           <div className="ec-event-list">
             {grouped[dateKey].map((ev, i) => {
               const cdm = countdownMs(ev, clock);
-              const eventTimeLabel = formatEventTimeLocal(ev, userTimeZone);
+              const eventTimeLabel = formatEventTimeLocal(ev, viewerTimeZone);
               return (
               <div
                 key={i}
@@ -251,7 +249,7 @@ export default function EconomicCalendarView() {
         </section>
       ))}
 
-      <p className="ec-source-note">Times shown in your local timezone ({userTimeZone})</p>
+      <p className="ec-source-note">Times shown in your regional timezone ({viewerTimeZone})</p>
     </div>
   );
 }

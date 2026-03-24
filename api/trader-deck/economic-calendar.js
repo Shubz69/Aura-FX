@@ -13,7 +13,7 @@ require('../utils/suppress-warnings');
 const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getCached, setCached } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v4';
+const CACHE_KEY = 'trader-deck:economic-calendar:v5';
 const CACHE_TTL_MS = 45 * 1000; // 45 s — fresher calendar for release times
 
 const IMPACT_COLORS = { High: 'high', Medium: 'medium', Low: 'low' };
@@ -82,6 +82,18 @@ function normalizeEventShape(input, fallbackSource = 'fallback') {
     previous: normalizeValue(input.previous),
     source: input.source || fallbackSource,
   };
+}
+
+function resolveViewerTimeZone(req) {
+  const raw = req?.headers?.['x-vercel-ip-timezone'];
+  const tz = raw ? String(raw).trim() : '';
+  if (!tz) return 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz }).format(new Date());
+    return tz;
+  } catch (_) {
+    return 'UTC';
+  }
 }
 
 // --- Provider 1: Forex Factory JSON CDN (official FF data feed, no API key needed) ---
@@ -245,9 +257,12 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
+  const viewerTimeZone = resolveViewerTimeZone(req);
+  const cacheKey = `${CACHE_KEY}:${viewerTimeZone}`;
+
   // ?refresh=1 bypasses cache — used by frontend for precision fetches at event release time
   const forceRefresh = req.query.refresh === '1';
-  const cached = forceRefresh ? null : getCached(CACHE_KEY, CACHE_TTL_MS);
+  const cached = forceRefresh ? null : getCached(cacheKey, CACHE_TTL_MS);
   if (cached) return res.status(200).json({ success: true, ...cached, cached: true });
 
   const days = Math.min(14, Math.max(1, parseInt(req.query.days, 10) || 7));
@@ -282,8 +297,16 @@ module.exports = async (req, res) => {
   });
 
   const fetchedAt = new Date().toISOString();
-  const payload = { events, source, days, updatedAt: fetchedAt, fetchedAt, sourceUpdatedAt: fetchedAt };
-  setCached(CACHE_KEY, payload, CACHE_TTL_MS);
+  const payload = {
+    events,
+    source,
+    days,
+    viewerTimeZone,
+    updatedAt: fetchedAt,
+    fetchedAt,
+    sourceUpdatedAt: fetchedAt,
+  };
+  setCached(cacheKey, payload, CACHE_TTL_MS);
 
   return res.status(200).json({ success: true, ...payload, cached: false });
 };
@@ -291,4 +314,5 @@ module.exports = async (req, res) => {
 module.exports._test = {
   parseDateToTimestamp,
   normalizeEventShape,
+  resolveViewerTimeZone,
 };
