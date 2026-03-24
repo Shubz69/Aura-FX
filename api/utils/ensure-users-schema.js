@@ -3,10 +3,13 @@
  * Avoids running SELECT/ALTER probes on every GET /api/users/:id — that pattern
  * exhausted DB connections and locked `users` in production.
  */
-const { executeQuery, isBenignSchemaDuplicate } = require('../db');
+const { executeQuery, isBenignSchemaDuplicate, isMetadataAccessDenied } = require('../db');
 
 let usersColumnSet = null;
 let ensureInFlight = null;
+const MINIMUM_SAFE_COLUMN_SET = new Set([
+  'id', 'username', 'email', 'name', 'phone', 'address', 'bio', 'avatar', 'role', 'level', 'xp'
+]);
 
 const OPTIONAL_COLS = [
   ['last_username_change', 'DATETIME DEFAULT NULL'],
@@ -24,16 +27,22 @@ const OPTIONAL_COLS = [
 ];
 
 async function fetchColumnSet() {
-  const [rows] = await executeQuery(
-    `SELECT COLUMN_NAME AS c FROM INFORMATION_SCHEMA.COLUMNS 
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'`,
-    [],
-    { timeout: 15000, requestId: 'users-schema' }
-  );
-  return new Set((rows || []).map((r) => String(r.c)));
+  try {
+    const [rows] = await executeQuery(
+      `SELECT COLUMN_NAME AS c FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'`,
+      [],
+      { timeout: 15000, requestId: 'users-schema' }
+    );
+    return new Set((rows || []).map((r) => String(r.c)));
+  } catch (error) {
+    if (isMetadataAccessDenied(error)) return null;
+    throw error;
+  }
 }
 
 async function widenAvatarToTextIfNeeded(columnSet) {
+  if (!columnSet) return;
   if (!columnSet.has('avatar')) {
     try {
       await executeQuery('ALTER TABLE users ADD COLUMN avatar TEXT', [], {
@@ -47,12 +56,19 @@ async function widenAvatarToTextIfNeeded(columnSet) {
     }
     return;
   }
-  const [rows] = await executeQuery(
-    `SELECT COLUMN_TYPE AS t FROM INFORMATION_SCHEMA.COLUMNS 
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'avatar'`,
-    [],
-    { timeout: 15000, requestId: 'users-schema-avatar-type' }
-  );
+  let rows = null;
+  try {
+    const result = await executeQuery(
+      `SELECT COLUMN_TYPE AS t FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'avatar'`,
+      [],
+      { timeout: 15000, requestId: 'users-schema-avatar-type' }
+    );
+    rows = result[0];
+  } catch (error) {
+    if (isMetadataAccessDenied(error)) return;
+    throw error;
+  }
   if (!rows || !rows[0]) return;
   const t = String(rows[0].t || '').toLowerCase();
   if (t.includes('varchar') && !t.includes('text')) {
@@ -77,6 +93,11 @@ async function ensureUsersSchema() {
   ensureInFlight = (async () => {
     try {
       let set = await fetchColumnSet();
+      if (!set) {
+        // DB user cannot read metadata; skip runtime DDL and cache safe baseline to avoid retries/noisy logs.
+        usersColumnSet = new Set(MINIMUM_SAFE_COLUMN_SET);
+        return usersColumnSet;
+      }
       for (const [name, def] of OPTIONAL_COLS) {
         if (set.has(name)) continue;
         try {

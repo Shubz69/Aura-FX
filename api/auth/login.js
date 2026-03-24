@@ -4,7 +4,6 @@ const { getDbConnection } = require('../db');
 const { normalizeRole, isSuperAdminEmail } = require('../utils/entitlements');
 const { signToken } = require('../utils/auth');
 const { checkRateLimit, RATE_LIMIT_CONFIGS } = require('../utils/rate-limiter');
-const { ensureUsersSchema } = require('../utils/ensure-users-schema');
 
 const BASE_SELECT_FIELDS = [
   'id',
@@ -23,18 +22,6 @@ const OPTIONAL_SELECT_FIELDS = [
   'payment_failed',
   'timezone'
 ];
-
-let warmSchemaOnce = null;
-
-function warmUsersSchemaOnce() {
-  if (!warmSchemaOnce) {
-    warmSchemaOnce = ensureUsersSchema().catch((error) => {
-      console.warn('Login schema warmup skipped:', error?.message || error);
-      return null;
-    });
-  }
-  return warmSchemaOnce;
-}
 
 function isUnknownColumnError(error) {
   if (!error) return false;
@@ -156,9 +143,6 @@ module.exports = async (req, res) => {
           message: 'Something went wrong. Please try again.'
         });
       }
-
-      // Warm schema in background to prevent later cold-start DDL work from delaying auth.
-      warmUsersSchemaOnce();
 
       // Find user by email (schema-compatible select that tolerates mixed legacy columns).
       const user = await fetchUserByEmailCompat(db, emailLower);
