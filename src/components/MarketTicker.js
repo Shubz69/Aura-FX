@@ -211,7 +211,7 @@ function MarketTicker({
     getPricesGrouped,
     getHealth,
     refresh
-  } = useLivePrices({ beginnerMode: !showModal && !activeCategory, category: activeCategory });
+  } = useLivePrices({ beginnerMode: !activeCategory, category: activeCategory });
 
   const pricesArray   = getPricesArray();
   const groupedPrices = getPricesGrouped();

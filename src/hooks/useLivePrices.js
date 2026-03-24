@@ -34,6 +34,10 @@ let fetchInFlight = false;
 let isConnected = false;
 let lastFetchTime = 0;
 let watchlistConfig = null;
+/** Built from watchlist.groups + decimals payload — used before hardcoded DECIMALS */
+let serverDecimalsBySymbol = {};
+/** symbol → { symbol, displayName, decimals } from server watchlist */
+let serverSymbolRows = {};
 let activeSymbols = new Set();
 let visibilityListenerAttached = false;
 let pollingSuspendedHidden = false;
@@ -97,7 +101,31 @@ const DISPLAY_NAMES = {
 };
 
 function getDecimals(symbol) {
+  const fromServer = serverDecimalsBySymbol[symbol];
+  if (typeof fromServer === 'number' && fromServer >= 0) return fromServer;
   return DECIMALS[symbol] || 2;
+}
+
+function buildServerDecimalsMap(watchlist) {
+  const map = {};
+  if (!watchlist?.groups) return map;
+  Object.values(watchlist.groups).forEach((g) => {
+    (g.symbols || []).forEach((row) => {
+      if (row?.symbol && typeof row.decimals === 'number') map[row.symbol] = row.decimals;
+    });
+  });
+  return map;
+}
+
+function buildServerSymbolRows(watchlist) {
+  const map = {};
+  if (!watchlist?.groups) return map;
+  Object.values(watchlist.groups).forEach((g) => {
+    (g.symbols || []).forEach((row) => {
+      if (row?.symbol) map[row.symbol] = row;
+    });
+  });
+  return map;
 }
 
 function formatPrice(price, symbol) {
@@ -106,7 +134,8 @@ function formatPrice(price, symbol) {
   return parseFloat(price).toFixed(dec);
 }
 
-function getDisplayName(symbol) {
+function getDisplayName(symbol, rowFromWatchlist) {
+  if (rowFromWatchlist?.displayName) return rowFromWatchlist.displayName;
   return DISPLAY_NAMES[symbol] || symbol;
 }
 
@@ -154,7 +183,12 @@ async function fetchSnapshot() {
       healthStats.delayedSymbols = 0;
 
       Object.entries(data.prices).forEach(([symbol, priceData]) => {
-        if (priceData.source === 'fallback' && priceData.unavailable) {
+        const fallbackNumeric =
+          priceData.source === 'fallback' &&
+          priceData.unavailable &&
+          parseFloat(priceData.rawPrice || priceData.price) > 0;
+
+        if (priceData.source === 'fallback' && priceData.unavailable && !fallbackNumeric) {
           globalPriceData[symbol] = {
             symbol,
             displayName: priceData.displayName || getDisplayName(symbol),
@@ -188,7 +222,14 @@ async function fetchSnapshot() {
           displayName: priceData.displayName || getDisplayName(symbol),
           flash,
           flashTime: flash ? Date.now() : (prev?.flashTime || 0),
-          lastUpdate: data.snapshotTimestamp
+          lastUpdate: data.snapshotTimestamp,
+          ...(fallbackNumeric
+            ? {
+                delayed: true,
+                quoteUnavailable: false,
+                loading: false
+              }
+            : {})
         };
       });
 
@@ -237,6 +278,8 @@ async function fetchWatchlist() {
     const data = await response.json();
     if (data.success && data.watchlist) {
       watchlistConfig = data.watchlist;
+      serverDecimalsBySymbol = buildServerDecimalsMap(watchlistConfig);
+      serverSymbolRows = buildServerSymbolRows(watchlistConfig);
       return watchlistConfig;
     }
   } catch (e) {
@@ -340,6 +383,9 @@ export function useLivePrices(options = {}) {
       const config = await fetchWatchlist();
       if (!mounted) return;
 
+      serverDecimalsBySymbol = buildServerDecimalsMap(config);
+      serverSymbolRows = buildServerSymbolRows(config);
+
       setWatchlist(config);
 
       let symbolsToTrack = customSymbols;
@@ -393,7 +439,7 @@ export function useLivePrices(options = {}) {
   const getPricesArray = useCallback(() => {
     return symbolsRef.current.map(symbol => {
       const priceData = prices[symbol];
-      const displayName = getDisplayName(symbol);
+      const displayName = getDisplayName(symbol, serverSymbolRows[symbol]);
       
       if (
         priceData &&
